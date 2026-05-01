@@ -1,0 +1,17 @@
+services:
+  l4v:
+    image: sel4-test
+    container_name: sel4-l4v
+    network_mode: host
+    working_dir: /workspace/verification/l4v
+    volumes:
+      - ./:/workspace
+    environment:
+      L4V_ARCH: ARM
+      # run.sh + skill scripts call `isabelle ...` bare; the Dockerfile doesn't
+      # add Isabelle's bin to PATH (it uses relative ./isabelle/bin/isabelle in
+      # the WORKDIR). Prepending the mounted Isabelle bin makes both work.
+      PATH: /workspace/verification/isabelle/bin:/root/.local/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    stdin_open: true
+    tty: true
+    command: bash

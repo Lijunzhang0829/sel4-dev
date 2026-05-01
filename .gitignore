@@ -1,0 +1,22 @@
+verification/*
+isabelle_cache/*
+!isabelle_cache/README.md
+stack_cache/*
+!stack_cache/README.md
+
+# --- Isabelle session heaps (binary, multi-GB) — NOT tracked in git.
+# heaps/build_log.txt IS tracked: it's the per-theory timing baseline
+# we benchmark experiments against.
+# To restore the heap binaries themselves, see baseline-restore.md.
+heaps/*
+!heaps/build_log.txt
+
+# Runtime artifacts produced by run.sh / isabelle_prover skill
+logs/
+reports/
+test_output.log
+
+# Python / OS housekeeping
+__pycache__/
+*.pyc
+.DS_Store

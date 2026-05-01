@@ -1,0 +1,6 @@
+[submodule "Isa-Repl"]
+	path = Isa-Repl
+	url = https://github.com/Lizn-zn/Isa-Repl.git
+[submodule "seL4-prover"]
+	path = seL4-prover
+	url = https://github.com/SoaringE/seL4-prover.git
