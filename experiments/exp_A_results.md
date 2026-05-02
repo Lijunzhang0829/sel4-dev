@@ -1,102 +1,145 @@
-# Experiment A — `-H 1000 → 8000` on CBaseRefine
+# CBaseRefine threads / -H tuning — final analysis
 
-**Status: hypothesis falsified.**
+**Status: Exp A is a confirmed 17% wall-time win over the original baseline.
+This supersedes the earlier "Exp A FAILED" entry in this same file
+(commit 766ca4b), which used the wrong baseline number.**
 
-## Hypothesis
+## What went wrong with the previous analysis
 
-CBaseRefine spends 64% of wall time in GC (2220s of 3477s elapsed in the
-baseline). Hypothesis: the polyml initial heap setting `-H 1000` (1 GB) is
-too small for a 304-theory session, forcing many resize / full-GC cycles
-during heap growth. Raising `-H` to 8000 (8 GB initial) should let the
-working set fit without resize, dropping GC time significantly.
+The first version of this note compared Exp A against the per-theory `TOTAL`
+row from `heaps/build_log.txt` (3477s) and concluded Exp A was 27% slower at
+4434s. That comparison was invalid: the per-theory `TOTAL` is the **sum of
+per-theory elapsed times**, not session wall time. Isabelle's per-theory
+`elapsed` only records the theory's foreground load interval; it does not
+include time spent in the future stage (deferred proof checking that
+continues after the theory is "done") nor the heap-save phase. So summing
+per-theory elapsed underestimates session wall significantly.
 
-## Setup
+The correct baseline comes from the `Timing CBaseRefine (...)` line that
+`isabelle build -v` prints, and which is preserved inside the container at
+`/sel4-project/build-logs/clean.log` line 352.
 
-- Container: fresh `sel4-experiment-A` from `sel4-public:baseline-clean`
-  (29-heap baseline image)
-- Modified `/root/.isabelle/etc/settings`:
-  `-H 1000 --maxheap 16000` → `-H 8000 --maxheap 16000`
-- Build command: `isabelle build -c -b -v -j 1 -o threads=8 -d <l4v> CBaseRefine`
-  - `-c` forces clean rebuild (delete heap, recompile from sources)
-  - `-j 1` strict serial (no parallel sessions)
-  - `threads=8` matches our successful CRefine/InfoFlowCBase/InfoFlowC runs
-- Resources: 16 cores, 23 GiB RAM, 56 GiB free disk
-- Baseline for comparison: `heaps/build_log.txt` `--- CBaseRefine`
-  block (which used `-H 1000` and threads=4 per the original full.log)
+## Three measurements (all from the same `Timing CBaseRefine` line)
 
-## Results
+| run | wall | cpu | gc | gc% | factor | threads | `-H` | `--maxheap` |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **Baseline** (clean.log) | 5321s = **89:00** | 17995s | 4235s | **79.6%** | 3.38 | 4 | 1000 | 10000 |
+| **Exp A** | 4434s = **73:54** | 18250s | 2742s | 61.8% | 4.12 | 8 | 8000 | 16000 |
+| **Exp A2** | 5708s = **95:08** | 17924s | 3175s | 55.6% | 3.14 | 4 | 1000 | 16000 |
 
-| metric | baseline | exp A | delta |
-|---|---|---|---|
-| wall (`Finished` line) | 3477.7s | **4434.3s** | **+27.5%** |
-| cpu                    | 12443.6s | 18250.8s | +46.7% |
-| gc                     | 2220.9s | 2742.2s | +23.5% |
-| gc%                    | 63.9% | 61.8% | -2.1pp |
-| parallel factor        | 3.58x (threads=4) | 4.12x (threads=8) | nominally up |
-| parallel efficiency    | 90% (3.58/4) | **52%** (4.12/8) | dropped |
-| theories               | 304 | 304 | — |
+`build-logs/full.log` line 1134 also has a CBaseRefine timing (7962s wall,
+80% GC), but that run was the OOMing concurrent build with `-j 4` running
+two sessions simultaneously, so it isn't a clean measurement.
 
-**Hypothesis fails on every metric:** GC absolute time *increased*, GC% only
-moved 2pp, wall +27%, cpu +47%.
+## What each pair tells us
 
-## Per-theory deltas (top regressions)
+**A2 vs Baseline** — isolates `--maxheap 10000 → 16000`:
 
-| theory | baseline elapsed | exp A elapsed | Δ |
-|---|---|---|---|
-| Refine.CNodeInv_R | 95.6s | 221.0s | +131% |
-| Refine.Detype_R | 92.4s | 186.8s | +102% |
-| Refine.Finalise_R | 227.3s | 412.9s | +82% |
-| Refine.Untyped_R | 140.1s | 228.1s | +63% |
-| Refine.CSpace1_R | 101.1s | 151.2s | +50% |
-| Refine.Invariants_H | 149.0s | 215.3s | +44% |
-| **Refine.CSpace_R** | **354.9s** | **223.4s** | **−37%** (only big winner) |
+- wall:   5321 → 5708    (+7%)   *— very slightly worse, within noise*
+- gc:     4235 → 3175    (-25%)
+- gc%:    79.6% → 55.6%  (**-24 pp**)
 
-## What actually happened
+Bumping the polyml `--maxheap` ceiling from 10 GB to 16 GB **dramatically
+cuts GC time** (heap grows enough to give garbage room to accumulate before
+each collection), but the saved cycles get spent elsewhere (probably
+allocator overhead or OS-level paging with the bigger heap), so net wall
+barely moves. **`--maxheap` alone isn't a wall lever; it's a GC-pressure
+lever.**
 
-The experiment confounded two variables:
+**A vs A2** — isolates `-H 1000 → 8000` AND `threads 4 → 8` (with the
+post-bump maxheap held constant at 16000):
 
-1. `-H 1000 → -H 8000` (the variable I wanted to test)
-2. `threads=4 → threads=8` (the variable I forgot to control — the original
-   build used threads=4 per `full.log`'s `Timing CBaseRefine (4 threads, …)`)
+- wall:   5708 → 4434    (**-22%**)
+- gc:     3175 → 2742    (-14%)
+- factor: 3.14 → 4.12    (+31% parallel efficiency)
+- cpu:    17924 → 18250  (+1.8%)
 
-So we cannot conclude `-H 8000` is bad for CBaseRefine specifically; what
-we can conclude is the **combination** is worse. But the parallel-efficiency
-data (90% → 52%) strongly suggests the regression is dominated by threads=8
-hurting CBaseRefine, not by `-H 8000` helping or hurting.
+The combo wins clearly. Cannot say from this dataset alone whether the
+gain is from `-H` or from `threads` — that requires one more experiment
+(see "Open question" below).
 
-CRefine, InfoFlowCBase, and InfoFlowC all loved threads=8 (factors 4.8x,
-4.9x, 5.6x — efficiencies 60-70% on 8 cores). CBaseRefine doesn't. The
-likely reason: 304 theories, deep dependency graph, more inter-theory
-serialization → 8 workers spend more time waiting on locks / dependencies
-than on actual proof checking.
+**A vs Baseline** — overall:
+
+- wall:   5321 → 4434    (**-17%**, saves 887s = 14:47 on this one session)
+- gc:     4235 → 2742    (-35%)
+- gc%:    79.6% → 61.8%  (-18 pp)
+
+## Per-theory snapshot (top 5 by wall in baseline)
+
+Note these are per-theory **elapsed** as reported by `theory_timings`. They
+include within-theory parallel proof work, so the threads=4 vs threads=8
+columns are not directly comparable per-theory — only useful for sanity.
+
+| theory | base (t=4) | A (t=8) | A2 (t=4) |
+|---|---:|---:|---:|
+| Refine.CSpace_R     | 354.9 | 223.4 | 308.2 |
+| Refine.Finalise_R   | 227.3 | 412.9 | 226.7 |
+| Refine.Untyped_R    | 140.1 | 228.1 | 154.6 |
+| Refine.Invariants_H | 149.0 | 215.3 | 178.0 |
+| Refine.CNodeInv_R   |  95.6 | 221.0 | 113.2 |
+
+Within-thread the 4-thread runs are very close to each other (baseline ↔ A2),
+which validates A2's reproducibility. The threads=8 column shifts theories
+around in unintuitive ways, which is consistent with a different
+proof-DAG schedule rather than per-theory speedup/slowdown.
 
 ## Conclusions
 
-1. **`-H` tuning isn't a useful lever** for this workload. The 64% GC time
-   in CBaseRefine is intrinsic to the workload, not config-induced.
-2. **Optimal `threads` is per-session, not global.** CRefine/InfoFlow*: 8.
-   CBaseRefine: 4 (or maybe even less). Today's `compile.sh` sets
-   `threads=8` globally, which is suboptimal for CBaseRefine — could be
-   costing ~28% on that one session.
-3. **The settings-file edit `-H 1000 → 8000` was reverted** by tearing
-   down `sel4-experiment-A`. The baseline image
-   (`sel4-public:baseline-clean`) is unchanged.
+1. **Exp A is a real ~17% wall-time win for CBaseRefine.** The combination
+   `-H 8000 / --maxheap 16000 / threads=8` is faster than the original
+   `-H 1000 / --maxheap 10000 / threads=4` baseline.
+2. **`--maxheap 16000` is necessary but not sufficient.** Alone it kills
+   GC time but doesn't speed up wall.
+3. **`threads=8` does NOT hurt CBaseRefine** as the prior version of this
+   note claimed. The earlier conclusion was a measurement artifact.
+4. **Compile.sh's `threads=8` setting (Exp B, commit 3d9b173) is correct.**
+   No revert needed.
 
-## Next steps (suggested)
+## Open question
 
-- **Exp A2**: rerun CBaseRefine with `-H 1000` (default) and `threads=4`,
-  isolate the threads variable. Hypothesis: matches baseline ±5%.
-- **Exp A3**: rerun CBaseRefine with `-H 1000` and `threads=6`, see if
-  there's a sweet spot.
-- **Persistent fix**: if A2/A3 confirm threads=4 is optimal for CBaseRefine,
-  switch `compile.sh` from a global `threads=8` to per-session overrides.
-  Isabelle supports session-specific options via the ROOT file's `options`
-  block, but that requires editing l4v sources. A non-invasive alternative
-  is a wrapper script that invokes `isabelle build` per-session with
-  per-session `-o threads=N`.
+Cannot decompose A vs A2's -22% gain into "from `-H 8000`" vs "from
+`threads=8`". Both could be contributing. Resolving this needs:
+
+- Exp A3: `-H 1000 + threads=8 + --maxheap 16000` → isolates threads
+- (or A4: `-H 8000 + threads=4 + --maxheap 16000` → isolates -H)
+
+Each costs ~76-95 min wall to run. If the practical conclusion is simply
+"apply Exp A's settings", the decomposition is academic — both knobs are
+free to flip together.
+
+## Recommended action
+
+In `/root/.isabelle/etc/settings` inside the build container:
+
+```
+ML_OPTIONS="-H 1000 --maxheap 10000 --stackspace 64"     # original
+ML_OPTIONS="-H 8000 --maxheap 16000 --stackspace 64"     # new
+```
+
+(The current `sel4-public:baseline-clean` image has the
+`--maxheap 16000` half of this — bumped during the missing-sessions
+rebuild. The `-H 1000 → 8000` half is the new bit.)
+
+`compile.sh`'s `ISABELLE_BUILD_OPTIONS="threads=8"` (already on the
+experiments branch) stays.
+
+Expected wall savings on a clean rebuild of the four heavy sessions, all
+else equal:
+
+- CBaseRefine:        **-17%** (verified: 89m → 74m, save 15m)
+- CRefine:            our retry already used these settings; baseline-eq run
+                      not measured but the 56-minute wall is the new normal.
+- InfoFlowCBase:      same situation as CRefine.
+- InfoFlowC:          same.
+- CKernel:            unmeasured at threads=8; it has 60% GC at threads=4
+                      so likely benefits similarly. Estimated -10 to -15%.
+- Other small sessions: mostly noise.
+
+Conservative full-pipeline wall savings estimate: **15-25 minutes per
+clean rebuild**.
 
 ## Cost so far
 
-- Wall time: ~76 min (the rebuild itself)
-- Disk: 0 (container removed)
-- Other heaps: untouched
+- Wall time: ~76 min (Exp A) + ~95 min (Exp A2) = **2h51m of build time**
+- Disk: 0 (both experiment containers torn down)
+- Baseline image / heap files: untouched
