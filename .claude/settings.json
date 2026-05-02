@@ -1,14 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bash claude/.claude/skills/isabelle_prover/scripts/check-theory.sh:*)",
-      "Bash(bash claude/.claude/skills/isabelle_prover/scripts/goal-at.sh:*)",
-      "Bash(bash claude/.claude/skills/isabelle_prover/scripts/proof-timing.sh:*)",
-      "Bash(bash claude/.claude/skills/isabelle_prover/scripts/scan-slow-proofs.sh:*)",
-      "Bash(bash claude/.claude/skills/isabelle_prover/scripts/sledgehammer.sh:*)",
-      "Bash(bash claude/.claude/skills/isabelle_prover/scripts/strengthen-proof.sh:*)",
-      "Bash(bash claude/.claude/skills/isabelle_prover/scripts/propose-tactic.sh:*)",
-      "Bash(bash claude/.claude/skills/isabelle_prover/scripts/emit-session-baselines.sh:*)",
       "Bash(bash .claude/skills/isabelle_prover/scripts/check-theory.sh:*)",
       "Bash(bash .claude/skills/isabelle_prover/scripts/goal-at.sh:*)",
       "Bash(bash .claude/skills/isabelle_prover/scripts/proof-timing.sh:*)",
