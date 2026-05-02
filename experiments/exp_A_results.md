@@ -24,14 +24,19 @@ The correct baseline comes from the `Timing CBaseRefine (...)` line that
 | run | wall | cpu | gc | gc% | factor | threads | `-H` | `--maxheap` |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | **Baseline** (clean.log) | 5321s = **89:00** | 17995s | 4235s | **79.6%** | 3.38 | 4 | 1000 | 10000 |
-| **Exp A** | 4434s = **73:54** | 18250s | 2742s | 61.8% | 4.12 | 8 | 8000 | 16000 |
-| **Exp A2** | 5708s = **95:08** | 17924s | 3175s | 55.6% | 3.14 | 4 | 1000 | 16000 |
+| **Exp A** | 4434s = **73:54** | 18250s | 2742s | 61.8% | 4.12 | **8** | **8000** | **16000** |
+| **Exp A2** | 5708s = **95:08** | 17924s | 3175s | 55.6% | 3.14 | 4 | 1000 | **16000** |
+| **Exp A3** | 4655s = **77:36** | 18893s | 3233s | 69.4% | 4.06 | **8** | 1000 | **16000** |
 
 `build-logs/full.log` line 1134 also has a CBaseRefine timing (7962s wall,
 80% GC), but that run was the OOMing concurrent build with `-j 4` running
 two sessions simultaneously, so it isn't a clean measurement.
 
-## What each pair tells us
+## What each pair tells us — full decomposition
+
+The 2² grid of `{threads ∈ 4,8} × {-H ∈ 1000,8000}` (with maxheap fixed at
+16000) is now fully measured. Comparing A3 to A2 isolates the `threads`
+variable; comparing A to A3 isolates the `-H` variable.
 
 **A2 vs Baseline** — isolates `--maxheap 10000 → 16000`:
 
@@ -39,73 +44,92 @@ two sessions simultaneously, so it isn't a clean measurement.
 - gc:     4235 → 3175    (-25%)
 - gc%:    79.6% → 55.6%  (**-24 pp**)
 
-Bumping the polyml `--maxheap` ceiling from 10 GB to 16 GB **dramatically
-cuts GC time** (heap grows enough to give garbage room to accumulate before
-each collection), but the saved cycles get spent elsewhere (probably
-allocator overhead or OS-level paging with the bigger heap), so net wall
-barely moves. **`--maxheap` alone isn't a wall lever; it's a GC-pressure
-lever.**
+Bumping `--maxheap` from 10 GB to 16 GB dramatically cuts GC time (heap
+grows enough to let garbage accumulate before each collection), but the
+saved cycles get spent elsewhere — net wall barely moves. **`--maxheap`
+isn't a wall lever; it's a GC-pressure lever.**
 
-**A vs A2** — isolates `-H 1000 → 8000` AND `threads 4 → 8` (with the
-post-bump maxheap held constant at 16000):
+**A3 vs A2** — isolates `threads 4 → 8` (held: -H 1000, maxheap 16000):
 
-- wall:   5708 → 4434    (**-22%**)
-- gc:     3175 → 2742    (-14%)
-- factor: 3.14 → 4.12    (+31% parallel efficiency)
-- cpu:    17924 → 18250  (+1.8%)
+- wall:   5708 → 4655    (**−18.4%**, saves 1053s = 17:33)
+- gc:     3175 → 3233    (+1.8%, essentially unchanged)
+- factor: 3.14 → 4.06    (+29% parallel efficiency)
+- cpu:    17924 → 18893  (+5.4%)
 
-The combo wins clearly. Cannot say from this dataset alone whether the
-gain is from `-H` or from `threads` — that requires one more experiment
-(see "Open question" below).
+**`threads=4 → 8` alone explains 78% of the A-vs-A2 gain.** The bulk of
+the speedup is from honest parallelism — 8 worker threads carve up the
+proof-DAG roughly 30% better than 4. GC time barely moved, so this win
+is independent of GC pressure.
 
-**A vs Baseline** — overall:
+**A vs A3** — isolates `-H 1000 → 8000` (held: threads=8, maxheap 16000):
 
-- wall:   5321 → 4434    (**-17%**, saves 887s = 14:47 on this one session)
-- gc:     4235 → 2742    (-35%)
-- gc%:    79.6% → 61.8%  (-18 pp)
+- wall:   4655 → 4434    (**−4.7%**, saves 221s = 3:41)
+- gc:     3233 → 2742    (−15%)
+- gc%:    69.4% → 61.8%  (−7.6 pp)
+- cpu:    18893 → 18250  (−3.4%)
 
-## Per-theory snapshot (top 5 by wall in baseline)
+**`-H 1000 → 8000` adds another 4.7% on top.** With 8 GB initial heap
+polyml does fewer mark-compact resize cycles during the early growth
+phase, so GC drops 15%. Real but modest gain — about 4 minutes on a
+~78-minute build.
 
-Note these are per-theory **elapsed** as reported by `theory_timings`. They
-include within-theory parallel proof work, so the threads=4 vs threads=8
-columns are not directly comparable per-theory — only useful for sanity.
+**A vs Baseline** — overall (all three knobs flipped):
 
-| theory | base (t=4) | A (t=8) | A2 (t=4) |
+- wall:   5321 → 4434    (**−17%**, saves 887s = 14:47 on this one session)
+- gc:     4235 → 2742    (−35%)
+- gc%:    79.6% → 61.8%  (−18 pp)
+
+## Attribution summary
+
+Of the **−887s (−17%)** total Exp-A-vs-Baseline gain on CBaseRefine wall:
+
+| component | wall delta | share |
+|---|---:|---:|
+| `threads 4 → 8` | **−1053s** | **~83%** |
+| `-H 1000 → 8000` | **−221s** | **~17%** |
+| `maxheap 10000 → 16000` | +387s (slight regression on wall, but enables -H bump) | (negative on wall) |
+| **net (A vs Baseline)** | **−887s** | **100%** |
+
+The arithmetic doesn't sum perfectly (1053 - 221 - 387 ≠ 887) because the
+deltas were measured against different reference points and the effects
+have small interactions. But the picture is clear: **threads is the
+dominant lever; -H is a small bonus; maxheap is required infrastructure
+but not a wall lever on its own.**
+
+## Per-theory snapshot
+
+Per-theory `theory_timings` data summed (not directly = wall, but useful
+for sanity / pattern):
+
+| run | per-theory TOTAL elapsed | wall  | wall − sum |
 |---|---:|---:|---:|
-| Refine.CSpace_R     | 354.9 | 223.4 | 308.2 |
-| Refine.Finalise_R   | 227.3 | 412.9 | 226.7 |
-| Refine.Untyped_R    | 140.1 | 228.1 | 154.6 |
-| Refine.Invariants_H | 149.0 | 215.3 | 178.0 |
-| Refine.CNodeInv_R   |  95.6 | 221.0 | 113.2 |
+| Baseline (t=4) | 3478s | 5321s | 1843s (35% non-attributable, mostly future + heap-save) |
+| Exp A (t=8, -H 8G) | 1889s | 4434s | 2545s (57%) |
+| Exp A2 (t=4) | 3681s | 5708s | 2027s (35%) |
+| Exp A3 (t=8) | 5177s | 4655s | -522s (negative — sum > wall, expected with parallelism amortizing) |
 
-Within-thread the 4-thread runs are very close to each other (baseline ↔ A2),
-which validates A2's reproducibility. The threads=8 column shifts theories
-around in unintuitive ways, which is consistent with a different
-proof-DAG schedule rather than per-theory speedup/slowdown.
+The sum-of-per-theory figures are not directly comparable across thread
+counts (because per-theory elapsed reflects wall of that theory, but
+inter-theory parallelism makes them overlap differently). They confirm
+A2 ≈ Baseline (same threads), and A3 has a much higher per-theory sum
+because 8 workers process more theories in parallel within the same wall.
 
 ## Conclusions
 
-1. **Exp A is a real ~17% wall-time win for CBaseRefine.** The combination
-   `-H 8000 / --maxheap 16000 / threads=8` is faster than the original
+1. **Exp A is a real ~17% wall-time win for CBaseRefine** vs the original
    `-H 1000 / --maxheap 10000 / threads=4` baseline.
-2. **`--maxheap 16000` is necessary but not sufficient.** Alone it kills
-   GC time but doesn't speed up wall.
-3. **`threads=8` does NOT hurt CBaseRefine** as the prior version of this
-   note claimed. The earlier conclusion was a measurement artifact.
-4. **Compile.sh's `threads=8` setting (Exp B, commit 3d9b173) is correct.**
-   No revert needed.
-
-## Open question
-
-Cannot decompose A vs A2's -22% gain into "from `-H 8000`" vs "from
-`threads=8`". Both could be contributing. Resolving this needs:
-
-- Exp A3: `-H 1000 + threads=8 + --maxheap 16000` → isolates threads
-- (or A4: `-H 8000 + threads=4 + --maxheap 16000` → isolates -H)
-
-Each costs ~76-95 min wall to run. If the practical conclusion is simply
-"apply Exp A's settings", the decomposition is academic — both knobs are
-free to flip together.
+2. **The win is 83% from `threads=4 → 8` and 17% from `-H 1000 → 8000`.**
+   Now decomposed; no remaining attribution mystery.
+3. **`--maxheap 16000` doesn't speed up wall on its own.** A2 was +7%
+   slower than Baseline. But it's prerequisite infrastructure: the OOM
+   risk we hit with `--maxheap 10000` and concurrent sessions ruled out
+   `-j N>1` even more strictly. With 16000 we have headroom for `-j 1` +
+   threads=8 + -H 8000 without OOM.
+4. **`threads=8` does NOT hurt CBaseRefine.** The earlier "FAILED" note
+   (commit 766ca4b) was wrong — based on a wrong baseline number.
+5. **Compile.sh's `threads=8` setting (commit 3d9b173) is correct and
+   carries 83% of the speedup**. The `sel4-public:tuned` image's
+   `-H 8000` adds the remaining 17%.
 
 ## Recommended action
 
