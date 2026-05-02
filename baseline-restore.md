@@ -57,26 +57,39 @@ repo sync
 
 ## Build configuration that produced the baseline
 
-- Container: `sel4-public:baseline-clean` (see `docker images`)
+- Container: `sel4-public:baseline-clean`
 - Isabelle 2024 with polyml-5.9.1
 - `/root/.isabelle/etc/settings`:
-  `ML_OPTIONS="-H 1000 --maxheap 16000 --stackspace 64"` (10G→16G bump)
+  `ML_OPTIONS="-H 1000 --maxheap 16000 --stackspace 64"` (10G→16G bump
+  applied during the missing-sessions rebuild; the original was maxheap
+  10000)
 - `isabelle build -b -v -j 1 -o threads=8 -d <l4v> <SESSION>`
 - Strict session-level serialization (no `-j N>1`).
 
-## Per-session wall times in the baseline (top sessions)
+## Two docker image tags — which to use for what
 
-From `heaps/build_log.txt`, top by elapsed time:
+| tag | settings | when to use |
+|---|---|---|
+| `sel4-public:baseline-clean` | `-H 1000 --maxheap 16000` | reproducing the baseline / regression testing |
+| `sel4-public:tuned` | `-H 8000 --maxheap 16000` | new builds — empirically -17% wall on CBaseRefine vs the original `-H 1000 --maxheap 10000` config (see `experiments/exp_A_results.md`) |
 
-| Session | elapsed | gc% | par_factor | theories |
-|---|---|---|---|---|
-| SimplExportAndRefine | 3779s | 24% | 3.7x | 8 (1 dominates) |
-| CBaseRefine | 3478s | **64%** | 3.6x | 304 |
-| CRefine | 1889s | 38% | 4.8x | 52 |
-| Refine | 1292s | 21% | 3.3x | 48 |
-| CKernel | 1013s | **60%** | 2.8x | 61 |
-| AInvs | 780s | 24% | 3.3x | 119 |
+Both images contain the same 29 heap files. Settings is the only delta.
 
-Sessions where `gc%` ≥ 50% are the main acceleration candidates (the
-`-H 1000` initial heap is too small relative to the working set, causing
-excessive resize / full-GC cycles).
+## Per-session walls in the original baseline (`build-logs/clean.log` inside the image)
+
+These are the authoritative wall times — the `Timing X (...)` lines from
+`isabelle build -v`. Note they are **not** the per-theory `TOTAL` rows
+in `heaps/build_log.txt`, which sum per-theory elapsed only.
+
+| session | wall | gc% | factor | threads |
+|---|---:|---:|---:|---:|
+| **CBaseRefine** | **5321s = 89:00** | 79.6% | 3.38 | 4 |
+| **CKernel**     | 1300s = 21:40    | 55.7% | 2.98 | 4 |
+| AInvs           | 1403s = 23:23    | 24.3% | 3.07 | 4 |
+| Access          | 467s             | 18.8% | 3.28 | 4 |
+| ASpec           | 177s             | 18.5% | 1.80 | 4 |
+| BaseRefine      | 207s             | 13.7% | 1.50 | 4 |
+
+Sessions where `gc%` ≥ 50% are the main acceleration candidates. The
+`tuned` image's `-H 8000` setting addresses this: more initial ML heap
+means fewer mark-compact cycles during the early growth phase.
