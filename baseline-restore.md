@@ -28,6 +28,28 @@ docker rm -f sel4-restore
 
 After this, `heaps/` should have **29 heap files + build_log.txt**.
 
+### Leaf sessions worth knowing about
+
+The proof DAG has two **leaf sessions** (no other session depends on them)
+that are **not** required for the SOSP'09 Theorem 1/2/3 functional
+correctness chain (`Abstract → ExecSpec → C` via `Refine` then `CRefine`):
+
+- **`CRefineSyscall`** (`crefine/intermediate`, theory `Intermediate_C`).
+  Inherits from `CBaseRefine` + `CRefine`. Heap is 326 MB. Present in both
+  baseline images. Treated as part of the 29-heap baseline because it's a
+  declared session in `proof/ROOT` and `proof/tests.xml`. Not on the
+  critical path; lose it and Theorem 3 still holds. If you ever delete it
+  and want it back, `docker cp <image>:/root/.isabelle/heaps/.../CRefineSyscall`
+  from either baseline image.
+
+- **`AutoCorresCRefine`** (`crefine/autocorres-test`, theory `AutoCorresTest`).
+  Inherits from `CRefine`. **Broken in l4v 13.0 ARM** — its `AutoCorresTest.thy`
+  imports `Refine_C` but the file is at `proof/crefine/ARM/Refine_C.thy`,
+  not the local `proof/crefine/autocorres-test/Refine_C.thy` Isabelle
+  resolves to. Other arches (X64/RISCV64/AARCH64) explicitly exclude this
+  in `verification/l4v/run_tests`. Our `compile.sh` follows suit. **No heap
+  exists** in either image; this is correct/expected.
+
 ## 2. Or just run experiments inside the container
 
 The container already has all heaps pre-loaded. Skip the cp and:
