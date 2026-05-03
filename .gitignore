@@ -16,6 +16,13 @@ logs/
 reports/
 test_output.log
 
+# Claude Code: per-user/per-machine permission overrides — gitignored
+# per Claude Code convention. Project-level permissions live in
+# .claude/settings.json (committed). This local file is for grants you
+# do not want to share with the team (machine-specific paths, broad
+# wildcards for personal convenience, etc).
+.claude/settings.local.json
+
 # Python / OS housekeeping
 __pycache__/
 *.pyc
