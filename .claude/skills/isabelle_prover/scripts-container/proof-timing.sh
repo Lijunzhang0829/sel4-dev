@@ -23,9 +23,10 @@ set -- "$(_translate_host_path "$1")" "${@:2}"
 THEORY_FILE="$(realpath "${1:?Usage: $0 <theory_file> [session]}")"
 SESSION="${2:-AInvs}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Layout: <repo>/claude/.claude/skills/isabelle_prover/scripts-container/
-# Five "../" hops to reach the repo root (mounted at /workspace inside container).
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../../.." && pwd)"
+# Layout (after consolidation, commit 3e27380):
+#   <repo>/.claude/skills/isabelle_prover/scripts-container/
+# Four "../" hops to reach the repo root (mounted at /workspace inside container).
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 L4V_DIR="${L4V_DIR:-${REPO_ROOT}/verification/l4v}"
 ISA_HOME="${ISABELLE_HOME:-${REPO_ROOT}/verification/isabelle}"
 
@@ -160,16 +161,28 @@ def measure(sorry_range=None):
         with open(os.path.join(tmpdir, 'ROOT'), 'w') as f:
             f.write(f'session {tmpname} = {SESSION} + theories "{tmpname}"\n')
 
-        # Build
+        # Build. quick_and_dirty=true is required because sorry-substitution
+        # uses `sorry` in proof bodies; without this flag Isabelle errors out
+        # with "Cheating requires quick_and_dirty mode!" before measuring
+        # anything. The baseline (no sorry) also runs under quick_and_dirty
+        # for symmetry — same flag, same loader path, only the proof body
+        # text differs between baseline and substituted runs.
         t0 = time.monotonic()
         result = subprocess.run(
             [os.path.join(ISA_HOME, 'bin', 'isabelle'), 'build',
+             '-o', 'quick_and_dirty=true',
              '-d', L4V_DIR, '-d', tmpdir, tmpname],
             capture_output=True, text=True,
             env={**os.environ, 'L4V_ARCH': L4V_ARCH},
         )
         ms = int((time.monotonic() - t0) * 1000)
         has_err = result.returncode != 0
+        if has_err:
+            import sys
+            sys.stderr.write("\n[proof-timing] build error rc=%d\n%s%s\n" %
+                             (result.returncode,
+                              result.stderr[-1500:] if result.stderr else "",
+                              result.stdout[-500:] if result.stdout else ""))
         return ms, has_err
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)

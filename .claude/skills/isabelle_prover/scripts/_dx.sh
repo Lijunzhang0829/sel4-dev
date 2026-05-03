@@ -6,10 +6,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[1]}")" && pwd)"
-# Layout in this repo:
-#   <repo>/claude/.claude/skills/isabelle_prover/scripts/_dx.sh
-# Five "../" hops from scripts/ to the seL4-docker-main repo root.
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../../.." && pwd)"
+# Layout in this repo (after consolidation, commit 3e27380):
+#   <repo>/.claude/skills/isabelle_prover/scripts/_dx.sh
+# Four "../" hops from scripts/ → isabelle_prover/ → skills/ → .claude/ → <repo>.
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 COMPOSE_FILE="${REPO_ROOT}/docker-compose.yml"
 WRAPPER_NAME="$(basename "${BASH_SOURCE[1]}")"
 

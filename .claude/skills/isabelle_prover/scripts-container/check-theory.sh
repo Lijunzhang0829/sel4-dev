@@ -55,9 +55,9 @@ while [ $# -gt 0 ]; do
 done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Layout: <repo>/claude/.claude/skills/isabelle_prover/scripts-container/
+# Layout: <repo>/.claude/skills/isabelle_prover/scripts-container/
 # Five "../" hops to reach the repo root (mounted at /workspace inside container).
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../../.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 L4V_DIR="${L4V_DIR:-${REPO_ROOT}/verification/l4v}"
 ISA_HOME="${ISABELLE_HOME:-${REPO_ROOT}/verification/isabelle}"
 
