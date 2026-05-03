@@ -75,31 +75,138 @@ with open(THEORY_FILE) as f:
     orig_lines = f.readlines()
 
 # ── Parse proof blocks ──────────────────────────────────────────────
+#
+# [FIX 2026-05-03] The original parse_proofs() used "first done/qed line after
+# `^lemma`" as the proof boundary. Three concrete failure modes that drove every
+# Access scan to "Baseline: 0ms" (all sorry builds errored out before measuring):
+#
+#   (1) Isar `proof … qed` blocks containing nested `subgoal`/`show … done`
+#       were truncated at the FIRST inner `done`. Sorry-substitution then deleted
+#       lines including the lemma's actual end, leaving the OUTER `qed` orphaned.
+#       Isabelle: `*** Bad context for command "qed"`.
+#   (2) Only `^lemma` was matched — `theorem`, `corollary`, `proposition`,
+#       `schematic_goal` were silently skipped (no entry, no measurement).
+#   (3) `lemma (in locale) name:` and `lemma [attr] name:` did not match the
+#       narrow `^lemma\s+\S+` pattern, so locale-bound lemmas were dropped.
+#
+# The replacement below uses the "next-top-level command" boundary detection
+# already proven in tools/lemma_inventory/extract_lemmas.py: the proof body
+# extends from the first proof-keyword line after the lemma name, up to (but
+# not including) the next theory-level command (lemma/definition/end/…). All
+# nested Isar constructs sit inside that span correctly.
+#
+# Comments (* ... *) are stripped first so commented-out lemmas don't false-match.
+# Newlines are preserved during stripping, so line numbers stay aligned with
+# orig_lines (the rest of the script indexes via proof_start/proof_end into
+# orig_lines for sorry substitution).
 
 def parse_proofs():
+    LEMMA_KIND_RE = re.compile(
+        r"^\s*(?P<kind>lemma|theorem|corollary|proposition|schematic_goal)\b"
+    )
+    # Optional `(in locale)` then optional `[attrs]` then identifier name.
+    NAME_RE = re.compile(
+        r"\s*(?:\(\s*in\s+[A-Za-z_][\w'\s,]*?\s*\)\s*)?"
+        r"(?:\[[^\]]*\]\s*)?"
+        r"(?P<name>[A-Za-z_][\w']*)"
+    )
+    PROOF_KEYWORDS = ("apply", "by", "proof", "using", "unfolding", "supply",
+                      "subgoal", "show", "thus", "hence", "have", "moreover",
+                      "obtain", "fix", "assume", "next", "qed", "done",
+                      "oops", "sorry", "including", "sledgehammer")
+    PROOF_START_RE = re.compile(r"^\s*(" + "|".join(PROOF_KEYWORDS) + r")\b")
+    # Theory-level commands that terminate a proof body when seen at start of line.
+    TOP_KEYWORDS = (
+        "lemma", "theorem", "corollary", "proposition", "schematic_goal", "lemmas",
+        "definition", "fun", "function", "primrec", "abbreviation", "notation",
+        "no_notation", "declare", "axiomatization", "consts", "locale", "sublocale",
+        "context", "interpretation", "instance", "instantiation", "class", "datatype",
+        "record", "type_synonym", "code_datatype", "codatatype", "end", "begin",
+        "ML", "ML_file", "ML_command", "ML_val", "setup", "local_setup",
+        "attribute_setup", "method_setup", "syntax", "no_syntax", "translations",
+        "term", "value", "thm", "find_theorems", "find_consts", "named_theorems",
+        "partial_function", "termination", "defs", "overloading", "bundle",
+        "unbundle", "lift_definition", "free_constructors", "oracle", "section",
+        "subsection", "subsubsection", "chapter", "paragraph", "text", "txt",
+        "crunch", "crunches", "crunch_ignore", "requalify_consts", "requalify_facts",
+        "requalify_types", "global_naming", "qualified_consts",
+    )
+    NEXT_TOP_RE = re.compile(
+        r"^\s*(" + "|".join(re.escape(k) for k in TOP_KEYWORDS) + r")\b"
+    )
+
+    # Strip nested (* ... *) preserving newlines and string literals.
+    def _strip(src):
+        out, i, depth, n, in_str = [], 0, 0, len(src), False
+        while i < n:
+            if not in_str and src.startswith("(*", i):
+                depth, end = 1, i + 2
+                while end < n and depth > 0:
+                    if src.startswith("(*", end):
+                        depth += 1; end += 2
+                    elif src.startswith("*)", end):
+                        depth -= 1; end += 2
+                    elif src[end] == "\n":
+                        out.append("\n"); end += 1
+                    else:
+                        end += 1
+                i = end
+                continue
+            if not in_str and src[i] == '"':
+                in_str = True
+            elif in_str and src[i] == '"':
+                in_str = False
+            out.append(src[i])
+            i += 1
+        return "".join(out)
+
+    cleaned_lines = _strip("".join(orig_lines)).split("\n")
+    # Pad so cleaned_lines indices match orig_lines (handles files w/o trailing \n).
+    while len(cleaned_lines) < len(orig_lines):
+        cleaned_lines.append("")
+
     proofs = []
-    lemma_line = None
-    lemma_name = None
-    for i, line in enumerate(orig_lines):
-        m = re.match(r'^lemma\s+(\S+)', line)
-        if m:
-            lemma_line = i
-            lemma_name = m.group(1).rstrip(':')
-        if line.strip() in ('done', 'qed') and lemma_line is not None:
-            proof_start = None
-            for j in range(lemma_line + 1, i + 1):
-                s = orig_lines[j].strip()
-                if s.startswith(('apply', 'using', 'by ', 'proof', 'unfolding')):
-                    proof_start = j
-                    break
-            if proof_start is not None:
-                proofs.append({
-                    'name': lemma_name,
-                    'proof_start': proof_start,
-                    'proof_end': i,
-                    'size': i - proof_start + 1,
-                })
-            lemma_line = None
+    n = len(cleaned_lines)
+    i = 0
+    while i < n:
+        m = LEMMA_KIND_RE.match(cleaned_lines[i])
+        if not m:
+            i += 1
+            continue
+        nm = NAME_RE.match(cleaned_lines[i][m.end():])
+        if not nm:
+            # Anonymous lemma (`lemma "stmt" by simp`) or multi-line header — skip.
+            i += 1
+            continue
+        name = nm.group("name")
+        lemma_line = i
+        # Find proof_start: first subsequent line whose first token is a proof keyword.
+        proof_start = None
+        for j in range(lemma_line + 1, n):
+            line = cleaned_lines[j]
+            if line.strip() and PROOF_START_RE.match(line):
+                proof_start = j
+                break
+        if proof_start is None:
+            i += 1
+            continue
+        # proof_end = line BEFORE the next top-level command after proof_start
+        # (or last line of file if none). Trim trailing blank lines.
+        proof_end = n - 1
+        for j in range(proof_start + 1, n):
+            if NEXT_TOP_RE.match(cleaned_lines[j]):
+                proof_end = j - 1
+                break
+        while proof_end > proof_start and not cleaned_lines[proof_end].strip():
+            proof_end -= 1
+        proofs.append({
+            'name': name,
+            'proof_start': proof_start,
+            'proof_end': proof_end,
+            'size': proof_end - proof_start + 1,
+        })
+        # Advance past this lemma's body to avoid double-counting nested lemma matches.
+        i = proof_end + 1
     proofs.sort(key=lambda p: p['size'], reverse=True)
     return proofs
 
