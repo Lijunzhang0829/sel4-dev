@@ -13,7 +13,8 @@ heaps/*
 
 # Runtime artifacts produced by run.sh / isabelle_prover skill
 logs/
-reports/
+reports/*
+!reports/README.md
 test_output.log
 
 # Claude Code: per-user/per-machine permission overrides — gitignored
