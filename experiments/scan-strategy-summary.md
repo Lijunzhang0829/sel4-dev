@@ -246,16 +246,39 @@ The top-N + fix5 hybrid gives 40 actionable slow proofs, including high-
 value ones that per-file missed because they live in big files past top-10
 (`integrity_trans`, `send_upd_ctxintegrity`, etc).
 
+### AInvs (no controlled comparison — gap intentionally left)
+
+AInvs has only top-N data (3.3 h wall, 100 lemmas measured, 39 slow proofs
+after fix3 supplement; see §4 below). **Per-file was never run on AInvs.**
+
+Reasons for the gap:
+- Per-file scan on AInvs (81 .thy files vs InfoFlow's 51) was estimated at
+  18-30 h wall — the largest single-session budget across the five.
+- Two controlled comparisons (Access + InfoFlow) already pointed in the
+  same direction: top-N is the better primary strategy. The marginal
+  information value of a third comparison was judged not worth the cost.
+- AInvs `proof/invariant-abstract/` is single-session (only `AInvs`), so
+  the multi-session ERR class (Bug 3) doesn't apply. The fix3 supplement
+  only had to recover Bug 4/5/6 cases, which it did cleanly (24/25 ERR
+  measurements recovered, 1 orphan file skipped).
+
+Anyone wanting a 3rd comparison datapoint can fire the fixed
+`tools/scan-slow-proofs.sh` against `proof/invariant-abstract/` — the same
+inventory-aware scanner used for the fix3 rescan.
+
 ### Verdict
 
 - **Top-N is the right primary strategy.** Catches more slow proofs in
-  less wall time on both controlled experiments.
+  less wall time on both controlled experiments (Access, InfoFlow).
 - **Per-file's "small-file capture" advantage matters less than predicted.**
   Of the slow proofs per-file uniquely caught, several are in test/example
   files (e.g. `ExampleSystem.thy`) outside the active build path.
-- **Fix5 supplement is valuable when scan-dir spans multiple sessions
-  (InfoFlow, future Refine/orphanage)** — recovers files that fail under
-  the single-session assumption.
+- **Fix-supplement (fix5 / fix3) is valuable when scan-dir spans multiple
+  sessions or contains files with imports the parent session can't see**
+  — recovers files that fail under the single-session assumption.
+- **AInvs's gap is acknowledged**: only top-N data, no per-file
+  comparison. Conclusions transfer from Access + InfoFlow but with one
+  fewer datapoint of support.
 
 ---
 
