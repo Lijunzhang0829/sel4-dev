@@ -31,12 +31,101 @@ import argparse
 import json
 import os
 import re
+import sqlite3
 import subprocess
 import sys
 import tempfile
 import time
 import uuid
+from functools import lru_cache
 from pathlib import Path
+
+
+# ─── Per-file session lookup ──────────────────────────────────────────────────
+#
+# Why this exists: scan-slow-proofs.sh and the original scan_topN_global.py both
+# took a single --session argument and applied it to every .thy in the scan-dir.
+# That is wrong whenever the scan-dir spans multiple sessions:
+#
+#   proof/infoflow/             InfoFlow + InfoFlowC + InfoFlowCBase
+#   proof/refine/ARM/           Refine + RefineOrphanage
+#
+# Files in a "wrong" session would error out with `*** Cannot load theory
+# "<session>.<theory>"` because the temp session's heap chain doesn't include
+# the file's actual session content. On InfoFlow this took out 11/51 files
+# (22%) silently — the per-file scan log just showed [ERR] markers and the
+# downstream cost numbers were 0.
+#
+# The fix: look up each .thy's actual owning session via the inventory built by
+# tools/lemma_inventory/build.py. Inventory's `theories` table is the precise
+# (path → session) map — derived from parsing every l4v ROOT file with directory
+# prefix matching (deepest match wins).
+#
+# Container-vs-host paths: inventory stores rel paths under L4V_ROOT (e.g.
+# `proof/infoflow/Foo.thy`). The scanner running inside the container sees
+# paths like `/workspace/verification/l4v/proof/infoflow/Foo.thy`. We strip the
+# prefix using the L4V_ROOT-aware path resolution helpers below.
+
+# Default inventory location, host repo path. The container's /workspace mounts
+# the host repo, so this path also works inside the container.
+DEFAULT_INVENTORY_DB = "/workspace/reports/inventory/baseline.db"
+
+
+@lru_cache(maxsize=1)
+def _load_session_map(inventory_db: str) -> dict[str, str]:
+    """Read inventory.db once, return {rel_path: session} dict.
+
+    rel_path is keyed exactly as inventory stores it — relative to l4v root
+    (e.g. `proof/infoflow/Foo.thy`).
+    """
+    if not Path(inventory_db).exists():
+        return {}
+    conn = sqlite3.connect(inventory_db)
+    try:
+        rows = conn.execute(
+            "SELECT path, session FROM theories WHERE session IS NOT NULL"
+        ).fetchall()
+    finally:
+        conn.close()
+    return dict(rows)
+
+
+def _to_inventory_rel(thy_path: Path, l4v_root: Path | str) -> str | None:
+    """Convert an absolute container/host path to inventory's rel-path key.
+
+    inventory keys look like 'proof/infoflow/Foo.thy' (relative to l4v_root).
+    Container paths look like '/workspace/verification/l4v/proof/infoflow/Foo.thy'.
+    Host paths look like '/home/lijun/seL4-docker-main/verification/l4v/proof/...'.
+    Both forms strip down to the same inventory key.
+    """
+    abs_p = thy_path.resolve()
+    candidates = [
+        Path(l4v_root).resolve(),
+        Path("/sel4-project/verification/l4v"),  # container heap-fingerprint path
+        Path("/workspace/verification/l4v"),     # container mount path
+    ]
+    for root in candidates:
+        try:
+            return str(abs_p.relative_to(root))
+        except ValueError:
+            continue
+    return None
+
+
+def session_for_thy(thy_path: Path, l4v_root: Path | str,
+                    inventory_db: str = DEFAULT_INVENTORY_DB,
+                    fallback: str | None = None) -> str | None:
+    """Return the session that owns this .thy file, or `fallback` if not found.
+
+    Uses inventory.db (preferred). Falls back to None/fallback if:
+      - Inventory missing or doesn't have this file
+      - Path translation fails
+    """
+    rel = _to_inventory_rel(thy_path, l4v_root)
+    if rel is None:
+        return fallback
+    smap = _load_session_map(inventory_db)
+    return smap.get(rel, fallback)
 
 # ─── Lemma extraction (mirrored from tools/lemma_inventory/extract_lemmas.py) ──
 
