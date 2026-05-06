@@ -283,7 +283,18 @@ are the high-confidence targets for micro-rewrite experiments.
 | 12.1 | 15 | `unmap_page_respects` | ArchArch_AC.thy |
 | 11.5 | 58 | `send_ipc_integrity_autarch` | Ipc_AC.thy |
 
-### AInvs (top-N data)
+### AInvs (top-N + fix3 supplement)
+
+The original top-N scan ran 2026-05-04, before Bugs 4/5/6 were fixed. 25/100
+measurements baseline-erred on three files: `Deterministic_AI.thy` (19 lemmas;
+self-reference `Deterministic_AI.X`, Bug 5), `ArchVSpaceEntries_AI.thy` (5
+lemmas, recovered cleanly with the fix), `KernelInitSepProofs_AI.thy` (1
+lemma; cross-session import of `Sep_Algebra.Sep_Algebra_L4v`, not in AInvs
+build closure → out of scope, like the 6 InfoFlowC files in InfoFlow).
+
+A targeted fix3 rescan on 2026-05-06 with the Bug 4/5/6-fixed scanner
+recovered **24/25 erred measurements** (Deterministic_AI + ArchVSpaceEntries_AI;
+KernelInitSepProofs_AI skipped). Net AInvs slow-proof catalogue:
 
 | cost (s) | size (L) | lemma | file |
 |---:|---:|---|---|
@@ -295,8 +306,12 @@ are the high-confidence targets for micro-rewrite experiments.
 | 22.5 | 27 | `init_arch_objects_invs` | ArchRetype_AI.thy |
 | 18.5 | 39 | `cap_revoke_typ_at[wp]` | CNodeInv_AI.thy |
 | 17.4 | 34 | `cancel_badged_sends_invs` | Finalise_AI.thy |
+| **15.0** | **241** | **`next_not_child`** | **Deterministic_AI.thy (fix3)** |
 | 14.0 | 20 | `decode_inv_typ_at[wp]` | Tcb_AI.thy |
 | 12.0 | 36 | `make_arch_fault_msg_invs` | ArchTcb_AI.thy |
+
+`next_not_child` was previously hidden by the Bug 5 baseline ERR — its body
+is 241 lines, the largest body in the AInvs cost-> 10 s tier.
 
 ### InfoFlow (top-N + fix5 supplement)
 
@@ -382,17 +397,33 @@ should be re-measured 3+ times before committing rewrite effort.
 
 ### For the scan pipeline itself
 
-1. **`proof-timing.sh` still has Bugs 4 / 5 / 6** — only `proof_cost_scan.py`
-   has been fixed. If the user wants per-file scans to also work
-   reliably, the same three fixes should be ported back to
-   `proof-timing.sh`. Marked TODO; not blocking current work since top-N
-   is the primary strategy.
-2. The `scan-slow-proofs.sh + proof-timing.sh` skill pipeline lacks
-   per-file inventory session lookup. Same TODO — not on critical path.
+1. **`proof-timing.sh` Bug 4/5/6 fixes — DONE in commit `99b7e6c`.**
+   Copies of the skill scripts at `tools/proof-timing.sh` and
+   `tools/scan-slow-proofs.sh` have all six bug fixes applied with inline
+   `[BUG N — fixed YYYY-MM-DD]` comments at each modification point. The
+   original `.claude/skills/isabelle_prover/scripts-container/` versions
+   keep only Bug 1 + Bug 2 fixes, leaving the skill itself minimally
+   touched. Either pipeline (per-file via `tools/scan-slow-proofs.sh`,
+   top-N via `tools/scan_topN_global.py`) is now usable on multi-session
+   scan dirs.
+
+2. **Cross-session orphan files**: a small number of .thy files live in a
+   session's directory but are NOT transitively imported from the
+   session's ROOT entry points (e.g. `KernelInitSepProofs_AI.thy` in
+   `proof/invariant-abstract/` imports `Sep_Algebra.Sep_Algebra_L4v` —
+   the Sep_Algebra session is not on AInvs's heap chain, so the temp
+   build can't resolve it). These files are by definition not in the
+   session's active build closure and contribute zero to its build wall.
+   The scanner correctly reports `baseline_err`; the right action is to
+   skip them rather than expand the heap chain. Confirmed pattern at:
+   - 6 InfoFlow files (InfoFlowC content, see InfoFlow comparison)
+   - 1 AInvs file (`KernelInitSepProofs_AI`, Sep_Algebra-dependent)
 
 ---
 
 ## Appendix: artefact map
+
+### Scan reports (under `reports/`)
 
 | artefact | location |
 |---|---|
@@ -400,13 +431,33 @@ should be re-measured 3+ times before committing rewrite effort.
 | Access per-file MD (control) | `reports/slow-proofs-access.md` |
 | Access comparison | `reports/scan-comparison-access.md` |
 | AInvs top-N | `reports/slow-proofs-ainvs-topN.{json,md}` |
+| AInvs fix3 supplement | `reports/slow-proofs-ainvs-fix3/{Deterministic_AI,ArchVSpaceEntries_AI,KernelInitSepProofs_AI}.json` |
 | InfoFlow top-N | `reports/slow-proofs-infoflow-topN.{json,md}` |
 | InfoFlow per-file (control, partial) | `reports/slow-proofs-infoflow.md` |
 | InfoFlow comparison | `reports/scan-comparison-infoflow.md` |
-| InfoFlow fix5 results | `reports/slow-proofs-infoflow-fix5/*.json` |
-| Bug 1 fix | commit `6bbc538`, `proof-timing.sh::parse_proofs` |
-| Bug 2 fix | commit `f1a7a52`, `chmod +x scripts-container/*.sh` |
-| Bug 3 fix | `tools/scan_topN_global.py` + `tools/proof_cost_scan.py::session_for_thy` |
-| Bug 4 fix | `tools/proof_cost_scan.py::build_temp_session::qualify_imports` |
-| Bug 5 fix | `tools/proof_cost_scan.py::build_temp_session::theory rename` |
-| Bug 6 fix | `tools/proof_cost_scan.py::build_temp_session::imports comment-strip` |
+| InfoFlow fix5 supplement | `reports/slow-proofs-infoflow-fix5/{FinalCaps,Scheduler_IF,Example_Valid_State,Syscall_IF,PasUpdates}.json` |
+
+### Tools (under `tools/`)
+
+| tool | role |
+|---|---|
+| `tools/lemma_inventory/` | Source-level inventory (theory→session map, lemma byte-ranges) |
+| `tools/scan_topN_global.py` | Global top-N scanner (Python; per-file inventory lookup, all 6 bug fixes) |
+| `tools/proof_cost_scan.py` | Building blocks for top-N (parser + measure primitives) |
+| `tools/proof-timing.sh` | Per-file measurement (shell; Bugs 1/4/5/6 fixed; copy of skill original) |
+| `tools/scan-slow-proofs.sh` | Per-file directory scanner (shell; Bug 3 fixed) |
+| `tools/scan_chain_topN.sh` | Sequential 4-session top-N driver |
+| `tools/rescan_infoflow_5files.sh` | Targeted InfoFlow fix5 rescan driver |
+| `tools/rescan_ainvs_3files.sh` | Targeted AInvs fix3 rescan driver |
+| `tools/compare_scan_reports.py` | Per-file vs top-N markdown diff |
+
+### Bug fixes
+
+| bug | fix location |
+|---|---|
+| 1 — parse_proofs Isar nesting | commit `6bbc538`, `.claude/skills/.../proof-timing.sh::parse_proofs` |
+| 2 — missing `+x` on skill scripts | commit `f1a7a52`, `chmod +x scripts-container/*.sh` |
+| 3 — scan-dir spans multiple sessions | commits `18f4620` + `99b7e6c`; `tools/scan_topN_global.py`, `tools/proof_cost_scan.py::session_for_thy`, `tools/scan-slow-proofs.sh::_session_for` |
+| 4 — quoted-import qualification | commit `99b7e6c`; `tools/proof_cost_scan.py::build_temp_session`, `tools/proof-timing.sh::qualify_imports` |
+| 5 — theory rename misses self-references | commit `99b7e6c`; both above |
+| 6 — inline comments break import tokenizer | commit `99b7e6c`; both above |
