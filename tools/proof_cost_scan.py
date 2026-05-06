@@ -278,21 +278,69 @@ def build_temp_session(thy_path: Path, session: str, l4v_dir: str,
         tmp_name = f"Tmp_{uid}"
         tmp_thy = Path(td) / f"{tmp_name}.thy"
 
-        # Rename theory header
+        # ── Rename theory header AND its qualified self-references ───────────
+        #
+        # [BUG 5 — fixed 2026-05-05] Some .thy files reference their own
+        # constants/definitions using the qualified form `<TheoryName>.<id>`,
+        # e.g. FinalCaps.thy contains
+        #     lslot \<in> FinalCaps.slots_holding_overlapping_caps cap s
+        # Plain `theory FinalCaps → theory Tmp_xxx` left those qualified
+        # references pointing to the (now non-existent) `FinalCaps` namespace,
+        # producing
+        #     *** Undefined constant: "FinalCaps.slots_holding_overlapping_caps"
+        # Fix: after renaming the header, also rewrite every word-boundary
+        # occurrence of `<base>.` in the body to `<tmp_name>.`. The `\.`
+        # disambiguates from `theory <base>` (no following `.`) so the header
+        # match isn't disturbed.
         m = re.search(r"^(theory\s+)" + re.escape(base) + r"\b", new_text, re.MULTILINE)
         if m:
             new_text = new_text[:m.start(1)] + m.group(1) + tmp_name + new_text[m.end():]
+            new_text = re.sub(r"\b" + re.escape(base) + r"\.", tmp_name + ".", new_text)
 
-        # Qualify bare imports with session prefix
+        # ── Qualify imports with session prefix ──────────────────────────────
+        #
+        # [BUG 4 — fixed 2026-05-05] Original behaviour treated EVERY quoted
+        # import (e.g. `"Foo"`) as a relative file path and left it untouched.
+        # But many l4v sources use the QUOTED form for plain theory NAMES
+        # (style choice, not a path), e.g.
+        #     imports "ArchSyscall_IF" "ArchPasUpdates"
+        # In a temp session under /tmp/xxx, `"ArchSyscall_IF"` is then resolved
+        # as /tmp/xxx/ArchSyscall_IF.thy and isabelle errors out
+        #     *** Cannot load theory file "/tmp/xxx/ArchSyscall_IF.thy"
+        # Fix: distinguish "quoted theory name" from "quoted relative path".
+        # If the quoted string contains no `/` and no `.`, treat it as a plain
+        # theory name and apply the same `<session>.<name>` qualification we
+        # use for bare tokens. Quoted strings with `/` or `.` are kept verbatim
+        # (they ARE relative paths or already-qualified names).
         m = re.search(r"(imports\s*\n?)(.*?)(begin)", new_text, re.DOTALL)
         if m:
             imports_chunk = m.group(2)
+            # [BUG 6 — fixed 2026-05-05] Imports section may contain inline
+            # Isabelle comments, e.g. Syscall_IF.thy:
+            #     imports
+            #         "ArchPasUpdates" (*Only needed for idle thread stuff*)
+            #         "ArchTcb_IF"
+            # The naive tokenizer below (split on whitespace) treats `(*Only`
+            # as a single non-whitespace token, finds no `.` in it, and
+            # rewrites it to `InfoFlow.(*Only`. Isabelle then chokes on the
+            # mangled `imports` block before reaching `begin` and emits
+            # `keyword "begin" expected, but bad input was found: .`. Fix:
+            # strip nested `(* ... *)` from the imports chunk before
+            # tokenizing. _strip_comments preserves whitespace/newlines.
+            imports_chunk = _strip_comments(imports_chunk)
             out_q, i = [], 0
             while i < len(imports_chunk):
                 ch = imports_chunk[i]
                 if ch == '"':
                     j = imports_chunk.index('"', i+1) + 1
-                    out_q.append(imports_chunk[i:j]); i = j
+                    inner = imports_chunk[i+1:j-1]
+                    if "/" in inner or "." in inner or not inner:
+                        # Genuine path / pre-qualified / empty — pass verbatim.
+                        out_q.append(imports_chunk[i:j])
+                    else:
+                        # Quoted simple theory name — unquote and qualify.
+                        out_q.append(session + "." + inner)
+                    i = j
                 elif ch.isspace():
                     out_q.append(ch); i += 1
                 else:
