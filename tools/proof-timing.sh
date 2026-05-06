@@ -25,8 +25,16 @@ SESSION="${2:-AInvs}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Layout (after consolidation, commit 3e27380):
 #   <repo>/.claude/skills/isabelle_prover/scripts-container/
-# Four "../" hops to reach the repo root (mounted at /workspace inside container).
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
+# [BUG 7 — fixed 2026-05-06] This script was copied from
+# .claude/skills/isabelle_prover/scripts-container/ (depth 4 from repo root)
+# into tools/ (depth 1). The original `../../../..` hop count overshoots
+# four levels above /workspace/tools — i.e. ends up at filesystem root —
+# making ISA_HOME resolve to `/verification/isabelle` (does not exist) and
+# proof-timing fail at line 51 with `//verification/isabelle/bin/isabelle:
+# No such file or directory`. Symptom in scan-slow-proofs.sh: every file
+# silently reports "skip (0ms < 5s)". Fix: 1 hop from /workspace/tools to
+# /workspace.
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 L4V_DIR="${L4V_DIR:-${REPO_ROOT}/verification/l4v}"
 ISA_HOME="${ISABELLE_HOME:-${REPO_ROOT}/verification/isabelle}"
 
