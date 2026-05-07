@@ -1,29 +1,14 @@
 #!/usr/bin/env python3
-"""tools/scan_topN_global.py — global top-N sorry-cost scan.
+"""Global top-N sorry-cost scan for l4v proof directories.
 
-Differs from .claude/skills/.../scan-slow-proofs.sh + proof-timing.sh in:
+Enumerates all lemmas under a scan directory, ranks them by proof-body size,
+measures only the top N, and groups measurements by file so each file pays one
+baseline build plus its selected sorry substitutions. Per-file session lookup
+comes from the lemma inventory DB, which keeps mixed-session directories such
+as proof/infoflow/ and proof/refine/ARM/ usable.
 
-  Per-file (skill)   : for EACH .thy in dir, measure top-10 lemmas BY SIZE.
-                       Every file pays 1 baseline + 10 sorry = 11 builds, even
-                       when its biggest lemma is tiny in the global picture.
-  Global top-N (this): enumerate ALL lemmas in the dir, sort by body_size
-                       descending, take top N (default 100). Group by file.
-                       Each involved file pays 1 baseline + (N_in_this_file)
-                       sorry builds. Files with no top-N lemma do 0 builds.
-
-For Access (28 files, 1167 lemmas), global top-100 covers 17 files instead of
-all 28; the smaller files skipped were paying 11 builds for almost no signal.
-
-Build cost per file: roughly the same as baseline since `quick_and_dirty=true`
-and sorry-substitution only short-circuits ONE proof — the other N-1 proofs
-in the file still run, dominating wall.
-
-Output:
-  - JSON dump of all per-lemma results
-  - Markdown report mirroring `reports/slow-proofs-<name>.md` shape so it can
-    be diffed against the per-file scan output
-
-Must run inside the sel4-l4v container; see tools/scan_topN_global_run.sh.
+Must run inside the sel4-l4v container, where Isabelle is on PATH and
+/workspace points at this repository.
 """
 from __future__ import annotations
 

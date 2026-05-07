@@ -1,29 +1,13 @@
 #!/usr/bin/env python3
-"""tools/proof_cost_scan.py — per-proof sorry-cost scan, robust to Isar.
+"""Per-proof sorry-cost measurement primitives for l4v.
 
-Replaces the SKILL's proof-timing.sh which has a brittle parse_proofs()
-(`first done/qed after lemma` heuristic) that gets confused by Isar
-`proof…qed` blocks containing nested `done` / `subgoal` commands. The
-sorry-substitution then leaves an orphan `qed` and isabelle build dies
-with `*** Bad context for command "qed"`. Affects ~3-10% of l4v proof
-files but enough to drive baseline measurements to error every time.
+Uses the lemma inventory parser's top-level-command boundaries to substitute a
+complete proof body with ``sorry`` without breaking nested Isar proofs. For a
+candidate lemma, builds a temporary session extending the owning session, times
+the baseline and sorry-substituted file, and reports the wall-time delta.
 
-This version reuses tools/lemma_inventory's tolerant lemma parser to find
-the exact byte range of each lemma's proof body — body extends from the
-first proof-keyword line after the statement up to (but not including) the
-next top-level command. Substituting that whole range with `  sorry` keeps
-the file syntactically consistent.
-
-For each top-N largest proof: build a temp session that extends the
-original session, time wall, compare against baseline (no substitution).
-
-Usage:
-    docker exec sel4-l4v python3 \\
-      /workspace/tools/proof_cost_scan.py <thy_file> <session> [--top N]
-
-The script must run INSIDE the sel4-l4v container (uses isabelle binary
-on PATH). The host wrapper at tools/proof_cost_scan_run.sh does the
-docker exec and path translation.
+Must run inside the sel4-l4v container, where Isabelle is on PATH and
+/workspace points at this repository.
 """
 from __future__ import annotations
 
