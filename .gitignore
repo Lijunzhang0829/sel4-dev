@@ -15,6 +15,7 @@ heaps/*
 logs/
 reports/*
 !reports/README.md
+!reports/cbaserefine-build-config-comparison.md
 test_output.log
 
 # Claude Code: per-user/per-machine permission overrides — gitignored
