@@ -7,7 +7,7 @@ stack_cache/*
 # --- Isabelle session heaps (binary, multi-GB) — NOT tracked in git.
 # heaps/build_log.txt IS tracked: it's the per-theory timing baseline
 # we benchmark experiments against.
-# To restore the heap binaries themselves, see baseline-restore.md.
+# To restore the heap binaries themselves, see reports/baseline-restore.md.
 heaps/*
 !heaps/build_log.txt
 
@@ -15,6 +15,7 @@ heaps/*
 logs/
 reports/*
 !reports/README.md
+!reports/baseline-restore.md
 !reports/cbaserefine-build-config-comparison.md
 test_output.log
 
