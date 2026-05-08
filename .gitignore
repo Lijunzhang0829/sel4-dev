@@ -21,6 +21,8 @@ reports/*
 !reports/session-duplication-scan.json
 !reports/critical-path-*.md
 !reports/critical-path-*.json
+!reports/theory-dag.json
+!reports/session-dag.json
 test_output.log
 
 # Claude Code: per-user/per-machine permission overrides — gitignored
