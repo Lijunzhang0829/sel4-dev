@@ -546,7 +546,17 @@ def render_summary_report(all_data: dict, dup_data: dict | None = None) -> str:
         "declaration. Top targets: CBaseRefine→Refine (3538s), CRefineSyscall→"
         "CRefine (1546s), CBaseRefine→AInvs (1416s). **Helps**: proof, "
         "spec_abstract, spec_invariant, haskell. **Risk**: ML state conflicts "
-        "may force a refactor rather than a 1-line swap."
+        "may force a refactor rather than a 1-line swap.  "
+        "**EMPIRICALLY VALIDATED 2026-05-09** ([experiments/cbaserefine-swap-parent.md]"
+        "(../experiments/cbaserefine-swap-parent.md)): two 1-line swaps "
+        "(CBaseRefine `= CSpec +` → `= Refine +`; CRefineSyscall "
+        "`= CBaseRefine + sessions CRefine` → `= CRefine +`) yielded "
+        "**−7466s wall (−29.5% of canonical TUNED total)** across 5 affected "
+        "sessions: CBaseRefine −3865s (−74.6%), CRefine −518s (−11.4%, ML-state "
+        "GC bonus), CRefineSyscall −3306s (−99.97%, was pure dup), with +222s "
+        "downstream regression on InfoFlowCBase/C (their own P0.5 issue, "
+        "addressable separately as candidate (a-cont)). Far exceeded original "
+        "~5500s upper-bound estimate."
     )
     out.append("")
     out.append(
@@ -600,13 +610,27 @@ def render_summary_report(all_data: dict, dup_data: dict | None = None) -> str:
     )
     out.append("")
     out.append(
-        "**Combined upper-bound wall recovery** if all four landed: "
-        "~5500s (a) + ~1300s (b) + ~2200s (c) + ~3500s (d) ≈ **~12,500s** of the "
-        "~25,000s canonical TUNED total wall. Real wall recovery will be lower "
-        "due to intra-session 8-thread parallelism (factor 3-6×) and because "
-        "some duplicated work serves genuine purposes (locale re-interpretation "
-        "in different ML contexts that wasn't strictly avoidable). Estimated "
-        "achievable: 4000-7000s wall reduction (15-30% of total)."
+        "**Wall recovery accounting** (revised after empirical (a) validation):  "
+    )
+    out.append(
+        "  - (a) **MEASURED −7466s** (−29.5% of total canonical wall). "
+        "Already exceeds the original 4000-7000s estimate by itself.  "
+    )
+    out.append(
+        "  - (b) ~1300s estimate, partially exposed by (a)'s downstream "
+        "regression on InfoFlowCBase/C (+222s); addressable as (a-cont).  "
+    )
+    out.append(
+        "  - (c) ~2200s estimate, untouched (orthogonal — only affects C "
+        "change-type / asm-refinement chain).  "
+    )
+    out.append(
+        "  - (d) ~3500s estimate (haskell ASpec→ExecSpec cross-cut), untouched.  "
+    )
+    out.append(
+        "  - **Total realistic if all four land**: ~14,000s wall recovery "
+        "(~55% of canonical TUNED total). With (a) alone already at −29.5%, "
+        "the practical ceiling appears higher than the original 15-30% guess."
     )
     out.append("")
     out.append(

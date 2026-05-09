@@ -197,7 +197,7 @@ Theories owned by sessions NOT in the canonical 28-session build set (libraries)
 
 The 7 change types' bottleneck profiles are covered by **four orthogonal structural fixes**, each addressing a distinct anomaly in l4v's session graph. No single fix covers everything; conversely, doing all four would eliminate the bulk of cross-session duplication overhead documented in [reports/session-duplication-scan.md](session-duplication-scan.md).
 
-**(a) Perpetrator/Victim ROOT inheritance dedupe** — Edit [proof/ROOT:106](../verification/l4v/proof/ROOT) and similar lines so downstream sessions merge their refinement-side parent via `+` instead of pulling it in via `imports "Y.foo"` from a `sessions Y` namespace declaration. Top targets: CBaseRefine→Refine (3538s), CRefineSyscall→CRefine (1546s), CBaseRefine→AInvs (1416s). **Helps**: proof, spec_abstract, spec_invariant, haskell. **Risk**: ML state conflicts may force a refactor rather than a 1-line swap.
+**(a) Perpetrator/Victim ROOT inheritance dedupe** — Edit [proof/ROOT:106](../verification/l4v/proof/ROOT) and similar lines so downstream sessions merge their refinement-side parent via `+` instead of pulling it in via `imports "Y.foo"` from a `sessions Y` namespace declaration. Top targets: CBaseRefine→Refine (3538s), CRefineSyscall→CRefine (1546s), CBaseRefine→AInvs (1416s). **Helps**: proof, spec_abstract, spec_invariant, haskell. **Risk**: ML state conflicts may force a refactor rather than a 1-line swap.  **EMPIRICALLY VALIDATED 2026-05-09** ([experiments/cbaserefine-swap-parent.md](../experiments/cbaserefine-swap-parent.md)): two 1-line swaps (CBaseRefine `= CSpec +` → `= Refine +`; CRefineSyscall `= CBaseRefine + sessions CRefine` → `= CRefine +`) yielded **−7466s wall (−29.5% of canonical TUNED total)** across 5 affected sessions: CBaseRefine −3865s (−74.6%), CRefine −518s (−11.4%, ML-state GC bonus), CRefineSyscall −3306s (−99.97%, was pure dup), with +222s downstream regression on InfoFlowCBase/C (their own P0.5 issue, addressable separately as candidate (a-cont)). Far exceeded original ~5500s upper-bound estimate.
 
 **(b) Shared third-party heap-merging** — Restructure consumers of `ExecSpec`, `Lib`, `Monads`, `Eisbach_Tools` to share a common heap-merged ancestor. The biggest single win is `ExecSpec` (reprocessed in 5 canonical sessions; ~575s overhead). **Helps**: haskell most, spec/proof some. **Risk**: lower than (a); ExecSpec is already well-defined as a session, just not heap-merged.
 
@@ -210,7 +210,12 @@ The 7 change types' bottleneck profiles are covered by **four orthogonal structu
   - **Risk**: low if the imported surface is small; medium if ASpec uses more of ExecSpec than expected.  
   - **Wall impact estimate**: 14 sessions × average ~300s avoided rebuild = ~3000-4000s upper bound for the haskell closure (which currently includes ASpec, AInvs, Access, InfoFlow, Bisim and their downstreams).
 
-**Combined upper-bound wall recovery** if all four landed: ~5500s (a) + ~1300s (b) + ~2200s (c) + ~3500s (d) ≈ **~12,500s** of the ~25,000s canonical TUNED total wall. Real wall recovery will be lower due to intra-session 8-thread parallelism (factor 3-6×) and because some duplicated work serves genuine purposes (locale re-interpretation in different ML contexts that wasn't strictly avoidable). Estimated achievable: 4000-7000s wall reduction (15-30% of total).
+**Wall recovery accounting** (revised after empirical (a) validation):  
+  - (a) **MEASURED −7466s** (−29.5% of total canonical wall). Already exceeds the original 4000-7000s estimate by itself.  
+  - (b) ~1300s estimate, partially exposed by (a)'s downstream regression on InfoFlowCBase/C (+222s); addressable as (a-cont).  
+  - (c) ~2200s estimate, untouched (orthogonal — only affects C change-type / asm-refinement chain).  
+  - (d) ~3500s estimate (haskell ASpec→ExecSpec cross-cut), untouched.  
+  - **Total realistic if all four land**: ~14,000s wall recovery (~55% of canonical TUNED total). With (a) alone already at −29.5%, the practical ceiling appears higher than the original 15-30% guess.
 
 **Mapping to per-type bottlenecks**:
 
