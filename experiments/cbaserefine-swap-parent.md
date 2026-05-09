@@ -257,6 +257,96 @@ Downstream of CBaseRefine: AutoCorresCRefine, InfoFlowCBase, InfoFlowC
 heaps remain stale (built on old CBaseRefine.heap). They will be
 rebuilt next.
 
+## Run 3 (2026-05-09T05:19Z): downstream rebuild — InfoFlowCBase + InfoFlowC
+
+After validating the upstream swaps, wiped InfoFlowCBase + InfoFlowC +
+AutoCorresCRefine heaps and rebuilt InfoFlowCBase + InfoFlowC (the two
+downstream sessions on the canonical Theorem-3 chain). Goal: confirm
+they still build under the new chain, and measure any wall regression.
+
+(AutoCorresCRefine excluded by `compile.sh` per
+[reports/baseline-restore.md](../reports/baseline-restore.md), so no
+baseline to compare against.)
+
+Run log: [cbaserefine-swap-runs/20260509T044018Z-downstream.log](cbaserefine-swap-runs/20260509T044018Z-downstream.log)
+
+### Result: builds succeed, but small wall regression downstream
+
+```
+                       baseline        swap (Run 3)         delta wall
+  InfoFlowCBase       1109.9s          1217.9s             +108s   +9.7%
+    cpu               4793.3s          5349.6s             +556s   +11.6%
+    gc                 194.0s           257.2s              +63s   +32.5%
+    factor             4.32             4.39                +0.07
+
+  InfoFlowC            844.7s           958.7s             +114s   +13.5%
+    cpu               2847.2s          3054.3s             +207s   +7.3%
+    gc                 137.3s            51.2s              -86s   -62.7%
+    factor             3.37             3.19               -0.18
+```
+
+Both sessions completed successfully (EXIT=0, heaps written). The wall
+regression is modest (~+222s combined) but **opposite in sign** from
+the upstream sessions where wall fell sharply.
+
+### Why downstream regressed
+
+Two structural reasons:
+
+1. **InfoFlowCBase has its own P0.5 issue** independent of the
+   CBaseRefine swap: `session InfoFlowCBase = CRefine + sessions InfoFlow Access`.
+   This means InfoFlow + Access source-re-execute inside InfoFlowCBase
+   (P0.5 reported 99.4% dup, 644s aggregate). The CBaseRefine swap does
+   not touch this; only an analogous swap on InfoFlowCBase itself would.
+
+2. **The new CRefine.heap has a different ML state layout**. Under the
+   old chain (`CRefine = CBaseRefine = CSpec + sessions Refine`), the
+   CRefine.heap incorporated source-re-executed Refine state. Under the
+   new chain (`CRefine = CBaseRefine = Refine + sessions CSpec`), it
+   incorporates source-re-executed CSpec state. When InfoFlowCBase
+   loads CRefine.heap, deserialization + locale interpretation costs
+   may differ slightly. InfoFlowCBase's `sessions InfoFlow Access`
+   reprocessing also runs against the new layout, possibly hitting
+   slightly different rule-set sizes during tactic search.
+
+The InfoFlowC GC actually went DOWN (-87s), so the regression is not
+uniformly a GC issue. cpu went up modestly (+207s vs +556s for
+InfoFlowCBase), suggesting InfoFlowCBase is the main affected session.
+
+### Net result across all 5 affected sessions
+
+```
+                       baseline       swap          delta wall    %
+  CBaseRefine         5183.2s         1318.3s      -3864.9s    -74.6%
+  CRefine             4556.6s         4038.8s       -517.8s    -11.4%
+  CRefineSyscall      3306.7s            1.2s     -3305.5s    -99.97%
+  InfoFlowCBase       1109.9s         1217.9s        +108s     +9.7%
+  InfoFlowC            844.7s          958.7s        +114s     +13.5%
+  ──────────────────────────────────────────────────────────
+  total              15001.1s         7534.9s     -7466.2s    -49.8%
+```
+
+**Net proof-side wall reduction: ~7466s (~2 hours 4 minutes) across
+the 5 sessions affected by these two ROOT swaps. ~29.5% of the entire
+canonical TUNED build wall (25,331s).**
+
+### Pending: optimisation candidate (d1) — InfoFlowCBase swap
+
+The +222s regression on InfoFlowCBase + InfoFlowC suggests an analogous
+swap could turn it into a further win:
+
+```diff
+- session InfoFlowCBase = CRefine +
+-   sessions InfoFlow Access ...
++ session InfoFlowCBase = InfoFlow +    (or = Access +)
++   sessions ... appropriate other side ...
+```
+
+P0.5 says InfoFlowCBase's 99.4% dup splits as InfoFlow 371s + Access 273s
++ DPolicy 63s. The natural new parent is whichever of InfoFlow / Access
+has the most dup overhead. Worth testing as a follow-up after the
+canonical rebuild.
+
 ## How to apply
 
 ```bash
