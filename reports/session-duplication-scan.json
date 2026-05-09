@@ -46,10 +46,12 @@
     }
   },
   "remediation_hints": {
-    "fix_root_inheritance_pattern_A": "Edit verification/l4v/proof/ROOT to convert `sessions Y` into `+ Y` (or build a JointBase). Trial-fix CBaseRefine first: swap line 106 from `= CSpec +` to `= Refine +` (and add CSpec via `sessions`), then `isabelle build CBaseRefine` and inspect. If ML state conflicts, the error will pinpoint which simp/locale needs reconciliation. Upper bound: 5519s wall in CBaseRefine alone could be reclaimed (98.6% of 5598.7s).",
-    "split_meta_imports_pattern_A": "If full ROOT change is too risky, instead split `Refine.Refine` (meta-theory that re-exports all 48 Refine theories) so the current session imports only the subset it actually needs. Use reports/critical-path-all.json fanout data to identify which Refine theories CBaseRefine downstream actually uses.",
-    "skip_proofs_environment_workaround": "l4v already provides this: `proof/ROOT:111` declares the duplicated theories under condition=SKIP_DUPLICATED_PROOFS with quick_and_dirty + skip_proofs, allowing CI/dev workflows to bypass re-execution at the cost of weaker checking. Suitable for incremental dev cycles, not release builds.",
-    "split_heavy_theory_into_base_heavy_pattern_A": "For specific high-weight duplicated theories (Refine.Finalise_R 650s total, Refine.Invariants_H 359s, etc.), split the .thy into Base (stable interface lemmas downstream needs) + Heavy (internal proof bodies only Refine itself uses). Reduces what the duplication actually re-executes."
+    "fix_root_inheritance_pattern_A_VALIDATED": "**EMPIRICALLY VALIDATED 2026-05-09** (experiments/cbaserefine-swap-parent.md, 4 runs). Two ROOT swaps applied: (1) CBaseRefine `= CSpec + sessions Refine` \u2192 `= Refine + sessions CSpec`; (2) CRefineSyscall `= CBaseRefine + sessions CRefine` \u2192 `= CRefine +`. Result on 5 affected sessions: CBaseRefine wall 5183s \u2192 1318s (-74.6%), CRefineSyscall 3306s \u2192 1.2s (-99.97%, was pure dup), CRefine 4557s \u2192 4039s (-11.4%, indirect bonus from cleaner parent heap), InfoFlowCBase +149s and InfoFlowC -4s (downstream regression from residual P0.5 in InfoFlow* chain). Total: -7543s wall = -29.8% of canonical TUNED 25,331s. Far exceeded original 5519s upper bound. Excess gain came from: (a) ML-state amplification (re-executed theories take 1.79-3.61x longer than original session timing), (b) GC pressure as wall multiplier (CBaseRefine GC 66.5% of wall \u2192 22.1%), (c) CRefineSyscall being a 1-theory packaging session (own work \u22481s, all baseline wall was P0.5 dup), (d) parent-heap hygiene transfer to descendants. Patch in experiments/cbaserefine-swap-parent.patch. **Status: applied to C-refinement chain; InfoFlow*/D-spec/D-policy chains untouched (size asymmetry makes the same swap pattern infeasible).**",
+    "remove_dead_sessions_X_post_swap_VALIDATED": "**Run 4 (2026-05-09) finding**: after a parent swap that puts session Y into the new heap chain, any `sessions Y` declaration in DOWNSTREAM sessions becomes dead but is not necessarily harmless. Removed `sessions Refine` from InfoFlowCBase (Refine now in CRefine.heap parent chain post-Run 1) \u2192 InfoFlowC wall 958s \u2192 841s (-118s, back to baseline). Mechanism: dead `sessions X` declarations cause the host session's .heap to retain extra namespace/dep metadata; downstream consumers pay a small load tax for that metadata. **Action**: after applying any pattern A fix, scan downstream ROOT entries for now-redundant `sessions X` lines and remove. Estimated wall recovery per dead declaration: 50-150s on downstream session (small but positive).",
+    "split_meta_imports_pattern_A": "Backup if full ROOT change is too risky for some other session: split the meta-theory (e.g., `Refine.Refine` that re-exports all session theories) so the current session imports only the subset it actually needs. Use reports/critical-path-all.json fanout data to identify which theories the downstream session actually uses. **Not pursued** since fix_root_inheritance_pattern_A_VALIDATED was viable.",
+    "skip_proofs_environment_workaround": "l4v already provides this: `proof/ROOT:111` declares the duplicated theories under condition=SKIP_DUPLICATED_PROOFS with quick_and_dirty + skip_proofs, allowing CI/dev workflows to bypass re-execution at the cost of weaker checking. Suitable for incremental dev cycles, not release builds. Orthogonal to the validated structural fix.",
+    "split_heavy_theory_into_base_heavy_pattern_A": "Per-theory micro-optimisation: for specific high-weight duplicated theories (Refine.Finalise_R 650s total, Refine.Invariants_H 359s, etc.), split the .thy into Base (stable interface lemmas downstream needs) + Heavy (internal proof bodies only Refine itself uses). **Not pursued** for the C-refinement chain since fix_root_inheritance_pattern_A obsoleted the per-theory amplification (those theories no longer appear in CBaseRefine.db). May still apply to InfoFlow* chain where the structural fix isn't viable.",
+    "remediation_status_summary": "**Solved (P0.5 chain on C-refinement)**: CBaseRefine, CRefine, CRefineSyscall \u2014 covered by fix_root_inheritance_pattern_A_VALIDATED. Saved -7543s wall.  **Untouched (residual P0.5)**: InfoFlowCBase \u2194 InfoFlow + Access + DPolicy (~640s aggregate), DSpec \u2194 ASpec (~93s), DBaseRefine \u2194 DSpec (~80s), DPolicy \u2194 Access (~60s), Pattern C broadcasts (ASpec \u2194 multiple, ~270s). Total residual: ~1100s aggregate dup, estimated ~250s wall \u2014 much smaller than the proof-chain win. Most residual cases have unfavourable size asymmetry (small heap in `+`, large heap in `sessions`) so the same swap pattern would make things worse; would need DAG restructure (e.g., split_heavy_theory_into_base_heavy_pattern_A) to address."
   },
   "session_summary": [
     {
@@ -68,10 +70,10 @@
         "DSpec": 18.2,
         "SimplExport": 0.3
       },
-      "root_plus_parent": "CSpec",
+      "root_plus_parent": "Refine",
       "root_imported_sessions": [
         "CLib",
-        "Refine",
+        "CSpec",
         "AutoCorres"
       ],
       "inheritance_trigger_breakdown": [
@@ -79,11 +81,6 @@
           "declared_via_sessions": "CLib",
           "n_theories_pulled_in": 2,
           "elapsed_in_self": 7.2
-        },
-        {
-          "declared_via_sessions": "Refine",
-          "n_theories_pulled_in": 38,
-          "elapsed_in_self": 3504.4
         },
         {
           "declared_via_sessions": "AutoCorres",
@@ -152,17 +149,9 @@
       "co_appearing_sessions": {
         "CRefine": 1546.0
       },
-      "root_plus_parent": "CBaseRefine",
-      "root_imported_sessions": [
-        "CRefine"
-      ],
-      "inheritance_trigger_breakdown": [
-        {
-          "declared_via_sessions": "CRefine",
-          "n_theories_pulled_in": 38,
-          "elapsed_in_self": 1518.0
-        }
-      ],
+      "root_plus_parent": "CRefine",
+      "root_imported_sessions": [],
+      "inheritance_trigger_breakdown": [],
       "pattern": "A_high_dup_structural_fix_candidate"
     },
     {
@@ -197,7 +186,6 @@
       },
       "root_plus_parent": "CRefine",
       "root_imported_sessions": [
-        "Refine",
         "Access",
         "InfoFlow"
       ],
@@ -1834,7 +1822,7 @@
       "perpetrator_session": "CBaseRefine",
       "victim_session": "Refine",
       "elapsed_in_perpetrator_on_overlap": 3537.9,
-      "root_declaration": "session CBaseRefine in \"base\" = CSpec +\n  sessions\n    CLib\n    Refine\n    AutoCorres",
+      "root_declaration": "session CBaseRefine in \"base\" = Refine +\n  sessions\n    CLib\n    CSpec\n    AutoCorres",
       "concrete_trigger_imports": [
         {
           "thy_file": "verification/l4v/proof/crefine/base/Include_C.thy",
@@ -1868,7 +1856,7 @@
       "perpetrator_session": "CRefineSyscall",
       "victim_session": "CRefine",
       "elapsed_in_perpetrator_on_overlap": 1546.0,
-      "root_declaration": "session CRefineSyscall in \"intermediate\" = CBaseRefine +\n  sessions\n    CRefine",
+      "root_declaration": "session CRefineSyscall in \"intermediate\" = CRefine +",
       "concrete_trigger_imports": [
         {
           "thy_file": "verification/l4v/proof/crefine/intermediate/Intermediate_C.thy",
@@ -1902,7 +1890,7 @@
       "perpetrator_session": "CBaseRefine",
       "victim_session": "AInvs",
       "elapsed_in_perpetrator_on_overlap": 1416.0,
-      "root_declaration": "session CBaseRefine in \"base\" = CSpec +\n  sessions\n    CLib\n    Refine\n    AutoCorres",
+      "root_declaration": "session CBaseRefine in \"base\" = Refine +\n  sessions\n    CLib\n    CSpec\n    AutoCorres",
       "concrete_trigger_imports": [],
       "spotlight_theory": {
         "name": "AInvs.ArchRetype_AI",
@@ -1930,7 +1918,7 @@
       "perpetrator_session": "InfoFlowCBase",
       "victim_session": "InfoFlow",
       "elapsed_in_perpetrator_on_overlap": 370.9,
-      "root_declaration": "session InfoFlowCBase in \"base\" = CRefine +\n  sessions\n    Refine\n    Access\n    InfoFlow",
+      "root_declaration": "session InfoFlowCBase in \"base\" = CRefine +\n  sessions\n    Access\n    InfoFlow",
       "concrete_trigger_imports": [
         {
           "thy_file": "verification/l4v/proof/infoflow/refine/base/Include_IF_C.thy",
@@ -1974,7 +1962,7 @@
       "perpetrator_session": "CBaseRefine",
       "victim_session": "BaseRefine",
       "elapsed_in_perpetrator_on_overlap": 342.3,
-      "root_declaration": "session CBaseRefine in \"base\" = CSpec +\n  sessions\n    CLib\n    Refine\n    AutoCorres",
+      "root_declaration": "session CBaseRefine in \"base\" = Refine +\n  sessions\n    CLib\n    CSpec\n    AutoCorres",
       "concrete_trigger_imports": [],
       "spotlight_theory": {
         "name": "ExecSpec.Structures_H",
@@ -2002,7 +1990,7 @@
       "perpetrator_session": "InfoFlowCBase",
       "victim_session": "Access",
       "elapsed_in_perpetrator_on_overlap": 273.1,
-      "root_declaration": "session InfoFlowCBase in \"base\" = CRefine +\n  sessions\n    Refine\n    Access\n    InfoFlow",
+      "root_declaration": "session InfoFlowCBase in \"base\" = CRefine +\n  sessions\n    Access\n    InfoFlow",
       "concrete_trigger_imports": [],
       "spotlight_theory": {
         "name": "Access.ArchRetype_AC",
@@ -2030,7 +2018,7 @@
       "perpetrator_session": "CBaseRefine",
       "victim_session": "ASpec",
       "elapsed_in_perpetrator_on_overlap": 223.1,
-      "root_declaration": "session CBaseRefine in \"base\" = CSpec +\n  sessions\n    CLib\n    Refine\n    AutoCorres",
+      "root_declaration": "session CBaseRefine in \"base\" = Refine +\n  sessions\n    CLib\n    CSpec\n    AutoCorres",
       "concrete_trigger_imports": [],
       "spotlight_theory": {
         "name": "ASpec.Structures_A",

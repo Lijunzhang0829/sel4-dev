@@ -61,10 +61,10 @@ Sessions ranked by `duplicated_elapsed_in_self`. The `inheritance_trigger_breakd
 
 | session | pattern | #thys | own Σelapsed | dup #thys | dup Σelapsed | dup % | trigger via `sessions` | parent (`+`) |
 |---|---|---:|---:|---:|---:|---:|---|---|
-| `CBaseRefine` | A | 304 | 5598.7 | 274 | 5519.3 | 98.6% | `CLib`→7s; `Refine`→3504s; `AutoCorres`→42s | `CSpec` |
+| `CBaseRefine` | A | 304 | 5598.7 | 274 | 5519.3 | 98.6% | `CLib`→7s; `AutoCorres`→42s | `Refine` |
 | `CRefine` | A | 52 | 2334.1 | 44 | 1882.6 | 80.7% | — | `CBaseRefine` |
 | `Refine` | A | 48 | 1733.8 | 47 | 1723.0 | 99.4% | `Lib`→32s; `CorresK`→5s | `BaseRefine` |
-| `CRefineSyscall` | A | 44 | 1546.1 | 43 | 1546.0 | 100.0% | `CRefine`→1518s | `CBaseRefine` |
+| `CRefineSyscall` | A | 44 | 1546.1 | 43 | 1546.0 | 100.0% | — | `CRefine` |
 | `AInvs` | A | 119 | 1052.6 | 119 | 1052.6 | 100.0% | — | `ASpec` |
 | `InfoFlowCBase` | A | 70 | 647.9 | 69 | 644.0 | 99.4% | `Access`→273s; `InfoFlow`→366s | `CRefine` |
 | `InfoFlow` | A | 46 | 367.7 | 42 | 349.1 | 94.9% | — | `Access` |
@@ -102,10 +102,10 @@ Sessions ranked by `duplicated_elapsed_in_self`. The `inheritance_trigger_breakd
 **ROOT declaration**:
 
 ```
-session CBaseRefine in "base" = CSpec +
+session CBaseRefine in "base" = Refine +
   sessions
     CLib
-    Refine
+    CSpec
     AutoCorres
 ```
 
@@ -132,9 +132,7 @@ _Same .thy source; ran in two different ML contexts. In CBaseRefine (this sessio
 **ROOT declaration**:
 
 ```
-session CRefineSyscall in "intermediate" = CBaseRefine +
-  sessions
-    CRefine
+session CRefineSyscall in "intermediate" = CRefine +
 ```
 
 **Concrete trigger imports** (source lines that pull in the duplicated session):
@@ -160,10 +158,10 @@ _Same .thy source; ran in two different ML contexts. In CRefine (this session) i
 **ROOT declaration**:
 
 ```
-session CBaseRefine in "base" = CSpec +
+session CBaseRefine in "base" = Refine +
   sessions
     CLib
-    Refine
+    CSpec
     AutoCorres
 ```
 
@@ -188,7 +186,6 @@ _Same .thy source; ran in two different ML contexts. In CBaseRefine (this sessio
 ```
 session InfoFlowCBase in "base" = CRefine +
   sessions
-    Refine
     Access
     InfoFlow
 ```
@@ -218,10 +215,10 @@ _Same .thy source; ran in two different ML contexts. In InfoFlowCBase (this sess
 **ROOT declaration**:
 
 ```
-session CBaseRefine in "base" = CSpec +
+session CBaseRefine in "base" = Refine +
   sessions
     CLib
-    Refine
+    CSpec
     AutoCorres
 ```
 
@@ -246,7 +243,6 @@ _Same .thy source; ran in two different ML contexts. In CBaseRefine (this sessio
 ```
 session InfoFlowCBase in "base" = CRefine +
   sessions
-    Refine
     Access
     InfoFlow
 ```
@@ -270,10 +266,10 @@ _Same .thy source; ran in two different ML contexts. In Access (this session) it
 **ROOT declaration**:
 
 ```
-session CBaseRefine in "base" = CSpec +
+session CBaseRefine in "base" = Refine +
   sessions
     CLib
-    Refine
+    CSpec
     AutoCorres
 ```
 
@@ -430,21 +426,29 @@ These are theories owned by sessions NOT in the canonical 28-session build set (
 
 ## Remediation hints
 
-### fix_root_inheritance_pattern_A
+### fix_root_inheritance_pattern_A_VALIDATED
 
-Edit verification/l4v/proof/ROOT to convert `sessions Y` into `+ Y` (or build a JointBase). Trial-fix CBaseRefine first: swap line 106 from `= CSpec +` to `= Refine +` (and add CSpec via `sessions`), then `isabelle build CBaseRefine` and inspect. If ML state conflicts, the error will pinpoint which simp/locale needs reconciliation. Upper bound: 5519s wall in CBaseRefine alone could be reclaimed (98.6% of 5598.7s).
+**EMPIRICALLY VALIDATED 2026-05-09** (experiments/cbaserefine-swap-parent.md, 4 runs). Two ROOT swaps applied: (1) CBaseRefine `= CSpec + sessions Refine` → `= Refine + sessions CSpec`; (2) CRefineSyscall `= CBaseRefine + sessions CRefine` → `= CRefine +`. Result on 5 affected sessions: CBaseRefine wall 5183s → 1318s (-74.6%), CRefineSyscall 3306s → 1.2s (-99.97%, was pure dup), CRefine 4557s → 4039s (-11.4%, indirect bonus from cleaner parent heap), InfoFlowCBase +149s and InfoFlowC -4s (downstream regression from residual P0.5 in InfoFlow* chain). Total: -7543s wall = -29.8% of canonical TUNED 25,331s. Far exceeded original 5519s upper bound. Excess gain came from: (a) ML-state amplification (re-executed theories take 1.79-3.61x longer than original session timing), (b) GC pressure as wall multiplier (CBaseRefine GC 66.5% of wall → 22.1%), (c) CRefineSyscall being a 1-theory packaging session (own work ≈1s, all baseline wall was P0.5 dup), (d) parent-heap hygiene transfer to descendants. Patch in experiments/cbaserefine-swap-parent.patch. **Status: applied to C-refinement chain; InfoFlow*/D-spec/D-policy chains untouched (size asymmetry makes the same swap pattern infeasible).**
+
+### remove_dead_sessions_X_post_swap_VALIDATED
+
+**Run 4 (2026-05-09) finding**: after a parent swap that puts session Y into the new heap chain, any `sessions Y` declaration in DOWNSTREAM sessions becomes dead but is not necessarily harmless. Removed `sessions Refine` from InfoFlowCBase (Refine now in CRefine.heap parent chain post-Run 1) → InfoFlowC wall 958s → 841s (-118s, back to baseline). Mechanism: dead `sessions X` declarations cause the host session's .heap to retain extra namespace/dep metadata; downstream consumers pay a small load tax for that metadata. **Action**: after applying any pattern A fix, scan downstream ROOT entries for now-redundant `sessions X` lines and remove. Estimated wall recovery per dead declaration: 50-150s on downstream session (small but positive).
 
 ### split_meta_imports_pattern_A
 
-If full ROOT change is too risky, instead split `Refine.Refine` (meta-theory that re-exports all 48 Refine theories) so the current session imports only the subset it actually needs. Use reports/critical-path-all.json fanout data to identify which Refine theories CBaseRefine downstream actually uses.
+Backup if full ROOT change is too risky for some other session: split the meta-theory (e.g., `Refine.Refine` that re-exports all session theories) so the current session imports only the subset it actually needs. Use reports/critical-path-all.json fanout data to identify which theories the downstream session actually uses. **Not pursued** since fix_root_inheritance_pattern_A_VALIDATED was viable.
 
 ### skip_proofs_environment_workaround
 
-l4v already provides this: `proof/ROOT:111` declares the duplicated theories under condition=SKIP_DUPLICATED_PROOFS with quick_and_dirty + skip_proofs, allowing CI/dev workflows to bypass re-execution at the cost of weaker checking. Suitable for incremental dev cycles, not release builds.
+l4v already provides this: `proof/ROOT:111` declares the duplicated theories under condition=SKIP_DUPLICATED_PROOFS with quick_and_dirty + skip_proofs, allowing CI/dev workflows to bypass re-execution at the cost of weaker checking. Suitable for incremental dev cycles, not release builds. Orthogonal to the validated structural fix.
 
 ### split_heavy_theory_into_base_heavy_pattern_A
 
-For specific high-weight duplicated theories (Refine.Finalise_R 650s total, Refine.Invariants_H 359s, etc.), split the .thy into Base (stable interface lemmas downstream needs) + Heavy (internal proof bodies only Refine itself uses). Reduces what the duplication actually re-executes.
+Per-theory micro-optimisation: for specific high-weight duplicated theories (Refine.Finalise_R 650s total, Refine.Invariants_H 359s, etc.), split the .thy into Base (stable interface lemmas downstream needs) + Heavy (internal proof bodies only Refine itself uses). **Not pursued** for the C-refinement chain since fix_root_inheritance_pattern_A obsoleted the per-theory amplification (those theories no longer appear in CBaseRefine.db). May still apply to InfoFlow* chain where the structural fix isn't viable.
+
+### remediation_status_summary
+
+**Solved (P0.5 chain on C-refinement)**: CBaseRefine, CRefine, CRefineSyscall — covered by fix_root_inheritance_pattern_A_VALIDATED. Saved -7543s wall.  **Untouched (residual P0.5)**: InfoFlowCBase ↔ InfoFlow + Access + DPolicy (~640s aggregate), DSpec ↔ ASpec (~93s), DBaseRefine ↔ DSpec (~80s), DPolicy ↔ Access (~60s), Pattern C broadcasts (ASpec ↔ multiple, ~270s). Total residual: ~1100s aggregate dup, estimated ~250s wall — much smaller than the proof-chain win. Most residual cases have unfavourable size asymmetry (small heap in `+`, large heap in `sessions`) so the same swap pattern would make things worse; would need DAG restructure (e.g., split_heavy_theory_into_base_heavy_pattern_A) to address.
 
 ## How downstream tools use this
 
