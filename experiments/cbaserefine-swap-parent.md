@@ -343,9 +343,75 @@ swap could turn it into a further win:
 ```
 
 P0.5 says InfoFlowCBase's 99.4% dup splits as InfoFlow 371s + Access 273s
-+ DPolicy 63s. The natural new parent is whichever of InfoFlow / Access
-has the most dup overhead. Worth testing as a follow-up after the
-canonical rebuild.
++ DPolicy 63s. **Investigation conclusion (post-Run 4)**: this swap
+direction is **not viable** — the size asymmetry is reversed. InfoFlow's
+side (~600s amplified) is the *small* side; CRefine's side (~4000s
+amplified) is the *large* side. Putting CRefine in `sessions` would
+trade 600s saved for 4000s added, net loss. The current orientation
+(`= CRefine + sessions InfoFlow Access`) is already optimal among
+single-parent swaps. Removing the +222s regression entirely would
+require a deeper DAG restructure (e.g., make Access a parent of
+CRefine, or build a JointBase session).
+
+## Run 4 (2026-05-09T06:43Z): A' cleanup — remove redundant `sessions Refine`
+
+After the CBaseRefine swap made `Refine` part of CRefine's parent
+heap chain (`CRefine = CBaseRefine = Refine + sessions CSpec`), the
+`sessions Refine` declaration in InfoFlowCBase became dead — it
+declares a namespace that's already implied by the parent chain.
+
+```diff
+  session InfoFlowCBase in "infoflow/refine/base" = CRefine +
+    sessions
+-     Refine
+      Access
+      InfoFlow
+```
+
+Hypothesis: removing the dead declaration could be neutral
+(harmless no-op) or marginally beneficial (less metadata to track).
+
+Run log: [cbaserefine-swap-runs/20260509T060338Z-infoflowcbase-cleanup.log](cbaserefine-swap-runs/20260509T060338Z-infoflowcbase-cleanup.log)
+
+### Result: small but real downstream improvement
+
+```
+                  baseline    Run 3 (no cleanup)    Run 4 (cleanup)    Δ vs Run 3
+InfoFlowCBase     1109.9s     1217.9s               1258.5s            +40.6s
+InfoFlowC          844.7s      958.7s                841.1s            -117.6s
+total             1954.6s     2176.6s               2099.6s            -77.0s
+```
+
+Surprisingly, the cleanup helped **InfoFlowC** (-117.6s vs Run 3,
+back to baseline) more than it affected **InfoFlowCBase** (+40.6s,
+within noise). InfoFlowC's GC also continued dropping (137 → 51 → 46s
+across baseline / Run 3 / Run 4).
+
+Mechanism interpretation: the dead `sessions Refine` declaration
+caused InfoFlowCBase.heap to retain extra namespace/dep metadata.
+InfoFlowC, which depends on InfoFlowCBase, paid a small load cost
+for that metadata each time. Removing it produces a leaner heap and
+saves wall when the heap is consumed downstream.
+
+This is a low-magnitude but real second-order effect of P0.5
+amplification: even *dead* `sessions X` declarations carry a small
+downstream tax.
+
+### Updated final wall accounting (Run 4 = post-A'-cleanup)
+
+```
+                    baseline       Run 4 (final)    delta wall    %
+  CBaseRefine       5183.2s        1318.3s         -3864.9s     -74.6%
+  CRefine           4556.6s        4038.8s          -517.8s     -11.4%
+  CRefineSyscall    3306.7s           1.2s         -3305.5s     -99.97%
+  InfoFlowCBase     1109.9s        1258.5s          +148.6s     +13.4%
+  InfoFlowC          844.7s         841.1s            -3.6s      -0.4%
+  ────────────────────────────────────────────────────────────────
+  total            15001.1s        7457.9s        -7543.2s     -50.3%
+  
+  Improvement vs Run 3 (without A' cleanup): −77.0s (Run 4 is better)
+  Total canonical TUNED wall (25,331s):     −29.8% recovered
+```
 
 ## How to apply
 

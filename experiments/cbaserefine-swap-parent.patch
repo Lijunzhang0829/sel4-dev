@@ -1,5 +1,5 @@
 diff --git a/proof/ROOT b/proof/ROOT
-index cb8a159..861986f 100644
+index cb8a159..0afb98d 100644
 --- a/proof/ROOT
 +++ b/proof/ROOT
 @@ -86,9 +86,15 @@ session AInvs in "invariant-abstract" = ASpec +
@@ -42,3 +42,19 @@ index cb8a159..861986f 100644
      AutoCorres
    theories [condition = "SKIP_DUPLICATED_PROOFS", quick_and_dirty, skip_proofs]
      (* crefine/lib/AutoCorres_C explains why L4VerifiedLinks is included here. *)
+@@ -157,9 +171,14 @@ session InfoFlow in "infoflow" = Access +
+   theories
+     "InfoFlow_Image_Toplevel"
+ 
++(* P0.5 cleanup: `sessions Refine` is redundant after the CBaseRefine swap.
++   With CBaseRefine = Refine + sessions CSpec (see line 109 below), Refine
++   is now in CRefine's parent heap chain (CRefine = CBaseRefine = Refine +).
++   The `sessions Refine` declaration is therefore a no-op for namespace
++   resolution purposes. Removing it does not change closure semantics; it
++   just avoids declaring something that's already implied. *)
+ session InfoFlowCBase in "infoflow/refine/base" = CRefine +
+   sessions
+-    Refine
+     Access
+     InfoFlow
+   theories [condition = "SKIP_DUPLICATED_PROOFS", quick_and_dirty, skip_proofs]
