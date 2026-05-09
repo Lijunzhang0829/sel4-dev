@@ -233,7 +233,7 @@ def render_change_report(name: str, data: dict, summary_data: dict) -> str:
     return "\n".join(out) + "\n"
 
 
-def render_summary_report(all_data: dict) -> str:
+def render_summary_report(all_data: dict, dup_data: dict | None = None) -> str:
     out: list[str] = []
     out.append("# Critical-path summary — all 4 change types")
     out.append("")
@@ -356,19 +356,153 @@ def render_summary_report(all_data: dict) -> str:
             out.append("_(no candidates passing the filter)_")
         out.append("")
 
-    # ---- Universal recommendation ----
-    out.append("## Cross-type observation")
+    # ---- P0.5 structural patterns + 3rd-party overhead (data from dup scan) ----
+    if dup_data is not None:
+        out.append("## P0.5 structural duplication patterns")
+        out.append("")
+        out.append(
+            "The duplication footprint identified by P0.5 splits into **three "
+            "structural patterns**, each requiring a different remediation. The "
+            "table below summarises each pattern and which change types feel its "
+            "impact most strongly."
+        )
+        out.append("")
+        out.append("| pattern | mechanism | affects | wall impact (s) | remediation |")
+        out.append("|---|---|---|---:|---|")
+
+        # Pattern 1: Perpetrator/Victim from case_studies
+        cases = dup_data.get("case_studies", [])
+        pv_total = sum(c["elapsed_in_perpetrator_on_overlap"] for c in cases)
+        out.append(
+            f"| **Perpetrator/Victim** | A session imports `\"Y.Foo\"` while only "
+            f"`+ X` (X ≠ Y) is heap-merged → entire Y is re-executed | "
+            f"proof, spec, haskell | ~{pv_total:.0f} | "
+            f"`+ Y` ROOT change, or shared parent merging both X and Y |"
+        )
+
+        # Pattern 2: Shared 3rd-party
+        third = dup_data.get("shared_dependency_overhead", [])
+        third_total = sum(t["total_elapsed_across_appearances"] for t in third)
+        # Rough split: subtract the "first appearance" cost (the 'necessary' one) per session
+        third_overhead = sum(
+            t["total_elapsed_across_appearances"]
+            - (t["total_elapsed_across_appearances"] / max(t["appearing_in_n_canonical_sessions"], 1))
+            for t in third
+        )
+        out.append(
+            f"| **Shared 3rd-party** | Library sessions (Lib, Monads, ExecSpec, "
+            f"Eisbach_Tools) declared via `sessions Y` in many canonical sessions, "
+            f"each independently re-executes Y's theories | "
+            f"haskell (ExecSpec), spec (Lib/Monads), all | "
+            f"~{third_overhead:.0f} | "
+            f"Make these sessions a `+` parent of all consumers, or build "
+            f"a shared parent that already merges them |"
+        )
+
+        # Pattern 3: SEL4GraphRefine (asm refinement monolith)
+        out.append(
+            "| **Asm-refinement monolith** | "
+            "`proof/asmrefine/SEL4GraphRefine.thy:72` does all graph-refinement "
+            "proofs in one ML block via "
+            "`ProveSimplToGraphGoals.test_all_graph_refine_proofs_parallel` | "
+            "C only | ~2228 | "
+            "Chunk the ML invocation into multiple theory boundaries so "
+            "incremental rebuild becomes possible |"
+        )
+        out.append("")
+
+        # ---- Shared 3rd-party detail table ----
+        out.append("### Shared third-party sessions detail")
+        out.append("")
+        out.append(
+            "Theories owned by sessions NOT in the canonical 28-session build set "
+            "(libraries) but appearing in MULTIPLE canonical sessions' BLOBs — "
+            "each canonical session re-executes them independently."
+        )
+        out.append("")
+        out.append("| 3rd-party session | #thys | × #canonical sessions | Σelapsed (all appearances) | which change types affected |")
+        out.append("|---|---:|---:|---:|---|")
+        # Map: 3rd-party session → which change types it sits on closure for
+        # (heuristic by name: ExecSpec→haskell, Lib/Monads→all-via-Refine, etc.)
+        third_party_change_type_map = {
+            "ExecSpec": "haskell (regen entry), spec, proof",
+            "Lib": "all four (foundational utility)",
+            "Monads": "proof, spec, haskell (monad WP infrastructure)",
+            "CLib": "C (C-side utility)",
+            "Eisbach_Tools": "all four (proof tactic library)",
+            "CorresK": "proof, spec, haskell (corres infrastructure)",
+            "HOL-Library": "all four",
+            "ML_Utils": "all four",
+            "HOL-Combinatorics": "spec",
+            "Basics": "all four",
+        }
+        for r in third[:10]:
+            k = r["third_party_session"]
+            affected = third_party_change_type_map.get(k, "—")
+            out.append(
+                f"| `{k}` | {r['n_theories']} | "
+                f"{r['appearing_in_n_canonical_sessions']} | "
+                f"{r['total_elapsed_across_appearances']:.1f} | {affected} |"
+            )
+        out.append("")
+        out.append(
+            "**Notable for haskell change type**: `ExecSpec` (75 thys × 5 sessions, "
+            "718s total) is the regenerated design-spec layer. Each Haskell change "
+            "invalidates ExecSpec, and each canonical session that uses ExecSpec "
+            "(Refine, CBaseRefine, DBaseRefine, ...) reprocesses the affected "
+            "theories independently. Resolving this is orthogonal to the "
+            "Perpetrator/Victim Refine→CBaseRefine dedupe."
+        )
+        out.append("")
+
+    # ---- Universal recommendation (revised — three orthogonal targets) ----
+    out.append("## Cross-type observation: three orthogonal structural targets")
     out.append("")
     out.append(
-        "Three of the four change types (proof / spec / haskell) share near-identical "
-        "critical paths through the Refine→CRefine duplication chain — meaning a single "
-        "structural fix (e.g., resolving the P0.5 ROOT inheritance issue documented in "
-        "[reports/session-duplication-scan.md](session-duplication-scan.md)) would benefit "
-        "**all three** simultaneously. The C change type is structurally distinct: its "
-        "bottleneck is concentrated in a single ML invocation in "
-        "`SEL4GraphRefine.thy:72`. These two structural targets — "
-        "**(a) ROOT inheritance dedupe** and **(b) SEL4GraphRefine ML chunking** — are "
-        "orthogonal and together cover the bottlenecks of all four change types.")
+        "The four change types' bottleneck profiles are covered by **three "
+        "orthogonal structural fixes**, each addressing a distinct P0.5 pattern. "
+        "No single fix covers everything; conversely, doing all three would "
+        "eliminate the bulk of cross-session duplication overhead documented in "
+        "[reports/session-duplication-scan.md](session-duplication-scan.md)."
+    )
+    out.append("")
+    out.append(
+        "**(a) Perpetrator/Victim ROOT inheritance dedupe** — "
+        "Edit `proof/ROOT:106` and similar lines so that downstream sessions "
+        "merge their refinement-side parent via `+` instead of pulling it in "
+        "via `imports \"Y.foo\"` from a `sessions Y` namespace declaration. "
+        "Top targets: CBaseRefine→Refine (3538s), CRefineSyscall→CRefine (1546s), "
+        "CBaseRefine→AInvs (1416s). **Helps**: proof, spec, haskell. "
+        "**Risk**: ML state conflicts may force a refactor rather than a 1-line "
+        "swap."
+    )
+    out.append("")
+    out.append(
+        "**(b) Shared third-party heap-merging** — "
+        "Restructure consumers of `ExecSpec`, `Lib`, `Monads`, `Eisbach_Tools` to "
+        "share a common heap-merged ancestor. The biggest single win is `ExecSpec` "
+        "(reprocessed in 5 canonical sessions; ~575s overhead). **Helps**: haskell "
+        "most, spec/proof some. **Risk**: lower than (a); ExecSpec is already "
+        "well-defined as a session, just not heap-merged."
+    )
+    out.append("")
+    out.append(
+        "**(c) Asm-refinement ML chunking** — "
+        "Split `proof/asmrefine/SEL4GraphRefine.thy:72`'s monolithic ML "
+        "invocation into multiple theories so `isabelle build` can checkpoint and "
+        "incrementally rebuild. Currently 2228s of one atomic block. **Helps**: "
+        "C only. **Risk**: requires understanding the SimplToGraph proof "
+        "infrastructure to chunk safely."
+    )
+    out.append("")
+    out.append(
+        "Combined upper-bound wall recovery if all three landed: "
+        "~5500s (a) + ~1300s (b) + ~2200s (c) ≈ **~9000s** of the ~25,000s "
+        "canonical TUNED total wall. Real wall recovery will be lower due to "
+        "intra-session 8-thread parallelism (factor 3-6×) and because some "
+        "duplicated work serves genuine purposes (locale re-interpretation in "
+        "different ML contexts that wasn't strictly avoidable)."
+    )
     out.append("")
     out.append("---")
     out.append("")
@@ -380,6 +514,10 @@ def render_summary_report(all_data: dict) -> str:
 
 def main() -> int:
     data = json.loads(INPUT.read_text())
+    # P0.5 enrichment: load duplication scan for case studies + 3rd-party data
+    dup_scan_path = REPO / "reports" / "session-duplication-scan.json"
+    dup_data = json.loads(dup_scan_path.read_text()) if dup_scan_path.exists() else None
+
     written: list[str] = []
 
     for ct in ("proof", "spec", "haskell", "c"):
@@ -389,7 +527,7 @@ def main() -> int:
         written.append(str(out_path.relative_to(REPO)))
 
     summary_path = OUT_DIR / "critical-path-summary.md"
-    summary_path.write_text(render_summary_report(data))
+    summary_path.write_text(render_summary_report(data, dup_data))
     written.append(str(summary_path.relative_to(REPO)))
 
     print("wrote:")

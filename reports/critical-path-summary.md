@@ -117,9 +117,46 @@ Total upper-bound saving if optimized to 0: ~692s wall.
 Total upper-bound saving if optimized to 0: ~606s wall.
 
 
-## Cross-type observation
+## P0.5 structural duplication patterns
 
-Three of the four change types (proof / spec / haskell) share near-identical critical paths through the Refine→CRefine duplication chain — meaning a single structural fix (e.g., resolving the P0.5 ROOT inheritance issue documented in [reports/session-duplication-scan.md](session-duplication-scan.md)) would benefit **all three** simultaneously. The C change type is structurally distinct: its bottleneck is concentrated in a single ML invocation in `SEL4GraphRefine.thy:72`. These two structural targets — **(a) ROOT inheritance dedupe** and **(b) SEL4GraphRefine ML chunking** — are orthogonal and together cover the bottlenecks of all four change types.
+The duplication footprint identified by P0.5 splits into **three structural patterns**, each requiring a different remediation. The table below summarises each pattern and which change types feel its impact most strongly.
+
+| pattern | mechanism | affects | wall impact (s) | remediation |
+|---|---|---|---:|---|
+| **Perpetrator/Victim** | A session imports `"Y.Foo"` while only `+ X` (X ≠ Y) is heap-merged → entire Y is re-executed | proof, spec, haskell | ~7953 | `+ Y` ROOT change, or shared parent merging both X and Y |
+| **Shared 3rd-party** | Library sessions (Lib, Monads, ExecSpec, Eisbach_Tools) declared via `sessions Y` in many canonical sessions, each independently re-executes Y's theories | haskell (ExecSpec), spec (Lib/Monads), all | ~1081 | Make these sessions a `+` parent of all consumers, or build a shared parent that already merges them |
+| **Asm-refinement monolith** | `proof/asmrefine/SEL4GraphRefine.thy:72` does all graph-refinement proofs in one ML block via `ProveSimplToGraphGoals.test_all_graph_refine_proofs_parallel` | C only | ~2228 | Chunk the ML invocation into multiple theory boundaries so incremental rebuild becomes possible |
+
+### Shared third-party sessions detail
+
+Theories owned by sessions NOT in the canonical 28-session build set (libraries) but appearing in MULTIPLE canonical sessions' BLOBs — each canonical session re-executes them independently.
+
+| 3rd-party session | #thys | × #canonical sessions | Σelapsed (all appearances) | which change types affected |
+|---|---:|---:|---:|---|
+| `ExecSpec` | 75 | 5 | 717.6 | haskell (regen entry), spec, proof |
+| `Lib` | 54 | 11 | 277.3 | all four (foundational utility) |
+| `Monads` | 34 | 6 | 212.6 | proof, spec, haskell (monad WP infrastructure) |
+| `CLib` | 5 | 2 | 56.5 | C (C-side utility) |
+| `Eisbach_Tools` | 11 | 5 | 40.3 | all four (proof tactic library) |
+| `CorresK` | 1 | 2 | 20.3 | proof, spec, haskell (corres infrastructure) |
+| `HOL-Library` | 2 | 3 | 4.3 | all four |
+| `ML_Utils` | 2 | 4 | 2.6 | all four |
+| `HOL-Combinatorics` | 1 | 2 | 1.8 | spec |
+| `Basics` | 1 | 3 | 1.3 | all four |
+
+**Notable for haskell change type**: `ExecSpec` (75 thys × 5 sessions, 718s total) is the regenerated design-spec layer. Each Haskell change invalidates ExecSpec, and each canonical session that uses ExecSpec (Refine, CBaseRefine, DBaseRefine, ...) reprocesses the affected theories independently. Resolving this is orthogonal to the Perpetrator/Victim Refine→CBaseRefine dedupe.
+
+## Cross-type observation: three orthogonal structural targets
+
+The four change types' bottleneck profiles are covered by **three orthogonal structural fixes**, each addressing a distinct P0.5 pattern. No single fix covers everything; conversely, doing all three would eliminate the bulk of cross-session duplication overhead documented in [reports/session-duplication-scan.md](session-duplication-scan.md).
+
+**(a) Perpetrator/Victim ROOT inheritance dedupe** — Edit `proof/ROOT:106` and similar lines so that downstream sessions merge their refinement-side parent via `+` instead of pulling it in via `imports "Y.foo"` from a `sessions Y` namespace declaration. Top targets: CBaseRefine→Refine (3538s), CRefineSyscall→CRefine (1546s), CBaseRefine→AInvs (1416s). **Helps**: proof, spec, haskell. **Risk**: ML state conflicts may force a refactor rather than a 1-line swap.
+
+**(b) Shared third-party heap-merging** — Restructure consumers of `ExecSpec`, `Lib`, `Monads`, `Eisbach_Tools` to share a common heap-merged ancestor. The biggest single win is `ExecSpec` (reprocessed in 5 canonical sessions; ~575s overhead). **Helps**: haskell most, spec/proof some. **Risk**: lower than (a); ExecSpec is already well-defined as a session, just not heap-merged.
+
+**(c) Asm-refinement ML chunking** — Split `proof/asmrefine/SEL4GraphRefine.thy:72`'s monolithic ML invocation into multiple theories so `isabelle build` can checkpoint and incrementally rebuild. Currently 2228s of one atomic block. **Helps**: C only. **Risk**: requires understanding the SimplToGraph proof infrastructure to chunk safely.
+
+Combined upper-bound wall recovery if all three landed: ~5500s (a) + ~1300s (b) + ~2200s (c) ≈ **~9000s** of the ~25,000s canonical TUNED total wall. Real wall recovery will be lower due to intra-session 8-thread parallelism (factor 3-6×) and because some duplicated work serves genuine purposes (locale re-interpretation in different ML contexts that wasn't strictly avoidable).
 
 ---
 
