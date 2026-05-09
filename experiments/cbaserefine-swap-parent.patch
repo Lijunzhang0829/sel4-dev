@@ -1,0 +1,25 @@
+diff --git a/proof/ROOT b/proof/ROOT
+index cb8a159..36276a7 100644
+--- a/proof/ROOT
++++ b/proof/ROOT
+@@ -103,10 +103,18 @@ session CRefine in "crefine" = CBaseRefine +
+   theories
+     "Refine_C"
+ 
+-session CBaseRefine in "crefine/base" = CSpec +
++(* P0.5 experiment: parent swap CSpec → Refine.
++   Currently `= CSpec + sessions Refine` causes Refine heap (1734s of theories)
++   to be source-re-executed during CBaseRefine build because `sessions Refine`
++   declares the namespace but does NOT merge the heap. Swapping to
++   `= Refine + sessions CSpec` merges Refine heap properly; CSpec becomes the
++   reprocessed side, but it's only ~149s — net aggregate save ~3300s, wall
++   save ~850-1100s (factor 3.87). See reports/critical-path-summary.md
++   structural target (a). *)
++session CBaseRefine in "crefine/base" = Refine +
+   sessions
+     CLib
+-    Refine
++    CSpec
+     AutoCorres
+   theories [condition = "SKIP_DUPLICATED_PROOFS", quick_and_dirty, skip_proofs]
+     (* crefine/lib/AutoCorres_C explains why L4VerifiedLinks is included here. *)
