@@ -43,8 +43,8 @@ Theories with the least scheduling flexibility — optimizing these yields the m
 | 14 | `Refine.ArchAcc_R` | Refine | 81.5 | 2 | 14.8 | 81 | -0.0 | ✓ |
 | 15 | `AInvs.ArchVSpace_AI` | AInvs | 76.2 | 2 | 34.0 | 234 | -0.0 | ✓ |
 | 16 | `AInvs.CSpaceInv_AI` | AInvs | 73.8 | 2 | 17.7 | 246 | -0.0 | ✓ |
-| 17 | `AInvs.InvariantsPre_AI` | AInvs | 69.8 | 2 | 28.6 | 263 | -0.0 | ✓ |
-| 18 | `Refine.Schedule_R` | Refine | 69.8 | 2 | 25.4 | 69 | -0.0 | ✓ |
+| 17 | `Refine.Schedule_R` | Refine | 69.8 | 2 | 25.4 | 69 | -0.0 | ✓ |
+| 18 | `AInvs.InvariantsPre_AI` | AInvs | 69.8 | 2 | 28.6 | 263 | -0.0 | ✓ |
 | 19 | `Refine.StateRelation` | Refine | 67.8 | 2 | 19.9 | 91 | -0.0 | ✓ |
 | 20 | `AInvs.ArchEmptyFail_AI` | AInvs | 65.4 | 2 | 27.5 | 207 | -0.0 | ✓ |
 | 21 | `AInvs.ArchDetSchedSchedule_AI` | AInvs | 63.2 | 2 | 23.4 | 186 | -0.0 | ✓ |

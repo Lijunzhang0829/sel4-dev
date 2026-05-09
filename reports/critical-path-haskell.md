@@ -6,7 +6,7 @@ _in `heaps/db-archive/*.db` (P0.5 cost model — captures duplication overhead).
 
 ## Scope
 
-Changes to Haskell prototype (`spec/haskell/**/*.hs`). Triggers regeneration of `spec/design/**/*.thy` (ExecSpec session), which then invalidates Refine, CBaseRefine, CRefine, CRefineSyscall, InfoFlow*, DSpec/DBaseRefine/DRefine/DPolicy/SepDSpec/DSpecProofs.
+Changes to Haskell prototype (`spec/haskell/**/*.hs`). Triggers regeneration of `spec/design/**/*.thy` (ExecSpec session), which then invalidates Refine, CBaseRefine, CRefine, CRefineSyscall, InfoFlow*, DSpec/DBaseRefine/DRefine/DPolicy/SepDSpec/DSpecProofs. Through the ASpec→ExecSpec cross-cut, also propagates back UP to ASpec/AInvs/Access — surfaced as a structural finding in the summary.
 
 **Manifest entry paths**:
 - `verification/l4v/spec/haskell/**/*.hs`

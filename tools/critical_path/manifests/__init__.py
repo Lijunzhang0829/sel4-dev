@@ -24,17 +24,24 @@ Each manifest module exports a top-level dict `MANIFEST` describing:
                                the entry, get re-run because they sit on the
                                refinement layer downstream of the change.
 
-The four manifests:
+The seven manifests:
 
-    proof.py     — changes to proof/*.thy  (the proof layer itself)
-    spec.py      — changes to spec/abstract/, spec/invariant-abstract/, etc.
-                   (the abstract/exec spec, but NOT the auto-regenerated
-                   design.thy from Haskell — that's haskell.py's territory)
-    haskell.py   — changes to spec/haskell/*.hs (Haskell prototype),
-                   triggering spec/design/*.thy regeneration
-    c.py         — changes to verification/seL4/src/**/*.{c,h},
-                   triggering C-parser regeneration of
-                   spec/cspec/c/build/ARM/*.thy
+    proof.py            changes to proof/**/*.thy (the proof layer itself)
+    spec_abstract.py    changes to spec/abstract/**/*.thy (MA layer)
+    spec_invariant.py   changes to proof/invariant-abstract/**/*.thy (AInvs)
+    spec_cspec.py       changes to spec/cspec/**/*.thy (CSpec, hand-written)
+    spec_lib.py         changes to lib/**/*.thy (foundational utility)
+    haskell.py          changes to spec/haskell/**/*.{hs,lhs}; triggers
+                        spec/design/*.thy regen (ExecSpec)
+    c.py                changes to verification/seL4/src/**/*.{c,h};
+                        triggers spec/cspec/c/build/ARM/*.thy regen
+
+Note on the 4-way `spec_*` split:
+    The original `spec.py` lumped all of spec/abstract, spec/cspec, lib,
+    and proof/invariant-abstract together. This produced a 1012-theory
+    closure (~92% of the DAG) which obscured the much narrower closure
+    of a pure abstract-spec change. The split lets us report what each
+    sub-type actually invalidates.
 
 Manifests are read by tools/critical_path/dag.py.
 """

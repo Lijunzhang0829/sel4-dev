@@ -57,10 +57,13 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO / "tools" / "critical_path"))
-from manifests import c as m_c                     # noqa: E402
-from manifests import haskell as m_haskell         # noqa: E402
-from manifests import proof as m_proof             # noqa: E402
-from manifests import spec as m_spec               # noqa: E402
+from manifests import c as m_c                                # noqa: E402
+from manifests import haskell as m_haskell                    # noqa: E402
+from manifests import proof as m_proof                        # noqa: E402
+from manifests import spec_abstract as m_spec_abstract        # noqa: E402
+from manifests import spec_cspec as m_spec_cspec              # noqa: E402
+from manifests import spec_invariant as m_spec_invariant      # noqa: E402
+from manifests import spec_lib as m_spec_lib                  # noqa: E402
 
 THEORY_DAG_JSON = REPO / "reports" / "theory-dag.json"
 SESSION_DAG_JSON = REPO / "reports" / "session-dag.json"
@@ -330,7 +333,10 @@ def main() -> int:
 
     manifests = {
         "proof": m_proof.MANIFEST,
-        "spec": m_spec.MANIFEST,
+        "spec_abstract": m_spec_abstract.MANIFEST,
+        "spec_invariant": m_spec_invariant.MANIFEST,
+        "spec_cspec": m_spec_cspec.MANIFEST,
+        "spec_lib": m_spec_lib.MANIFEST,
         "haskell": m_haskell.MANIFEST,
         "c": m_c.MANIFEST,
     }

@@ -39,7 +39,10 @@ OUT_DIR = REPO / "reports"
 
 CHANGE_TYPE_TITLES = {
     "proof": "proof-only",
-    "spec": "spec",
+    "spec_abstract": "spec_abstract (MA layer)",
+    "spec_invariant": "spec_invariant (AInvs layer)",
+    "spec_cspec": "spec_cspec (C-side abstract spec)",
+    "spec_lib": "spec_lib (foundational utility)",
     "haskell": "haskell",
     "c": "C",
 }
@@ -51,17 +54,39 @@ CHANGE_TYPE_DESCRIPTIONS = {
         "Asm-refinement / autocorres-test / camkes branches excluded "
         "unless the changed file is under those subtrees."
     ),
-    "spec": (
-        "Changes to abstract/exec spec or invariant-abstract proofs "
-        "(`spec/abstract/`, `spec/sep-abstract/`, `spec/cspec/` non-generated, "
-        "`proof/invariant-abstract/`, `lib/`). "
-        "These ripple through every refinement layer."
+    "spec_abstract": (
+        "Changes to **abstract specification** (`spec/abstract/**/*.thy`) — "
+        "the MA layer in SOSP'09 Fig. 2. Logical scope per the paper: only "
+        "Theorem 1 (`ME refines MA`) and proofs depending on MA's lemmas "
+        "(AInvs, Refine). Real build scope is wider due to (a) P0.5 ROOT "
+        "inheritance reprocessing Refine inside CBaseRefine, and (b) the "
+        "ASpec→ExecSpec cross-cut (see summary §Structural findings)."
+    ),
+    "spec_invariant": (
+        "Changes to **invariant proofs** over abstract spec "
+        "(`proof/invariant-abstract/**/*.thy`). Per SOSP'09 §4.5, "
+        "~80% of refinement-proof effort goes to maintaining these. "
+        "Closure starts at AInvs layer, so does NOT propagate up "
+        "through ASpec — narrower than spec_abstract."
+    ),
+    "spec_cspec": (
+        "Changes to **hand-written C-side abstract spec** "
+        "(`spec/cspec/**/*.thy`). Closure: CSpec → CKernel → "
+        "C-side refinement chain + asm-refinement. Should NOT propagate "
+        "to ASpec / AInvs / Access."
+    ),
+    "spec_lib": (
+        "Changes to **shared utility theories** (`lib/**/*.thy`). "
+        "Foundational infrastructure — almost every l4v session imports "
+        "lib. Naturally the widest closure (worst-case spec change)."
     ),
     "haskell": (
         "Changes to Haskell prototype (`spec/haskell/**/*.hs`). "
         "Triggers regeneration of `spec/design/**/*.thy` (ExecSpec session), "
         "which then invalidates Refine, CBaseRefine, CRefine, CRefineSyscall, "
-        "InfoFlow*, DSpec/DBaseRefine/DRefine/DPolicy/SepDSpec/DSpecProofs."
+        "InfoFlow*, DSpec/DBaseRefine/DRefine/DPolicy/SepDSpec/DSpecProofs. "
+        "Through the ASpec→ExecSpec cross-cut, also propagates back UP to "
+        "ASpec/AInvs/Access — surfaced as a structural finding in the summary."
     ),
     "c": (
         "Changes to seL4 kernel C source (`verification/seL4/src/**/*.{c,h}`). "
@@ -70,6 +95,17 @@ CHANGE_TYPE_DESCRIPTIONS = {
         "chain (SimplExport, SimplExportAndRefine)."
     ),
 }
+
+# Order in which change types are rendered (and iterated in summary).
+CHANGE_TYPE_ORDER = (
+    "proof",
+    "spec_abstract",
+    "spec_invariant",
+    "spec_cspec",
+    "spec_lib",
+    "haskell",
+    "c",
+)
 
 
 def fmt_float(f: float) -> str:
@@ -179,21 +215,50 @@ def render_change_report(name: str, data: dict, summary_data: dict) -> str:
             "- AInvs theories appear at the top by **fanout** (260+) but have low "
             "  individual weight (<120s). They sit at the dependency root; "
             "  optimizing them is structurally hard but ripples broadly.")
-    elif name == "spec":
+    elif name == "spec_abstract":
         out.append(
-            "- Closure size is the largest of all four change types ({tn} theories) "
-            "  because spec changes propagate through every refinement layer.".format(
-                tn=data["theory_closure_size"]
-            ))
+            "- Logical scope per SOSP'09 Fig. 2: a change here should only affect "
+            "  Theorem 1 (`ME refines MA`) — i.e., AInvs + Refine. The actual "
+            "  closure is wider due to two structural anomalies:")
+        out.append(
+            "    1. **P0.5 ROOT inheritance** — Refine theories get reprocessed "
+            "       inside CBaseRefine, so changes ripple to CBaseRefine + CRefine.")
+        out.append(
+            "    2. **ASpec→ExecSpec cross-cut** — `spec/ROOT` declares ASpec "
+            "       to import ExecSpec, so BFS pulls ExecSpec → CKernel → CSpec "
+            "       and then their downstreams into the closure.")
+        out.append(
+            "- See summary §Structural findings for proposed fixes.")
+    elif name == "spec_invariant":
+        out.append(
+            "- Closure starts at AInvs and goes downstream — narrower than "
+            "  spec_abstract because we don't traverse the ASpec→ExecSpec "
+            "  cross-cut from above.")
+        out.append(
+            "- Top slack=0 set overlaps heavily with proof-only — these are "
+            "  the same Refine-system theories reprocessed in CBaseRefine.")
+    elif name == "spec_cspec":
+        out.append(
+            "- This is the C-side abstract spec, distinct from the spec_abstract "
+            "  (ASpec) layer. Closure stays in the C/asm-refinement chain — "
+            "  does NOT propagate to ASpec/AInvs/Access/InfoFlow.")
+        out.append(
+            "- Often dominated by SimplExport / SimplExportAndRefine if the "
+            "  asm-refinement chain is in scope.")
+    elif name == "spec_lib":
+        out.append(
+            "- This is the **worst-case** change type: lib/ is foundational, "
+            "  imported almost everywhere. The closure naturally spans most of "
+            "  the DAG.")
         out.append(
             "- **Word_Lib** dominates the fanout list (>800 transitive importers) "
-            "  but its theories are tiny in absolute weight. This suggests "
-            "  Word_Lib changes are **closure-amplifying** (rebuild a lot) but "
-            "  not weight-amplifying (don't make any single rebuild dramatically "
-            "  longer).")
+            "  but its theories are tiny in absolute weight. This means lib changes "
+            "  are **closure-amplifying** (rebuild a lot) but not weight-amplifying "
+            "  (don't make any single rebuild dramatically longer).")
         out.append(
-            "- The top slack=0 set overlaps heavily with the proof report — these "
-            "  are universal bottlenecks regardless of where the change originates.")
+            "- Optimization strategy here is **incremental rebuild**, not "
+            "  structural splitting — lib/ already is split sensibly across "
+            "  multiple sessions (Word_Lib, Lib, CorresK, Eisbach, etc.).")
     elif name == "haskell":
         out.append(
             "- **ExecSpec session** appears as the top fanout target (Kernel_Config, "
@@ -234,8 +299,9 @@ def render_change_report(name: str, data: dict, summary_data: dict) -> str:
 
 
 def render_summary_report(all_data: dict, dup_data: dict | None = None) -> str:
+    available_cts = tuple(ct for ct in CHANGE_TYPE_ORDER if ct in all_data["change_types"])
     out: list[str] = []
-    out.append("# Critical-path summary — all 4 change types")
+    out.append(f"# Critical-path summary — all {len(available_cts)} change types")
     out.append("")
     out.append("_Generated by `tools/critical_path/report.py` from `reports/critical-path-all.json`._  ")
     out.append(f"_Total cost model footprint: {all_data['theory_weights_summary']['total_weight_all']}s "
@@ -243,13 +309,18 @@ def render_summary_report(all_data: dict, dup_data: dict | None = None) -> str:
                f"({100*all_data['theory_weights_summary']['duplication_total_overhead']/max(all_data['theory_weights_summary']['total_weight_all'],1):.1f}%) "
                f"is cross-session duplication overhead (P0.5)._")
     out.append("")
+    out.append("> **Note**: The original `spec` change type has been split into four "
+               "sub-types — `spec_abstract`, `spec_invariant`, `spec_cspec`, `spec_lib` — "
+               "to reflect the very different closure widths produced by changes to "
+               "abstract spec vs. lib utilities. See per-type reports for details.")
+    out.append("")
 
     # ---- High-level table ----
     out.append("## Closure size & critical path per change type")
     out.append("")
     out.append("| change type | sessions in closure | theories in closure | closure total weight | critical path total | CP nodes |")
     out.append("|---|---:|---:|---:|---:|---:|")
-    for ct in ("proof", "spec", "haskell", "c"):
+    for ct in available_cts:
         d = all_data["change_types"][ct]
         out.append(
             f"| **{ct}** | {d['session_closure_size']} | {d['theory_closure_size']} | "
@@ -262,7 +333,7 @@ def render_summary_report(all_data: dict, dup_data: dict | None = None) -> str:
     out.append("## Cross-cutting bottlenecks (theories in top-25 slack of multiple change types)")
     out.append("")
     universal: dict[str, set[str]] = {}
-    for ct in ("proof", "spec", "haskell", "c"):
+    for ct in available_cts:
         for n in all_data["change_types"][ct]["top_by_slack_low"][:25]:
             universal.setdefault(n["theory"], set()).add(ct)
     multi = {k: v for k, v in universal.items() if len(v) >= 2}
@@ -294,9 +365,9 @@ def render_summary_report(all_data: dict, dup_data: dict | None = None) -> str:
     # ---- Profile-specific bottlenecks ----
     out.append("## Profile-specific bottlenecks (top-3 unique to each change type)")
     out.append("")
-    for ct in ("proof", "spec", "haskell", "c"):
+    for ct in available_cts:
         in_others: set[str] = set()
-        for other in ("proof", "spec", "haskell", "c"):
+        for other in available_cts:
             if other == ct:
                 continue
             for n in all_data["change_types"][other]["top_by_slack_low"][:25]:
@@ -331,7 +402,7 @@ def render_summary_report(all_data: dict, dup_data: dict | None = None) -> str:
                "highest `duplication_overhead` (= work that disappears if the P0.5 inheritance "
                "issue is fixed) AND highest fanout. Top 3 per type, deduplicated within type.")
     out.append("")
-    for ct in ("proof", "spec", "haskell", "c"):
+    for ct in available_cts:
         d = all_data["change_types"][ct]
         # Score = weight × (1 + duplication_factor) × log(fanout+1) ... we'll just sort
         # by (-weight, -duplication_overhead). Pick from top_by_slack_low.
@@ -455,26 +526,27 @@ def render_summary_report(all_data: dict, dup_data: dict | None = None) -> str:
         )
         out.append("")
 
-    # ---- Universal recommendation (revised — three orthogonal targets) ----
-    out.append("## Cross-type observation: three orthogonal structural targets")
+    # ---- Structural findings: four orthogonal targets ----
+    out.append("## Structural findings: four orthogonal optimization targets")
     out.append("")
     out.append(
-        "The four change types' bottleneck profiles are covered by **three "
-        "orthogonal structural fixes**, each addressing a distinct P0.5 pattern. "
-        "No single fix covers everything; conversely, doing all three would "
-        "eliminate the bulk of cross-session duplication overhead documented in "
-        "[reports/session-duplication-scan.md](session-duplication-scan.md)."
+        f"The {len(available_cts)} change types' bottleneck profiles are covered by "
+        "**four orthogonal structural fixes**, each addressing a distinct anomaly "
+        "in l4v's session graph. No single fix covers everything; conversely, doing "
+        "all four would eliminate the bulk of cross-session duplication overhead "
+        "documented in [reports/session-duplication-scan.md]"
+        "(session-duplication-scan.md)."
     )
     out.append("")
     out.append(
         "**(a) Perpetrator/Victim ROOT inheritance dedupe** — "
-        "Edit `proof/ROOT:106` and similar lines so that downstream sessions "
-        "merge their refinement-side parent via `+` instead of pulling it in "
-        "via `imports \"Y.foo\"` from a `sessions Y` namespace declaration. "
-        "Top targets: CBaseRefine→Refine (3538s), CRefineSyscall→CRefine (1546s), "
-        "CBaseRefine→AInvs (1416s). **Helps**: proof, spec, haskell. "
-        "**Risk**: ML state conflicts may force a refactor rather than a 1-line "
-        "swap."
+        "Edit [proof/ROOT:106](../verification/l4v/proof/ROOT) and similar lines so "
+        "downstream sessions merge their refinement-side parent via `+` instead of "
+        "pulling it in via `imports \"Y.foo\"` from a `sessions Y` namespace "
+        "declaration. Top targets: CBaseRefine→Refine (3538s), CRefineSyscall→"
+        "CRefine (1546s), CBaseRefine→AInvs (1416s). **Helps**: proof, "
+        "spec_abstract, spec_invariant, haskell. **Risk**: ML state conflicts "
+        "may force a refactor rather than a 1-line swap."
     )
     out.append("")
     out.append(
@@ -488,27 +560,77 @@ def render_summary_report(all_data: dict, dup_data: dict | None = None) -> str:
     out.append("")
     out.append(
         "**(c) Asm-refinement ML chunking** — "
-        "Split `proof/asmrefine/SEL4GraphRefine.thy:72`'s monolithic ML "
-        "invocation into multiple theories so `isabelle build` can checkpoint and "
-        "incrementally rebuild. Currently 2228s of one atomic block. **Helps**: "
-        "C only. **Risk**: requires understanding the SimplToGraph proof "
-        "infrastructure to chunk safely."
+        "Split [proof/asmrefine/SEL4GraphRefine.thy:72]"
+        "(../verification/l4v/proof/asmrefine/SEL4GraphRefine.thy)'s monolithic "
+        "ML invocation into multiple theories so `isabelle build` can checkpoint "
+        "and incrementally rebuild. Currently 2228s of one atomic block. "
+        "**Helps**: C only. **Risk**: requires understanding the SimplToGraph "
+        "proof infrastructure to chunk safely."
     )
     out.append("")
     out.append(
-        "Combined upper-bound wall recovery if all three landed: "
-        "~5500s (a) + ~1300s (b) + ~2200s (c) ≈ **~9000s** of the ~25,000s "
-        "canonical TUNED total wall. Real wall recovery will be lower due to "
-        "intra-session 8-thread parallelism (factor 3-6×) and because some "
-        "duplicated work serves genuine purposes (locale re-interpretation in "
-        "different ML contexts that wasn't strictly avoidable)."
+        "**(d) ASpec→ExecSpec cross-cut elimination** — "
+        "[spec/ROOT:64-71](../verification/l4v/spec/ROOT) declares "
+        "`session ASpec ... sessions ExecSpec`, making the *abstract spec layer* "
+        "depend on the *executable spec layer*. This violates the SOSP'09 Fig. 2 "
+        "refinement tower (MA should be foundational, ME should refine MA, not "
+        "vice versa). Empirical effect: any change to ExecSpec or Haskell "
+        "regenerates ASpec, which then reverse-propagates through AInvs, Access, "
+        "InfoFlow, Bisim, etc. — adding ~14 sessions to the haskell change "
+        "closure that should not logically be there."
     )
+    out.append("")
+    out.append(
+        "  - **Investigation**: identify which symbols/types ASpec actually imports "
+        "from ExecSpec. If only a few base architectural constants, lift them to "
+        "Word_Lib or a new SharedSpec session that ExecSpec and ASpec both depend on, "
+        "rather than ASpec depending on ExecSpec.  "
+    )
+    out.append(
+        "  - **Helps**: haskell, spec_abstract.  "
+    )
+    out.append(
+        "  - **Risk**: low if the imported surface is small; medium if ASpec uses "
+        "more of ExecSpec than expected.  "
+    )
+    out.append(
+        "  - **Wall impact estimate**: 14 sessions × average ~300s avoided rebuild "
+        "= ~3000-4000s upper bound for the haskell closure (which currently includes "
+        "ASpec, AInvs, Access, InfoFlow, Bisim and their downstreams)."
+    )
+    out.append("")
+    out.append(
+        "**Combined upper-bound wall recovery** if all four landed: "
+        "~5500s (a) + ~1300s (b) + ~2200s (c) + ~3500s (d) ≈ **~12,500s** of the "
+        "~25,000s canonical TUNED total wall. Real wall recovery will be lower "
+        "due to intra-session 8-thread parallelism (factor 3-6×) and because "
+        "some duplicated work serves genuine purposes (locale re-interpretation "
+        "in different ML contexts that wasn't strictly avoidable). Estimated "
+        "achievable: 4000-7000s wall reduction (15-30% of total)."
+    )
+    out.append("")
+    out.append(
+        "**Mapping to per-type bottlenecks**:"
+    )
+    out.append("")
+    out.append("| change type | (a) ROOT dedupe | (b) 3rd-party heap | (c) ML chunking | (d) ASpec cross-cut |")
+    out.append("|---|:---:|:---:|:---:|:---:|")
+    out.append("| proof | ✓✓ | ○ | – | – |")
+    out.append("| spec_abstract | ✓✓ | ○ | – | ○ |")
+    out.append("| spec_invariant | ✓✓ | – | – | – |")
+    out.append("| spec_cspec | ○ | – | ✓ | – |")
+    out.append("| spec_lib | – | ✓ | – | – |")
+    out.append("| haskell | ✓ | ✓✓ | – | ✓✓ |")
+    out.append("| c | – | – | ✓✓ | – |")
+    out.append("")
+    out.append("_(✓✓ = primary fix, ✓ = helps significantly, ○ = helps marginally, – = orthogonal)_")
     out.append("")
     out.append("---")
     out.append("")
-    out.append(f"_Per-type details: [proof](critical-path-proof.md) · "
-               f"[spec](critical-path-spec.md) · [haskell](critical-path-haskell.md) · "
-               f"[c](critical-path-c.md)_")
+    per_type_links = " · ".join(
+        f"[{ct}](critical-path-{ct}.md)" for ct in available_cts
+    )
+    out.append(f"_Per-type details: {per_type_links}_")
     return "\n".join(out) + "\n"
 
 
@@ -519,8 +641,9 @@ def main() -> int:
     dup_data = json.loads(dup_scan_path.read_text()) if dup_scan_path.exists() else None
 
     written: list[str] = []
+    available_cts = tuple(ct for ct in CHANGE_TYPE_ORDER if ct in data["change_types"])
 
-    for ct in ("proof", "spec", "haskell", "c"):
+    for ct in available_cts:
         out_path = OUT_DIR / f"critical-path-{ct}.md"
         md = render_change_report(ct, data["change_types"][ct], data)
         out_path.write_text(md)
