@@ -1,0 +1,110 @@
+Started at Sat May 9 03:25:54 GMT 2026 (polyml-5.9.1_x86_64_32-linux on lijun-VMware-Virtual-Platform)
+ISABELLE_TOOL_JAVA_OPTIONS="-Djava.awt.headless=true -Xms512m -Xmx4g -Xss16m"
+ISABELLE_BUILD_OPTIONS=""
+
+ML_PLATFORM="x86_64_32-linux"
+ML_HOME="/root/.isabelle/contrib/polyml-5.9.1/x86_64_32-linux"
+ML_SYSTEM="polyml-5.9.1"
+ML_OPTIONS="-H 8000 --maxheap 16000 --stackspace 64"
+
+Session Pure/Pure
+Session FOL/FOL
+Session Misc/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Cardinals (timing)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Combinatorics (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Algebra (main timing)
+Session HOL/HOL-Decision_Procs (timing)
+Session HOL/HOL-Real_Asymp
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Statespace
+Session Lib/ML_Utils (lib)
+Session Lib/Eisbach_Tools (lib)
+Session Lib/Monads (lib)
+Session Lib/Word_Lib (lib)
+Session Lib/Basics (lib)
+Session Lib/Lib (lib)
+Session Specifications/ExecSpec
+Session Specifications/ASpec
+Session Proofs/AInvs
+Session Lib/CorresK
+Session Proofs/BaseRefine
+Session Proofs/Refine
+Session C-Parser/Simpl-VCG
+Session C-Parser/CParser
+Session Unsorted/AutoCorres
+Session Lib/CLib (lib)
+Session Tools/AsmRefine
+Session Specifications/CKernel
+Session Specifications/CSpec
+Session Proofs/CBaseRefine
+Session Proofs/CRefine
+Session Proofs/CRefineSyscall
+Building CRefine ...
+CRefine: theory CLib.Simpl_Rewrite
+CRefine: theory CLib.SimplRewrite
+CRefine: theory CRefine.Boolean_C
+CRefine: theory CLib.XPres
+CRefine: theory CRefine.AutoCorresModifiesProofs
+CRefine: theory CLib.MonadicRewrite_C
+CRefine: theory CRefine.Move_C
+CRefine: theory CRefine.DetWP
+CRefine: theory CRefine.CToCRefine
+CRefine: theory CRefine.ArchMove_C
+CRefine: theory CLib.CCorres_Rewrite
+CRefine: theory CLib.CCorresLemmas
+CRefine: theory CRefine.CLevityCatch
+CRefine: theory CRefine.Fastpath_Defs
+CRefine: theory CRefine.IsolatedThreadAction
+CRefine: theory CRefine.Wellformed_C
+CRefine: theory CRefine.Fastpath_Equiv
+CRefine: theory CRefine.StateRelation_C
+CRefine: theory CRefine.SR_lemmas_C
+CRefine: theory CRefine.Corres_C
+CRefine: theory CRefine.TcbQueue_C
+CRefine: theory CRefine.AutoCorres_C
+CRefine: theory CRefine.Ctac
+CRefine: theory CRefine.Ctac_lemmas_C
+CRefine: theory CRefine.CSpaceAcc_C
+CRefine: theory CRefine.Machine_C
+CRefine: theory CRefine.PSpace_C
+CRefine: theory CRefine.TcbAcc_C
+CRefine: theory CRefine.Detype_C
+CRefine: theory CRefine.CSpace_RAB_C
+CRefine: theory CRefine.CSpace_C
+CRefine: theory CRefine.CSpace_All
+CRefine: theory CRefine.VSpace_C
+CRefine: theory CRefine.StoreWord_C
+CRefine: theory CRefine.Retype_C
+CRefine: theory CRefine.SyscallArgs_C
+CRefine: theory CRefine.IpcCancel_C
+CRefine: theory CRefine.Finalise_C
+CRefine: theory CRefine.Delete_C
+CRefine: theory CRefine.Interrupt_C
+CRefine: theory CRefine.Ipc_C
+CRefine: theory CRefine.Recycle_C
+CRefine: theory CRefine.Arch_C
+CRefine: theory CRefine.Invoke_C
+CRefine: theory CRefine.Tcb_C
+CRefine: theory CRefine.Schedule_C
+CRefine: theory CRefine.ADT_C
+CRefine: theory CRefine.Syscall_C
+CRefine: theory CRefine.Fastpath_C
+CRefine: theory CRefine.Init_C
+CRefine: theory CRefine.Refine_C
+Skipping theories "Refine_C" (undefined CREFINE_QUICK_AND_DIRTY)
+Timing CRefine (8 threads, 4038.779s elapsed time, 18538.652s cpu time, 2426.334s GC time, factor 4.59)
+Finished CRefine (1:09:17 elapsed time, 5:13:07 cpu time, factor 4.52)
+Building CRefineSyscall ...
+CRefineSyscall: theory CRefineSyscall.Intermediate_C
+Skipping theories "Intermediate_C" (undefined CREFINE_QUICK_AND_DIRTY)
+Timing CRefineSyscall (8 threads, 1.158s elapsed time, 1.668s cpu time, 0.000s GC time, factor 1.44)
+Finished CRefineSyscall (0:01:02 elapsed time, 0:01:57 cpu time, factor 1.88)
+
+Finished at Sat May 9 04:36:35 GMT 2026
+1:10:41 elapsed time, 5:15:04 cpu time, factor 4.46
+===EXIT=0===
+2026-05-09T04:36:36Z

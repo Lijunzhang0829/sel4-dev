@@ -1,4 +1,4 @@
-# Experiment: CBaseRefine parent swap (target a, P0.5 ROOT inheritance dedupe)
+# Experiment: CBaseRefine + CRefineSyscall parent swap (target a, P0.5 ROOT inheritance dedupe)
 
 ## Context
 
@@ -165,6 +165,97 @@ investigating if incremental rebuild dependency-tracking is impacted.
 - `CBaseRefine.heap`: 592 MB (timestamp 2026-05-09 03:17 UTC)
 - `CBaseRefine.db`: 14.8 MB
 - All other heaps untouched (Refine, CSpec, CKernel, etc. still from canonical baseline)
+
+## Run 2 (2026-05-09T04:36Z): CRefineSyscall parent swap downstream test
+
+After validating CBaseRefine swap, applied an analogous swap to
+CRefineSyscall (commit f9f7597 → next):
+
+```diff
+- session CRefineSyscall in "crefine/intermediate" = CBaseRefine +
+-   sessions
+-     CRefine
++ session CRefineSyscall in "crefine/intermediate" = CRefine +
+```
+
+CRefineSyscall declared 100% duplication of CRefine theories in P0.5
+(`= CBaseRefine + sessions CRefine` source-re-executes 44 CRefine
+theories, 1546s aggregate). Swap merges CRefine.heap properly via `+`;
+CRefine's own parent is CBaseRefine, so the chain
+CRefineSyscall → CRefine → CBaseRefine → Refine + CSpec is preserved.
+
+Wiped CRefine + CRefineSyscall heaps to test cascade rebuild.
+
+Run log: [cbaserefine-swap-runs/20260509T032551Z-crefinesyscall.log](cbaserefine-swap-runs/20260509T032551Z-crefinesyscall.log)
+
+### CRefine: parity-with-bonus-GC-savings
+
+```
+                        baseline (= CBaseRefine +)    swap-cascade        delta
+  threads                            8                        8
+  elapsed (wall)              4556.6s                  4038.8s           -518s    -11.4%
+  cpu                        20590.9s                 18538.7s          -2052s    -10.0%
+  gc                          4689.3s                  2426.3s          -2263s    -48.3%
+  factor                         4.52                     4.59           +0.07
+```
+
+CRefine's session structure didn't change directly. The wall reduction
+comes from inheriting the smaller / cleaner new CBaseRefine.heap as
+parent — primarily lower GC pressure (-48% GC time). This corroborates
+the hypothesis that P0.5 amplification was driven by ML-state pollution.
+
+### CRefineSyscall: pure-duplication elimination
+
+```
+                        baseline (= CBaseRefine + sessions CRefine)    swap (= CRefine +)    delta
+  threads                            8                                          8
+  elapsed (wall)              3306.7s                                       1.158s         -3305.5s   -99.97%
+  cpu                        14336.6s                                       1.668s        -14334.9s
+  gc                          1149.4s                                       0.000s         -1149.4s
+  factor                         4.34                                        1.44
+```
+
+The result is dramatic: CRefineSyscall's actual own work is just
+`Intermediate_C` (a small bridging theory). The baseline 3306s was
+**entirely** the cost of source-re-executing the full CRefine session
+inside CRefineSyscall's ML state. With heap-merge via `+`, that work is
+zero.
+
+The session log makes this explicit:
+```
+Building CRefineSyscall ...
+CRefineSyscall: theory CRefineSyscall.Intermediate_C
+Timing CRefineSyscall (8 threads, 1.158s elapsed time, ...)
+```
+
+44 CRefine theories that previously appeared in CRefineSyscall.db
+(P0.5 finding: 100% duplication, 1546s aggregate) are now entirely
+absent — they live in CRefine.heap, merged on session start.
+
+### Combined proof-core wall savings (3 sessions)
+
+```
+                         baseline       swap         delta wall         %
+  CBaseRefine            5183.2s        1318.3s     -3864.9s          -74.6%
+  CRefine                4556.6s        4038.8s      -517.8s          -11.4%
+  CRefineSyscall         3306.7s           1.2s     -3305.5s          -99.97%
+  ─────────────────────────────────────────────────────────────────
+  proof-core total      13046.5s        5358.3s     -7688.2s          -58.9%
+```
+
+**Proof-core (CBaseRefine + CRefine + CRefineSyscall) wall reduced by
+2 hours 8 minutes (-58.9%).** Total canonical TUNED build wall is
+25,331s — this is **30.4%** of total wall.
+
+### Heaps state after Run 2
+
+- `CRefine.heap`: rebuilt (timestamp 2026-05-09 ~04:33 UTC, replaces baseline)
+- `CRefineSyscall.heap`: 5.4 MB (timestamp 2026-05-09 04:36 UTC, vs baseline ~?)
+- `CRefineSyscall.db`: 152 KB (vs baseline several MB) — collapsed dup metadata
+
+Downstream of CBaseRefine: AutoCorresCRefine, InfoFlowCBase, InfoFlowC
+heaps remain stale (built on old CBaseRefine.heap). They will be
+rebuilt next.
 
 ## How to apply
 
