@@ -16,9 +16,9 @@ Changes to Haskell prototype (`spec/haskell/**/*.hs`). Triggers regeneration of 
 
 - Sessions in closure: **30** of 56 (54%)
 - Theories in closure: **489** of 1094 (45%)
-- Closure total weight (sum of theory weights): **15352.0s**
-- Critical path total: **8656.5s** (56.4% of closure)
-- Critical path length: **138** theories
+- Closure total weight (sum of theory weights): **8507.4s**
+- Critical path total: **3423.1s** (40.2% of closure)
+- Critical path length: **137** theories
 
 **Sessions in closure**: `AInvs`, `ASepSpec`, `ASpec`, `Access`, `AutoCorresSEL4`, `BaseRefine`, `Bisim`, `CBaseRefine`, `CKernel`, `CRefine`, `CRefineSyscall`, `CSpec`, `CamkesCdlBase`, `CamkesCdlRefine`, `CorresK`, `DBaseRefine`, `DPolicy`, `DRefine`, `DSpec`, `DSpecProofs`, `ExecSpec`, `InfoFlow`, `InfoFlowC`, `InfoFlowCBase`, `LibTest`, `Refine`, `RefineOrphanage`, `SepDSpec`, `SysInit`, `SysInitExamples`
 
@@ -28,31 +28,31 @@ Theories with the least scheduling flexibility — optimizing these yields the m
 
 | rank | theory | session | weight (s) | n_sess | dup overhead | fanout | slack | on CP |
 |---:|---|---|---:|---:|---:|---:|---:|:---:|
-| 1 | `Refine.Finalise_R` | Refine | 649.8 | 2 | 225.6 | 66 | 0.0 | ✓ |
-| 2 | `Refine.Invariants_H` | Refine | 359.4 | 2 | 128.8 | 92 | 0.0 | ✓ |
-| 3 | `Refine.IpcCancel_R` | Refine | 348.0 | 2 | 75.5 | 67 | 0.0 | ✓ |
-| 4 | `CRefine.Ipc_C` | CRefine | 332.3 | 2 | 148.3 | 12 | 0.0 | ✓ |
-| 5 | `CRefine.StateRelation_C` | CRefine | 315.4 | 2 | 149.2 | 38 | 0.0 | ✓ |
-| 6 | `Refine.CSpace_R` | Refine | 282.5 | 2 | 100.8 | 76 | 0.0 | ✓ |
-| 7 | `Refine.Ipc_R` | Refine | 265.5 | 2 | 71.7 | 64 | 0.0 | ✓ |
-| 8 | `Refine.CNodeInv_R` | Refine | 260.0 | 2 | 102.1 | 62 | 0.0 | ✓ |
-| 9 | `CRefine.ADT_C` | CRefine | 239.9 | 1 | 0.0 | 6 | 0.0 | ✓ |
-| 10 | `CRefine.Tcb_C` | CRefine | 238.8 | 2 | 32.2 | 11 | 0.0 | ✓ |
-| 11 | `Refine.CSpace1_R` | Refine | 237.9 | 2 | 85.1 | 78 | 0.0 | ✓ |
-| 12 | `CRefine.VSpace_C` | CRefine | 195.6 | 2 | 90.8 | 23 | 0.0 | ✓ |
-| 13 | `Refine.CSpace_I` | Refine | 174.0 | 2 | 41.8 | 79 | 0.0 | ✓ |
-| 14 | `CRefine.SyscallArgs_C` | CRefine | 170.5 | 2 | 76.9 | 20 | 0.0 | ✓ |
-| 15 | `CRefine.Finalise_C` | CRefine | 166.1 | 2 | 81.7 | 18 | 0.0 | ✓ |
-| 16 | `Refine.ADT_H` | Refine | 158.2 | 2 | 55.8 | 58 | 0.0 | ✓ |
-| 17 | `Refine.Tcb_R` | Refine | 156.1 | 2 | 32.2 | 61 | 0.0 | ✓ |
-| 18 | `Refine.TcbAcc_R` | Refine | 150.1 | 2 | 48.6 | 75 | 0.0 | ✓ |
-| 19 | `CRefine.Wellformed_C` | CRefine | 128.4 | 2 | 60.8 | 39 | 0.0 | ✓ |
-| 20 | `CRefine.Corres_C` | CRefine | 120.8 | 2 | 54.8 | 36 | 0.0 | ✓ |
-| 21 | `Refine.KHeap_R` | Refine | 115.3 | 2 | 47.1 | 83 | 0.0 | ✓ |
-| 22 | `Refine.VSpace_R` | Refine | 111.5 | 2 | 37.2 | 73 | 0.0 | ✓ |
-| 23 | `AInvs.DetSchedSchedule_AI` | AInvs | 83.4 | 2 | 30.4 | 186 | 0.0 | ✓ |
-| 24 | `CRefine.Refine_C` | CRefine | 82.1 | 1 | 0.0 | 4 | 0.0 | ✓ |
-| 25 | `Refine.ArchAcc_R` | Refine | 81.5 | 2 | 14.8 | 80 | 0.0 | ✓ |
+| 1 | `CRefine.ADT_C` | CRefine | 266.1 | 1 | 0.0 | 6 | 0.0 | ✓ |
+| 2 | `CRefine.Ipc_C` | CRefine | 170.9 | 1 | 0.0 | 12 | 0.0 | ✓ |
+| 3 | `CRefine.StateRelation_C` | CRefine | 102.6 | 1 | 0.0 | 38 | 0.0 | ✓ |
+| 4 | `CRefine.Refine_C` | CRefine | 96.4 | 1 | 0.0 | 4 | 0.0 | ✓ |
+| 5 | `CRefine.VSpace_C` | CRefine | 95.0 | 1 | 0.0 | 23 | 0.0 | ✓ |
+| 6 | `CRefine.Finalise_C` | CRefine | 83.9 | 1 | 0.0 | 18 | 0.0 | ✓ |
+| 7 | `CRefine.SyscallArgs_C` | CRefine | 78.7 | 1 | 0.0 | 20 | 0.0 | ✓ |
+| 8 | `InfoFlowC.Noninterference_Refinement` | InfoFlowC | 65.6 | 1 | 0.0 | 0 | 0.0 | ✓ |
+| 9 | `CRefine.Wellformed_C` | CRefine | 59.6 | 1 | 0.0 | 39 | 0.0 | ✓ |
+| 10 | `CRefine.Tcb_C` | CRefine | 55.6 | 1 | 0.0 | 11 | 0.0 | ✓ |
+| 11 | `InfoFlowC.ADT_IF_Refine_C` | InfoFlowC | 54.3 | 1 | 0.0 | 2 | 0.0 | ✓ |
+| 12 | `CRefine.Corres_C` | CRefine | 51.2 | 1 | 0.0 | 36 | 0.0 | ✓ |
+| 13 | `CRefine.Machine_C` | CRefine | 44.6 | 1 | 0.0 | 26 | 0.0 | ✓ |
+| 14 | `CRefine.CSpace_C` | CRefine | 36.8 | 1 | 0.0 | 25 | 0.0 | ✓ |
+| 15 | `CRefine.Schedule_C` | CRefine | 25.5 | 1 | 0.0 | 10 | 0.0 | ✓ |
+| 16 | `CRefine.SR_lemmas_C` | CRefine | 22.7 | 1 | 0.0 | 37 | 0.0 | ✓ |
+| 17 | `CRefine.AutoCorres_C` | CRefine | 18.5 | 1 | 0.0 | 35 | 0.0 | ✓ |
+| 18 | `CRefine.Ctac` | CRefine | 18.3 | 1 | 0.0 | 34 | 0.0 | ✓ |
+| 19 | `CRefine.IpcCancel_C` | CRefine | 15.2 | 1 | 0.0 | 19 | 0.0 | ✓ |
+| 20 | `InfoFlowC.ArchADT_IF_Refine_C` | InfoFlowC | 15.2 | 1 | 0.0 | 1 | 0.0 | ✓ |
+| 21 | `CRefine.StoreWord_C` | CRefine | 10.4 | 1 | 0.0 | 22 | 0.0 | ✓ |
+| 22 | `CRefine.Ctac_lemmas_C` | CRefine | 6.2 | 1 | 0.0 | 33 | 0.0 | ✓ |
+| 23 | `Refine.Finalise_R` | Refine | 222.9 | 1 | 0.0 | 66 | 0.0 | ✓ |
+| 24 | `Refine.Invariants_H` | Refine | 100.5 | 1 | 0.0 | 92 | 0.0 | ✓ |
+| 25 | `Refine.CSpace_R` | Refine | 97.4 | 1 | 0.0 | 76 | 0.0 | ✓ |
 
 ## Top 20 critical-path theories (sorted by weight)
 
@@ -60,26 +60,26 @@ All on the critical path (slack ≈ 0). Ordered by their individual weight — t
 
 | rank | theory | session | weight (s) | n_sess | dup overhead | fanout | EST→EFT |
 |---:|---|---|---:|---:|---:|---:|:---|
-| 1 | `Refine.Finalise_R` | Refine | 649.8 | 2 | 225.6 | 66 | 4414→5064 |
-| 2 | `Refine.Invariants_H` | Refine | 359.4 | 2 | 128.8 | 92 | 2283→2642 |
-| 3 | `Refine.IpcCancel_R` | Refine | 348.0 | 2 | 75.5 | 67 | 4066→4414 |
-| 4 | `CRefine.Ipc_C` | CRefine | 332.3 | 2 | 148.3 | 12 | 7570→7903 |
-| 5 | `CRefine.StateRelation_C` | CRefine | 315.4 | 2 | 149.2 | 38 | 6258→6573 |
-| 6 | `Refine.CSpace_R` | Refine | 282.5 | 2 | 100.8 | 76 | 3453→3735 |
-| 7 | `Refine.Ipc_R` | Refine | 265.5 | 2 | 71.7 | 64 | 5064→5330 |
-| 8 | `Refine.CNodeInv_R` | Refine | 260.0 | 2 | 102.1 | 62 | 5330→5590 |
-| 9 | `CRefine.ADT_C` | CRefine | 239.9 | 1 | 0.0 | 6 | 8187→8426 |
-| 10 | `CRefine.Tcb_C` | CRefine | 238.8 | 2 | 32.2 | 11 | 7903→8141 |
-| 11 | `Refine.CSpace1_R` | Refine | 237.9 | 2 | 85.1 | 78 | 3215→3453 |
-| 12 | `CRefine.VSpace_C` | CRefine | 195.6 | 2 | 90.8 | 23 | 6989→7184 |
-| 13 | `Refine.CSpace_I` | Refine | 174.0 | 2 | 41.8 | 79 | 3041→3215 |
-| 14 | `CRefine.SyscallArgs_C` | CRefine | 170.5 | 2 | 76.9 | 20 | 7204→7375 |
-| 15 | `CRefine.Finalise_C` | CRefine | 166.1 | 2 | 81.7 | 18 | 7404→7570 |
-| 16 | `AInvs.ArchRetype_AI` | AInvs | 159.7 | 2 | 75.6 | 226 | 1161→1320 |
-| 17 | `Refine.ADT_H` | Refine | 158.2 | 2 | 55.8 | 58 | 5817→5976 |
-| 18 | `Refine.Tcb_R` | Refine | 156.1 | 2 | 32.2 | 61 | 5590→5746 |
-| 19 | `Refine.TcbAcc_R` | Refine | 150.1 | 2 | 48.6 | 75 | 3735→3885 |
-| 20 | `CRefine.Wellformed_C` | CRefine | 128.4 | 2 | 60.8 | 39 | 6130→6258 |
+| 1 | `CRefine.ADT_C` | CRefine | 266.1 | 1 | 0.0 | 6 | 2925→3191 |
+| 2 | `Refine.Finalise_R` | Refine | 222.9 | 1 | 0.0 | 66 | 1471→1694 |
+| 3 | `CRefine.Ipc_C` | CRefine | 170.9 | 1 | 0.0 | 12 | 2673→2844 |
+| 4 | `CRefine.StateRelation_C` | CRefine | 102.6 | 1 | 0.0 | 38 | 2088→2191 |
+| 5 | `Refine.Invariants_H` | Refine | 100.5 | 1 | 0.0 | 92 | 879→980 |
+| 6 | `Refine.CSpace_R` | Refine | 97.4 | 1 | 0.0 | 76 | 1191→1288 |
+| 7 | `CRefine.Refine_C` | CRefine | 96.4 | 1 | 0.0 | 4 | 3192→3288 |
+| 8 | `CRefine.VSpace_C` | CRefine | 95.0 | 1 | 0.0 | 23 | 2389→2484 |
+| 9 | `Refine.CNodeInv_R` | Refine | 88.4 | 1 | 0.0 | 62 | 1739→1828 |
+| 10 | `CRefine.Finalise_C` | CRefine | 83.9 | 1 | 0.0 | 18 | 2589→2673 |
+| 11 | `CRefine.SyscallArgs_C` | CRefine | 78.7 | 1 | 0.0 | 20 | 2495→2574 |
+| 12 | `Refine.CSpace1_R` | Refine | 77.4 | 1 | 0.0 | 78 | 1113→1191 |
+| 13 | `Refine.IpcCancel_R` | Refine | 72.5 | 1 | 0.0 | 67 | 1399→1471 |
+| 14 | `InfoFlowC.Noninterference_Refinement` | InfoFlowC | 65.6 | 1 | 0.0 | 0 | 3358→3423 |
+| 15 | `AInvs.ArchRetype_AI` | AInvs | 62.6 | 1 | 0.0 | 226 | 444→506 |
+| 16 | `Refine.ADT_H` | Refine | 62.5 | 1 | 0.0 | 58 | 1892→1954 |
+| 17 | `CRefine.Wellformed_C` | CRefine | 59.6 | 1 | 0.0 | 39 | 2029→2088 |
+| 18 | `CRefine.Tcb_C` | CRefine | 55.6 | 1 | 0.0 | 11 | 2844→2899 |
+| 19 | `InfoFlowC.ADT_IF_Refine_C` | InfoFlowC | 54.3 | 1 | 0.0 | 2 | 3288→3342 |
+| 20 | `CRefine.Corres_C` | CRefine | 51.2 | 1 | 0.0 | 36 | 2214→2265 |
 
 ## Top 10 by fanout (cross-cutting impact)
 
@@ -87,16 +87,16 @@ Theories with the most transitive importers in this closure. Optimizing or restr
 
 | rank | theory | session | weight (s) | fanout | n_sess | on CP |
 |---:|---|---|---:|---:|---:|:---:|
-| 1 | `ExecSpec.Setup_Locale` | ExecSpec | 1.2 | 432 | 3 |  |
-| 2 | `ExecSpec.Kernel_Config` | ExecSpec | 3.1 | 429 | 3 | ✓ |
-| 3 | `ExecSpec.Platform` | ExecSpec | 3.4 | 427 | 3 | ✓ |
-| 4 | `ExecSpec.MachineTypes` | ExecSpec | 28.4 | 423 | 3 | ✓ |
-| 5 | `ExecSpec.MachineMonad` | ExecSpec | 4.8 | 414 | 3 | ✓ |
-| 6 | `ExecSpec.MachineOps` | ExecSpec | 11.2 | 413 | 3 | ✓ |
-| 7 | `ExecSpec.MachineExports` | ExecSpec | 2.2 | 370 | 3 |  |
-| 8 | `ASpec.CapRights_A` | ASpec | 8.9 | 363 | 3 |  |
-| 9 | `ExecSpec.Arch_Structs_B` | ExecSpec | 6.5 | 362 | 2 |  |
-| 10 | `ASpec.VMRights_A` | ASpec | 0.9 | 361 | 3 |  |
+| 1 | `ExecSpec.Setup_Locale` | ExecSpec | 1.1 | 432 | 3 |  |
+| 2 | `ExecSpec.Kernel_Config` | ExecSpec | 2.9 | 429 | 3 | ✓ |
+| 3 | `ExecSpec.Platform` | ExecSpec | 3.2 | 427 | 3 | ✓ |
+| 4 | `ExecSpec.MachineTypes` | ExecSpec | 26.0 | 423 | 3 | ✓ |
+| 5 | `ExecSpec.MachineMonad` | ExecSpec | 1.1 | 414 | 2 | ✓ |
+| 6 | `ExecSpec.MachineOps` | ExecSpec | 3.4 | 413 | 2 | ✓ |
+| 7 | `ExecSpec.MachineExports` | ExecSpec | 1.2 | 370 | 2 |  |
+| 8 | `ASpec.CapRights_A` | ASpec | 5.7 | 363 | 2 |  |
+| 9 | `ExecSpec.Arch_Structs_B` | ExecSpec | 2.5 | 362 | 1 |  |
+| 10 | `ASpec.VMRights_A` | ASpec | 0.6 | 361 | 2 |  |
 
 ## Notes
 

@@ -15,9 +15,9 @@ Changes to **invariant proofs** over abstract spec (`proof/invariant-abstract/**
 
 - Sessions in closure: **21** of 56 (38%)
 - Theories in closure: **331** of 1094 (30%)
-- Closure total weight (sum of theory weights): **13244.8s**
-- Critical path total: **8312.1s** (62.8% of closure)
-- Critical path length: **111** theories
+- Closure total weight (sum of theory weights): **6309.0s**
+- Critical path total: **3273.2s** (51.9% of closure)
+- Critical path length: **110** theories
 
 **Sessions in closure**: `AInvs`, `Access`, `BaseRefine`, `Bisim`, `CBaseRefine`, `CRefine`, `CRefineSyscall`, `CamkesCdlBase`, `CamkesCdlRefine`, `DBaseRefine`, `DPolicy`, `DRefine`, `DSpecProofs`, `InfoFlow`, `InfoFlowC`, `InfoFlowCBase`, `LibTest`, `Refine`, `RefineOrphanage`, `SysInit`, `SysInitExamples`
 
@@ -27,31 +27,31 @@ Theories with the least scheduling flexibility — optimizing these yields the m
 
 | rank | theory | session | weight (s) | n_sess | dup overhead | fanout | slack | on CP |
 |---:|---|---|---:|---:|---:|---:|---:|:---:|
-| 1 | `Refine.Invariants_H` | Refine | 359.4 | 2 | 128.8 | 92 | -0.0 | ✓ |
-| 2 | `Refine.IpcCancel_R` | Refine | 348.0 | 2 | 75.5 | 67 | -0.0 | ✓ |
-| 3 | `Refine.CSpace_R` | Refine | 282.5 | 2 | 100.8 | 76 | -0.0 | ✓ |
-| 4 | `Refine.CSpace1_R` | Refine | 237.9 | 2 | 85.1 | 78 | -0.0 | ✓ |
-| 5 | `Refine.CSpace_I` | Refine | 174.0 | 2 | 41.8 | 79 | -0.0 | ✓ |
-| 6 | `AInvs.ArchRetype_AI` | AInvs | 159.7 | 2 | 75.6 | 226 | -0.0 | ✓ |
-| 7 | `Refine.TcbAcc_R` | Refine | 150.1 | 2 | 48.6 | 75 | -0.0 | ✓ |
-| 8 | `Refine.KHeap_R` | Refine | 115.3 | 2 | 47.1 | 83 | -0.0 | ✓ |
-| 9 | `AInvs.Invariants_AI` | AInvs | 115.0 | 2 | 50.4 | 260 | -0.0 | ✓ |
-| 10 | `Refine.VSpace_R` | Refine | 111.5 | 2 | 37.2 | 73 | -0.0 | ✓ |
-| 11 | `AInvs.ArchInvariants_AI` | AInvs | 94.9 | 2 | 39.2 | 261 | -0.0 | ✓ |
-| 12 | `AInvs.ArchFinalise_AI` | AInvs | 91.0 | 2 | 40.9 | 220 | -0.0 | ✓ |
-| 13 | `AInvs.DetSchedSchedule_AI` | AInvs | 83.4 | 2 | 30.4 | 186 | -0.0 | ✓ |
-| 14 | `Refine.ArchAcc_R` | Refine | 81.5 | 2 | 14.8 | 80 | -0.0 | ✓ |
-| 15 | `AInvs.ArchVSpace_AI` | AInvs | 76.2 | 2 | 34.0 | 233 | -0.0 | ✓ |
-| 16 | `AInvs.CSpaceInv_AI` | AInvs | 73.8 | 2 | 17.7 | 245 | -0.0 | ✓ |
-| 17 | `Refine.Schedule_R` | Refine | 69.8 | 2 | 25.4 | 68 | -0.0 | ✓ |
-| 18 | `AInvs.InvariantsPre_AI` | AInvs | 69.8 | 2 | 28.6 | 262 | -0.0 | ✓ |
-| 19 | `Refine.StateRelation` | Refine | 67.8 | 2 | 19.9 | 90 | -0.0 | ✓ |
-| 20 | `AInvs.ArchEmptyFail_AI` | AInvs | 65.4 | 2 | 27.5 | 206 | -0.0 | ✓ |
-| 21 | `AInvs.ArchDetSchedSchedule_AI` | AInvs | 63.2 | 2 | 23.4 | 185 | -0.0 | ✓ |
-| 22 | `AInvs.Ipc_AI` | AInvs | 58.4 | 2 | 25.7 | 217 | -0.0 | ✓ |
-| 23 | `Refine.Bits_R` | Refine | 52.2 | 2 | 25.9 | 88 | -0.0 | ✓ |
-| 24 | `AInvs.Deterministic_AI` | AInvs | 51.8 | 2 | 19.6 | 193 | -0.0 | ✓ |
-| 25 | `AInvs.Machine_AI` | AInvs | 51.6 | 2 | 15.1 | 254 | -0.0 | ✓ |
+| 1 | `AInvs.ArchInvariants_AI` | AInvs | 36.0 | 1 | 0.0 | 261 | -0.0 | ✓ |
+| 2 | `AInvs.InvariantsPre_AI` | AInvs | 20.4 | 1 | 0.0 | 262 | -0.0 | ✓ |
+| 3 | `AInvs.Invariants_AI` | AInvs | 41.4 | 1 | 0.0 | 260 | -0.0 | ✓ |
+| 4 | `AInvs.CSpace_AI` | AInvs | 27.4 | 1 | 0.0 | 240 | -0.0 | ✓ |
+| 5 | `AInvs.CSpaceInv_AI` | AInvs | 16.8 | 1 | 0.0 | 245 | -0.0 | ✓ |
+| 6 | `AInvs.Machine_AI` | AInvs | 12.0 | 1 | 0.0 | 254 | -0.0 | ✓ |
+| 7 | `AInvs.ArchKHeap_AI` | AInvs | 9.6 | 1 | 0.0 | 252 | -0.0 | ✓ |
+| 8 | `AInvs.ArchCSpace_AI` | AInvs | 9.3 | 1 | 0.0 | 239 | -0.0 | ✓ |
+| 9 | `AInvs.KHeap_AI` | AInvs | 9.1 | 1 | 0.0 | 251 | -0.0 | ✓ |
+| 10 | `AInvs.CSpaceInvPre_AI` | AInvs | 8.2 | 1 | 0.0 | 247 | -0.0 | ✓ |
+| 11 | `AInvs.ArchCSpaceInv_AI` | AInvs | 7.9 | 1 | 0.0 | 243 | -0.0 | ✓ |
+| 12 | `AInvs.TcbAcc_AI` | AInvs | 6.9 | 1 | 0.0 | 238 | -0.0 | ✓ |
+| 13 | `AInvs.ArchAcc_AI` | AInvs | 5.4 | 1 | 0.0 | 248 | -0.0 | ✓ |
+| 14 | `AInvs.VSpacePre_AI` | AInvs | 5.2 | 1 | 0.0 | 234 | -0.0 | ✓ |
+| 15 | `AInvs.ArchRetype_AI` | AInvs | 62.6 | 1 | 0.0 | 226 | -0.0 | ✓ |
+| 16 | `AInvs.ArchFinalise_AI` | AInvs | 36.4 | 1 | 0.0 | 220 | -0.0 | ✓ |
+| 17 | `AInvs.ArchVSpace_AI` | AInvs | 32.5 | 1 | 0.0 | 233 | -0.0 | ✓ |
+| 18 | `AInvs.Ipc_AI` | AInvs | 25.5 | 1 | 0.0 | 217 | -0.0 | ✓ |
+| 19 | `AInvs.ArchCNodeInv_AI` | AInvs | 22.0 | 1 | 0.0 | 212 | -0.0 | ✓ |
+| 20 | `AInvs.CNodeInv_AI` | AInvs | 13.6 | 1 | 0.0 | 213 | -0.0 | ✓ |
+| 21 | `AInvs.ArchTcb_AI` | AInvs | 12.0 | 1 | 0.0 | 208 | -0.0 | ✓ |
+| 22 | `AInvs.Finalise_AI` | AInvs | 11.7 | 1 | 0.0 | 221 | -0.0 | ✓ |
+| 23 | `AInvs.Tcb_AI` | AInvs | 10.0 | 1 | 0.0 | 211 | -0.0 | ✓ |
+| 24 | `AInvs.Retype_AI` | AInvs | 8.6 | 1 | 0.0 | 227 | -0.0 | ✓ |
+| 25 | `AInvs.EmptyFail_AI` | AInvs | 7.7 | 1 | 0.0 | 207 | -0.0 | ✓ |
 
 ## Top 20 critical-path theories (sorted by weight)
 
@@ -59,26 +59,26 @@ All on the critical path (slack ≈ 0). Ordered by their individual weight — t
 
 | rank | theory | session | weight (s) | n_sess | dup overhead | fanout | EST→EFT |
 |---:|---|---|---:|---:|---:|---:|:---|
-| 1 | `Refine.Finalise_R` | Refine | 649.8 | 2 | 225.6 | 66 | 4070→4720 |
-| 2 | `Refine.Invariants_H` | Refine | 359.4 | 2 | 128.8 | 92 | 1938→2298 |
-| 3 | `Refine.IpcCancel_R` | Refine | 348.0 | 2 | 75.5 | 67 | 3722→4070 |
-| 4 | `CRefine.Ipc_C` | CRefine | 332.3 | 2 | 148.3 | 12 | 7226→7558 |
-| 5 | `CRefine.StateRelation_C` | CRefine | 315.4 | 2 | 149.2 | 38 | 5914→6229 |
-| 6 | `Refine.CSpace_R` | Refine | 282.5 | 2 | 100.8 | 76 | 3108→3391 |
-| 7 | `Refine.Ipc_R` | Refine | 265.5 | 2 | 71.7 | 64 | 4720→4985 |
-| 8 | `Refine.CNodeInv_R` | Refine | 260.0 | 2 | 102.1 | 62 | 4985→5245 |
-| 9 | `CRefine.ADT_C` | CRefine | 239.9 | 1 | 0.0 | 6 | 7842→8082 |
-| 10 | `CRefine.Tcb_C` | CRefine | 238.8 | 2 | 32.2 | 11 | 7558→7797 |
-| 11 | `Refine.CSpace1_R` | Refine | 237.9 | 2 | 85.1 | 78 | 2870→3108 |
-| 12 | `CRefine.VSpace_C` | CRefine | 195.6 | 2 | 90.8 | 23 | 6644→6840 |
-| 13 | `Refine.CSpace_I` | Refine | 174.0 | 2 | 41.8 | 79 | 2696→2870 |
-| 14 | `CRefine.SyscallArgs_C` | CRefine | 170.5 | 2 | 76.9 | 20 | 6860→7030 |
-| 15 | `CRefine.Finalise_C` | CRefine | 166.1 | 2 | 81.7 | 18 | 7060→7226 |
-| 16 | `AInvs.ArchRetype_AI` | AInvs | 159.7 | 2 | 75.6 | 226 | 816→976 |
-| 17 | `Refine.ADT_H` | Refine | 158.2 | 2 | 55.8 | 58 | 5473→5631 |
-| 18 | `Refine.Tcb_R` | Refine | 156.1 | 2 | 32.2 | 61 | 5245→5402 |
-| 19 | `Refine.TcbAcc_R` | Refine | 150.1 | 2 | 48.6 | 75 | 3391→3541 |
-| 20 | `CRefine.Wellformed_C` | CRefine | 128.4 | 2 | 60.8 | 39 | 5785→5914 |
+| 1 | `CRefine.ADT_C` | CRefine | 266.1 | 1 | 0.0 | 6 | 2775→3041 |
+| 2 | `Refine.Finalise_R` | Refine | 222.9 | 1 | 0.0 | 66 | 1321→1544 |
+| 3 | `CRefine.Ipc_C` | CRefine | 170.9 | 1 | 0.0 | 12 | 2523→2694 |
+| 4 | `CRefine.StateRelation_C` | CRefine | 102.6 | 1 | 0.0 | 38 | 1939→2041 |
+| 5 | `Refine.Invariants_H` | Refine | 100.5 | 1 | 0.0 | 92 | 729→830 |
+| 6 | `Refine.CSpace_R` | Refine | 97.4 | 1 | 0.0 | 76 | 1041→1138 |
+| 7 | `CRefine.Refine_C` | CRefine | 96.4 | 1 | 0.0 | 4 | 3042→3138 |
+| 8 | `CRefine.VSpace_C` | CRefine | 95.0 | 1 | 0.0 | 23 | 2240→2334 |
+| 9 | `Refine.CNodeInv_R` | Refine | 88.4 | 1 | 0.0 | 62 | 1589→1678 |
+| 10 | `CRefine.Finalise_C` | CRefine | 83.9 | 1 | 0.0 | 18 | 2439→2523 |
+| 11 | `CRefine.SyscallArgs_C` | CRefine | 78.7 | 1 | 0.0 | 20 | 2345→2424 |
+| 12 | `Refine.CSpace1_R` | Refine | 77.4 | 1 | 0.0 | 78 | 963→1041 |
+| 13 | `Refine.IpcCancel_R` | Refine | 72.5 | 1 | 0.0 | 67 | 1249→1321 |
+| 14 | `InfoFlowC.Noninterference_Refinement` | InfoFlowC | 65.6 | 1 | 0.0 | 0 | 3208→3273 |
+| 15 | `AInvs.ArchRetype_AI` | AInvs | 62.6 | 1 | 0.0 | 226 | 294→356 |
+| 16 | `Refine.ADT_H` | Refine | 62.5 | 1 | 0.0 | 58 | 1742→1804 |
+| 17 | `CRefine.Wellformed_C` | CRefine | 59.6 | 1 | 0.0 | 39 | 1879→1939 |
+| 18 | `CRefine.Tcb_C` | CRefine | 55.6 | 1 | 0.0 | 11 | 2694→2749 |
+| 19 | `InfoFlowC.ADT_IF_Refine_C` | InfoFlowC | 54.3 | 1 | 0.0 | 2 | 3138→3192 |
+| 20 | `CRefine.Corres_C` | CRefine | 51.2 | 1 | 0.0 | 36 | 2064→2115 |
 
 ## Top 10 by fanout (cross-cutting impact)
 
@@ -86,16 +86,16 @@ Theories with the most transitive importers in this closure. Optimizing or restr
 
 | rank | theory | session | weight (s) | fanout | n_sess | on CP |
 |---:|---|---|---:|---:|---:|:---:|
-| 1 | `AInvs.Rights_AI` | AInvs | 0.7 | 283 | 2 |  |
-| 2 | `AInvs.ArchCrunchSetup_AI` | AInvs | 5.8 | 269 | 2 | ✓ |
-| 3 | `AInvs.Include_AI` | AInvs | 2.7 | 268 | 2 | ✓ |
-| 4 | `AInvs.BCorres_AI` | AInvs | 6.1 | 266 | 2 | ✓ |
+| 1 | `AInvs.Rights_AI` | AInvs | 0.4 | 283 | 1 |  |
+| 2 | `AInvs.ArchCrunchSetup_AI` | AInvs | 2.4 | 269 | 1 | ✓ |
+| 3 | `AInvs.Include_AI` | AInvs | 1.4 | 268 | 1 | ✓ |
+| 4 | `AInvs.BCorres_AI` | AInvs | 2.7 | 266 | 1 | ✓ |
 | 5 | `AInvs.ArchBitSetup_AI` | AInvs | 0.0 | 266 | 0 |  |
-| 6 | `AInvs.ArchBCorres_AI` | AInvs | 5.9 | 265 | 2 | ✓ |
-| 7 | `AInvs.ArchLevityCatch_AI` | AInvs | 4.1 | 264 | 2 | ✓ |
-| 8 | `AInvs.LevityCatch_AI` | AInvs | 8.5 | 263 | 2 | ✓ |
-| 9 | `AInvs.InvariantsPre_AI` | AInvs | 69.8 | 262 | 2 | ✓ |
-| 10 | `AInvs.ArchInvariants_AI` | AInvs | 94.9 | 261 | 2 | ✓ |
+| 6 | `AInvs.ArchBCorres_AI` | AInvs | 2.7 | 265 | 1 | ✓ |
+| 7 | `AInvs.ArchLevityCatch_AI` | AInvs | 1.9 | 264 | 1 | ✓ |
+| 8 | `AInvs.LevityCatch_AI` | AInvs | 4.2 | 263 | 1 | ✓ |
+| 9 | `AInvs.InvariantsPre_AI` | AInvs | 20.4 | 262 | 1 | ✓ |
+| 10 | `AInvs.ArchInvariants_AI` | AInvs | 36.0 | 261 | 1 | ✓ |
 
 ## Notes
 

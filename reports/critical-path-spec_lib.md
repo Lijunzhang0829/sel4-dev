@@ -15,9 +15,9 @@ Changes to **shared utility theories** (`lib/**/*.thy`). Foundational infrastruc
 
 - Sessions in closure: **52** of 56 (93%)
 - Theories in closure: **1026** of 1094 (94%)
-- Closure total weight (sum of theory weights): **19045.0s**
-- Critical path total: **8732.2s** (45.9% of closure)
-- Critical path length: **141** theories
+- Closure total weight (sum of theory weights): **12101.9s**
+- Critical path total: **4407.6s** (36.4% of closure)
+- Critical path length: **40** theories
 
 **Sessions in closure**: `AInvs`, `ASepSpec`, `ASpec`, `Access`, `AsmRefine`, `AsmRefineTest`, `AutoCorres`, `AutoCorresCRefine`, `AutoCorresQuickstart`, `AutoCorresSEL4`, `BaseRefine`, `Basics`, `Bisim`, `CBaseRefine`, `CKernel`, `CLib`, `CParser`, `CRefine`, `CRefineSyscall`, `CSpec`, `CamkesCdlBase`, `CamkesCdlRefine`, `Concurrency`, `CorresK`, `DBaseRefine`, `DPolicy`, `DRefine`, `DSpec`, `DSpecProofs`, `Docs`, `EVTutorial`, `Eisbach_Tools`, `ExecSpec`, `InfoFlow`, `InfoFlowC`, `InfoFlowCBase`, `Lib`, `LibTest`, `ML_Utils`, `Monads`, `Refine`, `RefineOrphanage`, `SepDSpec`, `SepTactics`, `Sep_Algebra`, `Simpl-VCG`, `SimplExport`, `SimplExportAndRefine`, `SysInit`, `SysInitExamples`, `TakeGrant`, `Word_Lib`
 
@@ -27,31 +27,31 @@ Theories with the least scheduling flexibility — optimizing these yields the m
 
 | rank | theory | session | weight (s) | n_sess | dup overhead | fanout | slack | on CP |
 |---:|---|---|---:|---:|---:|---:|---:|:---:|
-| 1 | `Refine.Finalise_R` | Refine | 649.8 | 2 | 225.6 | 67 | 0.0 | ✓ |
-| 2 | `Refine.Invariants_H` | Refine | 359.4 | 2 | 128.8 | 93 | 0.0 | ✓ |
-| 3 | `Refine.IpcCancel_R` | Refine | 348.0 | 2 | 75.5 | 68 | 0.0 | ✓ |
-| 4 | `CRefine.Ipc_C` | CRefine | 332.3 | 2 | 148.3 | 13 | 0.0 | ✓ |
-| 5 | `CRefine.StateRelation_C` | CRefine | 315.4 | 2 | 149.2 | 39 | 0.0 | ✓ |
-| 6 | `Refine.CSpace_R` | Refine | 282.5 | 2 | 100.8 | 77 | 0.0 | ✓ |
-| 7 | `Refine.Ipc_R` | Refine | 265.5 | 2 | 71.7 | 65 | 0.0 | ✓ |
-| 8 | `Refine.CNodeInv_R` | Refine | 260.0 | 2 | 102.1 | 63 | 0.0 | ✓ |
-| 9 | `CRefine.ADT_C` | CRefine | 239.9 | 1 | 0.0 | 7 | 0.0 | ✓ |
-| 10 | `CRefine.Tcb_C` | CRefine | 238.8 | 2 | 32.2 | 12 | 0.0 | ✓ |
-| 11 | `Refine.CSpace1_R` | Refine | 237.9 | 2 | 85.1 | 79 | 0.0 | ✓ |
-| 12 | `CRefine.VSpace_C` | CRefine | 195.6 | 2 | 90.8 | 24 | 0.0 | ✓ |
-| 13 | `Refine.CSpace_I` | Refine | 174.0 | 2 | 41.8 | 80 | 0.0 | ✓ |
-| 14 | `CRefine.SyscallArgs_C` | CRefine | 170.5 | 2 | 76.9 | 21 | 0.0 | ✓ |
-| 15 | `CRefine.Finalise_C` | CRefine | 166.1 | 2 | 81.7 | 19 | 0.0 | ✓ |
-| 16 | `AInvs.ArchRetype_AI` | AInvs | 159.7 | 2 | 75.6 | 227 | 0.0 | ✓ |
-| 17 | `Refine.ADT_H` | Refine | 158.2 | 2 | 55.8 | 59 | 0.0 | ✓ |
-| 18 | `Refine.Tcb_R` | Refine | 156.1 | 2 | 32.2 | 62 | 0.0 | ✓ |
-| 19 | `Refine.TcbAcc_R` | Refine | 150.1 | 2 | 48.6 | 76 | 0.0 | ✓ |
-| 20 | `CRefine.Wellformed_C` | CRefine | 128.4 | 2 | 60.8 | 40 | 0.0 | ✓ |
-| 21 | `CRefine.Corres_C` | CRefine | 120.8 | 2 | 54.8 | 37 | 0.0 | ✓ |
-| 22 | `Refine.KHeap_R` | Refine | 115.3 | 2 | 47.1 | 84 | 0.0 | ✓ |
-| 23 | `Refine.VSpace_R` | Refine | 111.5 | 2 | 37.2 | 74 | 0.0 | ✓ |
-| 24 | `AInvs.ArchFinalise_AI` | AInvs | 91.0 | 2 | 40.9 | 221 | 0.0 | ✓ |
-| 25 | `AInvs.DetSchedSchedule_AI` | AInvs | 83.4 | 2 | 30.4 | 187 | 0.0 | ✓ |
+| 1 | `CParser.CTranslation` | CParser | 24.3 | 2 | 9.5 | 301 | -0.0 | ✓ |
+| 2 | `AsmRefine.GlobalsSwap` | AsmRefine | 8.1 | 2 | 3.9 | 72 | -0.0 | ✓ |
+| 3 | `CParser.CProof` | CParser | 6.4 | 2 | 3.2 | 305 | -0.0 | ✓ |
+| 4 | `CParser.TypHeap` | CParser | 5.9 | 2 | 2.6 | 313 | -0.0 | ✓ |
+| 5 | `CParser.CTypesDefs` | CParser | 28.9 | 2 | 12.1 | 324 | -0.0 | ✓ |
+| 6 | `CParser.CTypesBase` | CParser | 11.6 | 2 | 4.7 | 325 | -0.0 | ✓ |
+| 7 | `SimplExportAndRefine.SEL4GraphRefine` | SimplExportAndRefine | 2308.3 | 1 | 0.0 | 0 | 0.0 | ✓ |
+| 8 | `CKernel.Kernel_C` | CKernel | 1289.4 | 2 | 613.6 | 55 | 0.0 | ✓ |
+| 9 | `SimplExport.SEL4SimplExport` | SimplExport | 522.0 | 1 | 0.0 | 2 | 0.0 | ✓ |
+| 10 | `CSpec.Substitute` | CSpec | 147.4 | 2 | 64.9 | 54 | 0.0 | ✓ |
+| 11 | `Lib.Lib` | Lib | 15.3 | 3 | 9.4 | 518 | 40.2 |  |
+| 12 | `Eisbach_Tools.Rule_By_Method` | Eisbach_Tools | 5.7 | 3 | 3.8 | 541 | 40.2 |  |
+| 13 | `Lib.NICTATools` | Lib | 18.9 | 3 | 11.6 | 519 | 40.2 |  |
+| 14 | `Eisbach_Tools.Eisbach_Methods` | Eisbach_Tools | 8.3 | 3 | 5.5 | 533 | 40.2 |  |
+| 15 | `ExecSpec.MachineTypes` | ExecSpec | 26.0 | 3 | 17.1 | 429 | 40.2 |  |
+| 16 | `Lib.HaskellLib_H` | Lib | 21.9 | 2 | 10.8 | 466 | 40.2 |  |
+| 17 | `Monads.WP` | Monads | 13.2 | 3 | 8.1 | 606 | 42.3 |  |
+| 18 | `Monads.WPSimp` | Monads | 9.5 | 3 | 5.5 | 605 | 42.3 |  |
+| 19 | `Monads.Nondet_VCG` | Monads | 8.8 | 3 | 5.1 | 578 | 42.3 |  |
+| 20 | `Monads.Datatype_Schematic` | Monads | 7.0 | 3 | 3.8 | 608 | 42.3 |  |
+| 21 | `Monads.Strengthen` | Monads | 7.9 | 3 | 5.3 | 613 | 43.4 |  |
+| 22 | `Eisbach_Tools.Apply_Debug` | Eisbach_Tools | 5.3 | 3 | 2.7 | 640 | 44.3 |  |
+| 23 | `Monads.Nondet_Lemmas` | Monads | 9.1 | 3 | 5.7 | 580 | 54.4 |  |
+| 24 | `Monads.Nondet_Monad` | Monads | 10.4 | 3 | 5.3 | 585 | 54.4 |  |
+| 25 | `Lib.Value_Abbreviation` | Lib | 8.7 | 3 | 5.6 | 519 | 64.4 |  |
 
 ## Top 20 critical-path theories (sorted by weight)
 
@@ -59,26 +59,26 @@ All on the critical path (slack ≈ 0). Ordered by their individual weight — t
 
 | rank | theory | session | weight (s) | n_sess | dup overhead | fanout | EST→EFT |
 |---:|---|---|---:|---:|---:|---:|:---|
-| 1 | `Refine.Finalise_R` | Refine | 649.8 | 2 | 225.6 | 67 | 4490→5140 |
-| 2 | `Refine.Invariants_H` | Refine | 359.4 | 2 | 128.8 | 93 | 2358→2718 |
-| 3 | `Refine.IpcCancel_R` | Refine | 348.0 | 2 | 75.5 | 68 | 4142→4490 |
-| 4 | `CRefine.Ipc_C` | CRefine | 332.3 | 2 | 148.3 | 13 | 7646→7978 |
-| 5 | `CRefine.StateRelation_C` | CRefine | 315.4 | 2 | 149.2 | 39 | 6334→6649 |
-| 6 | `Refine.CSpace_R` | Refine | 282.5 | 2 | 100.8 | 77 | 3528→3811 |
-| 7 | `Refine.Ipc_R` | Refine | 265.5 | 2 | 71.7 | 65 | 5140→5406 |
-| 8 | `Refine.CNodeInv_R` | Refine | 260.0 | 2 | 102.1 | 63 | 5406→5666 |
-| 9 | `CRefine.ADT_C` | CRefine | 239.9 | 1 | 0.0 | 7 | 8262→8502 |
-| 10 | `CRefine.Tcb_C` | CRefine | 238.8 | 2 | 32.2 | 12 | 7978→8217 |
-| 11 | `Refine.CSpace1_R` | Refine | 237.9 | 2 | 85.1 | 79 | 3290→3528 |
-| 12 | `CRefine.VSpace_C` | CRefine | 195.6 | 2 | 90.8 | 24 | 7064→7260 |
-| 13 | `Refine.CSpace_I` | Refine | 174.0 | 2 | 41.8 | 80 | 3116→3290 |
-| 14 | `CRefine.SyscallArgs_C` | CRefine | 170.5 | 2 | 76.9 | 21 | 7280→7451 |
-| 15 | `CRefine.Finalise_C` | CRefine | 166.1 | 2 | 81.7 | 19 | 7480→7646 |
-| 16 | `AInvs.ArchRetype_AI` | AInvs | 159.7 | 2 | 75.6 | 227 | 1236→1396 |
-| 17 | `Refine.ADT_H` | Refine | 158.2 | 2 | 55.8 | 59 | 5893→6051 |
-| 18 | `Refine.Tcb_R` | Refine | 156.1 | 2 | 32.2 | 62 | 5666→5822 |
-| 19 | `Refine.TcbAcc_R` | Refine | 150.1 | 2 | 48.6 | 76 | 3811→3961 |
-| 20 | `CRefine.Wellformed_C` | CRefine | 128.4 | 2 | 60.8 | 40 | 6205→6334 |
+| 1 | `SimplExportAndRefine.SEL4GraphRefine` | SimplExportAndRefine | 2308.3 | 1 | 0.0 | 0 | 2099→4408 |
+| 2 | `CKernel.Kernel_C` | CKernel | 1289.4 | 2 | 613.6 | 55 | 136→1426 |
+| 3 | `SimplExport.SEL4SimplExport` | SimplExport | 522.0 | 1 | 0.0 | 2 | 1577→2099 |
+| 4 | `CSpec.Substitute` | CSpec | 147.4 | 2 | 64.9 | 54 | 1426→1573 |
+| 5 | `CParser.CTypesDefs` | CParser | 28.9 | 2 | 12.1 | 324 | 34→63 |
+| 6 | `CParser.CTranslation` | CParser | 24.3 | 2 | 9.5 | 301 | 102→127 |
+| 7 | `CParser.CTypesBase` | CParser | 11.6 | 2 | 4.7 | 325 | 22→34 |
+| 8 | `AsmRefine.GlobalsSwap` | AsmRefine | 8.1 | 2 | 3.9 | 72 | 127→135 |
+| 9 | `CParser.CProof` | CParser | 6.4 | 2 | 3.2 | 305 | 94→100 |
+| 10 | `CParser.TypHeap` | CParser | 5.9 | 2 | 2.6 | 313 | 76→82 |
+| 11 | `Word_Lib.More_Bit_Ring` | Word_Lib | 4.3 | 1 | 0.0 | 818 | 0→4 |
+| 12 | `SimplExport.ArchSEL4SimplExport` | SimplExport | 4.2 | 1 | 0.0 | 3 | 1573→1577 |
+| 13 | `CParser.CTypes` | CParser | 4.0 | 2 | 1.9 | 323 | 63→67 |
+| 14 | `CParser.SepCode` | CParser | 3.7 | 2 | 1.6 | 311 | 84→88 |
+| 15 | `Word_Lib.Bits_Int` | Word_Lib | 3.6 | 1 | 0.0 | 798 | 9→13 |
+| 16 | `CParser.ArchArraysMemInstance` | CParser | 3.0 | 2 | 1.3 | 314 | 73→76 |
+| 17 | `CParser.SepFrame` | CParser | 2.9 | 2 | 1.3 | 306 | 91→94 |
+| 18 | `CParser.CompoundCTypes` | CParser | 2.7 | 2 | 1.1 | 317 | 70→72 |
+| 19 | `Word_Lib.Reversed_Bit_Lists` | Word_Lib | 2.6 | 1 | 0.0 | 795 | 13→16 |
+| 20 | `CParser.Separation` | CParser | 2.3 | 2 | 1.1 | 312 | 82→84 |
 
 ## Top 10 by fanout (cross-cutting impact)
 
@@ -86,16 +86,16 @@ Theories with the most transitive importers in this closure. Optimizing or restr
 
 | rank | theory | session | weight (s) | fanout | n_sess | on CP |
 |---:|---|---|---:|---:|---:|:---:|
-| 1 | `Word_Lib.More_Bit_Ring` | Word_Lib | 3.9 | 818 | 1 |  |
+| 1 | `Word_Lib.More_Bit_Ring` | Word_Lib | 4.3 | 818 | 1 | ✓ |
 | 2 | `Word_Lib.More_Divides` | Word_Lib | 0.2 | 818 | 1 |  |
 | 3 | `Word_Lib.More_Arithmetic` | Word_Lib | 0.1 | 818 | 1 |  |
-| 4 | `Word_Lib.More_Word` | Word_Lib | 1.8 | 817 | 1 |  |
-| 5 | `Word_Lib.Bit_Shifts_Infix_Syntax` | Word_Lib | 1.6 | 809 | 1 |  |
-| 6 | `Word_Lib.Most_significant_bit` | Word_Lib | 0.2 | 803 | 1 |  |
-| 7 | `Word_Lib.Even_More_List` | Word_Lib | 0.5 | 802 | 1 |  |
-| 8 | `ML_Utils.ML_Utils` | ML_Utils | 2.1 | 801 | 3 |  |
+| 4 | `Word_Lib.More_Word` | Word_Lib | 2.1 | 817 | 1 | ✓ |
+| 5 | `Word_Lib.Bit_Shifts_Infix_Syntax` | Word_Lib | 1.7 | 809 | 1 | ✓ |
+| 6 | `Word_Lib.Most_significant_bit` | Word_Lib | 0.2 | 803 | 1 | ✓ |
+| 7 | `Word_Lib.Even_More_List` | Word_Lib | 0.6 | 802 | 1 |  |
+| 8 | `ML_Utils.ML_Utils` | ML_Utils | 2.0 | 801 | 3 |  |
 | 9 | `Word_Lib.Aligned` | Word_Lib | 0.6 | 801 | 1 |  |
-| 10 | `Word_Lib.Bit_Comprehension` | Word_Lib | 1.5 | 800 | 1 |  |
+| 10 | `Word_Lib.Bit_Comprehension` | Word_Lib | 1.6 | 800 | 1 |  |
 
 ## Notes
 

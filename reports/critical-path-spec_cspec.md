@@ -15,8 +15,8 @@ Changes to **hand-written C-side abstract spec** (`spec/cspec/**/*.thy`). Closur
 
 - Sessions in closure: **11** of 56 (20%)
 - Theories in closure: **73** of 1094 (7%)
-- Closure total weight (sum of theory weights): **7731.2s**
-- Critical path total: **3615.9s** (46.8% of closure)
+- Closure total weight (sum of theory weights): **6742.7s**
+- Critical path total: **4271.3s** (63.3% of closure)
 - Critical path length: **5** theories
 
 **Sessions in closure**: `AutoCorresCRefine`, `AutoCorresSEL4`, `CBaseRefine`, `CKernel`, `CRefine`, `CRefineSyscall`, `CSpec`, `InfoFlowC`, `InfoFlowCBase`, `SimplExport`, `SimplExportAndRefine`
@@ -27,31 +27,31 @@ Theories with the least scheduling flexibility — optimizing these yields the m
 
 | rank | theory | session | weight (s) | n_sess | dup overhead | fanout | slack | on CP |
 |---:|---|---|---:|---:|---:|---:|---:|:---:|
-| 1 | `SimplExportAndRefine.SEL4GraphRefine` | SimplExportAndRefine | 2228.4 | 1 | 0.0 | 0 | 0.0 | ✓ |
-| 2 | `SimplExport.SEL4SimplExport` | SimplExport | 605.9 | 1 | 0.0 | 2 | 0.0 | ✓ |
-| 3 | `CKernel.Kernel_C` | CKernel | 692.5 | 1 | 0.0 | 55 | 0.0 | ✓ |
-| 4 | `CSpec.Substitute` | CSpec | 83.8 | 1 | 0.0 | 54 | 0.0 | ✓ |
-| 5 | `SimplExport.ArchSEL4SimplExport` | SimplExport | 5.3 | 1 | 0.0 | 3 | 0.0 | ✓ |
-| 6 | `CRefine.StoreWord_C` | CRefine | 20.2 | 2 | 9.9 | 23 | 243.9 |  |
-| 7 | `CRefine.Ipc_C` | CRefine | 332.3 | 2 | 148.3 | 13 | 243.9 |  |
-| 8 | `CRefine.StateRelation_C` | CRefine | 315.4 | 2 | 149.2 | 39 | 243.9 |  |
-| 9 | `CRefine.ADT_C` | CRefine | 239.9 | 1 | 0.0 | 7 | 243.9 |  |
-| 10 | `CRefine.Tcb_C` | CRefine | 238.8 | 2 | 32.2 | 12 | 243.9 |  |
-| 11 | `CRefine.VSpace_C` | CRefine | 195.6 | 2 | 90.8 | 24 | 243.9 |  |
-| 12 | `CRefine.SyscallArgs_C` | CRefine | 170.5 | 2 | 76.9 | 21 | 243.9 |  |
-| 13 | `CRefine.Finalise_C` | CRefine | 166.1 | 2 | 81.7 | 19 | 243.9 |  |
-| 14 | `CRefine.Corres_C` | CRefine | 120.8 | 2 | 54.8 | 37 | 243.9 |  |
-| 15 | `CRefine.Refine_C` | CRefine | 82.1 | 1 | 0.0 | 5 | 243.9 |  |
-| 16 | `CRefine.Machine_C` | CRefine | 76.1 | 2 | 36.2 | 27 | 243.9 |  |
-| 17 | `InfoFlowC.Noninterference_Refinement` | InfoFlowC | 72.1 | 1 | 0.0 | 0 | 243.9 |  |
-| 18 | `CRefine.CSpace_C` | CRefine | 68.2 | 2 | 32.7 | 26 | 243.9 |  |
-| 19 | `InfoFlowC.ADT_IF_Refine_C` | InfoFlowC | 60.1 | 1 | 0.0 | 2 | 243.9 |  |
-| 20 | `CRefine.SR_lemmas_C` | CRefine | 55.9 | 2 | 24.8 | 38 | 243.9 |  |
-| 21 | `CRefine.Schedule_C` | CRefine | 45.2 | 2 | 22.1 | 11 | 243.9 |  |
-| 22 | `CRefine.Ctac` | CRefine | 39.4 | 2 | 19.2 | 35 | 243.9 |  |
-| 23 | `CRefine.AutoCorres_C` | CRefine | 38.1 | 2 | 18.2 | 36 | 243.9 |  |
-| 24 | `CRefine.CLevityCatch` | CRefine | 38.1 | 2 | 13.3 | 41 | 243.9 |  |
-| 25 | `CRefine.IpcCancel_C` | CRefine | 29.3 | 2 | 14.0 | 20 | 243.9 |  |
+| 1 | `CKernel.Kernel_C` | CKernel | 1289.4 | 2 | 613.6 | 55 | -0.0 | ✓ |
+| 2 | `SimplExport.SEL4SimplExport` | SimplExport | 522.0 | 1 | 0.0 | 2 | -0.0 | ✓ |
+| 3 | `CSpec.Substitute` | CSpec | 147.4 | 2 | 64.9 | 54 | -0.0 | ✓ |
+| 4 | `SimplExportAndRefine.SEL4GraphRefine` | SimplExportAndRefine | 2308.3 | 1 | 0.0 | 0 | 0.0 | ✓ |
+| 5 | `SimplExportAndRefine.SEL4GlobalsSwap` | SimplExportAndRefine | 11.7 | 1 | 0.0 | 2 | 514.5 |  |
+| 6 | `CRefine.ADT_C` | CRefine | 266.1 | 1 | 0.0 | 7 | 1387.8 |  |
+| 7 | `CRefine.Ipc_C` | CRefine | 170.9 | 1 | 0.0 | 13 | 1387.8 |  |
+| 8 | `CRefine.Refine_C` | CRefine | 96.4 | 1 | 0.0 | 5 | 1387.8 |  |
+| 9 | `CRefine.Finalise_C` | CRefine | 83.9 | 1 | 0.0 | 19 | 1387.8 |  |
+| 10 | `CRefine.SyscallArgs_C` | CRefine | 78.7 | 1 | 0.0 | 21 | 1387.8 |  |
+| 11 | `CRefine.Tcb_C` | CRefine | 55.6 | 1 | 0.0 | 12 | 1387.8 |  |
+| 12 | `InfoFlowC.ADT_IF_Refine_C` | InfoFlowC | 54.3 | 1 | 0.0 | 2 | 1387.8 |  |
+| 13 | `CRefine.Corres_C` | CRefine | 51.2 | 1 | 0.0 | 37 | 1387.8 |  |
+| 14 | `CRefine.Machine_C` | CRefine | 44.6 | 1 | 0.0 | 27 | 1387.8 |  |
+| 15 | `CRefine.Schedule_C` | CRefine | 25.5 | 1 | 0.0 | 11 | 1387.8 |  |
+| 16 | `CRefine.AutoCorres_C` | CRefine | 18.5 | 1 | 0.0 | 36 | 1387.8 |  |
+| 17 | `CRefine.IpcCancel_C` | CRefine | 15.2 | 1 | 0.0 | 20 | 1387.8 |  |
+| 18 | `InfoFlowC.ArchADT_IF_Refine_C` | InfoFlowC | 15.2 | 1 | 0.0 | 1 | 1387.8 |  |
+| 19 | `CRefine.Ctac_lemmas_C` | CRefine | 6.2 | 1 | 0.0 | 34 | 1387.8 |  |
+| 20 | `CRefine.VSpace_C` | CRefine | 95.0 | 1 | 0.0 | 24 | 1387.8 |  |
+| 21 | `CRefine.CSpace_C` | CRefine | 36.8 | 1 | 0.0 | 26 | 1387.8 |  |
+| 22 | `CRefine.SR_lemmas_C` | CRefine | 22.7 | 1 | 0.0 | 38 | 1387.8 |  |
+| 23 | `CRefine.Ctac` | CRefine | 18.3 | 1 | 0.0 | 35 | 1387.8 |  |
+| 24 | `CRefine.StoreWord_C` | CRefine | 10.4 | 1 | 0.0 | 23 | 1387.8 |  |
+| 25 | `CRefine.StateRelation_C` | CRefine | 102.6 | 1 | 0.0 | 39 | 1387.8 |  |
 
 ## Top 20 critical-path theories (sorted by weight)
 
@@ -59,11 +59,11 @@ All on the critical path (slack ≈ 0). Ordered by their individual weight — t
 
 | rank | theory | session | weight (s) | n_sess | dup overhead | fanout | EST→EFT |
 |---:|---|---|---:|---:|---:|---:|:---|
-| 1 | `SimplExportAndRefine.SEL4GraphRefine` | SimplExportAndRefine | 2228.4 | 1 | 0.0 | 0 | 1388→3616 |
-| 2 | `CKernel.Kernel_C` | CKernel | 692.5 | 1 | 0.0 | 55 | 0→692 |
-| 3 | `SimplExport.SEL4SimplExport` | SimplExport | 605.9 | 1 | 0.0 | 2 | 782→1388 |
-| 4 | `CSpec.Substitute` | CSpec | 83.8 | 1 | 0.0 | 54 | 692→776 |
-| 5 | `SimplExport.ArchSEL4SimplExport` | SimplExport | 5.3 | 1 | 0.0 | 3 | 776→782 |
+| 1 | `SimplExportAndRefine.SEL4GraphRefine` | SimplExportAndRefine | 2308.3 | 1 | 0.0 | 0 | 1963→4271 |
+| 2 | `CKernel.Kernel_C` | CKernel | 1289.4 | 2 | 613.6 | 55 | 0→1289 |
+| 3 | `SimplExport.SEL4SimplExport` | SimplExport | 522.0 | 1 | 0.0 | 2 | 1441→1963 |
+| 4 | `CSpec.Substitute` | CSpec | 147.4 | 2 | 64.9 | 54 | 1289→1437 |
+| 5 | `SimplExport.ArchSEL4SimplExport` | SimplExport | 4.2 | 1 | 0.0 | 3 | 1437→1441 |
 
 ## Top 10 by fanout (cross-cutting impact)
 
@@ -71,16 +71,16 @@ Theories with the most transitive importers in this closure. Optimizing or restr
 
 | rank | theory | session | weight (s) | fanout | n_sess | on CP |
 |---:|---|---|---:|---:|---:|:---:|
-| 1 | `CKernel.Kernel_C` | CKernel | 692.5 | 55 | 1 | ✓ |
-| 2 | `CSpec.Substitute` | CSpec | 83.8 | 54 | 1 | ✓ |
-| 3 | `CSpec.structures_defs` | CSpec | 35.0 | 47 | 1 |  |
-| 4 | `CSpec.structures_proofs` | CSpec | 17.9 | 47 | 1 |  |
-| 5 | `CSpec.shared_types_defs` | CSpec | 2.6 | 47 | 1 |  |
-| 6 | `CSpec.shared_types_proofs` | CSpec | 1.3 | 47 | 1 |  |
-| 7 | `CRefine.Move_C` | CRefine | 13.1 | 46 | 2 |  |
-| 8 | `CSpec.KernelInc_C` | CSpec | 0.9 | 46 | 1 |  |
-| 9 | `CRefine.ArchMove_C` | CRefine | 34.8 | 45 | 2 |  |
-| 10 | `CBaseRefine.Include_C` | CBaseRefine | 29.7 | 43 | 1 |  |
+| 1 | `CKernel.Kernel_C` | CKernel | 1289.4 | 55 | 2 | ✓ |
+| 2 | `CSpec.Substitute` | CSpec | 147.4 | 54 | 2 | ✓ |
+| 3 | `CSpec.structures_defs` | CSpec | 87.6 | 47 | 2 |  |
+| 4 | `CSpec.structures_proofs` | CSpec | 39.4 | 47 | 2 |  |
+| 5 | `CSpec.shared_types_defs` | CSpec | 13.5 | 47 | 2 |  |
+| 6 | `CSpec.shared_types_proofs` | CSpec | 2.5 | 47 | 2 |  |
+| 7 | `CSpec.KernelInc_C` | CSpec | 7.7 | 46 | 2 |  |
+| 8 | `CRefine.Move_C` | CRefine | 6.0 | 46 | 1 |  |
+| 9 | `CRefine.ArchMove_C` | CRefine | 17.7 | 45 | 1 |  |
+| 10 | `CBaseRefine.Include_C` | CBaseRefine | 21.2 | 43 | 1 |  |
 
 ## Notes
 
