@@ -18,7 +18,7 @@ Pipeline:
 Plus the asm-refinement chain is also affected:
     spec/cspec/c → SimplExport → SimplExportAndRefine
 
-Per P0.5: CSpec/CKernel are 0%/11% duplication, so the C-change closure has
+Per CSTR: CSpec/CKernel are 0%/11% duplication, so the C-change closure has
 relatively MORE actual work in the closure than proof/spec/haskell changes
 would suggest from raw timings. SimplExport (646s) + SimplExportAndRefine
 (2264s) take big absolute hits if asm-refinement is part of the workflow.

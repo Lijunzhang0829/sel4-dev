@@ -88,7 +88,7 @@ Spread across 5 commits on `experiment/dag-critical-path`, we built:
 5. **CPM analysis** — earliest/latest finish times, slack, fanout per
    node, on the closure-induced subgraph.
 
-### 2.2 The P0.5 finding
+### 2.2 The CSTR finding
 
 A diagnostic check ([reports/session-duplication-scan.md](../reports/session-duplication-scan.md))
 revealed that **28% of total per-theory aggregate elapsed (5585 of
@@ -139,7 +139,7 @@ Refine.Invariants_H       128.8s            230.6s              1.79×
                        (top 10 sum):        2376s (vs 938 original; ~2.5×)
 ```
 
-**This is the P0.5 amplification**: cross-session reprocessing isn't
+**This is the CSTR amplification**: cross-session reprocessing isn't
 just duplicate work, it's *more expensive* duplicate work.
 
 ### 2.4 Critical-path placement
@@ -147,9 +147,9 @@ just duplicate work, it's *more expensive* duplicate work.
 The cost-aware critical-path report
 ([reports/critical-path-summary.md](../reports/critical-path-summary.md))
 showed that the top slack=0 theories for proof / spec / haskell change
-types were *all* P0.5-amplified Refine theories: `Finalise_R 650s`
+types were *all* CSTR-amplified Refine theories: `Finalise_R 650s`
 (combined cost), `Invariants_H 359s`, `IpcCancel_R 348s`, `CSpace_R 282s`,
-etc. — each appearing with `n_sessions=2` indicating P0.5 dup.
+etc. — each appearing with `n_sessions=2` indicating CSTR dup.
 
 In other words: the 4-most-impactful change types' bottleneck was
 **not the lemmas the slow-commands report flagged, but the
@@ -290,7 +290,7 @@ Trade: 5527.5s of Refine-system reprocessing (with ~2-3× amplification)
 CRefineSyscall declares only one theory (`Intermediate_C`); under the
 old config its 3306s wall was **entirely** the cost of source-
 re-executing the full CRefine session inside CRefineSyscall's ML
-state. P0.5 reported 100% dup. After swap:
+state. CSTR reported 100% dup. After swap:
 
 ```
 Building CRefineSyscall ...
@@ -298,13 +298,13 @@ CRefineSyscall: theory CRefineSyscall.Intermediate_C
 Timing CRefineSyscall (8 threads, 1.158s elapsed time, 1.668s cpu time, 0.000s GC time, factor 1.44)
 ```
 
-The actual session-specific work was always ~1s. P0.5 inflated it ~3000×.
+The actual session-specific work was always ~1s. CSTR inflated it ~3000×.
 
 ### 4.4 Why the gain was 5× the estimate
 
 The conservative 5500s upper-bound estimate missed four mechanisms:
 
-**Mechanism 1: P0.5 amplification (×2.5 average)** — re-executed
+**Mechanism 1: CSTR amplification (×2.5 average)** — re-executed
 theories take 2.5× their original session time on average due to ML
 state size effects. Estimate accounted only for the original 3405s
 aggregate; reality removed 5527s.
@@ -333,7 +333,7 @@ parent. Its GC dropped 4689→2426s (-48%), wall dropped 4557→4039s
 
 Negative offset:
 **Mechanism 5: downstream regression** — InfoFlowCBase (`= CRefine +
-sessions InfoFlow Access ...`) has its own P0.5 issue not addressed
+sessions InfoFlow Access ...`) has its own CSTR issue not addressed
 by this swap, and its load of the new CRefine.heap layout costs
 slightly more wall (+108s). InfoFlowC (downstream of InfoFlowCBase)
 inherits this (+114s). Total +222s; well within the upstream gain.
@@ -407,4 +407,4 @@ For future leverage-point estimation:
   — 4-orthogonal-target accounting (target (a) marked
   EMPIRICALLY VALIDATED).
 - [reports/session-duplication-scan.md](../reports/session-duplication-scan.md)
-  — P0.5 raw findings.
+  — CSTR raw findings.

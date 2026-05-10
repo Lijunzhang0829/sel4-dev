@@ -12,7 +12,7 @@ If you change one specific .thy, the actual closure is:
     {target} ∪ {transitive importers of target in theory-DAG}
 
 This script BFS-walks the theory-DAG in importer direction starting
-from the target, sums weights (using the P0.5 cross-session cost
+from the target, sums weights (using the CSTR cross-session cost
 model), and reports:
 
     - n theories in real closure
@@ -154,8 +154,8 @@ def main() -> int:
     print(f"    with timing data:    {len(closure_entries) - no_weight}")
     print(f"    no timing data:      {no_weight}")
     print(f"  sessions touched ({len(sessions_touched)}): {', '.join(sessions_touched)}")
-    print(f"  total weight (P0.5 cost model):           {total_weight:>9.1f}s")
-    print(f"  of which duplication overhead (P0.5):     {total_dup:>9.1f}s")
+    print(f"  total weight (CSTR cost model):           {total_weight:>9.1f}s")
+    print(f"  of which duplication overhead (CSTR):     {total_dup:>9.1f}s")
     print()
 
     # Target self-stats
@@ -163,9 +163,9 @@ def main() -> int:
     if self_info:
         print(f"=== target self ===")
         print(f"  weight:                {self_info['weight_total_elapsed']:.1f}s")
-        print(f"  n_sessions (P0.5):     {self_info['n_sessions']}  "
+        print(f"  n_sessions (CSTR):     {self_info['n_sessions']}  "
               f"({'YES' if self_info['n_sessions'] > 1 else 'no'} "
-              f"— P0.5 cross-session amplification)")
+              f"— CSTR cross-session amplification)")
         print(f"  duplication_overhead:  {self_info['duplication_overhead']:.1f}s")
         print(f"  fanout (in proof CP):  {self_info.get('fanout', '—')}")
         print(f"  on critical path:      {self_info.get('on_critical_path', '—')}")

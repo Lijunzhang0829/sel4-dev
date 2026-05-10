@@ -23,7 +23,7 @@ OUTPUT
           "parent": str|None,
           "imported_sessions": [str, ...],
           "session_dir": str,
-          "own_total_elapsed": float,           # from P0.5 (None if not in db-archive)
+          "own_total_elapsed": float,           # from CSTR (None if not in db-archive)
           "duplicated_pct": float|None,
           "n_duplicated_theories": int|None,
           "co_appearing_sessions": {str: float}|None
@@ -59,7 +59,7 @@ def main() -> int:
     parsed = parse_roots.parse_all_roots(L4V.resolve(), arch="ARM")
     sessions = parsed["sessions"]
 
-    # Load P0.5 duplication scan (session-level facts)
+    # Load CSTR duplication scan (session-level facts)
     dup = json.loads(DUP_JSON.read_text())
     dup_by_session = {s["session"]: s for s in dup["session_summary"]}
 
@@ -119,7 +119,7 @@ def main() -> int:
     print(f"  sessions:                       {stats['n_sessions']}")
     print(f"  parent edges:                   {stats['n_parent_edges']}")
     print(f"  imported_sessions edges:        {stats['n_import_edges']}")
-    print(f"  sessions covered by P0.5 scan:  {stats['n_sessions_in_dup_scan']}")
+    print(f"  sessions covered by CSTR scan:  {stats['n_sessions_in_dup_scan']}")
     print(f"  sessions WITHOUT timing data:   {stats['n_sessions_without_dup_data']}")
     print(f"  dangling edges:                 {stats['n_dangling_edges']}")
     print(f"  no-parent (root) sessions:      {len(no_parent)}: {no_parent[:8]}...")

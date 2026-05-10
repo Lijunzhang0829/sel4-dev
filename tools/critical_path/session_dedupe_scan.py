@@ -3,7 +3,7 @@
 tools/critical_path/session_dedupe_scan.py
 ==========================================
 
-P0.5 — Full session duplication scan, with mechanism + case studies.
+CSTR — Full session duplication scan, with mechanism + case studies.
 
 WHAT THIS DOES
 --------------
@@ -67,6 +67,15 @@ REC_RE = re.compile(
 # ----------------------------------------------------------------------
 
 PROBLEM_STATEMENT = {
+    "name_and_aliases": (
+        "**CSTR — Cross-Session Theory Reprocessing.** Other names used "
+        "for the same phenomenon: 'duplicated proofs' (l4v project's own "
+        "term, see SKIP_DUPLICATED_PROOFS env var in proof/ROOT:111), "
+        "'namespace-only sessions reprocessing', 'non-heap-merged session "
+        "import'. Internally we previously labelled this 'P0.5' (after "
+        "the half-step diagnostic between P0 and P1 in our analysis "
+        "pipeline) — that label is deprecated; CSTR is the canonical name."
+    ),
     "summary": (
         "Several l4v sessions reprocess theories that have already been "
         "proven and cached in upstream sessions' heap files. The "
@@ -124,7 +133,7 @@ MECHANISM = {
         "Isabelle locates X.foo's source file via X's session dir, then "
         "EXECUTES it in the current session's ML state (NOT loaded from "
         "X.heap). This is the source of the cross-session duplication "
-        "observed in P0.5."
+        "observed in CSTR."
     ),
     "why_elapsed_differs_across_sessions": (
         "When the same .thy is executed in two different sessions, the "
@@ -204,14 +213,14 @@ REMEDIATION_HINTS = {
         "(-74.6%), CRefineSyscall 3306s → 1.2s (-99.97%, was pure dup), "
         "CRefine 4557s → 4039s (-11.4%, indirect bonus from cleaner "
         "parent heap), InfoFlowCBase +149s and InfoFlowC -4s "
-        "(downstream regression from residual P0.5 in InfoFlow* chain). "
+        "(downstream regression from residual CSTR in InfoFlow* chain). "
         "Total: -7543s wall = -29.8% of canonical TUNED 25,331s. Far "
         "exceeded original 5519s upper bound. Excess gain came from: "
         "(a) ML-state amplification (re-executed theories take 1.79-3.61x "
         "longer than original session timing), (b) GC pressure as wall "
         "multiplier (CBaseRefine GC 66.5% of wall → 22.1%), (c) "
         "CRefineSyscall being a 1-theory packaging session (own work "
-        "≈1s, all baseline wall was P0.5 dup), (d) parent-heap hygiene "
+        "≈1s, all baseline wall was CSTR dup), (d) parent-heap hygiene "
         "transfer to descendants. Patch in "
         "experiments/cbaserefine-swap-parent.patch. **Status: applied "
         "to C-refinement chain; InfoFlow*/D-spec/D-policy chains "
@@ -261,10 +270,10 @@ REMEDIATION_HINTS = {
         "where the structural fix isn't viable."
     ),
     "remediation_status_summary": (
-        "**Solved (P0.5 chain on C-refinement)**: CBaseRefine, CRefine, "
+        "**Solved (CSTR chain on C-refinement)**: CBaseRefine, CRefine, "
         "CRefineSyscall — covered by fix_root_inheritance_pattern_A_VALIDATED. "
         "Saved -7543s wall.  "
-        "**Untouched (residual P0.5)**: InfoFlowCBase ↔ InfoFlow + Access + "
+        "**Untouched (residual CSTR)**: InfoFlowCBase ↔ InfoFlow + Access + "
         "DPolicy (~640s aggregate), DSpec ↔ ASpec (~93s), DBaseRefine ↔ "
         "DSpec (~80s), DPolicy ↔ Access (~60s), Pattern C broadcasts "
         "(ASpec ↔ multiple, ~270s). Total residual: ~1100s aggregate dup, "
@@ -573,7 +582,7 @@ def build_case_studies(
 
 def render_md(data: dict) -> str:
     out: list[str] = []
-    out.append("# Session-level theory duplication scan (P0.5)")
+    out.append("# Session-level theory duplication scan (CSTR)")
     out.append("")
     out.append(
         "_Empirical scan of `heaps/db-archive/*.db` `theory_timings` BLOBs to "

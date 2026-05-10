@@ -11,7 +11,7 @@ seL4 design process. Changes propagate through:
     spec/design/**.thy         (executable spec — Isabelle)
         ↓  imported by
     proof/refine/**            (Refine session)
-        ↓  imported by (via heap or duplicated processing — see P0.5)
+        ↓  imported by (via heap or duplicated processing — see CSTR)
     proof/crefine/**           (CBaseRefine, CRefine, CRefineSyscall)
 
 Generated edge model: any change in spec/haskell/SEL4/Foo.hs may regenerate

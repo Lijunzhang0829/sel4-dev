@@ -1,8 +1,8 @@
-# Experiment: CBaseRefine + CRefineSyscall parent swap (target a, P0.5 ROOT inheritance dedupe)
+# Experiment: CBaseRefine + CRefineSyscall parent swap (target a, CSTR ROOT inheritance dedupe)
 
 ## Context
 
-P0.5 finding (commit `3cf5194`): `verification/l4v/proof/ROOT:106` declares
+CSTR finding (commit `3cf5194`): `verification/l4v/proof/ROOT:106` declares
 ```
 session CBaseRefine in "crefine/base" = CSpec +
   sessions
@@ -100,7 +100,7 @@ Run log: [cbaserefine-swap-runs/20260509T025109Z.log](cbaserefine-swap-runs/2026
 ```
 
 **Wall save: 3865s (≈ 64 minutes) on a single session — far exceeds the
-1330s estimate in the original Hypothesis section.** Reason: P0.5
+1330s estimate in the original Hypothesis section.** Reason: CSTR
 amplification was bidirectional. In the old config, Refine theories
 re-executed in CSpec-derived context took ~1.5–2× longer than in their
 native session (Finalise_R: 226s → 424s). Heap-merging via `+ Refine`
@@ -108,7 +108,7 @@ eliminates BOTH the original-side cost AND the amplification.
 
 ### CBaseRefine.db structural change
 
-P0.5 finding directly verified: the duplication footprint changed
+CSTR finding directly verified: the duplication footprint changed
 exactly as predicted by the swap.
 
 ```
@@ -178,7 +178,7 @@ CRefineSyscall (commit f9f7597 → next):
 + session CRefineSyscall in "crefine/intermediate" = CRefine +
 ```
 
-CRefineSyscall declared 100% duplication of CRefine theories in P0.5
+CRefineSyscall declared 100% duplication of CRefine theories in CSTR
 (`= CBaseRefine + sessions CRefine` source-re-executes 44 CRefine
 theories, 1546s aggregate). Swap merges CRefine.heap properly via `+`;
 CRefine's own parent is CBaseRefine, so the chain
@@ -202,7 +202,7 @@ Run log: [cbaserefine-swap-runs/20260509T032551Z-crefinesyscall.log](cbaserefine
 CRefine's session structure didn't change directly. The wall reduction
 comes from inheriting the smaller / cleaner new CBaseRefine.heap as
 parent — primarily lower GC pressure (-48% GC time). This corroborates
-the hypothesis that P0.5 amplification was driven by ML-state pollution.
+the hypothesis that CSTR amplification was driven by ML-state pollution.
 
 ### CRefineSyscall: pure-duplication elimination
 
@@ -229,7 +229,7 @@ Timing CRefineSyscall (8 threads, 1.158s elapsed time, ...)
 ```
 
 44 CRefine theories that previously appeared in CRefineSyscall.db
-(P0.5 finding: 100% duplication, 1546s aggregate) are now entirely
+(CSTR finding: 100% duplication, 1546s aggregate) are now entirely
 absent — they live in CRefine.heap, merged on session start.
 
 ### Combined proof-core wall savings (3 sessions)
@@ -293,10 +293,10 @@ the upstream sessions where wall fell sharply.
 
 Two structural reasons:
 
-1. **InfoFlowCBase has its own P0.5 issue** independent of the
+1. **InfoFlowCBase has its own CSTR issue** independent of the
    CBaseRefine swap: `session InfoFlowCBase = CRefine + sessions InfoFlow Access`.
    This means InfoFlow + Access source-re-execute inside InfoFlowCBase
-   (P0.5 reported 99.4% dup, 644s aggregate). The CBaseRefine swap does
+   (CSTR reported 99.4% dup, 644s aggregate). The CBaseRefine swap does
    not touch this; only an analogous swap on InfoFlowCBase itself would.
 
 2. **The new CRefine.heap has a different ML state layout**. Under the
@@ -342,7 +342,7 @@ swap could turn it into a further win:
 +   sessions ... appropriate other side ...
 ```
 
-P0.5 says InfoFlowCBase's 99.4% dup splits as InfoFlow 371s + Access 273s
+CSTR says InfoFlowCBase's 99.4% dup splits as InfoFlow 371s + Access 273s
 + DPolicy 63s. **Investigation conclusion (post-Run 4)**: this swap
 direction is **not viable** — the size asymmetry is reversed. InfoFlow's
 side (~600s amplified) is the *small* side; CRefine's side (~4000s
@@ -393,7 +393,7 @@ InfoFlowC, which depends on InfoFlowCBase, paid a small load cost
 for that metadata each time. Removing it produces a leaner heap and
 saves wall when the heap is consumed downstream.
 
-This is a low-magnitude but real second-order effect of P0.5
+This is a low-magnitude but real second-order effect of CSTR
 amplification: even *dead* `sessions X` declarations carry a small
 downstream tax.
 
@@ -442,13 +442,13 @@ modifications there are untracked from the outer repo's perspective.)
    + session CRefineSyscall ... = CRefine +
    ```
    CRefineSyscall is CBaseRefine + sessions CRefine, with CRefineSyscall
-   showing 100% duplication of CRefine in P0.5. CRefine has CBaseRefine
+   showing 100% duplication of CRefine in CSTR. CRefine has CBaseRefine
    as parent already, so swapping CRefineSyscall to `= CRefine +` gets
    both heaps via parent chain (CRefineSyscall → CRefine → CBaseRefine →
    ... → Refine and ... → CSpec via the new CBaseRefine).
 
    Expected wall save (analogous reasoning): ~400-700s on CRefineSyscall
-   (baseline 3306s with ~1546s P0.5 dup overhead).
+   (baseline 3306s with ~1546s CSTR dup overhead).
 
 3. **Full canonical rebuild for definitive confirmation** — once both
    CBaseRefine and CRefineSyscall swaps land, run

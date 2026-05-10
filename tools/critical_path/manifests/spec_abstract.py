@@ -8,7 +8,7 @@ Logical scope per the paper: only Theorem 1 (ME refines MA) and any
 proof depending on MA's lemmas (AInvs, Refine) should need rebuild.
 
 Real build scope is wider for two reasons:
-  (1) P0.5 — Refine theories are reprocessed by CBaseRefine due to
+  (1) CSTR — Refine theories are reprocessed by CBaseRefine due to
       `sessions Refine` ROOT pattern, so changes to MA → AInvs → Refine
       cascade into CBaseRefine + CRefine + CRefineSyscall.
   (2) ASpec→ExecSpec cross-cut — `spec/ROOT` declares

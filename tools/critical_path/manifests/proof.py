@@ -3,7 +3,7 @@ Change type: proof-only
 
 A change to a .thy file in proof/ — most direct refinement-of-proof workflow.
 The closure is computed from the theory imports DAG: the changed thy + every
-theory transitively importing it (across session boundaries, due to P0.5
+theory transitively importing it (across session boundaries, due to CSTR
 finding that downstream sessions reprocess parent theories).
 
 No generated_edges: proof changes don't trigger regeneration of any other

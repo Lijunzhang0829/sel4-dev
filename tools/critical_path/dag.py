@@ -428,7 +428,7 @@ def main() -> int:
             ),
             "weight_definition": (
                 "weight(theory) = sum of elapsed across every session whose "
-                ".db theory_timings BLOB lists this theory (P0.5 cost model)."
+                ".db theory_timings BLOB lists this theory (CSTR cost model)."
             ),
         },
         "theory_weights_summary": {

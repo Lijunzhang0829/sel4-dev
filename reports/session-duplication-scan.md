@@ -1,14 +1,14 @@
-# Session-level theory duplication scan (P0.5)
+# Session-level theory duplication scan (CSTR)
 
 _Empirical scan of `heaps/db-archive/*.db` `theory_timings` BLOBs to quantify cross-session re-execution of the same .thy source. See [`tools/critical_path/session_dedupe_scan.py`](../tools/critical_path/session_dedupe_scan.py) for the scanner._
 
 ## Headline
 
-- Sessions scanned: **28**
-- Unique theory names: **845**
-- Theories duplicated across ≥2 sessions: **464** (54.9%)
-- Σ per-theory elapsed across all sessions: **19507.1s**
-- **Duplication overhead estimate**: **5585.3s** (28.6%)
+- Sessions scanned: **29**
+- Unique theory names: **846**
+- Theories duplicated across ≥2 sessions: **245** (29.0%)
+- Σ per-theory elapsed across all sessions: **12670.0s**
+- **Duplication overhead estimate**: **1767.9s** (14.0%)
 
 ## Problem statement
 
@@ -29,7 +29,7 @@ _Empirical scan of `heaps/db-archive/*.db` `theory_timings` BLOBs to quantify cr
 
 **`+ X` (heap merge).** `= X +` causes Isabelle to load X.heap directly. Theories in X are present as compiled images in the running ML state; they are NOT re-executed and contribute milliseconds-level loading cost only.
 
-**`sessions X` (namespace only).** `sessions X` only declares X for name resolution. When a theory in the current session writes `imports "X.foo"`, Isabelle locates X.foo's source file via X's session dir, then EXECUTES it in the current session's ML state (NOT loaded from X.heap). This is the source of the cross-session duplication observed in P0.5.
+**`sessions X` (namespace only).** `sessions X` only declares X for name resolution. When a theory in the current session writes `imports "X.foo"`, Isabelle locates X.foo's source file via X's session dir, then EXECUTES it in the current session's ML state (NOT loaded from X.heap). This is the source of the cross-session duplication observed in CSTR.
 
 **Why elapsed differs across sessions.** When the same .thy is executed in two different sessions, the ambient ML state differs: each session has its own active simp rules, locale interpretations, type class instances, etc., inherited from its `+` parent. Tactic search spaces grow with rule set size, so the same proof script can take significantly longer in a more populated ML state. Example: Refine.Finalise_R takes 226s in Refine session (BaseRefine.heap-derived state) vs 424s in CBaseRefine session (CSpec.heap-derived state) — +88% wall, +24% cpu, +77% gc.
 
@@ -61,42 +61,43 @@ Sessions ranked by `duplicated_elapsed_in_self`. The `inheritance_trigger_breakd
 
 | session | pattern | #thys | own Σelapsed | dup #thys | dup Σelapsed | dup % | trigger via `sessions` | parent (`+`) |
 |---|---|---:|---:|---:|---:|---:|---|---|
-| `CBaseRefine` | A | 304 | 5598.7 | 274 | 5519.3 | 98.6% | `CLib`→7s; `AutoCorres`→42s | `Refine` |
-| `CRefine` | A | 52 | 2334.1 | 44 | 1882.6 | 80.7% | — | `CBaseRefine` |
-| `Refine` | A | 48 | 1733.8 | 47 | 1723.0 | 99.4% | `Lib`→32s; `CorresK`→5s | `BaseRefine` |
-| `CRefineSyscall` | A | 44 | 1546.1 | 43 | 1546.0 | 100.0% | — | `CRefine` |
-| `AInvs` | A | 119 | 1052.6 | 119 | 1052.6 | 100.0% | — | `ASpec` |
-| `InfoFlowCBase` | A | 70 | 647.9 | 69 | 644.0 | 99.4% | `Access`→273s; `InfoFlow`→366s | `CRefine` |
-| `InfoFlow` | A | 46 | 367.7 | 42 | 349.1 | 94.9% | — | `Access` |
-| `BaseRefine` | A | 63 | 283.6 | 63 | 283.6 | 100.0% | `Lib`→0s | `AInvs` |
-| `Access` | A | 28 | 306.7 | 27 | 281.8 | 91.9% | — | `AInvs` |
-| `ASpec` | A | 107 | 270.5 | 105 | 270.0 | 99.8% | `Lib`→23s; `ExecSpec`→39s | `Word_Lib` |
-| `DSpec` | A | 83 | 174.4 | 83 | 174.4 | 100.0% | `ExecSpec`→17s; `ASpec`→3s | `Word_Lib` |
-| `DBaseRefine` | A | 19 | 94.5 | 18 | 89.8 | 95.1% | `DSpec`→89s | `AInvs` |
-| `CKernel` | C | 61 | 785.5 | 56 | 87.3 | 11.1% | `ExecSpec`→12s; `CLib`→1s; `AsmRefine`→5s | `CParser` |
-| `SepDSpec` | C | 56 | 104.7 | 29 | 71.3 | 68.1% | `Sep_Algebra`→19s; `SepTactics`→1s | `DSpec` |
-| `DPolicy` | B | 8 | 81.3 | 7 | 60.9 | 75.0% | `Access`→61s | `DRefine` |
-| `InfoFlowC` | B | 7 | 234.0 | 1 | 30.0 | 12.8% | — | `InfoFlowCBase` |
-| `CParser` | B | 35 | 66.2 | 2 | 1.4 | 2.1% | `ML_Utils`→1s; `Basics`→1s | `Simpl-VCG` |
-| `SimplExport` | B | 7 | 646.7 | 1 | 0.3 | 0.1% | — | `CSpec` |
-| `Bisim` | B | 6 | 27.6 | 0 | 0.0 | 0.0% | `ASepSpec`→4s | `AInvs` |
-| `CSpec` | B | 8 | 148.9 | 0 | 0.0 | 0.0% | — | `CKernel` |
-| `DRefine` | B | 18 | 163.4 | 0 | 0.0 | 0.0% | — | `DBaseRefine` |
-| `DSpecProofs` | B | 12 | 27.0 | 0 | 0.0 | 0.0% | — | `SepDSpec` |
-| `HOL` | B | 114 | 379.4 | 0 | 0.0 | 0.0% | — | — |
-| `Pure` | B | 3 | 1.3 | 0 | 0.0 | 0.0% | — | — |
-| `RefineOrphanage` | B | 1 | 49.1 | 0 | 0.0 | 0.0% | — | `Refine` |
-| `Simpl-VCG` | B | 18 | 44.7 | 0 | 0.0 | 0.0% | — | `Word_Lib` |
-| `SimplExportAndRefine` | B | 8 | 2263.7 | 0 | 0.0 | 0.0% | — | `SimplExport` |
-| `Word_Lib` | B | 66 | 73.2 | 0 | 0.0 | 0.0% | — | `HOL` |
+| `CBaseRefine` | A | 94 | 1054.9 | 64 | 991.5 | 94.0% | `CLib`→10s; `CSpec`→186s; `AutoCorres`→35s | `Refine` |
+| `CKernel` | A | 61 | 700.3 | 61 | 700.3 | 100.0% | `ExecSpec`→11s; `CLib`→0s; `AsmRefine`→5s | `CParser` |
+| `InfoFlowCBase` | A | 70 | 643.5 | 69 | 639.4 | 99.4% | `Access`→274s; `InfoFlow`→360s | `CRefine` |
+| `InfoFlow` | A | 46 | 346.9 | 42 | 328.9 | 94.8% | — | `Access` |
+| `Access` | A | 28 | 300.9 | 27 | 269.3 | 89.5% | — | `AInvs` |
+| `DSpec` | A | 83 | 159.2 | 83 | 159.2 | 100.0% | `ExecSpec`→16s; `ASpec`→3s | `Word_Lib` |
+| `CSpec` | A | 8 | 125.4 | 8 | 125.4 | 100.0% | — | `CKernel` |
+| `ASpec` | C | 107 | 239.0 | 64 | 87.4 | 36.6% | `Lib`→22s; `ExecSpec`→36s | `Word_Lib` |
+| `DBaseRefine` | A | 19 | 79.9 | 18 | 76.6 | 95.9% | `DSpec`→76s | `AInvs` |
+| `CParser` | A | 35 | 66.9 | 35 | 66.9 | 100.0% | `ML_Utils`→1s; `Basics`→1s | `Simpl-VCG` |
+| `SepDSpec` | C | 56 | 97.3 | 29 | 65.9 | 67.7% | `Sep_Algebra`→18s; `SepTactics`→1s | `DSpec` |
+| `AInvs` | C | 119 | 946.7 | 29 | 65.7 | 6.9% | — | `ASpec` |
+| `DPolicy` | B | 8 | 82.8 | 7 | 64.7 | 78.1% | `Access`→65s | `DRefine` |
+| `Simpl-VCG` | A | 18 | 45.7 | 18 | 45.7 | 100.0% | — | `Word_Lib` |
+| `Refine` | B | 48 | 1591.4 | 1 | 0.4 | 0.0% | `Lib`→31s; `CorresK`→4s | `BaseRefine` |
+| `SimplExport` | B | 7 | 557.4 | 1 | 0.3 | 0.1% | — | `CSpec` |
+| `BaseRefine` | B | 63 | 237.7 | 0 | 0.0 | 0.0% | `Lib`→0s | `AInvs` |
+| `Bisim` | B | 6 | 24.6 | 0 | 0.0 | 0.0% | `ASepSpec`→4s | `AInvs` |
+| `CRefine` | B | 51 | 2103.9 | 0 | 0.0 | 0.0% | — | `CBaseRefine` |
+| `CRefineSyscall` | B | 1 | 0.9 | 0 | 0.0 | 0.0% | — | `CRefine` |
+| `DRefine` | B | 18 | 146.9 | 0 | 0.0 | 0.0% | — | `DBaseRefine` |
+| `DSpecProofs` | B | 12 | 24.5 | 0 | 0.0 | 0.0% | — | `SepDSpec` |
+| `HOL` | B | 114 | 428.5 | 0 | 0.0 | 0.0% | — | — |
+| `InfoFlowC` | B | 6 | 200.1 | 0 | 0.0 | 0.0% | — | `InfoFlowCBase` |
+| `Pure` | B | 3 | 1.1 | 0 | 0.0 | 0.0% | — | — |
+| `RefineOrphanage` | B | 1 | 38.6 | 0 | 0.0 | 0.0% | — | `Refine` |
+| `SimplExportAndRefine` | B | 8 | 2342.2 | 0 | 0.0 | 0.0% | — | `SimplExport` |
+| `UmmTypes` | B | 1 | 3.0 | 0 | 0.0 | 0.0% | — | — |
+| `Word_Lib` | B | 66 | 79.9 | 0 | 0.0 | 0.0% | — | `HOL` |
 
 ## Case studies (top 5 by dup elapsed)
 
-### CBaseRefine_re-executes_Refine
+### CBaseRefine_re-executes_CKernel
 
 - **Perpetrator (does the re-execution)**: `CBaseRefine`
-- **Victim (its theories get re-executed)**: `Refine`
-- **Elapsed in perpetrator on overlapping theories**: 3537.9s
+- **Victim (its theories get re-executed)**: `CKernel`
+- **Elapsed in perpetrator on overlapping theories**: 683.0s
 - **Pattern**: `A_high_dup_structural_fix_candidate`
 
 **ROOT declaration**:
@@ -109,76 +110,20 @@ session CBaseRefine in "base" = Refine +
     AutoCorres
 ```
 
-**Concrete trigger imports** (source lines that pull in the duplicated session):
-
-- `verification/l4v/proof/crefine/base/Include_C.thy` → `imports "Refine.Refine"`
-
-**Spotlight theory `Refine.Finalise_R`** — same .thy source, two ML contexts:
+**Spotlight theory `CKernel.Kernel_C`** — same .thy source, two ML contexts:
 
 | in session | elapsed (s) | cpu (s) | gc (s) |
 |---|---:|---:|---:|
-| `CBaseRefine` | 424.3 | 1813.7 | 258.7 |
-| `Refine` | 225.6 | 1406.6 | 146.4 |
+| `CBaseRefine` | 675.8 | 2233.6 | 101.7 |
+| `CKernel` | 613.6 | 1885.3 | 53.1 |
 
-_Same .thy source; ran in two different ML contexts. In CBaseRefine (this session) it took 424.3s; in Refine (originating session) it took 225.6s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
-
-### CRefineSyscall_re-executes_CRefine
-
-- **Perpetrator (does the re-execution)**: `CRefineSyscall`
-- **Victim (its theories get re-executed)**: `CRefine`
-- **Elapsed in perpetrator on overlapping theories**: 1546.0s
-- **Pattern**: `A_high_dup_structural_fix_candidate`
-
-**ROOT declaration**:
-
-```
-session CRefineSyscall in "intermediate" = CRefine +
-```
-
-**Concrete trigger imports** (source lines that pull in the duplicated session):
-
-- `verification/l4v/proof/crefine/intermediate/Intermediate_C.thy` → `imports "CRefine.Syscall_C"`
-
-**Spotlight theory `CRefine.Ipc_C`** — same .thy source, two ML contexts:
-
-| in session | elapsed (s) | cpu (s) | gc (s) |
-|---|---:|---:|---:|
-| `CRefine` | 184.0 | 949.7 | 128.6 |
-| `CRefineSyscall` | 148.3 | 880.3 | 105.9 |
-
-_Same .thy source; ran in two different ML contexts. In CRefine (this session) it took 184.0s; in CRefineSyscall (originating session) it took 148.3s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
-
-### CBaseRefine_re-executes_AInvs
-
-- **Perpetrator (does the re-execution)**: `CBaseRefine`
-- **Victim (its theories get re-executed)**: `AInvs`
-- **Elapsed in perpetrator on overlapping theories**: 1416.0s
-- **Pattern**: `A_high_dup_structural_fix_candidate`
-
-**ROOT declaration**:
-
-```
-session CBaseRefine in "base" = Refine +
-  sessions
-    CLib
-    CSpec
-    AutoCorres
-```
-
-**Spotlight theory `AInvs.ArchRetype_AI`** — same .thy source, two ML contexts:
-
-| in session | elapsed (s) | cpu (s) | gc (s) |
-|---|---:|---:|---:|
-| `CBaseRefine` | 84.2 | 434.1 | 25.6 |
-| `AInvs` | 75.6 | 427.6 | 40.0 |
-
-_Same .thy source; ran in two different ML contexts. In CBaseRefine (this session) it took 84.2s; in AInvs (originating session) it took 75.6s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
+_Same .thy source; ran in two different ML contexts. In CBaseRefine (this session) it took 675.8s; in CKernel (originating session) it took 613.6s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
 
 ### InfoFlowCBase_re-executes_InfoFlow
 
 - **Perpetrator (does the re-execution)**: `InfoFlowCBase`
 - **Victim (its theories get re-executed)**: `InfoFlow`
-- **Elapsed in perpetrator on overlapping theories**: 370.9s
+- **Elapsed in perpetrator on overlapping theories**: 365.3s
 - **Pattern**: `A_high_dup_structural_fix_candidate`
 
 **ROOT declaration**:
@@ -196,46 +141,20 @@ session InfoFlowCBase in "base" = CRefine +
 - `verification/l4v/proof/infoflow/refine/base/Include_IF_C.thy` → `imports "InfoFlow.Noninterference_Base_Refinement"`
 - `verification/l4v/proof/infoflow/refine/base/Include_IF_C.thy` → `imports "InfoFlow.Example_Valid_State"`
 
-**Spotlight theory `InfoFlow.ArchUserOp_IF`** — same .thy source, two ML contexts:
+**Spotlight theory `InfoFlow.ArchArch_IF`** — same .thy source, two ML contexts:
 
 | in session | elapsed (s) | cpu (s) | gc (s) |
 |---|---:|---:|---:|
-| `InfoFlowCBase` | 40.5 | 232.2 | 34.6 |
-| `InfoFlow` | 26.4 | 151.3 | 5.2 |
+| `InfoFlowCBase` | 27.9 | 154.6 | 4.4 |
+| `InfoFlow` | 27.7 | 141.6 | 3.8 |
 
-_Same .thy source; ran in two different ML contexts. In InfoFlowCBase (this session) it took 40.5s; in InfoFlow (originating session) it took 26.4s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
-
-### CBaseRefine_re-executes_BaseRefine
-
-- **Perpetrator (does the re-execution)**: `CBaseRefine`
-- **Victim (its theories get re-executed)**: `BaseRefine`
-- **Elapsed in perpetrator on overlapping theories**: 342.3s
-- **Pattern**: `A_high_dup_structural_fix_candidate`
-
-**ROOT declaration**:
-
-```
-session CBaseRefine in "base" = Refine +
-  sessions
-    CLib
-    CSpec
-    AutoCorres
-```
-
-**Spotlight theory `ExecSpec.Structures_H`** — same .thy source, two ML contexts:
-
-| in session | elapsed (s) | cpu (s) | gc (s) |
-|---|---:|---:|---:|
-| `CBaseRefine` | 29.1 | 174.9 | 6.0 |
-| `BaseRefine` | 23.6 | 38.9 | 0.9 |
-
-_Same .thy source; ran in two different ML contexts. In CBaseRefine (this session) it took 29.1s; in BaseRefine (originating session) it took 23.6s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
+_Same .thy source; ran in two different ML contexts. In InfoFlowCBase (this session) it took 27.9s; in InfoFlow (originating session) it took 27.7s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
 
 ### InfoFlowCBase_re-executes_Access
 
 - **Perpetrator (does the re-execution)**: `InfoFlowCBase`
 - **Victim (its theories get re-executed)**: `Access`
-- **Elapsed in perpetrator on overlapping theories**: 273.1s
+- **Elapsed in perpetrator on overlapping theories**: 274.1s
 - **Pattern**: `A_high_dup_structural_fix_candidate`
 
 **ROOT declaration**:
@@ -251,42 +170,16 @@ session InfoFlowCBase in "base" = CRefine +
 
 | in session | elapsed (s) | cpu (s) | gc (s) |
 |---|---:|---:|---:|
-| `Access` | 67.2 | 306.6 | 3.6 |
-| `InfoFlowCBase` | 63.2 | 284.8 | 2.3 |
+| `InfoFlowCBase` | 61.6 | 282.4 | 2.1 |
+| `Access` | 59.8 | 255.3 | 3.5 |
 
-_Same .thy source; ran in two different ML contexts. In Access (this session) it took 67.2s; in InfoFlowCBase (originating session) it took 63.2s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
-
-### CBaseRefine_re-executes_ASpec
-
-- **Perpetrator (does the re-execution)**: `CBaseRefine`
-- **Victim (its theories get re-executed)**: `ASpec`
-- **Elapsed in perpetrator on overlapping theories**: 223.1s
-- **Pattern**: `A_high_dup_structural_fix_candidate`
-
-**ROOT declaration**:
-
-```
-session CBaseRefine in "base" = Refine +
-  sessions
-    CLib
-    CSpec
-    AutoCorres
-```
-
-**Spotlight theory `ASpec.Structures_A`** — same .thy source, two ML contexts:
-
-| in session | elapsed (s) | cpu (s) | gc (s) |
-|---|---:|---:|---:|
-| `CBaseRefine` | 22.7 | 164.0 | 4.9 |
-| `ASpec` | 19.4 | 28.0 | 1.1 |
-
-_Same .thy source; ran in two different ML contexts. In CBaseRefine (this session) it took 22.7s; in ASpec (originating session) it took 19.4s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
+_Same .thy source; ran in two different ML contexts. In InfoFlowCBase (this session) it took 61.6s; in Access (originating session) it took 59.8s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
 
 ### DSpec_re-executes_ASpec
 
 - **Perpetrator (does the re-execution)**: `DSpec`
 - **Victim (its theories get re-executed)**: `ASpec`
-- **Elapsed in perpetrator on overlapping theories**: 93.1s
+- **Elapsed in perpetrator on overlapping theories**: 87.3s
 - **Pattern**: `A_high_dup_structural_fix_candidate`
 
 **ROOT declaration**:
@@ -309,17 +202,47 @@ session DSpec in "capDL" = Word_Lib +
 
 | in session | elapsed (s) | cpu (s) | gc (s) |
 |---|---:|---:|---:|
-| `CKernel` | 10.0 | 28.4 | 1.3 |
-| `ASpec` | 9.4 | 28.3 | 1.0 |
-| `DSpec` | 9.0 | 31.3 | 0.7 |
+| `CKernel` | 8.9 | 25.2 | 1.1 |
+| `ASpec` | 8.7 | 26.6 | 1.0 |
+| `DSpec` | 8.4 | 28.9 | 0.6 |
 
-_Same .thy source; ran in two different ML contexts. In CKernel (this session) it took 10.0s; in ASpec (originating session) it took 9.4s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
+_Same .thy source; ran in two different ML contexts. In CKernel (this session) it took 8.9s; in ASpec (originating session) it took 8.7s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
+
+### CBaseRefine_re-executes_CSpec
+
+- **Perpetrator (does the re-execution)**: `CBaseRefine`
+- **Victim (its theories get re-executed)**: `CSpec`
+- **Elapsed in perpetrator on overlapping theories**: 187.4s
+- **Pattern**: `A_high_dup_structural_fix_candidate`
+
+**ROOT declaration**:
+
+```
+session CBaseRefine in "base" = Refine +
+  sessions
+    CLib
+    CSpec
+    AutoCorres
+```
+
+**Concrete trigger imports** (source lines that pull in the duplicated session):
+
+- `verification/l4v/proof/crefine/base/Include_C.thy` → `imports "CSpec.KernelInc_C"`
+
+**Spotlight theory `CSpec.Substitute`** — same .thy source, two ML contexts:
+
+| in session | elapsed (s) | cpu (s) | gc (s) |
+|---|---:|---:|---:|
+| `CBaseRefine` | 82.6 | 513.4 | 51.0 |
+| `CSpec` | 64.9 | 81.6 | 0.6 |
+
+_Same .thy source; ran in two different ML contexts. In CBaseRefine (this session) it took 82.6s; in CSpec (originating session) it took 64.9s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
 
 ### DBaseRefine_re-executes_DSpec
 
 - **Perpetrator (does the re-execution)**: `DBaseRefine`
 - **Victim (its theories get re-executed)**: `DSpec`
-- **Elapsed in perpetrator on overlapping theories**: 89.8s
+- **Elapsed in perpetrator on overlapping theories**: 76.6s
 - **Pattern**: `A_high_dup_structural_fix_candidate`
 
 **ROOT declaration**:
@@ -338,16 +261,42 @@ session DBaseRefine in "base" = AInvs +
 
 | in session | elapsed (s) | cpu (s) | gc (s) |
 |---|---:|---:|---:|
-| `DBaseRefine` | 36.5 | 56.0 | 0.6 |
-| `DSpec` | 27.6 | 104.0 | 3.4 |
+| `DBaseRefine` | 31.7 | 48.9 | 0.5 |
+| `DSpec` | 25.7 | 97.5 | 3.2 |
 
-_Same .thy source; ran in two different ML contexts. In DBaseRefine (this session) it took 36.5s; in DSpec (originating session) it took 27.6s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
+_Same .thy source; ran in two different ML contexts. In DBaseRefine (this session) it took 31.7s; in DSpec (originating session) it took 25.7s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
+
+### CBaseRefine_re-executes_CParser
+
+- **Perpetrator (does the re-execution)**: `CBaseRefine`
+- **Victim (its theories get re-executed)**: `CParser`
+- **Elapsed in perpetrator on overlapping theories**: 73.2s
+- **Pattern**: `A_high_dup_structural_fix_candidate`
+
+**ROOT declaration**:
+
+```
+session CBaseRefine in "base" = Refine +
+  sessions
+    CLib
+    CSpec
+    AutoCorres
+```
+
+**Spotlight theory `CParser.CTypesDefs`** — same .thy source, two ML contexts:
+
+| in session | elapsed (s) | cpu (s) | gc (s) |
+|---|---:|---:|---:|
+| `CParser` | 16.8 | 24.6 | 0.8 |
+| `CBaseRefine` | 12.1 | 50.7 | 2.8 |
+
+_Same .thy source; ran in two different ML contexts. In CParser (this session) it took 16.8s; in CBaseRefine (originating session) it took 12.1s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
 
 ### DPolicy_re-executes_Access
 
 - **Perpetrator (does the re-execution)**: `DPolicy`
 - **Victim (its theories get re-executed)**: `Access`
-- **Elapsed in perpetrator on overlapping theories**: 60.9s
+- **Elapsed in perpetrator on overlapping theories**: 64.7s
 - **Pattern**: `B_partial_independent`
 
 **ROOT declaration**:
@@ -366,11 +315,11 @@ session DPolicy in "dpolicy" = DRefine +
 
 | in session | elapsed (s) | cpu (s) | gc (s) |
 |---|---:|---:|---:|
-| `DPolicy` | 25.8 | 41.4 | 1.9 |
-| `Access` | 24.9 | 41.3 | 1.9 |
-| `InfoFlowCBase` | 21.6 | 46.0 | 2.4 |
+| `InfoFlowCBase` | 21.9 | 46.5 | 2.3 |
+| `Access` | 21.7 | 35.9 | 1.8 |
+| `DPolicy` | 21.5 | 36.1 | 1.8 |
 
-_Same .thy source; ran in two different ML contexts. In DPolicy (this session) it took 25.8s; in Access (originating session) it took 24.9s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
+_Same .thy source; ran in two different ML contexts. In InfoFlowCBase (this session) it took 21.9s; in Access (originating session) it took 21.7s. Difference reflects the different sets of active simp rules / locale interpretations / type class instances inherited from each session's `+` parent heap._
 
 ## Shared third-party dependency overhead
 
@@ -378,57 +327,58 @@ These are theories owned by sessions NOT in the canonical 28-session build set (
 
 | 3rd-party session | #thys | in #canonical sessions | Σelapsed (all appearances) | avg/appearance |
 |---|---:|---:|---:|---:|
-| `ExecSpec` | 75 | 5 | 717.6 | 4.54s |
-| `Lib` | 54 | 11 | 277.3 | 1.86s |
-| `Monads` | 34 | 6 | 212.6 | 2.17s |
-| `CLib` | 5 | 2 | 56.5 | 5.65s |
-| `Eisbach_Tools` | 11 | 5 | 40.3 | 1.30s |
-| `CorresK` | 1 | 2 | 20.3 | 10.16s |
-| `HOL-Library` | 2 | 3 | 4.3 | 0.72s |
-| `ML_Utils` | 2 | 4 | 2.6 | 0.44s |
-| `HOL-Combinatorics` | 1 | 2 | 1.8 | 0.92s |
-| `Basics` | 1 | 3 | 1.3 | 0.44s |
+| `Lib` | 42 | 9 | 159.5 | 1.50s |
+| `Monads` | 30 | 5 | 150.7 | 1.91s |
+| `ExecSpec` | 8 | 3 | 41.9 | 2.09s |
+| `Eisbach_Tools` | 9 | 3 | 34.5 | 1.28s |
+| `HOL-Statespace` | 3 | 2 | 14.5 | 2.42s |
+| `HOL-Library` | 3 | 5 | 12.7 | 1.58s |
+| `AsmRefine` | 3 | 2 | 10.1 | 1.68s |
+| `CLib` | 2 | 3 | 5.6 | 1.40s |
+| `ML_Utils` | 2 | 4 | 2.5 | 0.42s |
+| `HOL-Combinatorics` | 1 | 2 | 1.7 | 0.87s |
+| `Basics` | 1 | 3 | 1.3 | 0.45s |
 
 ## Top 30 duplicated theories by total cross-session cost
 
 | theory | #sess | Σelapsed (all) | max single | max session | overhead | Δmax/2nd % | per-session breakdown |
 |---|---:|---:|---:|---|---:|---:|---|
-| `Refine.Finalise_R` | 2 | 649.8 | 424.3 | `CBaseRefine` | 225.6 | 88.1% | `CBaseRefine`:424s; `Refine`:226s |
-| `Refine.Retype_R` | 2 | 382.0 | 294.4 | `CBaseRefine` | 87.7 | 235.8% | `CBaseRefine`:294s; `Refine`:88s |
-| `Refine.Untyped_R` | 2 | 366.9 | 249.5 | `CBaseRefine` | 117.5 | 112.4% | `CBaseRefine`:250s; `Refine`:118s |
-| `Refine.Invariants_H` | 2 | 359.4 | 230.6 | `CBaseRefine` | 128.8 | 79.1% | `CBaseRefine`:231s; `Refine`:129s |
-| `Refine.IpcCancel_R` | 2 | 348.0 | 272.5 | `CBaseRefine` | 75.5 | 261.0% | `CBaseRefine`:272s; `Refine`:76s |
-| `CRefine.Ipc_C` | 2 | 332.3 | 184.0 | `CRefine` | 148.3 | 24.0% | `CRefine`:184s; `CRefineSyscall`:148s |
-| `CRefine.StateRelation_C` | 2 | 315.4 | 166.2 | `CRefineSyscall` | 149.2 | 11.4% | `CRefineSyscall`:166s; `CRefine`:149s |
-| `CRefine.Retype_C` | 2 | 297.3 | 158.3 | `CRefine` | 139.1 | 13.8% | `CRefine`:158s; `CRefineSyscall`:139s |
-| `Refine.CSpace_R` | 2 | 282.5 | 181.8 | `CBaseRefine` | 100.8 | 80.4% | `CBaseRefine`:182s; `Refine`:101s |
-| `Refine.Ipc_R` | 2 | 265.5 | 193.7 | `CBaseRefine` | 71.7 | 170.1% | `CBaseRefine`:194s; `Refine`:72s |
-| `Refine.Detype_R` | 2 | 262.8 | 170.0 | `CBaseRefine` | 92.8 | 83.3% | `CBaseRefine`:170s; `Refine`:93s |
-| `Refine.CNodeInv_R` | 2 | 260.0 | 157.9 | `CBaseRefine` | 102.1 | 54.7% | `CBaseRefine`:158s; `Refine`:102s |
-| `CRefine.Tcb_C` | 2 | 238.8 | 206.6 | `CRefine` | 32.2 | 541.7% | `CRefine`:207s; `CRefineSyscall`:32s |
-| `Refine.CSpace1_R` | 2 | 237.9 | 152.7 | `CBaseRefine` | 85.1 | 79.4% | `CBaseRefine`:153s; `Refine`:85s |
-| `CRefine.VSpace_C` | 2 | 195.6 | 104.8 | `CRefine` | 90.8 | 15.3% | `CRefine`:105s; `CRefineSyscall`:91s |
-| `Refine.CSpace_I` | 2 | 174.0 | 132.2 | `CBaseRefine` | 41.8 | 216.3% | `CBaseRefine`:132s; `Refine`:42s |
-| `CRefine.SyscallArgs_C` | 2 | 170.5 | 93.5 | `CRefine` | 76.9 | 21.6% | `CRefine`:94s; `CRefineSyscall`:77s |
-| `CRefine.Finalise_C` | 2 | 166.1 | 84.4 | `CRefine` | 81.7 | 3.3% | `CRefine`:84s; `CRefineSyscall`:82s |
-| `AInvs.ArchRetype_AI` | 2 | 159.7 | 84.2 | `CBaseRefine` | 75.6 | 11.4% | `CBaseRefine`:84s; `AInvs`:76s |
-| `Refine.ADT_H` | 2 | 158.2 | 102.5 | `CBaseRefine` | 55.8 | 83.7% | `CBaseRefine`:102s; `Refine`:56s |
-| `Refine.Tcb_R` | 2 | 156.1 | 123.9 | `CBaseRefine` | 32.2 | 285.0% | `CBaseRefine`:124s; `Refine`:32s |
-| `Refine.TcbAcc_R` | 2 | 150.1 | 101.5 | `CBaseRefine` | 48.6 | 108.9% | `CBaseRefine`:102s; `Refine`:49s |
-| `CRefine.Invoke_C` | 2 | 130.7 | 81.8 | `CRefine` | 48.9 | 67.3% | `CRefine`:82s; `CRefineSyscall`:49s |
-| `Access.ArchRetype_AC` | 2 | 130.4 | 67.2 | `Access` | 63.2 | 6.3% | `Access`:67s; `InfoFlowCBase`:63s |
-| `CRefine.Wellformed_C` | 2 | 128.4 | 67.5 | `CRefineSyscall` | 60.8 | 11.0% | `CRefineSyscall`:68s; `CRefine`:61s |
-| `CRefine.Corres_C` | 2 | 120.8 | 66.0 | `CRefine` | 54.8 | 20.6% | `CRefine`:66s; `CRefineSyscall`:55s |
-| `CRefine.Arch_C` | 2 | 118.7 | 73.4 | `CRefine` | 45.4 | 61.8% | `CRefine`:73s; `CRefineSyscall`:45s |
-| `Refine.KHeap_R` | 2 | 115.3 | 68.1 | `CBaseRefine` | 47.1 | 44.5% | `CBaseRefine`:68s; `Refine`:47s |
-| `AInvs.Invariants_AI` | 2 | 115.0 | 64.7 | `CBaseRefine` | 50.4 | 28.4% | `CBaseRefine`:65s; `AInvs`:50s |
-| `Refine.VSpace_R` | 2 | 111.5 | 74.3 | `CBaseRefine` | 37.2 | 99.7% | `CBaseRefine`:74s; `Refine`:37s |
+| `CKernel.Kernel_C` | 2 | 1289.4 | 675.8 | `CBaseRefine` | 613.6 | 10.1% | `CBaseRefine`:676s; `CKernel`:614s |
+| `CSpec.Substitute` | 2 | 147.4 | 82.6 | `CBaseRefine` | 64.9 | 27.3% | `CBaseRefine`:83s; `CSpec`:65s |
+| `Access.ArchRetype_AC` | 2 | 121.5 | 61.6 | `InfoFlowCBase` | 59.8 | 3.0% | `InfoFlowCBase`:62s; `Access`:60s |
+| `CSpec.structures_defs` | 2 | 87.6 | 54.7 | `CBaseRefine` | 32.9 | 66.4% | `CBaseRefine`:55s; `CSpec`:33s |
+| `Access.ArchAccess` | 3 | 65.1 | 21.9 | `InfoFlowCBase` | 43.2 | 1.0% | `InfoFlowCBase`:22s; `Access`:22s; `DPolicy`:22s |
+| `Access.ArchCNode_AC` | 2 | 62.6 | 32.0 | `InfoFlowCBase` | 30.6 | 4.3% | `InfoFlowCBase`:32s; `Access`:31s |
+| `DSpec.Intents_D` | 2 | 57.4 | 31.7 | `DBaseRefine` | 25.7 | 23.2% | `DBaseRefine`:32s; `DSpec`:26s |
+| `InfoFlow.ArchArch_IF` | 2 | 55.6 | 27.9 | `InfoFlowCBase` | 27.7 | 0.8% | `InfoFlowCBase`:28s; `InfoFlow`:28s |
+| `InfoFlow.ArchUserOp_IF` | 2 | 54.8 | 29.9 | `InfoFlowCBase` | 24.9 | 20.1% | `InfoFlowCBase`:30s; `InfoFlow`:25s |
+| `Access.ArchAccess_AC` | 3 | 46.5 | 15.8 | `InfoFlowCBase` | 30.6 | 2.4% | `InfoFlowCBase`:16s; `DPolicy`:15s; `Access`:15s |
+| `InfoFlow.ArchRetype_IF` | 2 | 45.1 | 30.9 | `InfoFlowCBase` | 14.2 | 117.2% | `InfoFlowCBase`:31s; `InfoFlow`:14s |
+| `InfoFlow.Example_Valid_State` | 2 | 40.4 | 21.0 | `InfoFlowCBase` | 19.4 | 8.4% | `InfoFlowCBase`:21s; `InfoFlow`:19s |
+| `CSpec.structures_proofs` | 2 | 39.4 | 22.3 | `CBaseRefine` | 17.1 | 30.7% | `CBaseRefine`:22s; `CSpec`:17s |
+| `InfoFlow.ArchScheduler_IF` | 2 | 37.9 | 20.7 | `InfoFlowCBase` | 17.2 | 20.5% | `InfoFlowCBase`:21s; `InfoFlow`:17s |
+| `InfoFlow.ArchCNode_IF` | 2 | 36.4 | 19.2 | `InfoFlowCBase` | 17.2 | 12.0% | `InfoFlowCBase`:19s; `InfoFlow`:17s |
+| `DSpec.Invocations_D` | 2 | 36.1 | 18.1 | `DSpec` | 18.0 | 1.0% | `DSpec`:18s; `DBaseRefine`:18s |
+| `Access.ArchArch_AC` | 2 | 34.9 | 17.8 | `InfoFlowCBase` | 17.0 | 4.6% | `InfoFlowCBase`:18s; `Access`:17s |
+| `InfoFlow.ArchIRQMasks_IF` | 2 | 34.5 | 19.3 | `InfoFlowCBase` | 15.2 | 27.0% | `InfoFlowCBase`:19s; `InfoFlow`:15s |
+| `InfoFlow.Noninterference` | 2 | 31.6 | 16.6 | `InfoFlowCBase` | 15.0 | 10.5% | `InfoFlowCBase`:17s; `InfoFlow`:15s |
+| `InfoFlow.ArchInfoFlow` | 2 | 31.0 | 18.1 | `InfoFlow` | 13.0 | 39.0% | `InfoFlow`:18s; `InfoFlowCBase`:13s |
+| `Access.ArchIpc_AC` | 2 | 30.1 | 15.5 | `InfoFlowCBase` | 14.6 | 6.0% | `InfoFlowCBase`:16s; `Access`:15s |
+| `Access.ArchInterrupt_AC` | 2 | 30.1 | 15.3 | `InfoFlowCBase` | 14.8 | 3.7% | `InfoFlowCBase`:15s; `Access`:15s |
+| `Access.Types` | 3 | 29.2 | 10.9 | `InfoFlowCBase` | 18.2 | 19.4% | `InfoFlowCBase`:11s; `Access`:9s; `DPolicy`:9s |
+| `CParser.CTypesDefs` | 2 | 28.9 | 16.8 | `CParser` | 12.1 | 39.5% | `CParser`:17s; `CBaseRefine`:12s |
+| `Simpl-VCG.Language` | 2 | 28.6 | 15.8 | `Simpl-VCG` | 12.9 | 22.5% | `Simpl-VCG`:16s; `CBaseRefine`:13s |
+| `InfoFlow.ArchNoninterference` | 2 | 28.3 | 15.6 | `InfoFlowCBase` | 12.7 | 22.9% | `InfoFlowCBase`:16s; `InfoFlow`:13s |
+| `DSpec.Types_D` | 2 | 27.2 | 13.6 | `DSpec` | 13.6 | 0.7% | `DSpec`:14s; `DBaseRefine`:14s |
+| `ExecSpec.MachineTypes` | 3 | 26.0 | 8.9 | `CKernel` | 17.1 | 2.4% | `CKernel`:9s; `ASpec`:9s; `DSpec`:8s |
+| `Access.Access` | 3 | 26.0 | 10.2 | `Access` | 15.8 | 0.3% | `Access`:10s; `DPolicy`:10s; `InfoFlowCBase`:6s |
+| `CParser.CTranslation` | 2 | 24.3 | 14.7 | `CBaseRefine` | 9.5 | 54.3% | `CBaseRefine`:15s; `CParser`:10s |
 
 ## Remediation hints
 
 ### fix_root_inheritance_pattern_A_VALIDATED
 
-**EMPIRICALLY VALIDATED 2026-05-09** (experiments/cbaserefine-swap-parent.md, 4 runs). Two ROOT swaps applied: (1) CBaseRefine `= CSpec + sessions Refine` → `= Refine + sessions CSpec`; (2) CRefineSyscall `= CBaseRefine + sessions CRefine` → `= CRefine +`. Result on 5 affected sessions: CBaseRefine wall 5183s → 1318s (-74.6%), CRefineSyscall 3306s → 1.2s (-99.97%, was pure dup), CRefine 4557s → 4039s (-11.4%, indirect bonus from cleaner parent heap), InfoFlowCBase +149s and InfoFlowC -4s (downstream regression from residual P0.5 in InfoFlow* chain). Total: -7543s wall = -29.8% of canonical TUNED 25,331s. Far exceeded original 5519s upper bound. Excess gain came from: (a) ML-state amplification (re-executed theories take 1.79-3.61x longer than original session timing), (b) GC pressure as wall multiplier (CBaseRefine GC 66.5% of wall → 22.1%), (c) CRefineSyscall being a 1-theory packaging session (own work ≈1s, all baseline wall was P0.5 dup), (d) parent-heap hygiene transfer to descendants. Patch in experiments/cbaserefine-swap-parent.patch. **Status: applied to C-refinement chain; InfoFlow*/D-spec/D-policy chains untouched (size asymmetry makes the same swap pattern infeasible).**
+**EMPIRICALLY VALIDATED 2026-05-09** (experiments/cbaserefine-swap-parent.md, 4 runs). Two ROOT swaps applied: (1) CBaseRefine `= CSpec + sessions Refine` → `= Refine + sessions CSpec`; (2) CRefineSyscall `= CBaseRefine + sessions CRefine` → `= CRefine +`. Result on 5 affected sessions: CBaseRefine wall 5183s → 1318s (-74.6%), CRefineSyscall 3306s → 1.2s (-99.97%, was pure dup), CRefine 4557s → 4039s (-11.4%, indirect bonus from cleaner parent heap), InfoFlowCBase +149s and InfoFlowC -4s (downstream regression from residual CSTR in InfoFlow* chain). Total: -7543s wall = -29.8% of canonical TUNED 25,331s. Far exceeded original 5519s upper bound. Excess gain came from: (a) ML-state amplification (re-executed theories take 1.79-3.61x longer than original session timing), (b) GC pressure as wall multiplier (CBaseRefine GC 66.5% of wall → 22.1%), (c) CRefineSyscall being a 1-theory packaging session (own work ≈1s, all baseline wall was CSTR dup), (d) parent-heap hygiene transfer to descendants. Patch in experiments/cbaserefine-swap-parent.patch. **Status: applied to C-refinement chain; InfoFlow*/D-spec/D-policy chains untouched (size asymmetry makes the same swap pattern infeasible).**
 
 ### remove_dead_sessions_X_post_swap_VALIDATED
 
@@ -448,7 +398,7 @@ Per-theory micro-optimisation: for specific high-weight duplicated theories (Ref
 
 ### remediation_status_summary
 
-**Solved (P0.5 chain on C-refinement)**: CBaseRefine, CRefine, CRefineSyscall — covered by fix_root_inheritance_pattern_A_VALIDATED. Saved -7543s wall.  **Untouched (residual P0.5)**: InfoFlowCBase ↔ InfoFlow + Access + DPolicy (~640s aggregate), DSpec ↔ ASpec (~93s), DBaseRefine ↔ DSpec (~80s), DPolicy ↔ Access (~60s), Pattern C broadcasts (ASpec ↔ multiple, ~270s). Total residual: ~1100s aggregate dup, estimated ~250s wall — much smaller than the proof-chain win. Most residual cases have unfavourable size asymmetry (small heap in `+`, large heap in `sessions`) so the same swap pattern would make things worse; would need DAG restructure (e.g., split_heavy_theory_into_base_heavy_pattern_A) to address.
+**Solved (CSTR chain on C-refinement)**: CBaseRefine, CRefine, CRefineSyscall — covered by fix_root_inheritance_pattern_A_VALIDATED. Saved -7543s wall.  **Untouched (residual CSTR)**: InfoFlowCBase ↔ InfoFlow + Access + DPolicy (~640s aggregate), DSpec ↔ ASpec (~93s), DBaseRefine ↔ DSpec (~80s), DPolicy ↔ Access (~60s), Pattern C broadcasts (ASpec ↔ multiple, ~270s). Total residual: ~1100s aggregate dup, estimated ~250s wall — much smaller than the proof-chain win. Most residual cases have unfavourable size asymmetry (small heap in `+`, large heap in `sessions`) so the same swap pattern would make things worse; would need DAG restructure (e.g., split_heavy_theory_into_base_heavy_pattern_A) to address.
 
 ## How downstream tools use this
 
