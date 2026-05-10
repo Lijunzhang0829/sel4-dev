@@ -10,6 +10,7 @@ stack_cache/*
 # To restore the heap binaries themselves, see reports/baseline-restore.md.
 heaps/*
 !heaps/build_log.txt
+!heaps/build_log.pre-swap.txt
 
 # Runtime artifacts produced by run.sh / isabelle_prover skill
 logs/

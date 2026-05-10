@@ -55,15 +55,28 @@ USAGE
 -----
     python3 tools/assemble_build_log.py
 """
-import sqlite3, sys, re, os
+import sqlite3, sys, re, os, subprocess, tempfile
 from pathlib import Path
 
+# zstandard module preferred; fall back to `zstd` CLI (always present from
+# zstd debian package) if module not available — avoids pip dependency.
 try:
     import zstandard as zstd
+    _USE_MODULE = True
 except ImportError:
-    import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "zstandard"])
-    import zstandard as zstd
+    _USE_MODULE = False
+
+
+def _decompress_zst(blob: bytes) -> bytes:
+    if _USE_MODULE:
+        return zstd.ZstdDecompressor().decompress(blob)
+    with tempfile.NamedTemporaryFile(suffix=".zst", delete=False) as fz:
+        fz.write(blob)
+        fz_path = Path(fz.name)
+    try:
+        return subprocess.check_output(["zstd", "-dcq", str(fz_path)])
+    finally:
+        fz_path.unlink(missing_ok=True)
 
 REPO = Path(__file__).resolve().parent.parent
 TUNED_LOG = REPO / "heaps" / "build_log.tuned.txt"
@@ -102,7 +115,7 @@ for sess, *_ in sessions:
         continue
     if row is None or row[1] is None:
         continue
-    text = zstd.ZstdDecompressor().decompress(row[1]).decode("utf-8")
+    text = _decompress_zst(row[1]).decode("utf-8")
     # Isabelle 2024 emits records with \x06 as internal field separator.
     matches = re.findall(
         r"name=([^\x06]+)\x06elapsed=([0-9.]+)\x06cpu=([0-9.]+)\x06gc=([0-9.]+)",
