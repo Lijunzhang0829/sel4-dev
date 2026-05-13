@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-tools/session_dag_only/analyze.py
-=================================
+CSTR-1/analyze.py
+=================
 
-Single session-DAG analyzer. Collapses the previous two-graph (session +
-theory) methodology into one graph at session granularity.
+Single session-DAG analyzer (CSTR-1 = one graph built).
+Primary method for CSTR-class optimization on seL4 proof builds.
 
 NODES: 29 sessions, weight = own elapsed from heaps/build_log.txt
 EDGES: from verification/l4v/proof/ROOT
@@ -14,10 +14,10 @@ EDGES: from verification/l4v/proof/ROOT
                           theory_timings BLOB (= cross-session reprocessing
                           cost, the CSTR phenomenon)
 
-OUTPUT: reports/session-dag-only.md (recommendations) + .json (machine)
-        + records construction wall time at the bottom of the .md.
+OUTPUT: CSTR-1/output.md (recommendations) + .json (machine), with
+        construction wall time recorded at the bottom of the .md.
 
-USAGE: python3 tools/session_dag_only/analyze.py
+USAGE: python3 CSTR-1/analyze.py
 """
 import json
 import re
@@ -29,13 +29,13 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent.parent
+REPO = Path(__file__).resolve().parent.parent
 L4V = REPO / "verification" / "l4v"
-# Per-build authoritative pre-swap data:
+# Pre-swap authoritative data for analysis:
 DB_DIR = REPO / "heaps" / "db-archive-pre-swap"
-BUILD_LOG = REPO / "heaps" / "build_log.txt"  # 2026-05-07 pre-swap canonical
-OUT_MD = REPO / "reports" / "session-dag-only.md"
-OUT_JSON = REPO / "reports" / "session-dag-only.json"
+BUILD_LOG = REPO / "heaps" / "build_log.pre-swap.txt"
+OUT_MD = REPO / "CSTR-1" / "output.md"
+OUT_JSON = REPO / "CSTR-1" / "output.json"
 
 REC_RE = re.compile(
     r"name=([^\x06]+)\x06elapsed=([0-9.]+)\x06cpu=([0-9.]+)\x06gc=([0-9.]+)"

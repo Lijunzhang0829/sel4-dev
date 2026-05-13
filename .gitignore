@@ -10,6 +10,7 @@ stack_cache/*
 # To restore the heap binaries themselves, see reports/baseline-restore.md.
 heaps/*
 !heaps/build_log.txt
+!heaps/build_log.pre-swap.txt
 
 # Runtime artifacts produced by run.sh / isabelle_prover skill
 logs/
@@ -17,14 +18,11 @@ reports/*
 !reports/README.md
 !reports/baseline-restore.md
 !reports/cbaserefine-build-config-comparison.md
-!reports/session-duplication-scan.md
-!reports/session-duplication-scan.json
-!reports/critical-path-*.md
-!reports/critical-path-*.json
-!reports/session-dag-only.md
-!reports/session-dag-only.json
-!heaps/build_log.pre-swap.txt
 test_output.log
+
+# CSTR-1 / CSTR-2 (proof-build optimization study) — fully tracked.
+# CSTR-1/ = primary method (single session-DAG).
+# CSTR-2/ = supplementary method (two-graph theory + session DAG).
 
 # Claude Code: per-user/per-machine permission overrides — gitignored
 # per Claude Code convention. Project-level permissions live in

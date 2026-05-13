@@ -1,10 +1,10 @@
 {
   "construction_time_s": {
-    "parse_root": 0.022,
+    "parse_root": 0.03,
     "parse_build_log": 0.0,
-    "load_theory_timings_blobs": 0.149,
+    "load_theory_timings_blobs": 0.258,
     "build_graph": 0.0,
-    "total": 0.172
+    "total": 0.289
   },
   "graph": {
     "nodes": {
@@ -289,12 +289,6 @@
         "weight": 0.0
       },
       {
-        "src": "CBaseRefine",
-        "dst": "CRefineSyscall",
-        "kind": "parent",
-        "weight": 0.0
-      },
-      {
         "src": "CKernel",
         "dst": "CSpec",
         "kind": "parent",
@@ -341,9 +335,8 @@
       {
         "src": "CRefine",
         "dst": "CRefineSyscall",
-        "kind": "sessions",
-        "weight": 1546.0,
-        "n_shared": 43
+        "kind": "parent",
+        "weight": 0.0
       },
       {
         "src": "CRefine",
@@ -354,8 +347,9 @@
       {
         "src": "CSpec",
         "dst": "CBaseRefine",
-        "kind": "parent",
-        "weight": 0.0
+        "kind": "sessions",
+        "weight": 0,
+        "n_shared": 0
       },
       {
         "src": "CSpec",
@@ -446,16 +440,8 @@
       {
         "src": "Refine",
         "dst": "CBaseRefine",
-        "kind": "sessions",
-        "weight": 3537.9,
-        "n_shared": 45
-      },
-      {
-        "src": "Refine",
-        "dst": "InfoFlowCBase",
-        "kind": "sessions",
-        "weight": 0,
-        "n_shared": 0
+        "kind": "parent",
+        "weight": 0.0
       },
       {
         "src": "Refine",
@@ -497,28 +483,7 @@
       }
     ]
   },
-  "swap_recommendations": [
-    {
-      "session": "CBaseRefine",
-      "current_parent": "CSpec",
-      "swap_with": "Refine",
-      "current_reprocess_cost": 3537.9,
-      "est_post_swap_cost": 253.6,
-      "est_aggregate_saving": 3284.3,
-      "n_shared_theories": 45,
-      "old_parent_disposition": "move P to `sessions P`"
-    },
-    {
-      "session": "CRefineSyscall",
-      "current_parent": "CBaseRefine",
-      "swap_with": "CRefine",
-      "current_reprocess_cost": 1546.0,
-      "est_post_swap_cost": 0.0,
-      "est_aggregate_saving": 1546.0,
-      "n_shared_theories": 43,
-      "old_parent_disposition": "drop (P in U's ancestry)"
-    }
-  ],
+  "swap_recommendations": [],
   "redundant_sessions_clauses": [
     {
       "session": "Refine",
@@ -544,18 +509,7 @@
       "session": "AsmRefineTest",
       "redundant_sessions_clause": "CParser",
       "reason": "CParser already in parent chain of AsmRefineTest"
-    },
-    {
-      "session": "AutoCorresSEL4",
-      "redundant_sessions_clause": "CParser",
-      "reason": "CParser already in parent chain of AutoCorresSEL4"
     }
   ],
-  "redundant_after_swap": [
-    {
-      "session": "InfoFlowCBase",
-      "redundant_sessions_clause": "Refine",
-      "reason": "Refine already in parent chain of InfoFlowCBase"
-    }
-  ]
+  "redundant_after_swap": []
 }

@@ -7,11 +7,11 @@ reprocessing cost down to inter-session aggregates.
 
 | Step | Wall (s) |
 |---|---:|
-| parse ROOT | 0.022 |
+| parse ROOT | 0.019 |
 | parse build_log.txt | 0.000 |
-| load 29 theory_timings BLOBs | 0.149 |
+| load 29 theory_timings BLOBs | 0.163 |
 | build graph + edge weights | 0.000 |
-| **total** | **0.172** |
+| **total** | **0.183** |
 
 Graph size: 37 nodes, 52 edges (vs prior theory-DAG 1094 nodes / 1961 edges).
 
