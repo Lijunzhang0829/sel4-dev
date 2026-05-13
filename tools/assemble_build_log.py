@@ -60,10 +60,17 @@ from pathlib import Path
 
 try:
     import zstandard as zstd
+    _HAVE_PY_ZSTD = True
 except ImportError:
-    import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "zstandard"])
-    import zstandard as zstd
+    import subprocess, tempfile
+    _HAVE_PY_ZSTD = False
+    def _zstd_cli_decompress(blob: bytes) -> bytes:
+        with tempfile.NamedTemporaryFile(suffix=".zst", delete=False) as fz:
+            fz.write(blob); path = fz.name
+        try:
+            return subprocess.check_output(["zstd", "-dcq", path])
+        finally:
+            os.unlink(path)
 
 REPO = Path(__file__).resolve().parent.parent
 TUNED_LOG = REPO / "heaps" / "build_log.tuned.txt"
@@ -102,7 +109,10 @@ for sess, *_ in sessions:
         continue
     if row is None or row[1] is None:
         continue
-    text = zstd.ZstdDecompressor().decompress(row[1]).decode("utf-8")
+    if _HAVE_PY_ZSTD:
+        text = zstd.ZstdDecompressor().decompress(row[1]).decode("utf-8")
+    else:
+        text = _zstd_cli_decompress(row[1]).decode("utf-8")
     # Isabelle 2024 emits records with \x06 as internal field separator.
     matches = re.findall(
         r"name=([^\x06]+)\x06elapsed=([0-9.]+)\x06cpu=([0-9.]+)\x06gc=([0-9.]+)",
