@@ -1,0 +1,8668 @@
+{
+  "theory_count": 1094,
+  "proof_theory_count": 220,
+  "classification_counts": {
+    "haskell-axis": 159,
+    "cross-cut-HC": 51,
+    "minimal": 9,
+    "spec-only": 1
+  },
+  "classification_walls_s": {
+    "haskell-axis": 2928.0,
+    "cross-cut-HC": 4765.4,
+    "minimal": 22.7,
+    "spec-only": 3.8,
+    "c-axis": 0.0
+  },
+  "per_theory": {
+    "AInvs.ADT_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 5.8
+    },
+    "AInvs.AInvs": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.1
+    },
+    "AInvs.AInvsPre": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.8
+    },
+    "AInvs.ArchADT_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 13.5
+    },
+    "AInvs.ArchAInvsPre": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.2
+    },
+    "AInvs.ArchAcc_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 5.9
+    },
+    "AInvs.ArchArch_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 32.1
+    },
+    "AInvs.ArchBCorres2_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 15.4
+    },
+    "AInvs.ArchBCorres_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.0
+    },
+    "AInvs.ArchBitSetup_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "AInvs.ArchBits_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 7.0
+    },
+    "AInvs.ArchCNodeInv_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 16.2
+    },
+    "AInvs.ArchCSpaceInvPre_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.6
+    },
+    "AInvs.ArchCSpaceInv_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 8.6
+    },
+    "AInvs.ArchCSpacePre_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 9.2
+    },
+    "AInvs.ArchCSpace_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 10.0
+    },
+    "AInvs.ArchCrunchSetup_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 2.7
+    },
+    "AInvs.ArchDetSchedAux_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 8.9
+    },
+    "AInvs.ArchDetSchedDomainTime_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 15.2
+    },
+    "AInvs.ArchDetSchedSchedule_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 23.9
+    },
+    "AInvs.ArchDeterministic_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 17.8
+    },
+    "AInvs.ArchDetype_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 19.7
+    },
+    "AInvs.ArchEmptyFail_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 25.6
+    },
+    "AInvs.ArchFinalise_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 43.5
+    },
+    "AInvs.ArchInterruptAcc_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.7
+    },
+    "AInvs.ArchInterrupt_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.9
+    },
+    "AInvs.ArchInvariants_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 43.1
+    },
+    "AInvs.ArchIpcCancel_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.9
+    },
+    "AInvs.ArchIpc_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 8.0
+    },
+    "AInvs.ArchKHeap_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 11.9
+    },
+    "AInvs.ArchKernelInit_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 5.3
+    },
+    "AInvs.ArchLevityCatch_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 2.2
+    },
+    "AInvs.ArchRetype_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 67.2
+    },
+    "AInvs.ArchSchedule_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.1
+    },
+    "AInvs.ArchSyscall_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 5.3
+    },
+    "AInvs.ArchTcbAcc_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.7
+    },
+    "AInvs.ArchTcb_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 12.7
+    },
+    "AInvs.ArchUntyped_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 9.3
+    },
+    "AInvs.ArchVCPU_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "AInvs.ArchVSpaceEntries_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 15.8
+    },
+    "AInvs.ArchVSpaceLookup_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "AInvs.ArchVSpace_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 34.9
+    },
+    "AInvs.Arch_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.8
+    },
+    "AInvs.BCorres2_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 2.2
+    },
+    "AInvs.BCorres_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.1
+    },
+    "AInvs.Bits_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.2
+    },
+    "AInvs.CNodeInv_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 14.0
+    },
+    "AInvs.CSpaceInvPre_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 9.5
+    },
+    "AInvs.CSpaceInv_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 17.9
+    },
+    "AInvs.CSpacePre_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.7
+    },
+    "AInvs.CSpace_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 22.5
+    },
+    "AInvs.DetSchedAux_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 12.1
+    },
+    "AInvs.DetSchedDomainTime_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 15.0
+    },
+    "AInvs.DetSchedInvs_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.6
+    },
+    "AInvs.DetSchedSchedule_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 31.6
+    },
+    "AInvs.Deterministic_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 20.5
+    },
+    "AInvs.Detype_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 14.9
+    },
+    "AInvs.EmptyFail_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 8.1
+    },
+    "AInvs.Finalise_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 12.1
+    },
+    "AInvs.Include_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.5
+    },
+    "AInvs.InterruptAcc_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.2
+    },
+    "AInvs.Interrupt_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 9.4
+    },
+    "AInvs.InvariantsPre_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 25.5
+    },
+    "AInvs.Invariants_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 48.8
+    },
+    "AInvs.IpcCancel_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 9.4
+    },
+    "AInvs.Ipc_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 42.1
+    },
+    "AInvs.KHeapPre_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.3
+    },
+    "AInvs.KHeap_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 11.2
+    },
+    "AInvs.KernelInitSepProofs_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "AInvs.KernelInitSep_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "AInvs.KernelInit_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.1
+    },
+    "AInvs.LevityCatch_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.8
+    },
+    "AInvs.Machine_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 11.4
+    },
+    "AInvs.Retype_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 9.2
+    },
+    "AInvs.Rights_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "spec"
+      ],
+      "wall_s": 0.4
+    },
+    "AInvs.Schedule_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 6.3
+    },
+    "AInvs.SubMonad_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.1
+    },
+    "AInvs.Syscall_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 13.8
+    },
+    "AInvs.TcbAcc_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 7.7
+    },
+    "AInvs.Tcb_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 10.6
+    },
+    "AInvs.Untyped_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 19.8
+    },
+    "AInvs.VSpaceEntries_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.2
+    },
+    "AInvs.VSpacePre_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 5.7
+    },
+    "AInvs.VSpace_AI": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 6.0
+    },
+    "ASepSpec.Decode_SA": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ASepSpec.Ipc_SA": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ASepSpec.Syscall_SA": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ASpec.ArchCSpace_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.3
+    },
+    "ASpec.ArchDecode_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.3
+    },
+    "ASpec.ArchFault_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.9
+    },
+    "ASpec.ArchInterrupt_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.8
+    },
+    "ASpec.ArchInvocation_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 11.5
+    },
+    "ASpec.ArchIpcCancel_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.2
+    },
+    "ASpec.ArchRetype_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.6
+    },
+    "ASpec.ArchTcb_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.8
+    },
+    "ASpec.ArchVSpaceAcc_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.2
+    },
+    "ASpec.ArchVSpace_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.0
+    },
+    "ASpec.Arch_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 2.7
+    },
+    "ASpec.Arch_Structs_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 15.2
+    },
+    "ASpec.CSpaceAcc_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.4
+    },
+    "ASpec.CSpace_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 11.3
+    },
+    "ASpec.CapRights_A": {
+      "pillar": "spec",
+      "closure_pillars": [],
+      "wall_s": 3.0
+    },
+    "ASpec.Decode_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.9
+    },
+    "ASpec.Deterministic_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 5.5
+    },
+    "ASpec.ExceptionTypes_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.7
+    },
+    "ASpec.Exceptions_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.2
+    },
+    "ASpec.Glossary_Doc": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.0
+    },
+    "ASpec.Hypervisor_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.9
+    },
+    "ASpec.Init_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.5
+    },
+    "ASpec.Interrupt_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.4
+    },
+    "ASpec.Intro_Doc": {
+      "pillar": "spec",
+      "closure_pillars": [],
+      "wall_s": 0.4
+    },
+    "ASpec.InvocationLabels_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.3
+    },
+    "ASpec.Invocations_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 16.7
+    },
+    "ASpec.IpcCancel_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.6
+    },
+    "ASpec.Ipc_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 5.3
+    },
+    "ASpec.KHeap_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.6
+    },
+    "ASpec.KernelInit_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ASpec.Machine_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 2.2
+    },
+    "ASpec.MiscMachine_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.0
+    },
+    "ASpec.Retype_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.6
+    },
+    "ASpec.Schedule_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.3
+    },
+    "ASpec.Structures_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 20.5
+    },
+    "ASpec.Syscall_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 7.8
+    },
+    "ASpec.TcbAcc_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 2.9
+    },
+    "ASpec.Tcb_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.8
+    },
+    "ASpec.VCPUAcc_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ASpec.VCPU_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ASpec.VMRights_A": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "spec"
+      ],
+      "wall_s": 0.3
+    },
+    "Access.ADT_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.3
+    },
+    "Access.Access": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 6.8
+    },
+    "Access.Access_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 1.9
+    },
+    "Access.ArchADT_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.9
+    },
+    "Access.ArchAccess": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 26.6
+    },
+    "Access.ArchAccess_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 13.2
+    },
+    "Access.ArchArch_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 17.7
+    },
+    "Access.ArchCNode_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 35.3
+    },
+    "Access.ArchDomainSepInv": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 10.2
+    },
+    "Access.ArchFinalise_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 8.4
+    },
+    "Access.ArchInterrupt_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 16.0
+    },
+    "Access.ArchIpc_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 16.0
+    },
+    "Access.ArchRetype_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 67.3
+    },
+    "Access.ArchSyscall_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 8.4
+    },
+    "Access.ArchTcb_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.6
+    },
+    "Access.ArchTypes": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 2.2
+    },
+    "Access.Arch_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.6
+    },
+    "Access.CNode_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.8
+    },
+    "Access.Deterministic_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.1
+    },
+    "Access.DomainSepInv": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.6
+    },
+    "Access.ExampleSystem": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 31.2
+    },
+    "Access.Finalise_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.2
+    },
+    "Access.Interrupt_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.4
+    },
+    "Access.Ipc_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 7.6
+    },
+    "Access.Retype_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 1.5
+    },
+    "Access.Syscall_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 12.0
+    },
+    "Access.Tcb_AC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 1.5
+    },
+    "Access.Types": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 10.1
+    },
+    "AsmRefine.ArchSetup": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.AsmSemanticsRespects": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.CommonOps": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.CommonOpsLemmas": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.ExtraSpecs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.FieldAccessors": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.GhostAssertions": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.GlobalsSwap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.GraphLang": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.GraphLangLemmas": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.GraphProof": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.GraphRefine": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.ProveGraphRefine": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.SimplExport": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefine.TailrecPre": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefineTest.global_array_swap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefineTest.global_array_swap_gref": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefineTest.global_asm_stmt": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefineTest.global_asm_stmt_gref": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefineTest.inf_loop": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AsmRefineTest.inf_loop_gref": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.AC_Rename": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.AbstractArrays": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Alloc": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Alloc_Lite": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Alloc_Simp": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.AutoCorres": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.AutoCorresSimpset": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Auto_Separation_Algebra": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.BinarySearch": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.CCorresE": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.CList": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.ConditionGuard": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.CorresXF": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.CustomWordAbs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.DataStructures": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "AutoCorres.ExceptionRewrite": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.ExecConcrete": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.FactorialTest": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.FibProof": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.FunctionInfoDemo": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.HeapLift": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.HeapWrap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Incremental": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.IsPrime": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Kmalloc": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.L1Defs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.L1Peephole": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.L1Valid": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.L2Defs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.L2Opt": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.L2Peephole": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.ListRev": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.LocalVarExtract": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Memcpy": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Memset": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.MonadMono": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.MultByAdd": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.NatBitwise": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.NonDetMonadEx": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Plus": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Polish": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Quicksort": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.SchorrWaite": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.SignedWordAbsHeap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.SimplBucket": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.SimplConv": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Simple": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Str2Long": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Suzuki": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Swap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.Test_Spec_Translation": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.TraceDemo": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.TypHeapSimple": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.TypeStrengthen": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.WhileLoopVarsPreserved": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.WordAbs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.WordAbsFnCall": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.WordAbstract": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.WordPolish": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.array_indirect_update": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.badnames": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.dirty_frees": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.global_array_update": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.heap_lift_force_prevent": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.jira_ver_591": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.nested_struct": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.prototyped_functions": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.skip_heap_abs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.struct": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.struct2": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.struct3": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.type_strengthen_tricks": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.word_abs_cases": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorres.word_abs_options": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorresCRefine.AutoCorresTest": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorresQuickstart.Chapter1_MinMax": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorresQuickstart.Chapter2_HoareHeap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorresQuickstart.Chapter3_HoareHeap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "AutoCorresSEL4.TestSEL4": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "BaseRefine.Include": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.4
+    },
+    "Basics.CLib": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Bisim.Separation": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.1
+    },
+    "Bisim.Syscall_S": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 18.8
+    },
+    "CBaseRefine.Include_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 44.5
+    },
+    "CBaseRefine.L4VerifiedLinks": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.4
+    },
+    "CKernel.Kernel_C": {
+      "pillar": "c",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 706.8
+    },
+    "CLib.BitFieldProofsLib": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CLib.CCorresLemmas": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CLib.CCorres_Rewrite": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CLib.CTranslationNICTA": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CLib.Corres_UL_C": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CLib.MonadicRewrite_C": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CLib.SIMPL_Lemmas": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CLib.SimplRewrite": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CLib.Simpl_Rewrite": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CLib.XPres": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.Addr_Type": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.8
+    },
+    "CParser.ArchArraysMemInstance": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.5
+    },
+    "CParser.ArrayAssertion": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.3
+    },
+    "CParser.Arrays": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 2.9
+    },
+    "CParser.ArraysMemInstance": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.5
+    },
+    "CParser.CLanguage": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "CParser.CProof": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 3.4
+    },
+    "CParser.CTranslation": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 10.5
+    },
+    "CParser.CTypes": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 2.1
+    },
+    "CParser.CTypesBase": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 5.0
+    },
+    "CParser.CTypesDefs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 19.7
+    },
+    "CParser.Closed": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.CompoundCTypes": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.3
+    },
+    "CParser.CompoundCTypesEx": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.HeapRawState": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.4
+    },
+    "CParser.IndirectCalls": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.4
+    },
+    "CParser.LemmaBucket_C": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.2
+    },
+    "CParser.MachineWords": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.MapExtra": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 2.4
+    },
+    "CParser.MapExtraTrans": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.2
+    },
+    "CParser.ModifiesProofs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.4
+    },
+    "CParser.PackedTypes": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.9
+    },
+    "CParser.Padding": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.4
+    },
+    "CParser.PrettyProgs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.8
+    },
+    "CParser.SepCode": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.9
+    },
+    "CParser.SepFrame": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.4
+    },
+    "CParser.SepInv": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.0
+    },
+    "CParser.SepTactic": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.3
+    },
+    "CParser.Separation": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.2
+    },
+    "CParser.StaticFun": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 4.8
+    },
+    "CParser.StructSupport": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.8
+    },
+    "CParser.TypHeap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 2.9
+    },
+    "CParser.TypHeapLib": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.5
+    },
+    "CParser.Vanilla32": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.8
+    },
+    "CParser.Vanilla32_Preliminaries": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.3
+    },
+    "CParser.Word_Mem_Encoding": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "CParser.addrlocal": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.analsignedoverflow": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.array_of_ptr": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.arrays": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.asm_stmt": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.attributes": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.basic_char": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.bigstruct": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.breakcontinue": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.bug20060707": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.bug_mvt20110302": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.bugzilla180": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.bugzilla181": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.bugzilla182": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.builtins": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.charlit": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.codetests": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.dc_20081211": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.dc_embbug": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.decl_only": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.dont_translate": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.dupthms": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.emptystmt": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.extern_builtin": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.extern_dups": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.factorial": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.fncall": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.fnptr": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.gcc_attribs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.ghoststate1": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.ghoststate2": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.globals_fn": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.globals_in_record": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.globinits": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.guard_while": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.hexliteral": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.initialised_decls": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.inner_fncalls": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.int_promotion": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.isa2014": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver039": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver092": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver105": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver110": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver1241": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver1389": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver150": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver224": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver253": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver254": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver307": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver310": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver313": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver315": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver332": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver336": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver337": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver344": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver345": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver384": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver400": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver422": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver426": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver429": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver432": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver434": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver439": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver440": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver443": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver443a": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver456": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver464": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver473": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver54": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver550": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver808": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.jiraver881": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.kmalloc": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.list_reverse": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.list_reverse_norm": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.locvarfncall": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.longlong": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.many_local_vars": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.modifies_assumptions": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.modifies_speed": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.multi_deref": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.multidim_arrays": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.mutrec_modifies": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_addr": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_c99block": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_complit": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_dowhile": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_enum": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_fncall": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_forloop": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_include": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_protos": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_retfncall": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_sizeof": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_someops": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_struct": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_struct_array": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_switch": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_typecast": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.parse_voidfn": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.phantom_mstate": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.populate_globals": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.postfixOps": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.protoparamshadow": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.ptr_auxupd": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.ptr_diff": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.ptr_modifies": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.really_simple": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.relspec": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.retprefix": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.selection_sort": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.shortcircuit": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.signed_div": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.signedoverflow": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.simple_annotated_fn": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.simple_constexpr_sizeof": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.simple_fn": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.sizeof_typedef": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.spec_annotated_fn": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.spec_annotated_voidfn": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.swap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.switch_unsigned_signed": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.test_locality": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.test_shifts": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.ummbug20100217": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.untouched_globals": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.variable_munge": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.varinit": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.void_ptr_init": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CParser.volatile_asm": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CRefine.ADT_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 207.6
+    },
+    "CRefine.ArchMove_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 19.6
+    },
+    "CRefine.Arch_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 33.5
+    },
+    "CRefine.AutoCorresModifiesProofs": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "lib",
+        "proof"
+      ],
+      "wall_s": 5.1
+    },
+    "CRefine.AutoCorres_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 19.9
+    },
+    "CRefine.Boolean_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 2.2
+    },
+    "CRefine.CLevityCatch": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 26.4
+    },
+    "CRefine.CSpaceAcc_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 19.2
+    },
+    "CRefine.CSpace_All": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 10.7
+    },
+    "CRefine.CSpace_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 33.6
+    },
+    "CRefine.CSpace_RAB_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 14.8
+    },
+    "CRefine.CToCRefine": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 7.2
+    },
+    "CRefine.Corres_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 55.6
+    },
+    "CRefine.Ctac": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 18.0
+    },
+    "CRefine.Ctac_lemmas_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 13.1
+    },
+    "CRefine.Delete_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 27.4
+    },
+    "CRefine.DetWP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 24.0
+    },
+    "CRefine.Detype_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 25.6
+    },
+    "CRefine.Fastpath_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 54.4
+    },
+    "CRefine.Fastpath_Defs": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 20.8
+    },
+    "CRefine.Fastpath_Equiv": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 32.8
+    },
+    "CRefine.Finalise_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 82.1
+    },
+    "CRefine.Init_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.3
+    },
+    "CRefine.Interrupt_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 22.2
+    },
+    "CRefine.Invoke_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 51.5
+    },
+    "CRefine.IpcCancel_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 15.6
+    },
+    "CRefine.Ipc_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 150.1
+    },
+    "CRefine.IsolatedThreadAction": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 36.1
+    },
+    "CRefine.Machine_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 38.2
+    },
+    "CRefine.Move_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 6.3
+    },
+    "CRefine.PSpace_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 36.8
+    },
+    "CRefine.Recycle_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 56.4
+    },
+    "CRefine.Refine_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 47.3
+    },
+    "CRefine.Refine_nondet_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CRefine.Retype_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 154.0
+    },
+    "CRefine.SR_lemmas_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 27.4
+    },
+    "CRefine.Schedule_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 20.9
+    },
+    "CRefine.StateRelation_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 118.0
+    },
+    "CRefine.StoreWord_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 10.1
+    },
+    "CRefine.SyscallArgs_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 81.0
+    },
+    "CRefine.Syscall_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 35.9
+    },
+    "CRefine.TcbAcc_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 18.7
+    },
+    "CRefine.TcbQueue_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 8.0
+    },
+    "CRefine.Tcb_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 32.1
+    },
+    "CRefine.VSpace_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 94.3
+    },
+    "CRefine.Wellformed_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 62.5
+    },
+    "CRefineSyscall.Intermediate_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.9
+    },
+    "CSpec.KernelInc_C": {
+      "pillar": "c",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.7
+    },
+    "CSpec.KernelState_C": {
+      "pillar": "c",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 5.4
+    },
+    "CSpec.Kernel_C": {
+      "pillar": "c",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CSpec.Substitute": {
+      "pillar": "c",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 84.8
+    },
+    "CSpec.TypHeapLimits": {
+      "pillar": "c",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CSpec.shared_types_defs": {
+      "pillar": "c",
+      "closure_pillars": [],
+      "wall_s": 2.8
+    },
+    "CSpec.shared_types_proofs": {
+      "pillar": "c",
+      "closure_pillars": [],
+      "wall_s": 1.3
+    },
+    "CSpec.structures_defs": {
+      "pillar": "c",
+      "closure_pillars": [],
+      "wall_s": 37.0
+    },
+    "CSpec.structures_proofs": {
+      "pillar": "c",
+      "closure_pillars": [],
+      "wall_s": 18.6
+    },
+    "CamkesAdlSpec.Examples_CAMKES": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CamkesAdlSpec.Glue_CAMKES": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CamkesAdlSpec.Helpers_CAMKES": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CamkesAdlSpec.Library_CAMKES": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CamkesAdlSpec.Types_CAMKES": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CamkesAdlSpec.Wellformed_CAMKES": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CamkesCdlRefine.Eval_CAMKES_CDL": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CamkesCdlRefine.Policy_CAMKES_CDL": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CamkesCdlRefine.Types_CAMKES_CDL": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "CamkesGlueProofs.DataIn": {
+      "pillar": "?",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CamkesGlueProofs.EventFrom": {
+      "pillar": "?",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CamkesGlueProofs.EventTo": {
+      "pillar": "?",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CamkesGlueProofs.RPCFrom": {
+      "pillar": "?",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CamkesGlueProofs.RPCTo": {
+      "pillar": "?",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CamkesGlueProofs.Syntax": {
+      "pillar": "?",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.Abbreviations": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.CIMP": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.Connector": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.EgTop": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.EgTop2": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.GenDataportBase": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.GenDataportSystem": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.GenEventBase": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.GenEventSystem": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.GenFilter2Base": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.GenFilter2System": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.GenFilterBase": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.GenFilterSystem": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.GenSimpleBase": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.GenSimpleSystem": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.Types": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.UserDataport": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.UserEvent": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.UserFilter": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.UserFilter2": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.UserSimple": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "CamkesGlueSpec.UserStubs": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Concurrency.Atomicity_Lib": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Concurrency.Peterson_Atomicity": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Concurrency.Plus2_Prefix": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Concurrency.Prefix_Refinement": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Concurrency.Triv_Refinement": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "CorresK.CorresK_Lemmas": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "DBaseRefine.Include_D": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.3
+    },
+    "DPolicy.Dpolicy": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 21.0
+    },
+    "DRefine.Arch_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 10.0
+    },
+    "DRefine.CNode_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 10.1
+    },
+    "DRefine.Corres_D": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.9
+    },
+    "DRefine.Finalise_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 17.8
+    },
+    "DRefine.Intent_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 9.4
+    },
+    "DRefine.Interrupt_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 8.1
+    },
+    "DRefine.Ipc_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 10.5
+    },
+    "DRefine.KHeap_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 11.5
+    },
+    "DRefine.Lemmas_D": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 2.8
+    },
+    "DRefine.MoreCorres": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.8
+    },
+    "DRefine.MoreHOL": {
+      "pillar": "proof",
+      "closure_pillars": [],
+      "wall_s": 0.2
+    },
+    "DRefine.Refine_D": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 6.5
+    },
+    "DRefine.Schedule_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 7.6
+    },
+    "DRefine.StateTranslationProofs_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 6.8
+    },
+    "DRefine.StateTranslation_D": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 34.6
+    },
+    "DRefine.Syscall_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 14.6
+    },
+    "DRefine.Tcb_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 9.9
+    },
+    "DRefine.Untyped_DR": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 8.9
+    },
+    "DSpec.Asid_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.2
+    },
+    "DSpec.CNode_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.3
+    },
+    "DSpec.CSpace_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.1
+    },
+    "DSpec.Decode_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.8
+    },
+    "DSpec.Endpoint_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.4
+    },
+    "DSpec.Intents_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 28.0
+    },
+    "DSpec.Interrupt_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.6
+    },
+    "DSpec.Invocations_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 21.9
+    },
+    "DSpec.KHeap_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.4
+    },
+    "DSpec.Monads_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 1.9
+    },
+    "DSpec.PageTableUnmap_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 2.1
+    },
+    "DSpec.PageTable_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.5
+    },
+    "DSpec.Schedule_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.1
+    },
+    "DSpec.Syscall_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 2.0
+    },
+    "DSpec.Tcb_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.7
+    },
+    "DSpec.Types_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 15.3
+    },
+    "DSpec.Untyped_D": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0.4
+    },
+    "DSpecProofs.API_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.6
+    },
+    "DSpecProofs.Arch_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 1.1
+    },
+    "DSpecProofs.CNode_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.8
+    },
+    "DSpecProofs.IRQ_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.5
+    },
+    "DSpecProofs.Invocation_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 2.8
+    },
+    "DSpecProofs.KHeap_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 12.8
+    },
+    "DSpecProofs.Kernel_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.1
+    },
+    "DSpecProofs.ProofHelpers_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 1.3
+    },
+    "DSpecProofs.RWHelper_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.7
+    },
+    "DSpecProofs.Retype_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 2.0
+    },
+    "DSpecProofs.Sep_Tactic_Examples": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.3
+    },
+    "DSpecProofs.TCB_DP": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.8
+    },
+    "Docs.Style": {
+      "pillar": "?",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Docs.Style_pre": {
+      "pillar": "?",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "EVTutorial.EquivValidTutorial": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Apply_Debug": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Apply_Trace": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Apply_Trace_Cmd": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Conjuncts": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Eisbach_Methods": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Local_Method": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Local_Method_Tests": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.ProvePart": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Rule_By_Method": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Simp_No_Conditional": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Subgoal_Methods": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Eisbach_Tools.Trace_Schematic_Insts": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.API_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchFaultHandler_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchFault_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchHook_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchHypervisor_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchIntermediate_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchInterruptDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchInterrupt_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchInvocationLabels_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchLabelFuns_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchObjInsts_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchPSpace_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchRetypeDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchRetype_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchStateData_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchStructures_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchTCB_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchThreadDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchThread_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchTypes_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchVSpaceDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ArchVSpace_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Arch_Kernel_Config_Lemmas": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Arch_Structs_B": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.CNode_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.CSpaceDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.CSpace_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Config_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Delete_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.EndpointDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Endpoint_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Event_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.FaultHandlerDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.FaultHandler_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.FaultMonad_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Fault_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Hardware_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Hypervisor_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Intermediate_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.InterruptDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Interrupt_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.InvocationLabels_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Invocations_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.KI_Decls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.KernelInitMonad_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.KernelInit_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.KernelStateData_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Kernel_Config": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Kernel_Config_Lemmas": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Kernel_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.MachineExports": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.MachineMonad": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.MachineOps": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.MachineTypes": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.NotificationDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Notification_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ObjectInstances_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Object_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.PSpaceFuns_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.PSpaceStorable_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.PSpaceStruct_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Platform": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.RegisterSet_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.RetypeDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Retype_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Setup_Locale": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.State_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Structures_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Syscall_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.TCBDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.TCB_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.ThreadDecls_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Thread_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Types_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.Untyped_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.VCPU_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ExecSpec.VSpace_H": {
+      "pillar": "haskell",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "InfoFlow.ADT_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 12.8
+    },
+    "InfoFlow.ArchADT_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 6.2
+    },
+    "InfoFlow.ArchArch_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 30.7
+    },
+    "InfoFlow.ArchCNode_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 20.1
+    },
+    "InfoFlow.ArchDecode_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 8.3
+    },
+    "InfoFlow.ArchFinalCaps": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 8.9
+    },
+    "InfoFlow.ArchFinalise_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.2
+    },
+    "InfoFlow.ArchIRQMasks_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 17.2
+    },
+    "InfoFlow.ArchInfoFlow": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 20.3
+    },
+    "InfoFlow.ArchInfoFlow_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.3
+    },
+    "InfoFlow.ArchInterrupt_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 5.5
+    },
+    "InfoFlow.ArchIpc_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 9.3
+    },
+    "InfoFlow.ArchNoninterference": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 14.0
+    },
+    "InfoFlow.ArchPasUpdates": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 10.2
+    },
+    "InfoFlow.ArchRetype_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 16.4
+    },
+    "InfoFlow.ArchScheduler_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 18.6
+    },
+    "InfoFlow.ArchSyscall_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.6
+    },
+    "InfoFlow.ArchTcb_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 10.1
+    },
+    "InfoFlow.ArchUserOp_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 27.4
+    },
+    "InfoFlow.Arch_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 3.4
+    },
+    "InfoFlow.CNode_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 1.3
+    },
+    "InfoFlow.Decode_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.5
+    },
+    "InfoFlow.ExampleSystemPolicyFlows": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 3.3
+    },
+    "InfoFlow.Example_Valid_State": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 20.9
+    },
+    "InfoFlow.FinalCaps": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 6.1
+    },
+    "InfoFlow.Finalise_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 3.3
+    },
+    "InfoFlow.IRQMasks_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 15.1
+    },
+    "InfoFlow.InfoFlow": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 1.9
+    },
+    "InfoFlow.InfoFlow_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 1.6
+    },
+    "InfoFlow.InfoFlow_Image_Toplevel": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 8.5
+    },
+    "InfoFlow.Interrupt_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.4
+    },
+    "InfoFlow.Ipc_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 3.4
+    },
+    "InfoFlow.Noninterference": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 16.5
+    },
+    "InfoFlow.Noninterference_Base": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 5.4
+    },
+    "InfoFlow.Noninterference_Base_Alternatives": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "lib",
+        "proof"
+      ],
+      "wall_s": 7.7
+    },
+    "InfoFlow.Noninterference_Base_Refinement": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "lib",
+        "proof"
+      ],
+      "wall_s": 2.6
+    },
+    "InfoFlow.PasUpdates": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 6.6
+    },
+    "InfoFlow.PolicyExample": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 3.1
+    },
+    "InfoFlow.PolicySystemSAC": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.7
+    },
+    "InfoFlow.Retype_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.8
+    },
+    "InfoFlow.Scheduler_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 6.1
+    },
+    "InfoFlow.Syscall_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 5.0
+    },
+    "InfoFlow.Tcb_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 1.4
+    },
+    "InfoFlow.UserOp_IF": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 1.8
+    },
+    "InfoFlowC.ADT_IF_Refine": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 21.3
+    },
+    "InfoFlowC.ADT_IF_Refine_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 55.1
+    },
+    "InfoFlowC.ArchADT_IF_Refine": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 9.9
+    },
+    "InfoFlowC.ArchADT_IF_Refine_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 15.9
+    },
+    "InfoFlowC.Example_Valid_StateH": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 35.7
+    },
+    "InfoFlowC.Noninterference_Refinement": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 65.7
+    },
+    "InfoFlowCBase.Include_IF_C": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 5.6
+    },
+    "Lib.AddUpdSimps": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.BCorres_UL": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Bisim_UL": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.CorresK_Method": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Corres_Adjust_Preconds": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Corres_Cases": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Corres_Method": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Corres_UL": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Crunch": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Crunch_Instances_NonDet": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Crunch_Instances_Trace": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.CutMon": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.DataMap": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Defs": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.DetWPLib": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Distinct_Cmd": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.EquivValid": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Eval_Bool": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.ExtraCorres": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Extract_Conjunct": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.FP_Eval": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.FastMap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Find_Names": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.GenericLib": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.GenericTag": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Guess_ExI": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.HaskellLemmaBucket": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.HaskellLib_H": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Heap_List": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Injection_Handler": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Insulin": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.LemmaBucket": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.LexordList": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Lib": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.ListLibLemmas": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.List_Lib": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Locale_Abbrev": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.ML_Goal": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.ML_Goal_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Match_Abbreviation": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Monad_Commute": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Monad_Lists": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.MonadicRewrite": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.More_Numeral_Type": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.NICTATools": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Named_Eta": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.NonDetMonadLemmaBucket": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.None_Top_Bot": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Oblivious": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Qualify": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.RangeMap": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Repeat_Attribute": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Requalify": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Rules_Tac": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.ShowTypes": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.SimpStrategy": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Simulation": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Solves_Tac": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.SpecValid_R": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.SplitRule": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.StateMonad": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.SubMonadLib": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Time_Methods_Cmd": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Try_Attribute": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Try_Methods": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Lib.Value_Abbreviation": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Lib.Value_Type": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "LibTest.Apply_Debug_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.CorresK_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Corres_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Crunch_Test_NonDet": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Crunch_Test_Qualified_NonDet": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Crunch_Test_Qualified_Trace": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Crunch_Test_Trace": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.FP_Eval_Tests": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.FastMap_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Insulin_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Locale_Abbrev_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Match_Abbreviation_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.MonadicRewrite_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Named_Eta_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Qualify_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.RangeMap_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Rules_Tac_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.ShowTypes_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Time_Methods_Cmd_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Trace_Schematic_Insts_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.Value_Type_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "LibTest.WPTutorial": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "ML_Utils.ML_Utils": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "ML_Utils.MkTermAntiquote": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "ML_Utils.MkTermAntiquote_Tests": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "ML_Utils.TacticAntiquotation": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "ML_Utils.TacticAntiquotation_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "ML_Utils.TacticTutorial": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "ML_Utils.TermPatternAntiquote": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "ML_Utils.TermPatternAntiquote_Tests": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Datatype_Schematic": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Eisbach_WP": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Fun_Pred_Syntax": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Monads.Less_Monad_Syntax": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Monads.Monad_Lib": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Monads.Nondet_Det": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_Empty_Fail": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_In_Monad": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_Lemmas": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_Monad": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_MonadEq": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_MonadEq_Lemmas": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_Monad_Equations": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_More_VCG": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_No_Fail": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_No_Throw": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_README": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_Reader_Option": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_Sat": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_Strengthen_Setup": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_Total": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_VCG": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_While_Loop_Rules": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Nondet_While_Loop_Rules_Completeness": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Reader_Option_Monad": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Reader_Option_VCG": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Strengthen": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Monads.Strengthen_Demo": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_Det": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_Empty_Fail": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_In_Monad": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_Lemmas": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_Monad": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_Monad_Equations": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_More_RG": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_More_VCG": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_No_Fail": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_No_Throw": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_No_Trace": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_Prefix_Closed": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_RG": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_Reader_Option": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_Sat": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_Strengthen_Setup": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_Total": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.Trace_VCG": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.WP": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.WPBang": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.WPC": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.WPEx": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.WPFix": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.WPI": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.WPSimp": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.WP_Pre": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Monads.WP_README": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Refine.ADT_H": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 56.1
+    },
+    "Refine.ArchAcc_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 15.3
+    },
+    "Refine.ArchMove_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 14.5
+    },
+    "Refine.Arch_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 19.3
+    },
+    "Refine.Bits_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 31.3
+    },
+    "Refine.CNodeInv_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 145.0
+    },
+    "Refine.CSpace1_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 93.8
+    },
+    "Refine.CSpace_I": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 41.0
+    },
+    "Refine.CSpace_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 102.9
+    },
+    "Refine.Corres": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.9
+    },
+    "Refine.Detype_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 86.8
+    },
+    "Refine.EmptyFail": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 8.0
+    },
+    "Refine.EmptyFail_H": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 25.4
+    },
+    "Refine.Finalise_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 220.6
+    },
+    "Refine.IncKernelInit": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.0
+    },
+    "Refine.InitLemmas": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.2
+    },
+    "Refine.Init_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 11.0
+    },
+    "Refine.InterruptAcc_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 11.5
+    },
+    "Refine.Interrupt_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 25.2
+    },
+    "Refine.InvariantUpdates_H": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.4
+    },
+    "Refine.Invariants_H": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 124.7
+    },
+    "Refine.Invocations_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 8.4
+    },
+    "Refine.IpcCancel_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 88.5
+    },
+    "Refine.Ipc_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 46.6
+    },
+    "Refine.KHeap_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 27.6
+    },
+    "Refine.KernelInit_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 2.6
+    },
+    "Refine.LevityCatch": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 13.9
+    },
+    "Refine.Machine_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 7.9
+    },
+    "Refine.Move_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 2.5
+    },
+    "Refine.Orphanage": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "Refine.PageTableDuplicates": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 22.8
+    },
+    "Refine.RAB_FN": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 4.3
+    },
+    "Refine.Refine": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 21.7
+    },
+    "Refine.Retype_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 94.6
+    },
+    "Refine.Schedule_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 20.0
+    },
+    "Refine.StateRelation": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 20.5
+    },
+    "Refine.SubMonad_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 11.8
+    },
+    "Refine.Syscall_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 26.3
+    },
+    "Refine.TcbAcc_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 44.1
+    },
+    "Refine.Tcb_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 81.6
+    },
+    "Refine.Untyped_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 136.6
+    },
+    "Refine.VSpace_R": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 33.6
+    },
+    "RefineOrphanage.Orphanage": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 47.2
+    },
+    "SepDSpec.AbstractSeparationHelpers_SD": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "SepDSpec.AbstractSeparation_SD": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 3.8
+    },
+    "SepDSpec.Frame_SD": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.3
+    },
+    "SepDSpec.Helpers_SD": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 3.5
+    },
+    "SepDSpec.Lookups_D": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 3.0
+    },
+    "SepDSpec.Sep_Tactic_Helper": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.5
+    },
+    "SepDSpec.Separation_SD": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 2.8
+    },
+    "SepDSpec.Types_SD": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0.4
+    },
+    "SepTactics.Hoare_Sep_Tactics": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Abstract_Separation_D": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Arbitrary_Comm_Monoid": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Extended_Separation_Algebra": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Generic_Separation_Algebras": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Map_Extra": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Sep_Algebra.MonadSep": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Algebra_L4v": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Attribs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Cancel": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Cancel_Example": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Cancel_Set": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Eq": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Fold": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Fold_Cancel": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Forward": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Heap_Instance": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_ImpI": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_MP": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_MP_Example": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Provers": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Provers_Example": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Rotate": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Rule_Ext": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Select": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Select_Example": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Solve": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Solve_Example": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Tactic_Helpers": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Tactics": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Tactics_Test": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Sep_Util": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Separation_Algebra": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Separation_Algebra_Alt": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Separation_D": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Simple_Separation_Example": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Sep_Algebra.Types_D": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Sep_Algebra.VM_Example": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.AlternativeSmallStep": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Closure": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.ClosureEx": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Compose": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.ComposeEx": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.DPC0Expressions": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Simpl.DPC0Library": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Generalise": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Simpl.HeapList": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Hoare": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.HoarePartial": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.HoarePartialDef": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.HoarePartialProps": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.HoareTotal": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.HoareTotalDef": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.HoareTotalProps": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Language": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Simpl.ProcParEx": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.ProcParExSP": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Quicksort": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Semantic": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Simpl": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Simpl_Heap": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0
+    },
+    "Simpl.SmallStep": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.StateSpace": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.SyntaxTest": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Termination": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.UserGuide": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.Vcg": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.VcgEx": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.VcgExSP": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.VcgExTotal": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.XVcg": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Simpl.XVcgEx": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "SimplExport.ArchSEL4SimplExport": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 4.4
+    },
+    "SimplExport.SEL4SimplExport": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 550.2
+    },
+    "SimplExportAndRefine.SEL4GlobalsSwap": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "spec"
+      ],
+      "wall_s": 11.9
+    },
+    "SimplExportAndRefine.SEL4GraphRefine": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 2260.3
+    },
+    "SimplExportAndRefine.TestGraphRefine": {
+      "pillar": "proof",
+      "closure_pillars": [
+        "c",
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.CreateIRQCaps_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.CreateObjects_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.DuplicateCaps_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.InitCSpace_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.InitIRQ_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.InitTCB_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.InitVSpace_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.Mapped_Separating_Conjunction": {
+      "pillar": "?",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.ObjectInitialised_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.Proof_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.RootTask_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.StartThreads_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.SysInit_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInit.WellFormed_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInitExamples.ExampleSpecIRQ_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "SysInitExamples.ExampleSpec_SI": {
+      "pillar": "?",
+      "closure_pillars": [
+        "haskell",
+        "lib",
+        "proof",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "TakeGrant.Confine_S": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "TakeGrant.Example": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "TakeGrant.Example2": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "TakeGrant.Islands_S": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "TakeGrant.Isolation_S": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib",
+        "spec"
+      ],
+      "wall_s": 0
+    },
+    "TakeGrant.System_S": {
+      "pillar": "spec",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Word_Lib.Aligned": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.5
+    },
+    "Word_Lib.Bit_Comprehension": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 1.7
+    },
+    "Word_Lib.Bit_Comprehension_Int": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.2
+    },
+    "Word_Lib.Bit_Shifts_Infix_Syntax": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.9
+    },
+    "Word_Lib.Bits_Int": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 4.0
+    },
+    "Word_Lib.Bitwise": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.5
+    },
+    "Word_Lib.Bitwise_Signed": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.2
+    },
+    "Word_Lib.Boolean_Inequalities": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 2.7
+    },
+    "Word_Lib.Distinct_Prop": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.4
+    },
+    "Word_Lib.Enumeration": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 2.2
+    },
+    "Word_Lib.Enumeration_Word": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.6
+    },
+    "Word_Lib.Even_More_List": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.6
+    },
+    "Word_Lib.Examples": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.1
+    },
+    "Word_Lib.Generic_set_bit": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.0
+    },
+    "Word_Lib.Guide": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.6
+    },
+    "Word_Lib.Hex_Words": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.1
+    },
+    "Word_Lib.Least_significant_bit": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.9
+    },
+    "Word_Lib.Legacy_Aliases": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.2
+    },
+    "Word_Lib.Machine_Word_32": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "Word_Lib.Machine_Word_32_Basics": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "Word_Lib.Machine_Word_64": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.2
+    },
+    "Word_Lib.Machine_Word_64_Basics": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "Word_Lib.Many_More": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.7
+    },
+    "Word_Lib.More_Arithmetic": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.1
+    },
+    "Word_Lib.More_Bit_Ring": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 4.2
+    },
+    "Word_Lib.More_Divides": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.3
+    },
+    "Word_Lib.More_Misc": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.3
+    },
+    "Word_Lib.More_Sublist": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.3
+    },
+    "Word_Lib.More_Word": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 2.1
+    },
+    "Word_Lib.More_Word_Operations": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.4
+    },
+    "Word_Lib.Most_significant_bit": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.2
+    },
+    "Word_Lib.Next_and_Prev": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "Word_Lib.Norm_Words": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "Word_Lib.Reversed_Bit_Lists": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 2.8
+    },
+    "Word_Lib.Rsplit": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "Word_Lib.Sgn_Abs": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "Word_Lib.Signed_Division_Word": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.6
+    },
+    "Word_Lib.Signed_Words": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.2
+    },
+    "Word_Lib.Singleton_Bit_Shifts": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.2
+    },
+    "Word_Lib.Strict_part_mono": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.1
+    },
+    "Word_Lib.Syntax_Bundles": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.0
+    },
+    "Word_Lib.Type_Syntax": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.1
+    },
+    "Word_Lib.Typedef_Morphisms": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.5
+    },
+    "Word_Lib.WordSetup": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.2
+    },
+    "Word_Lib.Word_16": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.2
+    },
+    "Word_Lib.Word_32": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.1
+    },
+    "Word_Lib.Word_64": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.8
+    },
+    "Word_Lib.Word_8": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.1
+    },
+    "Word_Lib.Word_EqI": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 2.5
+    },
+    "Word_Lib.Word_Lemmas": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 2.3
+    },
+    "Word_Lib.Word_Lemmas_32_Internal": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.5
+    },
+    "Word_Lib.Word_Lemmas_64_Internal": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0
+    },
+    "Word_Lib.Word_Lemmas_Internal": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 1.2
+    },
+    "Word_Lib.Word_Lemmas_Prefix": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.6
+    },
+    "Word_Lib.Word_Lib_Sumo": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 2.1
+    },
+    "Word_Lib.Word_Names": {
+      "pillar": "lib",
+      "closure_pillars": [
+        "lib"
+      ],
+      "wall_s": 0.0
+    },
+    "Word_Lib.Word_Syntax": {
+      "pillar": "lib",
+      "closure_pillars": [],
+      "wall_s": 0.3
+    }
+  }
+}

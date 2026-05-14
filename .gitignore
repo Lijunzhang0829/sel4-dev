@@ -27,6 +27,8 @@ reports/*
 !reports/move-simulator.md
 !reports/split-simulator.md
 !reports/lemma-optimization-targets.md
+!reports/theory-axis-analysis.md
+!reports/theory-axis-analysis.json
 test_output.log
 
 # Claude Code: per-user/per-machine permission overrides — gitignored
