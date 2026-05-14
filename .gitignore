@@ -31,6 +31,7 @@ reports/*
 !reports/theory-axis-analysis.json
 !reports/theory-axis-2d.md
 !reports/theory-axis-2d.json
+!reports/theory-baseline-2026-05-14.md
 test_output.log
 
 # Claude Code: per-user/per-machine permission overrides — gitignored
