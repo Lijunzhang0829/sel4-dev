@@ -25,6 +25,7 @@ reports/*
 !reports/theory-dag.json
 !reports/session-dag.json
 !reports/move-simulator.md
+!reports/split-simulator.md
 test_output.log
 
 # Claude Code: per-user/per-machine permission overrides — gitignored
