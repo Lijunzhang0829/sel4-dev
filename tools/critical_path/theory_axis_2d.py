@@ -62,10 +62,14 @@ OUT_JSON = REPO / "reports" / "theory-axis-2d.json"
 # ─── Source pillar from path ─────────────────────────────────────────────
 
 PATH_PILLARS = [
-    ("c",       "/spec/cspec/c/build/"),
+    # FIXED 2026-05-14: `/spec/cspec/c/build/` doesn't contain .thy files;
+    # actual layout is `/spec/cspec/<ARCH>/Kernel_C.thy` for generated and
+    # `/spec/cspec/Substitute.thy` etc. for hand-written wrappers. ALL of
+    # /spec/cspec/ is c-pillar source (the wrappers exist to package C
+    # semantics for proofs; they change when C changes).
+    ("c",       "/spec/cspec/"),
     ("c",       "verification/seL4/src/"),
     ("c",       "verification/seL4/include/"),
-    ("spec",    "/spec/cspec/"),            # Isabelle-side cspec wrappers (rest)
     ("haskell", "/spec/design/"),
     ("haskell", "/spec/haskell/"),
     ("spec",    "/spec/abstract/"),
@@ -96,8 +100,8 @@ NAMESPACE_FALLBACK = {
     "CorresK":     "lib",
     "ASpec":       "spec",
     "ExecSpec":    "haskell",
-    "CSpec":       "spec",  # Isabelle wrappers
     "CKernel":     "c",
+    "CSpec":       "c",  # CORRECTED: all of cspec is c-pillar source
     "CParser":     "lib",
     "AInvs":       "proof",
     "Refine":      "proof",

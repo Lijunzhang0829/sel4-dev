@@ -3,15 +3,15 @@
   "source_pillar_counts": {
     "lib": 785,
     "proof": 304,
-    "spec": 81,
+    "spec": 75,
     "haskell": 69,
-    "c": 4
+    "c": 10
   },
   "dep_class_counts": {
     "lib-only": 776,
-    "needs-H-NOT-C": 390,
-    "needs-spec-only": 30,
-    "needs-H-AND-C": 47
+    "needs-H-NOT-C": 382,
+    "needs-H-AND-C": 55,
+    "needs-spec-only": 30
   },
   "matrix": {
     "lib": {
@@ -30,12 +30,12 @@
     },
     "proof": {
       "needs-H-NOT-C": {
-        "count": 248,
-        "wall_s": 6724.7
+        "count": 242,
+        "wall_s": 3890.6
       },
       "needs-H-AND-C": {
-        "count": 45,
-        "wall_s": 1931.3
+        "count": 51,
+        "wall_s": 4765.4
       },
       "lib-only": {
         "count": 9,
@@ -48,19 +48,15 @@
     },
     "spec": {
       "needs-H-NOT-C": {
-        "count": 49,
-        "wall_s": 959.7
+        "count": 45,
+        "wall_s": 162.7
       },
       "needs-spec-only": {
         "count": 25,
         "wall_s": 80.7
       },
-      "needs-H-AND-C": {
-        "count": 1,
-        "wall_s": 0.7
-      },
       "lib-only": {
-        "count": 6,
+        "count": 5,
         "wall_s": 4.2
       }
     },
@@ -75,19 +71,21 @@
       }
     },
     "c": {
+      "needs-H-NOT-C": {
+        "count": 2,
+        "wall_s": 706.8
+      },
+      "needs-H-AND-C": {
+        "count": 3,
+        "wall_s": 90.9
+      },
       "lib-only": {
-        "count": 4,
+        "count": 5,
         "wall_s": 59.7
       }
     }
   },
   "misalignment_candidates": [
-    {
-      "theory": "SimplExportAndRefine.SEL4GraphRefine",
-      "session": "SimplExportAndRefine",
-      "wall_s": 2260.3,
-      "path": "/home/lijun/seL4-docker-main/verification/l4v/proof/asmrefine/SEL4GraphRefine.thy"
-    },
     {
       "theory": "CRefine.IsolatedThreadAction",
       "session": "CRefine",
@@ -125,34 +123,16 @@
       "path": "/home/lijun/seL4-docker-main/verification/l4v/proof/crefine/ARM/ArchMove_C.thy"
     },
     {
-      "theory": "SimplExportAndRefine.SEL4GlobalsSwap",
-      "session": "SimplExportAndRefine",
-      "wall_s": 11.9,
-      "path": "/home/lijun/seL4-docker-main/verification/l4v/proof/asmrefine/SEL4GlobalsSwap.thy"
-    },
-    {
       "theory": "InfoFlowC.ArchADT_IF_Refine",
       "session": "InfoFlowC",
       "wall_s": 9.9,
       "path": "/home/lijun/seL4-docker-main/verification/l4v/proof/infoflow/refine/ARM/ArchADT_IF_Refine.thy"
     },
     {
-      "theory": "CRefine.CToCRefine",
-      "session": "CRefine",
-      "wall_s": 7.2,
-      "path": "/home/lijun/seL4-docker-main/verification/l4v/proof/crefine/lib/CToCRefine.thy"
-    },
-    {
       "theory": "CRefine.Move_C",
       "session": "CRefine",
       "wall_s": 6.3,
       "path": "/home/lijun/seL4-docker-main/verification/l4v/proof/crefine/Move_C.thy"
-    },
-    {
-      "theory": "SimplExportAndRefine.TestGraphRefine",
-      "session": "SimplExportAndRefine",
-      "wall_s": 0,
-      "path": "/home/lijun/seL4-docker-main/verification/l4v/proof/asmrefine/TestGraphRefine.thy"
     }
   ],
   "per_theory": {
@@ -2680,7 +2660,7 @@
       "wall_s": 0.4
     },
     "CKernel.Kernel_C": {
-      "source_pillar": "spec",
+      "source_pillar": "c",
       "dep_class": "needs-H-NOT-C",
       "dep_pillar_set": [
         "haskell",
@@ -4258,8 +4238,9 @@
     },
     "CRefine.CToCRefine": {
       "source_pillar": "proof",
-      "dep_class": "needs-H-NOT-C",
+      "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
+        "c",
         "haskell",
         "lib",
         "spec"
@@ -4683,7 +4664,7 @@
       "wall_s": 0.9
     },
     "CSpec.KernelInc_C": {
-      "source_pillar": "spec",
+      "source_pillar": "c",
       "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
         "c",
@@ -4694,9 +4675,10 @@
       "wall_s": 0.7
     },
     "CSpec.KernelState_C": {
-      "source_pillar": "spec",
-      "dep_class": "needs-H-NOT-C",
+      "source_pillar": "c",
+      "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
+        "c",
         "haskell",
         "lib",
         "spec"
@@ -4704,7 +4686,7 @@
       "wall_s": 5.4
     },
     "CSpec.Kernel_C": {
-      "source_pillar": "spec",
+      "source_pillar": "c",
       "dep_class": "needs-H-NOT-C",
       "dep_pillar_set": [
         "haskell",
@@ -4714,9 +4696,10 @@
       "wall_s": 0
     },
     "CSpec.Substitute": {
-      "source_pillar": "spec",
-      "dep_class": "needs-H-NOT-C",
+      "source_pillar": "c",
+      "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
+        "c",
         "haskell",
         "lib",
         "spec"
@@ -4724,7 +4707,7 @@
       "wall_s": 84.8
     },
     "CSpec.TypHeapLimits": {
-      "source_pillar": "spec",
+      "source_pillar": "c",
       "dep_class": "lib-only",
       "dep_pillar_set": [
         "lib"
@@ -10492,8 +10475,9 @@
     },
     "SimplExport.ArchSEL4SimplExport": {
       "source_pillar": "proof",
-      "dep_class": "needs-H-NOT-C",
+      "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
+        "c",
         "haskell",
         "lib",
         "spec"
@@ -10502,8 +10486,9 @@
     },
     "SimplExport.SEL4SimplExport": {
       "source_pillar": "proof",
-      "dep_class": "needs-H-NOT-C",
+      "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
+        "c",
         "haskell",
         "lib",
         "proof",
@@ -10513,8 +10498,9 @@
     },
     "SimplExportAndRefine.SEL4GlobalsSwap": {
       "source_pillar": "proof",
-      "dep_class": "needs-H-NOT-C",
+      "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
+        "c",
         "haskell",
         "lib",
         "spec"
@@ -10523,8 +10509,9 @@
     },
     "SimplExportAndRefine.SEL4GraphRefine": {
       "source_pillar": "proof",
-      "dep_class": "needs-H-NOT-C",
+      "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
+        "c",
         "haskell",
         "lib",
         "proof",
@@ -10534,8 +10521,9 @@
     },
     "SimplExportAndRefine.TestGraphRefine": {
       "source_pillar": "proof",
-      "dep_class": "needs-H-NOT-C",
+      "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
+        "c",
         "haskell",
         "lib",
         "proof",
