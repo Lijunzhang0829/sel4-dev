@@ -26,21 +26,6 @@ similarity index 100%
 rename from proof/crefine/Move_C.thy
 rename to proof/refine/Move_C.thy
 
-diff --git a/proof/infoflow/refine/ADT_IF_Refine.thy b/proof/infoflow/ADT_IF_Refine.thy
-similarity index 100%
-rename from proof/infoflow/refine/ADT_IF_Refine.thy
-rename to proof/infoflow/ADT_IF_Refine.thy
-
-diff --git a/proof/infoflow/refine/ARM/ArchADT_IF_Refine.thy b/proof/infoflow/ARM/ArchADT_IF_Refine.thy
-similarity index 100%
-rename from proof/infoflow/refine/ARM/ArchADT_IF_Refine.thy
-rename to proof/infoflow/ARM/ArchADT_IF_Refine.thy
-
-diff --git a/proof/infoflow/refine/ARM/Example_Valid_StateH.thy b/proof/infoflow/ARM/Example_Valid_StateH.thy
-similarity index 100%
-rename from proof/infoflow/refine/ARM/Example_Valid_StateH.thy
-rename to proof/infoflow/ARM/Example_Valid_StateH.thy
-
 diff --git a/proof/crefine/ARM/Ipc_C.thy b/proof/crefine/ARM/Ipc_C.thy
 --- a/proof/crefine/ARM/Ipc_C.thy
 +++ b/proof/crefine/ARM/Ipc_C.thy
@@ -93,19 +78,6 @@ diff --git a/proof/crefine/ARM/CLevityCatch.thy b/proof/crefine/ARM/CLevityCatch
    "Lib.LemmaBucket"
    Boolean_C
 
-diff --git a/proof/infoflow/refine/ADT_IF_Refine_C.thy b/proof/infoflow/refine/ADT_IF_Refine_C.thy
---- a/proof/infoflow/refine/ADT_IF_Refine_C.thy
-+++ b/proof/infoflow/refine/ADT_IF_Refine_C.thy
-@@ -5,7 +5,7 @@
-  *)
- 
- theory ADT_IF_Refine_C
--imports ArchADT_IF_Refine "CRefine.Refine_C"
-+imports "InfoFlow.ArchADT_IF_Refine" "CRefine.Refine_C"
- begin
- 
- definition handleSyscall_C_body_if
-
 diff --git a/proof/ROOT b/proof/ROOT
 --- a/proof/ROOT
 +++ b/proof/ROOT
@@ -141,21 +113,3 @@ diff --git a/proof/ROOT b/proof/ROOT
      "$L4V_ARCH/Refine"
      "$L4V_ARCH/RAB_FN"
      "$L4V_ARCH/EmptyFail_H"
-@@ -155,6 +170,9 @@
-   directories
-     "$L4V_ARCH"
-   theories
-+    "ADT_IF_Refine"
-+    "$L4V_ARCH/ArchADT_IF_Refine"
-+    "$L4V_ARCH/Example_Valid_StateH"
-     "InfoFlow_Image_Toplevel"
- 
- session InfoFlowCBase in "infoflow/refine/base" = CRefine +
-@@ -172,7 +190,6 @@
-     "$L4V_ARCH"
-   theories
-     "Noninterference_Refinement"
--    "Example_Valid_StateH"
- 
- (*
-  * capDL

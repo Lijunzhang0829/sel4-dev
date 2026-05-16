@@ -199,7 +199,7 @@ fi
 TMPDIR="$(mktemp -d)"
 trap "rm -rf $TMPDIR" EXIT
 
-TMPNAME="Tmp_$(head -c8 /dev/urandom | xxd -p)"
+TMPNAME="Tmp_$(python3 -c 'import secrets; print(secrets.token_hex(8))')"
 cp "$THEORY_FILE" "$TMPDIR/${TMPNAME}.thy"
 
 # Apply patch to temp copy if --patch

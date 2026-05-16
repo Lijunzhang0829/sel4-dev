@@ -32,7 +32,18 @@ L4V = REPO / "verification" / "l4v"
 OUT_PATCH = REPO / "experiments" / "misalignment-moves.patch"
 
 
-# 8 renames: (old_path_in_l4v, new_path_in_l4v)
+# 5 renames: CRefine → Refine (ARM only)
+#
+# UPDATED 2026-05-14: the prior version of this script also moved 3
+# InfoFlowC theories to InfoFlow, but `isabelle build -n` revealed that
+# `ADT_IF_Refine.thy` directly imports `Refine.EmptyFail_H`. InfoFlow
+# session's `+` chain is Access → AInvs → ASpec — no Refine.
+# InfoFlowC works only because its parent InfoFlowCBase = CRefine + ...
+# transitively heap-merges Refine. Moving these to InfoFlow would
+# require adding `sessions Refine` to InfoFlow's ROOT — which creates a
+# NEW CSTR equal to or larger than the one we're trying to remove.
+# So the 3 InfoFlowC misalignments are NOT genuine in session terms;
+# only the 5 CRefine ones survive.
 RENAMES = [
     ("proof/crefine/ARM/IsolatedThreadAction.thy",
      "proof/refine/ARM/IsolatedThreadAction.thy"),
@@ -44,16 +55,9 @@ RENAMES = [
      "proof/refine/ARM/ArchMove_C.thy"),
     ("proof/crefine/Move_C.thy",
      "proof/refine/Move_C.thy"),
-    ("proof/infoflow/refine/ADT_IF_Refine.thy",
-     "proof/infoflow/ADT_IF_Refine.thy"),
-    ("proof/infoflow/refine/ARM/ArchADT_IF_Refine.thy",
-     "proof/infoflow/ARM/ArchADT_IF_Refine.thy"),
-    ("proof/infoflow/refine/ARM/Example_Valid_StateH.thy",
-     "proof/infoflow/ARM/Example_Valid_StateH.thy"),
 ]
 
-# Importer files needing bare-name → FQ-name updates.
-# Each entry: (path_in_l4v, [(old_line_exact, new_line_exact), ...])
+# Importer files needing bare-name → FQ-name updates (CRefine side only).
 IMPORTER_EDITS = [
     ("proof/crefine/ARM/Ipc_C.thy", [
         ("  IsolatedThreadAction\n", '  "Refine.IsolatedThreadAction"\n'),
@@ -67,10 +71,6 @@ IMPORTER_EDITS = [
     ]),
     ("proof/crefine/ARM/CLevityCatch.thy", [
         ("  ArchMove_C\n", '  "Refine.ArchMove_C"\n'),
-    ]),
-    ("proof/infoflow/refine/ADT_IF_Refine_C.thy", [
-        ('imports ArchADT_IF_Refine "CRefine.Refine_C"\n',
-         'imports "InfoFlow.ArchADT_IF_Refine" "CRefine.Refine_C"\n'),
     ]),
 ]
 
@@ -142,36 +142,7 @@ session RefineOrphanage""",
  * work only for ARM, RISCV64, and AARCH64.
  *)
 session RefineOrphanage"""),
-    # --- InfoFlow session: add 3 moved theories ---
-    ("""session InfoFlow in "infoflow" = Access +
-  directories
-    "$L4V_ARCH"
-  theories
-    "InfoFlow_Image_Toplevel"
-""",
-     """session InfoFlow in "infoflow" = Access +
-  directories
-    "$L4V_ARCH"
-  theories
-    "ADT_IF_Refine"
-    "$L4V_ARCH/ArchADT_IF_Refine"
-    "$L4V_ARCH/Example_Valid_StateH"
-    "InfoFlow_Image_Toplevel"
-"""),
-    # --- InfoFlowC: remove Example_Valid_StateH (moved out) ---
-    ("""session InfoFlowC in "infoflow/refine" = InfoFlowCBase +
-  directories
-    "$L4V_ARCH"
-  theories
-    "Noninterference_Refinement"
-    "Example_Valid_StateH"
-""",
-     """session InfoFlowC in "infoflow/refine" = InfoFlowCBase +
-  directories
-    "$L4V_ARCH"
-  theories
-    "Noninterference_Refinement"
-"""),
+    # InfoFlow/InfoFlowC ROOT changes removed — see RENAMES comment.
 ]
 
 
