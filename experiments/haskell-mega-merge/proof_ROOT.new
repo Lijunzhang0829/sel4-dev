@@ -1,0 +1,181 @@
+(*
+ * Copyright 2014, General Dynamics C4 Systems
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ *)
+
+chapter "Proofs"
+
+(*
+ * List of rules to make various images.
+ *
+ * Some rules have duplicate targets of the form:
+ *
+ *    theories [condition = "MOO", quick_and_dirty]
+ *       "foo"
+ *    theories
+ *       "foo"
+ *
+ * The idea is that if the environment variable "MOO" is defined we
+ * execute the first rule (doing the proof in quick-and-dirty mode), and
+ * then find we need not take any action for the second. Otherwise, we
+ * skip the first rule and only perform the second.
+ *)
+
+(*
+ * Refinement proof.
+ *)
+
+session AInvs in "invariant-abstract" = ASpec +
+  directories
+    "$L4V_ARCH"
+  theories [condition = "SKIP_AINVS_PROOFS", quick_and_dirty, skip_proofs]
+    "KernelInit_AI"
+    "$L4V_ARCH/ArchDetSchedSchedule_AI"
+  theories [condition = "AINVS_QUICK_AND_DIRTY", quick_and_dirty]
+    "KernelInit_AI"
+    "$L4V_ARCH/ArchDetSchedSchedule_AI"
+  theories
+    "KernelInit_AI"
+    "$L4V_ARCH/ArchDetSchedSchedule_AI"
+
+(*
+ * C Refinement proof.
+ *)
+
+(* P0.5 experiment: parent swap CBaseRefine → CRefine.
+   Currently `= CBaseRefine + sessions CRefine` causes CRefine heap to be
+   source-re-executed during CRefineSyscall build (P0.5: 100% dup, 1546s
+   aggregate). Swapping to `= CRefine +` heap-merges CRefine; since
+   CRefine's parent is already CBaseRefine, the chain CRefineSyscall →
+   CRefine → CBaseRefine is preserved. The `sessions CRefine` line is
+   removed (now superseded by `+`). Mirror of the CBaseRefine swap that
+   gave -3865s wall on a single-session test. *)
+
+(* HaskellMega: merge of 11 Haskell-side proof sessions per user
+   2026-05-17 directive.
+   Merged from: Refine, BaseRefine, RefineOrphanage, Access, InfoFlow, DRefine, DBaseRefine, DPolicy, DSpecProofs, SepDSpec, Bisim
+   See experiments/haskell-mega-merge/summary.md for wall-delta
+   hypothesis and validation plan. *)
+session HaskellMega = AInvs +
+  description \<open>Mega-merged Haskell-side proof (was: Refine, BaseRefine, RefineOrphanage, Access, InfoFlow, DRefine, DBaseRefine, DPolicy, DSpecProofs, SepDSpec, Bisim).\<close>
+  sessions
+    ASepSpec
+    CorresK
+    DSpec
+    Lib
+    SepTactics
+    Sep_Algebra
+  directories
+    "access-control"
+    "access-control/ARM"
+    "bisim"
+    "capDL-api"
+    "dpolicy"
+    "drefine"
+    "drefine/base"
+    "infoflow"
+    "infoflow/ARM"
+    "refine"
+    "refine/ARM"
+    "refine/ARM/orphanage"
+    "refine/base"
+    "sep-capDL"
+  theories
+    "refine/Move_C"   (* from Refine *)
+    "refine/$L4V_ARCH/ArchMove_C"   (* from Refine *)
+    "refine/$L4V_ARCH/IsolatedThreadAction"   (* from Refine *)
+    "refine/$L4V_ARCH/Fastpath_Defs"   (* from Refine *)
+    "refine/$L4V_ARCH/Fastpath_Equiv"   (* from Refine *)
+    "refine/$L4V_ARCH/Refine"   (* from Refine *)
+    "refine/$L4V_ARCH/RAB_FN"   (* from Refine *)
+    "refine/$L4V_ARCH/EmptyFail_H"   (* from Refine *)
+    "refine/$L4V_ARCH/Init_R"   (* from Refine *)
+    "refine/base/Include"   (* from BaseRefine *)
+    "refine/ARM/orphanage/Orphanage"   (* from RefineOrphanage *)
+    "access-control/ArchADT_AC"   (* from Access *)
+    "access-control/ExampleSystem"   (* from Access *)
+    "infoflow/InfoFlow_Image_Toplevel"   (* from InfoFlow *)
+    "drefine/Refine_D"   (* from DRefine *)
+    "drefine/base/Include_D"   (* from DBaseRefine *)
+    "dpolicy/Dpolicy"   (* from DPolicy *)
+    "capDL-api/Sep_Tactic_Examples"   (* from DSpecProofs *)
+    "capDL-api/API_DP"   (* from DSpecProofs *)
+    "sep-capDL/Frame_SD"   (* from SepDSpec *)
+    "bisim/Syscall_S"   (* from Bisim *)
+
+session CRefineSyscall in "crefine/intermediate" = CRefine +
+  theories [condition = "CREFINE_QUICK_AND_DIRTY", quick_and_dirty]
+    "Intermediate_C"
+  theories
+    "Intermediate_C"
+
+session CRefine in "crefine" = CBaseRefine +
+  directories
+    "lib"
+    "$L4V_ARCH"
+  theories [condition = "CREFINE_QUICK_AND_DIRTY", quick_and_dirty]
+    "Refine_C"
+  theories
+    "Refine_C"
+
+(* P0.5 experiment: parent swap CSpec → Refine.
+   Currently `= CSpec + sessions Refine` causes Refine heap (1734s of theories)
+   to be source-re-executed during CBaseRefine build because `sessions Refine`
+   declares the namespace but does NOT merge the heap. Swapping to
+   `= Refine + sessions CSpec` merges Refine heap properly; CSpec becomes the
+   reprocessed side, but it's only ~149s — net aggregate save ~3300s, wall
+   save ~850-1100s (factor 3.87). See reports/critical-path-summary.md
+   structural target (a). *)
+session CBaseRefine in "crefine/base" = Refine +
+  sessions
+    CLib
+    CSpec
+    AutoCorres
+  theories [condition = "SKIP_DUPLICATED_PROOFS", quick_and_dirty, skip_proofs]
+    (* crefine/lib/AutoCorres_C explains why L4VerifiedLinks is included here. *)
+    "L4VerifiedLinks"
+    "Include_C"
+  theories
+    "L4VerifiedLinks"
+    "Include_C"
+
+session AutoCorresCRefine in "crefine/autocorres-test" = CRefine +
+  theories
+    "AutoCorresTest"
+
+(*
+ * CapDL Refinement
+ *)
+
+session InfoFlowCBase in "infoflow/refine/base" = CRefine +
+  sessions
+    Access
+    InfoFlow
+  theories [condition = "SKIP_DUPLICATED_PROOFS", quick_and_dirty, skip_proofs]
+    "Include_IF_C"
+  theories
+    "Include_IF_C"
+
+session InfoFlowC in "infoflow/refine" = InfoFlowCBase +
+  directories
+    "$L4V_ARCH"
+  theories
+    "Noninterference_Refinement"
+    "Example_Valid_StateH"
+
+(*
+ * capDL
+ *)
+
+session SimplExportAndRefine in "asmrefine" = SimplExport +
+  sessions
+    SimplExport
+  theories
+    "SEL4GraphRefine"
+
+session SimplExport in "asmrefine/export" = CSpec +
+  directories
+    "$L4V_ARCH"
+  theories
+    "SEL4SimplExport"

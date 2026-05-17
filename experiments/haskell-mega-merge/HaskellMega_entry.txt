@@ -1,0 +1,52 @@
+(* HaskellMega: merge of 11 Haskell-side proof sessions per user
+   2026-05-17 directive.
+   Merged from: Refine, BaseRefine, RefineOrphanage, Access, InfoFlow, DRefine, DBaseRefine, DPolicy, DSpecProofs, SepDSpec, Bisim
+   See experiments/haskell-mega-merge/summary.md for wall-delta
+   hypothesis and validation plan. *)
+session HaskellMega = AInvs +
+  description \<open>Mega-merged Haskell-side proof (was: Refine, BaseRefine, RefineOrphanage, Access, InfoFlow, DRefine, DBaseRefine, DPolicy, DSpecProofs, SepDSpec, Bisim).\<close>
+  sessions
+    ASepSpec
+    CorresK
+    DSpec
+    Lib
+    SepTactics
+    Sep_Algebra
+  directories
+    "access-control"
+    "access-control/ARM"
+    "bisim"
+    "capDL-api"
+    "dpolicy"
+    "drefine"
+    "drefine/base"
+    "infoflow"
+    "infoflow/ARM"
+    "refine"
+    "refine/ARM"
+    "refine/ARM/orphanage"
+    "refine/base"
+    "sep-capDL"
+  theories
+    "refine/Move_C"   (* from Refine *)
+    "refine/$L4V_ARCH/ArchMove_C"   (* from Refine *)
+    "refine/$L4V_ARCH/IsolatedThreadAction"   (* from Refine *)
+    "refine/$L4V_ARCH/Fastpath_Defs"   (* from Refine *)
+    "refine/$L4V_ARCH/Fastpath_Equiv"   (* from Refine *)
+    "refine/$L4V_ARCH/Refine"   (* from Refine *)
+    "refine/$L4V_ARCH/RAB_FN"   (* from Refine *)
+    "refine/$L4V_ARCH/EmptyFail_H"   (* from Refine *)
+    "refine/$L4V_ARCH/Init_R"   (* from Refine *)
+    "refine/base/Include"   (* from BaseRefine *)
+    "refine/ARM/orphanage/Orphanage"   (* from RefineOrphanage *)
+    "access-control/ArchADT_AC"   (* from Access *)
+    "access-control/ExampleSystem"   (* from Access *)
+    "infoflow/InfoFlow_Image_Toplevel"   (* from InfoFlow *)
+    "drefine/Refine_D"   (* from DRefine *)
+    "drefine/base/Include_D"   (* from DBaseRefine *)
+    "dpolicy/Dpolicy"   (* from DPolicy *)
+    "capDL-api/Sep_Tactic_Examples"   (* from DSpecProofs *)
+    "capDL-api/API_DP"   (* from DSpecProofs *)
+    "sep-capDL/Frame_SD"   (* from SepDSpec *)
+    "bisim/Syscall_S"   (* from Bisim *)
+
