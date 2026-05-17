@@ -32,6 +32,8 @@ reports/*
 !reports/theory-axis-2d.md
 !reports/theory-axis-2d.json
 !reports/ml-pillar-deps.json
+!reports/promote-simulator.md
+!reports/promote-simulator.json
 !reports/theory-baseline-2026-05-14.md
 test_output.log
 

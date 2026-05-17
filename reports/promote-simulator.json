@@ -1,0 +1,79 @@
+{
+  "savings_threshold_s": 100.0,
+  "candidates": [
+    {
+      "origin": "CKernel",
+      "n_theories": 1,
+      "total_wall_across_blobs": 1492.4,
+      "max_per_theory_sum": 785.6,
+      "potential_savings": 706.8,
+      "consumers": [
+        {
+          "consumer": "CBaseRefine",
+          "n_theories": 1,
+          "cost_in_consumer": 785.6,
+          "verdict": "SWAP-REJECTED",
+          "explanation": "swap would regress (origin 700s \u2264 parent 1591s); insertion would require restructuring `Refine` to inherit from `CKernel`"
+        }
+      ]
+    },
+    {
+      "origin": "InfoFlow",
+      "n_theories": 40,
+      "total_wall_across_blobs": 745.3,
+      "max_per_theory_sum": 408.6,
+      "potential_savings": 336.7,
+      "consumers": [
+        {
+          "consumer": "InfoFlowCBase",
+          "n_theories": 40,
+          "cost_in_consumer": 384.5,
+          "verdict": "SWAP-REJECTED",
+          "explanation": "swap would regress (origin 347s \u2264 parent 2104s); insertion would require restructuring `CRefine` to inherit from `InfoFlow`"
+        }
+      ]
+    },
+    {
+      "origin": "Access",
+      "n_theories": 27,
+      "total_wall_across_blobs": 627.5,
+      "max_per_theory_sum": 296.9,
+      "potential_savings": 330.7,
+      "consumers": [
+        {
+          "consumer": "InfoFlowCBase",
+          "n_theories": 27,
+          "cost_in_consumer": 278.4,
+          "verdict": "SWAP-REJECTED",
+          "explanation": "swap would regress (origin 301s \u2264 parent 2104s); insertion would require restructuring `CRefine` to inherit from `Access`"
+        },
+        {
+          "consumer": "DPolicy",
+          "n_theories": 7,
+          "cost_in_consumer": 61.3,
+          "verdict": "SWAP-VIABLE",
+          "explanation": "swap candidate (origin 301s > parent 147s, margin +154s)"
+        }
+      ]
+    },
+    {
+      "origin": "CSpec",
+      "n_theories": 7,
+      "total_wall_across_blobs": 340.0,
+      "max_per_theory_sum": 196.7,
+      "potential_savings": 143.3,
+      "consumers": [
+        {
+          "consumer": "CBaseRefine",
+          "n_theories": 7,
+          "cost_in_consumer": 189.4,
+          "verdict": "SWAP-REJECTED",
+          "explanation": "swap would regress (origin 125s \u2264 parent 1591s); insertion would require restructuring `Refine` to inherit from `CSpec`"
+        }
+      ]
+    }
+  ],
+  "total_potential_savings": 1517.5,
+  "total_viable_savings": 61.3,
+  "total_blocked_savings": 1637.9
+}
