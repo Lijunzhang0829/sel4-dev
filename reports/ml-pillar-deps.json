@@ -1,0 +1,41 @@
+{
+  "AsmRefine.GlobalsSwap": [
+    "c"
+  ],
+  "AsmRefine.GraphRefine": [
+    "c"
+  ],
+  "AsmRefineTest.global_array_swap_gref": [
+    "c"
+  ],
+  "AsmRefineTest.global_asm_stmt_gref": [
+    "c"
+  ],
+  "AsmRefineTest.inf_loop_gref": [
+    "c"
+  ],
+  "AutoCorresCRefine.AutoCorresTest": [
+    "c"
+  ],
+  "CParser.attributes": [
+    "c"
+  ],
+  "CParser.gcc_attribs": [
+    "c"
+  ],
+  "CParser.jiraver1241": [
+    "c"
+  ],
+  "CSpec.Substitute": [
+    "c"
+  ],
+  "SimplExport.SEL4SimplExport": [
+    "c"
+  ],
+  "SimplExportAndRefine.SEL4GraphRefine": [
+    "c"
+  ],
+  "SimplExportAndRefine.TestGraphRefine": [
+    "c"
+  ]
+}

@@ -2,22 +2,27 @@
   "n_theories": 1243,
   "source_pillar_counts": {
     "lib": 785,
+    "haskell": 69,
     "proof": 304,
     "spec": 75,
-    "haskell": 69,
     "c": 10
   },
   "dep_class_counts": {
-    "lib-only": 776,
-    "needs-H-NOT-C": 382,
-    "needs-H-AND-C": 55,
-    "needs-spec-only": 30
+    "lib-only": 761,
+    "needs-H-NOT-C": 380,
+    "needs-H-AND-C": 57,
+    "needs-spec-only": 30,
+    "needs-C-NOT-H": 15
   },
   "matrix": {
     "lib": {
       "lib-only": {
-        "count": 757,
-        "wall_s": 1026.6
+        "count": 742,
+        "wall_s": 977.9
+      },
+      "needs-C-NOT-H": {
+        "count": 15,
+        "wall_s": 48.7
       },
       "needs-H-NOT-C": {
         "count": 27,
@@ -26,6 +31,16 @@
       "needs-H-AND-C": {
         "count": 1,
         "wall_s": 0.0
+      }
+    },
+    "haskell": {
+      "needs-H-NOT-C": {
+        "count": 66,
+        "wall_s": 290.6
+      },
+      "needs-spec-only": {
+        "count": 3,
+        "wall_s": 25.0
       }
     },
     "proof": {
@@ -37,13 +52,13 @@
         "count": 51,
         "wall_s": 4765.4
       },
-      "lib-only": {
-        "count": 9,
-        "wall_s": 22.7
-      },
       "needs-spec-only": {
         "count": 2,
         "wall_s": 4.2
+      },
+      "lib-only": {
+        "count": 9,
+        "wall_s": 22.7
       }
     },
     "spec": {
@@ -60,24 +75,10 @@
         "wall_s": 4.2
       }
     },
-    "haskell": {
-      "needs-H-NOT-C": {
-        "count": 66,
-        "wall_s": 290.6
-      },
-      "needs-spec-only": {
-        "count": 3,
-        "wall_s": 25.0
-      }
-    },
     "c": {
-      "needs-H-NOT-C": {
-        "count": 2,
-        "wall_s": 706.8
-      },
       "needs-H-AND-C": {
-        "count": 3,
-        "wall_s": 90.9
+        "count": 5,
+        "wall_s": 797.7
       },
       "lib-only": {
         "count": 5,
@@ -1804,24 +1805,27 @@
     },
     "AsmRefine.AsmSemanticsRespects": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 1.1
     },
     "AsmRefine.CommonOps": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 0.8
     },
     "AsmRefine.CommonOpsLemmas": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 5.8
@@ -1860,48 +1864,54 @@
     },
     "AsmRefine.GraphLang": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 23.9
     },
     "AsmRefine.GraphLangLemmas": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 2.3
     },
     "AsmRefine.GraphProof": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 0
     },
     "AsmRefine.GraphRefine": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 12.3
     },
     "AsmRefine.ProveGraphRefine": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 1.4
     },
     "AsmRefine.SimplExport": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 1.1
@@ -1916,48 +1926,54 @@
     },
     "AsmRefineTest.global_array_swap": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 0
     },
     "AsmRefineTest.global_array_swap_gref": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 0
     },
     "AsmRefineTest.global_asm_stmt": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 0
     },
     "AsmRefineTest.global_asm_stmt_gref": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 0
     },
     "AsmRefineTest.inf_loop": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 0
     },
     "AsmRefineTest.inf_loop_gref": {
       "source_pillar": "lib",
-      "dep_class": "lib-only",
+      "dep_class": "needs-C-NOT-H",
       "dep_pillar_set": [
+        "c",
         "lib"
       ],
       "wall_s": 0
@@ -2661,8 +2677,9 @@
     },
     "CKernel.Kernel_C": {
       "source_pillar": "c",
-      "dep_class": "needs-H-NOT-C",
+      "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
+        "c",
         "haskell",
         "lib",
         "spec"
@@ -4687,8 +4704,9 @@
     },
     "CSpec.Kernel_C": {
       "source_pillar": "c",
-      "dep_class": "needs-H-NOT-C",
+      "dep_class": "needs-H-AND-C",
       "dep_pillar_set": [
+        "c",
         "haskell",
         "lib",
         "spec"

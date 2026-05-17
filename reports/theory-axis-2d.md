@@ -38,9 +38,9 @@ _Counts shown as `count theories / wall_s`. Empty cells = 0._
 |---|---|---|---|---|---|
 | `spec` | — | 45 / 163s | — | 25 / 81s | 5 / 4s |
 | `haskell` | — | 66 / 291s | — | 3 / 25s | — |
-| `c` | 3 / 91s | 2 / 707s | — | — | 5 / 60s |
+| `c` | 5 / 798s | — | — | — | 5 / 60s |
 | `proof` | 51 / 4765s | 242 / 3891s | — | 2 / 4s | 9 / 23s |
-| `lib` | 1 / 0s | 27 / 5s | — | — | 757 / 1027s |
+| `lib` | 1 / 0s | 27 / 5s | 15 / 49s | — | 742 / 978s |
 
 ## Sample theories per cell (selected)
 
@@ -48,19 +48,19 @@ _Counts shown as `count theories / wall_s`. Empty cells = 0._
 
 _51 theories, 4765s wall_
 
-- `CRefine.Interrupt_C` (22.2s)
-- `CRefine.Wellformed_C` (62.5s)
-- `SimplExport.ArchSEL4SimplExport` (4.4s)
-- `CBaseRefine.Include_C` (44.5s)
+- `CRefine.CSpace_RAB_C` (14.8s)
+- `CRefine.Arch_C` (33.5s)
+- `CRefine.Recycle_C` (56.4s)
+- `CRefine.DetWP` (24.0s)
 
 ### `source=proof` × `dep=needs-H-NOT-C` — Haskell-side proofs; belong in Refine/Access/InfoFlow
 
 _242 theories, 3891s wall_
 
-- `AInvs.KernelInitSep_AI` (0.0s)
-- `InfoFlow.ArchFinalise_IF` (4.2s)
+- `SepDSpec.Frame_SD` (0.3s)
+- `InfoFlow.ArchUserOp_IF` (27.4s)
 - `DRefine.Intent_DR` (9.4s)
-- `Access.ArchADT_AC` (4.9s)
+- `CRefine.Fastpath_Equiv` (32.8s)
 
 ### `source=proof` × `dep=needs-C-NOT-H` — if any — would be surprise (seL4's C proofs are ccorres)
 
@@ -70,17 +70,17 @@ _(empty)_
 
 _2 theories, 4s wall_
 
-- `SepDSpec.AbstractSeparation_SD` (3.8s)
 - `AInvs.Rights_AI` (0.4s)
+- `SepDSpec.AbstractSeparation_SD` (3.8s)
 
 ### `source=proof` × `dep=lib-only` — self-contained helper theories
 
 _9 theories, 23s wall_
 
-- `InfoFlow.Noninterference_Base_Alternatives` (7.7s)
-- `InfoFlow.Noninterference_Base` (5.4s)
-- `CRefine.AutoCorresModifiesProofs` (5.1s)
 - `CBaseRefine.L4VerifiedLinks` (0.4s)
+- `SepDSpec.Sep_Tactic_Helper` (0.5s)
+- `InfoFlow.Noninterference_Base_Refinement` (2.6s)
+- `DRefine.MoreHOL` (0.2s)
 
 ### `source=spec` × `dep=needs-H-AND-C` — spec material that transitively needs c — odd
 
@@ -88,10 +88,7 @@ _(empty)_
 
 ### `source=c` × `dep=needs-H-NOT-C` — c-source theories transitively needing haskell — odd
 
-_2 theories, 707s wall_
-
-- `CKernel.Kernel_C` (706.8s)
-- `CSpec.Kernel_C` (0.0s)
+_(empty)_
 
 ## Misalignment candidates
 

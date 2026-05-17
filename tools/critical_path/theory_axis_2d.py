@@ -169,13 +169,21 @@ def transitive_closure(start, imports_of):
     return visited
 
 
-def dep_pillar_set(closure_theories, theory_source_pillar):
-    """Set of pillars touched by closure (excluding the starting theory)."""
+def dep_pillar_set(closure_theories, theory_source_pillar, ml_deps=None):
+    """Set of pillars touched by closure (excluding the starting theory).
+
+    If `ml_deps` is supplied, also unions in any pillars reachable via
+    ML-level dependencies in `closure_theories` (closes the SEL4GraphRefine-
+    style false-positive gap: theories that reach a pillar via ML code
+    rather than via `imports`)."""
     pillars = set()
     for t in closure_theories:
         p = theory_source_pillar.get(t, "?")
         if p != "?":
             pillars.add(p)
+        if ml_deps is not None:
+            for mp in ml_deps.get(t, ()):
+                pillars.add(mp)
     return frozenset(pillars)
 
 
@@ -240,6 +248,17 @@ def main():
     dag_nodes, imports_of = load_dag()
     blobs = load_blobs()
 
+    # Optional ML-level dep map (produced by scan_ml_deps.py). Theories that
+    # reference C/Haskell/spec content via ML cartouches rather than `imports`.
+    ml_deps_path = REPO / "reports" / "ml-pillar-deps.json"
+    if ml_deps_path.exists():
+        ml_deps = {k: frozenset(v) for k, v in
+                   json.loads(ml_deps_path.read_text()).items()}
+        print(f"  loaded ML-pillar-deps: {len(ml_deps)} theories")
+    else:
+        ml_deps = {}
+        print(f"  (no ml-pillar-deps.json; run scan_ml_deps.py to populate)")
+
     # Collect ALL theories that ever appear: DAG nodes ∪ BLOB theories
     all_theories = set(dag_nodes.keys())
     for sess, recs in blobs.items():
@@ -268,7 +287,7 @@ def main():
         if t in imports_of or t in dag_nodes:
             cl = transitive_closure(t, imports_of)
             cl.discard(t)
-            ds = dep_pillar_set(cl, theory_source)
+            ds = dep_pillar_set(cl, theory_source, ml_deps=ml_deps)
         else:
             # No DAG record for this theory; fall back to lib-only assumption
             # for Isabelle distribution theories (HOL/Pure/Simpl-VCG etc.).
