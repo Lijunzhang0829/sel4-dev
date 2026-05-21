@@ -1,5 +1,14 @@
 # Theory Classification Baseline — 2026-05-14
 
+> **⚠ 2026-05-15 correction note.** The "Change-locality matrix" section
+> at the end of this document was originally framed as "sessions that
+> rebuild on pillar-X change". Per maintainer correction (Klein,
+> devel@sel4.systems), Isabelle's invalidation is **per-theory content-
+> hash**, not session-level dep-set. The matrix has been re-titled
+> "Static-dependency reach" and re-interpreted as an upper bound; do
+> NOT read those numbers as "real" rebuild scope. The 2D classification
+> (source × dep_class) is a STATIC dependency fact and remains accurate.
+
 Frozen snapshot of the seL4 verification theory universe as of commit
 `a2e0f17` (post-CSTR swap, before any pillar-decoupling refactor).
 
@@ -212,19 +221,35 @@ Top entries by wall:
 | `CSpec.KernelState_C` | 5.4 | `/spec/cspec/KernelState_C.thy` |
 | _(40 more — see [theory-axis-2d.json](theory-axis-2d.json) for full list)_ | | |
 
-## Change-locality matrix (which sessions rebuild when pillar X changes)
+## Static-dependency reach matrix (NOT a true change-locality measure)
 
-| Pillar change | Sessions rebuilt | Σ own wall (s) |
+> **⚠ Methodological correction 2026-05-15.** An earlier version of this
+> section was titled "Change-locality matrix" and claimed it answered
+> "which sessions rebuild when pillar X changes". **That framing was
+> wrong.** Per maintainer feedback (Klein, devel@sel4.systems thread),
+> Isabelle uses **per-theory content-hash invalidation**, not session-
+> level "if dep_set contains X, rebuild." A Haskell change to a file
+> whose regenerated `.thy` is NOT in a session's actual imports leaves
+> that session's content hash unchanged → no rebuild.
+>
+> The numbers below count **sessions whose static dep set touches the
+> pillar**. That is a strict **upper bound** on rebuild scope (the
+> "worst case if you happened to change the most-imported theory") —
+> NOT a typical-case rebuild estimate. For real change-locality, what
+> matters is which SPECIFIC theory in pillar X you edit, and which
+> downstream theories transitively import its regenerated form.
+
+| Pillar change (static dep reach) | Sessions in reach | Σ own wall (s) |
 |---|---:|---:|
 | `spec` | 34 | 12045 |
 | `haskell` | 33 | 12045 |
 | `c` | 10 | 7085 |
 | `proof` | 24 | 9874 |
 
-The near-identical `spec` and `haskell` rows reflect the 9 back-edges:
-changing either invalidates almost everyone. Target (a) should make `spec`
-strictly smaller than `haskell` (spec change no longer triggers Haskell
-re-cascade).
+The near-identical `spec` and `haskell` rows reflect that almost all
+sessions have BOTH spec and haskell content in their static dep set.
+Whether either pillar's edits actually trigger any of those rebuilds
+depends on **content-hash gating**, not on this table.
 
 ## How to regenerate
 

@@ -14,27 +14,39 @@ heaps/*
 
 # Runtime artifacts produced by run.sh / isabelle_prover skill
 logs/
+
+# reports/ is organized into 4 subtrees (see reports/README.md):
+#   baseline/         — pre-CSTR measurements (slow-commands, slow-proofs,
+#                       scan-comparison, inventory). Mostly bulky and
+#                       reproducible from heaps/build_log.txt → gitignored.
+#   layer1-root-swap/ — CBaseRefine ROOT-swap evidence (critical-path
+#                       pre/post pairs + early build-config exp). Tracked.
+#   layer2-theory/    — theory pillar re-alignment evidence (axis 2D, DAG,
+#                       simulators, baseline snapshot). Tracked.
+#   layer3-lemma/     — per-tactic refinement evidence. Tracked.
 reports/*
 !reports/README.md
-!reports/baseline-restore.md
-!reports/cbaserefine-build-config-comparison.md
-!reports/session-duplication-scan.md
-!reports/session-duplication-scan.json
-!reports/critical-path-*.md
-!reports/critical-path-*.json
-!reports/theory-dag.json
-!reports/session-dag.json
-!reports/move-simulator.md
-!reports/split-simulator.md
-!reports/lemma-optimization-targets.md
-!reports/theory-axis-analysis.md
-!reports/theory-axis-analysis.json
-!reports/theory-axis-2d.md
-!reports/theory-axis-2d.json
-!reports/ml-pillar-deps.json
-!reports/promote-simulator.md
-!reports/promote-simulator.json
-!reports/theory-baseline-2026-05-14.md
+!reports/lessons-learned-*.md
+
+# baseline/ — only the directory README is tracked; the raw measurement
+# dumps are large and regenerable, so they stay untracked.
+!reports/baseline/
+reports/baseline/*
+!reports/baseline/README.md
+!reports/baseline/baseline-restore.md
+
+# layer1-root-swap/ — all tracked
+!reports/layer1-root-swap/
+!reports/layer1-root-swap/**
+
+# layer2-theory/ — all tracked
+!reports/layer2-theory/
+!reports/layer2-theory/**
+
+# layer3-lemma/ — all tracked
+!reports/layer3-lemma/
+!reports/layer3-lemma/**
+
 test_output.log
 
 # Claude Code: per-user/per-machine permission overrides — gitignored

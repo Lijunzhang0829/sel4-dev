@@ -1,5 +1,46 @@
 # Target (a) — KernelTypes Extraction Proposal
 
+> **STATUS: WITHDRAWN — 2026-05-15.**
+> The maintainer (Klein, devel@sel4.systems) refuted two key premises:
+>
+> 1. **"Any Haskell change cascades into ASpec rebuilds" is incorrect.**
+>    Isabelle uses per-theory content-hash invalidation. Editing
+>    `spec/haskell/SEL4/Kernel/CSpace.lhs` regenerates `CSpec_H.thy`,
+>    but Isabelle compares CONTENT HASHES of ASpec's actually-imported
+>    theories. Since ASpec doesn't import `CSpec_H`, its dependency
+>    hash is unchanged → ASpec is NOT rebuilt. The "Haskell-change
+>    locality" argument used as the primary motivation for this
+>    proposal was therefore wrong.
+>
+> 2. **"`sessions ExecSpec` causes ExecSpec content to be source-re-
+>    executed in ASpec's ML state every time ASpec builds" framing was
+>    misplaced.** ML state matters for per-build wall (BLOB
+>    measurements ARE accurate at that level), but the rebuild trigger
+>    is content-hash-gated, NOT ML-state-driven. The "save 250s ASpec
+>    wall per build" claim is technically real when ASpec actually
+>    rebuilds (rare, content-hash gated), but the proposal sold this
+>    as if it happened on every Haskell edit. It does not.
+>
+> Maintainer's substantive reasons against the refactor:
+>
+> - "No strong advantages, but a few small disadvantages such as
+>   increasing the overall build time because it would produce yet
+>   another session image with associated heap export, etc."
+> - The cognitive dissonance — "why does ASpec include ExecSpec
+>   theories?" — is **intentional**, acting as a marker for new
+>   contributors that some parts are shared and that to get changes
+>   in ASpec one might have to edit Haskell source. A common base
+>   session would erase this useful signal.
+> - The maintainer has **personally considered this refactor multiple
+>   times** and decided against it each time on the same grounds.
+>
+> **The document is preserved below as process record** — the analytical
+> approach (theory-DAG 2D classification + spec→haskell back-edge
+> enumeration) is still sound; the policy conclusion (do the
+> extraction) is not.
+
+---
+
 Break the spec↔haskell back-coupling identified in
 [reports/theory-baseline-2026-05-14.md](../reports/theory-baseline-2026-05-14.md)
 by extracting the 12 shared-type theories out of `ExecSpec` into a new
