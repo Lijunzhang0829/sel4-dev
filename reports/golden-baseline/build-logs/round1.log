@@ -1,0 +1,788 @@
+golden-baseline-round1 start at $(date)
+Started at Fri May 29 17:34:28 GMT 2026 (polyml-5.9.1_x86_64_32-linux on lijun-VMware-Virtual-Platform)
+ISABELLE_TOOL_JAVA_OPTIONS="-Djava.awt.headless=true -Xms512m -Xmx4g -Xss16m"
+ISABELLE_BUILD_OPTIONS="document=false"
+
+ML_PLATFORM="x86_64_32-linux"
+ML_HOME="/root/.isabelle/contrib/polyml-5.9.1/x86_64_32-linux"
+ML_SYSTEM="polyml-5.9.1"
+ML_OPTIONS="--maxheap 12000 --stackspace 64"
+
+Session Pure/Pure
+Session FOL/FOL
+Session Misc/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Cardinals (timing)
+Session HOL/HOL-Hoare
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Combinatorics (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Algebra (main timing)
+Session HOL/HOL-Decision_Procs (timing)
+Session HOL/HOL-Real_Asymp
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Statespace
+Session Lib/ML_Utils (lib)
+Session Lib/Eisbach_Tools (lib)
+Session Lib/Monads (lib)
+Session Lib/Word_Lib (lib)
+Session Lib/Basics (lib)
+Session Lib/Lib (lib)
+Session Specifications/ExecSpec
+Session Specifications/ASpec
+Session Proofs/AInvs
+Session Proofs/Access
+Session Proofs/InfoFlow
+Session Specifications/ASepSpec
+Session Proofs/Bisim
+Session Lib/CorresK
+Session Proofs/BaseRefine
+Session Specifications/DSpec
+Session Proofs/DBaseRefine
+Session Proofs/DRefine
+Session Proofs/DPolicy
+Session Proofs/Refine
+Session Proofs/RefineOrphanage
+Session Lib/Sep_Algebra (lib)
+Session Lib/SepTactics (lib)
+Session Proofs/SepDSpec
+Session Proofs/DSpecProofs
+Session C-Parser/Simpl-VCG
+Session C-Parser/CParser
+Session Unsorted/AutoCorres
+Session Lib/CLib (lib)
+Session Tools/AsmRefine
+Session Specifications/CKernel
+Session Specifications/CSpec
+Session Proofs/CBaseRefine
+Session Unsorted/AutoCorresSEL4
+Session Proofs/CRefine
+Session Proofs/InfoFlowCBase
+Session Proofs/InfoFlowC
+Session Proofs/CRefineSyscall
+Session Proofs/SimplExport
+Session Proofs/SimplExportAndRefine
+Building Pure ...
+Pure: theory Pure
+Pure: theory ML_Bootstrap
+Pure: theory Pure.Sessions
+Timing Pure (1 threads, 0.989s elapsed time, 1.029s cpu time, 0.038s GC time, factor 1.04)
+Finished Pure (0:00:33 elapsed time, 0:00:33 cpu time, factor 0.98)
+Building HOL ...
+HOL: theory Tools.Code_Generator
+HOL: theory HOL.HOL
+HOL: theory HOL.Argo
+HOL: theory HOL.Ctr_Sugar
+HOL: theory HOL.Orderings
+HOL: theory HOL.Groups
+HOL: theory HOL.SAT
+HOL: theory HOL.Lattices
+HOL: theory HOL.Boolean_Algebras
+HOL: theory HOL.Set
+HOL: theory HOL.Fun
+HOL: theory HOL.Typedef
+HOL: theory HOL.Complete_Lattices
+HOL: theory HOL.Rings
+HOL: theory HOL.Inductive
+HOL: theory HOL.Product_Type
+HOL: theory HOL.Complete_Partial_Order
+HOL: theory HOL.Sum_Type
+HOL: theory HOL.Nat
+HOL: theory HOL.Fields
+HOL: theory HOL.Meson
+HOL: theory HOL.Relation
+HOL: theory HOL.Finite_Set
+HOL: theory HOL.Transitive_Closure
+HOL: theory HOL.Wellfounded
+HOL: theory HOL.Fun_Def_Base
+HOL: theory HOL.Hilbert_Choice
+HOL: theory HOL.Wfrec
+HOL: theory HOL.Order_Relation
+HOL: theory HOL.BNF_Wellorder_Relation
+HOL: theory HOL.BNF_Wellorder_Embedding
+HOL: theory HOL.BNF_Wellorder_Constructions
+HOL: theory HOL.Zorn
+HOL: theory HOL.BNF_Cardinal_Order_Relation
+HOL: theory HOL.BNF_Cardinal_Arithmetic
+HOL: theory HOL.BNF_Def
+HOL: theory HOL.ATP
+HOL: theory HOL.BNF_Composition
+HOL: theory HOL.Basic_BNFs
+HOL: theory HOL.BNF_Fixpoint_Base
+HOL: theory HOL.Metis
+HOL: theory HOL.BNF_Least_Fixpoint
+HOL: theory HOL.Basic_BNF_LFPs
+HOL: theory HOL.Equiv_Relations
+HOL: theory HOL.Transfer
+HOL: theory HOL.Lifting
+HOL: theory HOL.Num
+HOL: theory HOL.Option
+HOL: theory HOL.Extraction
+HOL: theory HOL.Partial_Function
+HOL: theory HOL.Fun_Def
+HOL: theory HOL.Quotient
+HOL: theory HOL.Power
+HOL: theory HOL.Groups_Big
+HOL: theory HOL.Int
+HOL: theory HOL.Lattices_Big
+HOL: theory HOL.Lifting_Set
+HOL: theory HOL.Euclidean_Rings
+HOL: theory HOL.Parity
+HOL: theory HOL.Divides
+HOL: theory HOL.Numeral_Simprocs
+HOL: theory HOL.SMT
+HOL: theory HOL.Semiring_Normalization
+HOL: theory HOL.Groebner_Basis
+HOL: theory HOL.Set_Interval
+HOL: theory HOL.Conditionally_Complete_Lattices
+HOL: theory HOL.Presburger
+HOL: theory HOL.Sledgehammer
+HOL: theory HOL.Filter
+HOL: theory HOL.List
+HOL: theory HOL.Groups_List
+HOL: theory HOL.Map
+HOL: theory HOL.Bit_Operations
+HOL: theory HOL.Factorial
+HOL: theory HOL.Binomial
+HOL: theory HOL.Enum
+HOL: theory HOL.Code_Numeral
+HOL: theory HOL.GCD
+HOL: theory HOL.String
+HOL: theory HOL.BNF_Greatest_Fixpoint
+HOL: theory HOL.Predicate
+HOL: theory HOL.Typerep
+HOL: theory HOL.Lazy_Sequence
+HOL: theory HOL.Random
+HOL: theory HOL.Limited_Sequence
+HOL: theory HOL.Code_Evaluation
+HOL: theory HOL.Quickcheck_Random
+HOL: theory HOL.Quickcheck_Exhaustive
+HOL: theory HOL.Quickcheck_Narrowing
+HOL: theory HOL.Random_Pred
+HOL: theory HOL.Record
+HOL: theory HOL.Random_Sequence
+HOL: theory HOL.Predicate_Compile
+HOL: theory HOL.Nitpick
+HOL: theory HOL.Mirabelle
+HOL: theory HOL.Nunchaku
+HOL: theory Main
+HOL: theory HOL.Archimedean_Field
+HOL: theory HOL.Hull
+HOL: theory HOL.Modules
+HOL: theory HOL.Vector_Spaces
+HOL: theory HOL.Topological_Spaces
+HOL: theory HOL.Rat
+HOL: theory HOL.Real
+HOL: theory HOL.Real_Vector_Spaces
+HOL: theory HOL.Inequalities
+HOL: theory HOL.Limits
+HOL: theory HOL.Deriv
+HOL: theory HOL.NthRoot
+HOL: theory HOL.Series
+HOL: theory HOL.Transcendental
+HOL: theory HOL.Complex
+HOL: theory HOL.MacLaurin
+HOL: theory Complex_Main
+Timing HOL (2 threads, 487.947s elapsed time, 960.063s cpu time, 96.268s GC time, factor 1.97)
+Finished HOL (0:08:42 elapsed time, 0:17:12 cpu time, factor 1.98)
+Building Word_Lib ...
+Word_Lib: theory HOL-Eisbach.Eisbach
+Word_Lib: theory HOL-Library.Phantom_Type
+Word_Lib: theory HOL-Eisbach.Eisbach_Tools
+Word_Lib: theory HOL-Library.Signed_Division
+Word_Lib: theory HOL-Library.Cardinality
+Word_Lib: theory HOL-Library.Sublist
+Word_Lib: theory HOL-Library.Numeral_Type
+Word_Lib: theory HOL-Library.Type_Length
+Word_Lib: theory HOL-Library.Word
+Word_Lib: theory HOL-Library.Prefix_Order
+Word_Lib: theory Word_Lib.More_Sublist
+Word_Lib: theory Word_Lib.Enumeration
+Word_Lib: theory Word_Lib.Even_More_List
+Word_Lib: theory Word_Lib.More_Arithmetic
+Word_Lib: theory Word_Lib.More_Bit_Ring
+Word_Lib: theory Word_Lib.More_Misc
+Word_Lib: theory Word_Lib.Bit_Comprehension
+Word_Lib: theory Word_Lib.Hex_Words
+Word_Lib: theory Word_Lib.Legacy_Aliases
+Word_Lib: theory Word_Lib.More_Divides
+Word_Lib: theory Word_Lib.Signed_Words
+Word_Lib: theory Word_Lib.Norm_Words
+Word_Lib: theory Word_Lib.Word_Names
+Word_Lib: theory Word_Lib.Syntax_Bundles
+Word_Lib: theory Word_Lib.Type_Syntax
+Word_Lib: theory Word_Lib.Word_Syntax
+Word_Lib: theory Word_Lib.Signed_Division_Word
+Word_Lib: theory Word_Lib.Bit_Comprehension_Int
+Word_Lib: theory Word_Lib.More_Word
+Word_Lib: theory Word_Lib.Bit_Shifts_Infix_Syntax
+Word_Lib: theory Word_Lib.Enumeration_Word
+Word_Lib: theory Word_Lib.Least_significant_bit
+Word_Lib: theory Word_Lib.Many_More
+Word_Lib: theory Word_Lib.Aligned
+Word_Lib: theory Word_Lib.Singleton_Bit_Shifts
+Word_Lib: theory Word_Lib.Next_and_Prev
+Word_Lib: theory Word_Lib.Distinct_Prop
+Word_Lib: theory Word_Lib.Most_significant_bit
+Word_Lib: theory Word_Lib.Generic_set_bit
+Word_Lib: theory Word_Lib.Sgn_Abs
+Word_Lib: theory Word_Lib.Strict_part_mono
+Word_Lib: theory Word_Lib.Word_16
+Word_Lib: theory Word_Lib.Word_EqI
+Word_Lib: theory Word_Lib.Bits_Int
+Word_Lib: theory Word_Lib.Boolean_Inequalities
+Word_Lib: theory Word_Lib.Rsplit
+Word_Lib: theory Word_Lib.Typedef_Morphisms
+Word_Lib: theory Word_Lib.Reversed_Bit_Lists
+Word_Lib: theory Word_Lib.Word_Lemmas
+Word_Lib: theory Word_Lib.Word_8
+Word_Lib: theory Word_Lib.Bitwise
+Word_Lib: theory Word_Lib.Bitwise_Signed
+Word_Lib: theory Word_Lib.More_Word_Operations
+Word_Lib: theory Word_Lib.Word_32
+Word_Lib: theory Word_Lib.Word_Lemmas_Internal
+Word_Lib: theory Word_Lib.Machine_Word_32_Basics
+Word_Lib: theory Word_Lib.Machine_Word_32
+Word_Lib: theory Word_Lib.Word_Lemmas_Prefix
+Word_Lib: theory Word_Lib.Word_Lib_Sumo
+Word_Lib: theory Word_Lib.Word_Lemmas_32_Internal
+Word_Lib: theory Word_Lib.WordSetup
+Word_Lib: theory Word_Lib.Examples
+Word_Lib: theory Word_Lib.Word_64
+Word_Lib: theory Word_Lib.Machine_Word_64_Basics
+Word_Lib: theory Word_Lib.Machine_Word_64
+Word_Lib: theory Word_Lib.Guide
+Preparing Word_Lib/document ...
+Finished Word_Lib/document (0:00:06 elapsed time)
+Timing Word_Lib (2 threads, 102.167s elapsed time, 194.105s cpu time, 16.300s GC time, factor 1.90)
+Finished Word_Lib (0:01:56 elapsed time, 0:03:40 cpu time, factor 1.89)
+Building ASpec ...
+Building DSpec ...
+ASpec: theory Lib.Find_Names
+ASpec: theory Lib.Insulin
+DSpec: theory Lib.Insulin
+DSpec: theory Lib.Find_Names
+ASpec: theory ML_Utils.TermPatternAntiquote
+DSpec: theory ML_Utils.TermPatternAntiquote
+ASpec: theory ASpec.CapRights_A
+DSpec: theory ASpec.CapRights_A
+ASpec: theory ASpec.Intro_Doc
+DSpec: theory Eisbach_Tools.Local_Method
+DSpec: theory Eisbach_Tools.Rule_By_Method
+ASpec: theory Eisbach_Tools.Local_Method
+ASpec: theory Eisbach_Tools.Rule_By_Method
+DSpec: theory ASpec.VMRights_A
+DSpec: theory Eisbach_Tools.Simp_No_Conditional
+ASpec: theory ASpec.VMRights_A
+DSpec: theory Eisbach_Tools.Subgoal_Methods
+DSpec: theory HOL-Combinatorics.Transposition
+ASpec: theory Eisbach_Tools.Simp_No_Conditional
+ASpec: theory Eisbach_Tools.Subgoal_Methods
+ASpec: theory HOL-Library.Adhoc_Overloading
+DSpec: theory Eisbach_Tools.Eisbach_Methods
+DSpec: theory HOL-Library.Adhoc_Overloading
+ASpec: theory Eisbach_Tools.Eisbach_Methods
+ASpec: theory HOL-Library.Monad_Syntax
+ASpec: theory Monads.Less_Monad_Syntax
+DSpec: theory HOL-Library.Monad_Syntax
+ASpec: theory Lib.Value_Type
+DSpec: theory Monads.Less_Monad_Syntax
+ASpec: theory Lib.Defs
+DSpec: theory Lib.Value_Type
+ASpec: theory Lib.List_Lib
+DSpec: theory Lib.Defs
+DSpec: theory Lib.Locale_Abbrev
+ASpec: theory Lib.Locale_Abbrev
+DSpec: theory Lib.ML_Goal
+ASpec: theory Lib.ML_Goal
+DSpec: theory Lib.Match_Abbreviation
+DSpec: theory Lib.Try_Methods
+ASpec: theory Lib.Try_Methods
+ASpec: theory Lib.Extract_Conjunct
+DSpec: theory Lib.Eval_Bool
+ASpec: theory Lib.Eval_Bool
+ASpec: theory Lib.Match_Abbreviation
+ASpec: theory Lib.Named_Eta
+ASpec: theory Lib.Qualify
+DSpec: theory Lib.Extract_Conjunct
+DSpec: theory Lib.Named_Eta
+DSpec: theory Lib.Qualify
+ASpec: theory Lib.Repeat_Attribute
+ASpec: theory Lib.Requalify
+DSpec: theory Lib.Repeat_Attribute
+DSpec: theory Lib.Requalify
+DSpec: theory Lib.ShowTypes
+ASpec: theory Lib.ShowTypes
+DSpec: theory Lib.SplitRule
+ASpec: theory Lib.Time_Methods_Cmd
+DSpec: theory Lib.Time_Methods_Cmd
+DSpec: theory ExecSpec.Setup_Locale
+ASpec: theory ExecSpec.Setup_Locale
+ASpec: theory Lib.Try_Attribute
+ASpec: theory Lib.Value_Abbreviation
+DSpec: theory Lib.Try_Attribute
+DSpec: theory Lib.Value_Abbreviation
+DSpec: theory ML_Utils.ML_Utils
+ASpec: theory ExecSpec.Arch_Structs_B
+DSpec: theory Eisbach_Tools.Apply_Trace
+DSpec: theory Eisbach_Tools.Apply_Debug
+ASpec: theory ML_Utils.ML_Utils
+ASpec: theory Eisbach_Tools.Apply_Trace
+DSpec: theory Eisbach_Tools.Apply_Trace_Cmd
+ASpec: theory Eisbach_Tools.Trace_Schematic_Insts
+ASpec: theory Eisbach_Tools.Apply_Debug
+ASpec: theory Eisbach_Tools.Apply_Trace_Cmd
+DSpec: theory Eisbach_Tools.Trace_Schematic_Insts
+DSpec: theory Monads.Datatype_Schematic
+DSpec: theory Lib.NICTATools
+ASpec: theory Monads.Datatype_Schematic
+ASpec: theory Lib.NICTATools
+DSpec: theory Monads.Fun_Pred_Syntax
+DSpec: theory Lib.None_Top_Bot
+DSpec: theory Monads.Monad_Lib
+ASpec: theory Monads.Fun_Pred_Syntax
+DSpec: theory Monads.Nondet_Monad
+ASpec: theory Lib.None_Top_Bot
+ASpec: theory Monads.Monad_Lib
+DSpec: theory Monads.Reader_Option_Monad
+ASpec: theory Monads.Nondet_Monad
+ASpec: theory Monads.Reader_Option_Monad
+DSpec: theory Monads.Nondet_Lemmas
+DSpec: theory Monads.Strengthen
+DSpec: theory Monads.Nondet_In_Monad
+ASpec: theory Monads.Nondet_Lemmas
+ASpec: theory Monads.Strengthen
+DSpec: theory Monads.WP_Pre
+ASpec: theory Monads.Nondet_In_Monad
+DSpec: theory Monads.WPFix
+DSpec: theory Monads.WPC
+ASpec: theory Monads.WP_Pre
+ASpec: theory Monads.WPFix
+DSpec: theory Basics.CLib
+DSpec: theory Monads.WP
+DSpec: theory DSpec.Intents_D
+ASpec: theory Monads.WPC
+ASpec: theory ExecSpec.ArchInvocationLabels_H
+ASpec: theory Monads.WP
+DSpec: theory Monads.WPSimp
+ASpec: theory Monads.WPSimp
+DSpec: theory Monads.Nondet_Empty_Fail
+ASpec: theory Monads.Nondet_Empty_Fail
+DSpec: theory Monads.Nondet_VCG
+ASpec: theory Monads.Nondet_VCG
+ASpec: theory Monads.Reader_Option_VCG
+ASpec: theory ExecSpec.InvocationLabels_H
+ASpec: theory Monads.Nondet_No_Fail
+DSpec: theory Monads.Nondet_No_Fail
+ASpec: theory Monads.Nondet_Reader_Option
+DSpec: theory Monads.Reader_Option_VCG
+ASpec: theory Basics.CLib
+ASpec: theory ExecSpec.Kernel_Config
+ASpec: theory ExecSpec.Kernel_Config_Lemmas
+ASpec: theory Lib.Lib
+DSpec: theory Monads.Nondet_Reader_Option
+DSpec: theory ExecSpec.Kernel_Config
+DSpec: theory Lib.Lib
+ASpec: theory ExecSpec.Platform
+ASpec: theory ExecSpec.ArchLabelFuns_H
+ASpec: theory ExecSpec.Arch_Kernel_Config_Lemmas
+ASpec: theory ExecSpec.MachineTypes
+DSpec: theory ExecSpec.Platform
+DSpec: theory ExecSpec.MachineTypes
+ASpec: theory ExecSpec.MachineMonad
+ASpec: theory ExecSpec.MachineOps
+DSpec: theory DSpec.Types_D
+DSpec: theory ExecSpec.MachineMonad
+DSpec: theory ExecSpec.MachineOps
+ASpec: theory ASpec.Machine_A
+ASpec: theory ExecSpec.MachineExports
+ASpec: theory ExecSpec.Event_H
+DSpec: theory ExecSpec.MachineExports
+DSpec: theory ExecSpec.Event_H
+ASpec: theory ASpec.MiscMachine_A
+ASpec: theory ASpec.ExceptionTypes_A
+ASpec: theory ASpec.InvocationLabels_A
+ASpec: theory ASpec.Arch_Structs_A
+DSpec: theory DSpec.Invocations_D
+DSpec: theory DSpec.Monads_D
+DSpec: theory DSpec.KHeap_D
+DSpec: theory DSpec.Schedule_D
+ASpec: theory ASpec.Structures_A
+DSpec: theory DSpec.PageTableUnmap_D
+DSpec: theory DSpec.CSpace_D
+ASpec: theory ASpec.ArchInvocation_A
+ASpec: theory ASpec.Deterministic_A
+DSpec: theory DSpec.CNode_D
+DSpec: theory DSpec.PageTable_D
+DSpec: theory DSpec.Tcb_D
+DSpec: theory DSpec.Untyped_D
+DSpec: theory DSpec.Asid_D
+DSpec: theory DSpec.Endpoint_D
+DSpec: theory DSpec.Interrupt_D
+DSpec: theory DSpec.Decode_D
+DSpec: theory DSpec.Syscall_D
+ASpec: theory ASpec.Exceptions_A
+ASpec: theory ASpec.Hypervisor_A
+ASpec: theory ASpec.KHeap_A
+ASpec: theory ASpec.ArchTcb_A
+ASpec: theory ASpec.ArchVSpaceAcc_A
+ASpec: theory ASpec.CSpaceAcc_A
+ASpec: theory ASpec.ArchIpcCancel_A
+ASpec: theory ASpec.IpcCancel_A
+ASpec: theory ASpec.Invocations_A
+ASpec: theory ASpec.ArchRetype_A
+ASpec: theory ASpec.Retype_A
+ASpec: theory ASpec.Init_A
+ASpec: theory ASpec.ArchVSpace_A
+ASpec: theory ASpec.ArchCSpace_A
+Timing DSpec (2 threads, 83.586s elapsed time, 172.671s cpu time, 14.786s GC time, factor 2.07)
+Finished DSpec (0:01:41 elapsed time, 0:03:27 cpu time, factor 2.05)
+Building SepDSpec ...
+SepDSpec: theory Lib.SimpStrategy
+SepDSpec: theory Monads.Nondet_Det
+SepDSpec: theory Monads.Nondet_Sat
+SepDSpec: theory Lib.CutMon
+SepDSpec: theory Lib.Injection_Handler
+SepDSpec: theory Lib.Oblivious
+SepDSpec: theory Monads.Nondet_MonadEq
+SepDSpec: theory Monads.Nondet_More_VCG
+SepDSpec: theory Monads.Nondet_MonadEq_Lemmas
+SepDSpec: theory Lib.Monad_Lists
+ASpec: theory ASpec.CSpace_A
+SepDSpec: theory Monads.Nondet_Monad_Equations
+SepDSpec: theory Monads.Nondet_Total
+SepDSpec: theory Monads.Nondet_While_Loop_Rules
+SepDSpec: theory Lib.Monad_Commute
+SepDSpec: theory Monads.WPEx
+SepDSpec: theory Sep_Algebra.Arbitrary_Comm_Monoid
+SepDSpec: theory Sep_Algebra.Separation_Algebra
+SepDSpec: theory Monads.Nondet_No_Throw
+SepDSpec: theory Monads.Nondet_While_Loop_Rules_Completeness
+SepDSpec: theory Sep_Algebra.Map_Extra
+SepDSpec: theory SepDSpec.Lookups_D
+SepDSpec: theory Lib.Crunch
+SepDSpec: theory Sep_Algebra.Sep_Select
+SepDSpec: theory Sep_Algebra.Sep_Rotate
+SepDSpec: theory Sep_Algebra.Sep_Provers
+SepDSpec: theory Sep_Algebra.Sep_Tactic_Helpers
+SepDSpec: theory Sep_Algebra.Sep_Attribs
+SepDSpec: theory Sep_Algebra.Sep_Cancel_Set
+SepDSpec: theory Sep_Algebra.Sep_Cancel
+SepDSpec: theory Sep_Algebra.Sep_ImpI
+SepDSpec: theory Sep_Algebra.Sep_Fold
+SepDSpec: theory Sep_Algebra.Sep_MP
+SepDSpec: theory Sep_Algebra.Sep_Rule_Ext
+SepDSpec: theory Sep_Algebra.Sep_Solve
+SepDSpec: theory Lib.Crunch_Instances_NonDet
+SepDSpec: theory Sep_Algebra.Sep_Tactics
+SepDSpec: theory Sep_Algebra.Sep_Algebra_L4v
+SepDSpec: theory SepDSpec.AbstractSeparationHelpers_SD
+SepDSpec: theory SepTactics.Hoare_Sep_Tactics
+SepDSpec: theory SepDSpec.AbstractSeparation_SD
+SepDSpec: theory Lib.NonDetMonadLemmaBucket
+SepDSpec: theory Lib.More_Numeral_Type
+SepDSpec: theory Lib.HaskellLib_H
+ASpec: theory ASpec.TcbAcc_A
+SepDSpec: theory Lib.HaskellLemmaBucket
+SepDSpec: theory Lib.Corres_UL
+SepDSpec: theory Lib.DetWPLib
+ASpec: theory ASpec.Arch_A
+SepDSpec: theory Lib.SubMonadLib
+SepDSpec: theory Lib.ExtraCorres
+ASpec: theory ASpec.Schedule_A
+SepDSpec: theory Lib.SpecValid_R
+SepDSpec: theory Lib.LemmaBucket
+SepDSpec: theory SepDSpec.Helpers_SD
+SepDSpec: theory Sep_Algebra.MonadSep
+ASpec: theory ASpec.Tcb_A
+SepDSpec: theory SepDSpec.Sep_Tactic_Helper
+SepDSpec: theory SepDSpec.Types_SD
+SepDSpec: theory SepDSpec.Separation_SD
+ASpec: theory ASpec.ArchFault_A
+SepDSpec: theory SepDSpec.Frame_SD
+ASpec: theory ASpec.Ipc_A
+ASpec: theory ASpec.ArchInterrupt_A
+ASpec: theory ASpec.Interrupt_A
+ASpec: theory ASpec.ArchDecode_A
+ASpec: theory ASpec.Decode_A
+ASpec: theory ASpec.Syscall_A
+ASpec: theory ASpec.Glossary_Doc
+Preparing ASpec/document ...
+Finished ASpec/document (0:00:04 elapsed time)
+Timing ASpec (2 threads, 154.390s elapsed time, 263.639s cpu time, 29.498s GC time, factor 1.71)
+Finished ASpec (0:02:57 elapsed time, 0:05:12 cpu time, factor 1.75)
+Building AInvs ...
+AInvs: theory AInvs.Rights_AI
+AInvs: theory Eisbach_Tools.Conjuncts
+AInvs: theory Eisbach_Tools.ProvePart
+AInvs: theory Lib.Rules_Tac
+AInvs: theory Lib.Simulation
+AInvs: theory Lib.SplitRule
+AInvs: theory Monads.Nondet_Det
+AInvs: theory Monads.Nondet_Sat
+AInvs: theory Lib.CutMon
+AInvs: theory Lib.Injection_Handler
+AInvs: theory Lib.Oblivious
+AInvs: theory Monads.Nondet_MonadEq
+AInvs: theory Monads.Nondet_MonadEq_Lemmas
+AInvs: theory Monads.Nondet_More_VCG
+AInvs: theory Lib.Monad_Lists
+AInvs: theory Monads.Nondet_Monad_Equations
+AInvs: theory Monads.Nondet_Total
+AInvs: theory Monads.Nondet_While_Loop_Rules
+AInvs: theory Lib.Monad_Commute
+AInvs: theory Monads.Nondet_Strengthen_Setup
+AInvs: theory Monads.WPBang
+AInvs: theory Monads.WPEx
+AInvs: theory Monads.Nondet_No_Throw
+AInvs: theory Monads.Nondet_While_Loop_Rules_Completeness
+AInvs: theory Monads.WPI
+AInvs: theory Lib.Crunch
+AInvs: theory Lib.Crunch_Instances_NonDet
+AInvs: theory AInvs.ArchCrunchSetup_AI
+AInvs: theory Monads.Eisbach_WP
+AInvs: theory Lib.BCorres_UL
+AInvs: theory Lib.NonDetMonadLemmaBucket
+AInvs: theory Lib.More_Numeral_Type
+AInvs: theory Lib.HaskellLib_H
+AInvs: theory Lib.HaskellLemmaBucket
+AInvs: theory Lib.Corres_UL
+AInvs: theory Lib.DetWPLib
+AInvs: theory Lib.SubMonadLib
+AInvs: theory Lib.ExtraCorres
+AInvs: theory Lib.MonadicRewrite
+AInvs: theory Lib.SpecValid_R
+AInvs: theory Lib.LemmaBucket
+AInvs: theory Lib.ListLibLemmas
+AInvs: theory AInvs.Include_AI
+AInvs: theory AInvs.BCorres_AI
+Timing SepDSpec (2 threads, 91.865s elapsed time, 172.334s cpu time, 12.225s GC time, factor 1.88)
+Finished SepDSpec (0:01:47 elapsed time, 0:03:21 cpu time, factor 1.87)
+Building DSpecProofs ...
+AInvs: theory AInvs.ArchBCorres_AI
+DSpecProofs: theory DSpecProofs.Kernel_DP
+DSpecProofs: theory DSpecProofs.ProofHelpers_DP
+AInvs: theory AInvs.ArchLevityCatch_AI
+DSpecProofs: theory DSpecProofs.KHeap_DP
+AInvs: theory AInvs.LevityCatch_AI
+DSpecProofs: theory DSpecProofs.Sep_Tactic_Examples
+DSpecProofs: theory DSpecProofs.RWHelper_DP
+DSpecProofs: theory DSpecProofs.Invocation_DP
+AInvs: theory AInvs.InvariantsPre_AI
+DSpecProofs: theory DSpecProofs.CNode_DP
+DSpecProofs: theory DSpecProofs.Retype_DP
+DSpecProofs: theory DSpecProofs.TCB_DP
+DSpecProofs: theory DSpecProofs.IRQ_DP
+DSpecProofs: theory DSpecProofs.Arch_DP
+DSpecProofs: theory DSpecProofs.API_DP
+AInvs: theory AInvs.ArchInvariants_AI
+AInvs: theory AInvs.Invariants_AI
+AInvs: theory AInvs.ArchADT_AI
+AInvs: theory AInvs.ArchBits_AI
+AInvs: theory AInvs.Bits_AI
+AInvs: theory AInvs.Machine_AI
+AInvs: theory AInvs.ADT_AI
+AInvs: theory AInvs.KHeapPre_AI
+AInvs: theory AInvs.ArchKHeap_AI
+AInvs: theory AInvs.KHeap_AI
+AInvs: theory AInvs.SubMonad_AI
+AInvs: theory AInvs.ArchAcc_AI
+AInvs: theory AInvs.CSpaceInvPre_AI
+AInvs: theory AInvs.ArchCSpaceInvPre_AI
+Timing DSpecProofs (2 threads, 149.923s elapsed time, 285.760s cpu time, 12.777s GC time, factor 1.91)
+Finished DSpecProofs (0:02:42 elapsed time, 0:05:06 cpu time, factor 1.88)
+Building Simpl-VCG ...
+Simpl-VCG: theory HOL-Library.Old_Recdef
+Simpl-VCG: theory HOL-Statespace.DistinctTreeProver
+AInvs: theory AInvs.CSpaceInv_AI
+Simpl-VCG: theory Simpl-VCG.Language
+Simpl-VCG: theory HOL-Statespace.StateFun
+Simpl-VCG: theory HOL-Statespace.StateSpaceLocale
+Simpl-VCG: theory Simpl-VCG.Generalise
+Simpl-VCG: theory Simpl-VCG.Semantic
+AInvs: theory AInvs.ArchCSpaceInv_AI
+Simpl-VCG: theory Simpl-VCG.HoarePartialDef
+Simpl-VCG: theory Simpl-VCG.Termination
+Simpl-VCG: theory Simpl-VCG.HoarePartialProps
+Simpl-VCG: theory Simpl-VCG.HoareTotalDef
+Simpl-VCG: theory Simpl-VCG.HoarePartial
+Simpl-VCG: theory Simpl-VCG.SmallStep
+Simpl-VCG: theory Simpl-VCG.HoareTotalProps
+Simpl-VCG: theory Simpl-VCG.HoareTotal
+AInvs: theory AInvs.CSpacePre_AI
+Simpl-VCG: theory Simpl-VCG.Hoare
+Simpl-VCG: theory Simpl-VCG.StateSpace
+Simpl-VCG: theory Simpl-VCG.Vcg
+AInvs: theory AInvs.ArchCSpacePre_AI
+AInvs: theory AInvs.CSpace_AI
+AInvs: theory AInvs.ArchCSpace_AI
+AInvs: theory AInvs.TcbAcc_AI
+AInvs: theory AInvs.ArchTcbAcc_AI
+AInvs: theory AInvs.InterruptAcc_AI
+AInvs: theory AInvs.VSpacePre_AI
+AInvs: theory AInvs.ArchInterruptAcc_AI
+AInvs: theory AInvs.ArchVSpace_AI
+Timing Simpl-VCG (2 threads, 67.200s elapsed time, 133.408s cpu time, 17.356s GC time, factor 1.99)
+Finished Simpl-VCG (0:01:21 elapsed time, 0:02:41 cpu time, factor 1.98)
+Building CParser ...
+CParser: theory CParser.MapExtra
+CParser: theory CParser.Padding
+CParser: theory CParser.StaticFun
+CParser: theory CParser.MapExtraTrans
+CParser: theory CParser.Arrays
+CParser: theory CParser.PrettyProgs
+CParser: theory ML_Utils.ML_Utils
+CParser: theory CParser.IndirectCalls
+CParser: theory Basics.CLib
+CParser: theory CParser.Addr_Type
+CParser: theory CParser.CTypesBase
+CParser: theory CParser.CTypesDefs
+AInvs: theory AInvs.VSpace_AI
+CParser: theory CParser.CTypes
+AInvs: theory AInvs.Retype_AI
+AInvs: theory AInvs.Schedule_AI
+CParser: theory CParser.HeapRawState
+CParser: theory CParser.Vanilla32_Preliminaries
+CParser: theory CParser.Word_Mem_Encoding
+CParser: theory CParser.Vanilla32
+CParser: theory CParser.CompoundCTypes
+CParser: theory CParser.ArraysMemInstance
+CParser: theory CParser.ArchArraysMemInstance
+AInvs: theory AInvs.ArchSchedule_AI
+CParser: theory CParser.TypHeap
+AInvs: theory AInvs.ArchRetype_AI
+CParser: theory CParser.Separation
+AInvs: theory AInvs.IpcCancel_AI
+CParser: theory CParser.SepCode
+CParser: theory CParser.SepInv
+CParser: theory CParser.SepTactic
+CParser: theory CParser.StructSupport
+CParser: theory CParser.SepFrame
+CParser: theory CParser.ArrayAssertion
+CParser: theory CParser.CProof
+*** Consumer thread failure: "Isabelle.Session.manager"
+*** Missing session sources entry "/workspace/verification/l4v/tools/c-parser/umm_heap/$L4V_ARCH/TargetNumbers.ML"
+AInvs: theory AInvs.ArchIpcCancel_AI
+CParser: theory CParser.CLanguage
+CParser: theory CParser.ModifiesProofs
+CParser: theory CParser.PackedTypes
+CParser: theory CParser.CTranslation
+CParser: theory CParser.TypHeapLib
+CParser: theory CParser.LemmaBucket_C
+AInvs: theory AInvs.Detype_AI
+AInvs: theory AInvs.Finalise_AI
+AInvs: theory AInvs.ArchFinalise_AI
+AInvs: theory AInvs.ArchDetype_AI
+AInvs: theory AInvs.Untyped_AI
+AInvs: theory AInvs.ArchUntyped_AI
+AInvs: theory AInvs.Ipc_AI
+AInvs: theory AInvs.Arch_AI
+AInvs: theory AInvs.ArchArch_AI
+Timing CParser (2 threads, 138.462s elapsed time, 228.853s cpu time, 18.999s GC time, factor 1.65)
+Finished CParser (0:02:34 elapsed time, 0:04:20 cpu time, factor 1.68)
+Building CKernel ...
+CKernel: theory Lib.Find_Names
+CKernel: theory Lib.Insulin
+CKernel: theory ML_Utils.TermPatternAntiquote
+CKernel: theory Eisbach_Tools.Local_Method
+CKernel: theory Eisbach_Tools.Rule_By_Method
+CKernel: theory Eisbach_Tools.Simp_No_Conditional
+CKernel: theory Eisbach_Tools.Subgoal_Methods
+CKernel: theory HOL-Library.Adhoc_Overloading
+AInvs: theory AInvs.ArchIpc_AI
+CKernel: theory HOL-Library.Monad_Syntax
+CKernel: theory Eisbach_Tools.Eisbach_Methods
+CKernel: theory Monads.Less_Monad_Syntax
+CKernel: theory Lib.Value_Type
+CKernel: theory Lib.Defs
+CKernel: theory Lib.Locale_Abbrev
+CKernel: theory Lib.ML_Goal
+CKernel: theory Lib.Match_Abbreviation
+CKernel: theory Lib.Named_Eta
+CKernel: theory Lib.Qualify
+CKernel: theory Lib.Try_Methods
+CKernel: theory Lib.Extract_Conjunct
+CKernel: theory Lib.Eval_Bool
+CKernel: theory Lib.Repeat_Attribute
+CKernel: theory Lib.Requalify
+CKernel: theory Lib.ShowTypes
+CKernel: theory Lib.Time_Methods_Cmd
+CKernel: theory Lib.Try_Attribute
+CKernel: theory ExecSpec.Setup_Locale
+CKernel: theory Lib.Value_Abbreviation
+CKernel: theory Eisbach_Tools.Apply_Trace
+CKernel: theory Eisbach_Tools.Apply_Debug
+CKernel: theory Eisbach_Tools.Apply_Trace_Cmd
+CKernel: theory Eisbach_Tools.Trace_Schematic_Insts
+CKernel: theory Monads.Datatype_Schematic
+CKernel: theory Lib.NICTATools
+CKernel: theory Monads.Fun_Pred_Syntax
+CKernel: theory Lib.None_Top_Bot
+CKernel: theory Monads.Monad_Lib
+CKernel: theory Monads.Nondet_Monad
+CKernel: theory Monads.Reader_Option_Monad
+CKernel: theory Monads.Nondet_Lemmas
+CKernel: theory Monads.Strengthen
+CKernel: theory Monads.Nondet_In_Monad
+CKernel: theory Monads.WP_Pre
+CKernel: theory Monads.WPFix
+CKernel: theory Monads.WPC
+CKernel: theory Monads.WP
+CKernel: theory CLib.CTranslationNICTA
+CKernel: theory Monads.WPSimp
+CKernel: theory AsmRefine.ArchSetup
+CKernel: theory ExecSpec.Kernel_Config
+AInvs: theory AInvs.CNodeInv_AI
+CKernel: theory Lib.Lib
+CKernel: theory Monads.Nondet_Empty_Fail
+AInvs: theory AInvs.Interrupt_AI
+CKernel: theory Monads.Nondet_VCG
+CKernel: theory Monads.Reader_Option_VCG
+CKernel: theory Monads.Nondet_No_Fail
+CKernel: theory AsmRefine.GlobalsSwap
+CKernel: theory Monads.Nondet_Reader_Option
+CKernel: theory ExecSpec.Platform
+CKernel: theory ExecSpec.MachineTypes
+CKernel: theory AsmRefine.CommonOps
+AInvs: theory AInvs.ArchInterrupt_AI
+CKernel: theory CKernel.Kernel_C
+*** Consumer thread failure: "Isabelle.Session.manager"
+*** Missing session sources entry "/workspace/verification/l4v/spec/cspec/c/build/$L4V_ARCH/kernel_all.c_pp"
+AInvs: theory AInvs.ArchCNodeInv_AI
+AInvs: theory AInvs.Tcb_AI
+AInvs: theory AInvs.ArchKernelInit_AI
+AInvs: theory AInvs.KernelInit_AI
+AInvs: theory AInvs.ArchTcb_AI
+AInvs: theory AInvs.EmptyFail_AI
+AInvs: theory AInvs.ArchEmptyFail_AI
+AInvs: theory AInvs.BCorres2_AI
+AInvs: theory AInvs.ArchBCorres2_AI
+AInvs: theory AInvs.Syscall_AI
+AInvs: theory AInvs.ArchSyscall_AI
+AInvs: theory AInvs.VSpaceEntries_AI
+AInvs: theory AInvs.ArchVSpaceEntries_AI
+AInvs: theory AInvs.AInvsPre
+AInvs: theory AInvs.ArchAInvsPre
+AInvs: theory AInvs.AInvs
+AInvs: theory AInvs.Deterministic_AI
+AInvs: theory AInvs.ArchDeterministic_AI
+AInvs: theory AInvs.DetSchedInvs_AI
+AInvs: theory AInvs.DetSchedAux_AI
+AInvs: theory AInvs.ArchDetSchedAux_AI
+AInvs: theory AInvs.DetSchedDomainTime_AI
+AInvs: theory AInvs.ArchDetSchedDomainTime_AI
+AInvs: theory AInvs.DetSchedSchedule_AI
+AInvs: theory AInvs.ArchDetSchedSchedule_AI
+Skipping theories "Kernel_C" (undefined SORRY_MODIFIES_PROOFS)
+Timing CKernel (2 threads, 1931.372s elapsed time, 3494.749s cpu time, 158.635s GC time, factor 1.81)
+Finished CKernel (0:34:27 elapsed time, 1:03:50 cpu time, factor 1.85)
+Building CSpec ...
+CSpec: theory CLib.BitFieldProofsLib
+CSpec: theory CSpec.Substitute
+CSpec: theory CSpec.KernelState_C
+CSpec: theory CSpec.shared_types_defs
+CSpec: theory CSpec.structures_defs
+CSpec: theory CSpec.shared_types_proofs
+CSpec: theory CSpec.structures_proofs
+CSpec: theory CSpec.KernelInc_C

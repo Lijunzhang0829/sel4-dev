@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "build_run_id": "golden-20260529-30gb-j2",
-  "generated_utc": "2026-05-29T17:32:26.469483+00:00",
+  "generated_utc": "2026-05-29T18:35:24.197931+00:00",
   "config": {
     "j": 2,
     "skip_duplicated_proofs": true,
@@ -10,7 +10,150 @@
     "l4v_arch": "ARM",
     "threads_per_session": "auto-detect (Isabelle default)"
   },
-  "rounds": [],
-  "per_session": {},
-  "totals_when_complete": null
+  "rounds": [
+    {
+      "round": "round1",
+      "n_finished": 10,
+      "total": null,
+      "events": [
+        {
+          "session": "Pure",
+          "wall_s": 33,
+          "cpu_s": 33,
+          "factor": 0.98
+        },
+        {
+          "session": "HOL",
+          "wall_s": 522,
+          "cpu_s": 1032,
+          "factor": 1.98
+        },
+        {
+          "session": "Word_Lib",
+          "wall_s": 116,
+          "cpu_s": 220,
+          "factor": 1.89
+        },
+        {
+          "session": "DSpec",
+          "wall_s": 101,
+          "cpu_s": 207,
+          "factor": 2.05
+        },
+        {
+          "session": "ASpec",
+          "wall_s": 177,
+          "cpu_s": 312,
+          "factor": 1.75
+        },
+        {
+          "session": "SepDSpec",
+          "wall_s": 107,
+          "cpu_s": 201,
+          "factor": 1.87
+        },
+        {
+          "session": "DSpecProofs",
+          "wall_s": 162,
+          "cpu_s": 306,
+          "factor": 1.88
+        },
+        {
+          "session": "Simpl-VCG",
+          "wall_s": 81,
+          "cpu_s": 161,
+          "factor": 1.98
+        },
+        {
+          "session": "CParser",
+          "wall_s": 154,
+          "cpu_s": 260,
+          "factor": 1.68
+        },
+        {
+          "session": "CKernel",
+          "wall_s": 2067,
+          "cpu_s": 3830,
+          "factor": 1.85
+        }
+      ]
+    }
+  ],
+  "per_session": {
+    "ASpec": {
+      "session": "ASpec",
+      "wall_s": 177,
+      "cpu_s": 312,
+      "factor": 1.75,
+      "round": "round1"
+    },
+    "CKernel": {
+      "session": "CKernel",
+      "wall_s": 2067,
+      "cpu_s": 3830,
+      "factor": 1.85,
+      "round": "round1"
+    },
+    "CParser": {
+      "session": "CParser",
+      "wall_s": 154,
+      "cpu_s": 260,
+      "factor": 1.68,
+      "round": "round1"
+    },
+    "DSpec": {
+      "session": "DSpec",
+      "wall_s": 101,
+      "cpu_s": 207,
+      "factor": 2.05,
+      "round": "round1"
+    },
+    "DSpecProofs": {
+      "session": "DSpecProofs",
+      "wall_s": 162,
+      "cpu_s": 306,
+      "factor": 1.88,
+      "round": "round1"
+    },
+    "HOL": {
+      "session": "HOL",
+      "wall_s": 522,
+      "cpu_s": 1032,
+      "factor": 1.98,
+      "round": "round1"
+    },
+    "Pure": {
+      "session": "Pure",
+      "wall_s": 33,
+      "cpu_s": 33,
+      "factor": 0.98,
+      "round": "round1"
+    },
+    "SepDSpec": {
+      "session": "SepDSpec",
+      "wall_s": 107,
+      "cpu_s": 201,
+      "factor": 1.87,
+      "round": "round1"
+    },
+    "Simpl-VCG": {
+      "session": "Simpl-VCG",
+      "wall_s": 81,
+      "cpu_s": 161,
+      "factor": 1.98,
+      "round": "round1"
+    },
+    "Word_Lib": {
+      "session": "Word_Lib",
+      "wall_s": 116,
+      "cpu_s": 220,
+      "factor": 1.89,
+      "round": "round1"
+    }
+  },
+  "totals_when_complete": {
+    "wall_s_sum_per_session": 3520,
+    "cpu_s_sum_per_session": 6562,
+    "session_count": 10
+  }
 }
