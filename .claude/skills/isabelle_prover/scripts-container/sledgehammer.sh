@@ -75,7 +75,7 @@ fi
 THEORY_BASE="$(basename "$THEORY_FILE" .thy)"
 TMPDIR="$(mktemp -d)"
 trap "rm -rf $TMPDIR" EXIT
-TMPNAME="Tmp_$(head -c8 /dev/urandom | xxd -p)"
+TMPNAME="Tmp_$(head -c8 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 
 # Build temp .thy: keep everything up to but not including the target line, then
 # insert `sledgehammer [timeout=N]` (which queries an ATP without committing the

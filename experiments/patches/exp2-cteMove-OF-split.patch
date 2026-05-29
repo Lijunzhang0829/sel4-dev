@@ -1,3 +1,0 @@
-863 863
-  apply (frule(1) use_valid [OF _ updateCap_no_0])
-  apply (frule(1) use_valid [OF _ updateCap_no_0])

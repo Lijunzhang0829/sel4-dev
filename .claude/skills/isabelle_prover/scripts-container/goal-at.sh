@@ -16,9 +16,10 @@ _translate_host_path() {
 }
 set -- "$(_translate_host_path "$1")" "${@:2}"
 
-THEORY_FILE="$(realpath "${1:?Usage: $0 <theory_file> <line> [session]}")"
-LINE="${2:?Usage: $0 <theory_file> <line> [session]}"
+THEORY_FILE="$(realpath "${1:?Usage: $0 <theory_file> <line> [session] [--full]}")"
+LINE="${2:?Usage: $0 <theory_file> <line> [session] [--full]}"
 SESSION="${3:-AInvs}"
+FULL_MODE="${4:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Layout: <repo>/.claude/skills/isabelle_prover/scripts-container/
 # Five "../" hops to reach the repo root (mounted at /workspace inside container).
@@ -37,7 +38,7 @@ if [ ! -f "${HEAP_DIR}/${SESSION}" ]; then
   L4V_ARCH="${L4V_ARCH:-ARM}" "$ISA_HOME/bin/isabelle" build -b -d "$L4V_DIR" "$SESSION" >&2 2>&1
 fi
 
-TMPNAME="Tmp_$(head -c8 /dev/urandom | xxd -p)"
+TMPNAME="Tmp_$(head -c8 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 export THEORY_FILE LINE SESSION THEORY_BASE TMPDIR TMPNAME
 
 python3 -c '
@@ -113,6 +114,13 @@ OUTPUT=$("$ISA_HOME/bin/isabelle" process \
   -l "$SESSION" \
   -d "$L4V_DIR" \
   -T "$TMPDIR/$TMPNAME" 2>&1)
+
+# --full mode: dump raw Isabelle output and exit. Useful for large VCG goals
+# whose conclusion the python extractor (below) truncates at val/###/*** markers.
+if [ "$FULL_MODE" = "--full" ]; then
+  echo "$OUTPUT"
+  exit 0
+fi
 
 # Extract goal block
 echo "$OUTPUT" | python3 -c '

@@ -30,6 +30,19 @@ for arg in "$@"; do
   translated_args+=("$arg")
 done
 
-exec docker compose -f "$COMPOSE_FILE" exec -T l4v \
+# Forward env vars that the container scripts honor. `docker compose exec -e`
+# expects either "NAME=value" or just "NAME" (inherits from current env).
+# We pass NAME=value explicitly so it works regardless of shell quirks.
+docker_env_args=()
+for var in CHECK_THEORY_TIMEOUT_S SLEDGEHAMMER_TIMEOUT_S PER_PROVER_TIMEOUT_S \
+           STRENGTHEN_DISABLE_TACTIC_COST_MODEL ISABELLE_LOCK_HELD \
+           L4V_ARCH RUN_SESSION_CLEAN_REBUILD RUN_PROOF_TIMING_AFTER; do
+  val="${!var-}"
+  if [ -n "$val" ]; then
+    docker_env_args+=(-e "$var=$val")
+  fi
+done
+
+exec docker compose -f "$COMPOSE_FILE" exec -T "${docker_env_args[@]}" l4v \
   bash "${CONTAINER_SCRIPT_DIR}/${WRAPPER_NAME}" \
   "${translated_args[@]}"
