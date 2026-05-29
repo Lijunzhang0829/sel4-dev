@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "build_run_id": "golden-20260529-30gb-j2",
+  "generated_utc": "2026-05-29T17:32:26.469483+00:00",
+  "config": {
+    "j": 2,
+    "skip_duplicated_proofs": true,
+    "ml_options": "--maxheap 12000 --stackspace 64",
+    "isabelle_build_options": "document=false",
+    "l4v_arch": "ARM",
+    "threads_per_session": "auto-detect (Isabelle default)"
+  },
+  "rounds": [],
+  "per_session": {},
+  "totals_when_complete": null
+}

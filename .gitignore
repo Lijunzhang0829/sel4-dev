@@ -47,6 +47,14 @@ reports/baseline/*
 !reports/layer3-lemma/
 !reports/layer3-lemma/**
 
+# spec-strengthen/ — spec-strengthening work logs. Tracked.
+!reports/spec-strengthen/
+!reports/spec-strengthen/**
+
+# golden-baseline/ — build measurement baseline. Tracked, including build logs.
+!reports/golden-baseline/
+!reports/golden-baseline/**
+
 test_output.log
 
 # Claude Code: per-user/per-machine permission overrides — gitignored
