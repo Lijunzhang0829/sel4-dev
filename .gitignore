@@ -18,6 +18,12 @@ test_output.log
 # Each experiment branches off baseline, adds reports/experiments/<id>/,
 # and PRs back to main.
 
+# Explicit allowlist for the experiments audit-trail subtree (parent
+# SKILL rule 5). Every accepted strengthening patch lives here as a
+# permanent re-runnable bundle.
+!reports/experiments/
+!reports/experiments/**
+
 # Python / OS housekeeping
 __pycache__/
 *.pyc

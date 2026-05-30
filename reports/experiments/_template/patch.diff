@@ -1,0 +1,14 @@
+--- /dev/null
++++ /dev/null
+@@ -0,0 +0,0 @@
+-- TEMPLATE: replace this file with the output of:
+--
+--   git -C verification/l4v diff <changed_file> > patch.diff
+--
+-- The diff must include both:
+--   (1) the strengthening (modified statement / new lemma)
+--   (2) the _old aux lemma from Step 4.5 (A'⟹A witness), placed
+--       immediately after the strengthened lemma in the .thy file.
+--
+-- Pattern B (additive) is the only case without an _old aux lemma:
+-- there's no old form to derive.
