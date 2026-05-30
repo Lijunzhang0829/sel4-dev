@@ -41,7 +41,7 @@ CONTAINER = "sel4-l4v"
 HEAP_DIR_CONTAINER = "/root/.isabelle/heaps/polyml-5.9.1_x86_64_32-linux"
 
 FINISH_RE = re.compile(
-    r"^Finished\s+([A-Za-z_][\w-]*)\s+"
+    r"^Finished\s+([A-Za-z_][\w.-]*)\s+"   # \w includes digits; AutoCorresSEL4 matches
     r"\((\d+):(\d+):(\d+)\s+elapsed\s+time,\s+"
     r"(\d+):(\d+):(\d+)\s+cpu\s+time,\s+factor\s+([\d.]+)\)\s*$"
 )
