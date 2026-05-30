@@ -19,7 +19,7 @@ The rest of this file describes the **common contract** all four sub-skills
 share. Sub-skills only specify their workflow / strategies / type-specific
 tools — they inherit everything below.
 
-## Three hard rules (all sub-skills)
+## Five hard rules (all sub-skills)
 
 ### 1. No direct edits
 Every change to `.thy` / `.hs` / `.c` / `.h` goes through a patch file
@@ -38,6 +38,36 @@ A patch is worth applying only when:
 
 No JSONL accounting / cost-model scoring required. Sub-skills may keep
 type-specific run logs in `reports/<layer-or-type>/`.
+
+### 5. PR-tracked mainline — every accepted patch reaches `main` via a PR
+
+`main` and `baseline` are aggregation points, not development surfaces.
+No direct push to either. Every patch that passes rules 1–3 above must
+be committed to a **topic branch** and submitted as a **Pull Request**.
+
+- **Topic branch per type**: experiments live on type-named branches —
+  `proof-strengthen`, `spec-strengthen`, `haskell-mega-merge`,
+  `c-strengthen`. Each branched off `baseline`.
+- **Per-experiment record** under `reports/experiments/<NNNN>-<name>/`:
+
+  | file | content |
+  |---|---|
+  | `patch.diff` | the exact source change |
+  | `command.sh` | the measurement command (re-runnable) |
+  | `measurement.json` | baseline wall + trial wall + delta, with `baseline_ref` pointing at `reports/golden-baseline/walls.json` |
+  | `decision.md` | human-readable summary + verdict (`applied` / `rejected` / `inconclusive`) |
+
+- **PR description** cites: the lemma/file changed, the matching
+  baseline wall entry, the trial wall from `check-theory.sh --apply`
+  output, and the experiment ID.
+- **Workflow**: `baseline` (clean template) → topic branch → experiments
+  → PR → `main` (accumulates verified results). `baseline` is refreshed
+  from `main` only when a release milestone is hit.
+
+Reason: every accepted modification has a PR + experiment record + a
+measurable wall delta tied to the golden baseline. Heaps, container
+state, and `/tmp` logs can be rebuilt; lost provenance can't be
+reconstructed.
 
 ### 4. Heap volatility — never pkill an active Isabelle build
 
