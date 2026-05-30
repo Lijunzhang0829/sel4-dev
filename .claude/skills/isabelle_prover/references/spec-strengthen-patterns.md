@@ -266,3 +266,213 @@ the definitions themselves.
 The only exception: adding a *derived* `definition` (e.g. naming an
 expression that already appears unfolded throughout the file) is fine —
 it's a renaming, not a behaviour change.
+
+---
+
+# Case studies — distilled from past sessions
+
+Curated record of strengthenings that proved illustrative — either as
+**success templates** (re-usable patterns) or as **failure modes**
+(traps to avoid). Sweeping / repetitive patches (e.g. 8× `real_cte_at`
+companion additions in a single session) are NOT recorded here; only
+load-bearing examples.
+
+Source logs: [AInvs-20260525.md](../../../../reports/spec-strengthen/AInvs-20260525.md),
+[AInvs-20260526.md](../../../../reports/spec-strengthen/AInvs-20260526.md).
+
+Add new entries here when you encounter a case that *teaches* something
+new about a pattern — not just another instance of an already-documented
+shape.
+
+## ★ Case 1 (Pattern A, success) — `lookup_slot_cte_at_wp` cte_at → real_cte_at
+
+**File:** `proof/invariant-abstract/CSpace_AI.thy`
+**Wall delta:** −47.7% file wall (single-lemma change)
+**What changed:**
+
+```isabelle
+(* before *)
+lemma lookup_slot_cte_at_wp[wp]:
+  "\<lbrace>valid_objs\<rbrace> lookup_slot_for_thread t addr \<lbrace>\<lambda>rv. cte_at (fst rv)\<rbrace>,-"
+  by (strengthen real_cte_at_cte, wp)
+
+(* after — postcond strengthened, body redirects to existing strong form *)
+lemma lookup_slot_cte_at_wp[wp]:
+  "\<lbrace>valid_objs\<rbrace> lookup_slot_for_thread t addr \<lbrace>\<lambda>rv. real_cte_at (fst rv)\<rbrace>,-"
+  by (rule lookup_slot_real_cte_at_wp)
+```
+
+**Why the dramatic wall drop:** downstream same-file lemmas were each
+re-running `strengthen real_cte_at_cte` after each `wp` step. Strengthening
+the rule at source eliminated that conversion across every consumer in
+the same file.
+
+**Lesson — when Pattern A genuinely wins:** the weak form's *proof body*
+is `(strengthen <weakening_lemma>, wp)` — a literal one-line redirect to
+the strong companion. That means the weak lemma is **strictly redundant**
+once consumers can absorb the stronger postcond. Look for this shape
+before any A patch.
+
+**Derivability check** (A' ⟹ A):
+```isabelle
+lemma lookup_slot_cte_at_wp_old: "\<lbrace>valid_objs\<rbrace> lookup_slot_for_thread t addr \<lbrace>\<lambda>rv. cte_at (fst rv)\<rbrace>,-"
+  by (rule hoare_strengthen_postE_R[OF lookup_slot_cte_at_wp])
+     (rule real_cte_at_cte)
+```
+
+---
+
+## ★ Case 2 (Pattern C, success) — `unbind_maybe_notification_not_bound` drop unused premises
+
+**File:** `proof/invariant-abstract/Finalise_AI.thy`
+**Wall delta:** −6.8% file wall
+**Downstream consumers:** 6 (across all 5 arch dirs)
+**What changed:**
+
+```isabelle
+(* before *)
+lemma unbind_maybe_notification_not_bound:
+  "\<lbrace>\<lambda>s. ntfn_at ntfnptr s \<and> valid_objs s \<and> sym_refs (state_refs_of s)\<rbrace>
+     unbind_maybe_notification ntfnptr
+   \<lbrace>\<lambda>_. obj_at (\<lambda>ko. \<exists>ntfn. ko = Notification ntfn \<and> ntfn_bound_tcb ntfn = None) ntfnptr\<rbrace>"
+  ...
+
+(* after — valid_objs and sym_refs dropped *)
+lemma unbind_maybe_notification_not_bound:
+  "\<lbrace>\<lambda>s. ntfn_at ntfnptr s\<rbrace>
+     unbind_maybe_notification ntfnptr
+   \<lbrace>\<lambda>_. obj_at (\<lambda>ko. \<exists>ntfn. ko = Notification ntfn \<and> ntfn_bound_tcb ntfn = None) ntfnptr\<rbrace>"
+```
+
+**Proof body unchanged.** Original body uses only `get_simple_ko_wp`,
+`sbn_obj_at_impossible`, `simple_obj_set_prop_at` + `clarsimp simp: obj_at_def` —
+none reference `valid_objs` or `sym_refs`. The premises were copied
+from sibling `unbind_notification_not_bound` (which DOES use both)
+without re-examining the actual proof body.
+
+**Lesson — Pattern C green flag:** when a lemma's proof body is short
+(≤5 lines) and uses only `wp` rules + `clarsimp` (no `valid_objsE`,
+no `sym_refs_*` consumers), the precondition is suspect. Try removing
+each non-structural conjunct; `check-theory.sh --patch` answers in ~60s.
+
+**Derivability check** (A' ⟹ A):
+```isabelle
+lemma unbind_maybe_notification_not_bound_old:
+  "\<lbrace>\<lambda>s. ntfn_at ntfnptr s \<and> valid_objs s \<and> sym_refs (state_refs_of s)\<rbrace>
+     unbind_maybe_notification ntfnptr \<lbrace>\<lambda>_. ...\<rbrace>"
+  by (rule hoare_pre[OF unbind_maybe_notification_not_bound]) simp
+```
+
+---
+
+## ★ Case 3 (Pattern C, failure) — `suspend_unlive` premise is load-bearing
+
+**File:** `proof/invariant-abstract/IpcCancel_AI.thy`
+**Attempted:** Drop `valid_mdb ∧ valid_objs` from precondition.
+**Result:** FAILED — proof left goal
+`bound_tcb_at ((=) None) t s ⟹ valid_mdb s ∧ valid_objs s`.
+
+**Lesson:** Pattern C is "try and see" but ~50% fail. The proof body
+matters: even when it looks like it doesn't use `valid_mdb`, internal
+wp rules may invoke `valid_objsE` or `valid_mdb_lift`-style intermediaries.
+Always check via `check-theory.sh --patch` — never reason about premise
+necessity in advance.
+
+---
+
+## ★ Case 4 (Pattern A, wrong-direction trap) — `set_cdt_valid_objs` is not redundant
+
+**Where scanner says:** `set_cdt_valid_objs` (CSpace_AI.thy:3927) is paired
+with stronger `set_cdt_pspace` (line 3309). `valid_pspace ⟹ valid_objs`,
+so prima facie A "delete weak".
+
+**Why it's wrong:** preconditions are *incomparable*:
+```
+set_cdt_valid_objs : \<lbrace>valid_objs\<rbrace> set_cdt m \<lbrace>\<lambda>_. valid_objs\<rbrace>
+set_cdt_pspace    : \<lbrace>valid_pspace\<rbrace> set_cdt m \<lbrace>\<lambda>_. valid_pspace\<rbrace>
+```
+A caller with `valid_objs` but NOT `valid_pspace` (e.g. mid-proof state
+where pspace_distinct is being rebuilt) can use the first but not the
+second. The weak lemma is the granular building block; deleting it
+breaks ~9 downstream files.
+
+**Lesson — Pattern A direction rule:** check that the strong companion's
+**precondition is at least as strong** (more restrictive) as the weak's.
+If not, the lemmas are incomparable entry points and both stay. The
+scanner pairs by postcond chain only; the human checks the precondition.
+
+---
+
+## ★ Case 5 (Pattern B, additive) — `set_cdt_cdt_update` new functional postcond
+
+**File:** `proof/invariant-abstract/CSpace_AI.thy` (post `set_cdt_valid_pspace`)
+**What added:**
+
+```isabelle
+lemma set_cdt_cdt_update:
+  "\<lbrace>\<top>\<rbrace> set_cdt t \<lbrace>\<lambda>_ s. cdt s = t\<rbrace>"
+  by (wpsimp simp: set_cdt_def)
+```
+
+**Why no immediate downstream win:** existing proofs that need
+`cdt s = t` after a `set_cdt t` had **already worked around the absence**
+by unfolding `set_cdt_def` manually (e.g. `update_cdt_cdt`,
+`cap_move_typ_at`). They don't refactor automatically just because the
+new lemma exists — Pattern B is *opt-in*.
+
+**Lesson — Pattern B ROI is delayed:** the immediate verification cost
+is small (one new lemma, seconds to verify), but ROI accrues only when
+future proofs are written *or* a separate refactor pass replaces manual
+`unfold *_def` with `wp <op>_<functional>`.
+
+**Derivability check:** Pattern B has no "old form" — the lemma is
+brand new. Derivability gate is **skipped** for additive patterns.
+
+---
+
+## ★ Case 6 (Pattern E, failure) — `set_cdt_invs` blocked by missing preservation rules
+
+**Attempted:** Add compound
+
+```isabelle
+lemma set_cdt_invs:
+  "\<lbrace>\<lambda>s. invs s \<and> valid_mdb (s\<lparr>cdt := m\<rparr>)\<rbrace> set_cdt m \<lbrace>\<lambda>_. invs\<rbrace>"
+```
+
+**Result:** 5 proof-tactic variants all FAILED. Root cause:
+`set_cdt` lacks `[wp]` preservation rules for many of `invs`'s 25
+components — particularly arch-specific ones:
+`valid_arch_state`, `valid_machine_state`, `valid_vspace_objs`,
+`valid_arch_caps`, `valid_global_objs`, `valid_kernel_mappings`,
+`equal_kernel_mappings`, `valid_asid_map`,
+`valid_global_vspace_mappings`, `pspace_in_kernel_window`,
+`cap_refs_in_kernel_window`, `pspace_respects_device_region`,
+`cap_refs_respects_device_region`, `valid_irq_handlers`,
+`valid_ioports`, `only_idle`, `valid_global_refs`.
+
+Error signature on each failed attempt: `Unification bound exceeded`
+or `Failed to finish proof` with the conjunctive postcondition still
+holding 20+ unfolded components.
+
+**Lesson — Pattern E preflight is mandatory:** before composing
+`op_invs`, run a per-component check (the coverage matrix from
+`spec_coverage_matrix.py`). If any `invs` component lacks
+`op_<component>[wp]`, the compound proof cannot close. Filling those
+gaps is base plumbing (a separate multi-step project), not a
+strengthening patch.
+
+**Workaround pattern when E is infeasible:** stop at the building-block
+level. Add the missing `op_<component>[wp]` rules one by one, each as
+its own Pattern B/E-precursor patch. Compound `op_invs` becomes
+possible only after the matrix shows ≥95% coverage.
+
+---
+
+## ★ Case 7 (Pattern A, success — historic) — `set_original_is_original_cap` from 20260525
+
+(Now superseded by Case 5 as the canonical Pattern B example. The
+20260525 entry showed a slightly different shape — `set_original` modifies
+a boolean flag, while Case 5's `set_cdt` modifies a record field. The
+proof tactic `by (wpsimp simp: set_X_def)` works identically.)
+
+Use Case 5 as the template. This case is referenced only for completeness.

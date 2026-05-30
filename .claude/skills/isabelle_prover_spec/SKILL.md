@@ -172,11 +172,51 @@ The report is appended to your dated strengthen-log automatically. Gates:
 | `rewrite` | — | manual review needed |
 | `weakening` | — | **abandon** |
 
+### Step 4.5 — derivability check (MANDATORY)
+
+**Why**: a strengthened spec is only *consumable in place of the old*
+if A' (new) implies A (old). Without this guarantee, "stronger" is just
+a different statement — downstream proofs that referenced A may now
+fail or re-bind to a different lemma. We require an explicit machine
+proof that the **old form is derivable from the new form**.
+
+Construct an auxiliary `lemma <name>_old` whose statement is **the
+verbatim old triple** and whose proof body uses only the new lemma +
+the appropriate Hoare-monotonicity rule. Place this aux lemma in the
+patch file *immediately after* the strengthened lemma so it's verified
+in the same `check-theory.sh --patch` pass.
+
+Pattern → tactic template:
+
+| Pattern | Old shape | New shape | Derivability tactic |
+|---|---|---|---|
+| **C** (premise removal) | `\<lbrace>P ∧ X\<rbrace> f \<lbrace>Q\<rbrace>` | `\<lbrace>P\<rbrace> f \<lbrace>Q\<rbrace>` | `by (rule hoare_pre[OF <new>]) simp` |
+| **A** (postcond strengthen) | `\<lbrace>P\<rbrace> f \<lbrace>Q\<rbrace>` | `\<lbrace>P\<rbrace> f \<lbrace>Q'\<rbrace>` with `Q' ⟹ Q` | `by (rule hoare_strengthen_post[OF <new>]) <Q'→Q rule>` |
+| **A** (E_R variant) | `\<lbrace>P\<rbrace> f \<lbrace>Q\<rbrace>,-` | `\<lbrace>P\<rbrace> f \<lbrace>Q'\<rbrace>,-` | `by (rule hoare_strengthen_postE_R[OF <new>]) <Q'→Q rule>` |
+| **D** (≤ → =) | `\<lbrace>P\<rbrace> f \<lbrace>e ≤ k\<rbrace>` | `\<lbrace>P\<rbrace> f \<lbrace>e = k\<rbrace>` | `by (rule hoare_strengthen_post[OF <new>]) simp` |
+| **E** (compound `_invs`) | each `\<lbrace>P'\<rbrace> f \<lbrace>\<lambda>_. <component>\<rbrace>` | one `\<lbrace>P ∧ ...\<rbrace> f \<lbrace>\<lambda>_. invs\<rbrace>` | one aux per component: `by (rule hoare_post_imp[OF <op>_invs]) (simp add: invs_def valid_state_def)` |
+| **B** (additive new lemma) | (none) | new lemma | **skipped** — no old form exists |
+
+**Gate**: the patch with appended `<name>_old` lemma must reach `OK`
+under `check-theory.sh --patch`. If derivability fails, the new lemma
+is NOT a strengthening — it's an alternative statement. Reject the
+patch.
+
+**Worked examples**: see Cases 1, 2 in
+[`references/spec-strengthen-patterns.md`](../isabelle_prover/references/spec-strengthen-patterns.md#case-studies-distilled-from-past-sessions).
+
 ### Step 5 — apply
+
+Both Step 4 (impact verdict) and Step 4.5 (derivability) must have
+passed. Then:
 
 ```
 bash $ISA_SCRIPTS/check-theory.sh <file.thy> <session> --apply <patch>
 ```
+
+Note: the `_old` aux lemma stays in the source file as a permanent
+**witness of strengthening** — it's the proof that nothing was
+silently broken. Don't delete it later.
 
 **Important**: `--apply` writes the source file but does NOT rebuild the
 session heap. The session heap still holds the OLD lemma signature until
@@ -199,12 +239,58 @@ block in the strengthen-log:
 - One sentence on what the strengthening enables downstream
 - Whether a session rebuild has been done (default: not yet)
 
+### Step 6 — PR construction (parent SKILL rule 5)
+
+Every accepted patch must produce a per-experiment record under
+`reports/experiments/<NNNN>-<short-name>/`. Use the next free `NNNN`;
+short-name is lowercase-with-hyphens, ≤ 30 chars (e.g.
+`spec-0001-unbind-maybe-notification`). The directory must contain
+**exactly** these files (skeleton at
+[`reports/experiments/_template/`](../../../reports/experiments/_template/)):
+
+| File | Content |
+|---|---|
+| `patch.diff` | The exact source change (output of `git diff` on the changed `.thy`). Includes the `_old` witness lemma from Step 4.5. |
+| `derivability.thy` | Standalone snippet containing the `<name>_old` derivability lemma + tactic. Re-verifiable in isolation. |
+| `command.sh` | The exact `check-theory.sh --patch` / `--apply` / `spec_impact.py` invocation, in order. Re-runnable. |
+| `measurement.json` | `{"baseline_wall_ms": <n>, "trial_wall_ms": <m>, "delta_pct": <d>, "baseline_ref": "reports/golden-baseline/walls.json#<session>", "consumers": <int>, "verdict": "<premise-weaken\|...>"}` |
+| `decision.md` | Verdict (`applied` / `rejected` / `inconclusive`) + one paragraph on what this strengthening enables + reference to which `Case N` in `references/spec-strengthen-patterns.md` (if any). |
+
+**PR template** at
+[`.github/PULL_REQUEST_TEMPLATE/spec-strengthen.md`](../../../.github/PULL_REQUEST_TEMPLATE/spec-strengthen.md).
+The template asks for:
+- Experiment ID(s) covered by the PR
+- Lemma(s) changed + Pattern letter(s)
+- File-wall delta from `measurement.json`
+- Derivability check verdict
+- Whether session-rebuild measurement attached (default no — batch-rebuild
+  cadence; see Step 5)
+
+**Workflow**: topic branch `spec-strengthen` → push → open PR against
+`main` → CI re-runs `command.sh` for every experiment dir touched →
+PR merges when all checks green.
+
+**Bundling rule**: one PR may cover **multiple** experiments if all are
+in the same session (same `<session>` in `measurement.json`) and the
+batch is logically coherent (e.g. "all `cte_at → real_cte_at` ports").
+Single-PR-multi-experiment is encouraged — easier to review the
+collective wall delta than 22 trivial PRs.
+
 ## Acceptance
 
-Apply iff the Step 4 gates all pass and the statement is **strictly more
-informative** (weaker pre, stronger post, or both — Tier 1 numbers
-confirm). The 3 hard rules from `isabelle_prover` (no `sorry` / `oops` /
-`axiomatization`, check-theory.sh as only gate, etc.) are inherited.
+Apply iff **all** of the following hold:
+
+1. **Step 3 — `check-theory.sh --patch` returns `OK`** on the
+   strengthened lemma.
+2. **Step 4 — impact verdict** is `premise-weaken`, `monotone-strengthen`,
+   `postcond-strengthen`, or `additive`. No `weakening` verdict.
+3. **Step 4.5 — derivability check passes** (`<name>_old` lemma reaches
+   `OK` in the same patch).
+4. Statement is strictly more informative (weaker pre, stronger post,
+   or both — Tier 1 numbers confirm).
+5. The 5 hard rules from `isabelle_prover` are inherited (no `sorry` /
+   `oops` / `axiomatization`, `check-theory.sh` as only gate, PR-tracked
+   mainline, heap volatility care).
 
 Spec strengthening trades build time for verification strength — a
 slightly slower build with a stronger spec is the intended direction.
