@@ -5,16 +5,18 @@ stack_cache/*
 !stack_cache/README.md
 
 # --- Isabelle session heaps (binary, multi-GB) — NOT tracked in git.
-# heaps/build_log.txt IS tracked: it's the per-theory timing baseline
-# we benchmark experiments against.
-# To restore the heap binaries themselves, see baseline-restore.md.
+# The heaps themselves live inside the docker container at
+# /root/.isabelle/heaps/. The git-tracked record of those heaps is
+# reports/golden-baseline/{walls.json, heap-sizes.txt, env.json}.
 heaps/*
-!heaps/build_log.txt
 
 # Runtime artifacts produced by run.sh / isabelle_prover skill
 logs/
-reports/
 test_output.log
+
+# Note: reports/ is TRACKED — it's where experiment records live.
+# Each experiment branches off baseline, adds reports/experiments/<id>/,
+# and PRs back to main.
 
 # Python / OS housekeeping
 __pycache__/
