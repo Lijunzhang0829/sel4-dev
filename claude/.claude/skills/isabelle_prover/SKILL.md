@@ -28,7 +28,7 @@ Each invocation of this skill targets **one Isabelle session**
 "Improvement" is your judgment call — speed, robustness, clarity,
 coverage. Pick what the target rewards.
 
-## Four hard rules
+## Five hard rules
 
 ### 1. No direct edits
 
@@ -120,6 +120,36 @@ read from its output. Do not write `wall_ms: 0, verdict: "fail"` as a
 "I'm predicting this will fail" placeholder. Either run the tool and
 record the true outcome, or write nothing. Auto-logged records from the
 script are always tied to a real run.
+
+### 5. PR-tracked mainline — every accepted patch reaches `main` via a PR
+
+`main` and `baseline` are aggregation points, not development surfaces.
+No direct push to either. Every patch that passes rules 1–4 above must
+be committed to a **topic branch** and submitted as a **Pull Request**.
+
+- **Topic branch per type**: experiments live on type-named branches —
+  `proof-strengthen`, `spec-strengthen`, `haskell-mega-merge`,
+  `c-strengthen`. Each branched off `baseline`.
+- **Per-experiment record** under `reports/experiments/<NNNN>-<name>/`:
+
+  | file | content |
+  |---|---|
+  | `patch.diff` | the exact source change |
+  | `command.sh` | the measurement command (re-runnable) |
+  | `measurement.json` | baseline wall + trial wall + delta, with `baseline_ref` pointing at `reports/golden-baseline/walls.json` |
+  | `decision.md` | human-readable summary + verdict (`applied` / `rejected` / `inconclusive`) |
+
+- **PR description** cites: the lemma/file changed, the matching
+  baseline wall entry, the trial wall from `check-theory.sh --apply`
+  output, and the experiment ID.
+- **Workflow**: `baseline` (clean template) → topic branch → experiments
+  → PR → `main` (accumulates verified results). `baseline` is refreshed
+  from `main` only when a release milestone is hit.
+
+Reason: every accepted modification has a PR + experiment record + a
+measurable wall delta tied to the golden baseline. Heaps, container
+state, and `/tmp` logs can be rebuilt; lost provenance can't be
+reconstructed.
 
 Everything else — how to pick targets, how many strategies to try per
 candidate, how to decide when a change is "good enough", when to move
