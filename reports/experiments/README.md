@@ -36,6 +36,45 @@ is intended to be merged via PR. See the per-type sub-skill (e.g.
 [`isabelle_prover_spec`](../../.claude/skills/isabelle_prover_spec/SKILL.md))
 for the exact construction step.
 
+## Two variants — seL4-source PR vs Meta PR
+
+Rule 5 (parent SKILL.md) distinguishes two kinds of PR. Pick the one
+that matches your change:
+
+### Variant A — seL4-source PR (full record)
+
+Triggered when the PR modifies `.thy` / `.hs` / `.c` / `.h` under
+`verification/l4v/`. Full 4-file record required:
+
+```
+<NNNN>-<short-name>/
+├── patch.diff
+├── derivability.thy   (skipped only for Tier 2 additive patches)
+├── command.sh
+└── measurement.json
+```
+
+### Variant B — Meta PR (simplified record)
+
+Triggered when the PR only modifies skill documents, scaffolding,
+PR templates, tooling under `tools/` or `.claude/skills/`. No
+Hoare-triple to measure, so:
+
+```
+<NNNN>-<short-name>/
+├── patch.diff       ← what changed (verbatim diff)
+└── decision.md      ← rationale, scope, smoke-test description
+```
+
+A meta-PR's `decision.md` must cite an **explicit smoke test** that
+proves the meta change doesn't break the existing workflow (e.g.
+"check-theory.sh on Finalise_AI.thy baseline returns OK in 20s after
+the bug fix").
+
+The single commit that first introduces this very `_template/`
+directory is the **only** bootstrap exception (it would be
+documenting itself); see rule 5 in parent SKILL.md.
+
 ## How to create
 
 ```bash
