@@ -55,9 +55,9 @@ while [ $# -gt 0 ]; do
 done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Layout: <repo>/claude/.claude/skills/isabelle_prover/scripts-container/
-# Five "../" hops to reach the repo root (mounted at /workspace inside container).
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../../.." && pwd)"
+# Layout: <repo>/.claude/skills/isabelle_prover/scripts-container/
+# Four "../" hops to reach the repo root (mounted at /workspace inside container).
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 L4V_DIR="${L4V_DIR:-${REPO_ROOT}/verification/l4v}"
 ISA_HOME="${ISABELLE_HOME:-${REPO_ROOT}/verification/isabelle}"
 
@@ -199,7 +199,7 @@ fi
 TMPDIR="$(mktemp -d)"
 trap "rm -rf $TMPDIR" EXIT
 
-TMPNAME="Tmp_$(head -c8 /dev/urandom | xxd -p)"
+TMPNAME="Tmp_$(python3 -c 'import secrets; print(secrets.token_hex(8))')"
 cp "$THEORY_FILE" "$TMPDIR/${TMPNAME}.thy"
 
 # Apply patch to temp copy if --patch
