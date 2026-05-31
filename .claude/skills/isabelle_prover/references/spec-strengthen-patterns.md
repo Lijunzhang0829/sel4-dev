@@ -208,6 +208,78 @@ acting.
 
 ---
 
+## Pattern G — Frame preservation (NEW, Exp 4a 2026-05-31)
+
+**Shape.** Op `f` doesn't touch state accessor `acc`, but no lemma of
+the form `⟨λs. P (acc s)⟩ f _ ⟨λ_ s. P (acc s)⟩` exists. The frame
+is missing — every downstream proof that wants to lift a property of
+`acc` across `f` has to either unfold `f`'s definition or manually
+piece together the lift.
+
+**Why this is Tier 1 (post-strengthen).** Adding the frame lemma adds
+a logical fact (`P (acc) is preserved`) to the set of things provable
+about `f`. It's not a packaging move — it expands what consumers can
+prove without unfolding.
+
+**Example — `set_cdt_machine_state` (verified 2026-05-31)**
+
+Inspection:
+
+```isabelle
+(* spec/abstract/CSpaceAcc_A.thy:81 *)
+definition set_cdt :: "cdt ⇒ (unit, 'z::state_ext) s_monad" where
+  "set_cdt t ≡ do s ← get; put $ s\<lparr>cdt := t\<rparr> od"
+```
+
+`set_cdt` clearly doesn't touch `machine_state`. But:
+
+```bash
+$ grep -rn "set_cdt_machine_state" verification/l4v/proof/invariant-abstract/
+(empty — frame lemma missing)
+```
+
+**Patch added** (Untyped_AI.thy, after the existing
+`set_cdt_state_hyp_refs_of[wp]`):
+
+```isabelle
+lemma set_cdt_machine_state[wp]:
+  "⟨λs. P (machine_state s)⟩
+     set_cdt m
+   ⟨λrv s. P (machine_state s)⟩"
+  by (wpsimp simp: set_cdt_def)
+```
+
+Verified: `check-theory.sh --patch Untyped_AI.thy AInvs` returned
+`OK` in 74,463 ms.
+
+**Derivability check (Tier 1 post-strengthen)**: there is no `_old`
+form to derive — Pattern G adds a frame lemma that didn't exist
+before. Technically this looks like Tier 2 additive, BUT it's
+information-adding (not just automation-restructuring), so Tier 1
+classification with `additive` verdict + SKIP §4.5 is the operational
+treatment.
+
+**Lesson — Pattern G is a scanner blind spot.** `spec_strengthen_scan.py`
+doesn't currently detect missing frame lemmas — they have a
+non-obvious shape (`P (accessor)` both before and after, instead of
+the set-then-equate shape Pattern B catches). Manual detection
+recipe:
+
+1. Pick an op `f`. Read its definition. Note which state fields it
+   updates.
+2. Enumerate state accessors NOT in (1).
+3. For each missing-frame candidate, grep `f_<accessor>` in
+   `verification/l4v/proof/`. If empty, candidate is real.
+
+Real l4v examples of Pattern G coverage being healthy (don't
+duplicate, just illustrating shape):
+- `set_cdt_state_refs_of[wp]` (`Untyped_AI.thy:2862`)
+- `cap_move_typ_at` (`CSpace_AI.thy:3302`)
+- `cap_swap_typ_at` (`CSpace_AI.thy:3946`)
+- `crunch update_cdt caps_of_state` (`CSpace_AI.thy:3624`)
+
+---
+
 ## Pattern E — Missing co-preserved invariant
 
 **Shape.** An operation has several separate preservation lemmas
