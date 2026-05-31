@@ -151,6 +151,34 @@ measurable wall delta tied to the golden baseline. Heaps, container
 state, and `/tmp` logs can be rebuilt; lost provenance can't be
 reconstructed.
 
+#### Meta-PR variant — skill / tools / infra changes
+
+Rules 1–4 above are written for **seL4 source patches** (`.thy` /
+`.hs` / `.c` / `.h`). A "meta-PR" — one that only modifies skill
+documents, scaffolding under `reports/experiments/`,
+`.github/PULL_REQUEST_TEMPLATE/`, or scripts under `tools/` and
+`.claude/skills/` — has no Hoare-triple to measure. It still needs an
+audit record, but in a **simplified variant**:
+
+| File | Meta-PR (skill/tools/infra) | seL4-source PR |
+|---|---|---|
+| `patch.diff` | required | required |
+| `decision.md` | required (rationale, scope, smoke test) | required |
+| `command.sh` | **omit** (no measurement target) | required |
+| `measurement.json` | **omit** (no wall delta) | required |
+
+A meta-PR must still:
+- Live on a topic branch (no direct push to `main`/`baseline`).
+- Carry its own `reports/experiments/<NNNN>-<name>/` audit dir, with
+  the simplified 2-file content.
+- Cite an explicit smoke test in `decision.md` (e.g. "check-theory.sh
+  baseline returns OK on Finalise_AI.thy in 20s").
+
+**Bootstrap exception**: the single commit that first introduces
+`reports/experiments/_template/` may skip the record (it would be
+documenting itself). All subsequent commits — including those on the
+same branch — must comply.
+
 Everything else — how to pick targets, how many strategies to try per
 candidate, how to decide when a change is "good enough", when to move
 on — is your call. `run.sh` closes the loop after you exit by computing

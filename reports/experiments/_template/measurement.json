@@ -1,0 +1,14 @@
+{
+  "_comment_": "TEMPLATE — fill in actual numbers from command.sh output. Schema in reports/experiments/README.md.",
+  "session": "AInvs",
+  "pattern": "C",
+  "baseline_wall_ms": 0,
+  "trial_wall_ms": 0,
+  "delta_pct": 0.0,
+  "baseline_ref": "reports/golden-baseline/walls.json#AInvs",
+  "session_rebuild_done": false,
+  "consumers_lines": 0,
+  "consumers_files": 0,
+  "impact_verdict": "premise-weaken",
+  "derivability_verdict": "ok"
+}
