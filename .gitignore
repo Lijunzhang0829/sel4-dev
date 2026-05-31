@@ -51,6 +51,10 @@ reports/baseline/*
 !reports/spec-strengthen/
 !reports/spec-strengthen/**
 
+# experiments/ — per-PR audit bundles (rule 5). Tracked.
+!reports/experiments/
+!reports/experiments/**
+
 # golden-baseline/ — build measurement baseline. Tracked, including build logs.
 !reports/golden-baseline/
 !reports/golden-baseline/**
