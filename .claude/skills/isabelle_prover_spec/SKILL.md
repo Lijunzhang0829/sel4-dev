@@ -42,7 +42,7 @@ break, including the cleanup-style "delete the weak alias" move.
 1. **Find a candidate.** Run the candidates tool against the target
    session and pick the top entry not already in past strengthen logs.
    For unfamiliar candidate shapes, consult
-   [`references/spec-strengthen-playbook.md`](../isabelle_prover/references/spec-strengthen-playbook.md).
+   [`references/spec-strengthen-playbook.md`](references/spec-strengthen-playbook.md).
 
 2. **Write the patch.** Two shapes:
    - **Modify an existing lemma** — drop a premise, tighten an
@@ -131,7 +131,7 @@ not enumerate detector internals — those live in the playbook.
 
 | When | File |
 |---|---|
-| Candidate shapes, scanner reliability, ROI weighting, worked case studies (success + failure) | [`references/spec-strengthen-playbook.md`](../isabelle_prover/references/spec-strengthen-playbook.md) |
-| Which sessions rebuild for which change | [`references/spec-downstream-map.md`](../isabelle_prover/references/spec-downstream-map.md) |
+| Candidate shapes, scanner reliability, ROI weighting, worked case studies (success + failure) | [`references/spec-strengthen-playbook.md`](references/spec-strengthen-playbook.md) |
+| Which sessions rebuild for which change | [`references/spec-downstream-map.md`](references/spec-downstream-map.md) |
 | Refinement-level strengthening (`corres` / `ccorres`) | [`references/refinement-proofs.md`](../isabelle_prover/references/refinement-proofs.md) |
 | Past strengthening sessions (precedent + failure modes) | [`reports/spec-strengthen/AInvs-*.md`](../../../reports/spec-strengthen/) |
