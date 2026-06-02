@@ -26,16 +26,42 @@ lemma <name>_old: "<verbatim old statement>"
   by (rule <hoare-monotonicity>[OF <name>]) <discharge>
 ```
 
-where `<hoare-monotonicity>` is one of `hoare_pre`, `hoare_weaken_pre`,
-`hoare_strengthen_post`, `hoare_strengthen_postE_R`, `hoare_post_imp`,
-or `hoare_post_impE`. The witness stays in source as a permanent
-soundness record — do not delete it later.
+where `<hoare-monotonicity>` is **one of the applicable Hoare
+monotonicity rules** for the lemma's triple shape (`valid` /
+`validE` / `validE_R` / `validE_E`) — e.g. `hoare_pre`,
+`hoare_weaken_pre`, `hoare_strengthen_post`, `hoare_strengthen_postE_R`.
+Do not pick by name-matching alone; the full table of which rule
+applies to which triple shape (and the common
+`valid`-vs-`validE_R` confusion that produces invented names like
+`hoare_post_imp_R`) lives in
+[`references/spec-strengthen-playbook.md`](references/spec-strengthen-playbook.md).
+The witness stays in source as a permanent soundness record — do
+not delete it later.
 
-**Only purely additive companion lemmas skip the witness.** If the
-patch replaces, weakens, or deletes an existing lemma, the change
-needs an `_old` witness — without one it is **rejected**. The
-witness is what distinguishes a sound strengthening from a silent
-break, including the cleanup-style "delete the weak alias" move.
+**Three patch shapes, three different soundness obligations** —
+do not conflate them:
+
+1. **Modify an existing lemma** (same name; statement gets
+   stronger — drop a premise, tighten a postcondition, swap `≤` →
+   `=`). Soundness is proved by the `<name>_old` witness lemma
+   above. Without the witness the change is **rejected**.
+2. **Add a new companion lemma** (purely additive — a new
+   functional postcondition, a new frame lemma, a missing
+   `_invs`). No old form to derive from; **no witness needed**.
+3. **Delete or disable an existing lemma** (e.g. a weak alias
+   that's no longer carrying its weight). This is **not a
+   strengthening** — adding a renamed copy `<name>_old` does not
+   redirect callers that still reference the old name. Either:
+   (a) `grep -rn '\b<name>\b' verification/l4v` returns nothing
+   (no consumers — safe to delete outright), or (b) keep a
+   `lemmas <name> = <new-or-replacement>` compatibility alias
+   under the old name so callers still resolve. The deletion is
+   then a refactor, recorded with the smoke-test evidence above
+   in the audit dir, but it carries no `_old` witness.
+
+Picking the wrong shape is the most common silent break. If in
+doubt, default to shape 1 (modify, keep witness) and follow up
+with a separate cleanup PR.
 
 ## Workflow
 
@@ -44,14 +70,20 @@ break, including the cleanup-style "delete the weak alias" move.
    For unfamiliar candidate shapes, consult
    [`references/spec-strengthen-playbook.md`](references/spec-strengthen-playbook.md).
 
-2. **Write the patch.** Two shapes:
-   - **Modify an existing lemma** — drop a premise, tighten an
-     existing postcondition (e.g. `≤` → `=`), or strengthen a
-     postcondition conjunct. In the same patch append the witness
-     lemma `<name>_old` per the contract above.
-   - **Add a new companion lemma** — purely additive: a new
-     functional postcondition, a new frame lemma, or a missing
-     compound `_invs`. No witness required.
+2. **Write the patch.** Choose the shape (see witness contract
+   above for the soundness obligation each one carries):
+   - **Modify an existing lemma** (shape 1) — drop a premise,
+     tighten an existing postcondition (e.g. `≤` → `=`), or
+     strengthen a postcondition conjunct. Append the
+     `<name>_old` witness in the same patch.
+   - **Add a new companion lemma** (shape 2) — purely additive:
+     a new functional postcondition, a new frame lemma, or a
+     missing compound `_invs`. No witness.
+   - **Delete or disable an existing lemma** (shape 3) — only
+     after a `grep` proves no consumer, OR after adding a
+     `lemmas <name> = ...` compatibility alias in the same
+     patch. No `_old` witness; this is a refactor, not a
+     strengthening.
 
    Place patches under `logs/spec-strengthen-<file>-<YYYYMMDD>.patch`.
 
@@ -69,13 +101,27 @@ break, including the cleanup-style "delete the weak alias" move.
    --apply <patch>`. Source file now contains both the strengthened
    lemma and the witness.
 
-6. **Record.** Create
-   `reports/experiments/<NNNN>-<short-name>/` with `patch.diff` +
-   `command.sh` + `measurement.json`. The witness lemma is part of
-   `patch.diff` (Step 2) — no separate file. Open a PR from a
-   `spec-strengthen` topic branch targeting `main`. For meta-PRs
-   (skill/tools/infra), the simplified two-file variant in parent
-   SKILL rule 5 applies.
+6. **Record.** Create `reports/experiments/<NNNN>-<short-name>/`
+   per parent SKILL rule 5. For a seL4-source PR (the normal
+   case for spec strengthening) all **four** files are required:
+
+   | File | Content |
+   |---|---|
+   | `patch.diff` | the exact source change, with the `<name>_old` witness inline (shape 1) or no witness (shape 2/3) |
+   | `command.sh` | re-runnable measurement command (sub-skill template: `spec_impact.py --measurement-out`) |
+   | `measurement.json` | baseline + trial wall + `delta_pct` + `impact_verdict` + `witness_present` (emitted by `spec_impact.py --measurement-out`) |
+   | `decision.md` | human-readable summary, the patch shape (1/2/3), and a verdict (`applied` / `rejected` / `inconclusive`) |
+
+   Open a PR from a `spec-strengthen` topic branch targeting
+   `main`. The PR description must cite: the lemma name + file
+   touched, the matching `reports/golden-baseline/walls.json`
+   entry, the trial wall from `check-theory.sh --apply`, and the
+   experiment ID (`<NNNN>-<short-name>`).
+
+   For meta-PRs (skill/tools/infra — no `verification/l4v/`
+   change), the simplified two-file variant in parent SKILL rule
+   5 (`patch.diff` + `decision.md`) applies; `command.sh` and
+   `measurement.json` are omitted.
 
 ## Acceptance
 

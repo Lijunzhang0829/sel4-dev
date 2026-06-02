@@ -43,6 +43,42 @@ missing-functional). The hint tells you what to **try**; the SKILL
 contract decides whether the trial passes (check-theory.sh OK +
 spec_impact verdict + wall gate).
 
+## Witness rules by Hoare triple shape
+
+The SKILL's witness contract requires `lemma <name>_old: "<old
+statement>" by (rule <hoare-monotonicity>[OF <name>]) <discharge>`.
+The correct `<hoare-monotonicity>` depends on the **shape of the
+triple** (`valid` / `validE` / `validE_R` / `validE_E`) and on
+**which side** is being relaxed (precondition vs postcondition).
+A common silent failure is picking a name by suffix-pattern-match
+(e.g. inventing `hoare_post_imp_R`, which does not exist in l4v)
+instead of by triple shape.
+
+The rules below all live under `verification/l4v/lib/Monads/`.
+Cross-checked against l4v as of 2026-06-02.
+
+| Triple shape | Strengthening direction | Witness rule | Discharge |
+|---|---|---|---|
+| `⟨P⟩ f ⟨Q⟩` (`valid`) | Pre weakened (drop premise) | `hoare_weaken_pre[OF <name>]` | `simp` / explicit lemma |
+| `⟨P⟩ f ⟨Q⟩` (`valid`) | Post strengthened | `hoare_strengthen_post[OF <name>]` or `hoare_post_imp[OF _ <name>]` | `simp` |
+| `⟨P⟩ f ⟨Q⟩,⟨E⟩` (`validE`) | Pre weakened | `hoare_pre[OF <name>]` | `simp` |
+| `⟨P⟩ f ⟨Q⟩,⟨E⟩` (`validE`) | Normal-post strengthened | `hoare_post_impE[OF _ _ <name>]` | `simp` (two discharges) |
+| `⟨P⟩ f ⟨Q⟩,-` (`validE_R`) | Post strengthened | `hoare_strengthen_postE_R[OF <name>]` | `simp` |
+| `⟨P⟩ f -,⟨E⟩` (`validE_E`) | Error-post strengthened | `hoare_strengthen_postE_E[OF <name>]` | `simp` |
+
+**Names that do NOT exist in l4v** (do not invent these — first
+`check-theory.sh --patch` will fail with a typecheck error):
+
+- `hoare_post_imp_R` — use `hoare_strengthen_postE_R` for the
+  validE_R post side, or `hoare_post_impE` for validE
+- `hoare_post_impR` / `hoare_pre_R` — non-existent
+
+When the discharge step takes more than a `simp`, the strengthening
+isn't a pure monotonicity step — the spec change has real
+semantic content that needs additional lemmas to bridge. That's
+fine, but the `_old` proof grows beyond a one-liner; record the
+extra reasoning in `decision.md`.
+
 ## Pattern catalog (legacy names retained for cross-reference)
 
 The skill's user-facing tool emits descriptive labels. Past
