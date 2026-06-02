@@ -28,7 +28,7 @@ lemma <name>_old: "<verbatim old statement>"
 
 where `<hoare-monotonicity>` is one of `hoare_pre`, `hoare_weaken_pre`,
 `hoare_strengthen_post`, `hoare_strengthen_postE_R`, `hoare_post_imp`,
-or `hoare_post_imp_R`. The witness stays in source as a permanent
+or `hoare_post_impE`. The witness stays in source as a permanent
 soundness record — do not delete it later.
 
 **Only purely additive companion lemmas skip the witness.** If the
@@ -71,10 +71,11 @@ break, including the cleanup-style "delete the weak alias" move.
 
 6. **Record.** Create
    `reports/experiments/<NNNN>-<short-name>/` with `patch.diff` +
-   `command.sh` + `measurement.json` (and `derivability.thy` if the
-   change isn't purely additive). Open a PR from a `spec-strengthen`
-   topic branch targeting `main`. For meta-PRs (skill/tools/infra),
-   the simplified two-file variant in parent SKILL rule 5 applies.
+   `command.sh` + `measurement.json`. The witness lemma is part of
+   `patch.diff` (Step 2) — no separate file. Open a PR from a
+   `spec-strengthen` topic branch targeting `main`. For meta-PRs
+   (skill/tools/infra), the simplified two-file variant in parent
+   SKILL rule 5 applies.
 
 ## Acceptance
 

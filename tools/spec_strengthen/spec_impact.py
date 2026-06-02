@@ -429,7 +429,8 @@ def compute_strength_score(sd: StructuralDiff) -> tuple[float, dict]:
 DERIVABILITY_RULES = (
     "hoare_pre", "hoare_weaken_pre",
     "hoare_strengthen_post", "hoare_strengthen_postE_R",
-    "hoare_post_imp", "hoare_post_imp_R",
+    "hoare_strengthen_postE_E",
+    "hoare_post_imp", "hoare_post_impE",
 )
 
 
@@ -686,7 +687,7 @@ def main() -> int:
             n_wit = len(deriv["witnesses"])
             lines.append(
                 f"# Derivability witness ({n_wit} found): {d_emoji} "
-                f"{'present' if deriv['present'] else 'ABSENT — Step 4.5 incomplete'}"
+                f"{'present' if deriv['present'] else 'ABSENT — witness lemma missing from patch'}"
             )
         lines.append("")
         lines.append("## Lemma deltas")

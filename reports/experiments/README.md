@@ -15,12 +15,10 @@ reports/experiments/
 ├── README.md                            ← this file
 ├── _template/                           ← skeleton, COPY when starting a new experiment
 │   ├── patch.diff
-│   ├── derivability.thy
 │   ├── command.sh
 │   └── measurement.json
 └── <NNNN>-<short-name>/                 ← one directory per accepted strengthening
-    ├── patch.diff                       ← re-applyable source change
-    ├── derivability.thy                 ← A'⟹A witness lemma (skipped only for Pattern B)
+    ├── patch.diff                       ← re-applyable source change (includes the `_old` witness lemma inline)
     ├── command.sh                       ← re-runnable measurement command
     └── measurement.json                 ← raw numbers tied to golden-baseline
 ```
@@ -44,12 +42,11 @@ that matches your change:
 ### Variant A — seL4-source PR (full record)
 
 Triggered when the PR modifies `.thy` / `.hs` / `.c` / `.h` under
-`verification/l4v/`. Full 4-file record required:
+`verification/l4v/`. Full 3-file record required:
 
 ```
 <NNNN>-<short-name>/
-├── patch.diff
-├── derivability.thy   (skipped only for Tier 2 additive patches)
+├── patch.diff       ← includes the `_old` witness lemma (per sub-skill Step 2)
 ├── command.sh
 └── measurement.json
 ```
@@ -93,15 +90,14 @@ cp reports/experiments/_template/* reports/experiments/$SHORT/
 #    at .github/PULL_REQUEST_TEMPLATE/<type>-strengthen.md.
 ```
 
-## Why four files instead of one PR description
+## Why three files instead of one PR description
 
-The four files and the PR description serve different roles:
+The three files and the PR description serve different roles:
 
 | Role | Location | Lifetime |
 |---|---|---|
 | Re-runnable measurement | `command.sh` + `measurement.json` | Persistent in repo; CI / future audit can re-run |
-| Re-applyable source change | `patch.diff` | Persistent in repo; can be replayed onto a fresh checkout |
-| A'⟹A consumability proof | `derivability.thy` | Persistent in repo; the cryptographic-equivalent guarantee that nothing broke |
+| Re-applyable source change | `patch.diff` (includes `_old` witness inline) | Persistent in repo; replayable onto fresh checkout. Witness is mechanically checked by the same `check-theory.sh` pass that verifies the strengthened lemma |
 | Human-readable "why" | PR description | Lives in PR; GitHub UI keeps it after merge but not in working tree |
 
 PR description is the discovery-time review aid; experiments dir is the
@@ -117,25 +113,31 @@ verification + measurement from scratch. The script must:
 - Apply `patch.diff` to a clean checkout of `verification/l4v` at the
   ref recorded in `measurement.json#baseline_ref`.
 - Run `check-theory.sh --patch <patch>` (Step 3 of the spec sub-skill).
-- Run the derivability check (Step 4.5) — verify `derivability.thy`.
+  This single pass verifies both the strengthened lemma and the inline
+  `_old` witness — no separate derivability step.
 - Print baseline wall, trial wall, delta to stdout.
 - Exit 0 iff all gates pass.
 
-`measurement.json` schema (minimal — extend per type as needed):
+`measurement.json` schema (produced by `spec_impact.py
+--measurement-out`; extend per type as needed):
 
 ```json
 {
   "session": "AInvs",
-  "pattern": "C",
   "baseline_wall_ms": 41055,
   "trial_wall_ms": 38245,
   "delta_pct": -6.8,
+  "wall_gate_pass": true,
   "baseline_ref": "reports/golden-baseline/walls.json#AInvs",
   "session_rebuild_done": false,
   "consumers_lines": 21,
   "consumers_files": 6,
   "impact_verdict": "premise-weaken",
-  "derivability_verdict": "ok"
+  "strength_score": 2.0,
+  "witness_present": true,
+  "witness_advisory_pass": true,
+  "gate_pass": true,
+  "has_weakening": false
 }
 ```
 

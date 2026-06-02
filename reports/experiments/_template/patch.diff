@@ -7,8 +7,9 @@
 --
 -- The diff must include both:
 --   (1) the strengthening (modified statement / new lemma)
---   (2) the _old aux lemma from Step 4.5 (A'⟹A witness), placed
---       immediately after the strengthened lemma in the .thy file.
+--   (2) the inline `<name>_old` witness lemma (A'⟹A; spec sub-skill
+--       Step 2), placed immediately after the strengthened lemma in
+--       the .thy file.
 --
--- Pattern B (additive) is the only case without an _old aux lemma:
--- there's no old form to derive.
+-- Purely additive companion lemmas are the only case without an `_old`
+-- witness — there is no old form to derive.
