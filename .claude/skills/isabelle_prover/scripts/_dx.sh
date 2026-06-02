@@ -16,8 +16,8 @@ WRAPPER_NAME="$(basename "${BASH_SOURCE[1]}")"
 # Compute the in-container path of scripts-container/ from this script's
 # location relative to the host repo root. The compose service mounts
 # $REPO_ROOT to /workspace, so:
-#   <REPO_ROOT>/claude/.claude/skills/.../scripts/  →
-#   /workspace/claude/.claude/skills/.../scripts-container/
+#   <REPO_ROOT>/.claude/skills/.../scripts/  →
+#   /workspace/.claude/skills/.../scripts-container/
 SCRIPT_DIR_REL="${SCRIPT_DIR#${REPO_ROOT}/}"
 CONTAINER_SCRIPT_DIR="/workspace/${SCRIPT_DIR_REL%/scripts}/scripts-container"
 
