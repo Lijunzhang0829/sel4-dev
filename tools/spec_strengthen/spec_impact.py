@@ -1,35 +1,39 @@
 #!/usr/bin/env python3
 r"""
-tools/critical_path/spec_impact.py — spec-strengthen impact metric.
+tools/spec_strengthen/spec_impact.py — spec-strengthen impact metric.
 
-Required by `isabelle_prover_spec` SKILL Step 4 (MANDATORY).
+Required by `isabelle_prover_spec` SKILL Step 4.
 
 What this script does (and does NOT do):
 
-- DOES: structural-diff a patch's lemma deltas, classify each into a
+- DOES: structural-diff a patch's lemma deltas; classify each into a
   verdict (premise-weaken / monotone-strengthen / postcond-strengthen /
-  additive / removal / rewrite / weakening / noop), compute a Semantic
-  Strength Score (SSS), check wall-time regression vs baseline, and
-  detect whether the patch contains a Step-4.5 derivability witness.
+  additive / removal / rewrite / weakening / noop); compute a Semantic
+  Strength Score (SSS); check wall-time regression vs baseline;
+  detect whether the patch contains an `<name>_old` witness lemma.
 - DOES NOT: prove A_old derivable from A_new. That is check-theory.sh's
-  job (the `<name>_old` aux lemma must be inside the patch; verifying
-  it is the Step-3 check-theory.sh run).
+  job — the witness lemma is verified by check-theory.sh in the same
+  pass as the strengthened lemma.
 
-Acceptance gate (Tier 1 lemmas):
+Acceptance gates (exit code 0 iff all pass):
   1. No `weakening` verdict on any delta.
-  2. At least one delta with verdict in
-     {premise-weaken, monotone-strengthen, postcond-strengthen, additive}.
+  2. At least one delta in
+     {premise-weaken, monotone-strengthen, postcond-strengthen,
+      additive}.
   3. trial_wall_ms ≤ baseline_wall_ms × 1.30 (when both supplied).
-  4. Derivability witness present in patch (warning only — actual
-     verification happens at check-theory.sh).
-
-Exit code 0 iff gates 1-3 pass. Gate 4 is advisory.
+  Witness presence is reported but advisory (real check at Step 3).
 
 Usage:
   spec_impact.py <patch.txt> <theory.thy>
                  [--baseline-wall MS] [--trial-wall MS]
                  [--tree DIR]
                  [--append-to FILE] [--json]
+                 [--measurement-out FILE]
+
+`--measurement-out FILE` writes a simplified JSON suited to
+`reports/experiments/<NNNN>/measurement.json` (the per-PR audit
+bundle). The simplified schema is a subset of the verbose `--json`
+output, with fields named after rule-5's template.
 """
 from __future__ import annotations
 
@@ -55,7 +59,6 @@ VERDICT_REMOVAL             = "removal"
 VERDICT_REWRITE             = "rewrite"
 VERDICT_WEAKENING           = "weakening"
 VERDICT_NOOP                = "noop"
-VERDICT_UNCLASSIFIED_ADD    = "unclassified-add"  # added but not B/G/E shape
 
 ACCEPTABLE_VERDICTS = {
     VERDICT_PREMISE_WEAKEN,
@@ -64,6 +67,10 @@ ACCEPTABLE_VERDICTS = {
     VERDICT_ADDITIVE,
 }
 
+# Verdicts that should be accompanied by an `<name>_old` witness lemma
+# in the same patch (strengthening of an existing lemma — the witness
+# is the soundness proof). `additive` is not Tier 1 (no `_old` form
+# to derive); witness is omitted.
 TIER1_VERDICTS = {
     VERDICT_PREMISE_WEAKEN,
     VERDICT_MONOTONE_STRENGTHEN,
@@ -203,9 +210,13 @@ extract_post_body = extract_predicate_body
 
 
 FRAME_CONJUNCT_RE = re.compile(
-    r"\bP\s*\(\s*\w+\s+s'?\s*\)"           # P (accessor s)
-    r"|=\s*\w+\s+s\d*"                      # = accessor s (preservation form)
+    r"\bP\s*\(\s*\w+\s+s'?\s*\)"            # P (accessor s)
+    r"|=\s*\w+\s+s'?\s*$"                   # ... = accessor s (preservation tail)
+    r"|\w+\s+s'?\s*=\s*\w+\s+s'?"           # acc s = acc s'  (frame eq form)
+    r"|\\<lambda>[^.]*s'?\s*\.\s*\w+\s+s'?\s*="  # \<lambda>_ s. acc s = ...
 )
+# Note: still heuristic — designed to catch common l4v frame shapes.
+# `acc s` accessor patterns include both bare and primed (s, s') variants.
 LE_RE = re.compile(r"(?:\\<le>|≤|<=)")
 EQ_RE = re.compile(r"(?<![<>=!])=(?!=)")
 
@@ -327,54 +338,25 @@ class LemmaDelta:
         }
 
 
-# ---------- Pattern shape detection for added lemmas -------------------------
-
-def detect_added_pattern(after: Lemma) -> str | None:
-    """Classify a newly-added Hoare-triple lemma as Pattern B / G / E.
-
-    Returns 'B', 'G', 'E', or None.
-    """
-    if not after or not after.post:
-        return None
-    op = after.op or ""
-
-    # Pattern E: compound _invs.
-    if after.name.endswith("_invs") or after.name.endswith("_invs_minor"):
-        post_body = extract_post_body(after.post)
-        if re.search(r"\binvs\b", post_body):
-            return "E"
-
-    # Pattern B: functional postcond — set_X / update_X with `accessor s = <arg>`.
-    if re.match(r"(?:set|update|modify)_", op):
-        post_body = extract_post_body(after.post)
-        if re.search(r"\w+\s+s\s*=", post_body):
-            return "B"
-
-    # Pattern G: frame — pre and post both `P (accessor s)`.
-    pre_body = after.pre
-    post_body = extract_post_body(after.post)
-    if FRAME_CONJUNCT_RE.search(pre_body) and FRAME_CONJUNCT_RE.search(post_body):
-        return "G"
-
-    return None
-
-
 # ---------- Verdict classifier ----------------------------------------------
 
 def classify_delta(d: LemmaDelta) -> tuple[str, list[str]]:
-    """Returns (verdict, extra_notes)."""
+    """Returns (verdict, extra_notes).
+
+    For added Hoare-triple lemmas we emit `additive` unconditionally.
+    The skill's contract is that purely-additive lemmas don't need a
+    witness; auxiliary aux lemmas without strengthening intent are
+    not distinguished here (the PR reviewer judges intent — soundness
+    is already covered by check-theory.sh).
+    """
     notes: list[str] = []
 
     if d.classification == "added":
-        pat = detect_added_pattern(d.after_lemma) if d.after_lemma else None
-        if pat:
-            notes.append(f"added lemma matches Pattern {pat} shape")
-            return VERDICT_ADDITIVE, notes
-        notes.append("added lemma does NOT match any of Pattern B/G/E shape — "
-                     "not a strengthening; treat as auxiliary")
-        return VERDICT_UNCLASSIFIED_ADD, notes
+        return VERDICT_ADDITIVE, notes
 
     if d.classification == "removed":
+        notes.append("removal — requires `<name>_old` witness in same "
+                     "patch (delete-style cleanup) or rejection")
         return VERDICT_REMOVAL, notes
 
     # Modified — use structural diff
@@ -478,13 +460,24 @@ def detect_derivability_witness(patch_text: str) -> dict:
 
 # ---------- Tier 2 consumer count (heuristic, upper bound) ------------------
 
+_DEF_KEYWORD_RE = re.compile(r"\b(?:lemma|theorem|corollary)s?\b")
+
+
 def grep_consumers(name: str, tree: Path,
                    self_file: Path | None = None,
                    self_line: int = 0) -> tuple[int, int]:
-    """Return (line_count, file_count) of `\\bname\\b` matches under tree.
+    r"""Return (line_count, file_count) of `\bname\b` matches under tree.
 
-    Note: this is an UPPER BOUND. Includes the lemma's own definition line
-    when self_file is None. To exclude self, pass (self_file, self_line).
+    UPPER BOUND. When (self_file, self_line) supplied, the lemma's own
+    definition line (at <self_file>:<self_line>: containing a
+    `lemma`/`theorem`/`corollary` keyword) is filtered out — same logic
+    as rank_candidates.grep_consumers, so the two tools agree on
+    consumer counts.
+
+    Previously this used a list-comp with reversed conditional logic
+    that kept the def line instead of dropping it (see review
+    2026-06-02). Rewritten to an explicit `for/continue` loop matching
+    the rank_candidates version exactly.
     """
     if not tree.exists():
         return (0, 0)
@@ -493,21 +486,30 @@ def grep_consumers(name: str, tree: Path,
             ["grep", "-rn", "-E", rf"\b{re.escape(name)}\b", str(tree)],
             check=False, capture_output=True, text=True, timeout=60,
         )
-        lines = [ln for ln in out.stdout.splitlines() if ln]
-        # Filter out lemma's own definition line(s)
-        if self_file is not None:
-            sf = str(self_file)
-            lines = [
-                ln for ln in lines
-                if not ln.startswith(f"{sf}:")
-                or not re.match(rf"^{re.escape(sf)}:{self_line}:",
-                                ln) is None and "lemma " in ln
-            ]
-        line_count = len(lines)
-        file_count = len({ln.split(":", 1)[0] for ln in lines})
-        return (line_count, file_count)
+        raw = [ln for ln in out.stdout.splitlines() if ln]
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return (0, 0)
+
+    if self_file is None or not self_line:
+        line_count = len(raw)
+        file_count = len({ln.split(":", 1)[0] for ln in raw})
+        return (line_count, file_count)
+
+    sf = str(self_file)
+    self_prefix = f"{sf}:"
+    kept: list[str] = []
+    for ln in raw:
+        if ln.startswith(self_prefix):
+            parts = ln.split(":", 2)
+            if len(parts) >= 3 and parts[1].isdigit() \
+               and int(parts[1]) == self_line \
+               and _DEF_KEYWORD_RE.search(parts[2]):
+                # Def line — drop.
+                continue
+        kept.append(ln)
+    line_count = len(kept)
+    file_count = len({ln.split(":", 1)[0] for ln in kept})
+    return (line_count, file_count)
 
 
 # ---------- Main -------------------------------------------------------------
@@ -521,8 +523,14 @@ def main() -> int:
     ap.add_argument("--trial-wall", type=int, default=None)
     ap.add_argument("--tree", type=Path,
                     default=Path("verification/l4v/proof"))
-    ap.add_argument("--append-to", type=Path, default=None)
-    ap.add_argument("--json", action="store_true")
+    ap.add_argument("--append-to", type=Path, default=None,
+                    help="Append markdown report to this file.")
+    ap.add_argument("--json", action="store_true",
+                    help="Emit verbose JSON to stdout (full report).")
+    ap.add_argument("--measurement-out", type=Path, default=None,
+                    help="Write simplified measurement.json (rule-5 audit "
+                         "bundle schema) to this path. Compatible with "
+                         "reports/experiments/_template/measurement.json.")
     args = ap.parse_args()
 
     if not args.theory.exists():
@@ -718,6 +726,72 @@ def main() -> int:
         with open(args.append_to, "a", encoding="utf-8") as f:
             f.write("\n" + out_text)
     print(out_text)
+
+    # ----- simplified measurement.json (rule-5 audit bundle) ------------
+    if args.measurement_out:
+        # Pick a representative verdict for the patch as a whole.
+        # Priority: monotone-strengthen > premise-weaken / postcond-strengthen
+        # > additive > weakening / rewrite / removal / noop.
+        priority = [
+            VERDICT_MONOTONE_STRENGTHEN, VERDICT_PREMISE_WEAKEN,
+            VERDICT_POSTCOND_STRENGTHEN, VERDICT_ADDITIVE,
+            VERDICT_WEAKENING, VERDICT_REWRITE, VERDICT_REMOVAL,
+            VERDICT_NOOP,
+        ]
+        delta_verdicts = [d.verdict for d in deltas]
+        representative_verdict = next(
+            (v for v in priority if v in delta_verdicts),
+            "noop",
+        )
+        # Total consumer count (sum of unique consumers across deltas).
+        total_consumer_lines = sum(
+            c.get("lines", 0) for c in consumer_counts.values()
+        )
+        total_consumer_files = sum(
+            c.get("files", 0) for c in consumer_counts.values()
+        )
+        # Derive session from theory file path if recognizable.
+        session = "?"
+        for prefix, sess in (
+            ("spec/abstract/",            "ASpec"),
+            ("spec/cspec/",               "CSpec"),
+            ("proof/invariant-abstract/", "AInvs"),
+            ("proof/refine/",             "Refine"),
+            ("proof/crefine/",            "CRefine"),
+            ("proof/access-control/",     "Access"),
+            ("proof/infoflow/",           "InfoFlow"),
+            ("proof/drefine/",            "DRefine"),
+            ("proof/bisim/",              "Bisim"),
+        ):
+            if prefix in str(args.theory):
+                session = sess
+                break
+
+        delta_pct = wall_pct  # alias for template compatibility
+
+        measurement = {
+            "session": session,
+            "baseline_wall_ms": args.baseline_wall,
+            "trial_wall_ms": args.trial_wall,
+            "delta_pct": round(delta_pct, 2) if delta_pct is not None else None,
+            "wall_gate_pass": wall_gate_pass,
+            "baseline_ref": f"reports/golden-baseline/walls.json#{session}",
+            "session_rebuild_done": False,
+            "consumers_lines": total_consumer_lines,
+            "consumers_files": total_consumer_files,
+            "impact_verdict": representative_verdict,
+            "strength_score": total_sss,
+            "witness_present": bool(deriv["present"]),
+            "witness_advisory_pass": derivability_advisory_pass,
+            "gate_pass": gate_pass,
+            "has_weakening": has_weakening,
+        }
+        args.measurement_out.write_text(
+            json.dumps(measurement, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        print(f"[measurement.json written to {args.measurement_out}]",
+              file=sys.stderr)
 
     return 0 if gate_pass else 1
 

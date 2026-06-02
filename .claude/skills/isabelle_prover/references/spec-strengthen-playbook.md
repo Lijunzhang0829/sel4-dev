@@ -1,10 +1,88 @@
-# Spec strengthening — pattern catalog with worked examples
+# Spec strengthening — playbook
 
-Companion to `isabelle_prover_spec/SKILL.md`. Each pattern lists:
-- the textual shape to look for,
-- a real example from this codebase,
-- the strengthening move,
-- the expected downstream impact.
+Companion to `isabelle_prover_spec/SKILL.md`. Read this when:
+- The candidates tool returned an unfamiliar shape and you're not
+  sure how to write the patch + witness.
+- You want to know whether to trust a specific detector hit
+  (false-positive rates vary widely by shape).
+- You're looking for empirical context on past sessions — what
+  worked, what failed, why.
+
+**Not a contract.** The SKILL.md is the contract; this file is
+prose, examples, and rationales.
+
+## Reading order
+
+| Question | Section |
+|---|---|
+| What "kind of strengthening" matters logically? | Taxonomy below |
+| How to find one of a given shape? | Pattern catalog below |
+| How likely is a given scanner hit to be real? | Reliability table |
+| Worked example of a shape | Case studies further down |
+| Why was Pattern F rejected? Why does Pattern G need manual scan? | Empirical notes at end |
+
+---
+
+## Taxonomy — what kind of change is this?
+
+Two logical kinds matter for soundness:
+
+| Kind | Effect on consumers | Witness `_old` required? |
+|---|---|---|
+| **Strengthening** (`P_old ⟹ P_new` ∧/∨ `Q_new ⟹ Q_old`) | Every old caller still works | Yes |
+| **Additive** (no `_old` form exists) | Old callers unaffected; new lemma is opt-in | No |
+
+A third pseudo-kind: **packaging** (deleting a redundant weak-form
+alias). It looks additive (no statement change to a surviving
+lemma) but is functionally a deletion — the surviving lemma must
+carry a witness proving the deleted alias's statement is still
+derivable. Treat as strengthening for the witness requirement.
+
+The scanner produces *hints* (paired-chain / unused-premise /
+missing-functional). The hint tells you what to **try**; the SKILL
+contract decides whether the trial passes (check-theory.sh OK +
+spec_impact verdict + wall gate).
+
+## Pattern catalog (legacy names retained for cross-reference)
+
+The skill's user-facing tool emits descriptive labels. Past
+strengthen-logs and historical conversations refer to
+Patterns A-G. Mapping:
+
+| Legacy name | Detector kind | Logical kind |
+|---|---|---|
+| Pattern A — paired weak/strong | `paired-chain` | Packaging |
+| Pattern B — missing functional postcond | `missing-functional` | Additive |
+| Pattern C — unused premise | `unused-premise` | Strengthening (premise-weaken) |
+| Pattern D — loose bound `≤ → =` | (manual) | Strengthening (postcond-strengthen) |
+| Pattern E — compound `_invs` | (manual) | Additive |
+| Pattern F — composite changed ∧ unchanged | rejected (not l4v idiom) | — |
+| Pattern G — frame preservation | (manual) | Additive |
+
+## Scanner reliability (calibration from 2026-05-25/26/30 sessions)
+
+| Kind | Accuracy | Cheap validation |
+|---|---|---|
+| `unused-premise` | ~50% (premise may be load-bearing) | `check-theory.sh --patch` ~60s |
+| `missing-functional` | ~95% detection; but downstream consumer existence rare | Manual review of consumer proofs |
+| `paired-chain` | ~20-30% real opportunities | Read both lemmas + grep cross-file before acting |
+| (D / G / E — manual) | n/a — no auto detector | Inspect target file by hand |
+
+## ROI weighting rationale (hidden inside spec_candidates.py)
+
+The candidates tool sorts by `consumer_lines × kind_weight`. Weights
+reflect empirical ROI:
+
+| Kind | Weight | Rationale |
+|---|---:|---|
+| `unused-premise` | 5 | Each consumer call saves a wp premise discharge |
+| `missing-functional` | 3 | Only consumers that need the new fact benefit (opt-in) |
+| `paired-chain` | 1 | Packaging cleanup; usually no downstream wall delta |
+
+Weights are constants at the head of `spec_candidates.py`. Move to
+JSON config if more tuning becomes needed.
+
+---
 
 All examples are file:line citations into
 `verification/l4v/proof/invariant-abstract/` or
