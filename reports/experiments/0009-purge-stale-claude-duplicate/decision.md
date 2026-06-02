@@ -130,3 +130,31 @@ the edits:
   removed `claude/.claude/skills/isabelle_prover_proof/SKILL.md`,
   it will need rewiring to the `.claude/` location. Out of scope
   for this PR — the spec SKILL has no such reset behavior.
+
+## Memory update (follow-up commit on top of 0b0aea3)
+
+Per user direction 2026-06-02 "一并更新，写入到experiment0009",
+appended a dated note to the auto-memory file at
+`~/.claude/projects/-home-lijun-seL4-docker-main/memory/proof-skill-resets.md`:
+
+> **Update 2026-06-02 (spec-strengthen PR-4 commit 0b0aea3, audit
+> 0009):** the parallel snapshot
+> `claude/.claude/skills/isabelle_prover_proof/SKILL.md` was
+> removed as part of purging the stale `claude/.claude/skills/`
+> duplicate. If the reset mechanism was reading from that nested
+> path as its restore source, resets will now fail silently and
+> edits to `.claude/skills/isabelle_prover_proof/SKILL.md` should
+> start persisting between turns. If resets continue **after**
+> this commit, the trigger is elsewhere — candidates: a hook in
+> `.claude/settings.json`, a user-side restore action, or a
+> fresh-clone overlay.
+
+This way, future sessions opening the proof skill have an explicit
+breadcrumb: the suspected restore source is gone, so reset
+behavior post-0b0aea3 is diagnostic information — observable
+absence of resets confirms the duplicate WAS the source; continued
+resets exonerate it and point at a hook/external action.
+
+Memory file lives outside the repo so this update produces no
+tracked diff — only this paragraph and the corresponding follow-up
+commit on `spec-strengthen` record that the memory was edited.
