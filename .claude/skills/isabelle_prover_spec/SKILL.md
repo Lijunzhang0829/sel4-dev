@@ -171,6 +171,14 @@ not a behavior change.
 | `tools/spec_strengthen/spec_candidates.py` | Step 1 entry. Flat ranked list of candidates with natural-language suggested moves. |
 | `tools/spec_strengthen/spec_impact.py` | Step 4 entry. Verdict + wall gate + witness presence. With `--measurement-out FILE` emits a simplified JSON suitable for the rule-5 audit bundle. |
 
+**Optional helpers** (not required by the workflow — use when the
+trial-and-error cost on an unfamiliar candidate is high):
+
+| Tool | When to use |
+|---|---|
+| `tools/spec_strengthen/spec_witness_gen.py <patch> <thy>` | Step 2 aid — emits the `<name>_old` witness lemma the patch needs (shape 1) or explains why no witness applies (shape 2/3). Codifies the playbook's witness-rule-by-triple-shape table so you don't pick `hoare_pre` vs `hoare_strengthen_postE_R` by suffix-pattern. |
+| `tools/spec_strengthen/spec_premise_probe.sh <thy-rel> <lemma> <premise>` | Step 1.5 filter for `unused-premise` candidates — TRIAL-based probe (synthesizes a copy of the lemma with the premise dropped, runs the original proof in Isa-REPL). Ground-truth verdict `likely-unused` / `load-bearing`. Wall ≈ 60-200s per probe (preamble walk dominates). Cheaper than blind `check-theory.sh --patch` only when the marginal candidate is filtered cheaply — and gives diagnostic info on failure (the residual subgoal). |
+
 Tool semantics are described in their own `--help`. The skill does
 not enumerate detector internals — those live in the playbook.
 
