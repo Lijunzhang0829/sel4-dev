@@ -1,12 +1,14 @@
 diff --git a/proof/invariant-abstract/CSpace_AI.thy b/proof/invariant-abstract/CSpace_AI.thy
 --- a/proof/invariant-abstract/CSpace_AI.thy
 +++ b/proof/invariant-abstract/CSpace_AI.thy
-@@ -3856,6 +3856,10 @@ lemma set_cdt_cur_thread[wp]:
+@@ -3856,6 +3856,10 @@
    "\<lbrace>\<lambda>s. P (cur_thread s)\<rbrace> set_cdt m \<lbrace>\<lambda>_ s. P (cur_thread s)\<rbrace>"
    by (wpsimp simp: set_cdt_def)
-
+ 
 +lemma set_cdt_idle_thread[wp]:
 +  "\<lbrace>\<lambda>s. P (idle_thread s)\<rbrace> set_cdt m \<lbrace>\<lambda>_ s. P (idle_thread s)\<rbrace>"
 +  by (wpsimp simp: set_cdt_def)
 +
  crunch vms[wp]: update_cdt valid_machine_state
+ 
+ 
