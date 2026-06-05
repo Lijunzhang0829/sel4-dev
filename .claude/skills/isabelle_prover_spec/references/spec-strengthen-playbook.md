@@ -392,6 +392,95 @@ duplicate, just illustrating shape):
 - `cap_swap_typ_at` (`CSpace_AI.thy:3946`)
 - `crunch update_cdt caps_of_state` (`CSpace_AI.thy:3624`)
 
+### Pattern G gotcha — `crunch` generates implicit set-object frames
+
+When adding a Pattern G frame lemma named `set_<op>_<field>[wp]`,
+**search the same file (and downstream files) for any
+`crunch <field>[wp]: <bigger_op>` declaration that recursively
+descends through `<op>`**. If found, `crunch` will have already
+generated `set_<op>_<field>` as an intermediate fact during its
+recursive lifting — even if the lemma name appears nowhere in
+source text. Adding a duplicate by hand triggers an Isabelle
+`Duplicate fact declaration` error at `check-theory.sh --patch`
+time.
+
+**Detection.** `grep` for the **lemma name** finds nothing
+(because crunch-derived facts are never typed out). `grep` for
+**`crunch <field>` patterns** in `proof/invariant-abstract/**`
+finds the smoking gun: any `crunch <field>: <bigger_op>` whose
+body or callees reach `<op>` implies a derived
+`set_<op>_<field>[wp]`.
+
+**Case study — [[0020]] aborted `set_object_interrupt_states[wp]`
+attempt.** I tried to add a frame lemma for `interrupt_states`
+under `set_object` in `KHeap_AI.thy`. `grep set_object_interrupt_states`
+in the entire l4v tree returned zero hits. Yet
+`check-theory.sh --patch` failed with `*** Duplicate fact
+declaration "...set_object_interrupt_states" vs.
+"...set_object_interrupt_states"`. Root cause was
+`KHeap_AI.thy:925`:
+```
+crunch interrupt_states[wp]: set_simple_ko "\<lambda>s. P (interrupt_states s)"
+```
+`set_simple_ko` calls `set_object` internally; crunch lifted the
+frame fact to `set_object` level as part of its recursive proof,
+auto-generating the named lemma. The collision is name-level, not
+semantic — the derived form is identical to what I was adding.
+
+**Pre-flight recipe before any Pattern G `set_<op>_<field>[wp]`:**
+
+```bash
+# 1. Direct duplicate check
+grep -rn 'set_<op>_<field>\b' verification/l4v/
+
+# 2. Crunch-derived duplicate check (the one that bit us)
+grep -rn 'crunch <field>.*set_<op>\|crunch <field>.*<wrapper_that_calls_set_op>' \
+     verification/l4v/proof/invariant-abstract/
+
+# 3. If step 2 finds anything, abandon that field. Pick a
+#    different state component. (Useful negative result: the
+#    downstream automation gap for that field is already covered.)
+```
+
+**Case study contrast — [[0019]] `set_object_cdt[wp]` and the
+revised [[0020]] `set_object_cur_thread[wp]` both succeeded** after
+the same pre-flight grep confirmed no `crunch cdt` /
+`crunch cur_thread` on operations that reach `set_object`. The
+recipe is mechanical; the cost of running it is seconds; skipping
+it costs a 20-30 s failed `--patch` run.
+
+### Pattern G tool-parser caveat — abbreviated "preserves" form
+
+Idiomatic l4v writes preservation lemmas with the **abbreviated
+form** `f \<lbrace>\<lambda>s. P (<field> s)\<rbrace>`, which
+desugars to `\<lbrace>\<lambda>s. P (<field> s)\<rbrace> f
+\<lbrace>\<lambda>_ s. P (<field> s)\<rbrace>`. Existing l4v lemmas
+like `set_object_machine_state[wp]` use this abbreviated form.
+
+**The current `spec_strengthen_scan.py` / `spec_witness_gen.py` /
+`spec_impact.py` regex parser does NOT recognize the abbreviated
+form.** Symptoms:
+- `spec_witness_gen.py` → "Could not classify patch (no shape detected)"
+- `spec_impact.py` stdout markdown → "Gate: FAIL ✗" with empty
+  Lemma deltas table
+- `spec_impact.py --measurement-out` JSON → `impact_verdict:
+  additive`, `gate_pass: true` (different code path, fallback)
+- The stdout/JSON divergence is itself a tool bug; the JSON is
+  the audit-of-record but the stdout is misleading.
+
+**Workaround for Pattern G adds today**: write the new lemma in
+**explicit `\<lbrace>P\<rbrace> body \<lbrace>Q\<rbrace>` form**
+even if the surrounding code uses the abbreviation. Semantically
+identical; lets the tools see it. See [[0019]] for the full
+revert + rewrite cycle when this bit me.
+
+**Real fix (follow-up)**: extend `HOARE_TRIPLE_RE` in
+`tools/spec_strengthen/spec_strengthen_scan.py` to also match
+`<body> \<lbrace>P\<rbrace>` (no leading `\<lbrace>...\<rbrace>`
+pre-bracket), treating that as `pre = post = P`. Small regex
+patch, fixes the issue at source. Not blocking — the manual
+workaround is one syntactic substitution.
+
 ---
 
 ## Pattern E — Missing co-preserved invariant
