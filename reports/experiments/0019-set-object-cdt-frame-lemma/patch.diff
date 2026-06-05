@@ -1,0 +1,15 @@
+diff --git a/proof/invariant-abstract/KHeap_AI.thy b/proof/invariant-abstract/KHeap_AI.thy
+index 713fd08..d98b17d 100644
+--- a/proof/invariant-abstract/KHeap_AI.thy
++++ b/proof/invariant-abstract/KHeap_AI.thy
+@@ -1278,6 +1278,10 @@ lemma set_object_machine_state[wp]:
+   "set_object p ko \<lbrace>\<lambda>s. P (machine_state s)\<rbrace>"
+   by (wpsimp wp: set_object_wp_strong)
+ 
++lemma set_object_cdt[wp]:
++  "\<lbrace>\<lambda>s. P (cdt s)\<rbrace> set_object p ko \<lbrace>\<lambda>_ s. P (cdt s)\<rbrace>"
++  by (wpsimp wp: set_object_wp_strong)
++
+ lemma valid_irq_states_triv:
+   assumes irqs: "\<And>P. f \<lbrace>\<lambda>s. P (interrupt_states s)\<rbrace>"
+   assumes ms: "\<And>P. f \<lbrace>\<lambda>s. P (machine_state s)\<rbrace>"
