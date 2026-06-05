@@ -15,8 +15,9 @@ Branch: `spec-strengthen` (PR-4)
 This batch ran the full slim-SKILL workflow end-to-end for the first
 time. Four `apply`-verified strengthenings landed on CSpace_AI.thy
 — all Pattern B/G additive, all centred on the `set_cdt` operation —
-plus six SKILL + tools infrastructure commits and one audit-hygiene
-fix.
+plus six SKILL + tools infrastructure experiments (0008-0013, across
+seven commits — 0009 was split into two follow-up commits) and one
+audit-hygiene fix (0018).
 
 | # | Lemma | Pattern | apply wall | Δ file wall | Downstream cite |
 |---|---|---|---:|---:|---|
@@ -36,9 +37,12 @@ playbook case study (see §5 below).
 
 ---
 
-## 1. Infrastructure context (commits 0008-0013)
+## 1. Infrastructure context (experiments 0008-0013)
 
-Before any source change, six Meta-PRs landed the workflow surface:
+Before any source change, six Meta-PR experiments (across seven
+commits — 0009's audit-trail follow-up landed as a separate
+commit `cba0a9b` on top of the main 0009 purge `0b0aea3`) landed
+the workflow surface:
 
 | # | Topic | Effect |
 |---|---|---|
@@ -283,12 +287,18 @@ exactly what an `--apply` attempt would have produced — at a
 fraction of the wall (probe ≈ 40-50 s, full apply ≈ 50-180 s).
 
 **Implication for the candidate list quality.** The scanner's
-`unused-premise` calibration in the playbook is **~50% TP**.
-This batch's 3/3 load-bearing rate is within the noise of that
-calibration (we drew from the top of the ranked list, where
-high-consumer-count lemmas may have load-bearing invariants
-more often because they're "central"). The probe is the
-correct filter; the scanner alone is not sufficient.
+`unused-premise` calibration in the playbook is **~50% TP**. The
+combined evidence pool — 2 probe rejections from this batch
+(`lsfco_cte_at/valid_objs`, `get_rs_real_cte_at/valid_objs`) plus
+1 from the earlier 0011-era session (`lsfco_cte_at/invs`, recorded
+in `reports/experiments/0011-*/decision.md`) — happens to give
+3/3 load-bearing on the samples drawn so far. This is too small
+to refine the playbook's 50% TP figure; it's consistent with
+"we drew from the top of the ranked list where high-consumer-
+count lemmas tend to be central enough that their premises are
+load-bearing." The substantive lesson is **the probe is the
+correct filter; the scanner alone is not sufficient** — that
+holds regardless of TP rate.
 
 ---
 
@@ -329,13 +339,33 @@ them reference cur_thread or idle_thread.
 
 **Playbook follow-up.** The playbook's Pattern G section
 currently says "manual detection only, ROI mostly delayed". This
-batch shows the ROI can be **immediate and dramatic** when the
-new frame's field is high-frequency in the same file. Worth
-codifying as a case study with a heuristic:
-> Before adding a Pattern G frame lemma, grep the same file for
-> `(<field-name> s)` occurrences in postconditions. A count
-> above ~50 predicts a measurable same-file wall improvement;
-> below that, ROI is downstream-only.
+batch produced **one** counterexample (0015's −11.3%) showing
+the ROI can occasionally be immediate. Worth recording as a
+case study, but not yet as a rule.
+
+**Unverified hypothesis** (do not promote to playbook until
+measured): the same-file wall delta might correlate with the
+frequency of `(<field-name> s)` references in that file's
+postconditions / proof obligations. Three data points isn't
+enough to fit a threshold — a casual grep for `machine_state s`
+/ `cur_thread s` / `idle_thread s` in CSpace_AI.thy doesn't show
+counts approaching any particular threshold and certainly
+nothing as clean as a "~50 separates immediate from delayed".
+
+To turn this into a usable heuristic, future Pattern G
+experiments should record alongside each measurement:
+- count of `(<field> s)` literal references in pre/post lines
+  of the same file,
+- count of `[wp]`-applicable goal shapes after a parsing pass
+  through the trial proof state (would need an Isa-REPL probe
+  extension; tooling does not exist today),
+- the eventual wall delta.
+
+After ~5-10 Pattern G data points with these recorded, a
+threshold (if any) becomes statistically meaningful. Until then,
+the safe statement is: "Pattern G ROI is mostly delayed, but
+when the new field is heavily referenced in same-file
+postconditions, an immediate wp-class pickup is possible."
 
 ### 4.3 Workflow stress test — what failed
 
@@ -468,10 +498,17 @@ cba0a9b audit(0009): follow-up — record proof-skill-resets memory update
 35d4aa2 audit(0008): SKILL slim follow-ups — fake Hoare rule + derivability.thy vestige
 ```
 
-Each commit has a corresponding `reports/experiments/00NN-*/` audit
-directory; experiments 0014-0017 carry the full 4-file seL4-source
-PR record (`patch.diff` + `command.sh` + `measurement.json` +
-`decision.md`); the rest carry the simplified 2-file Meta-PR record.
+Each experiment/topic has a corresponding `reports/experiments/00NN-*/`
+audit directory; experiments 0014-0017 carry the full 4-file
+seL4-source PR record (`patch.diff` + `command.sh` +
+`measurement.json` + `decision.md`); the rest carry the simplified
+2-file Meta-PR record. **The commit↔experiment mapping is not 1:1**:
+`c0e1950` covers both 0016 and 0017 (a single commit landing two
+related Pattern G frame lemmas); 0009 is split across two commits
+(`0b0aea3` for the SKILL-duplicate purge and `cba0a9b` for the
+proof-skill-resets memory follow-up). The 11 commits above cover
+10 distinct experiment/topic IDs (0008-0018, excluding the
+"meta-of-meta" follow-up nature of `cba0a9b`).
 
 l4v submodule pointer at end of batch: `00d9073f70d0` (unchanged —
 source changes live in the working tree only; upstream l4v PRs are
