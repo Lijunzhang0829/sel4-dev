@@ -180,6 +180,9 @@ def main() -> int:
                     default=Path("reports/spec-strengthen"))
     ap.add_argument("--limit", type=int, default=30)
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--json", action="store_true",
+                    help="Emit ranked rows as a JSON array on stdout "
+                         "(for tool consumption by spec_strengthen_run.sh).")
     args = ap.parse_args()
 
     scan_root = args.scan_root or Path(TARGET_SCAN_ROOTS[args.target])
@@ -231,6 +234,14 @@ def main() -> int:
     rows = list(by_name.values())
     rows.sort(key=lambda r: (r["done"], -r["roi_score"], -r["consumers_lines"]))
     rows = rows[: args.limit]
+
+    if args.json:
+        import json
+        # Strip internal-only fields before emitting
+        json_rows = [{k: v for k, v in r.items() if not k.startswith("_")}
+                     for r in rows]
+        print(json.dumps(json_rows, ensure_ascii=False))
+        return 0
 
     today = dt.date.today().isoformat()
     out_lines = [

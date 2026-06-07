@@ -1,14 +1,28 @@
 # spec-0014 — add `set_cdt_cdt_update` functional postcondition (seL4-source PR)
 
+> **Reclassification note (2026-06-07).** Under the revised strict
+> definition of spec strengthening — new spec must strictly entail old
+> spec, AND old spec cannot derive new spec — Pattern B (missing
+> functional postcondition) **no longer qualifies**: there is no "old"
+> companion lemma to derive `<name>_old` against; the change is
+> "interface filling" (new public fact where none existed before), not
+> strengthening. This experiment **remains applied** (the lemma is in
+> the submodule working tree, downstream not yet using it) but is
+> **excluded** from the strict spec-strengthening categorization. New
+> shell tooling and survey/execute pipeline only handle patterns A / C
+> / D / G; B / E / F are dropped from automation surface. See
+> `reports/spec-strengthen/AInvs-spec-strengthen-summary.md` for the
+> cross-batch view.
+
 | Field | Value |
 |---|---|
 | **Variant** | seL4-source PR (rule 5 full record) |
 | **Branch** | `spec-strengthen` |
 | **Date** | 2026-06-02 |
-| **Verdict** | applied |
-| **Patch shape** | 2 (additive) |
+| **Verdict** | applied (kept; reclassified — see note above) |
+| **Patch shape** | additive (Pattern B, not strict strengthening under revised definition) |
 | **Impact verdict** | `additive` |
-| **Acceptance** | PASS (all 4 gates) |
+| **Acceptance** | PASS (all 4 gates, by the looser pre-2026-06-07 definition) |
 
 ## What changed
 
@@ -17,7 +31,7 @@ new companion lemma right after `set_cdt_valid_pspace`:
 
 ```isabelle
 lemma set_cdt_cdt_update:
-  "\<lbrace>\<top>\<rbrace> set_cdt t \<lbrace>\<lambda>_ s. cdt s = t\<rbrace>"
+  "\<lbrace>\<top>\<rbrace> set_cdt t \<lbrace>\<lambda> \<rbrace>"
   by (wpsimp simp: set_cdt_def)
 ```
 

@@ -1,58 +1,50 @@
 #!/usr/bin/env bash
 # tools/spec_strengthen/spec_strengthen_run.sh
 #
-# Orchestrate a single Pattern G (or custom) spec strengthening end-
-# to-end. Stabilizes the workflow that 0014-0022 actually used.
+# Process manager for spec strengthening on the AInvs (and related)
+# sessions. Implements a 5-subcommand interface with a JSONL
+# candidate-state ledger.
 #
-# Two invocation modes:
+# Subcommands:
 #
-#   Mode A (Pattern G — auto-generated template):
-#     spec_strengthen_run.sh <theory> <op> <field> <expid> [-y]
+#   survey <file> [--session <s>] [--pattern G|C|A|all] [--out <path>]
+#       Scan <file> for Pattern G / C / A candidates. Pattern D is
+#       not surveyed (no automated detector). Write a markdown survey
+#       doc + append `discovered` events to the ledger for new
+#       candidates.
 #
-#     Example:
-#       spec_strengthen_run.sh \
-#         verification/l4v/proof/invariant-abstract/KHeap_AI.thy \
-#         set_object domain_index \
-#         0023-set-object-domain-index-frame-lemma
+#   execute --candidate <key> --expid <expid> [-y] [--retry]
+#       Run the full pipeline on a candidate identified by canonical
+#       key (e.g. `G:KHeap_AI:set_object:domain_index`). Branches by
+#       the pattern prefix.  Resumes failed candidates only with
+#       --retry.
 #
-#   Mode B (custom patch — author provides the patch file):
-#     spec_strengthen_run.sh --patch <patchfile> --theory <theory> \
-#                            --expid <expid> [-y]
+#   execute --pattern A|D --patch <patch> --theory <thy> \
+#           --expid <expid> [--key <key>] [-y]
+#       Run the standard pipeline on a custom patch. Pattern D's
+#       only path; Pattern A's fallback path.
 #
-# What it does (Mode A):
-#   1.  Pre-flight: direct grep + crunch-derived grep. Abort if
-#       either reports a collision (saves a doomed ~30 s check-
-#       theory.sh trial).
-#   2.  Generate a template Pattern G lemma in the explicit Hoare
-#       form (parser-safe per [[0019]] lesson). Write to
-#       logs/spec-strengthen-<file>-<op>_<field>-<DATE>.patch.
-#   3.  Show the proposed patch + ask "edit-and-continue [yes/no]"
-#       (skip with -y).
-#   4.  Snapshot the theory file (post-edit baseline).
-#   5.  Run baseline wall + trial wall via $ISA_SCRIPTS/check-theory.sh.
-#   6.  Run spec_impact.py --measurement-out → measurement.json.
-#       Abort if gate fails (no apply, no orphan source change).
-#   7.  Apply the patch via check-theory.sh --apply.
-#   8.  Capture unified diff via diff -u <pre-snapshot> <post> and
-#       prepend the diff --git header.
-#   9.  Build reports/experiments/<expid>/ with the full 4-file
-#       seL4-source PR audit record.
+#   status [<key>]
+#       Print the current state of one candidate (latest ledger
+#       event) or all candidates with their states.
 #
-# Defensive design:
-#   - Pre-flight is cheap; runs before any check-theory.sh trial.
-#   - Snapshot discipline (per [[0018]] lesson) means patch.diff is
-#     always generated from the actual pre/post pair, never hand-
-#     written or extracted from a cumulative diff.
-#   - On any pipeline failure between steps 4 and 7, the script
-#     leaves the theory file at the same state it was in before
-#     this run (the source hasn't been --apply-ed yet).
+#   ledger
+#       Tail the last 40 ledger events.
 #
-# Limitations:
-#   - Pattern G only for Mode A. Other patterns (B / C / D / E)
-#     need a custom patch — use Mode B.
-#   - Auto-derived insertion line uses the LAST set_<op>_*[wp]
-#     lemma in the file as the anchor. If you want a different
-#     insertion point, edit the generated patch before answering "y".
+#   mark-audited <key> [--expid <expid>]
+#       Append an `audited` event after the author commits the audit
+#       dir to git.
+#
+#   mark-aborted <key> [--reason <r>]
+#       Append an `aborted` event; the candidate is explicitly
+#       removed from active consideration.
+#
+# Spec-strengthening patterns supported: A, C, D, G.
+# Patterns B, E, F are deliberately not handled — they are not strict
+# spec strengthening under the project's revised definition.
+#
+# State storage: reports/spec-strengthen/candidate-ledger.jsonl
+# (append-only; latest event per key = current state).
 
 set -euo pipefail
 
@@ -61,60 +53,60 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 ISA_SCRIPTS="${ISA_SCRIPTS:-.claude/skills/isabelle_prover/scripts}"
 SPEC_TOOLS="${SPEC_TOOLS:-tools/spec_strengthen}"
+LEDGER="reports/spec-strengthen/candidate-ledger.jsonl"
 
-# ---------------- arg parsing -----------------------------------------------
+mkdir -p "$(dirname "$LEDGER")"
+touch "$LEDGER"
 
-CUSTOM_PATCH=""
-THEORY=""
-OP=""
-FIELD=""
-EXPID=""
-SKIP_PROMPT=0
+# ---------------- ledger helpers --------------------------------------------
 
-usage() {
-  cat >&2 <<'EOF'
-Usage (Mode A — Pattern G):
-  spec_strengthen_run.sh <theory> <op> <field> <expid> [-y]
-
-Usage (Mode B — custom patch):
-  spec_strengthen_run.sh --patch <patchfile> --theory <theory> \
-                         --expid <expid> [-y]
-
-Run from the repo root.
-EOF
-  exit 2
+# Append a JSON line to the ledger.  Caller provides a JSON dict;
+# script adds ts.
+ledger_append() {
+  local payload="$1"
+  local ts
+  ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  python3 -c "
+import json, sys
+d = json.loads('''$payload''')
+d['ts'] = '$ts'
+print(json.dumps(d, ensure_ascii=False))
+" >> "$LEDGER"
 }
 
-# Detect mode by first token
-if [[ "${1:-}" == "--patch" ]]; then
-  # Mode B
-  while [ $# -gt 0 ]; do
-    case "$1" in
-      --patch)  CUSTOM_PATCH="$2"; shift 2 ;;
-      --theory) THEORY="$2";       shift 2 ;;
-      --expid)  EXPID="$2";        shift 2 ;;
-      -y)       SKIP_PROMPT=1;     shift ;;
-      *)        usage ;;
-    esac
-  done
-  [ -z "$CUSTOM_PATCH" ] || [ -z "$THEORY" ] || [ -z "$EXPID" ] && usage
-else
-  # Mode A (positional)
-  [ $# -lt 4 ] && usage
-  THEORY="$1"; OP="$2"; FIELD="$3"; EXPID="$4"
-  shift 4
-  while [ $# -gt 0 ]; do
-    case "$1" in
-      -y) SKIP_PROMPT=1; shift ;;
-      *)  usage ;;
-    esac
-  done
-fi
+# Get the latest event for a candidate key.  Echo the event JSON or
+# empty if no events for that key.
+ledger_state() {
+  local key="$1"
+  tac "$LEDGER" 2>/dev/null | python3 -c "
+import json, sys
+key = '$key'
+for line in sys.stdin:
+    line = line.strip()
+    if not line: continue
+    try:
+        d = json.loads(line)
+    except json.JSONDecodeError:
+        continue
+    if d.get('key') == key:
+        print(json.dumps(d, ensure_ascii=False))
+        sys.exit(0)
+"
+}
 
-# Sanity: theory must exist
-[ -f "$THEORY" ] || { echo "theory not found: $THEORY" >&2; exit 4; }
+# Convenience: echo just the 'event' field of the latest state.
+ledger_state_event() {
+  local state
+  state="$(ledger_state "$1")"
+  if [ -z "$state" ]; then
+    echo "none"
+  else
+    echo "$state" | python3 -c "import json,sys; print(json.load(sys.stdin)['event'])"
+  fi
+}
 
-# Derive session from path prefix
+# ---------------- session derivation ----------------------------------------
+
 detect_session() {
   case "$1" in
     *spec/abstract/*)            echo ASpec ;;
@@ -129,235 +121,547 @@ detect_session() {
     *)                           echo "" ;;
   esac
 }
-SESSION=$(detect_session "$THEORY")
-[ -z "$SESSION" ] && { echo "could not derive session from $THEORY" >&2; exit 4; }
 
-THEORY_BASENAME=$(basename "$THEORY" .thy)
-DATE_TAG=$(date +%Y%m%d)
+# ---------------- usage -----------------------------------------------------
 
-echo "================================================================"
-echo "spec_strengthen_run.sh"
-echo "================================================================"
-echo "  theory:  $THEORY"
-echo "  session: $SESSION"
-echo "  mode:    $([ -n "$CUSTOM_PATCH" ] && echo "B (custom patch)" || echo "A (Pattern G)")"
-[ -n "$OP" ]    && echo "  op:      $OP"
-[ -n "$FIELD" ] && echo "  field:   $FIELD"
-echo "  expid:   $EXPID"
-echo ""
+usage() {
+  cat >&2 <<'EOF'
+spec_strengthen_run.sh — process manager for spec strengthening
+                        (patterns A, C, D, G only).
 
-# ---------------- preflight (Mode A only) -----------------------------------
+Subcommands:
+  survey  <file> [--session <s>] [--pattern G|C|A|all] [--out <path>]
+  execute --candidate <key> --expid <expid> [-y] [--retry]
+  execute --pattern A|D --patch <patch> --theory <thy> --expid <expid>
+                [--key <key>] [-y]
+  status  [<key>]
+  ledger
+  mark-audited <key> [--expid <expid>]
+  mark-aborted <key> [--reason <r>]
 
-confirm() {
-  local prompt="$1"
-  if [ "$SKIP_PROMPT" = 1 ]; then
-    echo "[auto-yes via -y]"
-    return 0
-  fi
-  read -r -p "$prompt [y/N] " ans
-  [[ "$ans" =~ ^[Yy]$ ]] || return 1
+Run from the repo root.
+EOF
+  exit 2
 }
 
-if [ -z "$CUSTOM_PATCH" ]; then
-  LEMMA_NAME="${OP}_${FIELD}"
+# ---------------- subcommand: status ----------------------------------------
 
-  echo "[preflight 1/3] direct grep for $LEMMA_NAME ..."
-  # NOTE: `grep | wc -l` with no matches makes grep exit 1, which
-  # set -e + pipefail would propagate. Trail with `|| true` to
-  # neutralize. Same pattern in step 2/3 below.
-  DIRECT_HITS=$( (grep -rln "\b${LEMMA_NAME}\b" verification/l4v/ 2>/dev/null || true) | wc -l)
-  if [ "$DIRECT_HITS" -gt 0 ]; then
-    echo "  ✗ FAIL — $LEMMA_NAME already exists in $DIRECT_HITS files"
-    grep -rn "\b${LEMMA_NAME}\b" verification/l4v/ 2>/dev/null | head -3 || true
-    exit 5
+cmd_status() {
+  local key="${1:-}"
+  if [ -n "$key" ]; then
+    local state
+    state="$(ledger_state "$key")"
+    if [ -z "$state" ]; then
+      echo "$key: no events"
+      return 0
+    fi
+    echo "$state" | python3 -m json.tool
+    return 0
   fi
-  echo "  ✓ 0 hits"
 
-  echo "[preflight 2/3] crunch-derived grep ..."
-  WRAPPERS="set_simple_ko set_cap thread_set set_thread_state set_bound_notification ${OP}"
-  PATTERN=""
-  for w in $WRAPPERS; do
-    PATTERN="${PATTERN}crunch ${FIELD}\\b.*${w}|"
-  done
-  PATTERN="${PATTERN%|}"
-  CRUNCH_HITS=$( (grep -rEn "${PATTERN}" verification/l4v/proof/invariant-abstract/ 2>/dev/null || true) | wc -l)
-  if [ "$CRUNCH_HITS" -gt 0 ]; then
-    echo "  ✗ FAIL — $FIELD has $CRUNCH_HITS crunch derivation(s) on wrappers"
-    echo "          that reach $OP. Skip this field; the gap is"
-    echo "          already covered. Hits:"
-    grep -rEn "${PATTERN}" verification/l4v/proof/invariant-abstract/ 2>/dev/null | head -5 || true
-    exit 5
-  fi
-  echo "  ✓ 0 hits"
-
-  # Find insertion anchor — last set_<op>_*[wp] lemma in the file
-  ANCHOR_LINE=$(grep -nE "^lemma ${OP}_[a-zA-Z_]+\s*\[wp\]?:" "$THEORY" | tail -1 | cut -d: -f1)
-  if [ -z "$ANCHOR_LINE" ]; then
-    echo "[preflight 3/3] ✗ no existing ${OP}_*[wp] lemma found as anchor"
-    exit 5
-  fi
-  # Find the `by` line of the anchor lemma (search forward ~10 lines).
-  # awk regex uses POSIX [[:space:]], NOT Perl \s.
-  BY_LINE=$(awk -v start="$ANCHOR_LINE" 'NR>=start && /^[[:space:]]*by[[:space:]]/ {print NR; exit}' "$THEORY")
-  [ -z "$BY_LINE" ] && { echo "could not locate by-line of anchor lemma at $ANCHOR_LINE" >&2; exit 5; }
-  ANCHOR_NAME=$(sed -n "${ANCHOR_LINE}p" "$THEORY" | grep -oE "^lemma ${OP}_[a-zA-Z_]+" | sed "s/^lemma //")
-  echo "[preflight 3/3] insertion anchor: $ANCHOR_NAME (by-line $BY_LINE)"
-  echo "  ✓ GO"
-  echo ""
-
-  # Generate the patch file
-  PATCH_PATH="logs/spec-strengthen-${THEORY_BASENAME}-${LEMMA_NAME}-${DATE_TAG}.patch"
-  mkdir -p logs
-  BY_TEXT=$(sed -n "${BY_LINE}p" "$THEORY")
-  cat > "$PATCH_PATH" <<EOF
-${BY_LINE} ${BY_LINE}
-${BY_TEXT}
-
-lemma ${LEMMA_NAME}[wp]:
-  "\\<lbrace>\\<lambda>s. P (${FIELD} s)\\<rbrace> ${OP} p ko \\<lbrace>\\<lambda>_ s. P (${FIELD} s)\\<rbrace>"
-  ${BY_TEXT##  }
+  # All candidates: latest event per key
+  python3 <<EOF
+import json
+from collections import OrderedDict
+latest = OrderedDict()
+with open("$LEDGER") as f:
+    for line in f:
+        line = line.strip()
+        if not line: continue
+        try: d = json.loads(line)
+        except json.JSONDecodeError: continue
+        latest[d['key']] = d
+if not latest:
+    print("(ledger is empty)")
+else:
+    print(f"{'event':<20} {'key'}")
+    print("-" * 80)
+    for k, d in latest.items():
+        print(f"{d['event']:<20} {k}")
 EOF
+}
 
-  echo "Generated patch at: $PATCH_PATH"
-  echo "----------------------------------------------------------------"
-  cat "$PATCH_PATH"
-  echo "----------------------------------------------------------------"
-  echo "Edit if needed (different statement, different proof tactic, ..)"
-  echo "and then continue. The default uses Pattern G shape +"
-  echo "the same 'by ...' tactic as the anchor lemma."
+# ---------------- subcommand: ledger ----------------------------------------
+
+cmd_ledger() {
+  tail -n 40 "$LEDGER" | python3 -c "
+import json, sys
+for line in sys.stdin:
+    line = line.strip()
+    if not line: continue
+    try: d = json.loads(line)
+    except json.JSONDecodeError: continue
+    ts = d.get('ts', '?')
+    ev = d.get('event', '?')
+    key = d.get('key', '?')
+    print(f'{ts}  {ev:<18} {key}')
+"
+}
+
+# ---------------- subcommand: mark-audited / mark-aborted -------------------
+
+cmd_mark_audited() {
+  local key="${1:-}"; [ -z "$key" ] && usage
+  shift || true
+  local expid=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --expid) expid="$2"; shift 2 ;;
+      *) usage ;;
+    esac
+  done
+  ledger_append "{\"key\":\"$key\",\"event\":\"audited\",\"expid\":\"$expid\"}"
+  echo "marked: $key → audited"
+}
+
+cmd_mark_aborted() {
+  local key="${1:-}"; [ -z "$key" ] && usage
+  shift || true
+  local reason=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --reason) reason="$2"; shift 2 ;;
+      *) usage ;;
+    esac
+  done
+  ledger_append "{\"key\":\"$key\",\"event\":\"aborted\",\"reason\":\"$reason\"}"
+  echo "marked: $key → aborted"
+}
+
+# ---------------- subcommand: survey ----------------------------------------
+
+cmd_survey() {
+  local file="" session="" pattern="all" out=""
+  # first positional arg = file
+  if [ "${1:-}" = "" ] || [[ "${1:-}" == --* ]]; then usage; fi
+  file="$1"; shift
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --session) session="$2"; shift 2 ;;
+      --pattern) pattern="$2"; shift 2 ;;
+      --out)     out="$2";     shift 2 ;;
+      *) usage ;;
+    esac
+  done
+
+  [ -f "$file" ] || { echo "theory not found: $file" >&2; exit 4; }
+  if [ -z "$session" ]; then
+    session="$(detect_session "$file")"
+    [ -z "$session" ] && { echo "could not derive session from $file" >&2; exit 4; }
+  fi
+
+  local theory_base date_tag
+  theory_base="$(basename "$file" .thy)"
+  date_tag="$(date +%Y%m%d)"
+  [ -z "$out" ] && out="reports/spec-strengthen/survey-${theory_base}-${date_tag}.md"
+  mkdir -p "$(dirname "$out")"
+
+  echo "[survey] file=$file  session=$session  pattern=$pattern"
+  echo "[survey] writing → $out"
+
+  # Survey output: build into a temp file then move
+  local tmp_md
+  tmp_md="$(mktemp)"
+  {
+    echo "# spec-strengthen survey — $session / $theory_base.thy — $(date +%Y-%m-%d)"
+    echo ""
+    echo "Source: \`$file\`"
+    echo ""
+  } > "$tmp_md"
+
+  # ---- Pattern G ---------------------------------------------------------
+  if [ "$pattern" = "all" ] || [ "$pattern" = "G" ]; then
+    echo "## Pattern G — frame preservation" >> "$tmp_md"
+    echo "" >> "$tmp_md"
+    # Detect existing ops with [wp] companions
+    local gap_jsonl
+    gap_jsonl="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_frame_gap.py" "$file" 2>/dev/null || true)"
+    if [ -z "$gap_jsonl" ]; then
+      echo "(no Pattern G candidates — file has no \`set_<op>_*[wp]\` companions)" >> "$tmp_md"
+    else
+      {
+        echo "| Key | (op, field) | anchor | status | prior |"
+        echo "|---|---|---|---|---|"
+        echo "$gap_jsonl" | python3 -c "
+import json, sys, os, subprocess
+ledger_path = os.environ.get('LEDGER', '$LEDGER')
+
+# Build a map: key -> latest event
+latest = {}
+try:
+    with open(ledger_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line: continue
+            try: d = json.loads(line)
+            except json.JSONDecodeError: continue
+            latest[d['key']] = d
+except FileNotFoundError:
+    pass
+
+for line in sys.stdin:
+    line = line.strip()
+    if not line: continue
+    r = json.loads(line)
+    prior = latest.get(r['key'], {}).get('event', '-')
+    anchor_str = r.get('anchor') or '—'
+    if r.get('anchor_line'):
+        anchor_str = f'{anchor_str} (L{r[\"anchor_line\"]})'
+    status = r['status']
+    if status != 'clean':
+        status = f'✗ {status} ({r[\"reason\"]})'
+    else:
+        status = '✓ clean'
+    print(f'| \`{r[\"key\"]}\` | {r[\"op\"]} / {r[\"field\"]} | {anchor_str} | {status} | {prior} |')
+"
+      } >> "$tmp_md"
+
+      # Append discovered events for new candidates (status=clean only;
+      # crunch-derived are NOT discovered, they are 'preflight_failed').
+      echo "$gap_jsonl" | python3 -c "
+import json, sys, subprocess
+ledger_path = '$LEDGER'
+
+# Build map of existing events
+existing = set()
+try:
+    with open(ledger_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line: continue
+            try: d = json.loads(line)
+            except json.JSONDecodeError: continue
+            existing.add(d['key'])
+except FileNotFoundError:
+    pass
+
+import datetime
+new_events = []
+for line in sys.stdin:
+    line = line.strip()
+    if not line: continue
+    r = json.loads(line)
+    if r['key'] in existing:
+        continue
+    ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    if r['status'] == 'clean':
+        ev = {'ts': ts, 'key': r['key'], 'event': 'discovered',
+              'pattern': 'G', 'theory': r['theory'],
+              'metadata': {'op': r['op'], 'field': r['field'],
+                           'anchor': r['anchor'], 'anchor_line': r['anchor_line']}}
+    else:
+        ev = {'ts': ts, 'key': r['key'], 'event': 'preflight_failed',
+              'pattern': 'G', 'theory': r['theory'],
+              'reason': r['reason']}
+    new_events.append(ev)
+
+with open(ledger_path, 'a') as f:
+    for ev in new_events:
+        f.write(json.dumps(ev, ensure_ascii=False) + '\n')
+
+print(f'# appended {len(new_events)} new ledger event(s)', file=sys.stderr)
+"
+    fi
+    echo "" >> "$tmp_md"
+  fi
+
+  # ---- Pattern C ---------------------------------------------------------
+  if [ "$pattern" = "all" ] || [ "$pattern" = "C" ]; then
+    echo "## Pattern C — unused premise" >> "$tmp_md"
+    echo "" >> "$tmp_md"
+    # Use spec_candidates.py output, filter to this file, kind=unused-premise
+    local cand_out
+    cand_out="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_candidates.py" --target "${session,,}" --limit 30 --json 2>/dev/null || true)"
+    if [ -z "$cand_out" ]; then
+      echo "(scanner returned no output for this session)" >> "$tmp_md"
+    else
+      {
+        echo "| Key | lemma / premise | ROI | prior |"
+        echo "|---|---|---|---|"
+        echo "$cand_out" | python3 -c "
+import json, sys, os
+ledger_path = '$LEDGER'
+theory = '$file'; theory_base = '$theory_base'
+
+latest = {}
+try:
+    with open(ledger_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line: continue
+            try: d = json.loads(line)
+            except json.JSONDecodeError: continue
+            latest[d['key']] = d
+except FileNotFoundError:
+    pass
+
+data = sys.stdin.read()
+try:
+    cands = json.loads(data)
+except json.JSONDecodeError:
+    print('(candidates tool output not JSON; skipping)', file=sys.stderr)
+    sys.exit(0)
+
+import datetime
+new_events = []
+for c in cands:
+    if c.get('kind') != 'unused-premise': continue
+    if theory_base not in c.get('file', ''): continue
+    # Extract premise from suggested_move
+    import re
+    m = re.search(r'dropping \`([^\`]+)\`', c.get('suggested_move', ''))
+    premise = m.group(1) if m else '?'
+    key = f'C:{theory_base}:{c[\"name\"]}:{premise}'
+    prior = latest.get(key, {}).get('event', '-')
+    roi = c.get('consumers', 0)
+    print(f'| \`{key}\` | {c[\"name\"]} / {premise} | {roi} | {prior} |')
+    if key not in latest:
+        ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        ev = {'ts': ts, 'key': key, 'event': 'discovered',
+              'pattern': 'C', 'theory': theory,
+              'metadata': {'lemma': c['name'], 'premise': premise, 'roi': roi}}
+        new_events.append(ev)
+
+with open(ledger_path, 'a') as f:
+    for ev in new_events:
+        f.write(json.dumps(ev, ensure_ascii=False) + '\n')
+print(f'# appended {len(new_events)} new ledger event(s)', file=sys.stderr)
+"
+      } >> "$tmp_md"
+    fi
+    echo "" >> "$tmp_md"
+    echo "_C candidates are not probed during survey (each probe is ~40s); the probe is the first step of \`execute\`._" >> "$tmp_md"
+    echo "" >> "$tmp_md"
+  fi
+
+  # ---- Pattern A ---------------------------------------------------------
+  if [ "$pattern" = "all" ] || [ "$pattern" = "A" ]; then
+    echo "## Pattern A — paired weak/strong cleanup" >> "$tmp_md"
+    echo "" >> "$tmp_md"
+    local a_out
+    a_out="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_candidates.py" --target "${session,,}" --limit 30 --json 2>/dev/null || true)"
+    if [ -z "$a_out" ]; then
+      echo "(scanner returned no output)" >> "$tmp_md"
+    else
+      {
+        echo "| Key | weak lemma | strong companion (suggested) | redirect proof? | prior |"
+        echo "|---|---|---|---|---|"
+        echo "$a_out" | python3 -c "
+import json, sys, re, subprocess, os
+ledger_path = '$LEDGER'
+theory = '$file'; theory_base = '$theory_base'
+
+latest = {}
+try:
+    with open(ledger_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line: continue
+            try: d = json.loads(line)
+            except json.JSONDecodeError: continue
+            latest[d['key']] = d
+except FileNotFoundError:
+    pass
+
+try:
+    cands = json.loads(sys.stdin.read())
+except json.JSONDecodeError:
+    sys.exit(0)
+
+import datetime
+new_events = []
+for c in cands:
+    if c.get('kind') != 'paired-chain': continue
+    if theory_base not in c.get('file', ''): continue
+    key = f'A:{theory_base}:{c[\"name\"]}'
+    prior = latest.get(key, {}).get('event', '-')
+    # Check redirect proof body shape
+    companion = c.get('companion', {}).get('name', '?') if c.get('companion') else '?'
+    # Best-effort grep for proof body
+    redirect_status = '? (manual check)'
+    try:
+        thy_text = open(theory).read()
+        m = re.search(rf'^lemma\s+{re.escape(c[\"name\"])}\b.*?^\s*(by|apply)\b[^\n]*', thy_text, re.MULTILINE | re.DOTALL)
+        if m and 'strengthen' in m.group(0):
+            redirect_status = '✓ (likely)'
+    except Exception:
+        pass
+    print(f'| \`{key}\` | {c[\"name\"]} | {companion} | {redirect_status} | {prior} |')
+    if key not in latest:
+        ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        ev = {'ts': ts, 'key': key, 'event': 'discovered',
+              'pattern': 'A', 'theory': theory,
+              'metadata': {'weak': c['name'], 'strong': companion}}
+        new_events.append(ev)
+
+with open(ledger_path, 'a') as f:
+    for ev in new_events:
+        f.write(json.dumps(ev, ensure_ascii=False) + '\n')
+print(f'# appended {len(new_events)} new ledger event(s)', file=sys.stderr)
+"
+      } >> "$tmp_md"
+    fi
+    echo "" >> "$tmp_md"
+    echo "_Pattern A preflight is **heuristic only**; the shell cannot verify pre/post comparability or cross-file consumer impact._" >> "$tmp_md"
+    echo "_Execute via \`--pattern A --patch <patch> ...\` after author review and patch construction._" >> "$tmp_md"
+    echo "" >> "$tmp_md"
+  fi
+
+  # ---- Pattern D notice --------------------------------------------------
+  echo "## Pattern D — loose bound \`≤\` → \`=\`" >> "$tmp_md"
+  echo "" >> "$tmp_md"
+  echo "**No automated detector.** D requires domain knowledge to identify a \`≤\`-bound" >> "$tmp_md"
+  echo "postcondition that's actually \`=\`. To execute a D candidate:" >> "$tmp_md"
+  echo '```' >> "$tmp_md"
+  echo "  spec_strengthen_run.sh execute --pattern D --patch <patch> \\" >> "$tmp_md"
+  echo "    --theory <thy> --expid <expid> [--key <key>] [-y]" >> "$tmp_md"
+  echo '```' >> "$tmp_md"
+  echo "" >> "$tmp_md"
+  echo "The shell does not judge D candidate quality; it only runs the standard" >> "$tmp_md"
+  echo "baseline/trial/apply/audit pipeline once you supply a patch." >> "$tmp_md"
+
+  mv "$tmp_md" "$out"
+  echo "[survey] written: $out"
+  echo "[survey] state summary:"
+  cmd_status | tail -n +1
+}
+
+# ---------------- execute helpers -------------------------------------------
+
+# Standard pipeline: snapshot → baseline → trial → impact → apply →
+# audit dir. Called by all execute branches after pattern-specific
+# prep has produced a valid patch file.
+#
+# Args:
+#   $1 = key
+#   $2 = pattern (G/C/A/D)
+#   $3 = theory_abs
+#   $4 = session
+#   $5 = patch_path
+#   $6 = expid
+standard_pipeline() {
+  local key="$1" pattern="$2" theory_abs="$3" session="$4" patch="$5" expid="$6"
+  local audit_dir="reports/experiments/${expid}"
+  mkdir -p "$REPO_ROOT/$audit_dir"
+
+  local snap="/tmp/spec_strengthen_${expid}_pre.$$"
+  cp "$theory_abs" "$snap"
+  echo "[1/6] snapshot → $snap"
+
+  echo "[2/6] baseline wall ..."
+  local baseline_out baseline_ms
+  baseline_out="$(bash "$REPO_ROOT/$ISA_SCRIPTS/check-theory.sh" "$theory_abs" "$session" 2>&1 | tail -1)"
+  baseline_ms="$(echo "$baseline_out" | grep -oE '\([0-9]+ms\)' | tr -d '()ms')"
+  [ -z "$baseline_ms" ] && {
+    ledger_append "{\"key\":\"$key\",\"event\":\"trial_failed\",\"expid\":\"$expid\",\"reason\":\"baseline run failed\"}"
+    echo "  ✗ baseline run failed"; exit 7;
+  }
+  echo "  ✓ baseline_wall_ms=$baseline_ms"
+
+  echo "[3/6] trial wall (with patch) ..."
+  local trial_out trial_ms
+  trial_out="$(bash "$REPO_ROOT/$ISA_SCRIPTS/check-theory.sh" "$theory_abs" "$session" --patch "$patch" 2>&1 | tail -1)"
+  if ! echo "$trial_out" | grep -q '^OK'; then
+    ledger_append "{\"key\":\"$key\",\"event\":\"trial_failed\",\"expid\":\"$expid\",\"reason\":\"check-theory.sh --patch failed\"}"
+    echo "  ✗ trial FAILED: $trial_out"; exit 7;
+  fi
+  trial_ms="$(echo "$trial_out" | grep -oE '\([0-9]+ms\)' | tr -d '()ms')"
+  local delta_pct
+  delta_pct="$(awk -v b="$baseline_ms" -v t="$trial_ms" 'BEGIN{printf "%.1f", (t-b)*100.0/b}')"
+  echo "  ✓ trial_wall_ms=$trial_ms (Δ ${delta_pct}%)"
+
+  echo "[4/6] spec_impact verdict ..."
+  python3 "$REPO_ROOT/$SPEC_TOOLS/spec_impact.py" "$patch" "$theory_abs" \
+    --baseline-wall "$baseline_ms" --trial-wall "$trial_ms" \
+    --tree "$REPO_ROOT/verification/l4v/proof" \
+    --measurement-out "$REPO_ROOT/$audit_dir/measurement.json" >/dev/null 2>&1 || true
+  local gate verdict
+  gate="$(python3 -c "import json; d=json.load(open('$REPO_ROOT/$audit_dir/measurement.json')); print('PASS' if d.get('gate_pass') else 'FAIL')")"
+  verdict="$(python3 -c "import json; d=json.load(open('$REPO_ROOT/$audit_dir/measurement.json')); print(d.get('impact_verdict','?'))")"
+  echo "  verdict=$verdict gate=$gate"
+  if [ "$gate" != "PASS" ]; then
+    ledger_append "{\"key\":\"$key\",\"event\":\"impact_failed\",\"expid\":\"$expid\",\"verdict\":\"$verdict\"}"
+    echo "  ✗ Acceptance Gate 2 FAIL; no apply."
+    exit 8
+  fi
+
+  echo "[5/6] apply ..."
+  local apply_out apply_ms
+  apply_out="$(bash "$REPO_ROOT/$ISA_SCRIPTS/check-theory.sh" "$theory_abs" "$session" --apply "$patch" 2>&1 | tail -3)"
+  if ! echo "$apply_out" | grep -q 'Patch applied'; then
+    ledger_append "{\"key\":\"$key\",\"event\":\"trial_failed\",\"expid\":\"$expid\",\"reason\":\"apply failed\"}"
+    echo "  ✗ apply failed"; exit 7;
+  fi
+  apply_ms="$(echo "$apply_out" | grep -oE '\([0-9]+ms\)' | head -1 | tr -d '()ms')"
+  echo "  ✓ apply_wall_ms=$apply_ms"
+
+  echo "[6/6] capture patch.diff + audit dir ..."
+  local diff_tmp
+  diff_tmp="$(mktemp)"
+  diff -u "$snap" "$theory_abs" > "$diff_tmp" 2>/dev/null || true
+  local theory_rel="${theory_abs#$REPO_ROOT/}"
+  local theory_short="${theory_rel#verification/l4v/}"
+  {
+    echo "diff --git a/${theory_short} b/${theory_short}"
+    sed "1s|^--- .*|--- a/${theory_short}|; 2s|^+++ .*|+++ b/${theory_short}|" "$diff_tmp"
+  } > "$REPO_ROOT/$audit_dir/patch.diff"
+  rm -f "$diff_tmp"
+  cp "$patch" "$REPO_ROOT/$audit_dir/range-patch.patch.txt"
+
+  # command.sh + decision.md skeleton (pattern-specific)
+  write_command_sh "$audit_dir" "$theory_rel" "$session" "$expid"
+  write_decision_md "$audit_dir" "$key" "$pattern" "$theory_rel" \
+    "$expid" "$baseline_ms" "$trial_ms" "$apply_ms" "$verdict"
+
+  ledger_append "{\"key\":\"$key\",\"event\":\"applied\",\"expid\":\"$expid\",\"walls\":{\"baseline\":$baseline_ms,\"trial\":$trial_ms,\"apply\":$apply_ms},\"verdict\":\"$verdict\"}"
+
   echo ""
-  confirm "Continue with this patch?" || { echo "aborted"; exit 0; }
+  echo "================================================================"
+  echo "SUMMARY"
+  echo "================================================================"
+  echo "  key:       $key"
+  echo "  pattern:   $pattern"
+  echo "  expid:     $expid"
+  echo "  walls:     baseline=$baseline_ms ms  trial=$trial_ms ms (Δ${delta_pct}%)  apply=$apply_ms ms"
+  echo "  verdict:   $verdict / $gate"
+  echo "  audit:     $audit_dir/"
+  echo ""
+  echo "Next steps (author):"
+  echo "  1. Fill in TODO sections in $audit_dir/decision.md"
+  echo "  2. git add $audit_dir/ && git commit"
+  echo "  3. spec_strengthen_run.sh mark-audited '$key' --expid '$expid'"
+  echo "================================================================"
+}
 
-  CUSTOM_PATCH="$PATCH_PATH"
-else
-  [ -f "$CUSTOM_PATCH" ] || { echo "patch not found: $CUSTOM_PATCH" >&2; exit 4; }
-fi
-
-# ---------------- shape check (Mode A & B) ----------------------------------
-
-echo "[check 1/8] spec_witness_gen.py shape ..."
-SHAPE_OUT=$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_witness_gen.py" "$CUSTOM_PATCH" "$THEORY" 2>&1 | head -3)
-echo "$SHAPE_OUT" | sed 's/^/  /'
-case "$SHAPE_OUT" in
-  *"SHAPE 1"*) WITNESS_NEEDED=1 ;;
-  *"SHAPE 2"*) WITNESS_NEEDED=0 ;;
-  *"SHAPE 3"*) echo "  ✗ shape 3 (deletion) — Acceptance Gate 2 will fail. Abort."; exit 6 ;;
-  *"WEAKENING"*) echo "  ✗ weakening detected. Abort."; exit 6 ;;
-  *) echo "  ⚠ ambiguous shape — proceed with manual review"; WITNESS_NEEDED=0 ;;
-esac
-
-# ---------------- snapshot (pre-apply) --------------------------------------
-
-SNAPSHOT_DIR="/tmp/spec_strengthen_run"
-mkdir -p "$SNAPSHOT_DIR"
-PRE_SNAPSHOT="$SNAPSHOT_DIR/$(basename "$THEORY").pre.$$"
-cp "$THEORY" "$PRE_SNAPSHOT"
-echo "[check 2/8] snapshot saved → $PRE_SNAPSHOT"
-
-# ---------------- baseline wall ---------------------------------------------
-
-echo "[check 3/8] baseline wall ..."
-BASELINE_OUT=$(bash "$REPO_ROOT/$ISA_SCRIPTS/check-theory.sh" "$REPO_ROOT/$THEORY" "$SESSION" 2>&1 | tail -1)
-BASELINE_MS=$(echo "$BASELINE_OUT" | grep -oE '\([0-9]+ms\)' | tr -d '()ms')
-[ -z "$BASELINE_MS" ] && { echo "  ✗ baseline run failed: $BASELINE_OUT"; exit 7; }
-echo "  ✓ baseline_wall_ms=$BASELINE_MS"
-
-# ---------------- trial wall ------------------------------------------------
-
-echo "[check 4/8] trial wall (with patch) ..."
-TRIAL_OUT=$(bash "$REPO_ROOT/$ISA_SCRIPTS/check-theory.sh" "$REPO_ROOT/$THEORY" "$SESSION" --patch "$REPO_ROOT/$CUSTOM_PATCH" 2>&1 | tail -1)
-TRIAL_MS=$(echo "$TRIAL_OUT" | grep -oE '\([0-9]+ms\)' | tr -d '()ms')
-if ! echo "$TRIAL_OUT" | grep -q '^OK'; then
-  echo "  ✗ trial FAILED: $TRIAL_OUT"
-  echo "  source untouched (no apply happened). Exit."
-  exit 7
-fi
-DELTA_PCT=$(awk -v b="$BASELINE_MS" -v t="$TRIAL_MS" 'BEGIN{printf "%.1f", (t-b)*100.0/b}')
-echo "  ✓ trial_wall_ms=$TRIAL_MS (Δ ${DELTA_PCT}%)"
-
-# ---------------- spec_impact + measurement.json ----------------------------
-
-AUDIT_DIR="reports/experiments/${EXPID}"
-mkdir -p "$REPO_ROOT/$AUDIT_DIR"
-
-echo "[check 5/8] spec_impact verdict ..."
-IMPACT_OUT=$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_impact.py" "$REPO_ROOT/$CUSTOM_PATCH" "$REPO_ROOT/$THEORY" \
-  --baseline-wall "$BASELINE_MS" --trial-wall "$TRIAL_MS" \
-  --tree "$REPO_ROOT/verification/l4v/proof" \
-  --measurement-out "$REPO_ROOT/$AUDIT_DIR/measurement.json" 2>&1)
-GATE=$(python3 -c "import json; print('PASS' if json.load(open('$REPO_ROOT/$AUDIT_DIR/measurement.json'))['gate_pass'] else 'FAIL')")
-VERDICT=$(python3 -c "import json; print(json.load(open('$REPO_ROOT/$AUDIT_DIR/measurement.json'))['impact_verdict'])")
-echo "  verdict=$VERDICT gate=$GATE"
-if [ "$GATE" != "PASS" ]; then
-  echo "  ✗ Acceptance Gate 2 FAIL — no apply."
-  echo "  Inspect: $REPO_ROOT/$AUDIT_DIR/measurement.json"
-  exit 8
-fi
-
-# ---------------- apply ------------------------------------------------------
-
-echo "[check 6/8] apply ..."
-APPLY_OUT=$(bash "$REPO_ROOT/$ISA_SCRIPTS/check-theory.sh" "$REPO_ROOT/$THEORY" "$SESSION" --apply "$REPO_ROOT/$CUSTOM_PATCH" 2>&1 | tail -3)
-APPLY_MS=$(echo "$APPLY_OUT" | grep -oE '\([0-9]+ms\)' | head -1 | tr -d '()ms')
-if ! echo "$APPLY_OUT" | grep -q 'Patch applied'; then
-  echo "  ✗ apply FAILED"
-  echo "$APPLY_OUT" | sed 's/^/    /'
-  exit 7
-fi
-echo "  ✓ apply_wall_ms=$APPLY_MS"
-
-# ---------------- audit dir: patch.diff via snapshot ------------------------
-
-echo "[check 7/8] capture diff + build audit dir ..."
-
-# Generate patch.diff via diff -u against snapshot — the only
-# reliable way per [[0018]] (no hand-written unified diffs).
-DIFF_TMP=$(mktemp)
-diff -u "$PRE_SNAPSHOT" "$THEORY" > "$DIFF_TMP" || true
-PATCH_DIFF="$REPO_ROOT/$AUDIT_DIR/patch.diff"
-{
-  echo "diff --git a/${THEORY#verification/l4v/} b/${THEORY#verification/l4v/}"
-  sed "1s|^--- .*|--- a/${THEORY#verification/l4v/}|; 2s|^+++ .*|+++ b/${THEORY#verification/l4v/}|" "$DIFF_TMP"
-} > "$PATCH_DIFF"
-rm -f "$DIFF_TMP"
-
-# Verify the patch.diff round-trips
-if git -C verification/l4v apply --check --reverse "$PATCH_DIFF" 2>&1 | grep -q '^error:'; then
-  echo "  ⚠ patch.diff failed reverse-apply check — manual review needed"
-else
-  echo "  ✓ patch.diff round-trips"
-fi
-
-# Copy the range-replace patch into audit dir for transparency
-cp "$CUSTOM_PATCH" "$REPO_ROOT/$AUDIT_DIR/range-patch.patch.txt"
-
-# Generate command.sh
-cat > "$REPO_ROOT/$AUDIT_DIR/command.sh" <<EOF
+# Write command.sh into the audit dir
+write_command_sh() {
+  local audit_dir="$1" theory_rel="$2" session="$3" expid="$4"
+  cat > "$REPO_ROOT/$audit_dir/command.sh" <<EOF
 #!/usr/bin/env bash
-# Re-runnable measurement for $EXPID. Generated by spec_strengthen_run.sh.
+# Re-runnable measurement for ${expid}. Generated by spec_strengthen_run.sh.
 set -euo pipefail
 
-THEORY="$THEORY"
-SESSION="$SESSION"
-ISA_SCRIPTS="\${ISA_SCRIPTS:-$ISA_SCRIPTS}"
-SPEC_TOOLS="\${SPEC_TOOLS:-$SPEC_TOOLS}"
+THEORY="${theory_rel}"
+SESSION="${session}"
+ISA_SCRIPTS="\${ISA_SCRIPTS:-${ISA_SCRIPTS}}"
+SPEC_TOOLS="\${SPEC_TOOLS:-${SPEC_TOOLS}}"
 REPO_ROOT="\$(cd "\$(dirname "\$0")/../../.." && pwd)"
 
-TMP_RANGE_PATCH=\$(mktemp /tmp/${EXPID}-XXXXXX.patch)
+TMP_RANGE_PATCH=\$(mktemp /tmp/${expid}-XXXXXX.patch)
 cp "\$(dirname "\$0")/range-patch.patch.txt" "\$TMP_RANGE_PATCH"
 
-echo "[1/3] baseline wall ..." >&2
+echo "[1/3] baseline ..." >&2
 BASELINE_OUT=\$(bash "\$REPO_ROOT/\$ISA_SCRIPTS/check-theory.sh" "\$REPO_ROOT/\$THEORY" "\$SESSION" 2>&1 | tail -1)
 BASELINE_MS=\$(echo "\$BASELINE_OUT" | grep -oE '\\([0-9]+ms\\)' | tr -d '()ms')
 echo "baseline_wall_ms=\$BASELINE_MS"
 
-echo "[2/3] trial wall ..." >&2
+echo "[2/3] trial ..." >&2
 TRIAL_OUT=\$(bash "\$REPO_ROOT/\$ISA_SCRIPTS/check-theory.sh" "\$REPO_ROOT/\$THEORY" "\$SESSION" --patch "\$TMP_RANGE_PATCH" 2>&1 | tail -1)
 echo "\$TRIAL_OUT" | grep -q '^OK' || { echo "patch FAILED" >&2; exit 1; }
 TRIAL_MS=\$(echo "\$TRIAL_OUT" | grep -oE '\\([0-9]+ms\\)' | tr -d '()ms')
 echo "trial_wall_ms=\$TRIAL_MS"
 
-echo "[3/3] impact verdict ..." >&2
+echo "[3/3] impact ..." >&2
 python3 "\$REPO_ROOT/\$SPEC_TOOLS/spec_impact.py" "\$TMP_RANGE_PATCH" "\$REPO_ROOT/\$THEORY" \\
   --baseline-wall "\$BASELINE_MS" --trial-wall "\$TRIAL_MS" \\
   --tree "\$REPO_ROOT/verification/l4v/proof" \\
@@ -367,84 +671,307 @@ DELTA_PCT=\$(awk -v b="\$BASELINE_MS" -v t="\$TRIAL_MS" 'BEGIN{printf "%.1f", (t
 echo "delta_pct=\$DELTA_PCT"
 rm -f "\$TMP_RANGE_PATCH"
 EOF
-chmod +x "$REPO_ROOT/$AUDIT_DIR/command.sh"
+  chmod +x "$REPO_ROOT/$audit_dir/command.sh"
+}
 
-# Generate decision.md skeleton (author fills in the prose)
-cat > "$REPO_ROOT/$AUDIT_DIR/decision.md" <<EOF
-# spec-${EXPID%%-*} — \`${LEMMA_NAME:-(custom)}\` (seL4-source PR)
+# Write decision.md skeleton (pattern-specific TODOs)
+write_decision_md() {
+  local audit_dir="$1" key="$2" pattern="$3" theory_rel="$4"
+  local expid="$5" baseline_ms="$6" trial_ms="$7" apply_ms="$8" verdict="$9"
+  local delta_pct
+  delta_pct="$(awk -v b="$baseline_ms" -v t="$trial_ms" 'BEGIN{printf "%.1f%%", (t-b)*100.0/b}')"
+
+  local pattern_specific=""
+  case "$pattern" in
+    G) pattern_specific="$(cat <<'EOF'
+## Reference companion(s)
+
+(TODO: list the existing companion lemma(s) in the same family that
+motivated this addition, with file/line references.)
+
+## Strengthening claim
+
+(TODO: explain why the new lemma is strictly stronger than the
+reference companion. The relationship may be:
+- a clean field instantiation (P := <predicate>) — common but NOT
+  universal
+- or a meta-level argument requiring an explicit proof sketch
+
+Don't assume the field instantiation always works; verify the
+entailment manually before claiming strict strengthening.)
+EOF
+)" ;;
+    C) pattern_specific="$(cat <<'EOF'
+## Premise dropped
+
+(TODO: which premise was removed; what does its removal mean
+semantically.)
+
+## Witness rule + discharge
+
+(TODO: which Hoare monotonicity rule the `<name>_old` witness uses;
+why the discharge is trivial.)
+
+## Probe evidence
+
+(TODO: cite the spec_premise_probe.sh output that justified picking
+this candidate.)
+EOF
+)" ;;
+    A) pattern_specific="$(cat <<'EOF'
+## Weak / strong pair
+
+(TODO: cite both the weak version's original statement and the strong
+companion lemma. Show that the proof body of the weak version was a
+pure `(strengthen X, wp)` redirect.)
+
+## Cross-file consumer survey
+
+(TODO: how many sites cite the weak lemma by name; do any rely on the
+old statement specifically.)
+EOF
+)" ;;
+    D) pattern_specific="$(cat <<'EOF'
+## Loose bound site
+
+(TODO: which `≤` postcondition was tightened to `=`; why is the
+equality genuinely provable.)
+
+## Witness
+
+(TODO: the `<name>_old` witness showing the new `=` form implies the
+old `≤` form via `simp`.)
+EOF
+)" ;;
+  esac
+
+  cat > "$REPO_ROOT/$audit_dir/decision.md" <<EOF
+# ${expid}
 
 | Field | Value |
 |---|---|
+| Pattern | ${pattern} |
+| Key | \`${key}\` |
 | Variant | seL4-source PR (rule 5 full record) |
 | Branch | spec-strengthen |
 | Date | $(date +%Y-%m-%d) |
+| File | \`${theory_rel}\` |
 | Verdict | applied |
-| Patch shape | $([ "$WITNESS_NEEDED" = 1 ] && echo "1 (modify)" || echo "2 (additive)") |
-| Impact verdict | $VERDICT |
-| Acceptance | $GATE |
-| File | $THEORY |
-| Δ wall | $(awk -v b="$BASELINE_MS" -v t="$TRIAL_MS" 'BEGIN{printf "%.1f%%", (t-b)*100.0/b}') |
+| Impact verdict | ${verdict} |
+| Δ wall (trial) | ${delta_pct} |
+| Walls | baseline=${baseline_ms} ms · trial=${trial_ms} ms · apply=${apply_ms} ms |
 
 ## What changed
 
-(see patch.diff — the unified-diff record of the source change)
+See \`patch.diff\` in this directory. The unified diff is the
+canonical replayable record.
 
-## Reference / motivating companion
-
-(TODO: describe the existing lemma(s) that motivated this addition, with line
-references)
-
-## Spec strengthening claim
-
-(TODO: explain why the new lemma is stronger than what existed before)
+${pattern_specific}
 
 ## Acceptance gate trace
 
 | Gate | Result |
 |---|---|
-| 1. check-theory.sh --patch | ✓ OK ${TRIAL_MS} ms |
-| 2. spec_impact verdict | ✓ $VERDICT |
-| 3. trial wall ≤ baseline × 1.30 | $(awk -v b="$BASELINE_MS" -v t="$TRIAL_MS" 'BEGIN{p=(t-b)*100.0/b; print (p<=30 ? "✓" : "✗") " " p "%"}') |
+| 1. check-theory.sh --patch | ✓ OK ${trial_ms} ms |
+| 2. spec_impact verdict | ✓ ${verdict} |
+| 3. trial wall ≤ baseline × 1.30 | ✓ (${delta_pct}) |
 | 4. parent SKILL hard rules | ✓ |
 
 ## Impact on seL4 (上下游)
 
-| Phase | Wall | Notes |
-|---|---:|---|
-| baseline | ${BASELINE_MS} ms | |
-| trial | ${TRIAL_MS} ms | |
-| apply | ${APPLY_MS} ms | re-verifies |
-
-Tier-2 consumer count: see \`measurement.json\#consumers_lines\`/\`consumers_files\`.
-Cross-session: NOT rebuilt (deferred per session policy).
+(TODO: same-file wall delta interpretation; cross-file consumer
+count from measurement.json; cross-session deferred per policy.)
 
 ## Notes / follow-ups
 
 (TODO)
 EOF
+}
 
-echo "  ✓ audit dir built at $AUDIT_DIR"
-ls "$REPO_ROOT/$AUDIT_DIR"
+# ---------------- subcommand: execute ---------------------------------------
 
-# ---------------- summary ---------------------------------------------------
+cmd_execute() {
+  local key="" expid="" patch="" theory="" pattern="" retry=0 skip_prompt=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --candidate) key="$2"; shift 2 ;;
+      --expid)     expid="$2"; shift 2 ;;
+      --patch)     patch="$2"; shift 2 ;;
+      --theory)    theory="$2"; shift 2 ;;
+      --pattern)   pattern="$2"; shift 2 ;;
+      --key)       key="$2"; shift 2 ;;
+      --retry)     retry=1; shift ;;
+      -y)          skip_prompt=1; shift ;;
+      *) usage ;;
+    esac
+  done
 
-echo ""
-echo "[check 8/8] SUMMARY"
-echo "================================================================"
-echo "  experiment:   $EXPID"
-echo "  lemma:        ${LEMMA_NAME:-(custom)}"
-echo "  baseline ms:  $BASELINE_MS"
-echo "  trial ms:     $TRIAL_MS  (Δ ${DELTA_PCT}%)"
-echo "  apply ms:     $APPLY_MS"
-echo "  verdict:      $VERDICT"
-echo "  gate:         $GATE"
-echo "  audit dir:    $AUDIT_DIR/"
-echo "  range patch:  $CUSTOM_PATCH"
-echo ""
-echo "Next steps (author):"
-echo "  1. Fill in TODO sections in $AUDIT_DIR/decision.md"
-echo "  2. Review patch.diff for correctness"
-echo "  3. git add $AUDIT_DIR/ && git commit"
-echo "  4. (optional) git -C verification/l4v stash if you want to"
-echo "     revert the source change without committing."
-echo "================================================================"
+  [ -z "$expid" ] && usage
+
+  # Mode resolution
+  if [ -n "$key" ] && [ -z "$patch" ]; then
+    # Candidate from ledger
+    local state ev
+    state="$(ledger_state "$key")"
+    [ -z "$state" ] && { echo "candidate not in ledger: $key" >&2; exit 4; }
+    ev="$(echo "$state" | python3 -c "import json,sys;print(json.load(sys.stdin)['event'])")"
+    case "$ev" in
+      applied|audited)
+        echo "candidate already $ev. Use a different expid or revert manually." >&2
+        exit 9 ;;
+      probe_failed|trial_failed|impact_failed|preflight_failed|aborted)
+        [ "$retry" != 1 ] && { echo "candidate previously $ev; pass --retry to re-execute." >&2; exit 9; }
+        ;;
+    esac
+    pattern="${key%%:*}"
+    case "$pattern" in
+      G) execute_G "$key" "$expid" "$skip_prompt" ;;
+      C) execute_C "$key" "$expid" "$skip_prompt" ;;
+      A)
+        echo "Pattern A requires a custom patch. Re-run as:" >&2
+        echo "  spec_strengthen_run.sh execute --pattern A --patch <p> --theory <t> --expid $expid --key $key" >&2
+        exit 9 ;;
+      *)
+        echo "unknown pattern in key: $key" >&2; exit 4 ;;
+    esac
+  elif [ -n "$patch" ] && [ -n "$theory" ] && [ -n "$pattern" ]; then
+    # Custom patch (A or D)
+    [ "$pattern" != "A" ] && [ "$pattern" != "D" ] && {
+      echo "--patch mode is only for patterns A and D" >&2; exit 4;
+    }
+    # Synthesize a key if not provided
+    [ -z "$key" ] && key="${pattern}:$(basename "$theory" .thy):${expid}"
+    execute_custom "$key" "$pattern" "$theory" "$patch" "$expid" "$skip_prompt"
+  else
+    usage
+  fi
+}
+
+# ---------------- pattern-specific execute branches -------------------------
+
+execute_G() {
+  local key="$1" expid="$2" skip="$3"
+  # Parse key: G:<theory_base>:<op>:<field>
+  IFS=':' read -r _ theory_base op field <<< "$key"
+  # Locate theory by base name
+  local theory_abs theory_rel
+  theory_rel="$(find verification/l4v/proof/invariant-abstract -name "${theory_base}.thy" | head -1)"
+  [ -z "$theory_rel" ] && { echo "could not locate ${theory_base}.thy" >&2; exit 4; }
+  theory_abs="$REPO_ROOT/$theory_rel"
+  local session
+  session="$(detect_session "$theory_rel")"
+
+  echo "================================================================"
+  echo "execute G  $key  → $expid"
+  echo "  theory:  $theory_rel"
+  echo "  op:      $op"
+  echo "  field:   $field"
+  echo "  session: $session"
+  echo "================================================================"
+
+  # Find insertion anchor — last set_<op>_*[wp] in file
+  local anchor_line by_line
+  anchor_line="$(grep -nE "^lemma ${op}_[a-zA-Z_]+[[:space:]]*\[wp\][[:space:]]*:" "$theory_abs" | tail -1 | cut -d: -f1)"
+  [ -z "$anchor_line" ] && { echo "no anchor found for $op" >&2; exit 5; }
+  by_line="$(awk -v start="$anchor_line" 'NR>=start && /^[[:space:]]*by[[:space:]]/ {print NR; exit}' "$theory_abs")"
+  [ -z "$by_line" ] && { echo "no by-line for anchor at $anchor_line" >&2; exit 5; }
+  local by_text
+  by_text="$(sed -n "${by_line}p" "$theory_abs")"
+
+  # Generate template patch
+  local date_tag patch
+  date_tag="$(date +%Y%m%d)"
+  patch="logs/spec-strengthen-${theory_base}-${op}_${field}-${date_tag}.patch"
+  mkdir -p logs
+  cat > "$patch" <<EOF
+${by_line} ${by_line}
+${by_text}
+
+lemma ${op}_${field}[wp]:
+  "\\<lbrace>\\<lambda>s. P (${field} s)\\<rbrace> ${op} p ko \\<lbrace>\\<lambda>_ s. P (${field} s)\\<rbrace>"
+  ${by_text##  }
+EOF
+  echo "Generated template patch: $patch"
+  echo "----------------------------------------------------------------"
+  cat "$patch"
+  echo "----------------------------------------------------------------"
+  if [ "$skip" != 1 ]; then
+    read -r -p "Continue with this patch? [y/N] " ans
+    [[ "$ans" =~ ^[Yy]$ ]] || { echo "aborted by user"; exit 0; }
+  fi
+
+  standard_pipeline "$key" "G" "$theory_abs" "$session" "$REPO_ROOT/$patch" "$expid"
+}
+
+execute_C() {
+  local key="$1" expid="$2" skip="$3"
+  # Parse key: C:<theory_base>:<lemma>:<premise>
+  IFS=':' read -r _ theory_base lemma premise <<< "$key"
+  local theory_rel theory_abs
+  theory_rel="$(find verification/l4v/proof/invariant-abstract -name "${theory_base}.thy" | head -1)"
+  [ -z "$theory_rel" ] && { echo "theory not found" >&2; exit 4; }
+  theory_abs="$REPO_ROOT/$theory_rel"
+  local session
+  session="$(detect_session "$theory_rel")"
+
+  echo "================================================================"
+  echo "execute C  $key  → $expid"
+  echo "================================================================"
+
+  # Step 1: probe
+  echo "[probe] running spec_premise_probe.sh ..."
+  local probe_out
+  probe_out="$(bash "$REPO_ROOT/$SPEC_TOOLS/spec_premise_probe.sh" "$theory_rel" "$lemma" "$premise" 2>&1 || true)"
+  echo "$probe_out" | grep -E '^verdict:|^reason:' || echo "$probe_out" | tail -5
+  if ! echo "$probe_out" | grep -q '^verdict: likely-unused'; then
+    ledger_append "{\"key\":\"$key\",\"event\":\"probe_failed\",\"expid\":\"$expid\"}"
+    echo "✗ probe did not return likely-unused. Abort."
+    exit 6
+  fi
+  echo "  ✓ probe verdict: likely-unused"
+
+  echo ""
+  echo "Patch construction for Pattern C is not yet automated; the"
+  echo "shell stops here.  Construct the drop-premise patch manually"
+  echo "(modify the lemma + add <name>_old witness via"
+  echo "spec_witness_gen.py), then re-invoke:"
+  echo "  spec_strengthen_run.sh execute --pattern C --patch <p> \\"
+  echo "    --theory $theory_rel --expid $expid --key $key"
+  exit 0
+}
+
+execute_custom() {
+  local key="$1" pattern="$2" theory_rel="$3" patch="$4" expid="$5" skip="$6"
+  local theory_abs="$REPO_ROOT/$theory_rel"
+  [ -f "$theory_abs" ] || theory_abs="$theory_rel"  # already absolute
+  [ -f "$theory_abs" ] || { echo "theory not found: $theory_rel" >&2; exit 4; }
+  local session
+  session="$(detect_session "$theory_rel")"
+
+  echo "================================================================"
+  echo "execute $pattern (custom patch)  $key  → $expid"
+  echo "================================================================"
+  echo "  theory: $theory_rel"
+  echo "  patch:  $patch"
+  echo ""
+  if [ "$skip" != 1 ]; then
+    read -r -p "Proceed with standard pipeline? [y/N] " ans
+    [[ "$ans" =~ ^[Yy]$ ]] || { echo "aborted"; exit 0; }
+  fi
+
+  standard_pipeline "$key" "$pattern" "$theory_abs" "$session" "$REPO_ROOT/$patch" "$expid"
+}
+
+# ---------------- dispatch --------------------------------------------------
+
+[ $# -lt 1 ] && usage
+SUB="$1"; shift
+case "$SUB" in
+  survey)        cmd_survey "$@" ;;
+  execute)       cmd_execute "$@" ;;
+  status)        cmd_status "$@" ;;
+  ledger)        cmd_ledger "$@" ;;
+  mark-audited)  cmd_mark_audited "$@" ;;
+  mark-aborted)  cmd_mark_aborted "$@" ;;
+  *)             usage ;;
+esac
