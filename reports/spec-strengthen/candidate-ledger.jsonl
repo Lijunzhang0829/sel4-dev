@@ -22,3 +22,4 @@
 {"ts":"2026-06-07T00:00:00Z","key":"G:KHeap_AI:set_object:arch_state","event":"audited","expid":"0022-set-object-arch-state-frame-lemma"}
 {"ts": "2026-06-08T15:44:24Z", "key": "C:Finalise_AI:unbind_maybe_notification_not_bound:valid_objs", "event": "discovered", "pattern": "C", "theory": "verification/l4v/proof/invariant-abstract/Finalise_AI.thy", "metadata": {"lemma": "unbind_maybe_notification_not_bound", "premise": "valid_objs", "roi": 0}}
 {"key": "C:Finalise_AI:unbind_maybe_notification_not_bound:valid_objs", "event": "applied", "expid": "0023-unbind-maybe-drop-valid-objs", "walls": {"baseline": 22383, "trial": 23074, "apply": 22864}, "verdict": "premise-weaken", "ts": "2026-06-08T15:47:22Z"}
+{"key": "C:Finalise_AI:unbind_maybe_notification_not_bound:valid_objs", "event": "audited", "expid": "0023-unbind-maybe-drop-valid-objs", "ts": "2026-06-08T15:48:54Z"}
