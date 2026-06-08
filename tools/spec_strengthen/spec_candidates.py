@@ -2,33 +2,52 @@
 r"""
 tools/spec_strengthen/spec_candidates.py
 
-Discover candidate spec strengthenings in a target session and emit a
-ranked flat list of (lemma, file:line, consumers, suggested move).
+Per-pattern candidate generator for Pattern A or Pattern C. Pattern B
+was dropped 2026-06-08 per the revised strict definition of spec
+strengthening. Pattern G uses a separate detector (`spec_frame_gap.py`)
+because its candidates are mechanically preflightable; Pattern D is
+manual-only and has no detector.
 
-The skill's Workflow Step 1 entry point. The Pattern A/B/C taxonomy
-that used to drive the output is now an internal detector
-implementation detail — the user-facing output is a single ranked
-table with natural-language suggestions.
+This tool emits candidates for **one pattern at a time** — `--pattern`
+is required. There is intentionally no shared ranking pipeline that
+mixes A and C; the two have different evidence qualities and different
+downstream verification paths, so mixing them in one table is
+misleading.
+
+Within a single pattern, candidates carry a `suspicion_score` (NOT
+"ranking" — the name was changed to avoid suggesting these are
+"highest probability of success"; they're "highest suspicion / impact
+if true"). For Pattern C, suspicion is also gated by a probe at
+execute time; the scanner is hypothesis-only.
+
+Output:
+  - JSON (--json): list of candidate records (for shell consumption)
+  - Markdown (default): human-readable table
 
 Usage:
-  spec_candidates.py [--target spec|ainvs|refine|all]
+  spec_candidates.py --pattern A|C
+                     [--target spec|ainvs|refine|all]
                      [--scan-root DIR]
                      [--tree DIR]
                      [--logs-dir DIR]
                      [--limit N]
                      [--out FILE]
+                     [--json]
 
-Ranking: consumer_lines × internal_weight (descending). Lemmas
-already covered in `reports/spec-strengthen/AInvs-*.md` are marked
-`[done]` and demoted to the bottom.
+Candidate fields (JSON):
+  name           — lemma name
+  file           — source file (basename)
+  file_path      — absolute path
+  line           — 1-based source line
+  session        — derived from file path
+  consumers_lines/files — Tier-2 grep upper-bound counts
+  suspicion_score — pattern-internal heuristic priority
+  suggested_move — natural-language hint
+  kind           — "paired-chain" (A) or "unused-premise" (C)
+  evidence       — "heuristic+manual" (A) or "heuristic" (C)
+  done           — true if covered in past strengthen-log
 
-Session is auto-derived from the file path:
-  spec/abstract/             → ASpec
-  proof/invariant-abstract/  → AInvs
-  proof/refine/              → Refine
-  ...
-
-For unfamiliar candidate shapes or false-positive risks, consult
+For unfamiliar shapes or FP risks, consult
 `references/spec-strengthen-playbook.md`.
 """
 from __future__ import annotations
@@ -44,18 +63,35 @@ _HERE = Path(__file__).parent
 sys.path.insert(0, str(_HERE))
 from spec_strengthen_scan import (  # noqa: E402
     parse_thy_lemmas, iter_thy_files,
-    detect_paired_chain, detect_missing_functional, detect_unused_premise,
+    detect_paired_chain, detect_unused_premise,
     Finding,
 )
 
 
-# Internal weights — bias ranking toward shapes with higher empirical
-# ROI (premise removal > functional postcond > paired-chain cleanup).
-# Hidden from user-facing output by design.
-KIND_WEIGHT = {
-    "unused-premise":     5,
-    "missing-functional": 3,
-    "paired-chain":       1,
+# Per-pattern config: detector callable + evidence type + internal
+# suspicion weight (used only WITHIN the pattern's own ranking — no
+# cross-pattern comparison). The shell's survey layer is responsible
+# for tier-based presentation; this tool stays single-pattern.
+PATTERN_CONFIG = {
+    "A": {
+        "kind":      "paired-chain",
+        "detector":  detect_paired_chain,
+        "evidence":  "heuristic+manual",
+        # suspicion_score = consumer_lines × weight (weight is 1 here
+        # because A's high consumer count often correlates with cross-file
+        # consumer breakage risk; we don't want to over-promote it).
+        "weight":    1,
+        "tier":      3,
+    },
+    "C": {
+        "kind":      "unused-premise",
+        "detector":  detect_unused_premise,
+        "evidence":  "heuristic",
+        # weight 5: C with high consumer count is high-impact-if-true,
+        # but probe is the actual filter at execute time.
+        "weight":    5,
+        "tier":      2,
+    },
 }
 
 TARGET_SCAN_ROOTS = {
@@ -150,24 +186,28 @@ def find_done_lemmas(logs_dir: Path) -> set[str]:
 
 # ---------- Driver -----------------------------------------------------------
 
-def run_detectors(all_lemmas: list) -> list[Finding]:
-    """Run every detector once and concatenate results.
+def run_detectors(all_lemmas: list, pattern: str) -> list[Finding]:
+    """Run the single detector for the chosen pattern.
 
-    A single lemma may appear in multiple detector outputs (e.g. a
-    paired-chain candidate that also has an unused premise). Dedup
-    by (file, line, name) post-rank, preferring the higher-weighted
-    finding.
+    No cross-pattern aggregation — callers ask for one pattern at a
+    time. The shell's survey layer is responsible for combining
+    patterns into the tier-based view.
     """
-    out: list[Finding] = []
-    out.extend(detect_unused_premise(all_lemmas))
-    out.extend(detect_missing_functional(all_lemmas))
-    out.extend(detect_paired_chain(all_lemmas))
-    return out
+    cfg = PATTERN_CONFIG.get(pattern)
+    if cfg is None:
+        raise ValueError(f"unknown pattern: {pattern} (allowed: A, C)")
+    return cfg["detector"](all_lemmas)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--pattern", required=True, choices=["A", "C"],
+                    help="Which pattern's detector to run. A = paired-chain "
+                         "(heuristic+manual, Tier 3). C = unused-premise "
+                         "(heuristic, probe-confirmable, Tier 2). Required — "
+                         "this tool emits one pattern at a time, no shared "
+                         "ranking pipeline.")
     ap.add_argument("--target", choices=list(TARGET_SCAN_ROOTS),
                     default="ainvs",
                     help="Which session to scan; sets --scan-root default.")
@@ -181,9 +221,11 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=30)
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--json", action="store_true",
-                    help="Emit ranked rows as a JSON array on stdout "
+                    help="Emit candidate records as a JSON array on stdout "
                          "(for tool consumption by spec_strengthen_run.sh).")
     args = ap.parse_args()
+
+    cfg = PATTERN_CONFIG[args.pattern]
 
     scan_root = args.scan_root or Path(TARGET_SCAN_ROOTS[args.target])
     if not scan_root.exists():
@@ -196,13 +238,15 @@ def main() -> int:
             all_lemmas.extend(parse_thy_lemmas(thy))
         except Exception as e:
             print(f"warn: parse {thy}: {e}", file=sys.stderr)
-    print(f"scanned {len(all_lemmas)} Hoare-triple lemmas under {scan_root}",
+    print(f"scanned {len(all_lemmas)} Hoare-triple lemmas under {scan_root} "
+          f"(pattern {args.pattern})",
           file=sys.stderr)
 
-    findings = run_detectors(all_lemmas)
+    findings = run_detectors(all_lemmas, args.pattern)
     done = find_done_lemmas(args.logs_dir)
 
-    # Build rows (with consumer counts + dedup by name keeping max weight)
+    # Build rows. Within a single pattern, suspicion_score =
+    # consumer_lines × cfg['weight']. NOT a cross-pattern ROI.
     by_name: dict[tuple[str, int, str], dict] = {}
     for f in findings:
         self_file = Path(f.file)
@@ -210,8 +254,7 @@ def main() -> int:
             f.name, args.tree,
             self_file=self_file, self_line=f.line,
         )
-        weight = KIND_WEIGHT.get(f.kind, 1)
-        roi_score = line_hits * weight
+        suspicion_score = line_hits * cfg["weight"]
         row = {
             "name": f.name,
             "file": self_file.name,
@@ -220,42 +263,43 @@ def main() -> int:
             "session": session_for_path(str(self_file)),
             "consumers_lines": line_hits,
             "consumers_files": file_hits,
-            "_internal_weight": weight,
-            "roi_score": roi_score,
+            "suspicion_score": suspicion_score,
             "suggested_move": f.suggested_move or f.note,
             "kind": f.kind,
+            "pattern": args.pattern,
+            "evidence": cfg["evidence"],
+            "tier": cfg["tier"],
             "done": f.name in done,
         }
         key = (str(self_file), f.line, f.name)
         existing = by_name.get(key)
-        if existing is None or row["roi_score"] > existing["roi_score"]:
+        if existing is None or row["suspicion_score"] > existing["suspicion_score"]:
             by_name[key] = row
 
     rows = list(by_name.values())
-    rows.sort(key=lambda r: (r["done"], -r["roi_score"], -r["consumers_lines"]))
+    rows.sort(key=lambda r: (r["done"], -r["suspicion_score"], -r["consumers_lines"]))
     rows = rows[: args.limit]
 
     if args.json:
         import json
-        # Strip internal-only fields before emitting
-        json_rows = [{k: v for k, v in r.items() if not k.startswith("_")}
-                     for r in rows]
-        print(json.dumps(json_rows, ensure_ascii=False))
+        print(json.dumps(rows, ensure_ascii=False))
         return 0
 
     today = dt.date.today().isoformat()
     out_lines = [
-        f"# Spec strengthening — candidates ({today})",
+        f"# Pattern {args.pattern} candidates ({today})",
         "",
         f"Source: `{scan_root}`",
+        f"Evidence type: `{cfg['evidence']}` — survey-layer Tier {cfg['tier']}.",
         "",
-        "Single ranked list. Higher rows have higher downstream-surface ROI.",
-        "Already-done lemmas (matched against past strengthen logs) are at",
-        "the bottom with `[done]`. For unfamiliar shapes or false-positive",
-        "risks, consult `references/spec-strengthen-playbook.md`.",
+        "Suspicion score = consumer_lines × pattern weight. **NOT** a "
+        "cross-pattern ROI. Higher means \"this candidate has wider downstream "
+        "surface if the heuristic is right\" — not \"more likely to succeed\".",
+        "Probe (Pattern C) or full check-theory.sh (Pattern A) is the actual "
+        "verification gate at execute time.",
         "",
-        "| Lemma | Session | File:Line | Consumers | Suggested move | Status |",
-        "|---|---|---|---:|---|---|",
+        "| Lemma | Session | File:Line | Consumers | Suspicion | Suggested move | Status |",
+        "|---|---|---|---:|---:|---|---|",
     ]
     for r in rows:
         status = "[done]" if r["done"] else ""
@@ -266,6 +310,7 @@ def main() -> int:
             f"| `{r['name']}` | {r['session']} "
             f"| `{r['file']}:{r['line']}` "
             f"| {r['consumers_lines']} "
+            f"| {r['suspicion_score']} "
             f"| {sm} | {status} |"
         )
 

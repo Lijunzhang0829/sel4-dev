@@ -130,7 +130,7 @@ spec_strengthen_run.sh — process manager for spec strengthening
                         (patterns A, C, D, G only).
 
 Subcommands:
-  survey  <file> [--session <s>] [--pattern G|C|A|all] [--out <path>]
+  survey  <file> [--session <s>] [--out <path>]
   execute --candidate <key> --expid <expid> [-y] [--retry]
   execute --pattern A|D --patch <patch> --theory <thy> --expid <expid>
                 [--key <key>] [-y]
@@ -231,14 +231,13 @@ cmd_mark_aborted() {
 # ---------------- subcommand: survey ----------------------------------------
 
 cmd_survey() {
-  local file="" session="" pattern="all" out=""
+  local file="" session="" out=""
   # first positional arg = file
   if [ "${1:-}" = "" ] || [[ "${1:-}" == --* ]]; then usage; fi
   file="$1"; shift
   while [ $# -gt 0 ]; do
     case "$1" in
       --session) session="$2"; shift 2 ;;
-      --pattern) pattern="$2"; shift 2 ;;
       --out)     out="$2";     shift 2 ;;
       *) usage ;;
     esac
@@ -256,37 +255,40 @@ cmd_survey() {
   [ -z "$out" ] && out="reports/spec-strengthen/survey-${theory_base}-${date_tag}.md"
   mkdir -p "$(dirname "$out")"
 
-  echo "[survey] file=$file  session=$session  pattern=$pattern"
+  echo "[survey] file=$file  session=$session"
   echo "[survey] writing → $out"
 
-  # Survey output: build into a temp file then move
-  local tmp_md
-  tmp_md="$(mktemp)"
-  {
-    echo "# spec-strengthen survey — $session / $theory_base.thy — $(date +%Y-%m-%d)"
-    echo ""
-    echo "Source: \`$file\`"
-    echo ""
-  } > "$tmp_md"
+  # Run each pattern's detector independently. No shared ranking
+  # pipeline. Each detector emits its own JSON; the renderer below
+  # groups by TIER (mechanical / probe-confirmable / manual), NOT by
+  # pattern, in the user-facing survey doc.
+  local g_jsonl c_json a_json
+  g_jsonl="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_frame_gap.py" "$file" 2>/dev/null || true)"
+  c_json="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_candidates.py" --pattern C --target "${session,,}" --limit 30 --json 2>/dev/null || true)"
+  a_json="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_candidates.py" --pattern A --target "${session,,}" --limit 30 --json 2>/dev/null || true)"
 
-  # ---- Pattern G ---------------------------------------------------------
-  if [ "$pattern" = "all" ] || [ "$pattern" = "G" ]; then
-    echo "## Pattern G — frame preservation" >> "$tmp_md"
-    echo "" >> "$tmp_md"
-    # Detect existing ops with [wp] companions
-    local gap_jsonl
-    gap_jsonl="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_frame_gap.py" "$file" 2>/dev/null || true)"
-    if [ -z "$gap_jsonl" ]; then
-      echo "(no Pattern G candidates — file has no \`set_<op>_*[wp]\` companions)" >> "$tmp_md"
-    else
-      {
-        echo "| Key | (op, field) | anchor | status | prior |"
-        echo "|---|---|---|---|---|"
-        echo "$gap_jsonl" | python3 -c "
-import json, sys, os, subprocess
-ledger_path = os.environ.get('LEDGER', '$LEDGER')
+  # Hand off to one Python renderer that:
+  # (1) loads ledger → existing-key map
+  # (2) renders the markdown survey by tier
+  # (3) appends `discovered`/`preflight_failed` events for new candidates
+  LEDGER_PATH="$LEDGER" \
+  THEORY_FILE="$file" \
+  THEORY_BASE="$theory_base" \
+  SESSION="$session" \
+  OUT_PATH="$out" \
+  G_JSONL="$g_jsonl" \
+  C_JSON="$c_json" \
+  A_JSON="$a_json" \
+  python3 - <<'PYEOF'
+import json, os, datetime, sys
 
-# Build a map: key -> latest event
+ledger_path = os.environ['LEDGER_PATH']
+theory      = os.environ['THEORY_FILE']
+theory_base = os.environ['THEORY_BASE']
+session     = os.environ['SESSION']
+out_path    = os.environ['OUT_PATH']
+
+# ---- load ledger -----------------------------------------------------
 latest = {}
 try:
     with open(ledger_path) as f:
@@ -299,231 +301,230 @@ try:
 except FileNotFoundError:
     pass
 
-for line in sys.stdin:
+# ---- parse detector outputs ------------------------------------------
+g_records = []
+for line in (os.environ.get('G_JSONL') or '').splitlines():
     line = line.strip()
     if not line: continue
-    r = json.loads(line)
-    prior = latest.get(r['key'], {}).get('event', '-')
-    anchor_str = r.get('anchor') or '—'
-    if r.get('anchor_line'):
-        anchor_str = f'{anchor_str} (L{r[\"anchor_line\"]})'
-    status = r['status']
-    if status != 'clean':
-        status = f'✗ {status} ({r[\"reason\"]})'
-    else:
-        status = '✓ clean'
-    print(f'| \`{r[\"key\"]}\` | {r[\"op\"]} / {r[\"field\"]} | {anchor_str} | {status} | {prior} |')
-"
-      } >> "$tmp_md"
+    try: g_records.append(json.loads(line))
+    except json.JSONDecodeError: pass
 
-      # Append discovered events for new candidates (status=clean only;
-      # crunch-derived are NOT discovered, they are 'preflight_failed').
-      echo "$gap_jsonl" | python3 -c "
-import json, sys, subprocess
-ledger_path = '$LEDGER'
-
-# Build map of existing events
-existing = set()
 try:
-    with open(ledger_path) as f:
-        for line in f:
-            line = line.strip()
-            if not line: continue
-            try: d = json.loads(line)
-            except json.JSONDecodeError: continue
-            existing.add(d['key'])
-except FileNotFoundError:
-    pass
-
-import datetime
-new_events = []
-for line in sys.stdin:
-    line = line.strip()
-    if not line: continue
-    r = json.loads(line)
-    if r['key'] in existing:
-        continue
-    ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-    if r['status'] == 'clean':
-        ev = {'ts': ts, 'key': r['key'], 'event': 'discovered',
-              'pattern': 'G', 'theory': r['theory'],
-              'metadata': {'op': r['op'], 'field': r['field'],
-                           'anchor': r['anchor'], 'anchor_line': r['anchor_line']}}
-    else:
-        ev = {'ts': ts, 'key': r['key'], 'event': 'preflight_failed',
-              'pattern': 'G', 'theory': r['theory'],
-              'reason': r['reason']}
-    new_events.append(ev)
-
-with open(ledger_path, 'a') as f:
-    for ev in new_events:
-        f.write(json.dumps(ev, ensure_ascii=False) + '\n')
-
-print(f'# appended {len(new_events)} new ledger event(s)', file=sys.stderr)
-"
-    fi
-    echo "" >> "$tmp_md"
-  fi
-
-  # ---- Pattern C ---------------------------------------------------------
-  if [ "$pattern" = "all" ] || [ "$pattern" = "C" ]; then
-    echo "## Pattern C — unused premise" >> "$tmp_md"
-    echo "" >> "$tmp_md"
-    # Use spec_candidates.py output, filter to this file, kind=unused-premise
-    local cand_out
-    cand_out="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_candidates.py" --target "${session,,}" --limit 30 --json 2>/dev/null || true)"
-    if [ -z "$cand_out" ]; then
-      echo "(scanner returned no output for this session)" >> "$tmp_md"
-    else
-      {
-        echo "| Key | lemma / premise | ROI | prior |"
-        echo "|---|---|---|---|"
-        echo "$cand_out" | python3 -c "
-import json, sys, os
-ledger_path = '$LEDGER'
-theory = '$file'; theory_base = '$theory_base'
-
-latest = {}
-try:
-    with open(ledger_path) as f:
-        for line in f:
-            line = line.strip()
-            if not line: continue
-            try: d = json.loads(line)
-            except json.JSONDecodeError: continue
-            latest[d['key']] = d
-except FileNotFoundError:
-    pass
-
-data = sys.stdin.read()
-try:
-    cands = json.loads(data)
+    c_records = json.loads(os.environ.get('C_JSON') or '[]')
 except json.JSONDecodeError:
-    print('(candidates tool output not JSON; skipping)', file=sys.stderr)
-    sys.exit(0)
+    c_records = []
+c_records = [r for r in c_records if theory_base in r.get('file', '')]
 
-import datetime
-new_events = []
-for c in cands:
-    if c.get('kind') != 'unused-premise': continue
-    if theory_base not in c.get('file', ''): continue
-    # Extract premise from suggested_move
-    import re
-    m = re.search(r'dropping \`([^\`]+)\`', c.get('suggested_move', ''))
+try:
+    a_records = json.loads(os.environ.get('A_JSON') or '[]')
+except json.JSONDecodeError:
+    a_records = []
+a_records = [r for r in a_records if theory_base in r.get('file', '')]
+
+# ---- key construction -----------------------------------------------
+import re
+def c_key(r):
+    m = re.search(r"dropping `([^`]+)`", r.get('suggested_move', ''))
     premise = m.group(1) if m else '?'
-    key = f'C:{theory_base}:{c[\"name\"]}:{premise}'
-    prior = latest.get(key, {}).get('event', '-')
-    roi = c.get('consumers', 0)
-    print(f'| \`{key}\` | {c[\"name\"]} / {premise} | {roi} | {prior} |')
-    if key not in latest:
-        ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-        ev = {'ts': ts, 'key': key, 'event': 'discovered',
-              'pattern': 'C', 'theory': theory,
-              'metadata': {'lemma': c['name'], 'premise': premise, 'roi': roi}}
-        new_events.append(ev)
+    return f"C:{theory_base}:{r['name']}:{premise}", premise
 
-with open(ledger_path, 'a') as f:
-    for ev in new_events:
-        f.write(json.dumps(ev, ensure_ascii=False) + '\n')
-print(f'# appended {len(new_events)} new ledger event(s)', file=sys.stderr)
-"
-      } >> "$tmp_md"
-    fi
-    echo "" >> "$tmp_md"
-    echo "_C candidates are not probed during survey (each probe is ~40s); the probe is the first step of \`execute\`._" >> "$tmp_md"
-    echo "" >> "$tmp_md"
-  fi
+def a_key(r):
+    return f"A:{theory_base}:{r['name']}"
 
-  # ---- Pattern A ---------------------------------------------------------
-  if [ "$pattern" = "all" ] || [ "$pattern" = "A" ]; then
-    echo "## Pattern A — paired weak/strong cleanup" >> "$tmp_md"
-    echo "" >> "$tmp_md"
-    local a_out
-    a_out="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_candidates.py" --target "${session,,}" --limit 30 --json 2>/dev/null || true)"
-    if [ -z "$a_out" ]; then
-      echo "(scanner returned no output)" >> "$tmp_md"
-    else
-      {
-        echo "| Key | weak lemma | strong companion (suggested) | redirect proof? | prior |"
-        echo "|---|---|---|---|---|"
-        echo "$a_out" | python3 -c "
-import json, sys, re, subprocess, os
-ledger_path = '$LEDGER'
-theory = '$file'; theory_base = '$theory_base'
-
-latest = {}
+# ---- detect A's proof-body redirect heuristic -----------------------
+thy_text = ''
 try:
-    with open(ledger_path) as f:
-        for line in f:
-            line = line.strip()
-            if not line: continue
-            try: d = json.loads(line)
-            except json.JSONDecodeError: continue
-            latest[d['key']] = d
-except FileNotFoundError:
+    thy_text = open(theory).read()
+except Exception:
     pass
 
-try:
-    cands = json.loads(sys.stdin.read())
-except json.JSONDecodeError:
-    sys.exit(0)
+def a_redirect_status(name):
+    if not thy_text:
+        return '? (file not read)'
+    m = re.search(rf'^lemma\s+{re.escape(name)}\b.*?^\s*(by|apply)\b[^\n]*',
+                  thy_text, re.MULTILINE | re.DOTALL)
+    if m and 'strengthen' in m.group(0):
+        return '✓ likely'
+    return '? manual'
 
-import datetime
+# ---- compute new ledger events (appended at end) --------------------
 new_events = []
-for c in cands:
-    if c.get('kind') != 'paired-chain': continue
-    if theory_base not in c.get('file', ''): continue
-    key = f'A:{theory_base}:{c[\"name\"]}'
-    prior = latest.get(key, {}).get('event', '-')
-    # Check redirect proof body shape
-    companion = c.get('companion', {}).get('name', '?') if c.get('companion') else '?'
-    # Best-effort grep for proof body
-    redirect_status = '? (manual check)'
-    try:
-        thy_text = open(theory).read()
-        m = re.search(rf'^lemma\s+{re.escape(c[\"name\"])}\b.*?^\s*(by|apply)\b[^\n]*', thy_text, re.MULTILINE | re.DOTALL)
-        if m and 'strengthen' in m.group(0):
-            redirect_status = '✓ (likely)'
-    except Exception:
-        pass
-    print(f'| \`{key}\` | {c[\"name\"]} | {companion} | {redirect_status} | {prior} |')
-    if key not in latest:
-        ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-        ev = {'ts': ts, 'key': key, 'event': 'discovered',
-              'pattern': 'A', 'theory': theory,
-              'metadata': {'weak': c['name'], 'strong': companion}}
-        new_events.append(ev)
+ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-with open(ledger_path, 'a') as f:
+def ev_new(record):
+    new_events.append(record)
+
+for r in g_records:
+    key = r['key']
+    if key in latest: continue
+    if r['status'] == 'clean':
+        ev_new({'ts': ts, 'key': key, 'event': 'discovered',
+                'pattern': 'G', 'theory': r['theory'],
+                'evidence': 'mechanical',
+                'metadata': {'op': r['op'], 'field': r['field'],
+                             'anchor': r['anchor'],
+                             'anchor_line': r['anchor_line']}})
+    else:
+        ev_new({'ts': ts, 'key': key, 'event': 'preflight_failed',
+                'pattern': 'G', 'theory': r['theory'],
+                'evidence': 'mechanical',
+                'reason': r['reason']})
+
+for r in c_records:
+    key, premise = c_key(r)
+    if key in latest: continue
+    ev_new({'ts': ts, 'key': key, 'event': 'discovered',
+            'pattern': 'C', 'theory': theory,
+            'evidence': 'heuristic',
+            'metadata': {'lemma': r['name'], 'premise': premise,
+                         'suspicion_score': r.get('suspicion_score', 0)}})
+
+for r in a_records:
+    key = a_key(r)
+    if key in latest: continue
+    ev_new({'ts': ts, 'key': key, 'event': 'discovered',
+            'pattern': 'A', 'theory': theory,
+            'evidence': 'heuristic+manual',
+            'metadata': {'weak': r['name'],
+                         'suspicion_score': r.get('suspicion_score', 0)}})
+
+# ---- render markdown by TIER ----------------------------------------
+out = []
+date_str = datetime.date.today().isoformat()
+out.append(f"# spec-strengthen survey — {session} / {theory_base}.thy — {date_str}")
+out.append("")
+out.append(f"Source: `{theory}`")
+out.append("")
+out.append("Survey output is **grouped by verification tier**, not by Pattern. "
+           "Each candidate carries an `evidence` tag indicating what kind of "
+           "check stands between the survey hit and a safe apply.")
+out.append("")
+
+# ----- Tier 1: mechanically clean (G clean) --------------------------
+g_clean = [r for r in g_records if r['status'] == 'clean']
+out.append("## Tier 1 — Mechanically clean (high-confidence apply)")
+out.append("")
+out.append("These candidates passed mechanical preflight (direct grep + "
+           "crunch-derived grep). Pattern G frame lemmas. evidence: `mechanical`.")
+out.append("")
+if g_clean:
+    out.append("| Key | (op, field) | anchor | prior |")
+    out.append("|---|---|---|---|")
+    for r in g_clean:
+        anchor = r.get('anchor') or '—'
+        if r.get('anchor_line'):
+            anchor = f"{anchor} (L{r['anchor_line']})"
+        prior = latest.get(r['key'], {}).get('event', '-')
+        if r['key'] in [e['key'] for e in new_events]:
+            prior = 'discovered (this run)'
+        out.append(f"| `{r['key']}` | {r['op']} / {r['field']} | {anchor} | {prior} |")
+else:
+    out.append("(none in this file)")
+out.append("")
+
+# ----- Tier 2: probe-confirmable (C) ---------------------------------
+out.append("## Tier 2 — Probe-confirmable (run mechanical verification at execute time)")
+out.append("")
+out.append("Pattern C candidates. evidence: `heuristic`. The scanner is a "
+           "hypothesis generator; the TRIAL-based premise probe (~40-60s per "
+           "candidate) is the actual filter. `spec_strengthen_run.sh execute "
+           "--candidate <key>` runs the probe as its first step.")
+out.append("")
+out.append("`suspicion_score` is **NOT** \"likelihood of success\" — it's "
+           "consumer count × pattern weight. Higher = more impact IF the "
+           "heuristic is right, not \"more likely to be right.\"")
+out.append("")
+if c_records:
+    out.append("| Key | lemma / premise | Consumers | Suspicion | prior |")
+    out.append("|---|---|---:|---:|---|")
+    for r in c_records:
+        key, premise = c_key(r)
+        prior = latest.get(key, {}).get('event', '-')
+        if key in [e['key'] for e in new_events]:
+            prior = 'discovered (this run)'
+        out.append(
+            f"| `{key}` | {r['name']} / {premise} "
+            f"| {r.get('consumers_lines', '?')} "
+            f"| {r.get('suspicion_score', '?')} | {prior} |"
+        )
+else:
+    out.append("(no C candidates for this file in scanner top output)")
+out.append("")
+
+# ----- Tier 3: manual review only (A) --------------------------------
+out.append("## Tier 3 — Manual review only (no auto-execute)")
+out.append("")
+out.append("Pattern A candidates. evidence: `heuristic+manual`. The scanner "
+           "flags weak/strong companion pairs, but pre/post comparability and "
+           "cross-file consumer impact require human judgment. shell **will "
+           "not** auto-generate a rewrite patch; execute via "
+           "`--pattern A --patch <patch>` after manual review.")
+out.append("")
+if a_records:
+    out.append("| Key | weak lemma | suggested strong companion | redirect proof? | Suspicion | prior |")
+    out.append("|---|---|---|---|---:|---|")
+    for r in a_records:
+        key = a_key(r)
+        prior = latest.get(key, {}).get('event', '-')
+        if key in [e['key'] for e in new_events]:
+            prior = 'discovered (this run)'
+        # Extract suggested companion from suggested_move text
+        m = re.search(r"`([A-Za-z_][A-Za-z_0-9']*)`\s+companion\s+`([^`]+)`",
+                      r.get('suggested_move', ''))
+        companion = m.group(2) if m else '?'
+        out.append(
+            f"| `{key}` | {r['name']} | {companion} "
+            f"| {a_redirect_status(r['name'])} "
+            f"| {r.get('suspicion_score', '?')} | {prior} |"
+        )
+else:
+    out.append("(no A candidates for this file in scanner top output)")
+out.append("")
+
+# ----- Out of scope / manual only (D) --------------------------------
+out.append("## Out of scope / manual only")
+out.append("")
+out.append("**Pattern D** (loose bound `≤` → `=`): no automated detector. D "
+           "requires domain knowledge to identify a `≤`-bound postcondition "
+           "that's provably `=`. Execute via:")
+out.append("```")
+out.append("  spec_strengthen_run.sh execute --pattern D \\")
+out.append("    --patch <patch> --theory <thy> --expid <expid> [--key <key>] [-y]")
+out.append("```")
+out.append("")
+out.append("The shell does not judge D candidate quality; it only runs the "
+           "standard baseline/trial/impact/apply/audit pipeline once you "
+           "supply a patch.")
+out.append("")
+
+# ----- G preflight-failed (informational, NOT in tier display) -------
+g_failed = [r for r in g_records if r['status'] != 'clean']
+if g_failed:
+    out.append("## Informational — G candidates that failed preflight")
+    out.append("")
+    out.append("These are recorded in the ledger as `preflight_failed` so a "
+               "future survey doesn't re-discover them. Not actionable.")
+    out.append("")
+    out.append("| Key | (op, field) | reason |")
+    out.append("|---|---|---|")
+    for r in g_failed:
+        out.append(f"| `{r['key']}` | {r['op']} / {r['field']} | {r['reason']} |")
+    out.append("")
+
+# ---- write outputs --------------------------------------------------
+with open(out_path, 'w', encoding='utf-8') as f:
+    f.write("\n".join(out) + "\n")
+
+with open(ledger_path, 'a', encoding='utf-8') as f:
     for ev in new_events:
-        f.write(json.dumps(ev, ensure_ascii=False) + '\n')
-print(f'# appended {len(new_events)} new ledger event(s)', file=sys.stderr)
-"
-      } >> "$tmp_md"
-    fi
-    echo "" >> "$tmp_md"
-    echo "_Pattern A preflight is **heuristic only**; the shell cannot verify pre/post comparability or cross-file consumer impact._" >> "$tmp_md"
-    echo "_Execute via \`--pattern A --patch <patch> ...\` after author review and patch construction._" >> "$tmp_md"
-    echo "" >> "$tmp_md"
-  fi
+        f.write(json.dumps(ev, ensure_ascii=False) + "\n")
 
-  # ---- Pattern D notice --------------------------------------------------
-  echo "## Pattern D — loose bound \`≤\` → \`=\`" >> "$tmp_md"
-  echo "" >> "$tmp_md"
-  echo "**No automated detector.** D requires domain knowledge to identify a \`≤\`-bound" >> "$tmp_md"
-  echo "postcondition that's actually \`=\`. To execute a D candidate:" >> "$tmp_md"
-  echo '```' >> "$tmp_md"
-  echo "  spec_strengthen_run.sh execute --pattern D --patch <patch> \\" >> "$tmp_md"
-  echo "    --theory <thy> --expid <expid> [--key <key>] [-y]" >> "$tmp_md"
-  echo '```' >> "$tmp_md"
-  echo "" >> "$tmp_md"
-  echo "The shell does not judge D candidate quality; it only runs the standard" >> "$tmp_md"
-  echo "baseline/trial/apply/audit pipeline once you supply a patch." >> "$tmp_md"
+print(f"[survey] markdown written: {out_path}", file=sys.stderr)
+print(f"[survey] appended {len(new_events)} new ledger event(s)", file=sys.stderr)
+PYEOF
 
-  mv "$tmp_md" "$out"
-  echo "[survey] written: $out"
   echo "[survey] state summary:"
-  cmd_status | tail -n +1
+  cmd_status | head -20
 }
 
 # ---------------- execute helpers -------------------------------------------

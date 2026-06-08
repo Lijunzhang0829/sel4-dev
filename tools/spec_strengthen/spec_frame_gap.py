@@ -250,6 +250,11 @@ def main() -> int:
                 "anchor_line": anchor_line,
                 "status": status,
                 "reason": reason,
+                # Evidence type: mechanical (direct grep + crunch-derived
+                # grep, both reliable). Tier 1 — clean candidates can be
+                # executed with high confidence without further probe.
+                "evidence": "mechanical",
+                "tier": 1 if status == "clean" else None,
             }
             print(json.dumps(record, ensure_ascii=False))
 

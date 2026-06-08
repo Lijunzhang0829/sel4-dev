@@ -15,24 +15,25 @@ Exports:
                        triples, plus `lemma shows`-bundle syntax.
 - `iter_thy_files(path)`
                      — iterator over .thy files under a path.
-- Three detector functions returning `list[Finding]`:
-    * `detect_paired_chain(lemmas)`
-        Same-op lemma pairs where one postcond implies the other
-        (former Pattern A). Treat results with caution — ~70%
-        false-positive rate (incomparable preconditions).
-    * `detect_missing_functional(lemmas)`
-        `set_*`/`update_*` ops with only preservation lemmas, no
-        functional postcond stating `<accessor> s = <arg>` (former
-        Pattern B).
-    * `detect_unused_premise(lemmas)`
+- Two detector functions returning `list[Finding]`:
+    * `detect_paired_chain(lemmas)` — Pattern A.
+        Same-op lemma pairs where one postcond implies the other.
+        Heuristic + manual review required (~70% FP from incomparable
+        preconditions). evidence: "heuristic+manual" — emit to Tier 3.
+    * `detect_unused_premise(lemmas)` — Pattern C.
         Hoare-triple lemmas whose precondition mentions an
         invariant-level predicate (valid_objs/invs/valid_pspace)
         but whose postcondition is purely structural — premise may
-        be droppable (former Pattern C).
+        be droppable. Heuristic only; ground-truth via probe.
+        evidence: "heuristic" — emit to Tier 2.
 
-The descriptive names replace the prior Pattern A/B/C labels; users
-of this module should not depend on the legacy single-letter
-identifiers.
+Pattern B's `detect_missing_functional` was removed 2026-06-08 per
+the revised strict definition of spec strengthening (B is "interface
+filling", not strict strengthening).
+
+The detector layer is intentionally one-pattern-at-a-time. No shared
+ranking pipeline. Callers should invoke individual detectors and
+present results in tiers (mechanical / probe-confirmable / manual).
 
 Limitations:
 - Regex-based; cannot follow imports / type-check.
@@ -90,7 +91,6 @@ LOCAL_TOKENS = {
     "case", "of", "True", "False",
 }
 
-MISSING_FUNCTIONAL_OP_PREFIX_RE = re.compile(r"^(?:set|update|modify|do)_")
 PREMISE_INV_RE = re.compile(r"\b(?:valid_objs|invs|valid_pspace|invs')\b")
 
 
@@ -116,11 +116,10 @@ class Finding:
 
     `kind` is a descriptive string identifying which detector produced
     the hit:
-      "paired-chain"        — paired weak/strong via implication table
-      "missing-functional"  — set_*/update_* lacks functional postcond
-      "unused-premise"      — invariant-level pre + structural post
+      "paired-chain"   — paired weak/strong (Pattern A; evidence: heuristic+manual)
+      "unused-premise" — invariant-level pre + structural post (Pattern C; evidence: heuristic, probe-confirmable)
 
-    Legacy Pattern A/B/C letters are not exposed.
+    Pattern B's "missing-functional" detector was removed 2026-06-08.
     """
     kind: str
     file: str
@@ -359,44 +358,11 @@ def detect_paired_chain(lemmas: list[Lemma]) -> list[Finding]:
     return out
 
 
-def detect_missing_functional(lemmas: list[Lemma]) -> list[Finding]:
-    """`set_*` / `update_*` ops with only preservation lemmas — no
-    lemma stating `<accessor> s = <arg>` after the operation (former
-    Pattern B)."""
-    findings: list[Finding] = []
-    by_op: dict[str, list[Lemma]] = {}
-    for l in lemmas:
-        if not l.op or not MISSING_FUNCTIONAL_OP_PREFIX_RE.match(l.op):
-            continue
-        by_op.setdefault(l.op, []).append(l)
-    for op, group in by_op.items():
-        has_functional = False
-        for l in group:
-            if re.search(r"\\<lambda>\s*_\s+s\.\s+.*=", l.post):
-                has_functional = True
-                break
-            if "= v" in l.post or "= t" in l.post or "= x" in l.post:
-                has_functional = True
-                break
-        if has_functional:
-            continue
-        l = group[0]
-        findings.append(Finding(
-            kind="missing-functional",
-            file=l.file, line=l.line, name=l.name,
-            note=(
-                f"`{op}` has preservation lemmas but no functional "
-                f"postcondition."
-            ),
-            suggested_move=(
-                f"add functional postcond: "
-                f"`\\<lbrace>\\<top>\\<rbrace> {op} v "
-                f"\\<lbrace>\\<lambda>_ s. <accessor> s = v\\<rbrace>` "
-                f"(purely additive — no witness needed)"
-            ),
-            pre=l.pre[:120], post=l.post[:120],
-        ))
-    return findings
+# NOTE: `detect_missing_functional` (Pattern B) was removed 2026-06-08.
+# Per the revised strict definition of spec strengthening (new spec must
+# strictly entail old spec AND old spec cannot derive new spec), B is
+# "interface filling", not strengthening. The detector is gone; the
+# `missing-functional` kind no longer appears in any output.
 
 
 def detect_unused_premise(lemmas: list[Lemma]) -> list[Finding]:
