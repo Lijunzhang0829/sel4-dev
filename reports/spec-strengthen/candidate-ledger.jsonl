@@ -76,3 +76,4 @@
 {"ts":"2026-06-08T16:06:53Z","key":"C:Finalise_AI:unbind_maybe_notification_not_bound:sym_refs","event":"discovered","pattern":"C","theory":"verification/l4v/proof/invariant-abstract/Finalise_AI.thy","metadata":{"lemma":"unbind_maybe_notification_not_bound","premise":"sym_refs","roi":5,"source":"manual: playbook Case 2 precedent"}}
 {"key": "G:KHeap_AI:set_object:domain_index", "event": "audited", "expid": "0024-set-object-domain-index-frame-lemma", "ts": "2026-06-08T16:17:36Z"}
 {"key": "G:KHeap_AI:set_object:domain_time", "event": "audited", "expid": "0025-set-object-domain-time-frame-lemma", "ts": "2026-06-08T16:17:36Z"}
+{"key": "C:Finalise_AI:unbind_maybe_notification_not_bound:sym_refs", "event": "aborted", "reason": "iterative C on same lemma — 0023's <name>_old witness blocks 0026's; need batch-drop or rename strategy", "ts": "2026-06-08T16:57:26Z"}

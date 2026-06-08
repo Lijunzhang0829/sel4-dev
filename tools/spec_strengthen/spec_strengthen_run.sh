@@ -560,12 +560,25 @@ standard_pipeline() {
 
   echo "[3/6] trial wall (with patch) ..."
   local trial_out trial_ms
-  trial_out="$(bash "$REPO_ROOT/$ISA_SCRIPTS/check-theory.sh" "$theory_abs" "$session" --patch "$patch" 2>&1 | tail -1)"
+  # Defensive: trap pipefail/set-e interactions that could silently kill
+  # the script if check-theory.sh produces unusual output (e.g.
+  # duplicate-fact errors that don't carry a normal `(NNNms)` suffix).
+  # See the 0026 (sym_refs) incident: a duplicate-`_old`-witness collision
+  # from an iterative-C cycle caused the previous run to exit 0 with
+  # no audit dir built — the grep extraction silently exited via
+  # pipefail. The `|| true` here keeps the failure visible.
+  local trial_raw
+  trial_raw="$(bash "$REPO_ROOT/$ISA_SCRIPTS/check-theory.sh" "$theory_abs" "$session" --patch "$patch" 2>&1 || true)"
+  trial_out="$(echo "$trial_raw" | tail -1)"
   if ! echo "$trial_out" | grep -q '^OK'; then
-    ledger_append "{\"key\":\"$key\",\"event\":\"trial_failed\",\"expid\":\"$expid\",\"reason\":\"check-theory.sh --patch failed\"}"
-    echo "  ✗ trial FAILED: $trial_out"; exit 7;
+    ledger_append "{\"key\":\"$key\",\"event\":\"trial_failed\",\"expid\":\"$expid\",\"reason\":\"check-theory.sh --patch did not return OK\"}"
+    echo "  ✗ trial FAILED. Last line: $trial_out"
+    echo "  (tail of full trial output:)"
+    echo "$trial_raw" | tail -5 | sed 's/^/    /'
+    exit 7
   fi
-  trial_ms="$(echo "$trial_out" | grep -oE '\([0-9]+ms\)' | tr -d '()ms')"
+  trial_ms="$(echo "$trial_out" | grep -oE '\([0-9]+ms\)' | tr -d '()ms' || echo "")"
+  [ -z "$trial_ms" ] && trial_ms="0"
   local delta_pct
   delta_pct="$(awk -v b="$baseline_ms" -v t="$trial_ms" 'BEGIN{printf "%.1f", (t-b)*100.0/b}')"
   echo "  ✓ trial_wall_ms=$trial_ms (Δ ${delta_pct}%)"
