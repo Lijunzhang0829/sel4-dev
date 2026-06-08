@@ -916,9 +916,13 @@ execute_C() {
 
   echo "================================================================"
   echo "execute C  $key  → $expid"
+  echo "  theory:  $theory_rel"
+  echo "  lemma:   $lemma"
+  echo "  premise: $premise"
+  echo "  session: $session"
   echo "================================================================"
 
-  # Step 1: probe
+  # Step 1: probe (ground-truth load-bearing check)
   echo "[probe] running spec_premise_probe.sh ..."
   local probe_out
   probe_out="$(bash "$REPO_ROOT/$SPEC_TOOLS/spec_premise_probe.sh" "$theory_rel" "$lemma" "$premise" 2>&1 || true)"
@@ -930,14 +934,31 @@ execute_C() {
   fi
   echo "  ✓ probe verdict: likely-unused"
 
-  echo ""
-  echo "Patch construction for Pattern C is not yet automated; the"
-  echo "shell stops here.  Construct the drop-premise patch manually"
-  echo "(modify the lemma + add <name>_old witness via"
-  echo "spec_witness_gen.py), then re-invoke:"
-  echo "  spec_strengthen_run.sh execute --pattern C --patch <p> \\"
-  echo "    --theory $theory_rel --expid $expid --key $key"
-  exit 0
+  # Step 2: auto-generate drop-premise patch + _old witness
+  echo "[c-patchgen] generating drop-premise patch + witness ..."
+  local date_tag patch
+  date_tag="$(date +%Y%m%d)"
+  patch="logs/spec-strengthen-${theory_base}-${lemma}_drop_${premise}-${date_tag}.patch"
+  mkdir -p logs
+  if ! python3 "$REPO_ROOT/$SPEC_TOOLS/spec_strengthen_c_patchgen.py" \
+        --theory "$theory_rel" --lemma "$lemma" --premise "$premise" \
+        --out "$patch" 2>&1; then
+    ledger_append "{\"key\":\"$key\",\"event\":\"trial_failed\",\"expid\":\"$expid\",\"reason\":\"patchgen failed\"}"
+    echo "✗ patch generation failed. Abort."
+    exit 7
+  fi
+  echo "  ✓ patch generated: $patch"
+  echo "----------------------------------------------------------------"
+  cat "$patch"
+  echo "----------------------------------------------------------------"
+
+  if [ "$skip" != 1 ]; then
+    read -r -p "Continue with this patch (full pipeline)? [y/N] " ans
+    [[ "$ans" =~ ^[Yy]$ ]] || { echo "aborted by user"; exit 0; }
+  fi
+
+  # Step 3: standard pipeline (snapshot/baseline/trial/impact/apply/audit)
+  standard_pipeline "$key" "C" "$theory_abs" "$session" "$REPO_ROOT/$patch" "$expid"
 }
 
 execute_custom() {
