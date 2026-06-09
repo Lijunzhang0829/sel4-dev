@@ -76,14 +76,35 @@ print(json.dumps(d, ensure_ascii=False))
 
 # Get the latest event for a candidate key.  Echo the event JSON or
 # empty if no events for that key.
+#
+# Previously implemented as `tac "$LEDGER" | python3 ...` with the
+# python iterating reversed lines until match. That form races under
+# `set -euo pipefail`: when python exits early (sys.exit(0) on match),
+# tac receives SIGPIPE → exit 141 → pipefail propagates non-zero into
+# the command substitution → set -e aborts the script. The race only
+# triggered when the matched event was DEEP enough in the file that
+# tac had buffered material in flight at python's exit; latest-events
+# (newer than ~6 lines from tail) happened to match before tac filled
+# its buffer, hiding the bug for the 0027-0049 work where all
+# candidates were freshly discovered. Surfaced by the 0050+ retries
+# that look up trial_failed events from earlier in the file.
+#
+# Fix: read the file in Python, iterate reversed in-memory. No pipe,
+# no SIGPIPE race.
 ledger_state() {
   local key="$1"
-  tac "$LEDGER" 2>/dev/null | python3 -c "
-import json, sys
+  python3 -c "
+import json, os, sys
 key = '$key'
-for line in sys.stdin:
+path = '$LEDGER'
+if not os.path.exists(path):
+    sys.exit(0)
+with open(path) as f:
+    lines = f.readlines()
+for line in reversed(lines):
     line = line.strip()
-    if not line: continue
+    if not line:
+        continue
     try:
         d = json.loads(line)
     except json.JSONDecodeError:
@@ -916,13 +937,41 @@ execute_G() {
   op_args="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_op_args.py" "$op" 2>/dev/null || echo "p ko")"
   [ -z "$op_args" ] && op_args="p ko"
 
-  # Generate template patch. Default proof tactic is
-  # `by (wpsimp simp: <op>_def)` — empirically works for set_thread_state,
-  # set_bound_notification, set_message_info, set_object, set_cdt and
-  # other write ops without nested do_machine_op / do_extended_op
-  # (which would have been caught by the new dmo/dxo preflight gates
-  # anyway). Complex ops (set_mrs, set_extra_badge) require a custom
-  # patch; see decision.md notes in 0033/0034 for the pattern.
+  # Per-op tactic — dynamically tailored based on op's static structure.
+  #
+  # Base form:   by (wpsimp simp: <op>_def)
+  #
+  # Adjustments (composable):
+  #
+  # 1. If op transitively calls `get_object`, add `wp: get_object_wp` to
+  #    the wp ruleset. Reason: wpsimp's default ruleset matches
+  #    `get_object`'s shape but leaves a schematic precondition that
+  #    can't be unified with the postcondition obligation when the
+  #    body case-splits on the returned object (set_cap, set_simple_ko).
+  #    Explicit `get_object_wp` resolves the unification chain.
+  #    Surfaced by the [[0039 / 0040 / 0042 / 0043]] failure trace
+  #    showing `\<lbrace>?R9 x1 x2\<rbrace> get_object x1 \<lbrace>...case-split...\<rbrace>`
+  #    — schematic ?R9 was the smoking gun.
+  #    Reference: existing `set_cap_typ_at` uses
+  #    `wpsimp wp: set_object_typ_at get_object_wp simp: set_cap_def`.
+  #
+  # 2. Fallback iteration `(... | clarsimp)+` for ops whose body has
+  #    case-on-input dispatch (set_cap, set_simple_ko) leaves
+  #    H⟹H residuals that wpsimp alone doesn't close. clarsimp closes
+  #    them via implication-intro + assumption.
+  local extra_wp=""
+  if python3 -c "
+import sys
+sys.path.insert(0, '$REPO_ROOT/$SPEC_TOOLS')
+from spec_frame_gap import op_transitively_calls
+from pathlib import Path
+hit, _ = op_transitively_calls('$op', 'get_object', Path('$REPO_ROOT'))
+sys.exit(0 if hit else 1)
+" 2>/dev/null; then
+    extra_wp=" wp: get_object_wp"
+  fi
+  local tactic="by (wpsimp${extra_wp} simp: ${op}_def | clarsimp)+"
+
   local date_tag patch
   date_tag="$(date +%Y%m%d)"
   patch="logs/spec-strengthen-${theory_base}-${op}_${field}-${date_tag}.patch"
@@ -933,7 +982,7 @@ ${block_end_text}
 
 lemma ${op}_${field}[wp]:
   "\\<lbrace>\\<lambda>s. P (${field} s)\\<rbrace> ${op} ${op_args} \\<lbrace>\\<lambda>_ s. P (${field} s)\\<rbrace>"
-  by (wpsimp simp: ${op}_def)
+  ${tactic}
 EOF
   echo "Generated template patch: $patch"
   echo "----------------------------------------------------------------"
