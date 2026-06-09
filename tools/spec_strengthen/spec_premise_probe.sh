@@ -33,7 +33,34 @@ if [ ! -f "$THY_ABS_HOST" ]; then
 fi
 THY_ABS_CONTAINER="/workspace/${THY_REL#./}"
 
-exec docker compose -f "$COMPOSE_FILE" exec -T l4v \
+# ---------------- container-orphan reaper -----------------------------------
+# Same pattern as .claude/skills/isabelle_prover/scripts/_dx.sh: when this
+# host wrapper is killed (timeout SIGTERM, OOM, etc.), `docker compose exec`
+# does not propagate the signal to polyml/java children in the container.
+# They become host orphans that accumulate across runs. Capture baseline
+# container PIDs at entry, kill any new ones at exit.
+__probe_baseline_file="/tmp/_probe_baseline_$$_$(date +%s%N | head -c 12).txt"
+docker compose -f "$COMPOSE_FILE" exec -T l4v bash -c \
+  "pgrep -f 'polyml|isabelle' 2>/dev/null | sort -u > '$__probe_baseline_file' || true" \
+  >/dev/null 2>&1 || true
+
+__probe_cleanup() {
+  docker compose -f "$COMPOSE_FILE" exec -T l4v bash -c "
+    if [ -f '$__probe_baseline_file' ]; then
+      NEW=\$(comm -23 <(pgrep -f 'polyml|isabelle' 2>/dev/null | sort -u) <(sort -u '$__probe_baseline_file') 2>/dev/null)
+      if [ -n \"\$NEW\" ]; then
+        kill -9 \$NEW 2>/dev/null || true
+      fi
+      rm -f '$__probe_baseline_file'
+    fi
+  " >/dev/null 2>&1 || true
+}
+trap __probe_cleanup EXIT
+trap '__probe_cleanup; exit 143' TERM
+trap '__probe_cleanup; exit 130' INT
+
+# NOT `exec` — must let the EXIT trap fire (see _dx.sh comment).
+docker compose -f "$COMPOSE_FILE" exec -T l4v \
   python3 /workspace/tools/spec_strengthen/spec_premise_probe.py \
     --theory "$THY_ABS_CONTAINER" \
     --lemma  "$LEMMA" \
