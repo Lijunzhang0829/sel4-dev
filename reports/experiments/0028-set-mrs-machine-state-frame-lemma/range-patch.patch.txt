@@ -1,0 +1,6 @@
+1881 1881
+               wp: mapM_x_wp_inv hoare_vcg_all_lift hoare_drop_imps)
+
+lemma set_mrs_machine_state[wp]:
+  "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_mrs t b m \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+  by (wp set_mrs_thread_set_dmo)

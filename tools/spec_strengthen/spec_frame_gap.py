@@ -236,8 +236,10 @@ def main() -> int:
         for field in STATE_FIELDS:
             if field in covered:
                 continue
-            if field == "kheap" and op == "set_object":
-                # set_object writes kheap; not a frame target
+            if field == "kheap":
+                # `kheap` is the heap/object store itself; these set_<op>
+                # operations mutate it by design, so it is never a useful
+                # literal-field frame target.
                 continue
             status, reason = preflight(op, field, repo_root)
             record = {

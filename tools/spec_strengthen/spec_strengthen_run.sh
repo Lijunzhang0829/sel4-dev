@@ -130,7 +130,7 @@ spec_strengthen_run.sh — process manager for spec strengthening
                         (patterns A, C, D, G only).
 
 Subcommands:
-  survey  <file> [--session <s>] [--out <path>]
+  survey  <file> [--session <s>] [--pattern G|C|A|all] [--out <path>]
   execute --candidate <key> --expid <expid> [-y] [--retry]
   execute --pattern A|D --patch <patch> --theory <thy> --expid <expid>
                 [--key <key>] [-y]
@@ -231,7 +231,7 @@ cmd_mark_aborted() {
 # ---------------- subcommand: survey ----------------------------------------
 
 cmd_survey() {
-  local file="" session="" out=""
+  local file="" session="" out="" pattern="all"
   # first positional arg = file
   if [ "${1:-}" = "" ] || [[ "${1:-}" == --* ]]; then usage; fi
   file="$1"; shift
@@ -239,9 +239,15 @@ cmd_survey() {
     case "$1" in
       --session) session="$2"; shift 2 ;;
       --out)     out="$2";     shift 2 ;;
+      --pattern) pattern="$2"; shift 2 ;;
       *) usage ;;
     esac
   done
+
+  case "$pattern" in
+    G|C|A|all) ;;
+    *) echo "invalid survey pattern: $pattern (use G, C, A, or all)" >&2; exit 2 ;;
+  esac
 
   [ -f "$file" ] || { echo "theory not found: $file" >&2; exit 4; }
   if [ -z "$session" ]; then
@@ -255,74 +261,85 @@ cmd_survey() {
   [ -z "$out" ] && out="reports/spec-strengthen/survey-${theory_base}-${date_tag}.md"
   mkdir -p "$(dirname "$out")"
 
-  echo "[survey] file=$file  session=$session"
+  echo "[survey] file=$file  session=$session  pattern=$pattern"
   echo "[survey] writing → $out"
 
-  # Run each pattern's detector independently. No shared ranking
-  # pipeline. Each detector emits its own JSON; the renderer below
-  # groups by TIER (mechanical / probe-confirmable / manual), NOT by
-  # pattern, in the user-facing survey doc.
-  local g_jsonl c_json a_json
-  g_jsonl="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_frame_gap.py" "$file" 2>/dev/null || true)"
-  c_json="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_candidates.py" --pattern C --target "${session,,}" --limit 30 --json 2>/dev/null || true)"
-  a_json="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_candidates.py" --pattern A --target "${session,,}" --limit 30 --json 2>/dev/null || true)"
+  local g_jsonl="" c_json="[]" a_json="[]"
+  if [ "$pattern" = "G" ] || [ "$pattern" = "all" ]; then
+    g_jsonl="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_frame_gap.py" "$file" 2>/dev/null || true)"
+  fi
+  if [ "$pattern" = "C" ] || [ "$pattern" = "all" ]; then
+    c_json="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_candidates.py" --pattern C --target "${session,,}" --limit 30 --json 2>/dev/null || true)"
+  fi
+  if [ "$pattern" = "A" ] || [ "$pattern" = "all" ]; then
+    a_json="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_candidates.py" --pattern A --target "${session,,}" --limit 30 --json 2>/dev/null || true)"
+  fi
 
-  # Hand off to one Python renderer that:
-  # (1) loads ledger → existing-key map
-  # (2) renders the markdown survey by tier
-  # (3) appends `discovered`/`preflight_failed` events for new candidates
   LEDGER_PATH="$LEDGER" \
   THEORY_FILE="$file" \
   THEORY_BASE="$theory_base" \
   SESSION="$session" \
+  SURVEY_PATTERN="$pattern" \
   OUT_PATH="$out" \
   G_JSONL="$g_jsonl" \
   C_JSON="$c_json" \
   A_JSON="$a_json" \
   python3 - <<'PYEOF'
 import json, os, datetime, sys
+from pathlib import Path
+import re
 
 ledger_path = os.environ['LEDGER_PATH']
 theory      = os.environ['THEORY_FILE']
+theory_path = Path(theory).resolve()
 theory_base = os.environ['THEORY_BASE']
 session     = os.environ['SESSION']
+survey_pattern = os.environ['SURVEY_PATTERN']
 out_path    = os.environ['OUT_PATH']
 
-# ---- load ledger -----------------------------------------------------
 latest = {}
 try:
     with open(ledger_path) as f:
         for line in f:
             line = line.strip()
-            if not line: continue
-            try: d = json.loads(line)
-            except json.JSONDecodeError: continue
+            if not line:
+                continue
+            try:
+                d = json.loads(line)
+            except json.JSONDecodeError:
+                continue
             latest[d['key']] = d
 except FileNotFoundError:
     pass
 
-# ---- parse detector outputs ------------------------------------------
 g_records = []
 for line in (os.environ.get('G_JSONL') or '').splitlines():
     line = line.strip()
-    if not line: continue
-    try: g_records.append(json.loads(line))
-    except json.JSONDecodeError: pass
+    if not line:
+        continue
+    try:
+        g_records.append(json.loads(line))
+    except json.JSONDecodeError:
+        pass
 
 try:
     c_records = json.loads(os.environ.get('C_JSON') or '[]')
 except json.JSONDecodeError:
     c_records = []
-c_records = [r for r in c_records if theory_base in r.get('file', '')]
+c_records = [
+    r for r in c_records
+    if Path(r.get('file_path', '')).resolve() == theory_path
+]
 
 try:
     a_records = json.loads(os.environ.get('A_JSON') or '[]')
 except json.JSONDecodeError:
     a_records = []
-a_records = [r for r in a_records if theory_base in r.get('file', '')]
+a_records = [
+    r for r in a_records
+    if Path(r.get('file_path', '')).resolve() == theory_path
+]
 
-# ---- key construction -----------------------------------------------
-import re
 def c_key(r):
     m = re.search(r"dropping `([^`]+)`", r.get('suggested_move', ''))
     premise = m.group(1) if m else '?'
@@ -331,10 +348,9 @@ def c_key(r):
 def a_key(r):
     return f"A:{theory_base}:{r['name']}"
 
-# ---- detect A's proof-body redirect heuristic -----------------------
 thy_text = ''
 try:
-    thy_text = open(theory).read()
+    thy_text = theory_path.read_text()
 except Exception:
     pass
 
@@ -344,19 +360,19 @@ def a_redirect_status(name):
     m = re.search(rf'^lemma\s+{re.escape(name)}\b.*?^\s*(by|apply)\b[^\n]*',
                   thy_text, re.MULTILINE | re.DOTALL)
     if m and 'strengthen' in m.group(0):
-        return '✓ likely'
-    return '? manual'
+        return 'likely redirect'
+    return 'manual review'
 
-# ---- compute new ledger events (appended at end) --------------------
 new_events = []
-ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+ts = datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H:%M:%SZ')
 
 def ev_new(record):
     new_events.append(record)
 
 for r in g_records:
     key = r['key']
-    if key in latest: continue
+    if key in latest:
+        continue
     if r['status'] == 'clean':
         ev_new({'ts': ts, 'key': key, 'event': 'discovered',
                 'pattern': 'G', 'theory': r['theory'],
@@ -372,7 +388,8 @@ for r in g_records:
 
 for r in c_records:
     key, premise = c_key(r)
-    if key in latest: continue
+    if key in latest:
+        continue
     ev_new({'ts': ts, 'key': key, 'event': 'discovered',
             'pattern': 'C', 'theory': theory,
             'evidence': 'heuristic',
@@ -381,137 +398,120 @@ for r in c_records:
 
 for r in a_records:
     key = a_key(r)
-    if key in latest: continue
+    if key in latest:
+        continue
     ev_new({'ts': ts, 'key': key, 'event': 'discovered',
             'pattern': 'A', 'theory': theory,
             'evidence': 'heuristic+manual',
             'metadata': {'weak': r['name'],
                          'suspicion_score': r.get('suspicion_score', 0)}})
 
-# ---- render markdown by TIER ----------------------------------------
 out = []
 date_str = datetime.date.today().isoformat()
 out.append(f"# spec-strengthen survey — {session} / {theory_base}.thy — {date_str}")
 out.append("")
 out.append(f"Source: `{theory}`")
 out.append("")
-out.append("Survey output is **grouped by verification tier**, not by Pattern. "
-           "Each candidate carries an `evidence` tag indicating what kind of "
-           "check stands between the survey hit and a safe apply.")
+out.append("This survey follows the 4-layer model: detector outputs are collected per-pattern, then presented by **verification tier** rather than by a unified candidate ranking.")
+out.append("")
+out.append("Evidence tags:")
+out.append("- `mechanical`: preflight already completed; candidate is high-confidence execute material")
+out.append("- `heuristic`: scanner hit only; execute must upgrade it with a probe")
+out.append("- `heuristic+manual`: scanner hit only; human review remains mandatory")
+out.append("- `none`: no detector; execute-only/manual path")
 out.append("")
 
-# ----- Tier 1: mechanically clean (G clean) --------------------------
-g_clean = [r for r in g_records if r['status'] == 'clean']
-out.append("## Tier 1 — Mechanically clean (high-confidence apply)")
-out.append("")
-out.append("These candidates passed mechanical preflight (direct grep + "
-           "crunch-derived grep). Pattern G frame lemmas. evidence: `mechanical`.")
-out.append("")
-if g_clean:
-    out.append("| Key | (op, field) | anchor | prior |")
-    out.append("|---|---|---|---|")
-    for r in g_clean:
-        anchor = r.get('anchor') or '—'
-        if r.get('anchor_line'):
-            anchor = f"{anchor} (L{r['anchor_line']})"
-        prior = latest.get(r['key'], {}).get('event', '-')
-        if r['key'] in [e['key'] for e in new_events]:
-            prior = 'discovered (this run)'
-        out.append(f"| `{r['key']}` | {r['op']} / {r['field']} | {anchor} | {prior} |")
-else:
-    out.append("(none in this file)")
-out.append("")
+selected_all = survey_pattern == 'all'
+show_g = selected_all or survey_pattern == 'G'
+show_c = selected_all or survey_pattern == 'C'
+show_a = selected_all or survey_pattern == 'A'
 
-# ----- Tier 2: probe-confirmable (C) ---------------------------------
-out.append("## Tier 2 — Probe-confirmable (run mechanical verification at execute time)")
-out.append("")
-out.append("Pattern C candidates. evidence: `heuristic`. The scanner is a "
-           "hypothesis generator; the TRIAL-based premise probe (~40-60s per "
-           "candidate) is the actual filter. `spec_strengthen_run.sh execute "
-           "--candidate <key>` runs the probe as its first step.")
-out.append("")
-out.append("`suspicion_score` is **NOT** \"likelihood of success\" — it's "
-           "consumer count × pattern weight. Higher = more impact IF the "
-           "heuristic is right, not \"more likely to be right.\"")
-out.append("")
-if c_records:
-    out.append("| Key | lemma / premise | Consumers | Suspicion | prior |")
-    out.append("|---|---|---:|---:|---|")
-    for r in c_records:
-        key, premise = c_key(r)
-        prior = latest.get(key, {}).get('event', '-')
-        if key in [e['key'] for e in new_events]:
-            prior = 'discovered (this run)'
-        out.append(
-            f"| `{key}` | {r['name']} / {premise} "
-            f"| {r.get('consumers_lines', '?')} "
-            f"| {r.get('suspicion_score', '?')} | {prior} |"
-        )
-else:
-    out.append("(no C candidates for this file in scanner top output)")
-out.append("")
+if show_g:
+    g_clean = [r for r in g_records if r['status'] == 'clean']
+    out.append("## Tier 1 — Mechanically clean (high-confidence apply)")
+    out.append("")
+    out.append("Pattern G candidates. These already passed direct-grep and crunch-derived preflight checks.")
+    out.append("")
+    if g_clean:
+        out.append("| Key | evidence | (op, field) | anchor | prior |")
+        out.append("|---|---|---|---|---|")
+        new_keys = {e['key'] for e in new_events}
+        for r in g_clean:
+            anchor = r.get('anchor') or '—'
+            if r.get('anchor_line'):
+                anchor = f"{anchor} (L{r['anchor_line']})"
+            prior = latest.get(r['key'], {}).get('event', '-')
+            if r['key'] in new_keys:
+                prior = 'discovered (this run)'
+            out.append(f"| `{r['key']}` | `{r.get('evidence','mechanical')}` | {r['op']} / {r['field']} | {anchor} | {prior} |")
+    else:
+        out.append("(none in this file)")
+    out.append("")
 
-# ----- Tier 3: manual review only (A) --------------------------------
-out.append("## Tier 3 — Manual review only (no auto-execute)")
-out.append("")
-out.append("Pattern A candidates. evidence: `heuristic+manual`. The scanner "
-           "flags weak/strong companion pairs, but pre/post comparability and "
-           "cross-file consumer impact require human judgment. shell **will "
-           "not** auto-generate a rewrite patch; execute via "
-           "`--pattern A --patch <patch>` after manual review.")
-out.append("")
-if a_records:
-    out.append("| Key | weak lemma | suggested strong companion | redirect proof? | Suspicion | prior |")
-    out.append("|---|---|---|---|---:|---|")
-    for r in a_records:
-        key = a_key(r)
-        prior = latest.get(key, {}).get('event', '-')
-        if key in [e['key'] for e in new_events]:
-            prior = 'discovered (this run)'
-        # Extract suggested companion from suggested_move text
-        m = re.search(r"`([A-Za-z_][A-Za-z_0-9']*)`\s+companion\s+`([^`]+)`",
-                      r.get('suggested_move', ''))
-        companion = m.group(2) if m else '?'
-        out.append(
-            f"| `{key}` | {r['name']} | {companion} "
-            f"| {a_redirect_status(r['name'])} "
-            f"| {r.get('suspicion_score', '?')} | {prior} |"
-        )
-else:
-    out.append("(no A candidates for this file in scanner top output)")
-out.append("")
+if show_c:
+    out.append("## Tier 2 — Probe-confirmable (execute upgrades heuristic to ground-truth)")
+    out.append("")
+    out.append("Pattern C candidates. The scanner only supplies a suspicion signal; `execute --candidate <key>` must run the TRIAL-based premise probe before any patch generation.")
+    out.append("")
+    out.append("`suspicion_score` is **not** a success ranking. It is a within-pattern impact score: higher means \"bigger payoff if true\", not \"more likely to survive probe\".")
+    out.append("")
+    if c_records:
+        out.append("| Key | evidence | lemma / premise | Consumers | suspicion_score | prior |")
+        out.append("|---|---|---|---:|---:|---|")
+        new_keys = {e['key'] for e in new_events}
+        for r in c_records:
+            key, premise = c_key(r)
+            prior = latest.get(key, {}).get('event', '-')
+            if key in new_keys:
+                prior = 'discovered (this run)'
+            out.append(f"| `{key}` | `{r.get('evidence','heuristic')}` | {r['name']} / {premise} | {r.get('consumers_lines','?')} | {r.get('suspicion_score','?')} | {prior} |")
+    else:
+        out.append("(no C candidates for this file in scanner output)")
+    out.append("")
 
-# ----- Out of scope / manual only (D) --------------------------------
+if show_a:
+    out.append("## Tier 3 — Manual review only")
+    out.append("")
+    out.append("Pattern A candidates. The detector only identifies weak/strong pairs plus a redirect-shaped proof hint. Pre/post comparability and consumer safety are still manual judgments, so there is no auto-execute path.")
+    out.append("")
+    if a_records:
+        out.append("| Key | evidence | weak lemma | suggested strong companion | redirect proof hint | suspicion_score | prior |")
+        out.append("|---|---|---|---|---|---:|---|")
+        new_keys = {e['key'] for e in new_events}
+        for r in a_records:
+            key = a_key(r)
+            prior = latest.get(key, {}).get('event', '-')
+            if key in new_keys:
+                prior = 'discovered (this run)'
+            m = re.search(r"`([A-Za-z_][A-Za-z_0-9']*)`\s+companion\s+`([^`]+)`", r.get('suggested_move', ''))
+            companion = m.group(2) if m else '?'
+            out.append(f"| `{key}` | `{r.get('evidence','heuristic+manual')}` | {r['name']} | {companion} | {a_redirect_status(r['name'])} | {r.get('suspicion_score','?')} | {prior} |")
+    else:
+        out.append("(no A candidates for this file in scanner output)")
+    out.append("")
+
 out.append("## Out of scope / manual only")
 out.append("")
-out.append("**Pattern D** (loose bound `≤` → `=`): no automated detector. D "
-           "requires domain knowledge to identify a `≤`-bound postcondition "
-           "that's provably `=`. Execute via:")
+out.append("**Pattern D** has no detector. It is an execute-only path with evidence tag `none`.")
 out.append("```")
 out.append("  spec_strengthen_run.sh execute --pattern D \\")
 out.append("    --patch <patch> --theory <thy> --expid <expid> [--key <key>] [-y]")
 out.append("```")
 out.append("")
-out.append("The shell does not judge D candidate quality; it only runs the "
-           "standard baseline/trial/impact/apply/audit pipeline once you "
-           "supply a patch.")
-out.append("")
 
-# ----- G preflight-failed (informational, NOT in tier display) -------
-g_failed = [r for r in g_records if r['status'] != 'clean']
-if g_failed:
-    out.append("## Informational — G candidates that failed preflight")
-    out.append("")
-    out.append("These are recorded in the ledger as `preflight_failed` so a "
-               "future survey doesn't re-discover them. Not actionable.")
-    out.append("")
-    out.append("| Key | (op, field) | reason |")
-    out.append("|---|---|---|")
-    for r in g_failed:
-        out.append(f"| `{r['key']}` | {r['op']} / {r['field']} | {r['reason']} |")
-    out.append("")
+if show_g:
+    g_failed = [r for r in g_records if r['status'] != 'clean']
+    if g_failed:
+        out.append("## Informational — Tier 1 candidates rejected by mechanical preflight")
+        out.append("")
+        out.append("These remain visible for traceability, but they are not execute candidates.")
+        out.append("")
+        out.append("| Key | evidence | (op, field) | reason |")
+        out.append("|---|---|---|---|")
+        for r in g_failed:
+            out.append(f"| `{r['key']}` | `{r.get('evidence','mechanical')}` | {r['op']} / {r['field']} | {r['reason']} |")
+        out.append("")
 
-# ---- write outputs --------------------------------------------------
 with open(out_path, 'w', encoding='utf-8') as f:
     f.write("\n".join(out) + "\n")
 
@@ -550,9 +550,14 @@ standard_pipeline() {
   echo "[1/6] snapshot → $snap"
 
   echo "[2/6] baseline wall ..."
-  local baseline_out baseline_ms
-  baseline_out="$(bash "$REPO_ROOT/$ISA_SCRIPTS/check-theory.sh" "$theory_abs" "$session" 2>&1 | tail -1)"
-  baseline_ms="$(echo "$baseline_out" | grep -oE '\([0-9]+ms\)' | tr -d '()ms')"
+  local baseline_out baseline_ms baseline_raw
+  # `|| true` mirrors the trial-step defense (see [3/6] comment): without it,
+  # pipefail propagates check-theory.sh's nonzero exit (e.g. heap-lock conflict,
+  # exit 4) into the variable assignment, where `set -e` then aborts the script
+  # silently before the `[ -z "$baseline_ms" ]` ledger-failure branch can run.
+  baseline_raw="$(bash "$REPO_ROOT/$ISA_SCRIPTS/check-theory.sh" "$theory_abs" "$session" 2>&1 || true)"
+  baseline_out="$(echo "$baseline_raw" | tail -1)"
+  baseline_ms="$(echo "$baseline_out" | grep -oE '\([0-9]+ms\)' | tr -d '()ms' || true)"
   [ -z "$baseline_ms" ] && {
     ledger_append "{\"key\":\"$key\",\"event\":\"trial_failed\",\"expid\":\"$expid\",\"reason\":\"baseline run failed\"}"
     echo "  ✗ baseline run failed"; exit 7;
@@ -850,9 +855,10 @@ cmd_execute() {
     esac
   elif [ -n "$patch" ] && [ -n "$theory" ] && [ -n "$pattern" ]; then
     # Custom patch (A or D)
-    [ "$pattern" != "A" ] && [ "$pattern" != "D" ] && {
-      echo "--patch mode is only for patterns A and D" >&2; exit 4;
-    }
+    case "$pattern" in
+      A|D|G) ;;
+      *) echo "--patch mode is only for patterns A, D, G" >&2; exit 4 ;;
+    esac
     # Synthesize a key if not provided
     [ -z "$key" ] && key="${pattern}:$(basename "$theory" .thy):${expid}"
     execute_custom "$key" "$pattern" "$theory" "$patch" "$expid" "$skip_prompt"
