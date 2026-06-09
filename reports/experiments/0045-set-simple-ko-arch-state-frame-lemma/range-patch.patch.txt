@@ -1,0 +1,6 @@
+2158 2158
+  by (wpsimp simp: set_simple_ko_def)
+
+lemma set_simple_ko_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_simple_ko f ptr ep \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  by (wpsimp simp: set_simple_ko_def)
