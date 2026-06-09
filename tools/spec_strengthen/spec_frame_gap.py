@@ -74,6 +74,155 @@ COMMON_WRAPPERS = [
 ]
 
 
+# State fields that live INSIDE the abstract state's `exst` record
+# (extensible state). Reading them goes through a projection like
+# `domain_index s = domain_index_internal (exst s)`. Any op that calls
+# `do_extended_op` writes `exst`, which may change these projections —
+# `Invariants_AI:3405-3437` proves do_extended_op preserves non-`exst`
+# top-level fields but does NOT prove preservation of `exst` sub-fields.
+EXT_STATE_PROJECTED = {
+    "domain_index", "domain_time", "cur_domain",
+    "scheduler_action", "ready_queues",
+}
+
+
+# Path to abstract spec definitions, relative to repo root.
+SPEC_ABSTRACT_REL = "verification/l4v/spec/abstract"
+
+
+def _read_text(p: Path) -> str:
+    try:
+        return p.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return ""
+
+
+def _find_op_def_block(op: str, repo_root: Path) -> str | None:
+    """Return the text of `op`'s definition block from spec/abstract/.
+
+    Heuristic block extraction:
+      - Find file containing `definition ... <op> ::` (or `<op> ::` near
+        `definition`).
+      - Take lines from the `definition` keyword up to the next top-level
+        `definition`/`lemma`/`abbreviation`/`fun`/`primrec` or 80 lines,
+        whichever is first.
+
+    Returns None if no definition is found.
+    """
+    spec_dir = repo_root / SPEC_ABSTRACT_REL
+    if not spec_dir.exists():
+        return None
+
+    # Find files where `<op> ::` appears after `definition` (in any form).
+    try:
+        result = subprocess.run(
+            ["grep", "-rln", "-E", rf"\b{re.escape(op)}\s*::", str(spec_dir)],
+            capture_output=True, text=True, check=False,
+        )
+        files = [Path(p) for p in result.stdout.splitlines() if p]
+    except FileNotFoundError:
+        return None
+
+    op_re = re.compile(rf"^\s*{re.escape(op)}\s*::")
+    end_kw_re = re.compile(r"^(?:definition|lemma|abbreviation|fun|primrec|theorem|locale|context|end)\b")
+
+    for f in files:
+        text = _read_text(f)
+        if not text:
+            continue
+        lines = text.splitlines()
+        # Locate the `<op> ::` line, then walk backwards to find the most
+        # recent `definition` keyword.
+        for i, ln in enumerate(lines):
+            if op_re.match(ln):
+                # Walk back ≤ 5 lines to find "definition"
+                start = i
+                for j in range(i, max(-1, i - 6), -1):
+                    if lines[j].strip().startswith("definition"):
+                        start = j
+                        break
+                # Walk forward to find next top-level keyword
+                end = min(len(lines), start + 80)
+                for k in range(start + 1, end):
+                    if end_kw_re.match(lines[k]):
+                        end = k
+                        break
+                return "\n".join(lines[start:end])
+    return None
+
+
+# Cheap memoization across the whole survey run.
+_OP_BODY_CACHE: dict[str, str | None] = {}
+
+
+def _op_body(op: str, repo_root: Path) -> str | None:
+    if op not in _OP_BODY_CACHE:
+        _OP_BODY_CACHE[op] = _find_op_def_block(op, repo_root)
+    return _OP_BODY_CACHE[op]
+
+
+def _extract_callees(body: str, max_n: int = 80) -> list[str]:
+    """Pull plausible sub-op identifiers out of a definition body.
+
+    Restrictive: only lowercase-underscore tokens of length ≥4 with no
+    surrounding `'`/`\\<` (Isabelle syntax noise). Limited to `max_n` to
+    bound recursion cost — 80 is generous enough to capture all callees
+    in typical set_* op bodies (the [[0028 set_mrs:ms]] regression: the
+    earlier 20-cap missed `store_word_offs` because it came late in the
+    body after many local binders).
+    """
+    # Strip Isabelle syntax noise that creates lots of distractor tokens.
+    body_clean = re.sub(r"\\<[a-zA-Z_]+>", " ", body)  # drop \<symbol>
+    body_clean = re.sub(r"::?[ \t]*\"[^\"]*\"", " ", body_clean)  # drop type annots
+    found = re.findall(r"\b([a-z][a-z0-9_]{3,})\b", body_clean)
+    seen, out = set(), []
+    # Skip Isabelle / HOL primitives that aren't user-defined ops.
+    SKIP = {"do", "od", "let", "in", "case", "of", "if", "then", "else",
+            "when", "unless", "return", "gets", "gets_the", "assert",
+            "modify", "put", "get", "bind", "fst", "snd", "set",
+            "and", "or", "not", "true", "false", "the", "some", "none",
+            "definition", "where", "lambda", "leftarrow", "equiv",
+            "lparr", "rparr", "obj_ref", "option", "message", "list",
+            "length_type", "state_ext", "s_monad", "unit", "nat",
+            "bool", "data", "word", "machine_word", "tcb",
+            "take", "drop", "length", "min", "max", "nth"}
+    for t in found:
+        if t in seen or t in SKIP:
+            continue
+        seen.add(t)
+        out.append(t)
+        if len(out) >= max_n:
+            break
+    return out
+
+
+def op_transitively_calls(op: str, target: str, repo_root: Path,
+                          depth: int = 2) -> tuple[bool, str]:
+    """Does op's definition, up to `depth` recursive calls, contain `target`?
+
+    Returns (found, evidence_chain) where evidence_chain is "op→sub_op" path
+    explaining why target was found, for the diagnostic reason string.
+    """
+    visited = set()
+    # BFS over (name, path_chain)
+    queue: list[tuple[str, str]] = [(op, op)]
+    while queue:
+        name, chain = queue.pop(0)
+        if name in visited or chain.count("→") > depth:
+            continue
+        visited.add(name)
+        body = _op_body(name, repo_root)
+        if body is None:
+            continue
+        if target in body:
+            return True, chain
+        if chain.count("→") < depth:
+            for sub in _extract_callees(body):
+                if sub != name and sub not in visited:
+                    queue.append((sub, f"{chain}→{sub}"))
+    return False, ""
+
+
 LEMMA_WP_RE = re.compile(
     r"^lemma\s+(?P<name>\w+)\s*\[wp\]\s*:",
     re.MULTILINE,
@@ -175,6 +324,18 @@ def preflight(op: str, field: str, repo_root: Path) -> tuple[str, str]:
       "clean"
       "preflight_failed:direct"    — set_<op>_<field> already exists
       "preflight_failed:crunch"    — crunch derivation reaches <op>
+      "preflight_failed:dmo_path"  — op (transitively) calls do_machine_op,
+                                     so `machine_state` frame is a
+                                     semantic FP (do_machine_op writes
+                                     machine_state.memory via storeWord
+                                     and friends).
+      "preflight_failed:dxo_path"  — op (transitively) calls do_extended_op
+                                     AND field is projected from `exst`;
+                                     a per-op lift over the ext-state
+                                     subfield is required, which isn't a
+                                     stock wp rule. See the
+                                     `Invariants_AI:3405-3437` family —
+                                     it covers non-`exst` fields only.
     """
     lemma_name = f"{op}_{field}"
     # Direct existence check
@@ -196,6 +357,34 @@ def preflight(op: str, field: str, repo_root: Path) -> tuple[str, str]:
     if crunch_hits:
         return ("preflight_failed:crunch",
                 f"{len(crunch_hits)} crunch derivation(s) reach {op}")
+
+    # Semantic Gate A: do_machine_op writes machine_state.
+    # Conservative gate — any do_machine_op call in op's transitive
+    # def is treated as a semantic FP for machine_state frames. This
+    # may over-reject a hypothetical "do_machine_op of a pure-read
+    # action" but no such case exists in seL4 AInvs scope at this
+    # writing. See [[0028]] / [[0032 set_extra_badge skip]] for the
+    # empirical cases this gate is designed to catch.
+    if field == "machine_state":
+        hit, chain = op_transitively_calls(op, "do_machine_op", repo_root)
+        if hit:
+            return ("preflight_failed:dmo_path",
+                    f"do_machine_op reachable via {chain} — writes "
+                    f"machine_state.memory, so frame is semantic FP")
+
+    # Semantic Gate B: do_extended_op on ext-state-projected fields.
+    # `do_extended_op` replaces the entire `exst` record, so any
+    # projection out of `exst` (domain_index, domain_time, etc.) may
+    # change. The standard `Invariants_AI:3405-3437` meta-lift only
+    # proves preservation of non-`exst` top-level fields. A per-op
+    # lift is needed; see the [[0030]] / [[0034]] decision.md notes
+    # for the deferred candidates this gate is designed to catch.
+    if field in EXT_STATE_PROJECTED:
+        hit, chain = op_transitively_calls(op, "do_extended_op", repo_root)
+        if hit:
+            return ("preflight_failed:dxo_path",
+                    f"do_extended_op reachable via {chain} — exst "
+                    f"replacement, no stock lift for {field}")
 
     return ("clean", "")
 
