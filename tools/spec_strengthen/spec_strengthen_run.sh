@@ -890,26 +890,50 @@ execute_G() {
   echo "================================================================"
 
   # Find insertion anchor — last set_<op>_*[wp] in file
-  local anchor_line by_line
+  local anchor_line
   anchor_line="$(grep -nE "^lemma ${op}_[a-zA-Z_]+[[:space:]]*\[wp\][[:space:]]*:" "$theory_abs" | tail -1 | cut -d: -f1)"
   [ -z "$anchor_line" ] && { echo "no anchor found for $op" >&2; exit 5; }
-  by_line="$(awk -v start="$anchor_line" 'NR>=start && /^[[:space:]]*by[[:space:]]/ {print NR; exit}' "$theory_abs")"
-  [ -z "$by_line" ] && { echo "no by-line for anchor at $anchor_line" >&2; exit 5; }
-  local by_text
-  by_text="$(sed -n "${by_line}p" "$theory_abs")"
 
-  # Generate template patch
+  # Find the BLOCK END of the anchor lemma — first ^\s*done$ or ^\s*by .*$
+  # line at or after anchor_line. The previous logic looked for the first
+  # `^\s*by\s` line, which (for multi-line `apply ... done` proofs) jumps
+  # to the NEXT lemma's by-shortcut and corrupts the insertion point.
+  # See [[0027 manual override]] — that experiment had to bypass execute_G
+  # because the anchor was a `apply ... done` proof.
+  local block_end_line block_end_text
+  block_end_line="$(awk -v start="$anchor_line" '
+    NR>=start {
+      if (/^[[:space:]]*done[[:space:]]*$/) { print NR; exit }
+      if (/^[[:space:]]*by[[:space:]]/ || /^[[:space:]]*by\(/) { print NR; exit }
+    }
+  ' "$theory_abs")"
+  [ -z "$block_end_line" ] && { echo "no block-end (done|by) for anchor at $anchor_line" >&2; exit 5; }
+  block_end_text="$(sed -n "${block_end_line}p" "$theory_abs")"
+
+  # Extract op formal args from spec/abstract/. Use defaults `p ko`
+  # (set_object shape) only if extraction fails (legacy fallback).
+  local op_args
+  op_args="$(python3 "$REPO_ROOT/$SPEC_TOOLS/spec_op_args.py" "$op" 2>/dev/null || echo "p ko")"
+  [ -z "$op_args" ] && op_args="p ko"
+
+  # Generate template patch. Default proof tactic is
+  # `by (wpsimp simp: <op>_def)` — empirically works for set_thread_state,
+  # set_bound_notification, set_message_info, set_object, set_cdt and
+  # other write ops without nested do_machine_op / do_extended_op
+  # (which would have been caught by the new dmo/dxo preflight gates
+  # anyway). Complex ops (set_mrs, set_extra_badge) require a custom
+  # patch; see decision.md notes in 0033/0034 for the pattern.
   local date_tag patch
   date_tag="$(date +%Y%m%d)"
   patch="logs/spec-strengthen-${theory_base}-${op}_${field}-${date_tag}.patch"
   mkdir -p logs
   cat > "$patch" <<EOF
-${by_line} ${by_line}
-${by_text}
+${block_end_line} ${block_end_line}
+${block_end_text}
 
 lemma ${op}_${field}[wp]:
-  "\\<lbrace>\\<lambda>s. P (${field} s)\\<rbrace> ${op} p ko \\<lbrace>\\<lambda>_ s. P (${field} s)\\<rbrace>"
-  ${by_text##  }
+  "\\<lbrace>\\<lambda>s. P (${field} s)\\<rbrace> ${op} ${op_args} \\<lbrace>\\<lambda>_ s. P (${field} s)\\<rbrace>"
+  by (wpsimp simp: ${op}_def)
 EOF
   echo "Generated template patch: $patch"
   echo "----------------------------------------------------------------"
