@@ -237,6 +237,12 @@ _KNOWN_3TOKEN_OPS = frozenset({
     "set_message_info",
     "set_irq_state",
     "set_object_no",
+    # Added 2026-06-09 after surveying DetSchedSchedule_AI / ArchVSpace_AI:
+    # cross-AInvs occurrence count + spec/abstract def existence confirms
+    # these as real 3-token ops (previously misparsed as 2-token).
+    "set_asid_pool",       # 183 occurrences
+    "set_vm_root",         #  21
+    "set_scheduler_action", #  15
 })
 
 
