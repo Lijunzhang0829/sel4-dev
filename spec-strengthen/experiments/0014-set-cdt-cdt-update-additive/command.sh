@@ -8,7 +8,7 @@ SESSION="AInvs"
 PATCH="$(dirname "$0")/patch.diff"
 
 ISA_SCRIPTS="${ISA_SCRIPTS:-.claude/skills/isabelle_prover/scripts}"
-SPEC_TOOLS="${SPEC_TOOLS:-tools/spec_strengthen}"
+SPEC_TOOLS="${SPEC_TOOLS:-spec-strengthen/scripts}"
 REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 
 # Convert the audit-dir patch.diff (unified) into check-theory.sh

@@ -5,7 +5,7 @@ set -euo pipefail
 THEORY="verification/l4v/proof/invariant-abstract/Ipc_AI.thy"
 SESSION="AInvs"
 ISA_SCRIPTS="${ISA_SCRIPTS:-.claude/skills/isabelle_prover/scripts}"
-SPEC_TOOLS="${SPEC_TOOLS:-tools/spec_strengthen}"
+SPEC_TOOLS="${SPEC_TOOLS:-spec-strengthen/scripts}"
 REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 
 TMP_RANGE_PATCH=$(mktemp /tmp/0033-set-mrs-domain-arch-frame-XXXXXX.patch)

@@ -102,7 +102,7 @@ with a separate cleanup PR.
 
    Place patches under `logs/spec-strengthen-<file>-<YYYYMMDD>.patch`.
 
-   For shape 1, run `python3 tools/spec_strengthen/spec_witness_gen.py
+   For shape 1, run `python3 spec-strengthen/scripts/spec_witness_gen.py
    <patch> <theory.thy>` against the partial patch (modified
    lemma only) to emit the `<name>_old` witness. If the tool
    returns a clean witness (exit 0, no `sorry` TODO), paste it
@@ -203,9 +203,9 @@ not a behavior change.
 | Tool | Role |
 |---|---|
 | `$ISA_SCRIPTS/check-theory.sh` | Only verification gate. Runs the patched file through Isabelle; one pass verifies both the strengthened lemma and the witness. |
-| `tools/spec_strengthen/spec_candidates.py` | Step 1 entry. Flat ranked list of candidates with natural-language suggested moves. |
-| `tools/spec_strengthen/spec_witness_gen.py` | Step 2 helper — emits the `<name>_old` witness for shape-1 patches by looking up the correct Hoare monotonicity rule from triple shape + direction. Use it (see Step 2). |
-| `tools/spec_strengthen/spec_impact.py` | Step 4 entry. Verdict + wall gate + witness presence. With `--measurement-out FILE` emits a simplified JSON suitable for the rule-5 audit bundle. |
+| `spec-strengthen/scripts/spec_candidates.py` | Step 1 entry. Flat ranked list of candidates with natural-language suggested moves. |
+| `spec-strengthen/scripts/spec_witness_gen.py` | Step 2 helper — emits the `<name>_old` witness for shape-1 patches by looking up the correct Hoare monotonicity rule from triple shape + direction. Use it (see Step 2). |
+| `spec-strengthen/scripts/spec_impact.py` | Step 4 entry. Verdict + wall gate + witness presence. With `--measurement-out FILE` emits a simplified JSON suitable for the rule-5 audit bundle. |
 
 **Optional diagnostic** (not on the main path — use when bare
 `check-theory.sh --patch` failure doesn't tell you which premise
@@ -213,7 +213,7 @@ broke the proof, OR for batch screening when daemon-mode is built):
 
 | Tool | When to use |
 |---|---|
-| `tools/spec_strengthen/spec_premise_probe.sh <thy-rel> <lemma> <premise>` | TRIAL-based probe for an `unused-premise` candidate — synthesizes a copy of the lemma with the premise dropped, runs the original proof in Isa-REPL. Ground-truth verdict `likely-unused` / `load-bearing`. Per-probe wall ≈ 60-200s in single-process mode (same as `check-theory.sh --patch`); the value-add is the **residual subgoal text** printed on `load-bearing`, which `check-theory.sh` failure doesn't expose. Future daemon mode (shared JVM across many probes) is where the real speedup lives. |
+| `spec-strengthen/scripts/spec_premise_probe.sh <thy-rel> <lemma> <premise>` | TRIAL-based probe for an `unused-premise` candidate — synthesizes a copy of the lemma with the premise dropped, runs the original proof in Isa-REPL. Ground-truth verdict `likely-unused` / `load-bearing`. Per-probe wall ≈ 60-200s in single-process mode (same as `check-theory.sh --patch`); the value-add is the **residual subgoal text** printed on `load-bearing`, which `check-theory.sh` failure doesn't expose. Future daemon mode (shared JVM across many probes) is where the real speedup lives. |
 
 Tool semantics are described in their own `--help`. The skill does
 not enumerate detector internals — those live in the playbook.
@@ -225,4 +225,4 @@ not enumerate detector internals — those live in the playbook.
 | Candidate shapes, scanner reliability, ROI weighting, worked case studies (success + failure) | [`references/spec-strengthen-playbook.md`](references/spec-strengthen-playbook.md) |
 | Which sessions rebuild for which change | [`references/spec-downstream-map.md`](references/spec-downstream-map.md) |
 | Refinement-level strengthening (`corres` / `ccorres`) | [`references/refinement-proofs.md`](../isabelle_prover/references/refinement-proofs.md) |
-| Past strengthening sessions (precedent + failure modes) | [`reports/spec-strengthen/AInvs-*.md`](../../../reports/spec-strengthen/) |
+| Past strengthening sessions (precedent + failure modes) | [`spec-strengthen/surveys/AInvs-*.md`](../../../spec-strengthen/surveys/) |

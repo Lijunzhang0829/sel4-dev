@@ -67,9 +67,12 @@ reports/baseline/*
 !reports/layer3-lemma/
 !reports/layer3-lemma/**
 
-# spec-strengthen/ — spec-strengthening work logs. Tracked.
-!reports/spec-strengthen/
-!reports/spec-strengthen/**
+# spec-strengthen/ — spec-strengthening work (moved 2026-06 to top-level
+# `spec-strengthen/`). The old `reports/spec-strengthen/` allowlist below is
+# vestigial — directory no longer exists — but kept harmless for now in case
+# a stale branch still has files there.
+!spec-strengthen/
+!spec-strengthen/**
 
 # experiments/ — per-PR audit bundles (rule 5). Tracked.
 !reports/experiments/
@@ -87,7 +90,6 @@ test_output.log
 # do not want to share with the team (machine-specific paths, broad
 # wildcards for personal convenience, etc).
 .claude/settings.local.json
->>>>>>> origin/spec-strengthen
 
 # Python / OS housekeeping
 __pycache__/

@@ -18,7 +18,7 @@ PATCH="$(dirname "$0")/patch.diff"
 # === END EDIT ===
 
 ISA_SCRIPTS="${ISA_SCRIPTS:-.claude/skills/isabelle_prover/scripts}"
-SPEC_TOOLS="${SPEC_TOOLS:-tools/spec_strengthen}"
+SPEC_TOOLS="${SPEC_TOOLS:-spec-strengthen/scripts}"
 
 echo "[1/3] baseline wall ..." >&2
 BASELINE_OUT=$(bash "$ISA_SCRIPTS/check-theory.sh" "$THEORY_FILE" "$SESSION" 2>&1 | tail -1)

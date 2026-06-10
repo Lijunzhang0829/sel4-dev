@@ -16,6 +16,20 @@ Pattern G candidates. These already passed direct-grep and crunch-derived prefli
 
 (none in this file)
 
+## Tier 2 — Probe-confirmable (execute upgrades heuristic to ground-truth)
+
+Pattern C candidates. The scanner only supplies a suspicion signal; `execute --candidate <key>` must run the TRIAL-based premise probe before any patch generation.
+
+`suspicion_score` is **not** a success ranking. It is a within-pattern impact score: higher means "bigger payoff if true", not "more likely to survive probe".
+
+(no C candidates for this file in scanner output)
+
+## Tier 3 — Manual review only
+
+Pattern A candidates. The detector only identifies weak/strong pairs plus a redirect-shaped proof hint. Pre/post comparability and consumer safety are still manual judgments, so there is no auto-execute path.
+
+(no A candidates for this file in scanner output)
+
 ## Out of scope / manual only
 
 **Pattern D** has no detector. It is an execute-only path with evidence tag `none`.
@@ -23,24 +37,4 @@ Pattern G candidates. These already passed direct-grep and crunch-derived prefli
   spec_strengthen_run.sh execute --pattern D \
     --patch <patch> --theory <thy> --expid <expid> [--key <key>] [-y]
 ```
-
-## Informational — Tier 1 candidates rejected by mechanical preflight
-
-These remain visible for traceability, but they are not execute candidates.
-
-| Key | evidence | (op, field) | reason |
-|---|---|---|---|
-| `G:VSpacePre_AI:set_mrs:machine_state` | `mechanical` | set_mrs / machine_state | do_machine_op reachable via set_mrs→store_word_offs — writes machine_state.memory, so frame is semantic FP |
-| `G:VSpacePre_AI:set_mrs:cdt` | `mechanical` | set_mrs / cdt | 1 crunch derivation(s) reach set_mrs |
-| `G:VSpacePre_AI:set_mrs:cur_thread` | `mechanical` | set_mrs / cur_thread | 2 crunch derivation(s) reach set_mrs |
-| `G:VSpacePre_AI:set_mrs:idle_thread` | `mechanical` | set_mrs / idle_thread | 3 crunch derivation(s) reach set_mrs |
-| `G:VSpacePre_AI:set_mrs:scheduler_action` | `mechanical` | set_mrs / scheduler_action | 1 crunch derivation(s) reach set_mrs |
-| `G:VSpacePre_AI:set_mrs:ready_queues` | `mechanical` | set_mrs / ready_queues | 1 crunch derivation(s) reach set_mrs |
-| `G:VSpacePre_AI:set_mrs:cur_domain` | `mechanical` | set_mrs / cur_domain | 5 crunch derivation(s) reach set_mrs |
-| `G:VSpacePre_AI:set_mrs:domain_index` | `mechanical` | set_mrs / domain_index | set_mrs_domain_index already exists in 2 site(s) |
-| `G:VSpacePre_AI:set_mrs:domain_time` | `mechanical` | set_mrs / domain_time | set_mrs_domain_time already exists in 2 site(s) |
-| `G:VSpacePre_AI:set_mrs:arch_state` | `mechanical` | set_mrs / arch_state | set_mrs_arch_state already exists in 2 site(s) |
-| `G:VSpacePre_AI:set_mrs:interrupt_irq_node` | `mechanical` | set_mrs / interrupt_irq_node | 3 crunch derivation(s) reach set_mrs |
-| `G:VSpacePre_AI:set_mrs:interrupt_states` | `mechanical` | set_mrs / interrupt_states | 17 crunch derivation(s) reach set_mrs |
-| `G:VSpacePre_AI:set_mrs:is_original_cap` | `mechanical` | set_mrs / is_original_cap | 1 crunch derivation(s) reach set_mrs |
 

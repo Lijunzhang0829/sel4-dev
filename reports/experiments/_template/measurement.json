@@ -1,5 +1,5 @@
 {
-  "_comment_": "TEMPLATE — overwrite via `python3 tools/spec_strengthen/spec_impact.py ... --measurement-out measurement.json`. Schema in reports/experiments/README.md.",
+  "_comment_": "TEMPLATE — overwrite via `python3 spec-strengthen/scripts/spec_impact.py ... --measurement-out measurement.json`. Schema in reports/experiments/README.md.",
   "session": "AInvs",
   "baseline_wall_ms": 0,
   "trial_wall_ms": 0,

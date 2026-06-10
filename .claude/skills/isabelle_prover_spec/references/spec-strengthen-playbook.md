@@ -475,7 +475,7 @@ identical; lets the tools see it. See [[0019]] for the full
 revert + rewrite cycle when this bit me.
 
 **Real fix (follow-up)**: extend `HOARE_TRIPLE_RE` in
-`tools/spec_strengthen/spec_strengthen_scan.py` to also match
+`spec-strengthen/scripts/spec_strengthen_scan.py` to also match
 `<body> \<lbrace>P\<rbrace>` (no leading `\<lbrace>...\<rbrace>`
 pre-bracket), treating that as `pre = post = P`. Small regex
 patch, fixes the issue at source. Not blocking — the manual
@@ -552,8 +552,8 @@ Curated record of strengthenings that proved illustrative — either as
 companion additions in a single session) are NOT recorded here; only
 load-bearing examples.
 
-Source logs: [AInvs-20260525.md](../../../../reports/spec-strengthen/AInvs-20260525.md),
-[AInvs-20260526.md](../../../../reports/spec-strengthen/AInvs-20260526.md).
+Source logs: [AInvs-20260525.md](../../../../spec-strengthen/surveys/AInvs-20260525.md),
+[AInvs-20260526.md](../../../../spec-strengthen/surveys/AInvs-20260526.md).
 
 Add new entries here when you encounter a case that *teaches* something
 new about a pattern — not just another instance of an already-documented
