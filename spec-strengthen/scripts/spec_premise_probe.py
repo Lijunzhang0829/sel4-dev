@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-tools/spec_strengthen/spec_premise_probe.py
+spec-strengthen/scripts/spec_premise_probe.py
 
 Optional Step 1.5 helper: TRIAL-based premise-usage probe via
 Isa-REPL. Ground truth (not heuristic) — synthesizes a copy of
@@ -21,7 +21,7 @@ spins one JVM per invocation; per-probe wall ≈ 40-60s).
 v0 (substring goal-state heuristic) was rejected: differential
 test showed it could not distinguish unused from load-bearing
 premises because Isabelle keeps the full precondition visible in
-intermediate subgoals — see `reports/experiments/0011-*`.
+intermediate subgoals — see `spec-strengthen/experiments/0011-*`.
 
 Verdicts:
   likely-unused      — synthesized lemma's proof closes; premise
@@ -36,11 +36,11 @@ Verdicts:
                        failure mode; fall back to check-theory.sh.
 
 Invocation (inside sel4-l4v container):
-  python3 /workspace/tools/spec_strengthen/spec_premise_probe.py \\
+  python3 /workspace/spec-strengthen/scripts/spec_premise_probe.py \\
     --theory <abs-path>.thy --lemma <name> --premise <suspect>
 
 Or via the host wrapper:
-  bash tools/spec_strengthen/spec_premise_probe.sh \\
+  bash spec-strengthen/scripts/spec_premise_probe.sh \\
     <relative-thy-path> <lemma_name> <suspect_premise>
 """
 

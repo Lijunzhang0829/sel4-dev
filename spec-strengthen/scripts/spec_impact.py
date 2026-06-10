@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 r"""
-tools/spec_strengthen/spec_impact.py — spec-strengthen impact metric.
+spec-strengthen/scripts/spec_impact.py — spec-strengthen impact metric.
 
 Required by `isabelle_prover_spec` SKILL Step 4.
 
@@ -31,7 +31,7 @@ Usage:
                  [--measurement-out FILE]
 
 `--measurement-out FILE` writes a simplified JSON suited to
-`reports/experiments/<NNNN>/measurement.json` (the per-PR audit
+`spec-strengthen/experiments/<NNNN>/measurement.json` (the per-PR audit
 bundle). The simplified schema is a subset of the verbose `--json`
 output, with fields named after rule-5's template.
 """
@@ -531,7 +531,7 @@ def main() -> int:
     ap.add_argument("--measurement-out", type=Path, default=None,
                     help="Write simplified measurement.json (rule-5 audit "
                          "bundle schema) to this path. Compatible with "
-                         "reports/experiments/_template/measurement.json.")
+                         "spec-strengthen/experiments/_template/measurement.json.")
     args = ap.parse_args()
 
     if not args.theory.exists():

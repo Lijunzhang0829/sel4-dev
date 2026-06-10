@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-tools/spec_strengthen/spec_witness_gen.py
+spec-strengthen/scripts/spec_witness_gen.py
 
 Optional Step 2 helper: given a patch + the unmodified theory file,
 emit the `_old` witness lemma the SKILL contract requires for a

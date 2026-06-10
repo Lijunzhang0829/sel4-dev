@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Host wrapper for spec_premise_probe.py — runs inside sel4-l4v container.
 # Usage:
-#   bash tools/spec_strengthen/spec_premise_probe.sh \
+#   bash spec-strengthen/scripts/spec_premise_probe.sh \
 #     <relative-thy-path> <lemma_name> <suspect_premise> [extra py args...]
 #
 # Translates the host theory path to /workspace/... and execs the

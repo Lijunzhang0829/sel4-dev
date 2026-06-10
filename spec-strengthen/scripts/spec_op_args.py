@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-tools/spec_strengthen/spec_op_args.py
+spec-strengthen/scripts/spec_op_args.py
 
 Extract the formal argument names of a Pattern-G op from its
 definition in verification/l4v/spec/abstract/. Used by
@@ -12,10 +12,10 @@ Returns space-separated arg names on stdout, or exits non-zero
 with a comment on stderr if the def can't be located/parsed.
 
 Usage:
-  python3 tools/spec_strengthen/spec_op_args.py <op_name>
+  python3 spec-strengthen/scripts/spec_op_args.py <op_name>
 
 Example:
-  $ python3 tools/spec_strengthen/spec_op_args.py set_thread_state
+  $ python3 spec-strengthen/scripts/spec_op_args.py set_thread_state
   ref ts
 """
 from __future__ import annotations

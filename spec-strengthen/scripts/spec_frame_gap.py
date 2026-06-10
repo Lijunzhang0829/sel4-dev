@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-tools/spec_strengthen/spec_frame_gap.py
+spec-strengthen/scripts/spec_frame_gap.py
 
 Pattern G family-survey detector.
 

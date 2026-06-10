@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-tools/spec_strengthen/spec_strengthen_c_patchgen.py
+spec-strengthen/scripts/spec_strengthen_c_patchgen.py
 
 Generate a Pattern C strengthening patch (drop unused premise +
 inline `_old` witness) in the range-replace format that

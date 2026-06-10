@@ -1,5 +1,5 @@
 r"""
-tools/spec_strengthen/spec_strengthen_scan.py
+spec-strengthen/scripts/spec_strengthen_scan.py
 
 INTERNAL library for the spec-strengthen sub-skill. NOT a CLI tool —
 the user-facing entry point is `spec_candidates.py` (discovery) and

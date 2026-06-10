@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 r"""
-tools/spec_strengthen/spec_candidates.py
+spec-strengthen/scripts/spec_candidates.py
 
 Per-pattern candidate generator for Pattern A or Pattern C. Pattern B
 was dropped 2026-06-08 per the revised strict definition of spec
@@ -217,7 +217,7 @@ def main() -> int:
                     default=Path("verification/l4v/proof"),
                     help="Tree for consumer-count grep.")
     ap.add_argument("--logs-dir", type=Path,
-                    default=Path("reports/spec-strengthen"))
+                    default=Path("spec-strengthen"))
     ap.add_argument("--limit", type=int, default=30)
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--json", action="store_true",
