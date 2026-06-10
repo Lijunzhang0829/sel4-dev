@@ -22,22 +22,27 @@ old_contract ⇏ new_contract     (旧承诺不能蕴含新承诺)
 
 任何**等价改写**（refactor 性质）和任何**弱化**（撤回承诺）都被排除在外。spec 强化必须在 spec 的契约空间里**严格向上**移动。
 
-工程上的衡量：
+**严格强化是一个 logical 性质**，由 lemma statement 本身决定（new lemma 是否在逻辑上蕴含 old 承诺），不由任何 gate 间接推断。工程流水把这个 logical 性质拆成两层来验证：
 
-| 验证关口 | 通过判据 |
-|---|---|
-| **Gate 1** check-theory.sh --patch | trial 返回 `OK` |
-| **Gate 2** spec_impact.py | verdict 为 `additive` 或 `null` |
-| **Gate 3** wall delta | trial wall ≤ baseline × 1.30 |
-| **Gate 4** SKILL hard rules | 不引入 `sorry`，不破坏向后兼容 |
+| 层级 | 关口 | 通过判据 |
+|---|---|---|
+| **逻辑层** — strict strengthening 本身 | 由 patch 内容显式承担：新 lemma 要 trivially 蕴含旧承诺（典型路径：hoare_pre / hoare_strengthen_post / 显式 simp 引理），或者在 additive 形式下根本不改旧 lemma | （非自动 — 在 patch 起草阶段由作者把关 + decision.md 显式记录） |
+| **工程层** — 没有 regression | **Gate 1** check-theory.sh --patch | trial 返回 `OK`（新 lemma 自身可证）|
+| | **Gate 2** spec_impact.py | impact verdict 为 `additive`（新 lemma 不与现有 [wp] 规则产生 search 冲突）|
+| | **Gate 3** wall delta | trial wall ≤ baseline × 1.30 |
+| | **Gate 4** SKILL hard rules | 不引入 `sorry`，不破坏向后兼容 |
 
-四关全过 = 一次合法的 spec 强化。
+**Gate 2 的 `additive` 不等于 strict-strengthening 本身**。它说的是"新 lemma 在 wp 数据库里的语义足迹与现有规则相加而非相覆盖" — 这是一个**必要而非充分**的工程条件，防止新 lemma 触发现有 proof 的 search 路径重排。Strict-strengthening 是更上一层的逻辑要求，由作者保证而非 gate 反推。
+
+四个工程层关口全过 + 逻辑层 patch 内容是 strict-strengthening = 一次合法的 spec 强化。
 
 ---
 
-## 2. A / C / D / G 四个 Pattern 的修改模式
+## 2. G / C / A 三个 Pattern 的修改模式
 
-`A/C/D/G` 是**修改形状**的字母编号，不是内容方向的标签。每个字母对应**对 lemma database 做什么操作**。
+`G/C/A` 是**修改形状**的字母编号，不是内容方向的标签。每个字母对应**对 lemma database 做什么操作**。
+
+> **关于 D**：早期 taxonomy 把 `≤ → =`（"bound tightening" / "exactness"）单列为 D。本阶段的重审认为它**不应该独立成 pattern**：D 在修改形状上跟 A 完全一致（改 existing lemma 的 post + 加 `_old` witness），只是 post 形式的特例。把它独立出来等于把 detector 实现细节当 taxonomy 维度。本文档把 exactness 收为 A 的子类 **A-exactness**，下面 A 小节里说明。
 
 ### G — Frame lemma addition（加新 frame 引理）
 
@@ -107,25 +112,21 @@ old_contract ⇏ new_contract     (旧承诺不能蕴含新承诺)
 
 Additive A 把 modify 形的 `_old` witness 化为"原 L 自身就承担 _old 的职责"，零 cascade。详见 [[0054]] decision.md。
 
-### D — Bound tightening（紧化界 / `≤` → `=`）
+#### A 的子类：A-general 与 A-exactness
 
-```
--   lemma L:
--     "\<lbrace>P\<rbrace> op \<lbrace>\<lambda>rv s. f s \<le> x\<rbrace>"
--     by <proof>
-+   lemma L:
-+     "\<lbrace>P\<rbrace> op \<lbrace>\<lambda>rv s. f s = x\<rbrace>"
-+     by <tighter proof>
-+   lemma L_old:
-+     "\<lbrace>P\<rbrace> op \<lbrace>\<lambda>rv s. f s \<le> x\<rbrace>"
-+     by (rule hoare_strengthen_post[OF L]) simp
-```
+A 的 post 形式有两个常见子模式：
 
-**修改形状**：A 的特例 — post 里某个非严格不等式被替换为严格相等。
+- **A-general**：任意 `Q_strong ⟹ Q_weak` 的精确化，例如 `real_cte_at ⟹ cte_at`、`valid_objs ∧ X ⟹ X`、特定 predicate 的细化等。[[0029]] / [[0054]] 都是 A-general。
+- **A-exactness**（旧 D）：post 里某个非严格不等式被替换为严格相等。形式上：
 
-**严格强化的来源**：`(f s = x) ⟹ (f s \<le> x)` 平凡成立，反向不成立。
+  ```
+  -   "\<lbrace>P\<rbrace> op \<lbrace>\<lambda>rv s. f s \<le> x\<rbrace>"
+  +   "\<lbrace>P\<rbrace> op \<lbrace>\<lambda>rv s. f s = x\<rbrace>"
+  ```
 
-**为什么独立编号**：D 候选的 detector 与 A 不同（要识别 post 里的 `≤` 子表达式而不是整个谓词替换），detector 可以更精准但是更稀有。
+  严格强化的来源是 `(f s = x) ⟹ (f s \<le> x)` 平凡成立、反向不成立。Modify-form 同样需要 `L_old` witness 走 `hoare_strengthen_post[OF L] simp`。Additive-form 加新 `L_exact` 不动旧 L。
+
+两者在**修改形状、cascade 风险、自动化难度、verifier 信号**上都完全一致 — 都是 modify L's post 或 add 新 lemma 走 A 的 verifier 链。区分它们只在 **detector 端**有意义（A-exactness 的 detector 可以专门扫 post 里的 `≤` 子表达式 → 候选池更精准但更稀有；A-general 的 detector 用 redirect-shape 启发式 → 候选池更宽但更嘈杂）。**detector 实现差异不构成 pattern 本体差异**，故归为 A 的两个子类。
 
 ### 横向对比
 
@@ -133,20 +134,19 @@ Additive A 把 modify 形的 `_old` witness 化为"原 L 自身就承担 _old �
 |---|---|:-:|:-:|:-:|:-:|
 | **G** (frame) | + new lemma | ✗ | ✗ | ✗ | ✗ |
 | **C** (drop) | ~ L's pre | ✓ | ✗ | ✗ | optional |
-| **A** (strong) | ~ L's post + proof | ✓ | 可能 | 可能（多文件） | ✓ 必须 |
-| **D** (tight) | ~ L's bound + proof | ✓ | 可能 | 可能 | ✓ 必须 |
+| **A** (general / exactness) | ~ L's post + proof | ✓ | 可能 | 可能（多文件） | ✓ 必须 |
 
-**G 是唯一的 pure-additive**。C 改单点。A/D 改单点 + cascade 风险跨文件。
+**G 是唯一的 pure-additive**。C 改单点。A 改单点 + cascade 风险跨文件。
 
 ---
 
-## 3. 为什么 G 已经实现自动化扫描，而 A / C / D 不能
+## 3. 为什么 G 已经实现自动化扫描，而 A / C 不能
 
 回答这个问题需要先定义"**自动化扫描可行**"的判据：
 
 > **可扫描** = candidate 的 truth-condition 能从 **detector 可见的静态信息** 推断出来，无需运行验证器或人工判读。
 
-四个 pattern 的 truth-condition **信息住址**完全不同：
+三个 pattern 的 truth-condition **信息住址**完全不同：
 
 ### G：truth-condition 住在 **op 的 def 体内**（local，static analysis）
 
@@ -210,9 +210,7 @@ Detector 能给的 hint：
 
 **这是 detector 与真值 fundamentally 错位**：detector 看 candidate 自身和它的"出场频率"；trial 看的是 candidate 周围所有 consumer 的 search space 是否仍可收敛。两者**没有可见连接**。
 
-### D：A 的 strict 子集，但更稀有
-
-D 的 detector 需要识别 `≤` 子表达式 — 比 A 的 "redirect shape" 还要精准。理论上更可扫，但**人工书写的 spec 里 `≤` 很少出现在 post 顶层**，candidate 池极小。本阶段未发现可执行的 D candidate。
+**A-exactness（旧 D）补注**：A-exactness 的 detector 任务比 A-general 窄 — 只需识别 post 里的 `≤` 子表达式。理论上 detector 精度更高，但本阶段在 AInvs 范围内**未发现 `≤` 顶层 post 形式的可执行候选**（人工书写的 seL4 spec 里 `≤` 在 post 顶层极少出现）。即便 detector 精度高，candidate 池可能依然为空。这一观察没有改变 A 的整体自动化结论 — 一旦候选出现，verifier 链路与 A-general 完全一样。
 
 ### 信息地图
 
@@ -221,14 +219,13 @@ D 的 detector 需要识别 `≤` 子表达式 — 比 A 的 "redirect shape" �
 | **G** | op 的 def 体 | LOCAL | **真值**（4 道 gate 等价 trial） | 仅作 confirmation |
 | **C** | proof body + wp 数据库 | TREE-GLOBAL | 怀疑度（与真值几乎无关）| **必要**（ground truth）|
 | **A** | 所有 use site | TREE-GLOBAL | candidate hint + suspicion | **必要**，且 cascade fail 率高 |
-| **D** | 所有 use site | TREE-GLOBAL | 极少 candidate | **必要** |
 
-**结论**：G 之所以能自动化扫描，根本原因是它的 truth-condition 在 spec 自身的 op def 里 — 一段**纯静态、纯 local** 的信息。A/C/D 的 truth-condition 都在 **proof tree 的 global 状态**里 — 这是 static analyzer 看不见的地方，只能由 verifier（check-theory.sh trial）告诉你。
+**结论**：G 之所以能自动化扫描，根本原因是它的 truth-condition 在 spec 自身的 op def 里 — 一段**纯静态、纯 local** 的信息。A/C 的 truth-condition 都在 **proof tree 的 global 状态**里 — 这是 static analyzer 看不见的地方，只能由 verifier（check-theory.sh trial）告诉你。
 
 后果：
 
 - **G 的 detector = verifier**（preflight 通过 = trial 通过）
-- **A/C/D 的 detector ≠ verifier**（怀疑度 ≠ 真值），自动化只能止步于"产候选"，**确认必须走 trial**
+- **A/C 的 detector ≠ verifier**（怀疑度 ≠ 真值），自动化只能止步于"产候选"，**确认必须走 trial**
 
 ---
 
@@ -300,9 +297,26 @@ D 的 detector 需要识别 `≤` 子表达式 — 比 A 的 "redirect shape" �
 
 ### 4.6 概念产出
 
-- **Pattern 字母描述修改形状，不描述内容方向** — 该洞察解释了为什么 G/C/A/D 的自动化能力有结构性差异。
+- **Pattern 字母描述修改形状，不描述内容方向** — 该洞察解释了为什么 G/C/A 的自动化能力有结构性差异，也是把 D 收为 A 子类的依据。
 - **Cascade 是 modification 的副作用，不是内容的副作用** — 该洞察直接推出"additive-unification"提案（[[0054]] PoC 验证）。
 - **LLM 的真正切入点是新 proof search，不是 spec content search** — 因为 spec content 受 strict-strengthening 约束极强，搜索空间很小；而某条 statement 的 proof 路径却是开放搜索问题。该洞察来自比较 lemma-staticize 的成功路径与本阶段 C/A 的失败路径。
+- **"detector 命中率"是 detector × pipeline × spec 三者的联合属性，不能反推 pattern 本体价值** — Tier 2 C 的 1/27 命中率是当前 detector + 当前 seL4 codebase 的联合结果，不等于 C 模式本身无价值。详见 §4.7。
+
+### 4.7 关于 C 的"命中率 3.7%"
+
+本阶段 27 个 C candidate 经 trial 验证只 1 例（[[0023]]）通过。这个数字有信息量但容易被误读，需要拆解：
+
+- **detector 发现率**：扫描器在 AInvs 范围内能识别出 27 个"premise 在 proof body 字面不出现"的 candidate。这一步**仅给怀疑信号**，不给真值。
+- **trial 通过率**：27 中 1 例通过 trial = 3.7%。trial 是 ground truth。
+- **pattern 本体价值**：C 作为 spec 强化的一种合法操作（弱化 pre = 给调用方更宽承诺），其价值由它在 spec 设计中扮演的角色决定，与 detector + 当前 codebase 的联合命中率**正交**。
+
+更精确的表述：**当前 detector + 当前 seL4 AInvs codebase 的组合下，C 候选 trial-verifiable 比例约 3.7%。**
+
+这告诉我们：
+
+- 当前 detector 的怀疑信号（"premise 不在 proof body 字面"）与真值（"premise 在 wp 链中不 load-bearing"）几乎不相关 — 需要更强的 detector，或退化为"用 trial 当 detector"。
+- 在当前 seL4 codebase 里，`valid_objs` / `invs` 之类常见 premise 几乎都隐式 load-bearing — 这是 spec 选型的结构性属性，不是 pattern 缺陷。
+- C 在结构更松的 spec 里命中率可能远高于 3.7%。这是关于 detector 与 codebase 的联合 statement，不是关于 C 模式的 statement。
 
 ---
 
@@ -313,14 +327,14 @@ D 的 detector 需要识别 `≤` 子表达式 — 比 A 的 "redirect shape" �
 | 命题 | 验证状态 |
 |---|---|
 | G 能完全自动化 | ✓ 100% 应用率 + 4 道 gate + dynamic tactic |
-| C 能通过 detector 自动发现 + trial 自动验证 | ✓ 流程自动 — 但 hit rate 3.7%，spec 结构性限制 |
+| C 能通过 detector 自动发现 + trial 自动验证（流程） | ✓ 流程自动 |
+| C 在当前 codebase 下命中率高 | ✗ 1/27 — 当前 detector + seL4 spec 联合属性，不可外推 |
 | A 能 single-shot modify 模式自动化 | ✗ cascade fail 是结构性问题 |
 | A 能 additive 模式绕开 cascade | ✓ [[0054]] PoC 在 0029 失败案例上验证 |
-| D 能形成有效 candidate 池 | ✗ 本阶段未发现可执行候选（候选稀有）|
 
-二阶段的工程入口是 **execute_additive 实施**：把 A/C/D 重写为 additive shape 的统一 execute 路径，让所有 spec 强化都走"加新 lemma + 原 L 不动"模式。配套 design：
+二阶段的工程入口是 **execute_additive 实施**：把 A/C 重写为 additive shape 的统一 execute 路径，让所有 spec 强化都走"加新 lemma + 原 L 不动"模式。配套 design：
 
-- Ledger schema 加 `kind` 字段（`frame_g` / `drop_c` / `strong_a` / `sub_g` / `tight_d`）
+- Ledger schema 加 `kind` 字段（`frame_g` / `drop_c` / `strong_a`；A-exactness 作为 `strong_a` 的子值或独立 `exactness_a`，按命名约定决定）
 - 命名约定 + `[wp]` 注册策略 per kind
 - 与 LLM agent 接口：trial_failed candidate 由 LLM 提议新 proof 后重试
 
@@ -331,3 +345,12 @@ D 的 detector 需要识别 `≤` 子表达式 — 比 A 的 "redirect shape" �
 **报告生成时间**：2026-06-10
 **对应 spec-strengthen branch HEAD**：`ae3f2f7` (`spec-strengthen: post-migration cleanup of stale path refs`)
 **累计 commit 数**：13（spec-strengthen 相关）
+
+---
+
+### 修订记录
+
+- **2026-06-10 v2**：根据 review 收紧三处表述。
+  - §1 Gate 2：拆出**逻辑层**（strict-strengthening 由作者承担 + decision.md 记录）与**工程层**（4 道 gate 防 regression），明确 `additive` verdict 是必要而非充分条件。
+  - §2 / §3 / §5：把 D 收为 A 的子类 **A-exactness**，pattern 本体从 4 个 (A/C/D/G) 减为 3 个 (G/C/A)。理由：pattern 字母是修改形状的分类，detector 实现差异不构成本体差异。
+  - §4.7（新增）：拆解"C 命中率 3.7%"的复合含义，明确这是 detector × pipeline × codebase 的联合属性，不能反推 pattern 本体价值。
