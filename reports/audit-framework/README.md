@@ -1,17 +1,32 @@
-# `reports/experiments/` — per-PR audit bundles
+# `reports/audit-framework/` — audit-dir format reference + historical scaffold
 
-Persistent in-repo audit trail for every accepted strengthening patch.
-Required by parent SKILL rule 5
-([`.claude/skills/isabelle_prover/SKILL.md`](../../.claude/skills/isabelle_prover/SKILL.md)).
+Two roles, both stable:
 
-This directory is the **durable evidence**. The PR description gives
-the human-readable story; this directory gives the machine-replayable
-proof. Both are required.
+1. **Format reference** — `README.md` (this file) + `_template/` define
+   the canonical layout of a per-experiment audit dir (`patch.diff`,
+   `command.sh`, `measurement.json`, `decision.md`). Referenced by
+   parent SKILL.md rule 5.
+
+2. **Historical scaffold** — `0001-0010` are the early framework
+   experiments that established the audit-dir convention itself
+   (`experiments-scaffold`, `tools-critical-path`, `skill-redesign`,
+   `skill-and-tools-slim-refactor`, `references-relocation`,
+   `skill-audit-fixes`, `purge-stale-claude-duplicate`,
+   `skill-review-5-points`). These are frozen historical records.
+
+**Active experiments now live under topic-specific directories**, not here:
+
+- spec-strengthening: `spec-strengthen/experiments/<NNNN>-*/`
+- proof staticization: `lemma-staticize/runs/bench-<timestamp>/`
+
+This directory is the **durable evidence FORMAT** — the PR description
+gives the human-readable story; the audit dir under the appropriate
+topic dir gives the machine-replayable proof. Both are required.
 
 ## Layout
 
 ```
-reports/experiments/
+reports/audit-framework/
 ├── README.md                            ← this file
 ├── _template/                           ← skeleton, COPY when starting a new experiment
 │   ├── patch.diff
@@ -76,13 +91,13 @@ documenting itself); see rule 5 in parent SKILL.md.
 
 ```bash
 # 1. Allocate the next id
-NNNN=$(printf "%04d" $(( $(ls reports/experiments/ \
+NNNN=$(printf "%04d" $(( $(ls reports/audit-framework/ \
   | grep -E '^[0-9]+-' | cut -d- -f1 | sort -n | tail -1 | sed 's/^0*//' || echo 0) + 1 )))
 SHORT=spec-${NNNN}-your-short-name
-mkdir -p reports/experiments/$SHORT
+mkdir -p reports/audit-framework/$SHORT
 
 # 2. Copy skeleton
-cp reports/experiments/_template/* reports/experiments/$SHORT/
+cp reports/audit-framework/_template/* reports/audit-framework/$SHORT/
 
 # 3. Fill in the 4 files. command.sh must be re-runnable on a clean checkout.
 
@@ -107,7 +122,7 @@ and rationale live in PR description only.
 ## Re-runnable contract
 
 `command.sh` is the canonical re-runner. CI (or any auditor) can run
-`bash reports/experiments/<NNNN>-<name>/command.sh` and reproduce the
+`bash reports/audit-framework/<NNNN>-<name>/command.sh` and reproduce the
 verification + measurement from scratch. The script must:
 
 - Apply `patch.diff` to a clean checkout of `verification/l4v` at the

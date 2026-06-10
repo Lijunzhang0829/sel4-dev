@@ -136,7 +136,7 @@ with a separate cleanup PR.
    --apply <patch>`. Source file now contains both the strengthened
    lemma and the witness.
 
-6. **Record.** Create `reports/experiments/<NNNN>-<short-name>/`
+6. **Record.** Create `reports/audit-framework/<NNNN>-<short-name>/`
    per parent SKILL rule 5. For a seL4-source PR (the normal
    case for spec strengthening) all **four** files are required:
 

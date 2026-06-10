@@ -48,7 +48,7 @@ be committed to a **topic branch** and submitted as a **Pull Request**.
 - **Topic branch per type**: experiments live on type-named branches —
   `proof-strengthen`, `spec-strengthen`, `haskell-mega-merge`,
   `c-strengthen`. Each branched off `baseline`.
-- **Per-experiment record** under `reports/experiments/<NNNN>-<name>/`:
+- **Per-experiment record** under `reports/audit-framework/<NNNN>-<name>/`:
 
   | file | content |
   |---|---|
@@ -73,7 +73,7 @@ reconstructed.
 
 Rules 1–4 above are written for **seL4 source patches** (`.thy` /
 `.hs` / `.c` / `.h`). A "meta-PR" — one that only modifies skill
-documents, scaffolding under `reports/experiments/`,
+documents, scaffolding under `reports/audit-framework/`,
 `.github/PULL_REQUEST_TEMPLATE/`, or scripts under `tools/` and
 `.claude/skills/` — has no Hoare-triple to measure. It still needs an
 audit record, but in a **simplified variant**:
@@ -87,13 +87,13 @@ audit record, but in a **simplified variant**:
 
 A meta-PR must still:
 - Live on a topic branch (no direct push to `main`/`baseline`).
-- Carry its own `reports/experiments/<NNNN>-<name>/` audit dir, with
+- Carry its own `reports/audit-framework/<NNNN>-<name>/` audit dir, with
   the simplified 2-file content.
 - Cite an explicit smoke test in `decision.md` (e.g. "check-theory.sh
   baseline returns OK on Finalise_AI.thy in 20s").
 
 **Bootstrap exception**: the single commit that first introduces
-`reports/experiments/_template/` may skip the record (it would be
+`reports/audit-framework/_template/` may skip the record (it would be
 documenting itself). All subsequent commits — including those on the
 same branch — must comply.
 

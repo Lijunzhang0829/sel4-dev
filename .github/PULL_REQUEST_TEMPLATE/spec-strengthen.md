@@ -15,7 +15,7 @@ Required by parent SKILL rule 5 (.claude/skills/isabelle_prover/SKILL.md).
 
 ## Experiments included in this PR
 
-<!-- List every reports/experiments/<NNNN>-<name>/ dir touched.
+<!-- List every reports/audit-framework/<NNNN>-<name>/ dir touched.
      One PR may bundle multiple experiments if they're logically coherent
      (e.g. "all cte_at → real_cte_at ports in a single session"). -->
 
@@ -25,7 +25,7 @@ Required by parent SKILL rule 5 (.claude/skills/isabelle_prover/SKILL.md).
 
 ## Per-experiment evidence
 
-For each experiment listed above, the `reports/experiments/<NNNN>-<name>/`
+For each experiment listed above, the `reports/audit-framework/<NNNN>-<name>/`
 directory contains:
 - `patch.diff` — the source change (re-applyable)
 - `derivability.thy` — A'⟹A witness lemma (proof that the OLD form is

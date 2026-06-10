@@ -16,14 +16,14 @@ logs/
 test_output.log
 
 # Note: reports/ is TRACKED — it's where experiment records live.
-# Each experiment branches off baseline, adds reports/experiments/<id>/,
+# Each experiment branches off baseline, adds reports/audit-framework/<id>/,
 # and PRs back to main.
 
 # Explicit allowlist for the experiments audit-trail subtree (parent
 # SKILL rule 5). Every accepted strengthening patch lives here as a
 # permanent re-runnable bundle.
-!reports/experiments/
-!reports/experiments/**
+!reports/audit-framework/
+!reports/audit-framework/**
 =======
 # heaps/build_log.txt IS tracked: it's the per-theory timing baseline
 # we benchmark experiments against.
@@ -74,9 +74,9 @@ reports/baseline/*
 !spec-strengthen/
 !spec-strengthen/**
 
-# experiments/ — per-PR audit bundles (rule 5). Tracked.
-!reports/experiments/
-!reports/experiments/**
+# audit-framework/ — audit-dir format reference + historical scaffold (rule 5). Tracked.
+!reports/audit-framework/
+!reports/audit-framework/**
 
 # golden-baseline/ — build measurement baseline. Tracked, including build logs.
 !reports/golden-baseline/
