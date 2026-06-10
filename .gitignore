@@ -93,3 +93,7 @@ test_output.log
 __pycache__/
 *.pyc
 .DS_Store
+.anthropic_key
+
+# spec-strengthen ephemeral patches
+spec-strengthen/logs/

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tools/spec_strengthen/spec_strengthen_run.sh
+# spec-strengthen/run.sh
 #
 # Process manager for spec strengthening on the AInvs (and related)
 # sessions. Implements a 5-subcommand interface with a JSONL
@@ -43,7 +43,7 @@
 # Patterns B, E, F are deliberately not handled — they are not strict
 # spec strengthening under the project's revised definition.
 #
-# State storage: reports/spec-strengthen/candidate-ledger.jsonl
+# State storage: spec-strengthen/candidates/candidate-ledger.jsonl
 # (append-only; latest event per key = current state).
 
 set -euo pipefail
@@ -52,8 +52,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 ISA_SCRIPTS="${ISA_SCRIPTS:-.claude/skills/isabelle_prover/scripts}"
-SPEC_TOOLS="${SPEC_TOOLS:-tools/spec_strengthen}"
-LEDGER="reports/spec-strengthen/candidate-ledger.jsonl"
+SPEC_TOOLS="${SPEC_TOOLS:-spec-strengthen/scripts}"
+LEDGER="spec-strengthen/candidates/candidate-ledger.jsonl"
 
 mkdir -p "$(dirname "$LEDGER")"
 touch "$LEDGER"
@@ -279,7 +279,7 @@ cmd_survey() {
   local theory_base date_tag
   theory_base="$(basename "$file" .thy)"
   date_tag="$(date +%Y%m%d)"
-  [ -z "$out" ] && out="reports/spec-strengthen/survey-${theory_base}-${date_tag}.md"
+  [ -z "$out" ] && out="spec-strengthen/surveys/survey-${theory_base}-${date_tag}.md"
   mkdir -p "$(dirname "$out")"
 
   echo "[survey] file=$file  session=$session  pattern=$pattern"
@@ -563,7 +563,7 @@ PYEOF
 #   $6 = expid
 standard_pipeline() {
   local key="$1" pattern="$2" theory_abs="$3" session="$4" patch="$5" expid="$6"
-  local audit_dir="reports/experiments/${expid}"
+  local audit_dir="spec-strengthen/experiments/${expid}"
   mkdir -p "$REPO_ROOT/$audit_dir"
 
   local snap="/tmp/spec_strengthen_${expid}_pre.$$"
@@ -974,8 +974,8 @@ sys.exit(0 if hit else 1)
 
   local date_tag patch
   date_tag="$(date +%Y%m%d)"
-  patch="logs/spec-strengthen-${theory_base}-${op}_${field}-${date_tag}.patch"
-  mkdir -p logs
+  patch="spec-strengthen/logs/spec-strengthen-${theory_base}-${op}_${field}-${date_tag}.patch"
+  mkdir -p spec-strengthen/logs
   cat > "$patch" <<EOF
 ${block_end_line} ${block_end_line}
 ${block_end_text}
@@ -1031,8 +1031,8 @@ execute_C() {
   echo "[c-patchgen] generating drop-premise patch + witness ..."
   local date_tag patch
   date_tag="$(date +%Y%m%d)"
-  patch="logs/spec-strengthen-${theory_base}-${lemma}_drop_${premise}-${date_tag}.patch"
-  mkdir -p logs
+  patch="spec-strengthen/logs/spec-strengthen-${theory_base}-${lemma}_drop_${premise}-${date_tag}.patch"
+  mkdir -p spec-strengthen/logs
   if ! python3 "$REPO_ROOT/$SPEC_TOOLS/spec_strengthen_c_patchgen.py" \
         --theory "$theory_rel" --lemma "$lemma" --premise "$premise" \
         --out "$patch" 2>&1; then

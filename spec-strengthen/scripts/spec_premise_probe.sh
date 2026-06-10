@@ -61,7 +61,7 @@ trap '__probe_cleanup; exit 130' INT
 
 # NOT `exec` — must let the EXIT trap fire (see _dx.sh comment).
 docker compose -f "$COMPOSE_FILE" exec -T l4v \
-  python3 /workspace/tools/spec_strengthen/spec_premise_probe.py \
+  python3 /workspace/spec-strengthen/scripts/spec_premise_probe.py \
     --theory "$THY_ABS_CONTAINER" \
     --lemma  "$LEMMA" \
     --premise "$PREMISE" \
