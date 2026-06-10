@@ -266,3 +266,4 @@
 {"key": "G:CSpaceInv_AI:set_cap:domain_time", "event": "applied", "expid": "0051-set-cap-domain-time-frame-lemma", "walls": {"baseline": 28369, "trial": 27481, "apply": 27144}, "verdict": "additive", "ts": "2026-06-09T15:42:27Z"}
 {"key": "G:DetSchedSchedule_AI:set_simple_ko:machine_state", "event": "applied", "expid": "0052-set-simple-ko-machine-state-frame-lemma", "walls": {"baseline": 81153, "trial": 84857, "apply": 80997}, "verdict": "additive", "ts": "2026-06-09T15:46:38Z"}
 {"key": "G:DetSchedSchedule_AI:set_simple_ko:domain_index", "event": "applied", "expid": "0053-set-simple-ko-domain-index-frame-lemma", "walls": {"baseline": 83441, "trial": 84572, "apply": 80591}, "verdict": "additive", "ts": "2026-06-09T15:50:51Z"}
+{"key": "G_sub:Ipc_AI:lsfco_real_cte_at", "event": "applied", "expid": "0054-poc-additive-lsfco-real-cte-at", "walls": {"baseline": 105963, "trial": 108351, "apply": 109629}, "verdict": "additive", "ts": "2026-06-10T11:15:07Z"}
