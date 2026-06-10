@@ -351,9 +351,9 @@ spec-strengthen/run.sh execute_additive \
 | F | wp | `F:<theory>:<op>:<field>` | `<op>_<field>[wp]` | `set_thread_state_machine_state[wp]` |
 | F | named | `F-named:<theory>:<op>:<field>` | `<op>_<field>` (无 [wp]) | 罕见 |
 | Q | named | `Q:<theory>:<lemma>:<target-post>` | `<lemma>_<target-post>` | `lsfco_real_cte_at` |
-| Q | wp | `Q-wp:<theory>:<lemma>:<target-post>` | `<lemma>_<target-post>[wp]` | 高风险，需 advisory pass |
+| Q | wp | `Q-wp:<theory>:<lemma>:<target-post>` | `<lemma>_<target-post>[wp]` | 默认 reject；需通过 §2.5.1 escalation gate 才准入 |
 | P | named | `P:<theory>:<lemma>:no:<premise>` | `<lemma>_no_<premise>` | `unbind_maybe_notification_not_bound_no_valid_objs` |
-| P | wp | `P-wp:...` | 罕见 | — |
+| P | wp | `P-wp:<theory>:<lemma>:no:<premise>` | `<lemma>_no_<premise>[wp]` | 默认 reject；需通过 §2.5.1 escalation gate 才准入 |
 | any | block | `<slot>-block:<theory>:<lemma>:...` | `<lemma>_<descriptive-suffix>` | helper 命名 |
 
 ### 3.2 Pipeline 步骤
@@ -374,7 +374,8 @@ execute_additive
   │
   ├─ [2] [wp] registration policy
   │     - F + wp: 加 [wp]
-  │     - Q/P + wp: 显示 advisory 警告 + decision.md 必填 "no wp regression" 段
+  │     - Q/P + wp: 不是普通分支 — 必须先通过 §2.5.1 escalation gate
+  │                 通过则与 F + wp 同等准入；未通过即 reject
   │     - named/block: 不加 [wp]
   │
   ├─ [3] snapshot + baseline (沿用 standard_pipeline)
@@ -446,14 +447,28 @@ execute_additive
 | Slot | Delivery | Substate | 实验 | 数量 |
 |---|---|---|---|---:|
 | F | wp | — | 0014-0017, 0019-0027, 0030-0031, 0034-0053（不含 0028/0029） | ~35 |
-| F-helper (=block) | wp | **realized**（同 PR 即有下层 0032/0033 的 frame lemma 引用） | 0032 中的 `do_machine_op_*` × 3 + `as_user_*` × 3 + `thread_set_*` × 3 | 9 |
-| P | named | **realized**（老 L 自身作为 backward-compat alias，等同同 PR 已存在的 consumer） | 0023（实际走 modify 路径，概念上是 additive） | 1 |
-| Q | named | **realized**（lsfco_cte_at 仍存在，其它 use site 立即可显式引用 `lsfco_real_cte_at`） | **0054 PoC** — `lsfco_real_cte_at` 不打 [wp] | 1 |
+| F-helper (=block) | wp | **realized**（同 PR 即有下层 0032/0033 的 frame lemma 在 trial patch 中显式依赖：set_extra_badge_*、set_message_info_*、set_mrs_* 的 proof 都直接 chains 到这些 helper）| 0032 中的 `do_machine_op_*` × 3 + `as_user_*` × 3 + `thread_set_*` × 3 | 9 |
+| P | named | **planned**（additive 重构下：原 L 不动，新 weak 版没有同 PR consumer。modify 形态下的 `_old` witness 不属于 additive 框架的 consumer。要从 planned 升 realized 必须有显式 consumer 在同 PR 引用 weak 版）| 0023（modify 形式 applied；additive 等价形式下属 planned） | 1 |
+| Q | named | **planned**（lsfco_cte_at 仍存在 = 老 lemma 不动，但 PoC 本身没在同 PR 加任何新 consumer 显式调 `lsfco_real_cte_at`。"将来可被消费" ≠ "已有显式 consumer"。grace period 内若无 consumer landing → orphan）| **0054 PoC** — `lsfco_real_cte_at` 不打 [wp] | 1 |
 | **failed** F | wp | — | 0028（dmo gate 之前的 FP）、0030 中被 dropped 的 2 个 dxo 候选 | 2 |
-| **failed** Q | named (cascade) | — | 0029 modify 路径（cascade 失败；additive 路径 = 0054 通过） | 1 |
+| **failed** Q | named (cascade) | — | 0029 modify 路径（cascade 失败；additive 路径 = 0054 通过 trial 但仍是 planned） | 1 |
 | **failed** P | iterative (witness 命名冲突) | — | 0026 | 1 |
 
-**统计**：phase-1 已 applied 的 ~46 个 lemma 全部能放入 (slot, delivery, substate) 三维空间。**全部是 realized 状态** — phase-1 偶然规避了 planned 风险（因为所有 named / block 候选要么同 PR 有 consumer、要么本身就是 frame [wp] 自然生效）。这给 phase-2 一个基线：planned 状态是新引入的，需要 §6.2 的 garbage-collection 机制兜底。失败案例也归位准确。这个三维框架真正覆盖了已有工作 + 暴露了新设计需要新增的纪律点。
+**统计**：phase-1 已 applied 的 ~46 个 lemma 全部能放入 (slot, delivery, substate) 三维空间。
+
+**substate 分布**：
+
+- **realized**：~44 个（35 个 F + 9 个 block helper）— F-slot 默认全 realized；block helper 因为同 PR 即被下层显式依赖也 realized。
+- **planned**：2 个（0023 P + 0054 Q）— 这两个是 phase-1 中仅有的 named delivery 实例，按 §2.3 严格定义都没有同 PR 显式 consumer。
+- **orphan**：0 个（phase-1 期太短，所有 planned 都还在 grace period 内）。
+
+**这个分布暴露了三个真实问题**：
+
+1. **0023 / 0054 在 phase-1 是 success case，但按 phase-2 严格标准都是 provisional**。这不是要回头否定它们 — modify 形式下的 0023 确有 `_old` witness 同 PR，additive 形式下的 0054 是有意 PoC。问题是**它们的 delivery 风险被 phase-1 模糊处理了**，phase-2 必须明示。
+2. **phase-1 全是 substate=realized 的偶然来源**：F-slot 是天然 realized（wp 自动生效），F-helper block 是因为同 PR 包了下层 frame lemma。这两类都有自动 realized 路径。一旦 phase-2 真做 P/Q-slot，substate=planned 才会真正出现。
+3. **0023 / 0054 给 phase-2 提供两个真实 baseline planned 候选**：phase-2 可以拿它们做 grace period + orphan flow 的端到端测试 — landing 一个显式 consumer 把 substate 从 planned 升 realized，验证整个状态机。
+
+失败案例也归位准确（含 0029 modify 路径 = Q + cascade，0054 additive 路径 trial 通过但仍是 Q + planned）。这个三维框架真正覆盖了已有工作 + 暴露了新设计需要新增的纪律点。
 
 ---
 
@@ -504,7 +519,7 @@ F-slot + wp 在 phase-1 验证了 35+ 个无问题，但累积到 100+ 后 wp �
 mitigation：
 
 - F-slot 默认 wp，可接受 — wall 总体下降是已观察事实
-- Q-slot / P-slot + wp 走 advisory：每条都需 decision.md 显式论证 + 单独跑下游 file 的 wall 回归测试
+- Q-slot / P-slot + wp **默认拒收**：仅在通过 §2.5.1 escalation gate（多 file 回归集 + 三轮 baseline-trial-baseline 可逆验证 + trial wall ≤ baseline × 1.05 + decision.md `## escalation` 段完整记录）后才放行。不通过即降级 named-realized 或 reject。
 
 ### 6.2 孤儿 lemma
 
@@ -585,6 +600,11 @@ mitigation：
 ---
 
 ### 修订记录
+
+- **2026-06-10 v3**：消除内部自相矛盾 + 收紧 substate 归类。三处改动：
+  - **§3.2 pipeline 步骤 [2]**：P/Q + wp 从"显示 advisory 警告"改为"不是普通分支 — 必须先通过 §2.5.1 escalation gate"。与 v2 §2.5.1 的新总规则统一。
+  - **§6.1 wp 数据库污染 mitigation**：Q/P + wp 从"走 advisory" 改为"默认拒收，仅 escalation 通过后放行"。与 v2 §2.5.1 / v3 §3.2 三处口径一致。
+  - **§4 历史归类表**：0023（P + named）和 0054（Q + named）从 `realized` 降为 `planned`。理由：按 v2 §2.3 严格定义，realized 要求"同 PR 已有显式 consumer 在 proof 中调用 L_new"。0023 additive 等价形式下原 L 不动、新 weak 版无同 PR consumer；0054 PoC 同 PR 无任何新 consumer 显式调 `lsfco_real_cte_at`。"可被消费" ≠ "已被消费"。同时更新统计段：phase-1 substate 分布从"全部 realized"修正为"~44 realized + 2 planned"，并展开三个对 phase-2 的含义。
 
 - **2026-06-10 v2**：根据 review 反馈，把"delivery 是声明"硬化为"delivery 需要被验证"。四处收紧：
   - **§1.1 锚的歧义**：明确 P/Q 围绕 existing L、F 围绕 op contract 两类锚。读者不再误以为三槽都以现有 lemma 为起点。
