@@ -35,17 +35,42 @@ execute_additive 把这个 PoC 升级为**统一的 spec 强化工程动作**：
 
 ## 1. 三种空槽 — spec 强化的全部内容空间
 
-### 1.1 设定
+### 1.1 设定：两类锚
 
-设 existing lemma：
+spec 强化的"目标"分两类，识别空槽的起点不同：
+
+**类 1（P-slot / Q-slot）：围绕某条 existing lemma L 强化**
+
+给定 existing lemma：
 
 ```
 L:  \<lbrace>P\<rbrace> op args \<lbrace>Q\<rbrace>
 ```
 
-我们想加 L'。L' 的 spec 必须**严格强于 L 在某个维度上的承诺**（strict-strengthening 硬约束），且**原 L 不动**（additive）。
+L' 的 spec 严格强于 L 在 pre 或 post 维度的承诺。锚是 L 自身 — 没有 L 就没有可强化对象。
 
-L 的 spec 表面有三个可"加紧"的维度：**pre / post / frame**。每个维度对应一种**空槽**：
+**类 2（F-slot）：围绕某个 operation 的 contract 强化**
+
+给定 op 自身，与任何已有 lemma 无关：
+
+```
+op：op 的 def 体（位于 spec/abstract/<X>_A.thy）
+```
+
+L' 是 op 的"保某 field"承诺，op 之前根本没承诺过这个 field。锚是 op contract — 即便没有任何关于 op 的现有 [wp] lemma，也可以新增 F-slot 承诺。
+
+**两类锚共同点**：
+
+- 都加新 lemma L'，原 L（若有）和原 op contract（必然有）不动 → **additive**
+- 都遵守 strict-strengthening 硬约束：`new_contract ⟹ old_contract` 且 `old ⇏ new`
+- 都进同一 execute_additive pipeline 验证
+
+**两类锚差异点**：
+
+- P/Q-slot 的 detector 起点是 L 的 statement + proof body；F-slot 的 detector 起点是 op 的 def
+- P/Q-slot 必须有 L；F-slot 不要求任何 existing lemma 存在
+
+下面三个槽位的详细说明里，P-slot / Q-slot 都默认有 L 为锚；F-slot 单独说明它的 op-contract 锚。
 
 ### 1.2 P-slot：弱化前提槽
 
@@ -182,12 +207,31 @@ apply (drule L_new[where ...])  (* 当 destructor *)
 - P-slot：consumer 在更松的环境（pre 不满足 L 完整 P 但满足 L_new 的 P'）下显式引用 L_new。
 - F-slot：罕见 — frame lemma 通常走 A 机制。但有时 wp 行为不便注册，按名调用。
 
+**named 分两档**：
+
+仅"声明预期 consumer"还挡不住"写了一个名字、其实没人接"的情况。named delivery 进一步拆为两档，准入门槛不同：
+
+| 档 | 定义 | 准入要求 |
+|---|---|---|
+| **named-realized** | 与 L_new 同 patch / 同 PR 里就有显式 consumer（一条已存在或本 PR 同时新增的下游 lemma，其 proof 中显式 `rule L_new` / `wp L_new` / `drule L_new`）| 进 ledger 时即标 `realized`；与 F+wp 同等 first-class |
+| **named-planned** | 仅在 decision.md 写出预期 consumer name / file:line range，本 PR 内无落地 consumer | 进 ledger 时标 `planned`，**provisional 身份**；下一阶段必须落地 consumer 否则触发 §6.2 garbage-collection |
+
+**realized 与 planned 的区别不仅是状态字段，是审批等级**：
+
+- `realized` 候选：detector → trial → impact → apply 一条龙 auto-merge，与 F+wp 相同
+- `planned` 候选：必须 review 阶段额外 attestation — decision.md 中 "delivery_plan" 段需包含具体 consumer 候选 key 或 lemma name + 时间窗口承诺（如 "next 2 PR cycles"）。Provisional 身份意味着该 lemma 在 grace period 内不计入 spec-strengthening 总盘账，超过 grace period 未实现 → `orphan`
+
 **风险**：
 
-- "后续 consumer"未必真出现。需要在 candidate 声明时**指明预期 consumer**（具名或描述 type），否则等于无人接盘的孤儿。
-- consumer 接入是 separate PR / commit — 工作分割可能漏接。
+- planned 候选数量膨胀 → ledger 噪声 + 下阶段 review 负担。建议每个作者同时 in-flight 的 planned 候选数有上限（如 ≤ 3）。
+- consumer 接入是 separate PR — planned 升 realized 的链路依赖作者主动跟进，需要 ledger 周期性提醒（CI 任务可自动汇报 in-flight planned 列表 + 已超过 grace period 的）。
 
-**纪律**：candidate 提交 patch 时必须在 decision.md 写出"预期 consumer = X"（lemma name 或 file:line range）。L_new 入库时若该 consumer 暂未存在，记 `delivery_pending` 状态在 ledger；后续 consumer landing 时 mark 为 `delivery_realized`。
+**纪律**：
+
+- candidate 提交时 metadata 必须包含 `delivery_substate` ∈ {`realized`, `planned`}
+- `realized` 必须提供：consumer lemma name + 该 lemma proof 中调用 L_new 的具体行
+- `planned` 必须提供：consumer 候选 key list + grace period 上限（默认 8 周）
+- 这两类信息都进 decision.md "Delivery attestation" 段
 
 ### 2.4 机制 C — 下层组合 lemma 的 building block
 
@@ -206,6 +250,23 @@ L_new 既不打 `[wp]` / `[simp]`，也不被任何叶子 proof 直接引用，�
 - 一组 spec 强化候选共享 proof 路径上的某个 building block。Building block 单独作为 L_new 加入。
 - 大型 op family 自动化的预备步骤。
 
+**block 准入条件硬化** — 仅"枚举下层 candidate key"不够，否则等于"未来也许有用的 helper"。block delivery 必须同时满足：
+
+1. **下层 candidate 至少存在一个已落地**（即在 ledger 里已有 `discovered` 或更后状态的 entry，且 statement 已能具体写出 — 不能仅是 "TODO: 未来某条 lemma"）
+2. **该下层 candidate 在自己的 trial patch 中实际引用或依赖此 block** — 必须能从 trial patch 的 proof tactic 链中静态确认依赖关系：
+   - 显式 `wp L_new` / `simp add: L_new` / `rule L_new` 出现在下层 candidate 的 patch 中，**或**
+   - 下层 candidate 的 trial 在不存在 L_new 时**确实失败**（即跑两次 trial：含 L_new vs 不含 L_new，前者通过、后者失败 → 依赖关系成立）
+
+**审批等级**：
+
+- 满足条件 1+2 → first-class，与 F+wp / named-realized 同等
+- 仅满足条件 1（声明了下层 candidate 但下层 trial 尚未引用）→ provisional block，跟 named-planned 同等审批级别 — decision.md 必须给出"下层 candidate 在 N 周内引用此 block"的承诺，超期 orphan
+
+**禁止状态**：
+
+- "block 加完了，下层 candidate 尚未发起" → reject（这就是"未来也许有用的 helper"，不进框架）
+- "block 与下层 candidate 在两个独立 PR，依赖关系未在 trial 中验证" → reject 或降级 provisional
+
 **风险**：
 
 - 计划落空 — building block 加了，但下层 lemma 链没接上。等同孤儿。
@@ -222,8 +283,9 @@ candidate 提交时 metadata 中必须包含字段 `delivery`：
   "key": "...",
   "slot": "P" | "Q" | "F",
   "delivery": "wp" | "simp" | "named" | "block",
+  "delivery_substate": "realized" | "planned",  // 仅 named/block 需要
   "delivery_target": "...",   // B 机制: 预期 consumer 名/范围
-                              // C 机制: 下层 candidate keys
+                              // C 机制: 下层 candidate keys + 依赖证据
                               // A 机制: 可空
   "delivery_attestation": "..." // decision.md 中相关段落的引用
 }
@@ -233,10 +295,37 @@ candidate 提交时 metadata 中必须包含字段 `delivery`：
 
 - `delivery` 缺失 → 候选不进 ledger，detector 阶段就 reject。
 - `delivery = named` 但 `delivery_target` 为空 / 仅泛泛描述（"some consumer might want this"）→ reject。
-- `delivery = block` 但 `delivery_target` 不指向 ledger 中存在的下层 candidate（或明确标记的"future-N"未来候选）→ reject。
-- `delivery = wp` 且槽是 P 或 Q → 触发 advisory warning，要求 decision.md 显式论证 wp 行为不会污染下游（pre-flight 必须包含一个 "no wp regression" 检查）。
+- `delivery = named` + `delivery_substate = planned` 但无 grace period 承诺 → reject。
+- `delivery = block` 但 `delivery_target` 不指向 ledger 中存在的下层 candidate → reject。
+- `delivery = block` + 下层 candidate 存在但**未提供依赖证据**（trial patch 中没引用 + 无"无 block 时下层 trial 失败"的证据）→ 降级为 provisional block 或直接 reject（按 §2.4 准入条件硬化）。
+- `delivery = wp` + `slot = P` 或 `slot = Q` → **默认 reject**（不是 advisory warning），见下 §2.5.1 P/Q + wp escalation gate。
 
 通过的候选才进入 execute_additive 的 trial 阶段。
+
+### 2.5.1 P/Q + wp escalation gate
+
+按本设计自身的逻辑，wp 是**最强 delivery 机制** — 一旦注册即影响整个 proof search 生态，不仅是"这条 lemma 有没有用"，而是"所有 wp 链遇到此 op 时的 search 行为可能改变"。所以 wp 应当对应**最强 gate**，而不是 advisory。
+
+| 槽位 + delivery | 默认状态 | 升级路径 |
+|---|---|---|
+| **F + wp** | 允许 | 现状 — wp 是 F-slot frame 的天然机制，phase-1 验证 35+ 个无污染 |
+| **P + wp** | **默认 reject** | 必须先通过完整 wp regression replay 才能 promote 到 allowed |
+| **Q + wp** | **默认 reject** | 同上 |
+
+**P/Q + wp regression replay 要求**：
+
+1. **指定回归测试 file 集合**：至少包括 L 所在 file + L 的 in-file consumer 所在 file + 任何 cross-file consumer 中具代表性的 3-5 个 file
+2. **三轮 baseline-trial-baseline**（不是单次）：跑 baseline wall → 加 L_new [wp] 后 trial wall → 移除 L_new 后再 baseline wall 验证可逆 → 三个数字记录到 measurement.json 扩展字段
+3. **gate**：trial wall ≤ baseline × 1.05（比正常 1.30 严得多 — P/Q 注 wp 期望不引起 wall regression），且第二次 baseline = 第一次 baseline（验证移除可逆）
+4. **decision.md 中显式段落**：`## P/Q + wp escalation`，记录回归测试 file 列表、三轮 wall 数据、为何 named-realized 不够用必须上 wp（典型理由：consumer 数量太多，逐个 named 不现实）
+
+满足上述 4 条 → 该候选从 reject 提升为 allowed，进入正常 execute_additive 流程。
+
+**纪律**：
+
+- escalation 不是 per-candidate 而是 per-design：同一个 op 上的 P/Q + wp 候选若有多个，第一个走 escalation；后续候选可引用第一个的 regression 结果不需要重跑（但 decision.md 必须 cite 第一个的 escalation 记录）
+- escalation 失败的候选自动降级为 named-realized（若该 lemma 仍有价值）或 reject（若无价值）
+- 拒收的 P/Q + wp 候选记 `escalation_failed` 状态，6 个月内 in-flight 同类候选不再尝试 escalation（避免重复跑回归）
 
 ---
 
@@ -323,11 +412,24 @@ execute_additive
   "event": "discovered" | "applied" | ... ,
   "slot": "Q",
   "delivery": "named",
-  "delivery_target": ["lsfco_cte_wp_at_univ-variants", ...],
+  "delivery_substate": "realized" | "planned",  // 仅 named/block
+  "delivery_target": ["<具体 consumer lemma name + 行号>", ...],  // realized: 实际引用；planned: 候选
   "delivery_state": "pending" | "realized" | "orphan",
+  "grace_period_weeks": 8,                       // 仅 planned 必填
+  "escalation_record": null,                     // P/Q + wp 时 ref §2.5.1 escalation 文档
   // 其它原有字段...
 }
 ```
+
+`delivery_substate` 和 `delivery_state` 的区别：
+
+- `delivery_substate`：candidate **提交时**的归类（realized / planned），不可逆 — realized 始终 realized
+- `delivery_state`：candidate 在 ledger 里的**运行时状态**（pending / realized / orphan），可随下游变化转移
+
+对应关系：
+
+- `substate=realized` 候选：进 ledger 时 `state=realized`，永久
+- `substate=planned` 候选：进 ledger 时 `state=pending`，超 grace period 未实现 → `state=orphan`；实现 → `state=realized`
 
 `delivery_state` 转移：
 
@@ -341,17 +443,17 @@ execute_additive
 
 把 phase-1 应用过的实验重新归类到 (slot, delivery) 坐标系：
 
-| Slot | Delivery | 实验 | 数量 |
-|---|---|---|---:|
-| F | wp | 0014-0017, 0019-0027, 0030-0031, 0034-0053（不含 0028/0029） | ~35 |
-| F-helper (=C-block) | wp | 0032 中的 `do_machine_op_*` × 3 + `as_user_*` × 3 + `thread_set_*` × 3 | 9 |
-| P | named (隐式) | 0023（实际走 modify 路径，但概念上是 P-slot + named delivery，老 L 自身作为 backward-compat alias） | 1 |
-| Q | named | **0054 PoC** — `lsfco_real_cte_at` 不打 [wp] | 1 |
-| **failed** F | wp | 0028（dmo gate 之前的 FP）、0030 中被 dropped 的 2 个 dxo 候选 | 2 |
-| **failed** Q | named (cascade) | 0029 modify 路径（cascade 失败；additive 路径 = 0054 通过） | 1 |
-| **failed** P | iterative (witness 命名冲突) | 0026 | 1 |
+| Slot | Delivery | Substate | 实验 | 数量 |
+|---|---|---|---|---:|
+| F | wp | — | 0014-0017, 0019-0027, 0030-0031, 0034-0053（不含 0028/0029） | ~35 |
+| F-helper (=block) | wp | **realized**（同 PR 即有下层 0032/0033 的 frame lemma 引用） | 0032 中的 `do_machine_op_*` × 3 + `as_user_*` × 3 + `thread_set_*` × 3 | 9 |
+| P | named | **realized**（老 L 自身作为 backward-compat alias，等同同 PR 已存在的 consumer） | 0023（实际走 modify 路径，概念上是 additive） | 1 |
+| Q | named | **realized**（lsfco_cte_at 仍存在，其它 use site 立即可显式引用 `lsfco_real_cte_at`） | **0054 PoC** — `lsfco_real_cte_at` 不打 [wp] | 1 |
+| **failed** F | wp | — | 0028（dmo gate 之前的 FP）、0030 中被 dropped 的 2 个 dxo 候选 | 2 |
+| **failed** Q | named (cascade) | — | 0029 modify 路径（cascade 失败；additive 路径 = 0054 通过） | 1 |
+| **failed** P | iterative (witness 命名冲突) | — | 0026 | 1 |
 
-**统计**：phase-1 已 applied 的 ~46 个 lemma 全部能放入 (slot, delivery) 二维空间。失败案例也归位准确。这个二维框架是真正覆盖了已有工作的。
+**统计**：phase-1 已 applied 的 ~46 个 lemma 全部能放入 (slot, delivery, substate) 三维空间。**全部是 realized 状态** — phase-1 偶然规避了 planned 风险（因为所有 named / block 候选要么同 PR 有 consumer、要么本身就是 frame [wp] 自然生效）。这给 phase-2 一个基线：planned 状态是新引入的，需要 §6.2 的 garbage-collection 机制兜底。失败案例也归位准确。这个三维框架真正覆盖了已有工作 + 暴露了新设计需要新增的纪律点。
 
 ---
 
@@ -479,3 +581,14 @@ mitigation：
 **报告生成时间**：2026-06-10
 **对应 spec-strengthen branch HEAD**：`8d190c4` (`reports(spec-strengthen): Pattern G automation pipeline reference`)
 **配套读物**：[phase-1-summary.md](phase-1-summary.md)（why-论证）；[pattern-G-automation-pipeline.md](pattern-G-automation-pipeline.md)（F-slot 的 how-参考实现）
+
+---
+
+### 修订记录
+
+- **2026-06-10 v2**：根据 review 反馈，把"delivery 是声明"硬化为"delivery 需要被验证"。四处收紧：
+  - **§1.1 锚的歧义**：明确 P/Q 围绕 existing L、F 围绕 op contract 两类锚。读者不再误以为三槽都以现有 lemma 为起点。
+  - **§2.3 named delivery 拆 realized / planned**：realized = 同 PR 已有显式 consumer，first-class；planned = 仅声明预期，provisional 身份 + 8 周 grace period + 超期 orphan。挡住"写了一个名字、实际没人接"的情况。
+  - **§2.4 block delivery 准入硬化**：仅"枚举下层 candidate"不够，必须 (1) 下层 candidate 已落地 + (2) 下层 trial patch 中实际引用此 block 或"无 block 时下层 trial 失败"。挡住"未来也许有用的 helper"。
+  - **§2.5.1 P/Q + wp escalation gate**：从 advisory warning 改为默认 reject。只有通过完整 wp regression replay（三轮 baseline-trial-baseline + wall ≤ baseline × 1.05 + 移除可逆）才能 promote 到 allowed。承认 wp 是最强 delivery 机制，对应最强 gate。
+  - §4 历史归类增加 `substate` 列，明确 phase-1 偶然全是 realized；§3.4 ledger schema 增加 `delivery_substate` / `grace_period_weeks` / `escalation_record` 字段。
