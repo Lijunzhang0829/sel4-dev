@@ -108,13 +108,43 @@ This is the most decision-relevant *new* finding for `isabelle_prover_c`.
   (`sel4-llm-proof-synthesis-landscape`, `staticize-*`): the whole LLM-proof field
   is greenfield synthesis, orthogonal to refinement repair after code change.
 
-## Under-covered (do not over-claim)
+## Area 6 — Multi-arch ports & MCS as code+proof co-evolution (pass 3; events REAL, cost UNQUANTIFIED)
 
-- **Area 3-MCS/multi-arch port cost**: neither pass produced surviving quantified
-  claims on ARM→x64→RISC-V→AArch64 / MCS proof-porting cost or arch-split reuse
-  fractions. **Evidence gap, not confirmed absence** — needs a dedicated pass.
-- **Current (2025-26) translation-validation economics** under the coliasgroup
-  graph-refine rewrite (AArch64? -O2? incremental re-run?) — open.
+- **Multi-arch status** (seL4 FAQ / trustworthy.systems / Proofcraft): functional
+  correctness to **C** exists for ARM32, ARM_HYP, x86-64, RISC-V64, **AArch64**;
+  full **binary** (translation-validation) proofs only for **ARM32 + RISC-V64**
+  (x86-64 and AArch64 stop at C-level refinement). AArch64 was staged: abstract+
+  design specs Mar 2022 → invariants 2023 → **full FC Apr 2024**; integrity done,
+  confidentiality ongoing (~Q2'26).
+- **arch-split / generic-architecture refactoring** is real (`Arch` locale,
+  qualified namespaces, `L4V_ARCH` switch ARM/ARM_HYP/X64/RISCV64/AARCH64),
+  motivated by proofs' original "intricate dependence on per-platform constants";
+  an active **DARPA PROVERS / INSPECTA** strand at Proofcraft. **Payoff (reduced
+  per-arch porting cost) stated as INTENT, not MEASURED.**
+- **MCS** (scheduling-context capabilities — time as a first-class capability
+  resource; **Lyons et al. EuroSys'18**, Lyons UNSW PhD'18): FC re-verification a
+  separate multi-year effort in progress since **RTCSA'20**; framework over **~500
+  C functions** (seL4 Foundation + XCalibyte funded); **C verification scheduled
+  Q3 2027** (Proofcraft / DARPA PROVERS). **No published proof-effort figure.**
+- **Binary-verification economics (2024-26)**: `coliasgroup/seL4-binary-
+  verification` is a from-scratch **Haskell** rewrite of graph-refine, **WIP Sep
+  2025** (check phase done, search phase incomplete — only re-checks scripts the
+  old Python tool discovered). **AArch64 and gcc -O2 are explicit "Beyond" future
+  goals, NOT yet supported** → the 2013 **~6–8 h / -O1 / ARM32** economics are
+  **not superseded**; no new per-change re-run figure published.
+
+**Net for Area 6**: the events are large and real, but **per-arch / MCS porting
+cost is genuinely unpublished** — only legacy figures exist (2009 FC ~11 py; 2013
+infoflow ~51 pm), neither about ports or MCS. The project may cite multi-arch/MCS
+as *qualitative* co-evolution instances but **cannot cite a quantified porting
+cost** — an honest evidence gap, confirmed by three independent searches.
+
+## Still open (do not over-claim)
+
+- Measured arch-split payoff (per-arch cost reduction) — projected, not measured.
+- Total MCS re-verification proof-effort — only a Q3'27 completion target exists.
+- Post-Sep-2025 graph-refine rewrite: did it finish the search phase / add
+  AArch64 / -O2, and does it change per-change binary re-run cost?
 
 ## Implications for the project
 
