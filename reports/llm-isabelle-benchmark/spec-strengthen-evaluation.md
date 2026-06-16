@@ -63,5 +63,35 @@ Spec-optimization track to the refinement-repair main line. It also means the
 current 33 "additive" results, by the consumption metric, score ≈ 0 effect and
 should not be cited as successful optimizations.
 
-(Pending: deep-research pass on how the literature quantifies spec strength —
-to be folded in. Task wodz137rl.)
+## Amendment (fairness): P/Q are a better class than Pattern-G
+
+The blanket "all 33 are speculative-additive, effect≈0" is unfair to the **P** and
+**Q** slots, which are genuine strengthenings (unlike Pattern-G additive facts):
+
+- **P (premise weakening)** — e.g. `gts_wf → gts_wf'` drops the unused premise
+  `tcb_at t`; weaker precondition ⇒ strictly stronger triple. **Strictness is
+  mechanically verified** (`p_claim_check.json`: `(tcb_at t and invs) ⟹ invs`,
+  reverse fails). Notably P is **consumer-safe** and could be wired in-place
+  (a `[wp]` rule with a weaker precondition generates an easier obligation) — the
+  additive discipline parks it over-conservatively.
+- **Q (postcondition strengthening)** — e.g. `compute_free_index_wp_exact`:
+  `rv≤idx → rv=0 ∨ rv=idx`. Genuine strengthening, but **strictness is only
+  agent-asserted, not mechanized** (rigor gap; trivial to fix). Q is
+  consumer-risky (cf. 0029), so additive is more justified.
+
+Both carry a **named prospective consumer** + an 8-week grace + a delivery
+lifecycle (named→planned→pending→realized/orphan). So their status is **effect
+PENDING (a dated promissory note), not effect-zero-forever**. Accurate grading:
+- **Pattern-G frame lemmas**: no named consumer → speculative-additive, effect≈0.
+- **P/Q**: well-formed strict strengthenings, effect **pending** (P mechanized, Q
+  needs strictness mechanized).
+
+## Resolved by literature (Task wodz137rl → see `spec-strength-quantification-literature.md`)
+
+The field confirms: **strength has no scalar — it is a partial order (implication)
+plus task-relative sufficiency.** P's implication-check is the accepted strength
+criterion; the accepted *quantitative* metric is **sufficiency = consumption**
+(Daikon recall; ICE/Code2Inv/LIV count "suffices to prove the target"). So P/Q being
+"pending" is exactly the literature's **inductive-but-insufficient** class: valid
+and strong, but not yet discharging any obligation. The metric switch stands —
+count *downstream obligations discharged*, not *lemmas applied*.
