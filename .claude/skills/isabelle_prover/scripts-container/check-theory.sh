@@ -58,7 +58,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Layout: <repo>/.claude/skills/isabelle_prover/scripts-container/
 # Four "../" hops to reach the repo root (mounted at /workspace inside container).
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
-L4V_DIR="${L4V_DIR:-${REPO_ROOT}/verification/l4v}"
+# Default to /sel4-project (NOT ${REPO_ROOT}=/workspace): the prebuilt heaps are
+# fingerprinted at /sel4-project/verification/l4v. Using the /workspace mount of
+# the SAME l4v makes Isabelle see "changed sources" and rebuild the whole chain,
+# thrashing heaps against any tool on the /sel4-project path. Honour an explicit
+# L4V_DIR env (compose sets it) but never silently fall back to /workspace.
+L4V_DIR="${L4V_DIR:-/sel4-project/verification/l4v}"
 ISA_HOME="${ISABELLE_HOME:-${REPO_ROOT}/verification/isabelle}"
 
 # Session-scoped lock: Isabelle build/process on a given session writes to a
@@ -138,7 +143,11 @@ with open('$THEORY_FILE', 'w') as f:
   # already logged a kind:patch record with the same patch_sha and the verify
   # wall_ms; this kind:apply twin records that the file was actually written
   # and pins the patch path for later inspection.
-  WORKSPACE_ROOT="${L4V_DIR%/verification/l4v}"
+  # logs/ live at the repo-root mount (/workspace), NOT under L4V_DIR — once
+  # L4V_DIR canonicalises to /sel4-project (which only mounts verification/l4v),
+  # deriving this from L4V_DIR points at a nonexistent /sel4-project/logs and
+  # silently disables attempt-logging. Pin to REPO_ROOT.
+  WORKSPACE_ROOT="$REPO_ROOT"
   RUN_ID_FILE="${WORKSPACE_ROOT}/logs/.current-run-id"
   if [ -f "$RUN_ID_FILE" ] && [ -s "$RUN_ID_FILE" ]; then
     AUTO_RUN_ID="$(cat "$RUN_ID_FILE")"
@@ -295,7 +304,8 @@ fi
 # run.sh at /workspace/logs/.current-run-id during a strengthen run.
 # When --patch is used, patch_sha + LOC fields are also included so downstream
 # joiners can group attempts by patch identity.
-WORKSPACE_ROOT="${L4V_DIR%/verification/l4v}"
+# logs/ live at REPO_ROOT (/workspace), not under L4V_DIR (/sel4-project) — see note above.
+WORKSPACE_ROOT="$REPO_ROOT"
 RUN_ID_FILE="${WORKSPACE_ROOT}/logs/.current-run-id"
 if [ -f "$RUN_ID_FILE" ] && [ -s "$RUN_ID_FILE" ]; then
   AUTO_RUN_ID="$(cat "$RUN_ID_FILE")"
