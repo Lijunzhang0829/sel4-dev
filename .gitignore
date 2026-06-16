@@ -82,6 +82,11 @@ reports/baseline/*
 !reports/golden-baseline/
 !reports/golden-baseline/**
 
+# llm-isabelle-benchmark/ — benchmark design for LLM incremental improvement on
+# Isabelle/HOL using seL4/l4v as substrate. Tracked.
+!reports/llm-isabelle-benchmark/
+!reports/llm-isabelle-benchmark/**
+
 test_output.log
 
 # Claude Code: per-user/per-machine permission overrides — gitignored
