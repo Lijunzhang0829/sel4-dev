@@ -120,3 +120,54 @@ flag).**
 3. FVELER stats vary by source version (29,125 vs 29,304 lemmas; 200,646 vs 201,498
    steps) — dataset versioning; theory count (758) and depth (156) are stable.
 4. PISA/SOTA numbers (71%, 65.7%) are 2022-24 framing, not necessarily 2026 SOTA.
+
+## Frontier update (2026-06) — the synthesis lane is now FILLED; repair/strengthening is the open niche
+
+Targeted frontier pass (Task wxmp6ttrc, 9 confirmed findings). The field moved hard
+in the last ~4 months. Verdicts per angle:
+
+**FILLED — seL4/l4v as held-out LLM eval for FORWARD proof SYNTHESIS** (3 distinct
+2026 works, all on real seL4 lemmas, pass-style):
+- **Selene** (arXiv:2401.07663, ACL'24) — first project-level seL4 proof benchmark, GPT-4 **27.06%** on 340 held-out seL4 theorems (forward synthesis).
+- **AutoReal-Prover** (arXiv:2602.08384, Feb'26) — **51.67%** (341/660) on seL4 Important Theories, eval theorems excluded from CoT training.
+- **Stepwise / He et al.** (arXiv:2603.19715, "OSDI'26") — **77.6%** on FVELER held-out test(1077)+test-hard(852); new Isabelle REPL; beats Selene/FVEL/Sledgehammer. This is the canonical FVEL follow-up that activates FVELER's latent held-out split.
+- **PROMISE** (arXiv:2604.05399, Apr'26) — 223-theorem l4v benchmark (lib/Monads, invariant-abstract, infoflow, sep-capDL, access-control), training-free, whole-theory Isabelle replay (target proof never used).
+
+→ The "seL4 as held-out eval" gap I had listed (spaces ①⑤) is **CLOSED for synthesis**.
+Entering the synthesis lane now = competing on pass@k against fine-tuned + tree-search
+systems (27%→52%→78% in ~2 yrs). Crowded and incremental.
+
+**STILL OPEN — seL4/l4v as held-out eval for refinement-proof REPAIR (corres/ccorres)
+/ strengthening / proof-repair-after-code-change** (the central question):
+- **No one** has published this. Every seL4 LLM work does forward synthesis; zero do
+  corres/ccorres repair, proof strengthening, or code-change-then-fix on seL4.
+- The only 2025-26 proof-REPAIR / commit-change benchmarks are in **other assistants**:
+  **CoqDev / Adapt** (arXiv:2510.25103, Oct'25) — 1,720 theorems mined from Coq commit
+  histories modeling incremental development (Coq-only); **ExVerus** — Verus/Rust proof
+  repair. Neither touches Isabelle / seL4 / refinement.
+
+**LARGELY OPEN — contamination methodology**: l4v is public on GitHub, ~certainly in
+pretraining. Only AutoReal/PROMISE enforce *target-level* held-out exclusion; **none**
+applies perturbation/decontamination against *pretraining* contamination. So the
+51–78% headline rates **likely overstate genuine generalization** — a decontamination
+protocol is both unpublished AND adversarial to the incumbents' numbers.
+
+### What this does to the positioning
+1. **The niche sharpens** from "seL4 as held-out eval" (filled) to specifically
+   **"refinement-proof REPAIR / strengthening-after-change as the task family"** (open)
+   + **contamination control** (open + adversarial). The project's bridge-repair concept,
+   the 0029 strengthen-and-repair exemplar, the failure taxonomy, and the consumption
+   metric all live in exactly this open lane.
+2. **CoqDev (Adapt) is the template + the contrast**: it de-risks "proof-maintenance-
+   after-change benchmark" as a real, publishable shape, but it's Coq functional-
+   correctness. The project = "CoqDev for seL4/Isabelle **refinement** proofs" — and
+   refinement (corres/ccorres) is a task type CoqDev does not have.
+3. **Dataset construction is the real work**: FVELER/PROMISE are *synthesis* datasets
+   (theorem→proof) and **cannot be repurposed for repair** — repair needs
+   (code_v1, proof_v1, code_v2, broken_proof) tuples that no current dataset provides.
+   The project must BUILD them via the perturbation operators (the failure taxonomy:
+   rename / add-case / swap-subop / alter-precond / alter-relation) or l4v git-history
+   mining. That construction is the contribution.
+4. **Urgency**: these are Feb–Apr 2026 preprints; the field is fast. The repair niche
+   could be filled by an Isabelle extension of CoqDev or a repair extension of PROMISE.
+   Move while it is open.
