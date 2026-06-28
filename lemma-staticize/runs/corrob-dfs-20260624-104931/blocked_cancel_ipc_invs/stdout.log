@@ -1,0 +1,3 @@
+[init ok]
+[reached blocked_cancel_ipc_invs]
+[cost-target] hottest of 6 classical lines: step18 = 116.8s DB; others=[0.4, 0.2, 0.1]

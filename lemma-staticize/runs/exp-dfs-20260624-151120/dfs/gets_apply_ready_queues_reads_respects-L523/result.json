@@ -1,0 +1,413 @@
+{
+ "lemma": "gets_apply_ready_queues_reads_respects",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/Finalise_IF.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (force elim: reads_equivE simp: equiv_for_def)",
+ "B_sig": [],
+ "facts": [
+  "equiv_for_def",
+  "reads_equivE"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>s. \\<forall>t. reads_equiv aag s t \\<and> affects_equiv aag l s t \\<and> pasSubject aag \\<in> pasDomainAbs aag d \\<and> pasSubject aag \\<in> pasDomainAbs aag d \\<longrightarrow> ready_queues "
+  },
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (unfold equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (simp only: equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule reads_equivE)",
+   "ok": true,
+   "obs": "[2sg] 1. reads_equiv ?aag2 ?s2 ?s'2"
+  },
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (unfold equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (simp only: equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst reads_equivE)",
+   "ok": true,
+   "obs": "[3sg] 1. reads_equiv ?aag2 ?s2 ?s'2"
+  },
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (unfold equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (simp only: equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (unfold equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (simp only: equiv_for_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule reads_equivE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 37265.7
+}

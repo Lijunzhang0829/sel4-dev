@@ -1,0 +1,14 @@
+[genstat-stateful] is_transferable_Untyped @ proof/access-control/Access_AC.thy
+[init ok]
+[reached is_transferable_Untyped]
+== target: by (blast elim: is_transferable.cases)
+   A_goal: \<not> is_transferable_cap (UntypedCap dev ptr sz freeIndex)
+   B: close the goal (0 subgoals)
+  round 0: 20.5s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+', 'done']
+  round 0: BUILD-FAIL `done` failed: failed for prove the goal using the tactic `done`. Get msg: Faile
+  round 1: 55.6s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: option.inject cap.distinct)+', 'done']
+  round 1: BUILD-FAIL `apply (simp only: option.inject cap.distinct)+` failed: failed for prove the go
+  round 2: 400.6s -> []
+  round 3: 200.3s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: option.inject option.distinct cap.distinct)+', 'done']
+  round 3: REACHED-B
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-is_transferable_Untyped.json  verdict=REACHED-B

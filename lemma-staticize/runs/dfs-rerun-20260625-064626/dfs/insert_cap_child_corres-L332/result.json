@@ -1,0 +1,663 @@
+{
+ "lemma": "insert_cap_child_corres",
+ "thy": "/sel4-project/verification/l4v/proof/drefine/CNode_DR.thy",
+ "session": "DRefine",
+ "mode": "react",
+ "target": "by (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI; auto dest: mdb_cte_atD is_untyped_cap_eqD simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)",
+ "B_sig": [],
+ "facts": [
+  "cte_wp_at_caps_of_state",
+  "is_untyped_cap_eqD",
+  "mdb_cte_atD",
+  "mdb_cte_atI",
+  "not_idle_thread_def",
+  "swp_def",
+  "valid_mdb_def"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s' capa. \\<lbrakk>should_be_parent_of capa (is_original_cap s' src) cap (cap_insert_dest_original cap capa); fst child \\<noteq> idle_thread s'; valid_idle s'; valid_etcbs s'; fst src \\<noteq>"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>s' capa. \\<lbrakk>should_be_parent_of capa (is_original_cap s' src) cap (cap_insert_dest_original cap capa); valid_idle s'; valid_etcbs s'; fst src \\<noteq> idle_thread s'; valid_objs s'; cap"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule mdb_cte_atD)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s' capa. \\<lbrakk>should_be_parent_of capa (is_original_cap s' src) cap (cap_insert_dest_original cap capa); fst child \\<noteq> idle_thread s'; valid_idle s'; valid_etcbs s'; fst src \\<noteq>"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule mdb_cte_atD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule mdb_cte_atD)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s' capa. \\<lbrakk>should_be_parent_of capa (is_original_cap s' src) cap (cap_insert_dest_original cap capa); fst child \\<noteq> idle_thread s'; valid_idle s'; valid_etcbs s'; fst src \\<noteq>"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule mdb_cte_atD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule mdb_cte_atD)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s' capa. \\<lbrakk>should_be_parent_of capa (is_original_cap s' src) cap (cap_insert_dest_original cap capa); fst child \\<noteq> idle_thread s'; valid_idle s'; valid_etcbs s'; fst src \\<noteq>"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule mdb_cte_atD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst mdb_cte_atD)",
+   "ok": true,
+   "obs": "[3sg] 1. \\<And>s' capa. \\<lbrakk>should_be_parent_of capa (is_original_cap s' src) cap (cap_insert_dest_original cap capa); fst child \\<noteq> idle_thread s'; valid_idle s'; valid_etcbs s'; fst src \\<noteq>"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule mdb_cte_atD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule mdb_cte_atI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule mdb_cte_atI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule mdb_cte_atI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule mdb_cte_atI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst mdb_cte_atI)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s' capa c p. \\<lbrakk>should_be_parent_of capa (is_original_cap s' src) cap (cap_insert_dest_original cap capa); fst child \\<noteq> idle_thread s'; valid_idle s'; valid_etcbs s'; fst src \\<no"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 21637.5
+}

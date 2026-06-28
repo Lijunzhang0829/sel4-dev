@@ -132,6 +132,28 @@ Rules of engagement:
 **Serial only**: these share the session heap lock. Concurrent runs fail
 with exit 4.
 
+## Measurement & timing — pick the tool by ROLE (do NOT time with the wrong one)
+
+The wrong timer silently gives cold-start-inflated, high-noise numbers that **flip verdicts**
+(a measured "+16 %" was really −76 %; a "91 %/25 s" win was really 55 %/3.4 s). Rules:
+
+| Need | Use | Never use |
+|---|---|---|
+| **Correctness** of a rewrite | stock `check-theory.sh --patch` (or `check_theory_selfqual.sh` for theories that qualify their own constants, e.g. FinalCaps) | in-REPL reach-B alone — it false-positives on long goals |
+| **Reported speedup** (paper) | stock `command_timings`: golden heap DB for the original (free), one `isabelle build` of the patched session for the variant | **Isa-REPL wall-clock** — py4j IPC + GC + cold-start (up to 4.5×) + ≤58 % run-to-run noise |
+| **Fast candidate search / screen** | Isa-REPL reach-B + `reduce_agent` (internal accelerators) | their wall-clock as a *reported* number |
+| cheap per-line build timing | (intended: IsarLite `isar timing`) | currently BROKEN (`missing-json`) — don't rely on it |
+
+If you must screen speed in-REPL: discard the warm-up run, **median of ≥5 reps**, and an **A/A
+noise floor** (time the original twice) — claim a win only if `(orig−variant) > 2×(A/A spread)`.
+`command_timings` stores **elapsed only** (no cpu); build `-o threads=1` for a cleaner number.
+A variant rebuild is **~88 min** if the theory is early in its session's import chain — reserve
+it for headline winners. **Full detail + costs/gotchas: `references/measurement-tools.md`.**
+
+Isa-REPL (`tools/seL4-proof-search/Isa-Repl`) and IsarLite are *internal* tools; their base
+(scala-isabelle) is citable but their wall-clock timing is not a publishable measurement —
+only stock `isabelle build` + `command_timings` is reproducible by a reviewer.
+
 ## Patch format
 
 ```
@@ -171,6 +193,7 @@ on host); never `/workspace/patches/` (not mounted).
 | Refinement (`corres`/`ccorres`) | `references/refinement-proofs.md` |
 | C lifting via AutoCorres | `references/autocorres-guide.md` |
 | Common error → fix | `references/compilation-errors.md` |
+| **Timing/measurement tool selection** (in-REPL vs stock build vs IsarLite) | `references/measurement-tools.md` |
 | Type-by-type strengthen guide | `references/strengthen-guide.md` |
 
 References, scripts, and shared assets live under this directory

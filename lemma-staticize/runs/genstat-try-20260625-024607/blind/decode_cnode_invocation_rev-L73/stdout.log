@@ -1,0 +1,9 @@
+[genstat-stateful] decode_cnode_invocation_rev @ proof/infoflow/Decode_IF.thy
+[init ok]
+[reached decode_cnode_invocation_rev]
+== target: apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! 
+   A_goal: (0 < data_to_nat (args ! Suc 0) \<and> data_to_nat (args ! Suc 0) \<le> word_bits \<longrightarrow> is_cnode_cap cap \<l
+   B: close the goal (0 subgoals)
+  round 0: gen=158.2s (claude 113.3s) -> ['apply (simp only: expand_len_gr_Suc_0)', 'apply (drule_tac x = "excaps ! 0" in bspec, rule UnI2, rule nth_mem, assumption)', 'apply (drule_tac x = "excaps ! Suc 0" in bspec, rule UnI2, rule nth_mem, assumption)', 'apply (drule is_cnode_into_is_subject; assumption)+', 'apply (erule prop_of_obj_ref_of_cnode_cap)+', 'apply assumption+', 'done']
+  round 0: BUILD-FAIL `apply (simp only: expand_len_gr_Suc_0)` failed: failed for prove the goal using
+  round 1: gen=400.5s (claude 400.1s) -> []

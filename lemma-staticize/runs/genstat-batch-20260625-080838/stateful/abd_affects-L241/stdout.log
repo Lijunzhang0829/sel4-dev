@@ -1,0 +1,15 @@
+[genstat-stateful] abd_affects @ proof/infoflow/PolicySystemSAC.thy
+[init ok]
+[reached abd_affects]
+== target: by auto
+   A_goal: partition_label x \<in> partition_label ` abd_affects_set
+   B: close the goal (0 subgoals)
+  step 0: gen=12.0s (claude 11.5s) -> ['apply (rule imageI)', 'apply assumption']
+  step 0: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 1: gen=26.5s (claude 26.1s) -> ['apply (rule imageI)', 'apply (simp only: abd_affects_set_def)']
+  step 1: OK -> 10 subgoal(s); applied=['apply (rule imageI)', 'apply (simp only: abd_affects_set_def)']
+  step 2: gen=17.0s (claude 16.5s) -> ['apply assumption']
+  step 2: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 3: gen=400.5s (claude 400.1s) -> []
+  step 4: gen=128.7s (claude 128.1s) -> ['apply (erule insertE | erule emptyE | hypsubst | rule insertI1 | rule insertI2)+']
+  step 4: OK -> 10 subgoal(s); applied=['apply (rule imageI)', 'apply (simp only: abd_affects_set_def)', 'apply (erule insertE | erule emptyE | hypsubst | rule insertI1 | rule insertI2)+']

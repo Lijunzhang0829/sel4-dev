@@ -1,0 +1,25 @@
+[init ok]
+[reached send_sync_ipc_corres]
+== target line 68: apply (clarsimp simp:pred_tcb_at_def obj_at_def, simp split:Structures
+   facts: ['Structures_A.thread_state.splits', 'obj_at_def', 'pred_tcb_at_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [10sg] 1. \<And>y ys s'a recv_state' x41 x42 ya yb rv rv' rva 
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule allE)  [10sg] 1. \<And>y ys s'a recv_state' x41 x42 ya yb rv rv' rva 
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply hypsubst  [10sg] 1. \<And>y ys s'a recv_state' x41 x42 ya yb rv rv' rva 
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst Structures_A.thread_state.splits)  [10sg] 1. \<And>y ys s'a recv_state' x41 x42 ya yb rv rv' rva 
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold obj_at_def)  [10sg] 1. \<And>y ys s'a recv_state' x41 x42 ya yb rv rv' rva 
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (simp only: obj_at_def)  [10sg] 1. \<And>y ys s'a recv_state' x41 x42 ya yb rv rv' rva 
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold pred_tcb_at_def)  [10sg] 1. \<And>y ys s'a recv_state' x41 x42 ya yb rv rv' rva 
+  [think d7] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (simp only: pred_tcb_at_def)  [10sg] 1. \<And>y ys s'a recv_state' x41 x42 ya yb rv rv' rva 
+  [think d8] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-send_sync_ipc_corres-P25804.json

@@ -1,0 +1,27 @@
+[init ok]
+[reached transfer_caps_loop_reads_respects']
+== target line 32: by (fastforce simp: cte_wp_at_caps_of_state masked_as_full_def is_cap_
+   facts: ['cte_wp_at_caps_of_state', 'if_splits', 'is_cap_simps', 'masked_as_full_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [2sg] 1. \<And>xa. \<lbrakk>\<And>slots n mi. reads_respects 
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule conjE)  [1sg] 1. \<And>xa. \<lbrakk>\<And>slots n mi. reads_respects 
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule impE)  [2sg] 1. \<And>xa. \<lbrakk>\<And>slots n mi. reads_respects 
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [1sg] 1. \<And>xa. \<lbrakk>\<And>slots n mi. reads_respects 
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst cte_wp_at_caps_of_state)  [1sg] 1. \<And>xa. \<lbrakk>\<And>slots n mi. reads_respects 
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst if_splits)  [1sg] 1. \<And>xa. \<lbrakk>\<And>slots n mi. reads_respects 
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold masked_as_full_def)  [1sg] 1. \<And>xa. \<lbrakk>\<And>slots n mi. reads_respects 
+  [think d7] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+    ↩ backtrack
+    ↩ backtrack
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-transfer_caps_loop_reads_respects'-P25829.json

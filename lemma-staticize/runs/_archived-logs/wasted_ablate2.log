@@ -1,0 +1,23 @@
+########## requiv_user_mem_eq ##########
+Traceback (most recent call last):
+  File "/workspace/tools/seL4-proof-search/Isa-Repl/wasted_ablate.py", line 53, in <module>
+    main()
+    ~~~~^^
+  File "/workspace/tools/seL4-proof-search/Isa-Repl/wasted_ablate.py", line 22, in main
+    lines = gate._read_lines(THY)
+  File "/workspace/tools/seL4-proof-search/Isa-Repl/gate.py", line 39, in _read_lines
+    return open(_abs(thy), encoding="utf-8").read().splitlines()
+           ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/sel4-project/verification/l4v/InfoFlow'
+########## SAC_partsSubjectAffects_exceptT ##########
+Traceback (most recent call last):
+  File "/workspace/tools/seL4-proof-search/Isa-Repl/wasted_ablate.py", line 53, in <module>
+    main()
+    ~~~~^^
+  File "/workspace/tools/seL4-proof-search/Isa-Repl/wasted_ablate.py", line 22, in main
+    lines = gate._read_lines(THY)
+  File "/workspace/tools/seL4-proof-search/Isa-Repl/gate.py", line 39, in _read_lines
+    return open(_abs(thy), encoding="utf-8").read().splitlines()
+           ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/sel4-project/verification/l4v/InfoFlow'
+[DONE]

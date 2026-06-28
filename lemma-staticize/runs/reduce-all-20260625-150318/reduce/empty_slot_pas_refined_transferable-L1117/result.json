@@ -1,0 +1,25 @@
+{
+ "lemma": "empty_slot_pas_refined_transferable",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/CNode_AC.thy",
+ "session": "Access",
+ "mode": "reduce",
+ "verdict": "NO-PATH",
+ "orig_ms": 23192.6,
+ "rounds": [],
+ "target": "by (fastforce simp: cte_wp_at_caps_of_state dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable])",
+ "B_sig": [],
+ "facts": [
+  "F",
+  "OF",
+  "all_childrenD",
+  "cte_wp_at_caps_of_state",
+  "is_transferable.simps",
+  "is_transferable_all_children",
+  "option.discI",
+  "option.simps(1)",
+  "pas_refined_mem",
+  "reply_cap_no_children",
+  "sta_cdt",
+  "sta_cdt_transferable"
+ ]
+}

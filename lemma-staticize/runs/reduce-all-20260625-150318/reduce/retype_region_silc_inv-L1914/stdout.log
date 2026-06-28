@@ -1,0 +1,14 @@
+[init ok]
+[reached retype_region_silc_inv]
+[error] An error occurred while calling t._step_without_timeout.
+: de.unruh.isabelle.control.IsabelleDestroyedException: Isabelle process was destroyed: null
+	at de.unruh.isabelle.control.IsabelleDestroyedException$.apply(Isabelle.scala:1065)
+	at de.unruh.isabelle.control.Isabelle.de$unruh$isabelle$control$Isabelle$$parseIsabelle(Isabelle.scala:318)
+	at de.unruh.isabelle.control.Isabelle$$anon$2.run(Isabelle.scala:486)
+Caused by: java.io.EOFException
+	at java.base/java.io.DataInputStream.readFully(DataInputStream.java:210)
+	at java.base/java.io.DataInputStream.readLong(DataInputStream.java:407)
+	at de.unruh.isabelle.control.Isabelle.de$unruh$isabelle$control$Isabelle$$parseIsabelle(Isabelle.scala:277)
+	... 1 more
+
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-retype_region_silc_inv-P25942.json  verdict=ERROR

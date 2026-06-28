@@ -1,0 +1,14 @@
+[genstat-stateful] SAC_partsSubjectAffects_exceptT @ proof/infoflow/PolicySystemSAC.thy
+[init ok]
+[reached SAC_partsSubjectAffects_exceptT]
+== target: apply (auto simp: SAC_affects SAC_reads)
+   A_goal: xaa = NTFN2
+   B: close the goal (0 subgoals)
+  step 0: gen=267.8s (claude 14.4s) -> ['apply assumption']
+  step 0: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 1: gen=19.5s (claude 19.4s) -> ['apply (simp only: SAC_affects SAC_reads)']
+  step 1: OK -> 10 subgoal(s); applied=['apply (simp only: SAC_affects SAC_reads)']
+  step 2: gen=21.5s (claude 20.9s) -> ['apply assumption']
+  step 2: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 3: gen=57.1s (claude 56.5s) -> ['apply (rule refl)']
+  step 3: FAILED `apply (rule refl)` failed: failed for prove the goal using the tactic `apply (r

@@ -1,0 +1,99 @@
+{
+ "lemma": "send_sync_ipc_corres",
+ "thy": "/sel4-project/verification/l4v/proof/drefine/Ipc_DR.thy",
+ "session": "DRefine",
+ "mode": "reduce",
+ "verdict": "REACHED-B-NOT-FASTER",
+ "orig_ms": 16658.6,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (clarsimp simp: pred_tcb_at_def obj_at_def split: Structures_A.thread_state.splits, fastforce)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 32829.6,
+   "saved_ms": -16171.0,
+   "faster": false,
+   "gen_secs": 29.5,
+   "claude_secs": 28.7
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (clarsimp simp: pred_tcb_at_def obj_at_def split: Structures_A.thread_state.splits, fastforce)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 34240.5,
+   "saved_ms": -17581.9,
+   "faster": false,
+   "gen_secs": 26.0,
+   "claude_secs": 25.5
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply (clarsimp simp: pred_tcb_at_def obj_at_def split: Structures_A.thread_state.splits, fastforce)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 32513.0,
+   "saved_ms": -15854.4,
+   "faster": false,
+   "gen_secs": 36.5,
+   "claude_secs": 35.9
+  },
+  {
+   "round": 4,
+   "variant": [
+    "apply (clarsimp simp only: pred_tcb_at_def obj_at_def, simp only: split: Structures_A.thread_state.splits, fastforce)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (clarsimp simp only: pred_tcb_at_def obj_at_def, simp only: split: Structures_A.thread_state.splits, fastforce)` failed: failed for prove the goal using the tactic `apply (clarsimp simp only: p",
+   "gen_secs": 36.0,
+   "claude_secs": 35.5
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (clarsimp simp: pred_tcb_at_def obj_at_def, simp split: Structures_A.thread_state.splits, fastforce simp del: pred_tcb_at_def obj_at_def)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 17198.5,
+   "saved_ms": -539.9,
+   "faster": false,
+   "gen_secs": 51.5,
+   "claude_secs": 51.4
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (clarsimp simp: pred_tcb_at_def obj_at_def split: Structures_A.thread_state.splits, fastforce)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 32773.2,
+   "saved_ms": -16114.6,
+   "faster": false,
+   "gen_secs": 32.5,
+   "claude_secs": 32.2
+  }
+ ],
+ "target": "apply (clarsimp simp:pred_tcb_at_def obj_at_def, simp split:Structures_A.thread_state.splits, fastforce)",
+ "B_sig": [
+  "1. \\<And>y ys s'a recv_state' x41 x42 ya yb rv rv'. \\<lbrakk>ep_id = epptr; tcb_id_sender = thread; not_idle_thread thread s'a; not_idle_thread (cur_thread s'a) s'a; st_tcb_at active thread s'a; valid_state s'a; valid_etcbs s'a; kheap s'a epptr = Some (kernel_object.Endpoint (RecvEP (y # ys))); none_is_sending_ep epptr s'a; \\<forall>p'. Some (kernel_object.Endpoint (RecvEP (y # ys))) = kheap s'a p' \\<longrightarrow> epptr = p'; y \\<in> ep_waiting_set_recv epptr s'a; recv_state' = BlockedOnReceive x41 x42; dc ya yb; dc rv rv'\\<rbrakk> \\<Longrightarrow> \\<lbrace>?R'275 y ys s'a recv_state' x41 x42 ya yb rv'\\<rbrace> possible_switch_to y \\<lbrace>\\<lambda>r. valid_mdb and valid_idle and valid_objs and not_idle_thread thread and not_idle_thread y and tcb_at thread and tcb_at y and st_tcb_at runnable thread and valid_etcbs\\<rbrace>",
+  "2. \\<And>y ys s'a recv_state' x41 x42 ya yb. \\<lbrakk>ep_id = epptr; tcb_id_sender = thread; not_idle_thread thread s'a; not_idle_thread (cur_thread s'a) s'a; st_tcb_at active thread s'a; valid_state s'a; valid_etcbs s'a; kheap s'a epptr = Some (kernel_object.Endpoint (RecvEP (y # ys))); none_is_sending_ep epptr s'a; \\<forall>p'. Some (kernel_object.Endpoint (RecvEP (y # ys))) = kheap s'a p' \\<longrightarrow> epptr = p'; y \\<in> ep_waiting_set_recv epptr s'a; recv_state' = BlockedOnReceive x41 x42; dc ya yb\\<rbrakk> \\<Longrightarrow> \\<lbrace>?Q277 y ys s'a recv_state' x41 x42 ya\\<rbrace> KHeap_D.set_cap (y, tcb_pending_op_slot) RunningCap \\<lbrace>\\<lambda>a b. True\\<rbrace>",
+  "3. \\<And>y ys s'a recv_state' x41 x42 ya yb. \\<lbrakk>ep_id = epptr; tcb_id_sender = thread; not_idle_thread thread s'a; not_idle_thread (cur_thread s'a) s'a; st_tcb_at active thread s'a; valid_state s'a; valid_etcbs s'a; kheap s'a epptr = Some (kernel_object.Endpoint (RecvEP (y # ys))); none_is_sending_ep epptr s'a; \\<forall>p'. Some (kernel_object.Endpoint (RecvEP (y # ys))) = kheap s'a p' \\<longrightarrow> epptr = p'; y \\<in> ep_waiting_set_recv epptr s'a; recv_state' = BlockedOnReceive x41 x42; dc ya yb\\<rbrakk> \\<Longrightarrow> \\<lbrace>?Q'282 y ys s'a recv_state' x41 x42 yb\\<rbrace> set_thread_state y Running \\<lbrace>?R'275 y ys s'a recv_state' x41 x42 ya yb\\<rbrace>",
+  "4. \\<And>y ys s'a recv_state' x41 x42. \\<lbrakk>ep_id = epptr; tcb_id_sender = thread; not_idle_thread thread s'a; not_idle_thread (cur_thread s'a) s'a; st_tcb_at active thread s'a; valid_state s'a; valid_etcbs s'a; kheap s'a epptr = Some (kernel_object.Endpoint (RecvEP (y # ys))); none_is_sending_ep epptr s'a; \\<forall>p'. Some (kernel_object.Endpoint (RecvEP (y # ys))) = kheap s'a p' \\<longrightarrow> epptr = p'; y \\<in> ep_waiting_set_recv epptr s'a; recv_state' = BlockedOnReceive x41 x42\\<rbrakk> \\<Longrightarrow> \\<lbrace>?Q261 y ys s'a () (PendingSyncRecvCap x41 False (receiver_can_grant x42))\\<rbrace> Endpoint_D.do_ipc_transfer (Some epptr) thread y can_grant \\<lbrace>\\<lambda>ya. (\\<lambda>_. True) and ?Q277 y ys s'a recv_state' x41 x42 ya\\<rbrace>",
+  "5. \\<And>y ys s'a recv_state' x41 x42. \\<lbrakk>ep_id = epptr; tcb_id_sender = thread; not_idle_thread thread s'a; not_idle_thread (cur_thread s'a) s'a; st_tcb_at active thread s'a; valid_state s'a; valid_etcbs s'a; kheap s'a epptr = Some (kernel_object.Endpoint (RecvEP (y # ys))); none_is_sending_ep epptr s'a; \\<forall>p'. Some (kernel_object.Endpoint (RecvEP (y # ys))) = kheap s'a p' \\<longrightarrow> epptr = p'; y \\<in> ep_waiting_set_recv epptr s'a; recv_state' = BlockedOnReceive x41 x42\\<rbrakk> \\<Longrightarrow> \\<lbrace>?Q'257 y ys s'a () (BlockedOnReceive x41 x42)\\<rbrace> Ipc_A.do_ipc_transfer thread (Some epptr) badge can_grant y \\<lbrace>\\<lambda>yb. not_idle_thread y and K (RunningCap = infer_tcb_pending_op y Running) and valid_etcbs and ?Q'282 y ys s'a recv_state' x41 x42 yb\\<rbrace>",
+  "6. \\<And>y ys s'a rv. \\<lbrakk>ep_id = epptr; tcb_id_sender = thread; not_idle_thread thread s'a; not_idle_thread (cur_thread s'a) s'a; st_tcb_at active thread s'a; valid_state s'a; valid_etcbs s'a; kheap s'a epptr = Some (kernel_object.Endpoint (RecvEP (y # ys))); none_is_sending_ep epptr s'a; \\<forall>p'. Some (kernel_object.Endpoint (RecvEP (y # ys))) = kheap s'a p' \\<longrightarrow> epptr = p'; y \\<in> ep_waiting_set_recv epptr s'a\\<rbrakk> \\<Longrightarrow> \\<lbrace>?Q226 y ys s'a\\<rbrace> do x <- get_thread y; return (the (cdl_tcb_caps x tcb_pending_op_slot)) od \\<lbrace>\\<lambda>a. (\\<lambda>a. True) and ?Q261 y ys s'a rv a\\<rbrace>",
+  "7. \\<And>y ys s'a rv. \\<lbrakk>ep_id = epptr; tcb_id_sender = thread; not_idle_thread thread s'a; not_idle_thread (cur_thread s'a) s'a; st_tcb_at active thread s'a; valid_state s'a; valid_etcbs s'a; kheap s'a epptr = Some (kernel_object.Endpoint (RecvEP (y # ys))); none_is_sending_ep epptr s'a; \\<forall>p'. Some (kernel_object.Endpoint (RecvEP (y # ys))) = kheap s'a p' \\<longrightarrow> epptr = p'; y \\<in> ep_waiting_set_recv epptr s'a\\<rbrakk> \\<Longrightarrow> \\<lbrace>?Q'224 y ys s'a rv\\<rbrace> get_thread_state y \\<lbrace>\\<lambda>a. valid_objs and pspace_aligned and valid_global_refs and pspace_distinct and valid_mdb and (\\<lambda>s. not_idle_thread (cur_thread s) s) and valid_irq_node and valid_idle and not_idle_thread y and not_idle_thread thread and valid_etcbs and ?Q'257 y ys s'a rv a\\<rbrace>",
+  "8. \\<And>y ys s'a. \\<lbrakk>ep_id = epptr; tcb_id_sender = thread; not_idle_thread thread s'a; not_idle_thread (cur_thread s'a) s'a; st_tcb_at active thread s'a; valid_state s'a; valid_etcbs s'a; kheap s'a epptr = Some (kernel_object.Endpoint (RecvEP (y # ys))); none_is_sending_ep epptr s'a; \\<forall>p'. Some (kernel_object.Endpoint (RecvEP (y # ys))) = kheap s'a p' \\<longrightarrow> epptr = p'; y \\<in> ep_waiting_set_recv epptr s'a\\<rbrakk> \\<Longrightarrow> \\<lbrace>?Q'216 y ys s'a\\<rbrace> set_endpoint epptr (case ys of [] \\<Rightarrow> IdleEP | a # list \\<Rightarrow> RecvEP ys) \\<lbrace>\\<lambda>r. valid_etcbs and tcb_at y and not_idle_thread y and ?Q'224 y ys s'a r\\<rbrace>",
+  "9. \\<And>y ys s'a cs. \\<lbrakk>ep_id = epptr; tcb_id_sender = thread; not_idle_thread thread s'a; not_idle_thread (cur_thread s'a) s'a; st_tcb_at active thread s'a; valid_state s'a; valid_etcbs s'a; kheap s'a epptr = Some (kernel_object.Endpoint (RecvEP (y # ys))); none_is_sending_ep epptr s'a; \\<forall>p'. Some (kernel_object.Endpoint (RecvEP (y # ys))) = kheap s'a p' \\<longrightarrow> epptr = p'; y \\<in> ep_waiting_set_recv epptr s'a\\<rbrakk> \\<Longrightarrow> \\<lbrace>\\<lambda>ps. transform ps = cs\\<rbrace> set_endpoint epptr (case ys of [] \\<Rightarrow> IdleEP | a # list \\<Rightarrow> RecvEP ys) \\<lbrace>\\<lambda>r s. transform s = cs\\<rbrace>",
+  "10. \\<And>y ys s'a s. \\<lbrakk>ep_id = epptr; tcb_id_sender = thread; not_idle_thread thread s'a; not_idle_thread (cur_thread s'a) s'a; st_tcb_at active thread s'a; valid_state s'a; valid_etcbs s'a; kheap s'a epptr = Some (kernel_object.Endpoint (RecvEP (y # ys))); none_is_sending_ep epptr s'a; \\<forall>p'. Some (kernel_object.Endpoint (RecvEP (y # ys))) = kheap s'a p' \\<longrightarrow> epptr = p'; y \\<in> ep_waiting_set_recv epptr s'a; transform s'a = s\\<rbrakk> \\<Longrightarrow> ((\\<lambda>_. True) and ?Q226 y ys s'a) s A total of 11 subgoals..."
+ ],
+ "facts": [
+  "Structures_A.thread_state.splits",
+  "obj_at_def",
+  "pred_tcb_at_def"
+ ],
+ "accelerated": false
+}

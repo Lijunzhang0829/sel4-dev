@@ -1,0 +1,13 @@
+lemma	session	verdict	effort	secs
+sep_heap_domD	DSpecProofs	CHANNEL-FAIL	5	1323
+sep_heap_domD'	DSpecProofs	CHANNEL-FAIL	12	3004
+sep_irq_node_domD'	DSpecProofs	REACHED-B	1	139
+is_transferable_Untyped	Access	REACHED-B	6	677
+is_transferable_Endpoint	Access	REACHED-B	6	584
+is_transferable_IRQ	Access	NO-PATH	20	2068
+is_transferable_Ntfn	Access	NO-PATH	20	1627
+is_transferable_Zombie	Access	NO-PATH	20	2311
+auth_graph_map_memI	Access	REACHED-B	5	603
+pas_refined_sita_mem	Access	REACHED-B	5	844
+tcb_domain_map_wellformed_mono	Access	REACHED-B	14	3617
+reply_masters_mdbD1	Access	REACHED-B	2	134

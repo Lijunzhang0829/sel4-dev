@@ -1,0 +1,22 @@
+[init ok]
+[reached insert_cap_child_corres]
+== target: by (case_tac "cdt s' child", safe intro!: mdb_cte_atI; auto dest: mdb_
+   orig_ms=22818  B: close the goal (0 subgoals)
+  round 0: gen=32.0s (claude 31.7s) -> ['apply (simp only: valid_mdb_def not_idle_thread_def cte_wp_at_caps_of_state)', 'apply (case_tac "cdt s\' child", safe intro!: mdb_cte_atI; auto dest: mdb_cte_atD is_untyped_cap_eqD simp: swp_def)', 'done']
+  round 0: FAILED `apply (simp only: valid_mdb_def not_idle_thread_def cte_wp_at_caps_of
+  round 1: gen=29.5s (claude 29.1s) -> ['by (case_tac "cdt s\' child", safe intro!: mdb_cte_atI; clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def; auto dest: mdb_cte_atD is_untyped_cap_eqD)']
+  round 1: REACH-B variant_ms=18488 orig_ms=22818 saved=4330.4 faster=True
+  round 2: gen=41.1s (claude 40.6s) -> ['apply (case_tac "cdt s\' child", safe intro!: mdb_cte_atI)', 'apply (clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)', 'apply (auto dest: mdb_cte_atD is_untyped_cap_eqD)', 'done']
+  round 2: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 3: gen=60.0s (claude 59.8s) -> ['apply (case_tac "cdt s\' child", safe intro!: mdb_cte_atI; clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def; auto dest: mdb_cte_atD is_untyped_cap_eqD)', 'done']
+  round 3: REACH-B variant_ms=18910 orig_ms=22818 saved=3908.3 faster=True
+  round 4: gen=137.1s (claude 136.9s) -> ['by (case_tac "cdt s\' child", safe intro!: mdb_cte_atI;']
+  round 4: FAILED `by (case_tac "cdt s' child", safe intro!: mdb_cte_atI;` failed: faile
+  round 5: gen=63.0s (claude 62.3s) -> ['apply (case_tac "cdt s\' child", safe intro!: mdb_cte_atI)', 'apply (clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)', 'apply (auto dest: mdb_cte_atD is_untyped_cap_eqD)', 'done']
+  round 5: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 6: gen=22.5s (claude 22.1s) -> ['apply (case_tac "cdt s\' child")', 'apply (safe intro!: mdb_cte_atI)', 'apply (clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)', 'apply (auto dest: mdb_cte_atD is_untyped_cap_eqD)']
+  round 6: WRONG-STATE (10 subgoals)
+  round 7: gen=42.5s (claude 42.0s) -> ['apply clarsimp', 'by (case_tac "cdt s\' child", safe intro!: mdb_cte_atI; auto dest: mdb_cte_atD is_untyped_cap_eqD simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)']
+  round 7: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+[WIN] 22818ms -> 18488ms  saved=4330.4ms (19%)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-insert_cap_child_corres-P25930.json  verdict=FASTER

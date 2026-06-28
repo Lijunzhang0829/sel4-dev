@@ -1,0 +1,17 @@
+[genstat-stateful] auth_graph_map_memI @ proof/access-control/Access_AC.thy
+[init ok]
+[reached auth_graph_map_memI]
+== target: by (fastforce simp add: auth_graph_map_mem)
+   A_goal: (x, auth, y) \<in> auth_graph_map f S
+   B: close the goal (0 subgoals)
+  step 0: 22.5s -> ['apply (simp only: auth_graph_map_mem)']
+  step 0: OK -> 1 subgoal(s); applied=['apply (simp only: auth_graph_map_mem)']
+  step 1: 44.1s -> ['apply assumption']
+  step 1: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 2: 191.3s -> ['apply (simp only: auth_graph_map_mem)', "apply (rule_tac x=x' in exI, rule_tac x=y' in exI)", 'apply (intro conjI; assumption)']
+  step 2: FAILED `apply (intro conjI; assumption)` failed: failed for prove the goal using the ta
+  step 3: 123.2s -> ["apply (rule_tac x=x' in exI, rule_tac x=y' in exI)", 'apply (intro conjI refl; assumption)']
+  step 3: FAILED `apply (rule_tac x=x' in exI, rule_tac x=y' in exI)` failed: failed for prove th
+  step 4: 153.7s -> ['apply (rule auth_graph_map_mem[THEN iffD2])', "apply (rule_tac x=x' in exI, rule_tac x=y' in exI)", 'apply (intro conjI; assumption)']
+  step 4: OK -> 0 subgoal(s); applied=['apply (simp only: auth_graph_map_mem)', 'apply (rule auth_graph_map_mem[THEN iffD2])', "apply (rule_tac x=x' in exI, rule_tac x=y' in exI)", 'apply (intro conjI; assumption)']
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-auth_graph_map_memI.json  verdict=REACHED-B

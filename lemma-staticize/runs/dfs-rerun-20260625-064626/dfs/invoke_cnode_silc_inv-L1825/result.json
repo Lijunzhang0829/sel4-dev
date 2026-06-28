@@ -1,0 +1,605 @@
+{
+ "lemma": "invoke_cnode_silc_inv",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/FinalCaps.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (fastforce simp: silc_inv_def authorised_cnode_inv_def)",
+ "B_sig": [
+  "1. \\<And>x21 x22 x23. i = MoveCall x21 x22 x23 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3; cap_move cap1 slot1 slot2 od | SaveCall slot \\<Rightarrow> without_preemption $ do thread <- gets cur_thread; src_slot <- return (thread, tcb_cnode_index 3); cap <- get_cap src_slot; case cap of NullCap \\<Rightarrow> return () | ReplyCap x True xa \\<Rightarrow> fail | ReplyCap x False xa \\<Rightarrow> cap_move cap src_slot slot | _ \\<Rightarrow> fail od | CancelBadgedSendsCall (EndpointCap ep b R) \\<Rightarrow> without_preemption $ when (b \\<noteq> 0) $ cancel_badged_sends ep b | CancelBadgedSendsCall _ \\<Rightarrow> fail \\<lbrace>\\<lambda>_. silc_inv aag st\\<rbrace>",
+  "2. \\<And>x3. i = RevokeCall x3 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3; cap_move cap1 slot1 slot2 od | SaveCall slot \\<Rightarrow> without_preemption $ do thread <- gets cur_thread; src_slot <- return (thread, tcb_cnode_index 3); cap <- get_cap src_slot; case cap of NullCap \\<Rightarrow> return () | ReplyCap x True xa \\<Rightarrow> fail | ReplyCap x False xa \\<Rightarrow> cap_move cap src_slot slot | _ \\<Rightarrow> fail od | CancelBadgedSendsCall (EndpointCap ep b R) \\<Rightarrow> without_preemption $ when (b \\<noteq> 0) $ cancel_badged_sends ep b | CancelBadgedSendsCall _ \\<Rightarrow> fail \\<lbrace>\\<lambda>_. silc_inv aag st\\<rbrace>",
+  "3. \\<And>x4. i = DeleteCall x4 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3; cap_move cap1 slot1 slot2 od | SaveCall slot \\<Rightarrow> without_preemption $ do thread <- gets cur_thread; src_slot <- return (thread, tcb_cnode_index 3); cap <- get_cap src_slot; case cap of NullCap \\<Rightarrow> return () | ReplyCap x True xa \\<Rightarrow> fail | ReplyCap x False xa \\<Rightarrow> cap_move cap src_slot slot | _ \\<Rightarrow> fail od | CancelBadgedSendsCall (EndpointCap ep b R) \\<Rightarrow> without_preemption $ when (b \\<noteq> 0) $ cancel_badged_sends ep b | CancelBadgedSendsCall _ \\<Rightarrow> fail \\<lbrace>\\<lambda>_. silc_inv aag st\\<rbrace>",
+  "4. \\<And>x51 x52 x53 x54 x55. i = RotateCall x51 x52 x53 x54 x55 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3; cap_move cap1 slot1 slot2 od | SaveCall slot \\<Rightarrow> without_preemption $ do thread <- gets cur_thread; src_slot <- return (thread, tcb_cnode_index 3); cap <- get_cap src_slot; case cap of NullCap \\<Rightarrow> return () | ReplyCap x True xa \\<Rightarrow> fail | ReplyCap x False xa \\<Rightarrow> cap_move cap src_slot slot | _ \\<Rightarrow> fail od | CancelBadgedSendsCall (EndpointCap ep b R) \\<Rightarrow> without_preemption $ when (b \\<noteq> 0) $ cancel_badged_sends ep b | CancelBadgedSendsCall _ \\<Rightarrow> fail \\<lbrace>\\<lambda>_. silc_inv aag st\\<rbrace>",
+  "5. \\<And>x6. i = SaveCall x6 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3; cap_move cap1 slot1 slot2 od | SaveCall slot \\<Rightarrow> without_preemption $ do thread <- gets cur_thread; src_slot <- return (thread, tcb_cnode_index 3); cap <- get_cap src_slot; case cap of NullCap \\<Rightarrow> return () | ReplyCap x True xa \\<Rightarrow> fail | ReplyCap x False xa \\<Rightarrow> cap_move cap src_slot slot | _ \\<Rightarrow> fail od | CancelBadgedSendsCall (EndpointCap ep b R) \\<Rightarrow> without_preemption $ when (b \\<noteq> 0) $ cancel_badged_sends ep b | CancelBadgedSendsCall _ \\<Rightarrow> fail \\<lbrace>\\<lambda>_. silc_inv aag st\\<rbrace>",
+  "6. \\<And>x7. i = CancelBadgedSendsCall x7 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3; cap_move cap1 slot1 slot2 od | SaveCall slot \\<Rightarrow> without_preemption $ do thread <- gets cur_thread; src_slot <- return (thread, tcb_cnode_index 3); cap <- get_cap src_slot; case cap of NullCap \\<Rightarrow> return () | ReplyCap x True xa \\<Rightarrow> fail | ReplyCap x False xa \\<Rightarrow> cap_move cap src_slot slot | _ \\<Rightarrow> fail od | CancelBadgedSendsCall (EndpointCap ep b R) \\<Rightarrow> without_preemption $ when (b \\<noteq> 0) $ cancel_badged_sends ep b | CancelBadgedSendsCall _ \\<Rightarrow> fail \\<lbrace>\\<lambda>_. silc_inv aag st\\<rbrace>"
+ ],
+ "facts": [
+  "authorised_cnode_inv_def",
+  "silc_inv_def"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": true,
+   "obs": "[8sg] 1. \\<And>x11 x12 x13 s. \\<lbrakk>i = InsertCall x11 x12 x13; silc_inv aag st s \\<and> invs s \\<and> valid_list s \\<and> valid_sched s \\<and> simple_sched_action s \\<and> pas_refined aag s \\<and> s \\<t"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": true,
+   "obs": "[7sg] 1. \\<And>x11 x12 x13 s. \\<lbrakk>i = InsertCall x11 x12 x13; silc_inv aag st s; invs s \\<and> valid_list s \\<and> valid_sched s \\<and> simple_sched_action s \\<and> pas_refined aag s \\<and> s \\<turnsti"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (unfold authorised_cnode_inv_def)",
+   "ok": true,
+   "obs": "[7sg] 1. \\<And>x11 x12 x13 s. \\<lbrakk>i = InsertCall x11 x12 x13; silc_inv aag st s \\<and> invs s \\<and> valid_list s \\<and> valid_sched s \\<and> simple_sched_action s \\<and> pas_refined aag s \\<and> s \\<t"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (simp only: authorised_cnode_inv_def)",
+   "ok": true,
+   "obs": "[7sg] 1. \\<And>x11 x12 x13 s. \\<lbrakk>i = InsertCall x11 x12 x13; silc_inv aag st s \\<and> invs s \\<and> valid_list s \\<and> valid_sched s \\<and> simple_sched_action s \\<and> pas_refined aag s \\<and> s \\<t"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (unfold silc_inv_def)",
+   "ok": true,
+   "obs": "[7sg] 1. \\<And>x11 x12 x13 s. \\<lbrakk>i = InsertCall x11 x12 x13; (SilcLabel \\<noteq> pasSubject aag \\<and> (\\<forall>x. pasObjectAbs aag x = SilcLabel \\<longrightarrow> (\\<exists>sz. cap_table_at sz x s))"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (simp only: silc_inv_def)",
+   "ok": true,
+   "obs": "[7sg] 1. \\<And>x11 x12 x13 s. \\<lbrakk>i = InsertCall x11 x12 x13; (SilcLabel \\<noteq> pasSubject aag \\<and> (\\<forall>x. pasObjectAbs aag x = SilcLabel \\<longrightarrow> (\\<exists>sz. cap_table_at sz x s))"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (drule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (frule authorised_cnode_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (rule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  },
+  {
+   "action": "apply (erule silc_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (7 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 817.8
+}

@@ -1,0 +1,12 @@
+[genstat-stateful] retype_region_silc_inv @ proof/infoflow/FinalCaps.thy
+[init ok]
+[reached retype_region_silc_inv]
+== target: subgoal
+by (fastforce elim: cte_wp_atE intro: cte_wp_at_cteI cte_wp_at
+   A_goal: cte_wp_at ((=) cap) (a, b) s
+   B: reach EXACTLY this 1-subgoal state:
+1. \<And>s a b cap. \<lbrakk>range_cover ptr
+  step 0: gen=158.7s (claude 158.2s) -> ['apply (erule cte_wp_atE)', 'apply (rule cte_wp_at_cteI)', 'apply (rule cte_wp_at_tcbI)']
+  step 0: FAILED `apply (erule cte_wp_atE)` failed: failed for prove the goal using the tactic `a
+  step 1: gen=153.7s (claude 153.4s) -> ['apply assumption']
+  step 1: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass

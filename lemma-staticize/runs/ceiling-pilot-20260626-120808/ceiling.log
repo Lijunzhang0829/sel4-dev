@@ -1,0 +1,32 @@
+########## pas_refined_sita_mem (Access) ##########
+[verify] {"lemma": "pas_refined_sita_mem", "builds": false, "build_ms": null, "span": [236, 236], "err": "*** Failed to apply proof method (line 238 of \"/tmp/tmp.ZZUAMIVJxU/Tmp_8acad503e6c530c8.thy\"): *** goal (1 subgoal): *** 1. \\<lbrakk>(x, auth, y) \\<in> state_objs_to_policy s; pas_wellformed aag; *** irq_map_wellformed a"}
+{"lemma": "pas_refined_sita_mem", "ipc_ms": 9.0, "orig": "by (auto simp: pas_refined_def)", "static_steps": 4, "orig_ms_adj": 22.1, "static_ms_adj": 4.9, "aa_spread_ms": 0.0, "ceiling_ms": 17.2, "significant": true, "note": "in-REPL SCREEN only; confirm winners with stock command_timings"}
+########## reply_masters_mdbD1 (Access) ##########
+[verify] {"lemma": "reply_masters_mdbD1", "builds": true, "build_ms": 218304.0, "span": [473, 473], "err": ""}
+{"lemma": "reply_masters_mdbD1", "ipc_ms": 9.1, "orig": "by (fastforce simp:reply_masters_mdb_def", "static_steps": 7, "orig_ms_adj": 27.4, "static_ms_adj": 12.1, "aa_spread_ms": 2.3, "ceiling_ms": 15.3, "significant": true, "note": "in-REPL SCREEN only; confirm winners with stock command_timings"}
+########## sep_irq_node_domD' (DSpecProofs) ##########
+[verify] {"lemma": "sep_irq_node_domD'", "builds": true, "build_ms": 18838.0, "span": [181, 181], "err": ""}
+{"lemma": "sep_irq_node_domD'", "ipc_ms": 8.4, "orig": "by (fastforce simp: sep_irq_node_dom_def", "static_steps": 4, "orig_ms_adj": 54.4, "static_ms_adj": 3.5, "aa_spread_ms": 1.4, "ceiling_ms": 50.9, "significant": true, "note": "in-REPL SCREEN only; confirm winners with stock command_timings"}
+########## tcb_domain_map_wellformed_mono (Access) ##########
+[verify] {"lemma": "tcb_domain_map_wellformed_mono", "builds": true, "build_ms": 146668.0, "span": [231, 231], "err": ""}
+{"lemma": "tcb_domain_map_wellformed_mono", "ipc_ms": 9.3, "orig": "by (auto simp: tcb_domain_map_wellformed", "static_steps": 5, "orig_ms_adj": 23.8, "static_ms_adj": 3.4, "aa_spread_ms": 3.3, "ceiling_ms": 20.3, "significant": true, "note": "in-REPL SCREEN only; confirm winners with stock command_timings"}
+########## auth_graph_map_memI (Access) ##########
+[verify] {"lemma": "auth_graph_map_memI", "builds": true, "build_ms": 148137.0, "span": [83, 83], "err": ""}
+{"lemma": "auth_graph_map_memI", "ipc_ms": 8.8, "orig": "by (fastforce simp add: auth_graph_map_m", "static_steps": 4, "orig_ms_adj": 30.5, "static_ms_adj": 2.1, "aa_spread_ms": 4.9, "ceiling_ms": 28.4, "significant": true, "note": "in-REPL SCREEN only; confirm winners with stock command_timings"}
+########## is_transferable_Endpoint (Access) ##########
+[verify] {"lemma": "is_transferable_Endpoint", "builds": true, "build_ms": 156022.0, "span": [107, 107], "err": ""}
+{"lemma": "is_transferable_Endpoint", "ipc_ms": 8.0, "orig": "by (blast elim: is_transferable.cases)", "static_steps": 3, "orig_ms_adj": 5.1, "static_ms_adj": 22.3, "aa_spread_ms": 0.6, "ceiling_ms": -17.1, "significant": false, "note": "in-REPL SCREEN only; confirm winners with stock command_timings"}
+########## is_transferable_Untyped (Access) ##########
+[verify] {"lemma": "is_transferable_Untyped", "builds": true, "build_ms": 148194.0, "span": [107, 107], "err": ""}
+{"lemma": "is_transferable_Untyped", "ipc_ms": 7.7, "orig": "by (blast elim: is_transferable.cases)", "static_steps": 3, "orig_ms_adj": 5.5, "static_ms_adj": 24.9, "aa_spread_ms": 0.0, "ceiling_ms": -19.5, "significant": false, "note": "in-REPL SCREEN only; confirm winners with stock command_timings"}
+########## sep_heap_domD' (DSpecProofs) ##########
+[verify] {"lemma": "sep_heap_domD'", "builds": false, "build_ms": null, "span": [171, 171], "err": "*** Failed to apply proof method (line 174 of \"/tmp/tmp.8FzaJdWEh3/Tmp_bba3c330e15f3680.thy\"): *** goal (1 subgoal): *** 1. \\<lbrakk>P s; p \\<notin> m; dom (sep_heap s) = m\\<rbrakk> *** \\<Longrightarrow> p \\<notin> dom ("}
+{"lemma": "sep_heap_domD'", "ipc_ms": 8.6, "orig": "by (fastforce simp:sep_heap_dom_def)", "static_steps": 4, "orig_ms_adj": 62.2, "static_ms_adj": 1.3, "aa_spread_ms": 3.0, "ceiling_ms": 61.0, "significant": true, "note": "in-REPL SCREEN only; confirm winners with stock command_timings"}
+########## is_transferable_Ntfn (Access) ##########
+[verify] {"lemma": "is_transferable_Ntfn", "builds": true, "build_ms": 125928.0, "span": [107, 107], "err": ""}
+########## sep_heap_domD (DSpecProofs) ##########
+[verify] {"lemma": "sep_heap_domD", "builds": true, "build_ms": 21898.0, "span": [171, 171], "err": ""}
+{"lemma": "sep_heap_domD", "ipc_ms": 12.4, "orig": "by (fastforce simp:sep_heap_dom_def)", "static_steps": 5, "orig_ms_adj": 27.4, "static_ms_adj": 2.6, "aa_spread_ms": 0.1, "ceiling_ms": 24.8, "significant": true, "note": "in-REPL SCREEN only; confirm winners with stock command_timings"}
+########## is_transferable_IRQ (Access) ##########
+########## is_transferable_Zombie (Access) ##########
+[verify] {"lemma": "is_transferable_Zombie", "builds": true, "build_ms": 179388.0, "span": [107, 107], "err": ""}

@@ -1,0 +1,11 @@
+[init ok]
+[reached abd_affects]
+== target: by auto
+   orig_ms=23227  B: close the goal (0 subgoals)
+  round 0: gen=24.5s (claude 24.0s) -> ['apply clarsimp', 'apply (auto simp: subjectAffects_def SACAuthGraph_def abd_affects_set_def)', 'done']
+  round 0: REACH-B variant_ms=8089 orig_ms=23227 saved=15138.1 faster=True
+  round 1: gen=32.5s (claude 31.8s) -> []
+  round 2: gen=31.0s (claude 30.4s) -> []
+  round 3: gen=29.0s (claude 28.6s) -> []
+[WIN] 23227ms -> 8089ms  saved=15138.1ms (65%)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-abd_affects-P25921.json  verdict=FASTER

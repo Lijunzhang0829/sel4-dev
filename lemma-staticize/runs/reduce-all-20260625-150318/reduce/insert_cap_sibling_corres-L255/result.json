@@ -1,0 +1,21 @@
+{
+ "lemma": "insert_cap_sibling_corres",
+ "thy": "/sel4-project/verification/l4v/proof/drefine/CNode_DR.thy",
+ "session": "DRefine",
+ "mode": "reduce",
+ "verdict": "ERROR",
+ "orig_ms": 17437.2,
+ "rounds": [],
+ "target": "by (auto dest: mdb_cte_atD is_untyped_cap_eqD simp: revokable_cap_insert_dest_original valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)",
+ "B_sig": [],
+ "facts": [
+  "cte_wp_at_caps_of_state",
+  "is_untyped_cap_eqD",
+  "mdb_cte_atD",
+  "not_idle_thread_def",
+  "revokable_cap_insert_dest_original",
+  "swp_def",
+  "valid_mdb_def"
+ ],
+ "error": "An error occurred while calling t._step_without_timeout"
+}

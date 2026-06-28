@@ -1,0 +1,20 @@
+[init ok]
+[reached gets_apply_ready_queues_reads_respects]
+== target: apply (force elim: reads_equivE simp: equiv_for_def)
+   orig_ms=16704  B: close the goal (0 subgoals)
+  round 0: gen=29.5s (claude 29.1s) -> ['apply (simp only: equiv_for_def)', 'apply (fastforce elim: reads_equivE)', 'done']
+  round 0: FAILED `apply (simp only: equiv_for_def)` failed: failed for prove the goal u
+  round 1: gen=20.5s (claude 20.1s) -> ['apply (fastforce elim: reads_equivE simp: equiv_for_def)']
+  round 1: REACH-B variant_ms=51102 orig_ms=16704 saved=-34398.0 faster=False
+  round 2: gen=25.0s (claude 24.5s) -> []
+  round 3: gen=43.0s (claude 42.4s) -> ['apply (clarsimp simp: equiv_for_def elim!: reads_equivE)']
+  round 3: WRONG-STATE (1 subgoals)
+  round 4: gen=76.6s (claude 76.2s) -> ['apply (erule reads_equivE)', 'apply (fastforce simp: equiv_for_def)', 'done']
+  round 4: FAILED `apply (erule reads_equivE)` failed: failed for prove the goal using t
+  round 5: gen=19.5s (claude 18.8s) -> ['apply (simp only: equiv_for_def)', 'apply (force elim: reads_equivE)']
+  round 5: FAILED `apply (simp only: equiv_for_def)` failed: failed for prove the goal u
+  round 6: gen=20.5s (claude 20.2s) -> ['apply (fastforce elim: reads_equivE simp: equiv_for_def)']
+  round 6: REACH-B variant_ms=51186 orig_ms=16704 saved=-34482.2 faster=False
+  round 7: gen=62.6s (claude 62.2s) -> ['apply (simp only: equiv_for_def)', 'apply (force elim: reads_equivE)']
+  round 7: FAILED `apply (simp only: equiv_for_def)` failed: failed for prove the goal u
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-gets_apply_ready_queues_reads_respects-P25914.json  verdict=REACHED-B-NOT-FASTER

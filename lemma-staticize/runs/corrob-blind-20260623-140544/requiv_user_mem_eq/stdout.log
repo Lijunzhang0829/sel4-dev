@@ -1,0 +1,9 @@
+[genstat-stateful] requiv_user_mem_eq @ proof/infoflow/ARM/ArchUserOp_IF.thy
+[init ok]
+[reached requiv_user_mem_eq]
+[cost-target] hottest of 13 classical lines: step11 = 10.8s DB
+== target: apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_ca
+   A_goal: \<forall>x\<in>ran (kheap s). obj_valid_pdpt x
+   B: reach EXACTLY this 3-subgoal state:
+1. \<And>sz. \<lbrakk>globals_equiv s s'; in
+  round 0: gen=400.4s (claude 400.1s) -> []

@@ -1,0 +1,11 @@
+[genstat-stateful] auth_graph_map_memI @ proof/access-control/Access_AC.thy
+[init ok]
+[reached auth_graph_map_memI]
+== target: by (fastforce simp add: auth_graph_map_mem)
+   A_goal: (x, auth, y) \<in> auth_graph_map f S
+   B: close the goal (0 subgoals)
+  round 0: 24.5s -> ['apply (simp only: auth_graph_map_mem)', "apply (rule_tac x=x' in exI)", "apply (rule_tac x=y' in exI)", 'apply (intro conjI; assumption)', 'done']
+  round 0: BUILD-FAIL `apply (intro conjI; assumption)` failed: failed for prove the goal using the ta
+  round 1: 149.7s -> ['apply (rule iffD2[OF auth_graph_map_mem])', "apply (rule exI[where x=x'])", "apply (rule exI[where x=y'])", 'apply (intro conjI; assumption)', 'done']
+  round 1: REACHED-B
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-auth_graph_map_memI.json  verdict=REACHED-B

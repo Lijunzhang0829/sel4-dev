@@ -1,0 +1,16 @@
+{
+ "lemma": "set_cap_slots_holding_overlapping_caps_other",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/FinalCaps.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (fastforce simp: get_cap_def get_object_def bind_def split_def gets_def get_def return_def assert_def assert_opt_def fail_def split: kernel_object.splits if_splits option.splits)",
+ "B_sig": [
+  "1. \\<And>s xa xaa ko. \\<lbrakk>x \\<in> slots_holding_overlapping_caps capa s; pasObjectAbs aag (fst x) \\<noteq> pasObjectAbs aag xa; slot = (xa, xaa); ko_at ko xa s; \\<not> (obj_refs capa = {} \\<and> cap_irqs capa = {})\\<rbrakk> \\<Longrightarrow> (\\<forall>xb xc. ko = CNode xb xc \\<longrightarrow> xaa \\<in> dom xc \\<and> well_formed_cnode_n xb xc \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> CNode xb (\\<lambda>a. if a = xaa then Some cap else xc a))\\<rparr>)) \\<and> (\\<forall>xb. ko = TCB xb \\<longrightarrow> (xaa = tcb_cnode_index 0 \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> TCB (xb\\<lparr>tcb_ctable := cap\\<rparr>))\\<rparr>)) \\<and> (xaa \\<noteq> tcb_cnode_index 0 \\<longrightarrow> (xaa = tcb_cnode_index (Suc 0) \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> TCB (xb\\<lparr>tcb_vtable := cap\\<rparr>))\\<rparr>)) \\<and> (xaa \\<noteq> tcb_cnode_index (Suc 0) \\<longrightarrow> (xaa = tcb_cnode_index 2 \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> TCB (xb\\<lparr>tcb_reply := cap\\<rparr>))\\<rparr>)) \\<and> (xaa \\<noteq> tcb_cnode_index 2 \\<longrightarrow> (xaa = tcb_cnode_index 3 \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> TCB (xb\\<lparr>tcb_caller := cap\\<rparr>))\\<rparr>)) \\<and> (xaa \\<noteq> tcb_cnode_index 3 \\<longrightarrow> xaa = tcb_cnode_index 4 \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> TCB (xb\\<lparr>tcb_ipcframe := cap\\<rparr>))\\<rparr>))))))"
+ ],
+ "facts": [],
+ "steps": [],
+ "path": null,
+ "audit": false,
+ "verdict": "NO-PATH",
+ "error": "An error occurred while calling t._step_without_timeout.\n: de.unruh.isabelle.control.IsabelleDestroyedException: Isabelle process was destroyed: null\n\tat de.unruh.isabelle.control.Isabelle.checkDestro"
+}

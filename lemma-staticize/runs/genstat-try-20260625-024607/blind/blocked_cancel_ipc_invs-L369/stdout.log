@@ -1,0 +1,11 @@
+[genstat-stateful] blocked_cancel_ipc_invs @ proof/invariant-abstract/IpcCancel_AI.thy
+[init ok]
+[reached blocked_cancel_ipc_invs]
+== target: apply (auto elim!: delta_sym_refs pred_tcb_weaken_strongerE simp: obj_
+   A_goal: (t = epptr \<longrightarrow> sym_refs (\<lambda>a. if a = epptr then {r \<in> set (remove1 epptr queue) \<times> {case e
+   B: reach EXACTLY this 2-subgoal state:
+1. \<And>epptr ep queue s. \<lbrakk>ep \<not
+  round 0: gen=80.6s (claude 80.3s) -> ['apply (simp only: obj_at_def is_ep_def2 refs_in_tcb_bound_refs idle_not_queued split: if_split_asm)', 'apply (erule pred_tcb_weaken_strongerE)', 'apply (drule idle_no_refs)', 'apply (erule delta_sym_refs)', 'apply (simp only: obj_at_def refs_in_tcb_bound_refs split: if_split_asm)']
+  round 0: BUILD-FAIL `apply (erule pred_tcb_weaken_strongerE)` failed: failed for prove the goal usin
+  round 1: gen=300.3s (claude 300.2s) -> ['apply (erule delta_sym_refs)', 'apply (simp only: obj_at_def is_ep_def2 idle_not_queued refs_in_tcb_bound_refs split: if_split_asm)', 'apply (drule idle_no_refs, assumption)']
+  round 1: BUILD-FAIL `apply (erule delta_sym_refs)` failed: failed for prove the goal using the tacti

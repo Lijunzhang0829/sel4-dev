@@ -1,0 +1,64 @@
+########## rm_affects (InfoFlow, blast, line 489) ##########
+  orig:   by (simp, blast?)+
+  clar:   by (simp, blast?)+
+  rep 0: base=70692.0ms  clar=65686.0ms
+  rep 1: base=65519.0ms  clar=66588.0ms
+[result] {"lemma": "rm_affects", "thy": "proof/infoflow/PolicySystemSAC.thy", "session": "InfoFlow", "tactic": "blast", "clar_builds": true, "base_ms_med": 70692.0, "clar_ms_med": 66588.0, "base_ms": [70692.0, 65519.0], "clar_ms": [69631.0, 65686.0, 66588.0], "base_ms_min": 65519.0, "clar_ms_max": 69631.0, "delta_ms": 4104.0, "speedup": 1.062}
+########## SAC_partsSubjectAffects_exceptT (InfoFlow, auto, line 921) ##########
+  orig:   apply (auto simp: SAC_affects SAC_reads)
+  clar:   apply (clarsimp simp: SAC_affects SAC_reads)
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (143 subgoals): *** 1. \<And>xa xaa d. *** \<lbrakk>x \<noteq> T; *** d \<in> subjectAffects SACAuthGraph (partit
+[result] {"lemma": "SAC_partsSubjectAffects_exceptT", "thy": "proof/infoflow/PolicySystemSAC.thy", "session": "InfoFlow", "tactic": "auto", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## abd_affects (InfoFlow, auto, line 241) ##########
+  orig:   by auto
+  clar:   by clarsimp
+  clarsimp BUILD-FAIL -> *** Failed to finish proof (line 241 of "/tmp/tmp.Y5uELsErzv/Tmp_12a576d229e26382.thy"): *** goal (11 subgoals): *** 1. \<And>xa auth l'. *** \<lbrakk
+[result] {"lemma": "abd_affects", "thy": "proof/infoflow/PolicySystemSAC.thy", "session": "InfoFlow", "tactic": "auto", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## dmo_device_state_update_reads_respects_g (InfoFlow, fastforce, line 151) ##########
+  orig:   apply (fastforce simp: equiv_valid_def2 equiv_valid_2_def in_monad do_machine_op_def
+  clar:   apply (clarsimp simp: equiv_valid_def2 equiv_valid_2_def in_monad do_machine_op_def
+  clarsimp BUILD-FAIL -> *** Failed to apply proof method (line 153 of "/tmp/tmp.b7Gi6huc9p/Tmp_cd918aed5399c6dc.thy"): *** goal (2 subgoals): *** 1. \<And>s t. *** \<lbrakk>d
+[result] {"lemma": "dmo_device_state_update_reads_respects_g", "thy": "proof/infoflow/UserOp_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## abd_reads (InfoFlow, blast, line 183) ##########
+  orig:   by (simp, blast?)+
+  clar:   by (simp, blast?)+
+  rep 0: base=66399.0ms  clar=65497.0ms
+  rep 1: base=65382.0ms  clar=66204.0ms
+[result] {"lemma": "abd_reads", "thy": "proof/infoflow/PolicySystemSAC.thy", "session": "InfoFlow", "tactic": "blast", "clar_builds": true, "base_ms_med": 66399.0, "clar_ms_med": 65802.0, "base_ms": [66399.0, 65382.0], "clar_ms": [65802.0, 65497.0, 66204.0], "base_ms_min": 65382.0, "clar_ms_max": 66204.0, "delta_ms": 597.0, "speedup": 1.009}
+########## ntfn123_reads (InfoFlow, blast, line 742) ##########
+  orig:   by (simp add:SACAuthGraph_def, blast?)+
+  clar:   by (simp add:SACAuthGraph_def, blast?)+
+  rep 0: base=65817.0ms  clar=65758.0ms
+  rep 1: base=66559.0ms  clar=67081.0ms
+[result] {"lemma": "ntfn123_reads", "thy": "proof/infoflow/PolicySystemSAC.thy", "session": "InfoFlow", "tactic": "blast", "clar_builds": true, "base_ms_med": 66559.0, "clar_ms_med": 65758.0, "base_ms": [65817.0, 66559.0], "clar_ms": [65551.0, 65758.0, 67081.0], "base_ms_min": 65817.0, "clar_ms_max": 67081.0, "delta_ms": 801.0, "speedup": 1.012}
+########## dmo_bind_ev' (InfoFlow, fastforce, line 93) ##########
+  orig:   by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def
+  clar:   by (clarsimp simp: do_machine_op_def gets_def get_def select_f_def modify_def
+  clarsimp BUILD-FAIL -> *** Failed to finish proof (line 94 of "/tmp/tmp.f7ic8KQv3s/Tmp_0c5ab306f82c2f71.thy"): *** goal (1 subgoal): *** 1. (\<forall>s t. *** P s \<and> P t
+[result] {"lemma": "dmo_bind_ev'", "thy": "proof/infoflow/Retype_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## decode_cnode_invocation_rev (InfoFlow, auto, line 73) ##########
+  orig:   apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! Suc 0"]
+  clar:   apply (clarsimp dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! Suc 0"]
+  clarsimp BUILD-FAIL -> *** Failed to apply proof method (line 73 of "/tmp/tmp.gqOMDFdcjD/Tmp_d6fb6da392eb496b.thy"): *** goal (3 subgoals): *** 1. \<And>s. *** \<lbrakk>pas_
+[result] {"lemma": "decode_cnode_invocation_rev", "thy": "proof/infoflow/Decode_IF.thy", "session": "InfoFlow", "tactic": "auto", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## storeWord_integrity_autarch (Access, auto, line 317) ##########
+  orig:   apply (auto simp: integrity_def is_aligned_mask [symmetric]
+  clar:   apply (clarsimp simp: integrity_def is_aligned_mask [symmetric]
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (1 subgoal): *** 1. \<And>sa x. *** \<lbrakk>integrity_obj_state aag (pasMayActivate aag) *** {pasSubject aag} st
+[result] {"lemma": "storeWord_integrity_autarch", "thy": "proof/access-control/ARM/ArchRetype_AC.thy", "session": "Access", "tactic": "auto", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## storeWord_respects (Access, auto, line 354) ##########
+  orig:   apply (auto simp: integrity_def is_aligned_mask [symmetric]
+  clar:   apply (clarsimp simp: integrity_def is_aligned_mask [symmetric]
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (1 subgoal): *** 1. \<And>sa x. *** \<lbrakk>integrity_obj_state aag (pasMayActivate aag) *** {pasSubject aag} st
+[result] {"lemma": "storeWord_respects", "thy": "proof/access-control/ARM/ArchRetype_AC.thy", "session": "Access", "tactic": "auto", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## invoke_tcb_pas_refined (Access, fastforce, line 377) ##########
+  orig:   apply (wp ita_wps hoare_drop_imps
+  clar:   apply (wp ita_wps hoare_drop_imps
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (7 subgoals): *** 1. \<And>x11 x12 x13 x14 s. *** \<lbrakk>is_subject aag x11; ti = WriteRegisters x11 x12 x13 x1
+[result] {"lemma": "invoke_tcb_pas_refined", "thy": "proof/access-control/Tcb_AC.thy", "session": "Access", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## pas_refined_clear_asid (Access, fastforce, line 538) ##########
+  orig:   by (fastforce simp: pas_refined_def state_objs_to_policy_def
+  clar:   by (clarsimp simp: pas_refined_def state_objs_to_policy_def
+  clarsimp BUILD-FAIL -> *** Failed to finish proof (line 541 of "/tmp/tmp.GosV3wAb5v/Tmp_976be34029ecc894.thy"): *** goal (1 subgoal): *** 1. \<And>a aa b. *** \<lbrakk>(a, a
+[result] {"lemma": "pas_refined_clear_asid", "thy": "proof/access-control/ARM/ArchCNode_AC.thy", "session": "Access", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+[ALL PILOT ABLATE DONE]

@@ -1,0 +1,22 @@
+[init ok]
+[reached requiv_user_mem_eq]
+== target: apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_ca
+   orig_ms=2875  B: leave EXACTLY these 3 subgoal(s):
+1. \<And>sz. \<lbrakk>globals_equiv 
+  round 0: gen=27.5s (claude 27.0s) -> ['apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)', 'apply (intro typ_at_user_data_at | fastforce)+']
+  round 0: WRONG-STATE (6 subgoals)
+  round 1: gen=79.6s (claude 79.1s) -> ['apply (fastforce simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_user_data_at)+']
+  round 1: WRONG-STATE (4 subgoals)
+  round 2: gen=60.1s (claude 59.7s) -> ['apply (clarsimp simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)', 'apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_user_data_at)+']
+  round 2: REACH-B variant_ms=2969 orig_ms=2875 saved=-93.4 faster=False
+  round 3: gen=53.6s (claude 53.1s) -> ['apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)', 'apply (fastforce | intro typ_at_user_data_at)+']
+  round 3: WRONG-STATE (6 subgoals)
+  round 4: gen=126.1s (claude 125.7s) -> ['apply (simp add: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)', 'apply (fastforce | intro typ_at_user_data_at)+']
+  round 4: WRONG-STATE (6 subgoals)
+  round 5: gen=49.1s (claude 48.6s) -> ['apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)', 'apply (fastforce | intro typ_at_user_data_at)+']
+  round 5: WRONG-STATE (6 subgoals)
+  round 6: gen=247.3s (claude 246.9s) -> ['apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_user_data_at)+']
+  round 6: WRONG-STATE (3 subgoals)
+  round 7: gen=43.6s (claude 43.0s) -> ['apply clarsimp', 'apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_user_data_at)+']
+  round 7: REACH-B variant_ms=2965 orig_ms=2875 saved=-89.5 faster=False
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-requiv_user_mem_eq-P25904.json  verdict=REACHED-B-NOT-FASTER

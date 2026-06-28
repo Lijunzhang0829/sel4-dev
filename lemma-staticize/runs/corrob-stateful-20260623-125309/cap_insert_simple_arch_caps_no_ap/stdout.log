@@ -1,0 +1,21 @@
+[genstat-stateful] cap_insert_simple_arch_caps_no_ap @ proof/invariant-abstract/ARM/ArchCSpace_AI.thy
+[init ok]
+[reached cap_insert_simple_arch_caps_no_ap]
+[cost-target] hottest of 2 classical lines: step6 = 8.8s DB
+== target: by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_
+   A_goal: dest \<noteq> src \<and> xa \<noteq> NullCap \<or> dest = src \<and> xa \<noteq> masked_as_full capa cap \<or> src \<not
+   B: close the goal (0 subgoals)
+  step 0: gen=41.5s (claude 40.8s) -> ['apply (simp only: is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)']
+  step 0: OK -> 5 subgoal(s); applied=['apply (simp only: is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)']
+  step 1: gen=34.5s (claude 34.0s) -> ['apply assumption']
+  step 1: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 2: gen=57.6s (claude 56.9s) -> ['apply (intro disjI1 conjI)', 'apply assumption']
+  step 2: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 3: gen=143.7s (claude 142.9s) -> ['apply (rule disjI2, rule disjI2, rule disjI2, rule disjI2, rule disjI1)', 'apply (rule conjI; assumption)']
+  step 3: FAILED `apply (rule conjI; assumption)` failed: failed for prove the goal using the tac
+  step 4: gen=80.1s (claude 79.4s) -> ['apply (rule disjI2, rule disjI2, rule disjI1)', 'apply (rule conjI; assumption)']
+  step 4: FAILED `apply (rule conjI; assumption)` failed: failed for prove the goal using the tac
+  step 5: gen=46.6s (claude 46.2s) -> ['apply (rule disjI2, rule disjI1)', 'apply (rule conjI; assumption)']
+  step 5: FAILED `apply (rule conjI; assumption)` failed: failed for prove the goal using the tac
+  step 6: gen=91.6s (claude 91.1s) -> ['apply (rule disjI2, rule disjI2, rule disjI2, rule disjI1)', 'apply (intro conjI; assumption)']
+  step 6: FAILED `apply (intro conjI; assumption)` failed: failed for prove the goal using the ta

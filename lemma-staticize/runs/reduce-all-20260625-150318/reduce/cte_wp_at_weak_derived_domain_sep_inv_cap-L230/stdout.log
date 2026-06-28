@@ -1,0 +1,26 @@
+[init ok]
+[reached cte_wp_at_weak_derived_domain_sep_inv_cap]
+== target: apply (force simp: domain_sep_inv_def domain_sep_inv_cap_def split: ca
+   orig_ms=23772  B: close the goal (0 subgoals)
+  round 0: gen=41.0s (claude 19.0s) -> ['apply (clarsimp simp: domain_sep_inv_def dest!: cte_wp_at_norm)', 'apply (fastforce simp: domain_sep_inv_cap_def split: cap.splits dest: weak_derived_irq_handler weak_derived_DomainCap)', 'done']
+ERROR:root:Exception while sending command.
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.13/site-packages/py4j/java_gateway.py", line 1255, in send_command
+    answer = smart_decode(self.stream.readline()[:-1])
+                          ~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/conda/lib/python3.13/socket.py", line 719, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+TimeoutError: timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.13/site-packages/py4j/java_gateway.py", line 1038, in send_command
+    response = connection.send_command(command)
+  File "/opt/conda/lib/python3.13/site-packages/py4j/java_gateway.py", line 1268, in send_command
+    raise Py4JNetworkError(
+        "Error while receiving", e, proto.ERROR_ON_RECEIVE)
+py4j.protocol.Py4JNetworkError: Error while receiving
+[error] An error occurred while calling t._step_without_timeout
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-cte_wp_at_weak_derived_domain_sep_inv_cap-P25913.json  verdict=ERROR

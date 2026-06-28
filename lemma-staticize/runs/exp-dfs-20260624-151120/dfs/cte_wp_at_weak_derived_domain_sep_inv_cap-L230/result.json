@@ -1,0 +1,647 @@
+{
+ "lemma": "cte_wp_at_weak_derived_domain_sep_inv_cap",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/DomainSepInv.thy",
+ "session": "Access",
+ "mode": "react",
+ "target": "apply (force simp: domain_sep_inv_def domain_sep_inv_cap_def split: cap.splits dest: cte_wp_at_norm weak_derived_irq_handler weak_derived_DomainCap)",
+ "B_sig": [],
+ "facts": [
+  "cap.splits",
+  "cte_wp_at_norm",
+  "domain_sep_inv_cap_def",
+  "domain_sep_inv_def",
+  "weak_derived_DomainCap",
+  "weak_derived_irq_handler"
+ ],
+ "steps": [
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>a b. \\<lbrakk>domain_sep_inv irqs st s; cte_wp_at (weak_derived cap) (a, b) s; slot = (a, b)\\<rbrakk> \\<Longrightarrow> domain_sep_inv_cap irqs cap"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cap.splits)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>a b. \\<lbrakk>domain_sep_inv irqs st s; cte_wp_at (weak_derived cap) slot s; slot = (a, b)\\<rbrakk> \\<Longrightarrow> domain_sep_inv_cap ((?cap1 a b = NullCap \\<longrightarrow> irqs) \\<and> ("
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_norm)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>a b. \\<lbrakk>domain_sep_inv irqs st s; slot = (a, b); \\<exists>c. cte_wp_at ((=) c) slot s \\<and> weak_derived cap c\\<rbrakk> \\<Longrightarrow> domain_sep_inv_cap irqs cap"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_norm)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>a b. \\<lbrakk>domain_sep_inv irqs st s; cte_wp_at (weak_derived cap) slot s; slot = (a, b); \\<exists>c. cte_wp_at ((=) c) slot s \\<and> weak_derived cap c\\<rbrakk> \\<Longrightarrow> domain_se"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (unfold domain_sep_inv_cap_def)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>a b. \\<lbrakk>domain_sep_inv irqs st s; cte_wp_at (weak_derived cap) slot s; slot = (a, b)\\<rbrakk> \\<Longrightarrow> case cap of DomainCap \\<Rightarrow> False | IRQControlCap \\<Rightarrow> i"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (simp only: domain_sep_inv_cap_def)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>a b. \\<lbrakk>domain_sep_inv irqs st s; cte_wp_at (weak_derived cap) (a, b) s; slot = (a, b)\\<rbrakk> \\<Longrightarrow> case cap of DomainCap \\<Rightarrow> False | IRQControlCap \\<Rightarrow>"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule domain_sep_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule domain_sep_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule domain_sep_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule domain_sep_inv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (unfold domain_sep_inv_def)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>a b. \\<lbrakk>(\\<forall>slot. \\<not> cte_wp_at ((=) DomainCap) slot s) \\<and> (irqs \\<or> (\\<forall>irq slot. \\<not> cte_wp_at ((=) IRQControlCap) slot s \\<and> \\<not> cte_wp_at ((=) (IRQHand"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cap.splits)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_norm)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule domain_sep_inv_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 28075.8
+}

@@ -1,0 +1,9 @@
+[genstat-stateful] cap_insert_simple_arch_caps_no_ap @ proof/invariant-abstract/ARM/ArchCSpace_AI.thy
+[init ok]
+[reached cap_insert_simple_arch_caps_no_ap]
+[cost-target] hottest of 2 classical lines: step6 = 8.8s DB
+== target: by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_
+   A_goal: dest \<noteq> src \<and> xa \<noteq> NullCap \<or> dest = src \<and> xa \<noteq> masked_as_full capa cap \<or> src \<not
+   B: close the goal (0 subgoals)
+  round 0: gen=294.8s (claude 294.6s) -> ['apply (simp only: is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)', 'done']
+  round 0: BUILD-FAIL `done` failed: failed for prove the goal using the tactic `done`. Get msg: Faile

@@ -1,0 +1,12 @@
+[genstat-stateful] SAC_partsSubjectAffects_exceptT @ proof/infoflow/PolicySystemSAC.thy
+[init ok]
+[reached SAC_partsSubjectAffects_exceptT]
+== target: apply (auto simp: SAC_affects SAC_reads)
+   A_goal: xaa = NTFN2
+   B: close the goal (0 subgoals)
+  round 0: gen=64.6s (claude 64.3s) -> ['apply (case_tac x)', 'apply (simp only: SAC_affects SAC_reads)+', 'done']
+  round 0: BUILD-FAIL `done` failed: failed for prove the goal using the tactic `done`. Get msg: Faile
+  round 1: gen=210.8s (claude 210.2s) -> ['apply (case_tac x; simp only: SAC_affects SAC_reads)', 'done']
+  round 1: BUILD-FAIL `done` failed: failed for prove the goal using the tactic `done`. Get msg: Faile
+  round 2: gen=190.3s (claude 189.4s) -> ['apply (simp only: partsSubjectAffects_def SAC_affects SAC_reads SACFlowDoms_def)', 'done']
+  round 2: BUILD-FAIL `done` failed: failed for prove the goal using the tactic `done`. Get msg: Faile

@@ -1,0 +1,110 @@
+{
+ "lemma": "valid_arch_caps_s0",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "by auto",
+ "B_sig": [],
+ "facts": [],
+ "steps": [
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>a b aa ba cap cap'. \\<lbrakk>obj_refs cap' = obj_refs cap; cap' = NullCap \\<or> ((aa, ba), cap') \\<in> {((Low_cnode_ptr, the_nat_to_bl 10 1), ThreadCap Low_tcb_ptr), ((Low_cnode_ptr, the_nat_"
+  },
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 37800.5
+}

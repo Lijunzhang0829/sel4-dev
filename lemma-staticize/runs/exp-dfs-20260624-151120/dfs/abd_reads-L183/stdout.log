@@ -1,0 +1,8 @@
+[init ok]
+[reached abd_reads]
+== target line 6: by (simp, blast?)+
+   facts: []
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-abd_reads-P25817.json

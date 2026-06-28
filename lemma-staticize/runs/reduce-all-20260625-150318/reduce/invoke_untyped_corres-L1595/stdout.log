@@ -1,0 +1,11 @@
+[init ok]
+[reached invoke_untyped_corres]
+== target: apply (fastforce dest: ex_cte_cap_to_not_idle)
+   orig_ms=8428  B: leave EXACTLY these 7 subgoal(s):
+1. \<And>s. \<lbrakk>reset \<longrig
+  round 0: gen=13.5s (claude 13.3s) -> ['apply clarsimp', 'apply (fastforce dest: ex_cte_cap_to_not_idle)']
+  round 0: REACH-B variant_ms=15565 orig_ms=8428 saved=-7136.1 faster=False
+  round 1: gen=49.1s (claude 48.9s) -> []
+  round 2: gen=72.1s (claude 71.5s) -> ['apply (fastforce simp del: if_split dest: ex_cte_cap_to_not_idle)']
+  round 2: REACH-B variant_ms=8641 orig_ms=8428 saved=-212.9 faster=False
+  round 3: gen=51.1s (claude 50.5s) -> ['apply (blast dest: ex_cte_cap_to_not_idle)']
