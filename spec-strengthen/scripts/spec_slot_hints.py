@@ -317,6 +317,49 @@ OPAQUE_PROOF_RE = re.compile(
     r"^\s*by\s*\(?\s*(wp|wpsimp|auto|simp|fastforce|clarsimp|force)\b[^\n]*$")
 
 
+# ---- op read/write classification (P-slot yield signal) --------------------
+# Empirical, from every live P case this line has produced:
+#   READ / decode op  → droppable premise  (gts_wf' on get_thread_state,
+#                       decode_unbind_notification_wf_strong on decode_*) : 2/2 PASS
+#   WRITE / modify op → load-bearing premise (setup_reply_master, pinv_tcb on
+#                       perform_invocation)                                : 4/4 FAIL
+# So the op class is a strong prior on whether dropping a premise can build.
+_OP_SKIP = {"do", "doE", "od", "odE", "return", "returnOk", "liftE", "liftM",
+            "when", "unless", "whenE", "K", "case", "if", "let", "the"}
+_OP_READ = ("get_", "gets_", "read_", "thread_get", "decode_", "lookup_",
+            "resolve_", "ensure_", "is_", "const_on_failure", "return")
+_OP_WRITE = ("set_", "perform_", "do_", "handle_", "send_", "receive_",
+             "cancel_", "delete_", "finalise_", "retype_", "create_",
+             "activate_", "deactivate_", "restart_", "suspend_", "resume_",
+             "update_", "store_", "write_", "invoke_", "switch_", "schedule_",
+             "reschedule_", "bind_", "unbind_", "insert_", "remove_", "empty_",
+             "reset_", "init_", "setup_", "copy_", "transfer_", "mask_",
+             "preemption", "unmap_", "map_", "arch_")
+
+
+def extract_op(statement):
+    """Head identifier of the program between pre and post: ⟨P⟩ <op> args ⟨Q⟩."""
+    m = re.search(r"\\<rbrace>(.*?)\\<lbrace>", statement, re.DOTALL)
+    if not m:
+        return ""
+    for tok in re.findall(r"[A-Za-z_][\w']*", m.group(1)):
+        if tok not in _OP_SKIP:
+            return tok
+    return ""
+
+
+def classify_op(op):
+    """read | write | unknown — a prior on P-slot droppability."""
+    if not op:
+        return "unknown"
+    o = op.lower()
+    if any(o.startswith(p) for p in _OP_READ):
+        return "read"
+    if any(o.startswith(p) for p in _OP_WRITE):
+        return "write"
+    return "unknown"
+
+
 def scan_p(lemmas):
     """P precision rules learned from first live scan:
     - PREFIX match, not word match: `simp: valid_objs_def` consumes
@@ -348,6 +391,8 @@ def scan_p(lemmas):
         # bound_tcb_at...). Mechanical kill, no semantic judgment needed.
         mposts = re.findall(r"\\<lbrace>(.*?)\\<rbrace>", lm["statement"], re.DOTALL)
         post = mposts[1] if len(mposts) >= 2 else ""
+        op = extract_op(lm["statement"])
+        op_class = classify_op(op)
         # Two DISTINCT notions, previously conflated (caused false `high`):
         #   consumed[c]      — should c be SPARED from flagging? True if c is a
         #                      frame premise (head in post, consumed invisibly
@@ -377,9 +422,18 @@ def scan_p(lemmas):
                 continue
             h = head_ident(c)
             differential = n_consumed >= 1
+            # op-class prior: dropping a premise off a WRITE/modify op is almost
+            # always load-bearing (4/4 live FAIL) → demote to low so it never
+            # eats the agent's top-N; READ/decode op premises are the real mine
+            # (2/2 live PASS) → keep the differential-based priority.
+            if op_class == "write":
+                priority = "low"
+            else:
+                priority = "high" if differential else "low"
             hints.append({
                 "slot": "P", "kind": "unused-premise", "lemma": lm["name"],
                 "line": lm["line"], "statement": lm["statement"][:300],
+                "op": op, "op_class": op_class,
                 "evidence": (f"conjunct `{c.strip()[:60]}` head `{h}` never "
                              f"appears in the proof body (prefix match incl. "
                              f"_def/_E forms)"
@@ -388,10 +442,15 @@ def scan_p(lemmas):
                                 if differential else
                                 "; NO conjunct visibly consumed — proof likely "
                                 "opaque, weak signal")
+                             + f"; op `{op}` is {op_class}"
+                             + (" (write/modify → premise usually load-bearing,"
+                                " demoted)" if op_class == "write" else
+                                " (read/decode → premise often droppable)"
+                                if op_class == "read" else "")
                              + "; wp-chain implicit use is the trial's job"),
                 "strong_rule": None, "q_strong_text": None,
                 "premise": c.strip()[:120], "position": None,
-                "priority": "high" if differential else "low",
+                "priority": priority,
             })
     return hints
 
@@ -533,10 +592,14 @@ def main():
         hints += qd[:args.max]
     if args.slot in ("P", "all"):
         p = scan_p(lemmas)
-        # high-priority first, then by line — MUST sort before the --max cap,
-        # else a high (differential) P hint past position --max is silently
-        # dropped while earlier low hints survive (regression vs scan_q).
-        p.sort(key=lambda h: (h["priority"] != "high", h["line"]))
+        # Rank READ/decode ops above WRITE ops before the --max cap: a read-op
+        # premise is the droppable mine even when NON-differential (the proven
+        # decode_unbind_notification_wf_strong win was read + non-differential,
+        # so it must outrank load-bearing write-op hints rather than share the
+        # 'low' bucket). Within a class: differential (high) first, then line.
+        _oc = {"read": 0, "unknown": 1, "write": 2}
+        p.sort(key=lambda h: (_oc.get(h.get("op_class", "unknown"), 1),
+                              h["priority"] != "high", h["line"]))
         hints += p[:args.max]
 
     blob = json.dumps(hints, ensure_ascii=False, indent=1)

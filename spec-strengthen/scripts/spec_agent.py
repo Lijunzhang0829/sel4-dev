@@ -262,8 +262,19 @@ over creative ones. Use the SAME Isabelle source conventions (escapes like \
 
 Theory file: {theory_rel}{focus}
 
-Propose the {n} BEST candidates, best first. Skip a slot rather than emit a \
-weak guess — a wrong proposal costs a full trial build. Output ONLY a JSON \
+THE TRIAL BUILD IS THE JUDGE — NOT YOU. Do NOT try to PROVE in your head \
+whether a premise is droppable or a postcondition holds; you cannot, and \
+attempting it makes you loop. Instead: read the hints, pick your best {n} \
+candidates by quick pattern-match, write each in one pass, and STOP. A wrong \
+guess costs exactly one trial build — that is acceptable and expected. Do not \
+deliberate exhaustively, do not re-rank, do not revisit a candidate you have \
+written. For P-slot specifically: a premise on a READ/decode op (get_*, \
+decode_*, lookup_*) is usually droppable; a premise on a WRITE/modify op \
+(set_*, perform_*, handle_*, do_*) is usually load-bearing — trust the hint's \
+`op_class` and prefer read-op candidates. Return [] only if NO hint looks even \
+plausible; a plausible guess beats an empty answer.
+
+Propose the {n} BEST candidates, best first. Output ONLY a JSON \
 array (no prose, no markdown fence) of objects with these keys: \
 slot, delivery, delivery_substate, delivery_target, lemma_name, anchor_line, \
 new_lemma, rationale, strengthening_claim, and OPTIONALLY: grace_period_weeks \
@@ -630,9 +641,16 @@ def main():
         # those calls are permission-DENIED, burning a turn + latency + cost
         # each (a live run wasted 2 turns / ~tens of seconds on denied Reads).
         # An empty allow-list forces a pure single-shot reasoning task.
+        # --effort low: this is a propose-from-hints task, not deep reasoning.
+        # Default session effort let the model spiral into 700+ thinking-token
+        # loops ("going in circles") on ambiguous premise-droppability, blowing
+        # time/cost and sometimes truncating to []. Low effort + the "trial is
+        # the judge" prompt keep the scan fast and decisive. Override with
+        # SPEC_AGENT_EFFORT.
+        effort = os.environ.get("SPEC_AGENT_EFFORT", "low")
         base_argv = [claude, "-p", prompt, "--model", args.model,
                      "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}',
-                     "--tools", "", "--max-turns", max_turns]
+                     "--tools", "", "--effort", effort, "--max-turns", max_turns]
         if os.environ.get("SPEC_AGENT_STREAM", "1") != "0":
             # visible mode: stream the full claude -p process to stderr
             print("[spec_agent] streaming claude -p (full process trace below; "
