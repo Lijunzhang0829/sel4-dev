@@ -27,11 +27,11 @@ Pattern G 自动化流程是一个 6 层 pipeline。从用户视角看是 `surve
 │    decision.md / measurement.json / patch.diff                      │
 │    range-patch.patch.txt / command.sh                               │
 ├─────────────────────────────────────────────────────────────────────┤
-│ Layer 5: Apply + Impact (irreversible)                              │
-│  check-theory.sh --apply  (持久化到 .thy 文件)                       │
-│  spec_impact.py --measurement-out                                   │
+│ Layer 5: Impact + Apply (gate before irreversible write)            │
+│  spec_impact.py --measurement-out  (gate)                           │
+│  check-theory.sh --apply        (持久化到 .thy 文件)                 │
 ├─────────────────────────────────────────────────────────────────────┤
-│ Layer 4: Verification (ground truth)                                │
+│ Layer 4: Verification (ground truth for candidate truth)            │
 │  check-theory.sh --patch  (trial, 不写盘)                            │
 │  返回 `OK (<ms>)` 或 `FAILED (<ms>) *** <err>`                       │
 ├─────────────────────────────────────────────────────────────────────┤
@@ -294,6 +294,72 @@ Gate 是 **field-specific** 触发：
 - `set_thread_state` 有 do_extended_op path → 但只对 EXT_STATE_PROJECTED 字段触发 dxo_path → machine_state / arch_state 通过 ✓
 - `set_extra_badge` 有 do_machine_op path → 但只对 machine_state 触发 dmo_path → domain_index 等通过 ✓
 - `set_mrs` 同上
+
+**但要注意**：上面这段如果只写结论，不给样本集和命令，就只能当历史说明，不能当可复现验证。要把 detector 修改完整复现出来，必须把 regression harness 也一并跑一遍。
+
+#### 可重跑的 regression harness
+
+主入口脚本：`spec-strengthen/scripts/pattern_g_regression.sh`。它把样本集、detector 调用和断言都固化好了。
+
+```bash
+bash spec-strengthen/scripts/pattern_g_regression.sh
+```
+
+最小要求是把样本分成两组：
+
+- **EXPECTED-FAIL**：加入新 gate 后，`survey --pattern G` 应该产出 `preflight_failed:*`，而不是 `clean`
+- **CONTROL**：加入新 gate 后，原本已经成功 apply 的 Pattern G 候选仍应保持 `clean`
+
+推荐样本集：
+
+**EXPECTED-FAIL**
+
+- `G:Ipc_AI:set_mrs:machine_state`  → 期望 `preflight_failed:dmo_path`
+- `G:TcbAcc_AI:set_mrs:machine_state` → 期望 `preflight_failed:dmo_path`
+- `G:Ipc_AI:set_extra_badge:machine_state` → 期望 `preflight_failed:dmo_path`
+- `G:TcbAcc_AI:set_thread_state:domain_index` → 期望 `preflight_failed:dxo_path`
+- `G:TcbAcc_AI:set_thread_state:domain_time` → 期望 `preflight_failed:dxo_path`
+
+**CONTROL**
+
+- `G:KHeap_AI:set_ep:machine_state`
+- `G:KHeap_AI:set_ep:domain_index`
+- `G:KHeap_AI:set_ep:domain_time`
+- `G:KHeap_AI:set_ep:arch_state`
+- `G:KHeap_AI:set_aobject:machine_state`
+- `G:KHeap_AI:set_aobject:domain_index`
+- `G:KHeap_AI:set_aobject:domain_time`
+- `G:KHeap_AI:set_aobject:arch_state`
+
+**脚本展开版（便于人工调试）**：下面是 `pattern_g_regression.sh` 内部实际做的 detector 调用；当你要加样本、改断言时再手动展开它。
+
+```bash
+cd /home/lijun/seL4-docker-main
+
+python3 spec-strengthen/scripts/spec_frame_gap.py   verification/l4v/proof/invariant-abstract/Ipc_AI.thy   | tee /tmp/g-ipc.jsonl
+
+python3 spec-strengthen/scripts/spec_frame_gap.py   verification/l4v/proof/invariant-abstract/TcbAcc_AI.thy   | tee /tmp/g-tcbacc.jsonl
+
+python3 spec-strengthen/scripts/spec_frame_gap.py   verification/l4v/proof/invariant-abstract/KHeap_AI.thy   | tee /tmp/g-kheap.jsonl
+```
+
+**通过判据**：
+
+```bash
+# EXPECTED-FAIL: 必须命中对应 gate
+rg 'set_mrs:machine_state.*preflight_failed:dmo_path' /tmp/g-ipc.jsonl /tmp/g-tcbacc.jsonl
+rg 'set_extra_badge:machine_state.*preflight_failed:dmo_path' /tmp/g-ipc.jsonl
+rg 'set_thread_state:domain_(index|time).*preflight_failed:dxo_path' /tmp/g-tcbacc.jsonl
+
+# CONTROL: 必须仍为 clean
+rg 'set_ep:(machine_state|domain_index|domain_time|arch_state).*"status": "clean"' /tmp/g-kheap.jsonl
+rg 'set_aobject:(machine_state|domain_index|domain_time|arch_state).*"status": "clean"' /tmp/g-kheap.jsonl
+```
+
+如果这些断言成立，才算“detector 修改被验证”。这一步和 [§9.2](#92-单-candidate-端到端命令序列) 的 execute/apply 流程是**互补关系**：
+
+- regression harness 验证 detector 没误报/漏报
+- execute 流水线验证某个 `clean` candidate 真能自动 patch + trial + impact + apply
 
 ---
 
@@ -934,6 +1000,37 @@ done
 
 [[0036-0049]] 那批 14 个用的就是这个模式，详见 commit `13b056d`。
 
+### 9.5 Detector 修改后的完整验证路线
+
+如果你的目标不是“使用现成 detector”，而是“修改 detector 后证明它仍然正确”，推荐按下面的两段式路线执行：
+
+1. **先跑 regression harness**
+   优先直接跑 `bash spec-strengthen/scripts/pattern_g_regression.sh`。它会验证 EXPECTED-FAIL / CONTROL 两组样本是否符合预期。这里不需要 Isabelle，也不需要 `check-theory.sh --apply`。
+
+2. **再挑一个 clean candidate 跑端到端流水**
+   例如 `G:Untyped_AI:set_cdt:arch_state`。这一步验证的是 executor / verifier / impact / audit 链路没有被 detector 改动意外破坏。
+
+最小可执行命令序列：
+
+```bash
+cd /home/lijun/seL4-docker-main
+
+# [A] detector regression
+bash spec-strengthen/scripts/pattern_g_regression.sh
+
+# [B] one clean candidate end-to-end
+bash spec-strengthen/run.sh execute   --candidate 'G:Untyped_AI:set_cdt:arch_state'   --expid 0035-set-cdt-arch-state-frame-lemma   -y
+```
+
+通过标准：
+
+- [A] 的 gate 断言全部成立
+- [B] 输出 `verdict=additive gate=PASS` 且 audit dir 五件套齐全
+
+**为什么 control 样本不再复用旧 apply 案例**：随着 branch 持续前进，很多历史上的 `clean` 候选已经被真正 apply，或者后来被 crunch / direct gate 吸收掉了。回归 harness 的 control 集应以“当前 tree 上仍然 clean”为准，而不是机械复用历史实验编号。
+
+这样才算完整复现了“Pattern G detector 的修改 + 验证”路线，而不是只复现使用方式。
+
 ---
 
 ## 10. 故障排查
@@ -1021,6 +1118,62 @@ timeout 240 bash .claude/skills/isabelle_prover/scripts/check-theory.sh \
 - 文件被另一个 apply 改了行号但 detector 没重 survey → 用 stale anchor_line。
 - 解决：重跑 `spec-strengthen/run.sh survey <file>` 拿新 anchor。
 
+### 10.6 `preflight_failed:*` 怎么诊断
+
+这是 Pattern G detector 维护里最重要的一类“非执行期”故障。`survey` 结果不是 `clean`，并不一定说明工具坏了；很多时候恰恰说明新 gate 生效了。诊断时先分类型，不要直接去改 tactic。
+
+**`preflight_failed:direct`**
+
+- 含义：同名 lemma 已经在 proof tree 里存在。
+- 先查：
+
+```bash
+rg -n '\b<lemma_name>\b' verification/l4v
+```
+
+- 处理：如果确实已有同名 lemma，这是正确跳过；如果只是误匹配到注释/历史文本，收紧 direct grep 的正则。
+
+**`preflight_failed:crunch`**
+
+- 含义：crunch 已经自动派生过这个 frame family。
+- 先查：
+
+```bash
+rg -n 'crunch\s+<field>.*<op>' verification/l4v/proof/invariant-abstract
+```
+
+- 处理：如果命中真实 crunch 声明，应保留 skip；如果命中的是 wrapper 名噪声，收紧 `COMMON_WRAPPERS` 或 crunch grep pattern。
+
+**`preflight_failed:dmo_path`**
+
+- 含义：`op_transitively_calls(op, "do_machine_op")` 命中，且当前 field = `machine_state`。
+- 先查：
+
+```bash
+python3 spec-strengthen/scripts/spec_frame_gap.py   verification/l4v/proof/invariant-abstract/<File>.thy --op <op>
+```
+
+再去看对应 `spec/abstract/*.thy` 里的 op definition，确认 chain 上是否真会进入 `do_machine_op`。
+
+- 处理：
+  - 如果 chain 真实存在，这是语义正确的 skip。
+  - 如果 chain 是 `_extract_callees` 误抓到的伪 callee，优先修 callee 过滤，而不是关掉 dmo gate。
+
+**`preflight_failed:dxo_path`**
+
+- 含义：`op_transitively_calls(op, "do_extended_op")` 命中，且 field 属于 `EXT_STATE_PROJECTED`。
+- 先查：definition block 里是否真实走到 `do_extended_op`，以及 field 是否确实在 `EXT_STATE_PROJECTED` 集合里。
+- 处理：
+  - 真实命中 → 应跳过。
+  - 误报 → 多半是调用图或 field 分类过宽，分别修 `_extract_callees` / `EXT_STATE_PROJECTED`，不要直接删 gate。
+
+**一个总原则**：
+
+- `trial_failed` 往往该看 tactic / patch / anchor
+- `preflight_failed:*` 往往该看 detector 的语义 gate / grep gate
+
+先分清自己处在哪一层，再决定修哪里。
+
 ---
 
 ## 11. 文件清单（reproducibility 黄金记录）
@@ -1031,6 +1184,7 @@ timeout 240 bash .claude/skills/isabelle_prover/scripts/check-theory.sh \
 |---|---:|---|
 | `spec-strengthen/run.sh` | ~1000 | 入口 + 5 个 subcommand + standard_pipeline |
 | `spec-strengthen/scripts/spec_frame_gap.py` | ~370 | G detector + 4 道 gate |
+| `spec-strengthen/scripts/pattern_g_regression.sh` | ~70 | G detector retroactive regression harness |
 | `spec-strengthen/scripts/spec_op_args.py` | ~135 | op 签名解析 + arity padding |
 | `spec-strengthen/scripts/spec_impact.py` | — | impact verdict + measurement.json |
 | `spec-strengthen/scripts/spec_strengthen_scan.py` | — | Hoare triple parser |

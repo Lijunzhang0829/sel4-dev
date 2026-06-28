@@ -2,8 +2,8 @@
 
 > 一阶段（2026-04 → 2026-06）spec 增强探索的总结。回答三个问题：
 >   1. spec 增强的目标是什么？
->   2. A / C / D / G 四个 pattern 各自的"修改模式"是什么？
->   3. 为什么 G 已经实现自动化扫描，而 A / C / D 不能？
+>   2. G / C / A 三个本体 pattern 各自的"修改模式"是什么？
+>   3. 为什么 G 已经实现自动化扫描，而 A / C 不能？
 >
 > 最后报告本阶段的工具沉淀与已 apply 的 spec 强化清单。
 
@@ -42,7 +42,7 @@ old_contract ⇏ new_contract     (旧承诺不能蕴含新承诺)
 
 `G/C/A` 是**修改形状**的字母编号，不是内容方向的标签。每个字母对应**对 lemma database 做什么操作**。
 
-> **关于 D**：早期 taxonomy 把 `≤ → =`（"bound tightening" / "exactness"）单列为 D。本阶段的重审认为它**不应该独立成 pattern**：D 在修改形状上跟 A 完全一致（改 existing lemma 的 post + 加 `_old` witness），只是 post 形式的特例。把它独立出来等于把 detector 实现细节当 taxonomy 维度。本文档把 exactness 收为 A 的子类 **A-exactness**，下面 A 小节里说明。
+> **关于 D**：早期 taxonomy 把 `≤ → =`（"bound tightening" / "exactness"）单列为 D。本阶段的重审认为它**不应该独立成 pattern**：D 在修改形状上跟 A 完全一致（改 existing lemma 的 post + 加 `_old` witness），只是 post 更精确这一类 A 的特例。把它独立出来等于把 detector 实现细节当 taxonomy 维度。本文档不再单独命名这一特例，而是直接并入 A。
 
 ### G — Frame lemma addition（加新 frame 引理）
 
@@ -112,21 +112,9 @@ old_contract ⇏ new_contract     (旧承诺不能蕴含新承诺)
 
 Additive A 把 modify 形的 `_old` witness 化为"原 L 自身就承担 _old 的职责"，零 cascade。详见 [[0054]] decision.md。
 
-#### A 的子类：A-general 与 A-exactness
+A 的常见情形包括：一般的 post 精确化（如 `real_cte_at ⟹ cte_at`），以及把非严格结论收紧成更精确结论（例如 `≤` 收成 `=`）。这些都不需要在 taxonomy 上再拆子类，因为它们在**修改形状、cascade 风险、自动化难度、verifier 信号**上完全一致：都是修改 existing lemma 的 post，必要时用 `_old` witness 保向后兼容。
 
-A 的 post 形式有两个常见子模式：
-
-- **A-general**：任意 `Q_strong ⟹ Q_weak` 的精确化，例如 `real_cte_at ⟹ cte_at`、`valid_objs ∧ X ⟹ X`、特定 predicate 的细化等。[[0029]] / [[0054]] 都是 A-general。
-- **A-exactness**（旧 D）：post 里某个非严格不等式被替换为严格相等。形式上：
-
-  ```
-  -   "\<lbrace>P\<rbrace> op \<lbrace>\<lambda>rv s. f s \<le> x\<rbrace>"
-  +   "\<lbrace>P\<rbrace> op \<lbrace>\<lambda>rv s. f s = x\<rbrace>"
-  ```
-
-  严格强化的来源是 `(f s = x) ⟹ (f s \<le> x)` 平凡成立、反向不成立。Modify-form 同样需要 `L_old` witness 走 `hoare_strengthen_post[OF L] simp`。Additive-form 加新 `L_exact` 不动旧 L。
-
-两者在**修改形状、cascade 风险、自动化难度、verifier 信号**上都完全一致 — 都是 modify L's post 或 add 新 lemma 走 A 的 verifier 链。区分它们只在 **detector 端**有意义（A-exactness 的 detector 可以专门扫 post 里的 `≤` 子表达式 → 候选池更精准但更稀有；A-general 的 detector 用 redirect-shape 启发式 → 候选池更宽但更嘈杂）。**detector 实现差异不构成 pattern 本体差异**，故归为 A 的两个子类。
+也正因为如此，detector 端即便对某些更窄的 post 形态做专门扫描，也只是**候选发现策略**不同，不构成新的 pattern 本体。
 
 ### 横向对比
 
@@ -134,7 +122,7 @@ A 的 post 形式有两个常见子模式：
 |---|---|:-:|:-:|:-:|:-:|
 | **G** (frame) | + new lemma | ✗ | ✗ | ✗ | ✗ |
 | **C** (drop) | ~ L's pre | ✓ | ✗ | ✗ | optional |
-| **A** (general / exactness) | ~ L's post + proof | ✓ | 可能 | 可能（多文件） | ✓ 必须 |
+| **A** (post strengthening) | ~ L's post + proof | ✓ | 可能 | 可能（多文件） | ✓ 必须 |
 
 **G 是唯一的 pure-additive**。C 改单点。A 改单点 + cascade 风险跨文件。
 
@@ -210,7 +198,7 @@ Detector 能给的 hint：
 
 **这是 detector 与真值 fundamentally 错位**：detector 看 candidate 自身和它的"出场频率"；trial 看的是 candidate 周围所有 consumer 的 search space 是否仍可收敛。两者**没有可见连接**。
 
-**A-exactness（旧 D）补注**：A-exactness 的 detector 任务比 A-general 窄 — 只需识别 post 里的 `≤` 子表达式。理论上 detector 精度更高，但本阶段在 AInvs 范围内**未发现 `≤` 顶层 post 形式的可执行候选**（人工书写的 seL4 spec 里 `≤` 在 post 顶层极少出现）。即便 detector 精度高，candidate 池可能依然为空。这一观察没有改变 A 的整体自动化结论 — 一旦候选出现，verifier 链路与 A-general 完全一样。
+补充一点：如果未来有人专门为某类更窄的 post 形式写 detector，例如扫描 `≤` 并尝试收紧为 `=`，那也只是 **A 的候选发现策略更精细**，不会改变 A 在自动化上的结论。因为一旦进入验证阶段，它仍然面对和其他 A 候选相同的问题：truth-condition 住在 consumer proof 的 search space 里，而不是 detector 可见的局部静态结构里。
 
 ### 信息地图
 
@@ -334,7 +322,7 @@ Detector 能给的 hint：
 
 二阶段的工程入口是 **execute_additive 实施**：把 A/C 重写为 additive shape 的统一 execute 路径，让所有 spec 强化都走"加新 lemma + 原 L 不动"模式。配套 design：
 
-- Ledger schema 加 `kind` 字段（`frame_g` / `drop_c` / `strong_a`；A-exactness 作为 `strong_a` 的子值或独立 `exactness_a`，按命名约定决定）
+- Ledger schema 加 `kind` 字段（`frame_g` / `drop_c` / `strong_a`）
 - 命名约定 + `[wp]` 注册策略 per kind
 - 与 LLM agent 接口：trial_failed candidate 由 LLM 提议新 proof 后重试
 
@@ -352,5 +340,5 @@ Detector 能给的 hint：
 
 - **2026-06-10 v2**：根据 review 收紧三处表述。
   - §1 Gate 2：拆出**逻辑层**（strict-strengthening 由作者承担 + decision.md 记录）与**工程层**（4 道 gate 防 regression），明确 `additive` verdict 是必要而非充分条件。
-  - §2 / §3 / §5：把 D 收为 A 的子类 **A-exactness**，pattern 本体从 4 个 (A/C/D/G) 减为 3 个 (G/C/A)。理由：pattern 字母是修改形状的分类，detector 实现差异不构成本体差异。
+  - §2 / §3 / §5：把 D 直接并入 A，不再单独命名。pattern 本体从 4 个 (A/C/D/G) 减为 3 个 (G/C/A)。理由：pattern 字母是修改形状的分类，detector 实现差异不构成本体差异。
   - §4.7（新增）：拆解"C 命中率 3.7%"的复合含义，明确这是 detector × pipeline × codebase 的联合属性，不能反推 pattern 本体价值。
