@@ -1,0 +1,15 @@
+{
+ "slot": "F",
+ "delivery": "wp",
+ "delivery_substate": null,
+ "delivery_target": null,
+ "lemma_name": "set_simple_ko_cur_thread",
+ "anchor_line": 1287,
+ "new_lemma": "lemma set_simple_ko_cur_thread[wp]:\n  \"set_simple_ko f ptr val \\<lbrace>\\<lambda>s. P (cur_thread s)\\<rbrace>\"\n  by (set_simple_ko_method wp_thm: set_object_cur_thread[THEN hoare_set_object_weaken_pre])",
+ "rationale": "set_object_cur_thread[wp] exists at line 1285. The sibling crunch at line 198 proves set_thread_state preserves cur_thread; the same field deserves a [wp] lemma for set_simple_ko to keep wp sets consistent.",
+ "strengthening_claim": "Adds a new wp frame lemma not present in the file; downstream wp proofs involving cur_thread and set_simple_ko previously had to solve this goal manually.",
+ "grace_period_weeks": null,
+ "block_dependency_evidence": null,
+ "consumer_hunks": null,
+ "anchor_text": "  by (wpsimp wp: set_object_wp_strong)"
+}

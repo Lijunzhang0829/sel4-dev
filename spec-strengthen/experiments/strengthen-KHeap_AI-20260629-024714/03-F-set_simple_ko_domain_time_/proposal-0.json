@@ -1,0 +1,15 @@
+{
+ "slot": "F",
+ "delivery": "wp",
+ "delivery_substate": null,
+ "delivery_target": null,
+ "lemma_name": "set_simple_ko_domain_time",
+ "anchor_line": 1441,
+ "new_lemma": "lemma set_simple_ko_domain_time[wp]:\n  \"set_simple_ko f ptr val \\<lbrace>\\<lambda>s. P (domain_time s)\\<rbrace>\"\n  by (set_simple_ko_method wp_thm: set_object_domain_time[THEN hoare_set_object_weaken_pre])",
+ "rationale": "set_object_domain_time[wp] is proved at line 1439. Same rationale as domain_index: set_simple_ko never writes scheduling fields; registering it in the wp set avoids manual discharge in future proofs involving domain_time.",
+ "strengthening_claim": "Pure-additive: new [wp] entry for domain_time field, not previously in the wp set for set_simple_ko.",
+ "grace_period_weeks": null,
+ "block_dependency_evidence": null,
+ "consumer_hunks": null,
+ "anchor_text": "  by (wpsimp wp: get_object_wp simp: set_object_def)"
+}
