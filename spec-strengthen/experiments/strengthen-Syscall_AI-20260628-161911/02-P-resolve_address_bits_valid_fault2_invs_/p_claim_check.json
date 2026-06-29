@@ -1,0 +1,8 @@
+{
+ "ok": true,
+ "reason": "pure premise-weakening verified (strict pre-conjunct subset, identical post)",
+ "claim": "(invs and valid_cap (fst param)) ==> (invs) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `valid_cap (fst param)`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "dropped_conjuncts": [
+  "valid_cap (fst param)"
+ ]
+}

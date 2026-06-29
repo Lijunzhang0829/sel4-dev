@@ -1,0 +1,56 @@
+diff --git a/proof/invariant-abstract/Syscall_AI.thy b/proof/invariant-abstract/Syscall_AI.thy
+--- a/proof/invariant-abstract/Syscall_AI.thy
++++ b/proof/invariant-abstract/Syscall_AI.thy
+@@ -665,6 +665,52 @@
+   apply (subst split_paired_Ex[symmetric], rule exI, simp)
+   done
+ 
++lemma decode_inv_wf_no_real_cte:
++  "\<lbrace>valid_cap cap and invs and cte_wp_at ((=) cap) slot
++           and ex_cte_cap_to slot
++           and (\<lambda>s::'state_ext state. \<forall>r\<in>zobj_refs cap. ex_nonz_cap_to r s)
++           and (\<lambda>s. \<forall>r\<in>cte_refs cap (interrupt_irq_node s). ex_cte_cap_to r s)
++           and (\<lambda>s. \<forall>cap \<in> set excaps. \<forall>r\<in>cte_refs (fst cap) (interrupt_irq_node s). ex_cte_cap_to r s)
++           and (\<lambda>s. \<forall>x \<in> set excaps. s \<turnstile> (fst x))
++           and (\<lambda>s. \<forall>x \<in> set excaps. \<forall>r\<in>zobj_refs (fst x). ex_nonz_cap_to r s)
++           and (\<lambda>s. \<forall>x \<in> set excaps. cte_wp_at ((=) (fst x)) (snd x) s)
++           and (\<lambda>s. \<forall>x \<in> set excaps. real_cte_at (snd x) s)
++           and (\<lambda>s. \<forall>x \<in> set excaps. ex_cte_cap_wp_to is_cnode_cap (snd x) s)
++           and (\<lambda>s. \<forall>x \<in> set excaps. cte_wp_at (interrupt_derived (fst x)) (snd x) s)\<rbrace>
++     decode_invocation label args cap_index slot cap excaps
++   \<lbrace>valid_invocation\<rbrace>,-"
++  apply (simp add: decode_invocation_def cong: cap.case_cong if_cong split del: if_split)
++  apply (rule hoare_pre)
++   apply (wp Tcb_AI.decode_tcb_inv_wf decode_domain_inv_wf[simplified split_def] | wpc |
++          simp add: o_def uncurry_def split_def del: is_cnode_cap.simps cte_refs.simps)+
++  apply (strengthen cnode_eq_strg)
++  apply (clarsimp simp: valid_cap_def cte_wp_at_eq_simp is_cap_simps
++                        cap_rights_update_def ex_cte_cap_wp_to_weakenE[OF _ TrueI]
++                        cte_wp_at_caps_of_state
++                 split: cap.splits option.splits)
++       apply (thin_tac " \<forall>x\<in>set excaps. P x \<and> Q x" for P Q)+
++       apply (drule (1) bspec)+
++       apply (subst split_paired_Ex[symmetric], rule exI, simp)
++      apply (thin_tac " \<forall>x\<in>set excaps. P x \<and> Q x" for P Q)+
++      apply (rule conjI)
++       apply (subst split_paired_Ex[symmetric], rule_tac x=slot in exI, simp)
++      apply clarsimp
++      apply (drule (1) bspec)+
++      apply (subst split_paired_Ex[symmetric], rule exI, simp)
++     apply (thin_tac " \<forall>x\<in>set excaps. P x \<and> Q x" for P Q)+
++     apply (drule (1) bspec)+
++     apply (clarsimp simp add: ex_cte_cap_wp_to_weakenE[OF _ TrueI])
++     apply (rule eq_no_cap_to_obj_with_diff_ref)
++      apply (fastforce simp add: cte_wp_at_caps_of_state)
++     apply (simp add: invs_valid_arch_caps)
++    apply (simp add: invs_valid_objs invs_valid_global_refs)
++   apply (thin_tac " \<forall>x\<in>set excaps. P x \<and> Q x" for P Q)+
++   apply (drule (1) bspec)+
++   apply (subst split_paired_Ex[symmetric], rule exI, simp)
++  apply (thin_tac " \<forall>x\<in>set excaps. P x \<and> Q x" for P Q)+
++  apply (subst split_paired_Ex[symmetric], rule exI, simp)
++  done
++
+ end
+ 
+ lemma lcs_valid [wp]:
