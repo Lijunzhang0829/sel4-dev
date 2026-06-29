@@ -113,6 +113,53 @@ from wins by mechanical **proof-tactic** features — they are approaching the
 **trial's semantic floor** (only the prover decides). Per the termination
 criterion (see [experiment-workflow.md](../experiment-workflow.md) / discussion):
 no regression-free new precision signal on this data ⇒ precision mining is
-(near-)converged FOR THIS SNAPSHOT. A held-out generalization test (not yet
-built) would make this a hard verdict rather than a 2-round trend; and new
+(near-)converged FOR THIS SNAPSHOT. A held-out generalization test (now built,
+Round 3) makes this a hard verdict rather than a 2-round trend; and new
 object-level data can re-open the space.
+
+---
+
+## Round 3 — 2026-06-29 (held-out generalization test — convergence quantified)
+
+The miner now **splits the labeled set ~80/20 by ORIGINAL lemma** (md5(hint_lemma)
+%10, buckets 8–9 = held-out) so a near-identical sibling drop can never leak into
+the test set. The LLM mines on **TRAIN only**; the deterministic gate then
+calibrates on TRAIN (what the LLM saw), HELD-OUT (generalization), and the full
+set. A signal is real only if it is regression-free **and** still catches on the
+**held-out** split. train-only success = OVERFIT = convergence evidence. The
+held-out demote-recall of the best signal is logged as a **convergence scalar**.
+
+Split: precision = 44+/11− train · 15+/4− held-out (positives = losses, negatives
+= wins).
+
+### Precision mode → "`erule`/`elim` consumes a hypothesis" — ⚠ NEEDS REVIEW (not promoted)
+[proposal](round3-precision.md) · process: `round3-precision.{prompt.txt,raw.jsonl}`.
+Signal: a standalone `erule`/`elim` tactic (not the `elim!:` simp-modifier)
+destructively matches a hypothesis against a rule without naming it → load-bearing.
+
+| set | losses demoted (recall) | wins demoted (regression) | regression-free |
+|---|---|---|---|
+| TRAIN (gate) | 17/44 (0.386) | 2 | False |
+| **HELD-OUT** | 3/15 (0.20) | **1 — `gts_wf'`** | False |
+| full set | 20/59 (0.339) | 3 | False |
+
+- Caught at the **train gate** (already regresses 2 wins) — never reached
+  promote-time. The held-out split independently confirms it: it also misfires on
+  `gts_wf'` on data the LLM never saw.
+- **Convergence scalar (held-out demote-recall) = 0.20**, but with a held-out
+  regression → no *generalizing* precision signal.
+
+### Convergence verdict (now a hard reading, not a trend)
+**Three consecutive precision rounds** independently gravitate to "the proof uses
+tactic X → demote" (automation → hypothesis-manipulation → `erule`/`elim`), and
+**all three regress the same `gts_wf`-family wins** — which use exactly those
+tactics yet remain droppable. The held-out test makes the verdict hard: no mined
+precision signal is regression-free even on held-out data. The residual losses are
+**not mechanically separable from wins by proof-tactic features** — they sit at the
+**trial's semantic floor** (only the prover decides). Precision mining is
+**converged for this data snapshot**. Re-opens only with new object-level data
+(new wins/losses) or a non-proof-tactic feature family.
+
+Recall mode is independently exhausted too: after promoting `compositional-wp`
+(signal #7), the under-ranked-win pool dropped from 5 → **1**, below the ≥3 floor
+to mine a boost — the promoted signal closed the recall gaps it was mined to fill.

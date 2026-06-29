@@ -31,6 +31,7 @@ Writes: reports/spec-strengthen/signal-proposals/<ts>.md    (proposal, never the
 """
 import argparse
 import glob
+import hashlib
 import json
 import os
 import re
@@ -422,6 +423,36 @@ def detector_priority(theory, hint_lemma, dropped_head):
     return None
 
 
+def _bucket(rec):
+    """Deterministic 0-9 bucket from the ORIGINAL lemma (hint_lemma), so every
+    drop of the same lemma lands in the same train/test split — no leakage of a
+    near-identical sibling drop into the held-out set."""
+    key = (rec.get("hint_lemma") or rec.get("lemma") or "").encode()
+    return int(hashlib.md5(key).hexdigest(), 16) % 10
+
+
+def split_train_test(recs, test_buckets=(8, 9)):
+    """Deterministic ~80/20 split (no randomness — reproducible across runs)."""
+    train = [r for r in recs if _bucket(r) not in test_buckets]
+    test = [r for r in recs if _bucket(r) in test_buckets]
+    return train, test
+
+
+def generalization_verdict(cal_tr, cal_te):
+    """A mined signal is real only if it GENERALIZES: regression-free + catches
+    on BOTH train and held-out. train-only success = OVERFIT (no real signal =
+    convergence evidence). A train regression is bad on its face."""
+    if not cal_tr.get("regression_free"):
+        return "⚠ NEEDS REVIEW (fires on a train win)"
+    if cal_tr.get("pos_fired", 0) == 0:
+        return "⚠ NEEDS REVIEW (catches nothing on train)"
+    if not cal_te.get("regression_free"):
+        return "❌ OVERFIT (held-out regression — fires on a held-out win)"
+    if cal_te.get("pos_fired", 0) == 0:
+        return "❌ OVERFIT (does not generalize — catches 0 on held-out)"
+    return "✅ PROMOTABLE (generalizes: regression-free + catches on held-out)"
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -443,29 +474,39 @@ def main():
 
     if args.mode == "recall":
         # positives = wins the detector ranked LOW (recall gaps); want BOOST.
-        low_wins = []
-        for r in wins:
-            if detector_priority(r["theory"], r["hint_lemma"],
-                                 r["dropped_head"]) == "low":
-                low_wins.append(r)
+        low_wins = [r for r in wins
+                    if detector_priority(r["theory"], r["hint_lemma"],
+                                         r["dropped_head"]) == "low"]
         print(f"[miner] under-ranked wins (recall gaps): {len(low_wins)}",
               file=sys.stderr)
         if len(low_wins) < 3 or len(losses) < 3:
             print("[miner] too few recall gaps to mine a boost signal",
                   file=sys.stderr)
             return 1
-        positives, negatives = low_wins, losses[:args.max_losses]
-        prompt = build_recall_prompt(low_wins, negatives, args.slot)
+        positives, negatives = low_wins, losses
     else:  # precision
         if len(wins) < 2 or len(losses) < 3:
             print("[miner] too few labeled examples to mine a signal",
                   file=sys.stderr)
             return 1
-        positives, negatives = losses[:args.max_losses], wins
-        prompt = build_prompt(wins, losses[:args.max_losses], args.slot)
+        positives, negatives = losses, wins
+
+    # HELD-OUT split (by original lemma → no sibling-drop leakage). Mine on TRAIN
+    # only; the deterministic gate then validates on the held-out TEST. A signal
+    # that passes train but fails test is OVERFIT (= convergence evidence).
+    pos_tr, pos_te = split_train_test(positives)
+    neg_tr, neg_te = split_train_test(negatives)
+    print(f"[miner] split: train {len(pos_tr)}+/{len(neg_tr)}- · "
+          f"held-out {len(pos_te)}+/{len(neg_te)}-", file=sys.stderr)
+    if args.mode == "recall":
+        prompt = build_recall_prompt(pos_tr, neg_tr[:args.max_losses], args.slot)
+    else:
+        prompt = build_prompt(neg_tr, pos_tr[:args.max_losses], args.slot)
 
     if args.dry_prompt:
         print(prompt)
+        print(f"\n# train {len(pos_tr)}+/{len(neg_tr)}- | "
+              f"held-out {len(pos_te)}+/{len(neg_te)}-", file=sys.stderr)
         return 0
 
     # archive the FULL run for audit: prompt (input) + claude -p NDJSON
@@ -495,46 +536,61 @@ def main():
               file=sys.stderr)
         return 3
 
-    cal = calibrate(obj["predicate_code"], positives, negatives)
-    report = render_report(args.slot, args.mode, obj, cal, base.name)
+    pred = obj["predicate_code"]
+    cal_tr = calibrate(pred, pos_tr, neg_tr)        # the gate (what LLM saw)
+    cal_te = calibrate(pred, pos_te, neg_te)        # held-out generalization
+    cal_all = calibrate(pred, positives, negatives)  # full-set, for reference
+    gen = generalization_verdict(cal_tr, cal_te)
+    report = render_report(args.slot, args.mode, obj, cal_tr, cal_te, cal_all,
+                           gen, base.name)
     out_path = base.with_suffix(".md")
     out_path.write_text(report, encoding="utf-8")
     print(report)
-    print(f"\n[miner] archived: {out_path.name} (proposal), "
-          f"{prompt_path.name} (input), {raw_path.name} (claude -p NDJSON)",
-          file=sys.stderr)
-    print(f"[miner] calibration: fires {cal.get('pos_fired')}/{cal.get('n_pos')}"
-          f" positives, {cal.get('neg_fired')} false-fires on negatives, "
-          f"regression_free={cal.get('regression_free')}", file=sys.stderr)
+    print(f"\n[miner] archived: {out_path.name}, {prompt_path.name}, "
+          f"{raw_path.name}", file=sys.stderr)
+    print(f"[miner] {gen}", file=sys.stderr)
+    print(f"[miner] CONVERGENCE SCALAR (held-out demote/boost-recall of best "
+          f"signal): {cal_te.get('recall_on_pos')} "
+          f"(→0 across rounds ⇒ space exhausted)", file=sys.stderr)
     return 0
 
 
-def render_report(slot, mode, obj, cal, run_name=""):
+def _row(name, cal, fire_verb):
+    return (f"| {name} | {cal.get('pos_fired')}/{cal.get('n_pos')} "
+            f"(recall {cal.get('recall_on_pos')}) | {cal.get('neg_fired')} | "
+            f"{cal.get('regression_free')} |")
+
+
+def render_report(slot, mode, obj, cal_tr, cal_te, cal_all, gen, run_name=""):
     fire_verb = "demote" if mode == "precision" else "boost"
     pos_name = "losses" if mode == "precision" else "low-ranked wins"
     neg_name = "wins" if mode == "precision" else "losses"
-    verdict = ("✅ PROMOTABLE" if cal.get("regression_free")
-               and cal.get("pos_fired", 0) > 0 else "⚠ NEEDS REVIEW")
+    conv = cal_te.get("recall_on_pos")
     trace = (f"\nFull run archived alongside: `{run_name}.prompt.txt` (exact input"
              f" fed to the LLM) · `{run_name}.raw.jsonl` (claude -p NDJSON — the"
-             f" discovery process, every thinking/text event)." if run_name else "")
+             f" discovery process)." if run_name else "")
     return f"""# Signal proposal — {slot}-slot (mode: {mode})
 
-> LLM-proposed, deterministically calibrated, **propose-only**. Review then
-> hand-write into `spec-strengthen/scripts/spec_slot_hints.py` if promotable.
+> LLM-proposed, **trained on TRAIN, validated on HELD-OUT**, propose-only. The
+> signal is real only if it GENERALIZES (held-out regression-free + still
+> catches). train-only success = OVERFIT = convergence evidence.
 {trace}
 
-Mode: **{mode}** — the signal should fire ({fire_verb}) on {pos_name}, NEVER on {neg_name}.
+Mode: **{mode}** — fire ({fire_verb}) on {pos_name}, NEVER on {neg_name}. Split by
+original lemma (~80/20), so a sibling drop never leaks into held-out.
 
-## Verdict: {verdict}
+## Verdict: {gen}
 
-| metric | value |
-|---|---|
-| {pos_name} fired ({fire_verb}d) | {cal.get('pos_fired')}/{cal.get('n_pos')} (recall {cal.get('recall_on_pos')}) |
-| **{neg_name} fired (regression — must be 0)** | **{cal.get('neg_fired')}** |
-| regression-free | {cal.get('regression_free')} |
-| predicate errors | {cal.get('predicate_errors')} |
-| misfired {neg_name} | {cal.get('misfired_negatives')} |
+| set | {pos_name} fired (recall) | {neg_name} fired (regression) | regression-free |
+|---|---|---|---|
+{_row("TRAIN (gate; LLM saw this)", cal_tr, fire_verb)}
+{_row("**HELD-OUT (generalization)**", cal_te, fire_verb)}
+{_row("_full set (reference)_", cal_all, fire_verb)}
+
+**Convergence scalar** = held-out {fire_verb}-recall of this best signal =
+**{conv}**. Tracked across rounds: when it stays ≈0 (no generalizing signal
+shrinks the held-out residual), the {mode} mining space is **exhausted for this
+data snapshot**. misfired held-out {neg_name}: {cal_te.get('misfired_negatives')}.
 
 ## Structural signature
 {obj.get('signature')}

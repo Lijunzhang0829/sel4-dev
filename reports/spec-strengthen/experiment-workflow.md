@@ -80,14 +80,25 @@ Q 侧:redirect 四分类 + exactness(`scan_q`/`scan_q_exactness`)。F 侧:frame-
 ```
 [1] 读本地全样本(experiments/ + ledger,含赢和输 —— 失败只在本地,不在 commit)
       ↓  每候选 = 特征 + win/loss + (失败的)trial 错误 + agent 自己的推理
-[2] LLM 引导(claude -p):提一个【现有信号没捕捉的】机械信号,分开 loss/win
+[1.5] 按【原始 lemma】~80/20 切 train/held-out(md5(hint_lemma)%10,桶 8–9 留出)
+      ↓  按原始 lemma 切 → 同一 lemma 的多个 drop 不会泄漏进 held-out
+[2] LLM 引导(claude -p):只看 TRAIN,提一个【现有信号没捕捉的】机械信号,分开 loss/win
       ↓  输出:结构签名 + 可执行 predicate
-[3] 确定性校准(不是 LLM 说了算):predicate 在标注集上跑
-      ↓  硬门:零误杀 win;报 precision/recall
-[4] 产出 proposal 报告(signal-proposals/<ts>.md)—— 【不自动改 detector】
+[3] 确定性校准(不是 LLM 说了算):predicate 在 train / held-out / 全集 三跑
+      ↓  硬门:零误杀 win;泛化门:held-out 也零回归 + 仍 catch 才算真信号
+[4] 产出 proposal 报告(signal-proposals/<ts>.md,含泛化裁决)—— 【不自动改 detector】
       ↓
 [5] 人/LLM review → 手写进 spec_slot_hints.py → commit(留 git 痕迹)
 ```
+
+**收敛量化(held-out 泛化测试)**:LLM 只在 train 上挖,确定性闸在 **held-out**
+上验。三种结局:`✅ PROMOTABLE`(train+held-out 都零回归且仍 catch = 真泛化信号);
+`❌ OVERFIT`(train 过但 held-out 回归/零 catch = 过拟合,**即收敛证据**);
+`⚠ NEEDS REVIEW`(train 自身就回归)。**收敛标量** = 最佳信号的 held-out
+demote/boost-recall;跨轮稳定 ≈0(无泛化信号能缩小 held-out 残差)⇒ 该方向
+**对此数据快照已穷尽**。新 object-level 数据可重开空间。三轮精度挖掘均收敛到
+"证明用 tactic X → 降级"且都回归同一 `gts_wf` 族 win,held-out 独立证实
+→ 精度方向已收敛(见 [MINING-LOG](signal-proposals/MINING-LOG.md) Round 3)。
 
 产出目录:[signal-proposals/](signal-proposals/)。
 
