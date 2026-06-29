@@ -72,3 +72,15 @@ Both lessons-2 gaps are now fixed in the miner and verified:
   reports `regression_free=False` (fires on 3 wins: `gts_wf'`, `decode_inv_wf`,
   `some_get_page_info_umapsD`) → **NEEDS REVIEW**, i.e. the miner would no
   longer have falsely cleared it. The calibration gate is now trustworthy.
+- **End-to-end re-run** (`234112-precision.md`): the fixed miner independently
+  re-proposed the same automation pattern and its own calibration flagged it
+  `regression-free=False` (2 wins fired) → NEEDS REVIEW. The bad signal is now
+  caught at calibration time, not only at promote-time.
+
+### Process archiving (done)
+Every miner run now archives the FULL process under `signal-proposals/<ts>-<mode>.*`:
+`.prompt.txt` (exact LLM input), `.raw.jsonl` (claude -p NDJSON — every
+thinking/text/result event of the discovery), `.md` (proposal + calibration).
+The LLM's "how it found the signal" is now auditable after the fact, same
+contract as spec_agent's `agent-raw.txt`. (Round-1's `234112.md` /
+`234112-recall.md` predate this and have no `.raw.jsonl`.)

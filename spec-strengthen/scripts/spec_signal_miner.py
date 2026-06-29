@@ -318,10 +318,12 @@ The predicate gets the feature dict and may use the `re` module. Keep it \
 conservative: prefer missing some losses over firing on any win."""
 
 
-def call_llm(prompt, model, timeout=600):
+def call_llm(prompt, model, timeout=600, raw_path=None):
     """Stream the claude -p process (reusing spec_agent's runner) so the
     operator sees progress and gets a clean timeout/kill instead of a blind
-    subprocess.run hang."""
+    subprocess.run hang. The FULL NDJSON stream is archived to raw_path so the
+    LLM's discovery process (how it reasoned its way to the signal) is auditable
+    after the fact — same reproducibility contract as spec_agent's agent-raw."""
     from spec_agent import find_claude, run_claude_streaming
     claude = os.environ.get("CLAUDE_BIN")
     if not claude or not Path(claude).exists():
@@ -330,7 +332,7 @@ def call_llm(prompt, model, timeout=600):
     argv = [claude, "-p", prompt, "--model", model, "--strict-mcp-config",
             "--mcp-config", '{"mcpServers":{}}', "--tools", "", "--effort", effort,
             "--output-format", "stream-json", "--verbose", "--max-turns", "6"]
-    return run_claude_streaming(argv, timeout=timeout)
+    return run_claude_streaming(argv, timeout=timeout, raw_path=raw_path)
 
 
 def extract_json(text):
@@ -454,8 +456,21 @@ def main():
         print(prompt)
         return 0
 
-    print(f"[miner] asking {args.model} to propose a signal ...", file=sys.stderr)
-    out = call_llm(prompt, args.model)
+    # archive the FULL run for audit: prompt (input) + claude -p NDJSON
+    # (discovery process) + report (output), all under signal-proposals/<ts>-<mode>.*
+    ts = max((p.name.split("-")[-1] for p in EXPERIMENTS.glob("strengthen-*")),
+             default="manual")  # avoid Date.now; tag from latest experiment
+    base = (Path(args.out).with_suffix("") if args.out else
+            REPO / "reports" / "spec-strengthen" / "signal-proposals"
+            / f"{ts}-{args.mode}")
+    base.parent.mkdir(parents=True, exist_ok=True)
+    prompt_path = base.with_suffix(".prompt.txt")
+    raw_path = base.with_suffix(".raw.jsonl")
+    prompt_path.write_text(prompt, encoding="utf-8")
+
+    print(f"[miner] asking {args.model} to propose a signal "
+          f"(archiving to {raw_path.name}) ...", file=sys.stderr)
+    out = call_llm(prompt, args.model, raw_path=str(raw_path))
     obj = extract_json(out)
     if not obj or "predicate_code" not in obj:
         print("[miner] LLM did not return a usable proposal:\n" + out[:800],
@@ -463,32 +478,33 @@ def main():
         return 3
 
     cal = calibrate(obj["predicate_code"], positives, negatives)
-    ts = max((p.name.split("-")[-1] for p in EXPERIMENTS.glob("strengthen-*")),
-             default="manual")  # avoid Date.now; tag from latest experiment
-    report = render_report(args.slot, args.mode, obj, cal)
-    out_path = Path(args.out) if args.out else (
-        REPO / "reports" / "spec-strengthen" / "signal-proposals"
-        / f"{ts}-{args.mode}.md")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+    report = render_report(args.slot, args.mode, obj, cal, base.name)
+    out_path = base.with_suffix(".md")
     out_path.write_text(report, encoding="utf-8")
     print(report)
-    print(f"\n[miner] proposal written: {out_path}", file=sys.stderr)
+    print(f"\n[miner] archived: {out_path.name} (proposal), "
+          f"{prompt_path.name} (input), {raw_path.name} (claude -p NDJSON)",
+          file=sys.stderr)
     print(f"[miner] calibration: fires {cal.get('pos_fired')}/{cal.get('n_pos')}"
           f" positives, {cal.get('neg_fired')} false-fires on negatives, "
           f"regression_free={cal.get('regression_free')}", file=sys.stderr)
     return 0
 
 
-def render_report(slot, mode, obj, cal):
+def render_report(slot, mode, obj, cal, run_name=""):
     fire_verb = "demote" if mode == "precision" else "boost"
     pos_name = "losses" if mode == "precision" else "low-ranked wins"
     neg_name = "wins" if mode == "precision" else "losses"
     verdict = ("✅ PROMOTABLE" if cal.get("regression_free")
                and cal.get("pos_fired", 0) > 0 else "⚠ NEEDS REVIEW")
+    trace = (f"\nFull run archived alongside: `{run_name}.prompt.txt` (exact input"
+             f" fed to the LLM) · `{run_name}.raw.jsonl` (claude -p NDJSON — the"
+             f" discovery process, every thinking/text event)." if run_name else "")
     return f"""# Signal proposal — {slot}-slot (mode: {mode})
 
 > LLM-proposed, deterministically calibrated, **propose-only**. Review then
 > hand-write into `spec-strengthen/scripts/spec_slot_hints.py` if promotable.
+{trace}
 
 Mode: **{mode}** — the signal should fire ({fire_verb}) on {pos_name}, NEVER on {neg_name}.
 
