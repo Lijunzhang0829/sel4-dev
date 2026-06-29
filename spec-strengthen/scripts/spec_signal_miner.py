@@ -138,16 +138,71 @@ def collect_labeled_set(slot=None):
                 if re.search(r"Failed to|error|unsolved|\*\*\*|noop|weakening", ln, re.I):
                     trial_err = ln.strip()[:160]
                     break
+        theory = ""
+        mt = re.search(r"strengthen-(.+?)-\d{8}", cd.parent.name)
+        if mt:
+            theory = mt.group(1)
         recs.append({
             "lemma": prop.get("lemma_name"),
             "slot": prop.get("slot"),
             "label": label,
             "verdict": verdict,
             "trial_err": trial_err,
+            "theory": theory,
+            "hint_lemma": prop.get("hint_lemma") or re.sub(
+                r"_no_.*|'+$", "", prop.get("lemma_name", "")),
+            "dropped_head": dropped,
             "rationale": (prop.get("rationale") or "")[:300],
             "feat": featurize(new_lemma, dropped),
         })
     return recs
+
+
+def build_recall_prompt(low_wins, losses, slot):
+    """Recall mode: find a BOOST signal that promotes under-ranked WINS (the
+    detector ranked them low and almost missed) without boosting any LOSS."""
+    def fmt(r):
+        f = r["feat"]
+        s = (f"- lemma {r['lemma']} | drop `{f['dropped_head']}` | op {f['op']}"
+             f" ({f['op_class']}) | form {f['form']}\n"
+             f"  proof: {f['proof'][:240].replace(chr(10),' ')}\n")
+        if r["label"] == "loss" and r["trial_err"]:
+            s += f"  TRIAL-ERR: {r['trial_err']}\n"
+        if r["rationale"]:
+            s += f"  agent-said: {r['rationale'][:160]}\n"
+        return s
+    pos = "".join(fmt(r) for r in low_wins)
+    neg = "".join(fmt(r) for r in losses)
+    sigs = "\n".join(f"  {i+1}. {s}" for i, s in enumerate(CURRENT_SIGNALS))
+    return f"""You are improving a DETERMINISTIC detector that RANKS candidate \
+{slot}-slot spec strengthenings (premise drops) high/low; the agent only \
+drafts the top-N, so a real strengthening ranked LOW is almost missed (a RECALL \
+gap). The detector's current signals:
+{sigs}
+
+Below are REAL outcomes. The POSITIVES are verified WINS (the drop built fine) \
+that the detector nonetheless ranked LOW — it under-valued them (e.g. demoted \
+by the write-op rule, or low because non-differential). The NEGATIVES are \
+LOSSES (the drop was load-bearing). Your job: find ONE mechanical BOOST signal \
+— a structural feature that the LOW-RANKED WINS share but the LOSSES do NOT — \
+so the detector can promote these missed wins to high WITHOUT promoting any \
+loss (which would re-introduce noise). Computable from the feature dict alone \
+(keys: dropped_head, op, op_class, form, proof, stmt, invoked_rules); NO \
+Isabelle, NO semantic reasoning.
+
+=== LOW-RANKED WINS ({len(low_wins)}) — your signal SHOULD fire (boost) ===
+{pos}
+=== LOSSES ({len(losses)}) — your signal must NOT fire ===
+{neg}
+
+Output ONLY a JSON object (no prose, no fence):
+{{
+  "signature": "<one paragraph: the structural pattern + WHY it predicts droppable>",
+  "predicate_code": "def proposed_signal(feat):\\n    # returns True to BOOST (predict win)\\n    ...",
+  "expected_effect": "<which low-wins it boosts, why it spares the losses>",
+  "novelty": "<why this is a recall/boost signal not captured by the 6 above>"
+}}
+Keep it conservative: prefer missing some low-wins over firing on any loss."""
 
 
 # --------------------------------------------------------------------------
@@ -220,47 +275,76 @@ def extract_json(text):
 
 
 # --------------------------------------------------------------------------
-def calibrate(predicate_code, recs):
-    """Run the proposed predicate over every labeled candidate. Hard gate: it
-    must NEVER fire on a win. Reports demote-precision/recall."""
+def calibrate(predicate_code, positives, negatives):
+    """Run the proposed predicate. Generic over both modes:
+      precision: positives=losses (want fire=demote), negatives=wins (must NOT)
+      recall:    positives=low-wins (want fire=boost), negatives=losses (must NOT)
+    Hard gate: the predicate must NEVER fire on a NEGATIVE."""
     ns = {"re": re}
     try:
         exec(predicate_code, ns)  # noqa: S102 — local dev tool, restricted ns
         fn = ns["proposed_signal"]
     except Exception as e:  # noqa: BLE001
         return {"ok": False, "error": f"predicate did not compile: {e}"}
-    win_fire = loss_fire = wins = losses = 0
-    errs = 0
+    pos_fire = neg_fire = errs = 0
     misfired = []
-    for r in recs:
+    for r in positives:
         try:
-            fire = bool(fn(r["feat"]))
+            pos_fire += bool(fn(r["feat"]))
         except Exception:  # noqa: BLE001
             errs += 1
-            continue
-        if r["label"] == "win":
-            wins += 1
-            if fire:
-                win_fire += 1
+    for r in negatives:
+        try:
+            if fn(r["feat"]):
+                neg_fire += 1
                 misfired.append(r["lemma"])
-        else:
-            losses += 1
-            loss_fire += fire
+        except Exception:  # noqa: BLE001
+            errs += 1
     return {
-        "ok": True, "wins": wins, "losses": losses,
-        "wins_demoted": win_fire, "losses_demoted": loss_fire,
+        "ok": True, "n_pos": len(positives), "n_neg": len(negatives),
+        "pos_fired": pos_fire, "neg_fired": neg_fire,
         "predicate_errors": errs,
-        "recall_on_losses": round(loss_fire / losses, 3) if losses else 0,
-        "regression_free": win_fire == 0,
-        "misfired_wins": misfired[:5],
+        "recall_on_pos": round(pos_fire / len(positives), 3) if positives else 0,
+        "regression_free": neg_fire == 0,
+        "misfired_negatives": misfired[:5],
     }
+
+
+def detector_priority(theory, hint_lemma, dropped_head):
+    """Re-run the detector on the win's file → what priority did it give this
+    drop? 'low' means a recall gap (real win the detector under-ranked)."""
+    import glob as _g
+    B = "verification/l4v/proof/invariant-abstract"
+    f = None
+    for c in (f"{B}/{theory}.thy", f"{B}/ARM/{theory}.thy"):
+        if os.path.exists(c):
+            f = c
+            break
+    if not f:
+        g = _g.glob(f"{B}/**/{theory}.thy", recursive=True)
+        f = g[0] if g else None
+    if not f:
+        return None
+    try:
+        hs = json.loads(subprocess.run(
+            ["python3", str(Path(__file__).with_name("spec_slot_hints.py")),
+             f, "--slot", "P", "--max", "120"],
+            capture_output=True, text=True, timeout=40).stdout)
+    except Exception:  # noqa: BLE001
+        return None
+    for h in hs:
+        if h["lemma"] == hint_lemma and (not dropped_head
+                                         or dropped_head in (h.get("premise") or "")):
+            return h["priority"]
+    return None
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--slot", default="P", choices=["P", "Q", "F"])
-    ap.add_argument("--mode", default="precision", choices=["precision"])
+    ap.add_argument("--mode", default="precision",
+                    choices=["precision", "recall"])
     ap.add_argument("--model", default=os.environ.get("SPEC_AGENT_MODEL", "sonnet"))
     ap.add_argument("--max-losses", type=int, default=40)
     ap.add_argument("--out", default=None)
@@ -271,12 +355,32 @@ def main():
     recs = collect_labeled_set(slot=args.slot)
     wins = [r for r in recs if r["label"] == "win"]
     losses = [r for r in recs if r["label"] == "loss"]
-    print(f"[miner] slot={args.slot} labeled: {len(wins)} wins / {len(losses)} "
-          f"losses", file=sys.stderr)
-    if len(wins) < 2 or len(losses) < 3:
-        print("[miner] too few labeled examples to mine a signal", file=sys.stderr)
-        return 1
-    prompt = build_prompt(wins, losses[:args.max_losses], args.slot)
+    print(f"[miner] slot={args.slot} mode={args.mode} labeled: {len(wins)} wins"
+          f" / {len(losses)} losses", file=sys.stderr)
+
+    if args.mode == "recall":
+        # positives = wins the detector ranked LOW (recall gaps); want BOOST.
+        low_wins = []
+        for r in wins:
+            if detector_priority(r["theory"], r["hint_lemma"],
+                                 r["dropped_head"]) == "low":
+                low_wins.append(r)
+        print(f"[miner] under-ranked wins (recall gaps): {len(low_wins)}",
+              file=sys.stderr)
+        if len(low_wins) < 3 or len(losses) < 3:
+            print("[miner] too few recall gaps to mine a boost signal",
+                  file=sys.stderr)
+            return 1
+        positives, negatives = low_wins, losses[:args.max_losses]
+        prompt = build_recall_prompt(low_wins, negatives, args.slot)
+    else:  # precision
+        if len(wins) < 2 or len(losses) < 3:
+            print("[miner] too few labeled examples to mine a signal",
+                  file=sys.stderr)
+            return 1
+        positives, negatives = losses[:args.max_losses], wins
+        prompt = build_prompt(wins, losses[:args.max_losses], args.slot)
+
     if args.dry_prompt:
         print(prompt)
         return 0
@@ -289,41 +393,45 @@ def main():
               file=sys.stderr)
         return 3
 
-    cal = calibrate(obj["predicate_code"], recs)
+    cal = calibrate(obj["predicate_code"], positives, negatives)
     ts = max((p.name.split("-")[-1] for p in EXPERIMENTS.glob("strengthen-*")),
              default="manual")  # avoid Date.now; tag from latest experiment
-    report = render_report(args.slot, obj, cal, len(wins), len(losses))
+    report = render_report(args.slot, args.mode, obj, cal)
     out_path = Path(args.out) if args.out else (
-        REPO / "reports" / "spec-strengthen" / "signal-proposals" / f"{ts}.md")
+        REPO / "reports" / "spec-strengthen" / "signal-proposals"
+        / f"{ts}-{args.mode}.md")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(report, encoding="utf-8")
     print(report)
     print(f"\n[miner] proposal written: {out_path}", file=sys.stderr)
-    print(f"[miner] calibration: demotes {cal.get('losses_demoted')}/"
-          f"{cal.get('losses')} losses, regression_free="
-          f"{cal.get('regression_free')}", file=sys.stderr)
+    print(f"[miner] calibration: fires {cal.get('pos_fired')}/{cal.get('n_pos')}"
+          f" positives, {cal.get('neg_fired')} false-fires on negatives, "
+          f"regression_free={cal.get('regression_free')}", file=sys.stderr)
     return 0
 
 
-def render_report(slot, obj, cal, nwin, nloss):
+def render_report(slot, mode, obj, cal):
+    fire_verb = "demote" if mode == "precision" else "boost"
+    pos_name = "losses" if mode == "precision" else "low-ranked wins"
+    neg_name = "wins" if mode == "precision" else "losses"
     verdict = ("✅ PROMOTABLE" if cal.get("regression_free")
-               and cal.get("losses_demoted", 0) > 0 else "⚠ NEEDS REVIEW")
-    return f"""# Signal proposal — {slot}-slot (mode: precision)
+               and cal.get("pos_fired", 0) > 0 else "⚠ NEEDS REVIEW")
+    return f"""# Signal proposal — {slot}-slot (mode: {mode})
 
 > LLM-proposed, deterministically calibrated, **propose-only**. Review then
 > hand-write into `spec-strengthen/scripts/spec_slot_hints.py` if promotable.
 
-Labeled set: {nwin} wins / {nloss} losses (local experiment archive).
+Mode: **{mode}** — the signal should fire ({fire_verb}) on {pos_name}, NEVER on {neg_name}.
 
 ## Verdict: {verdict}
 
 | metric | value |
 |---|---|
-| losses demoted (caught) | {cal.get('losses_demoted')}/{cal.get('losses')} (recall {cal.get('recall_on_losses')}) |
-| **wins demoted (regression — must be 0)** | **{cal.get('wins_demoted')}** |
+| {pos_name} fired ({fire_verb}d) | {cal.get('pos_fired')}/{cal.get('n_pos')} (recall {cal.get('recall_on_pos')}) |
+| **{neg_name} fired (regression — must be 0)** | **{cal.get('neg_fired')}** |
 | regression-free | {cal.get('regression_free')} |
 | predicate errors | {cal.get('predicate_errors')} |
-| misfired wins | {cal.get('misfired_wins')} |
+| misfired {neg_name} | {cal.get('misfired_negatives')} |
 
 ## Structural signature
 {obj.get('signature')}
