@@ -360,6 +360,34 @@ def classify_op(op):
     return "unknown"
 
 
+def split_assumptions(stmt):
+    """Plain implication lemma `\\<lbrakk>A1; A2; ...\\<rbrakk> \\<Longrightarrow> C`
+    -> (body, [A1, A2, ...], conclusion). NEW SCOPE (novel-slot discovery):
+    the detector otherwise only sees Hoare triples (\\<lbrace>...\\<rbrace>) and was
+    blind to this large class of seL4 helper lemmas (Untyped/CSpace have ~50
+    each). Assumption-weakening on these is a valid additive strengthening
+    (the lemma holds under weaker hypotheses). Assumptions split on top-level
+    `;` (paren depth 0)."""
+    m = re.search(r"\\<lbrakk>(.*?)\\<rbrakk>\s*\\<Longrightarrow>(.*)",
+                  stmt, re.DOTALL)
+    if not m:
+        return None, [], ""
+    body, concl = m.group(1).strip(), m.group(2).strip()
+    parts, depth, cur = [], 0, []
+    for ch in body:
+        if ch == "(":
+            depth += 1; cur.append(ch)
+        elif ch == ")":
+            depth -= 1; cur.append(ch)
+        elif ch == ";" and depth == 0:
+            parts.append("".join(cur).strip()); cur = []
+        else:
+            cur.append(ch)
+    if cur:
+        parts.append("".join(cur).strip())
+    return body, [p for p in parts if p], concl
+
+
 def scan_p(lemmas):
     """P precision rules learned from first live scan:
     - PREFIX match, not word match: `simp: valid_objs_def` consumes
@@ -375,7 +403,14 @@ def scan_p(lemmas):
     for lm in lemmas:
         if lm["has_assumes"]:
             continue
+        # Two statement shapes: Hoare triple ⟨P⟩ op ⟨Q⟩, OR (NEW) plain
+        # implication ⟦A1; A2; ...⟧ ⟹ C. The unused-premise logic is identical;
+        # only the way we extract the conjunct list and the "post" differ.
         pre, conjs = split_pre(lm["statement"])
+        form = "hoare"
+        if pre is None:
+            pre, conjs, concl = split_assumptions(lm["statement"])
+            form = "impl"
         if pre is None or len(conjs) < 2:
             continue
         proof = lm["proof"]
@@ -385,14 +420,17 @@ def scan_p(lemmas):
         if opaque:
             continue
         # FRAME-PREMISE rule (learned from a live all-[] agent run): a conjunct
-        # whose head also appears in the POSTCONDITION is the lemma's framed
-        # subject (pre P → post P), consumed invisibly by the wp chain and
-        # essentially never droppable (pre invs → post invs, bound_tcb_at →
-        # bound_tcb_at...). Mechanical kill, no semantic judgment needed.
-        mposts = re.findall(r"\\<lbrace>(.*?)\\<rbrace>", lm["statement"], re.DOTALL)
-        post = mposts[1] if len(mposts) >= 2 else ""
-        op = extract_op(lm["statement"])
-        op_class = classify_op(op)
+        # whose head also appears in the POSTCONDITION / CONCLUSION is the
+        # lemma's framed subject (pre P → post P), consumed invisibly and
+        # essentially never droppable. Mechanical kill, no semantic judgment.
+        if form == "impl":
+            post = concl
+            op, op_class = "", "unknown"   # no op in a plain implication
+        else:
+            mposts = re.findall(r"\\<lbrace>(.*?)\\<rbrace>", lm["statement"], re.DOTALL)
+            post = mposts[1] if len(mposts) >= 2 else ""
+            op = extract_op(lm["statement"])
+            op_class = classify_op(op)
         # Two DISTINCT notions, previously conflated (caused false `high`):
         #   consumed[c]      — should c be SPARED from flagging? True if c is a
         #                      frame premise (head in post, consumed invisibly
@@ -433,8 +471,10 @@ def scan_p(lemmas):
             hints.append({
                 "slot": "P", "kind": "unused-premise", "lemma": lm["name"],
                 "line": lm["line"], "statement": lm["statement"][:300],
-                "op": op, "op_class": op_class,
-                "evidence": (f"conjunct `{c.strip()[:60]}` head `{h}` never "
+                "op": op, "op_class": op_class, "form": form,
+                "evidence": ((f"[implication lemma — assumption-weakening] "
+                              if form == "impl" else "")
+                             + f"conjunct `{c.strip()[:60]}` head `{h}` never "
                              f"appears in the proof body (prefix match incl. "
                              f"_def/_E forms)"
                              + (f"; {n_consumed} other conjunct(s) ARE visibly "
