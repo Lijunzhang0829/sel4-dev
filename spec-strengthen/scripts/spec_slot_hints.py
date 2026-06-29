@@ -38,6 +38,7 @@ Usage: spec_slot_hints.py <theory.thy> [--slot Q|P|all] [--out hints.json]
 """
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -388,7 +389,45 @@ def split_assumptions(stmt):
     return body, [p for p in parts if p], concl
 
 
-def scan_p(lemmas):
+# ---- rule-precondition dependency (P-slot load-bearing signal) --------------
+# Learned from live success/failure: dropping a premise FAILS when it feeds a
+# named rule the proof invokes (ArchAcc: drop equal_kernel_mappings, proof calls
+# kernel_mapping_slots_empty_pdeI whose precondition lists it → load-bearing),
+# and SUCCEEDS when no invoked rule needs it (pd_at_asid: drop valid_vspace_objs,
+# proof uses valid_vs_lookupD/unique_table_refsD/asid_low_high_bits, none need
+# it). This upgrades the P signal from "head absent from proof body" to "head
+# absent from the dependency closure of the rules the proof actually invokes".
+
+def build_precond_index(thy_paths):
+    """name -> set of precondition-conjunct heads, across the given theories.
+    Covers Hoare (\\<lbrace>...\\<rbrace>) and implication (\\<lbrakk>...\\<rbrakk>)
+    forms. Used to look up what an invoked rule's precondition needs."""
+    idx = {}
+    for p in thy_paths:
+        try:
+            text = Path(p).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for lm in parse_lemmas(text):
+            pre, conjs = split_pre(lm["statement"])
+            if pre is None:
+                _, conjs, _ = split_assumptions(lm["statement"])
+            heads = {head_ident(c) for c in conjs}
+            heads.discard("")
+            if heads:
+                idx[lm["name"]] = heads
+    return idx
+
+
+def invoked_rules(proof, index):
+    """Lemma names from the index that appear in this proof body (i.e. rules the
+    proof invokes). Over-matching only causes a conservative demote, never a
+    false high, so a plain identifier ∩ index is sufficient and cheap."""
+    toks = set(re.findall(r"[A-Za-z_][\w']*", proof))
+    return toks & index.keys()
+
+
+def scan_p(lemmas, precond_index=None):
     """P precision rules learned from first live scan:
     - PREFIX match, not word match: `simp: valid_objs_def` consumes
       `valid_objs` — \\bvalid_objs\\b misses it because `_` is a word char.
@@ -414,6 +453,8 @@ def scan_p(lemmas):
         if pre is None or len(conjs) < 2:
             continue
         proof = lm["proof"]
+        inv_rules = (invoked_rules(proof, precond_index)
+                     if precond_index else set())
         tactic_lines = [l for l in lm["proof_lines"] if l.strip()]
         opaque = len(tactic_lines) <= 1 and bool(
             tactic_lines and OPAQUE_PROOF_RE.match(tactic_lines[0]))
@@ -460,11 +501,18 @@ def scan_p(lemmas):
                 continue
             h = head_ident(c)
             differential = n_consumed >= 1
+            # RULE-PRECONDITION DEPENDENCY: if h feeds the precondition of a
+            # named rule the proof INVOKES, it is consumed via that rule even
+            # though it never appears in the proof TEXT — almost always
+            # load-bearing (ArchAcc equal_kernel_mappings → kernel_mapping_
+            # slots_empty_pdeI). Demote and name the culprit rule(s).
+            lb_rules = [r for r in inv_rules
+                        if h and h in (precond_index or {}).get(r, ())]
             # op-class prior: dropping a premise off a WRITE/modify op is almost
             # always load-bearing (4/4 live FAIL) → demote to low so it never
             # eats the agent's top-N; READ/decode op premises are the real mine
             # (2/2 live PASS) → keep the differential-based priority.
-            if op_class == "write":
+            if lb_rules or op_class == "write":
                 priority = "low"
             else:
                 priority = "high" if differential else "low"
@@ -487,10 +535,13 @@ def scan_p(lemmas):
                                 " demoted)" if op_class == "write" else
                                 " (read/decode → premise often droppable)"
                                 if op_class == "read" else "")
+                             + (f"; BUT head feeds precondition of invoked "
+                                f"rule(s) {lb_rules[:3]} → load-bearing, DEMOTED"
+                                if lb_rules else "")
                              + "; wp-chain implicit use is the trial's job"),
                 "strong_rule": None, "q_strong_text": None,
                 "premise": c.strip()[:120], "position": None,
-                "priority": priority,
+                "priority": priority, "lb_rules": lb_rules[:3],
             })
     return hints
 
@@ -631,7 +682,19 @@ def main():
             qd.append(h)
         hints += qd[:args.max]
     if args.slot in ("P", "all"):
-        p = scan_p(lemmas)
+        # Build the rule-precondition index from the target file's directory +
+        # the top-level invariant-abstract dir (covers same-arch + generic
+        # rules). One-time ~seconds; lets scan_p demote premises consumed via an
+        # invoked rule's precondition (load-bearing despite being absent from
+        # the proof text). SPEC_HINTS_NO_RULE_INDEX=1 disables it.
+        precond_index = None
+        if os.environ.get("SPEC_HINTS_NO_RULE_INDEX") != "1":
+            d = Path(args.theory).resolve().parent
+            top = d.parent if d.name in (
+                "ARM", "RISCV64", "X64", "AARCH64", "ARM_HYP") else d
+            paths = set(d.glob("*.thy")) | set(top.glob("*.thy"))
+            precond_index = build_precond_index(paths)
+        p = scan_p(lemmas, precond_index)
         # Rank READ/decode ops above WRITE ops before the --max cap: a read-op
         # premise is the droppable mine even when NON-differential (the proven
         # decode_unbind_notification_wf_strong win was read + non-differential,
