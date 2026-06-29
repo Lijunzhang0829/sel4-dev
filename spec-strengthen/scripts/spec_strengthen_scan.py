@@ -163,8 +163,8 @@ HOARE_TRIPLE_RE = re.compile(
 )
 
 HOARE_FRAME_SHORT_RE = re.compile(
-    r"^\s*(?P<body>[^\n]+?)\s*"
-    r"\\<lbrace>(?P<post>.*?)\\<rbrace>\s*$",
+    r"^\s*\"?\s*(?P<body>[^\n]+?)\s*"
+    r"\\<lbrace>(?P<post>.*?)\\<rbrace>\s*(?:,-)?\s*\"?\s*$",
     re.DOTALL,
 )
 
