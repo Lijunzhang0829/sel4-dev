@@ -1,0 +1,21 @@
+FAILED (45014ms)
+*** Failed to finish proof:
+*** goal (1 subgoal):
+***  1. \<And>a b cap.
+***        \<lbrakk>caps_of_state s (a, b) = Some cap \<longrightarrow>
+***                 ex_cte_cap_wp_to (appropriate_cte_cap cap) (a, b) s;
+***         caps_of_state
+***          (s\<lparr>kheap :=
+***                      \<lambda>x.
+***                         if x = t then Some (TCB tcb) else kheap s x\<rparr>)
+***          (a, b) =
+***         Some cap;
+***         cap \<noteq> NullCap\<rbrakk>
+***        \<Longrightarrow> ex_cte_cap_wp_to (appropriate_cte_cap cap) (a, b)
+***                           (s\<lparr>kheap :=
+*** \<lambda>x. if x = t then Some (TCB tcb) else kheap s x\<rparr>)
+*** At command "done" (line 255 of "/tmp/tmp.52k3JJ4fLC/Tmp_a13cfdd1c989ab7b.thy")
+*** Failed to finish proof:
+*** goal (1 subgoal):
+***  1. \<And>a b cap.
+***        \<lbrakk>caps_of_state s (a, b) = Some cap \<longrightarrow>

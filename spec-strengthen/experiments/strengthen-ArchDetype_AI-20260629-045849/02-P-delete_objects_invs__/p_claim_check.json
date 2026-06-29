@@ -1,0 +1,8 @@
+{
+ "ok": true,
+ "reason": "pure premise-weakening verified (strict pre-conjunct subset, identical post)",
+ "claim": "((\\<lambda>s. \\<exists>slot. cte_wp_at ((=) (cap.UntypedCap dev ptr bits f)) slot s\n    \\<and> descendants_range (cap.UntypedCap dev ptr bits f) slot s) and\n    invs and ct_active) ==> ((\\<lambda>s. \\<exists>slot. cte_wp_at ((=) (cap.UntypedCap dev ptr bits f)) slot s\n    \\<and> descendants_range (cap.UntypedCap dev ptr bits f) slot s) and\n    invs) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `ct_active`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "dropped_conjuncts": [
+  "ct_active"
+ ]
+}

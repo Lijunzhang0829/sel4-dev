@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future callers of cap_refs_in_kernel_windowD that hold cap_refs_in_kernel_window but derive the cap lookup implicitly",
+ "hint_lemma": "cap_refs_in_kernel_windowD",
+ "lemma_name": "cap_refs_in_kernel_windowD_no_lookup",
+ "anchor_line": 280,
+ "new_lemma": "lemma cap_refs_in_kernel_windowD_no_lookup:\n  \"\\<lbrakk> cap_refs_in_kernel_window s \\<rbrakk>\n   \\<Longrightarrow> \\<forall>ref \\<in> cap_range cap.\n         arm_kernel_vspace (arch_state s) ref = ArmVSpaceKernelWindow\"\n  apply (clarsimp simp: cap_refs_in_kernel_window_def valid_refs_def\n                        cte_wp_at_caps_of_state)\n  apply (cases ptr, fastforce)\n  done",
+ "rationale": "The scanner flagged caps_of_state head as absent from the proof body text. cap_refs_in_kernel_window_def quantifies over all caps in the range; if clarsimp can establish the goal for an arbitrary cap without needing the specific lookup hypothesis, the premise is droppable. Proof body copied verbatim; trial decides.",
+ "strengthening_claim": "cap_refs_in_kernel_window s ==> (caps_of_state s ptr = Some cap \\<and> cap_refs_in_kernel_window s)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

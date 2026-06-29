@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future consumers of lookup_pt_slot_pte that carry page_directory_at pd may drop it once this lemma is wired in",
+ "grace_period_weeks": 8,
+ "hint_lemma": "lookup_pt_slot_pte",
+ "lemma_name": "lookup_pt_slot_pte_no_pd_at",
+ "anchor_line": 603,
+ "new_lemma": "lemma lookup_pt_slot_pte_no_pd_at:\n  \"\\<lbrace>pspace_aligned and valid_vspace_objs and valid_arch_state\n   and equal_kernel_mappings and valid_global_objs\n   and \\<exists>\\<rhd> pd\\<rbrace>\n  lookup_pt_slot pd vptr \\<lbrace>pte_at\\<rbrace>,-\"\n  apply (simp add: lookup_pt_slot_def)\n  apply (wp get_pde_wp|wpc)+\n  apply (clarsimp simp: lookup_pd_slot_def Let_def)\n  apply (simp add: pd_shifting_at)\n  apply (drule (2) valid_vspace_objsD)\n  apply (clarsimp simp: )\n  apply (bspec \"ucast (pd + (vptr >> 20 << 2) && mask pd_bits >> 2)\")\n   apply clarsimp\n   apply (erule page_table_pte_atI, simp_all)\n   apply (simp add: pt_bits_def pageBits_def)\n   apply (rule order_le_less_trans, rule word_and_le1, simp)\n  apply (frule kernel_mapping_slots_empty_pdeI)\n    apply (simp add: obj_at_def)+\n  apply (clarsimp simp: pde_ref_def)\n  apply (rule page_table_pte_atI, simp_all)\n   apply (simp add: valid_arch_state_def valid_global_pts_def second_level_tables_def)\n  apply (simp add: pt_bits_def pageBits_def)\n  apply (rule order_le_less_trans, rule word_and_le1, simp)\n  done",
+ "rationale": "page_directory_at pd does not appear textually in the proof body. It is consumed indirectly by pd_shifting_at, but pd_shifting_at may be derivable from pspace_aligned alone together with the ko_at hypothesis produced by get_pde_wp (which establishes that kheap holds a PageDirectory at pd && ~~ mask pd_bits, implying alignment). Lookup ops on read paths are prime candidates. Trial is the judge.",
+ "strengthening_claim": "(pspace_aligned and valid_vspace_objs and valid_arch_state\n   and equal_kernel_mappings and valid_global_objs\n   and \\<exists>\\<rhd> pd and page_directory_at pd) ==> (pspace_aligned and valid_vspace_objs and valid_arch_state\n   and equal_kernel_mappings and valid_global_objs\n   and \\<exists>\\<rhd> pd) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `page_directory_at pd`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "anchor_text": "  done"
+}

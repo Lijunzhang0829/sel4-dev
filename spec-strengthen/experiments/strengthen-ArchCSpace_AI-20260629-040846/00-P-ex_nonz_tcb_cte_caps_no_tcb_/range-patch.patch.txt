@@ -1,0 +1,16 @@
+439 439
+  done
+
+lemma ex_nonz_tcb_cte_caps_no_tcb [CSpace_AI_assms]:
+  "\<lbrakk>ex_nonz_cap_to t s; valid_objs s; ref \<in> dom tcb_cap_cases\<rbrakk>
+   \<Longrightarrow> ex_cte_cap_wp_to (appropriate_cte_cap cp) (t, ref) s"
+  apply (clarsimp simp: ex_nonz_cap_to_def ex_cte_cap_wp_to_def
+                        cte_wp_at_caps_of_state)
+  apply (subgoal_tac "s \<turnstile> cap")
+   apply (rule_tac x=a in exI, rule_tac x=ba in exI)
+   apply (clarsimp simp: valid_cap_def obj_at_def
+                         is_obj_defs dom_def
+                         appropriate_cte_cap_def
+                  split: cap.splits arch_cap.split_asm if_splits)
+  apply (clarsimp simp: caps_of_state_valid_cap)
+  done

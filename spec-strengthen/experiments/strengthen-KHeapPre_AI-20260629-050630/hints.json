@@ -1,0 +1,34 @@
+[
+ {
+  "slot": "P",
+  "kind": "unused-premise",
+  "lemma": "arch_obj_predE",
+  "line": 58,
+  "statement": "\\<lbrakk>arch_obj_pred P; non_arch_obj ko; non_arch_obj ko'\\<rbrakk> \\<Longrightarrow> P ko = P ko'",
+  "op": "",
+  "op_class": "unknown",
+  "form": "impl",
+  "evidence": "[implication lemma — assumption-weakening] conjunct `non_arch_obj ko` head `non_arch_obj` never appears in the proof body (prefix match incl. _def/_E forms); 1 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `` is unknown; wp-chain implicit use is the trial's job",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": "non_arch_obj ko",
+  "position": null,
+  "priority": "high"
+ },
+ {
+  "slot": "P",
+  "kind": "unused-premise",
+  "lemma": "arch_obj_predE",
+  "line": 58,
+  "statement": "\\<lbrakk>arch_obj_pred P; non_arch_obj ko; non_arch_obj ko'\\<rbrakk> \\<Longrightarrow> P ko = P ko'",
+  "op": "",
+  "op_class": "unknown",
+  "form": "impl",
+  "evidence": "[implication lemma — assumption-weakening] conjunct `non_arch_obj ko'` head `non_arch_obj` never appears in the proof body (prefix match incl. _def/_E forms); 1 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `` is unknown; wp-chain implicit use is the trial's job",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": "non_arch_obj ko'",
+  "position": null,
+  "priority": "high"
+ }
+]

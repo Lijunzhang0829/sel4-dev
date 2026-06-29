@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future consumer of tcb_arch_detype' in detype_invs or related proofs that prove valid_arch_tcb preservation without a concrete ko_at witness",
+ "hint_lemma": "tcb_arch_detype",
+ "lemma_name": "tcb_arch_detype'",
+ "anchor_line": 191,
+ "new_lemma": "lemma tcb_arch_detype'[detype_invs_proofs]:\n  \"valid_arch_tcb (tcb_arch t) s\n      \\<Longrightarrow> valid_arch_tcb (tcb_arch t) (detype (untyped_range cap) s)\"\n  apply (clarsimp simp: valid_arch_tcb_def)\n  done",
+ "rationale": "The original proof body `apply (clarsimp simp: valid_arch_tcb_def)` never mentions ko_at, erule, frule, drule or any rule that consumes `ko_at (TCB t) p s`. The simplification of valid_arch_tcb_def on ARM expands to a trivially-true condition (ARM valid_arch_tcb holds unconditionally or depends only on the tcb_arch field), so the ko_at witness is structurally unused.",
+ "strengthening_claim": "valid_arch_tcb (tcb_arch t) s ==> (ko_at (TCB t) p s \\<and> valid_arch_tcb (tcb_arch t) s)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

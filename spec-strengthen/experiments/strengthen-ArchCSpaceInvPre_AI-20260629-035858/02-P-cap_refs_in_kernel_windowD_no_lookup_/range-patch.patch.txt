@@ -1,0 +1,11 @@
+280 280
+  done
+
+lemma cap_refs_in_kernel_windowD_no_lookup:
+  "\<lbrakk> cap_refs_in_kernel_window s \<rbrakk>
+   \<Longrightarrow> \<forall>ref \<in> cap_range cap.
+         arm_kernel_vspace (arch_state s) ref = ArmVSpaceKernelWindow"
+  apply (clarsimp simp: cap_refs_in_kernel_window_def valid_refs_def
+                        cte_wp_at_caps_of_state)
+  apply (cases ptr, fastforce)
+  done

@@ -1,0 +1,21 @@
+FAILED (42527ms)
+*** Failed to apply proof method (line 452 of "/tmp/tmp.fiA86z7KBg/Tmp_9b4f3ec9c4040fe5.thy"):
+*** goal (9 subgoals):
+***  1. \<And>a aa ab b ba x32 x33 ep.
+***        \<lbrakk>valid_objs s; tcb_cap_cases ref = Some (aa, ab, b);
+***         caps_of_state s (a, ba) = Some (EndpointCap t x32 x33);
+***         cap_aligned (EndpointCap t x32 x33);
+***         kheap s t = Some (Endpoint ep)\<rbrakk>
+***        \<Longrightarrow> cp \<noteq> NullCap \<and>
+***                          (\<forall>x21 x22 x23 x24.
+***                              cp \<noteq> UntypedCap x21 x22 x23 x24) \<and>
+***                          (\<forall>x31 x32 x33.
+***                              cp \<noteq> EndpointCap x31 x32 x33) \<and>
+***                          (\<forall>x41 x42 x43.
+***                              cp \<noteq> NotificationCap x41 x42 x43) \<and>
+***                          (\<forall>x51 x52 x53.
+***                              cp \<noteq> ReplyCap x51 x52 x53) \<and>
+***                          (\<forall>x61 x62 x63.
+***                              cp \<noteq> CNodeCap x61 x62 x63) \<and>
+***                          (\<forall>x7. cp \<noteq> ThreadCap x7) \<and>
+***                          cp \<noteq> DomainCap \<and>

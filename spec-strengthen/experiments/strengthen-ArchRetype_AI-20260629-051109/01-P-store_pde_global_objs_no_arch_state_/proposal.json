@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "future consumer: copy_global_invs_mappings_restricted and similar callers could drop valid_arch_state from store_pde_global_objs precondition",
+ "hint_lemma": "store_pde_global_objs",
+ "lemma_name": "store_pde_global_objs_no_arch_state",
+ "anchor_line": 309,
+ "new_lemma": "lemma store_pde_global_objs_no_arch_state[wp]:\n  \"\\\\<lbrace>valid_global_objs and valid_global_refs and\n    (\\\\<lambda>s. (\\\\<forall>pd. (obj_at (empty_table (set (second_level_tables (arch_state s))))\n                     (p \\\\<and>\\\\<and> \\\\<not>\\\\<not> mask pd_bits) s\n             \\\\<and> ko_at (ArchObj (PageDirectory pd)) (p \\\\<and>\\\\<and> \\\\<not>\\\\<not> mask pd_bits) s\n               \\\\<longrightarrow> empty_table (set (second_level_tables (arch_state s)))\n                                   (ArchObj (PageDirectory (pd(ucast (p \\\\<and>\\\\<and> mask pd_bits >> 2) := pde)))))\n          \\\\<or> (\\\\<exists>slot. cte_wp_at (\\\\<lambda>cap. p \\\\<and>\\\\<and> \\\\<not>\\\\<not> mask pd_bits \\\\<in> obj_refs cap) slot s))\\\\<rbrace>\n     store_pde p pde \\\\<lbrace>\\\\<lambda>rv. valid_global_objs\\\\<rbrace>\"\n  apply (simp add: store_pde_def)\n  apply wp\n  apply clarsimp\n  done",
+ "rationale": "Same lemma and same proof body as hint 8: `valid_arch_state` never appears by name in the proof. The `second_level_tables (arch_state s)` is already threaded through the complex lambda conjunct, so no separate `valid_arch_state` predicate is needed for the wp/clarsimp chain. Dropping it yields a stronger triple; trial build decides.",
+ "strengthening_claim": "(valid_global_objs and valid_global_refs and <lambda>) <= (valid_global_objs and valid_global_refs and valid_arch_state and <lambda>)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

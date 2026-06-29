@@ -1,0 +1,19 @@
+481 481
+  done
+
+lemma retype_region_no_cap_to_obj_no_pspace:
+  "\<lbrace>valid_mdb
+             and caps_overlap_reserved {ptr..ptr + 2 ^ obj_bits_api ty us - 1}
+             and caps_no_overlap ptr sz
+             and pspace_no_overlap_range_cover ptr sz
+             and no_cap_to_obj_with_diff_ref cap S
+             and (\<lambda>s. \<exists>slot. cte_wp_at (\<lambda>c. up_aligned_area ptr sz \<subseteq> cap_range c \<and> cap_is_device c = dev) slot s)
+             and K (ty = Structures_A.CapTableObject \<longrightarrow> 0 < us)
+             and K (range_cover ptr sz (obj_bits_api ty us) 1) \<rbrace>
+     retype_region ptr 1 us ty dev
+   \<lbrace>\<lambda>rv. no_cap_to_obj_with_diff_ref cap S\<rbrace>"
+  apply (rule hoare_gen_asm)+
+  apply (simp add: no_cap_to_obj_with_diff_ref_null_filter)
+  apply (wp retype_region_caps_of | simp)+
+  apply fastforce
+  done

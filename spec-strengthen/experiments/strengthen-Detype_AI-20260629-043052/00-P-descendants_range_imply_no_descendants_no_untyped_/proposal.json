@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future callers that do not have is_untyped_cap in context can use this weaker form",
+ "grace_period_weeks": 8,
+ "lemma_name": "descendants_range_imply_no_descendants_no_untyped",
+ "hint_lemma": "descendants_range_imply_no_descendants",
+ "anchor_line": 343,
+ "new_lemma": "lemma descendants_range_imply_no_descendants_no_untyped:\n    \"\\<lbrakk>descendants_range cap p s; descendants_inc (cdt s) (caps_of_state s);\n    caps_of_state s p = Some cap; valid_objs s; valid_mdb s\\<rbrakk>\n    \\<Longrightarrow> descendants_of p (cdt s) = {}\"\n    apply (simp add:descendants_range_def is_cap_simps descendants_inc_def del:split_paired_All)\n    apply (elim exE)\n    apply (rule equals0I)\n    apply (drule(1) bspec)\n    apply (drule spec)+\n    apply (erule(1) impE)\n    apply (drule(1) descendants_of_cte_at)\n    apply (clarsimp simp:cte_wp_at_caps_of_state simp del:split_paired_All)\n    apply (drule(1) physical_valid_cap_not_empty_range[OF caps_of_state_valid_cap,rotated])\n     apply simp\n    apply auto\n    done",
+ "rationale": "The head `is_untyped_cap` never appears in the proof body. The simp set uses `is_cap_simps` and `descendants_range_def` which may not require `is_untyped_cap cap` as a separate hypothesis if cap_range is handled by other simp rules. Trial will confirm.",
+ "strengthening_claim": "(descendants_range cap p s \\<and> descendants_inc (cdt s) (caps_of_state s) \\<and> caps_of_state s p = Some cap \\<and> valid_objs s \\<and> valid_mdb s) \\<Longrightarrow> (descendants_range cap p s \\<and> descendants_inc (cdt s) (caps_of_state s) \\<and> is_untyped_cap cap \\<and> caps_of_state s p = Some cap \\<and> valid_objs s \\<and> valid_mdb s)",
+ "anchor_text": "  done"
+}

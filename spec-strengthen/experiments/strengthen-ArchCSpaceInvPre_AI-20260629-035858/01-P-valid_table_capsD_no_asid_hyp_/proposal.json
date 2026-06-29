@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future callers of valid_table_capsD that hold cte_wp_at and valid_table_caps but lack an explicit cap_asid = None hypothesis",
+ "hint_lemma": "valid_table_capsD",
+ "lemma_name": "valid_table_capsD_no_asid_hyp",
+ "anchor_line": 249,
+ "new_lemma": "lemma valid_table_capsD_no_asid_hyp:\n  \"\\<lbrakk> cte_wp_at ((=) cap) ptr s; valid_table_caps s;\n        is_pt_cap cap | is_pd_cap cap \\<rbrakk>\n        \\<Longrightarrow> \\<forall>r \\<in> obj_refs cap. obj_at (empty_table (set (second_level_tables (arch_state s)))) r s\"\n  apply (clarsimp simp: cte_wp_at_caps_of_state valid_table_caps_def)\n  apply (cases ptr, fastforce)\n  done",
+ "rationale": "The scanner noted cap_asid head never appears in the proof body text. valid_table_caps_def internally quantifies over cap_asid conditions; if clarsimp/fastforce can satisfy the instantiation without an explicit cap_asid cap = None hypothesis in the lemma statement (relying instead on valid_table_caps to supply it), the premise is droppable. Proof body copied verbatim; trial decides.",
+ "strengthening_claim": "(cte_wp_at ((=) cap) ptr s \\<and> valid_table_caps s \\<and> (is_pt_cap cap | is_pd_cap cap)) ==> (cte_wp_at ((=) cap) ptr s \\<and> valid_table_caps s \\<and> (is_pt_cap cap | is_pd_cap cap) \\<and> cap_asid cap = None)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

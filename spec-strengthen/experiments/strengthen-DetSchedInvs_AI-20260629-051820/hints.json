@@ -1,0 +1,18 @@
+[
+ {
+  "slot": "P",
+  "kind": "unused-premise",
+  "lemma": "valid_etcbs_ko_etcb",
+  "line": 429,
+  "statement": "\\<lbrakk> valid_etcbs s; kheap s ptr = Some ko \\<rbrakk> \\<Longrightarrow> \\<exists>tcb. (ko = TCB tcb = (\\<exists>etcb. ekheap s ptr = Some etcb))",
+  "op": "",
+  "op_class": "unknown",
+  "form": "impl",
+  "evidence": "[implication lemma — assumption-weakening] conjunct `kheap s ptr = Some ko` head `kheap` never appears in the proof body (prefix match incl. _def/_E forms); 1 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `` is unknown; wp-chain implicit use is the trial's job",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": "kheap s ptr = Some ko",
+  "position": null,
+  "priority": "high"
+ }
+]

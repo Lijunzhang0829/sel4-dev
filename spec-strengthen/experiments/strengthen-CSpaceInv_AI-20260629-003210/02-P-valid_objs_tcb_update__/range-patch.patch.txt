@@ -1,0 +1,19 @@
+216 216
+  done
+
+lemma valid_objs_tcb_update':
+    "\<lbrakk>valid_tcb t tcb s; valid_objs s \<rbrakk>
+    \<Longrightarrow> valid_objs (s\<lparr>kheap := (kheap s)(t \<mapsto> TCB tcb)\<rparr>)"
+    apply (clarsimp simp: valid_objs_def dom_def
+                   elim!: obj_atE)
+    apply (intro conjI impI)
+     apply (rule valid_obj_same_type)
+        apply (simp add: valid_obj_def)+
+     apply (clarsimp simp: a_type_def is_tcb)
+    apply clarsimp
+    apply (rule valid_obj_same_type)
+       apply (drule_tac x=ptr in spec, simp)
+      apply (simp add: valid_obj_def)
+     apply assumption
+    apply (clarsimp simp add: a_type_def is_tcb)
+    done
