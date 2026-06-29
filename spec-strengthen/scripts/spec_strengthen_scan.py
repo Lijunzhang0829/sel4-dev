@@ -218,6 +218,15 @@ def _hoare_from_stmt(stmt: str) -> tuple[str, str, str] | None:
         if "\\<lbrace>" in body:
             return None
         return (post, body, post)  # shorthand frame: pre = post
+    # Plain implication lemma `\<lbrakk>A1; ...\<rbrakk> \<Longrightarrow> C`. The
+    # additive spec-strengthen workflow proposes assumption-weakened versions of
+    # these (NEW lemma, weaker hypotheses). spec_impact must SEE them so an added
+    # implication lemma classifies as `additive` instead of vanishing → noop.
+    # pre = assumption list, body = "" (no program), post = conclusion.
+    im = re.search(r"\\<lbrakk>(?P<asm>.*?)\\<rbrakk>\s*\\<Longrightarrow>(?P<concl>.*)",
+                   stmt, re.DOTALL)
+    if im:
+        return (im.group("asm").strip(), "", im.group("concl").strip())
     return None
 
 
