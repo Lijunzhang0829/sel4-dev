@@ -1,0 +1,28 @@
+[
+ {
+  "slot": "Q",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future consumer proving stronger slot-specific postcondition about reply caps after cap_delete_one",
+  "hint_lemma": "cap_delete_one_deletes_reply",
+  "lemma_name": "cap_delete_one_deletes_reply_strong",
+  "anchor_line": 948,
+  "new_lemma": "lemma cap_delete_one_deletes_reply_strong:\n  \"\\<lbrace>cte_wp_at (is_reply_cap_to t) slot and valid_reply_caps\\<rbrace>\n    cap_delete_one slot\n   \\<lbrace>\\<lambda>rv s. \\<forall>sl' R. if (sl' = slot)\n       then cte_wp_at (\\<lambda>c. c = cap.NullCap) sl' s\n       else caps_of_state s sl' \\<noteq> Some (cap.ReplyCap t False R)\\<rbrace>\"\n  apply (simp add: cap_delete_one_def unless_def is_final_cap_def)\n  apply wp\n     apply (rule hoare_vcg_all_lift)\n     apply simp\n     apply (wp hoare_weak_lift_imp empty_slot_deletes empty_slot_caps_of_state get_cap_wp)+\n  apply (fastforce simp: cte_wp_at_caps_of_state valid_reply_caps_def\n                        is_cap_simps unique_reply_caps_def is_reply_cap_to_def\n              simp del: split_paired_All)\n  done",
+  "rationale": "The proof of cap_delete_one_deletes_reply (L929-948) internally establishes the stronger postcondition via rule_tac Q at L935-937, then immediately weakens it to \\<not> has_reply_cap t s via hoare_post_imp. Removing that weakening step yields a named lemma with the precise per-slot information: slot is NullCap, other slots lack the reply cap. The proof is the body of cap_delete_one_deletes_reply minus the hoare_post_imp bridge.",
+  "strengthening_claim": "(\\<forall>sl' R. if (sl' = slot) then cte_wp_at (\\<lambda>c. c = cap.NullCap) sl' s else caps_of_state s sl' \\<noteq> Some (cap.ReplyCap t False R)) \\<Longrightarrow> \\<not> has_reply_cap t s",
+  "grace_period_weeks": 8
+ },
+ {
+  "slot": "Q",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future consumer needing invariant that both conjuncts of cancel_ipc_caps_of_state precondition are preserved through cancel_ipc",
+  "hint_lemma": "cancel_ipc_caps_of_state",
+  "lemma_name": "cancel_ipc_caps_of_state_inv",
+  "anchor_line": 503,
+  "new_lemma": "lemma cancel_ipc_caps_of_state_inv:\n  \"\\<lbrace>\\<lambda>s. (\\<forall>p. cte_wp_at can_fast_finalise p s\n           \\<longrightarrow> P ((caps_of_state s) (p \\<mapsto> cap.NullCap)))\n           \\<and> P (caps_of_state s)\\<rbrace>\n     cancel_ipc t\n   \\<lbrace>\\<lambda>rv s. (\\<forall>p. cte_wp_at can_fast_finalise p s\n             \\<longrightarrow> P ((caps_of_state s) (p \\<mapsto> cap.NullCap)))\n             \\<and> P (caps_of_state s)\\<rbrace>\"\n  apply (simp add: cancel_ipc_def reply_cancel_ipc_def\n             cong: Structures_A.thread_state.case_cong)\n  apply (wpsimp wp: cap_delete_one_caps_of_state)\n     apply (rule_tac Q=\"\\<lambda>_ s. (\\<forall>p. cte_wp_at can_fast_finalise p s\n                                \\<longrightarrow> P ((caps_of_state s) (p \\<mapsto> cap.NullCap)))\n                                \\<and> P (caps_of_state s)\"\n                  in hoare_post_imp)\n      apply (clarsimp simp: fun_upd_def[symmetric] split_paired_Ball)\n     apply (simp add: cte_wp_at_caps_of_state)\n     apply (wpsimp wp: hoare_vcg_all_lift hoare_convert_imp thread_set_caps_of_state_trivial\n                 simp: ran_tcb_cap_cases)+\n   prefer 2\n   apply assumption\n  apply (rule hoare_strengthen_post [OF gts_sp])\n  apply (clarsimp simp: fun_upd_def[symmetric] cte_wp_at_caps_of_state)\n  done",
+  "rationale": "The proof of cancel_ipc_caps_of_state (L482-503) at L491-493 uses rule_tac Q with hoare_post_imp to maintain both conjuncts as an invariant through inner steps, then discards the first conjunct in the final post. The full invariant (both conjuncts preserved) is strictly stronger than just P (caps_of_state s) and is already proved internally; naming it avoids re-deriving the forall-part in downstream proofs.",
+  "strengthening_claim": "((\\<forall>p. cte_wp_at can_fast_finalise p s \\<longrightarrow> P ((caps_of_state s) (p \\<mapsto> cap.NullCap))) \\<and> P (caps_of_state s)) \\<Longrightarrow> P (caps_of_state s)",
+  "grace_period_weeks": 8
+ }
+]

@@ -1,0 +1,21 @@
+FAILED (42841ms)
+*** Failed to apply proof method (line 960 of "/tmp/tmp.O0dAQawJbS/Tmp_2cc1b3c7115c1ac9.thy"):
+*** goal (5 subgoals):
+***  1. \<And>cap final a.
+***        cap \<noteq> NullCap \<Longrightarrow>
+***        \<lbrace>?P24 cap final () a\<rbrace> empty_slot slot NullCap 
+***        \<lbrace>\<lambda>rv s.
+***                    \<forall>b.
+***                       ((a, b) = slot \<longrightarrow>
+***                        cte_wp_at (\<lambda>c. c = NullCap) slot s) \<and>
+***                       ((a, b) \<noteq> slot \<longrightarrow>
+***                        (\<forall>R.
+***                            caps_of_state s (a, b) \<noteq>
+***                            Some (ReplyCap t False R)))\<rbrace>
+***  2. \<And>cap final.
+***        cap \<noteq> NullCap \<Longrightarrow>
+***        \<lbrace>?Q'22 cap final\<rbrace> fast_finalise cap final 
+***        \<lbrace>\<lambda>y s. \<forall>x. ?P24 cap final y x s\<rbrace>
+***  3. \<And>cap.
+***        cap \<noteq> NullCap \<Longrightarrow>
+***        \<lbrace>?Q21 cap\<rbrace> gets (is_final_cap' cap) 

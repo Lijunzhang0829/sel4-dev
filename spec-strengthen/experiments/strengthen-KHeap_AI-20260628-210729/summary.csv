@@ -1,0 +1,2 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-P-get_simple_ko_valid_obj__,get_simple_ko_valid_obj',P,named,trial_passed,additive,-7.49
