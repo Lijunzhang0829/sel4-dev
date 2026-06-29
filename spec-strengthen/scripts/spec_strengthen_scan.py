@@ -163,7 +163,7 @@ HOARE_TRIPLE_RE = re.compile(
 )
 
 HOARE_FRAME_SHORT_RE = re.compile(
-    r"^\s*\"?\s*(?P<body>[^\n]+?)\s*"
+    r"^\s*(?:\[[^\]]*\]\s*)?:?\s*\"?\s*(?P<body>[^\n]+?)\s*"
     r"\\<lbrace>(?P<post>.*?)\\<rbrace>\s*(?:,-)?\s*\"?\s*$",
     re.DOTALL,
 )
@@ -245,7 +245,8 @@ def parse_thy_lemmas(thy_path: Path) -> list[Lemma]:
         end = headers[i + 1].start() if i + 1 < len(headers) else len(text)
         window = text[start:end]
         proof_kw = re.search(
-            r"^\s*(?:apply|by|proof|done|qed|sorry|oops)\b",
+            r"^\s*(?:apply|by|proof|done|qed|sorry|oops"
+            r"|unfolding|supply|using|subgoal)\b",
             window, re.MULTILINE,
         )
         if proof_kw:
