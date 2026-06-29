@@ -427,6 +427,39 @@ def invoked_rules(proof, index):
     return toks & index.keys()
 
 
+# --- proof-strategy signals (mined by spec_signal_miner.py, 2026-06-29) -------
+# Both fire on the PROOF STRATEGY, not the premise. Calibrated on 14 wins / 59
+# losses: each is regression-free (never fires against its forbidden class).
+_AUTOMATION_RE = re.compile(r"\b(blast|fastforce|auto|force|crush)\b")
+_COMP_WP_EXCLUDE = ("rule_tac", "strengthen", "hoare_gen_asm", "drule", "frule")
+
+
+def has_automation(proof):
+    """PRECISION signal: a proof discharged by an unconstrained automation
+    tactic (blast/fastforce/auto/force/crush) silently consumes the WHOLE
+    hypothesis context, so a text-absent premise can still be load-bearing →
+    the unused-premise signal is unreliable here. Demote. (Mined: demotes
+    15/59 losses, 0 wins.)"""
+    return bool(_AUTOMATION_RE.search(proof or ""))
+
+
+def is_compositional_wp(proof, op, form):
+    """RECALL signal: a Hoare proof that unfolds the operation's OWN definition
+    (`<op>_def`) + uses `hoare_pre` + a pure wp/wpc/clarsimp chain with NO
+    backward reasoning (drule/frule/strengthen/hoare_gen_asm/rule_tac) is
+    forward-driven through the op body — each sub-op discharges its own
+    preconditions via [wp] lemmas, so a bundled outer premise (invs, …) is
+    over-specified → droppable. BOOST, even past the write-op demote (this
+    recovers the invoke_cnode write-op wins signal #4 wrongly demoted). (Mined:
+    boosts 4/5 under-ranked wins, 0 losses.)"""
+    p = proof or ""
+    if form != "hoare" or not op or "unknown" in op.lower():
+        return False
+    if (op + "_def") not in p or "hoare_pre" not in p:
+        return False
+    return not any(x in p for x in _COMP_WP_EXCLUDE)
+
+
 def scan_p(lemmas, precond_index=None):
     """P precision rules learned from first live scan:
     - PREFIX match, not word match: `simp: valid_objs_def` consumes
@@ -472,6 +505,9 @@ def scan_p(lemmas, precond_index=None):
             post = mposts[1] if len(mposts) >= 2 else ""
             op = extract_op(lm["statement"])
             op_class = classify_op(op)
+        # proof-strategy signals (per-lemma, mined 2026-06-29)
+        automation = has_automation(proof)
+        comp_wp = is_compositional_wp(proof, op, form)
         # Two DISTINCT notions, previously conflated (caused false `high`):
         #   consumed[c]      — should c be SPARED from flagging? True if c is a
         #                      frame premise (head in post, consumed invisibly
@@ -508,11 +544,24 @@ def scan_p(lemmas, precond_index=None):
             # slots_empty_pdeI). Demote and name the culprit rule(s).
             lb_rules = [r for r in inv_rules
                         if h and h in (precond_index or {}).get(r, ())]
-            # op-class prior: dropping a premise off a WRITE/modify op is almost
-            # always load-bearing (4/4 live FAIL) → demote to low so it never
-            # eats the agent's top-N; READ/decode op premises are the real mine
-            # (2/2 live PASS) → keep the differential-based priority.
-            if lb_rules or op_class == "write":
+            # PRECEDENCE (strongest first):
+            #  1. rule-precondition: head feeds an invoked rule's precondition
+            #     → low (the drop is unsafe, consumed via that rule).
+            #  2. compositional-wp idiom (mined recall) → high. Boost even past
+            #     the write-op demote / non-differential — recovers wins those
+            #     rules under-rank (e.g. invoke_cnode write-op wins).
+            #  3. write-op demote (op-class prior) → low.
+            #  4. else: differential decides.
+            # NB: the mined `automation` signal is computed + recorded but NOT
+            # gated on — it demoted real wins (gts_wf's embedded `blast`, and
+            # `apply (fastforce simp:)` wins) that the miner's calibration missed
+            # (proof-extraction bug + gts_wf absent from its labeled set). Kept
+            # informational pending a cleaner whole-goal-only re-mine.
+            if lb_rules:
+                priority = "low"
+            elif comp_wp:
+                priority = "high"
+            elif op_class == "write":
                 priority = "low"
             else:
                 priority = "high" if differential else "low"
@@ -538,10 +587,17 @@ def scan_p(lemmas, precond_index=None):
                              + (f"; BUT head feeds precondition of invoked "
                                 f"rule(s) {lb_rules[:3]} → load-bearing, DEMOTED"
                                 if lb_rules else "")
+                             + ("; note: proof uses automation (blast/auto/"
+                                "fastforce) — text-absence less reliable (informational"
+                                ", not gated: regressed real wins)" if automation else "")
+                             + ("; compositional wp-chain idiom (op_def + "
+                                "hoare_pre + pure wp) → over-specified premise, "
+                                "BOOSTED" if comp_wp else "")
                              + "; wp-chain implicit use is the trial's job"),
                 "strong_rule": None, "q_strong_text": None,
                 "premise": c.strip()[:120], "position": None,
                 "priority": priority, "lb_rules": lb_rules[:3],
+                "automation": automation, "comp_wp": comp_wp,
             })
     return hints
 

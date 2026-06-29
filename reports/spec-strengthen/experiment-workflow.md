@@ -63,7 +63,8 @@
 | 4 | op 读/写分类(write 降级、read 保留) | P 精度 | live 案例 |
 | 5 | implication scope(`⟦…⟧⟹C` 假设弱化) | P 召回 | discovery pass |
 | 6 | rule-precondition 依赖(head 喂了被调用规则的前提 → 降级) | P 精度 | live 案例 |
-| (候选) | 非约束自动化 tactic(blast/fastforce/auto → 降级) | P 精度 | **meta-loop 自动发现**(见 §4) |
+| 7 | compositional wp-chain idiom(`op_def`+`hoare_pre`+纯 wp 链 → 升级) | P 召回 | **meta-loop 挖出 + 已 promote**(§4) |
+| (拒) | 非约束自动化 tactic(blast/auto → 降级) | P 精度 | meta-loop 挖出但 **promote 时回归 gts_wf,已拒**([MINING-LOG](signal-proposals/MINING-LOG.md)) |
 
 Q 侧:redirect 四分类 + exactness(`scan_q`/`scan_q_exactness`)。F 侧:frame-gap。
 
