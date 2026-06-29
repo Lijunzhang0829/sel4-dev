@@ -59,3 +59,16 @@ premise (e.g. `invs`) is over-specified → BOOST.
    wins from the ledger, not only `trial_passed` experiment candidates).
 3. **One clean signal per round is a good outcome.** Recall (boost) was cleanly
    separable; precision (automation) was not — and that's information.
+
+### Reliability fixes (done, same day)
+Both lessons-2 gaps are now fixed in the miner and verified:
+- **`_proof_of` no longer truncates** — it joins everything after the 2nd quote,
+  so a proof with its own quotes keeps all tactics (decode_inv_wf's `fastforce`
+  is now visible).
+- **Calibration sees the FULL win set** — `collect_ledger_wins()` reconstructs
+  `applied`/older wins from source (e.g. `gts_wf'`), not only experiment
+  `trial_passed` candidates.
+- **Verified**: re-calibrating the automation signal with the fixed miner now
+  reports `regression_free=False` (fires on 3 wins: `gts_wf'`, `decode_inv_wf`,
+  `some_get_page_info_umapsD`) → **NEEDS REVIEW**, i.e. the miner would no
+  longer have falsely cleared it. The calibration gate is now trustworthy.

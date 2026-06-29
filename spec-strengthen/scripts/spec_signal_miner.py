@@ -45,6 +45,8 @@ from spec_slot_hints import (  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 EXPERIMENTS = REPO / "spec-strengthen" / "experiments"
+LEDGER = REPO / "spec-strengthen" / "candidates" / "candidate-ledger.jsonl"
+AINVS = "verification/l4v/proof/invariant-abstract"
 WIN = {"trial_passed"}
 LOSS = {"TRIAL-FAILED", "IMPACT-FAILED", "trial_failed", "impact_failed"}
 
@@ -62,12 +64,14 @@ CURRENT_SIGNALS = [
 
 # --------------------------------------------------------------------------
 def _proof_of(new_lemma: str) -> str:
-    """Everything after the closing quote of the statement = the proof script."""
-    m = re.search(r'"\s*(.*)$', new_lemma, re.DOTALL)
-    tail = m.group(1) if m else new_lemma
-    # the statement itself sits in the first "...": drop up to the 2nd quote
+    """Everything after the closing quote of the statement = the proof script.
+    The statement is the first "...": join EVERYTHING after the 2nd quote so a
+    proof containing its own quotes (rule_tac P=\"...\", etc.) is not truncated.
+    (The old parts[2]-only form silently dropped tactics after the first
+    in-proof quote — it hid `fastforce` in 2 wins and falsely cleared the
+    automation signal at calibration. See MINING-LOG round 1.)"""
     parts = new_lemma.split('"')
-    return parts[2].strip() if len(parts) >= 3 else tail.strip()
+    return '"'.join(parts[2:]).strip() if len(parts) >= 3 else new_lemma.strip()
 
 
 def _rule_tokens(proof: str) -> list:
@@ -155,7 +159,72 @@ def collect_labeled_set(slot=None):
             "rationale": (prop.get("rationale") or "")[:300],
             "feat": featurize(new_lemma, dropped),
         })
+    if slot:
+        recs += collect_ledger_wins(slot, {r["lemma"] for r in recs})
     return recs
+
+
+def _orig_lemma(strengthened, file_lemmas):
+    """The longest file-lemma name that is a prefix of the strengthened name
+    (gts_wf' -> gts_wf, decode_unbind_..._wf_strong -> decode_unbind_..._wf)."""
+    base = re.sub(r"'+$", "", strengthened)
+    best = None
+    for nm in file_lemmas:
+        if base.startswith(nm) and (best is None or len(nm) > len(best)):
+            best = nm
+    return best
+
+
+def collect_ledger_wins(slot, seen):
+    """Verified wins recorded ONLY in the ledger (applied / older trial_passed
+    with no experiment candidate dir, e.g. gts_wf'), reconstructed from source so
+    calibration sees the FULL win set — not just recent experiment candidates.
+    The dropped premise is unknown here, but the PROOF (what the proof-strategy
+    signals read) is the original lemma's, which is what matters."""
+    from spec_slot_hints import parse_lemmas
+    import glob as _g
+    extra, done = [], set()
+    if not LEDGER.exists():
+        return extra
+    for line in LEDGER.read_text(errors="replace").splitlines():
+        try:
+            e = json.loads(line)
+        except ValueError:
+            continue
+        if e.get("event") not in ("applied", "trial_passed"):
+            continue
+        k = e.get("key", "").split(":")
+        if len(k) < 3 or k[0] != slot:
+            continue
+        theory, stre = k[1], k[-1]
+        if stre in seen or stre in done:
+            continue
+        done.add(stre)
+        f = None
+        for c in (f"{AINVS}/{theory}.thy", f"{AINVS}/ARM/{theory}.thy"):
+            if os.path.exists(c):
+                f = c
+                break
+        if not f:
+            g = _g.glob(f"{AINVS}/**/{theory}.thy", recursive=True)
+            f = g[0] if g else None
+        if not f:
+            continue
+        lms = {l["name"]: l
+               for l in parse_lemmas(Path(f).read_text(errors="replace"))}
+        orig = _orig_lemma(stre, lms)
+        if not orig:
+            continue
+        lm = lms[orig]
+        new_lemma = f'lemma {orig}: "{lm["statement"]}"\n{lm["proof"]}'
+        extra.append({
+            "lemma": stre, "slot": slot, "label": "win",
+            "verdict": e.get("event"), "trial_err": "", "theory": theory,
+            "hint_lemma": orig, "dropped_head": "",
+            "rationale": "(reconstructed from ledger; original-lemma proof)",
+            "feat": featurize(new_lemma, ""),
+        })
+    return extra
 
 
 def build_recall_prompt(low_wins, losses, slot):
