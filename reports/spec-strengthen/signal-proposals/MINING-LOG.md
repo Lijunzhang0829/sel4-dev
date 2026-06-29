@@ -84,3 +84,35 @@ thinking/text/result event of the discovery), `.md` (proposal + calibration).
 The LLM's "how it found the signal" is now auditable after the fact, same
 contract as spec_agent's `agent-raw.txt`. (Round-1's `234112.md` /
 `234112-recall.md` predate this and have no `.raw.jsonl`.)
+
+---
+
+## Round 2 — 2026-06-29 (trustworthy miner; same data)
+
+Same 14+1 wins / 59 losses, but with the reliable calibration + archiving, and
+with `compositional-wp` (now signal #7) and the rejected `automation` signal
+**both excluded from the prompt** so the LLM must find something genuinely new.
+
+### Precision mode → "hypothesis-manipulating tactics" — ⚠ NEEDS REVIEW (not promoted)
+[proposal](round2-precision.md) · process: `round2-precision.{prompt.txt,raw.jsonl}`.
+Signal: a proof using `hoare_gen_asm`/`supply`/`erule allE|impE`/`strengthen`/
+`unfolding`/`bspec`/`rule ccontr` predicts LOSS (each touches a specific context
+hypothesis).
+- Calibration (now trustworthy): demotes 16/30 losses, but **fires on 3 wins**
+  (`gts_wf'`, `decode_inv_wf`, `some_get_page_info`) → `regression-free=False`.
+- **Caught at calibration time** — no promote-time human catch needed.
+- The LLM deliberated long (~370s, 400+ thinking events) and still only produced
+  a broader cousin of the round-1 automation idea — and it regresses the **same
+  gts_wf-family wins** (those wins use `erule allE/impE` etc. but are still
+  droppable).
+
+### Convergence reading (first evidence the precision space is near-exhausted)
+Two consecutive rounds both gravitate to "the proof uses tactic X → demote", and
+both regress the same gts_wf-family wins. The residual losses are not separable
+from wins by mechanical **proof-tactic** features — they are approaching the
+**trial's semantic floor** (only the prover decides). Per the termination
+criterion (see [experiment-workflow.md](../experiment-workflow.md) / discussion):
+no regression-free new precision signal on this data ⇒ precision mining is
+(near-)converged FOR THIS SNAPSHOT. A held-out generalization test (not yet
+built) would make this a hard verdict rather than a 2-round trend; and new
+object-level data can re-open the space.

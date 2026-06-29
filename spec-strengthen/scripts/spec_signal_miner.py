@@ -59,6 +59,14 @@ CURRENT_SIGNALS = [
     "implication scope (\\<lbrakk>...\\<rbrakk> ==> C assumption-weakening)",
     "rule-precondition dependency (head feeds an INVOKED named rule's "
     "precondition → demoted)",
+    "compositional wp-chain idiom (Hoare proof: <op>_def unfold + hoare_pre + "
+    "pure wp/wpc/clarsimp, no drule/frule/strengthen/rule_tac → BOOST)",
+]
+# Already MINED and REJECTED — do NOT re-propose (the gate keeps clearing them):
+REJECTED_SIGNALS = [
+    "unconstrained automation tactic (blast/fastforce/auto in the proof → demote)"
+    " — REGRESSES real wins (gts_wf' embedded blast, `apply (fastforce simp:)` "
+    "wins); not cleanly separable from directed automation.",
 ]
 
 
@@ -289,10 +297,14 @@ def build_prompt(wins, losses, slot):
     wins_s = "".join(fmt(r) for r in wins)
     losses_s = "".join(fmt(r) for r in losses)
     sigs = "\n".join(f"  {i+1}. {s}" for i, s in enumerate(CURRENT_SIGNALS))
+    rej = "\n".join(f"  - {s}" for s in REJECTED_SIGNALS)
     return f"""You are improving a DETERMINISTIC detector that flags candidate \
 {slot}-slot spec strengthenings (premise/assumption drops) for an expensive \
 Isabelle trial. The detector already has these signals:
 {sigs}
+
+Already TRIED and REJECTED — do NOT propose these again:
+{rej}
 
 Below are REAL labeled outcomes from past rounds. WINS built fine (the drop was \
 sound); LOSSES failed the trial (the dropped premise was load-bearing) — these \
@@ -464,6 +476,12 @@ def main():
             REPO / "reports" / "spec-strengthen" / "signal-proposals"
             / f"{ts}-{args.mode}")
     base.parent.mkdir(parents=True, exist_ok=True)
+    # uniquify: never clobber a prior run's archive (ts is shared across runs)
+    if not args.out and base.with_suffix(".md").exists():
+        i = 2
+        while base.parent.joinpath(f"{base.name}-{i}.md").exists():
+            i += 1
+        base = base.parent / f"{base.name}-{i}"
     prompt_path = base.with_suffix(".prompt.txt")
     raw_path = base.with_suffix(".raw.jsonl")
     prompt_path.write_text(prompt, encoding="utf-8")
