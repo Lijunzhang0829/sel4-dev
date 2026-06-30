@@ -389,6 +389,32 @@ def split_assumptions(stmt):
     return body, [p for p in parts if p], concl
 
 
+def _has_toplevel_imp(conj):
+    """True if the conjunct is ITSELF a (higher-order) implication at paren depth
+    0 — e.g. `is_aligned x (obj_bits ...) \\<Longrightarrow> R`. That is the shape
+    of an ELIMINATION-RULE minor premise (`\\<lbrakk>...; (P \\<Longrightarrow> R)\\<rbrakk>
+    \\<Longrightarrow> R`), NOT a flat predicate hypothesis. The unused-premise
+    heuristic ("head absent from proof text ⇒ maybe droppable") is built for flat
+    conjuncts: a nested implication is a rule the proof *applies*, so its head's
+    textual (ab)sence says nothing about droppability, and dropping it is almost
+    always unsound. (Live miss: the detector flagged `is_aligned … \\<Longrightarrow> R`
+    in `pspace_alignedE` as droppable; claude rejected it pre-trial precisely
+    because it is the eliminator's minor premise.) Such conjuncts must not be
+    assessed for unused-premise flagging."""
+    depth = 0
+    i, n = 0, len(conj)
+    while i < n:
+        ch = conj[i]
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        elif depth == 0 and conj.startswith("\\<Longrightarrow>", i):
+            return True
+        i += 1
+    return False
+
+
 # ---- rule-precondition dependency (P-slot load-bearing signal) --------------
 # Learned from live success/failure: dropping a premise FAILS when it feeds a
 # named rule the proof invokes (ArchAcc: drop equal_kernel_mappings, proof calls
@@ -522,6 +548,12 @@ def scan_p(lemmas, precond_index=None):
         for c in conjs:
             h = head_ident(c)
             if h.lower() in P_SKIP_HEADS or len(h) < 3:
+                consumed[c] = None      # not assessable
+                body_consumed[c] = False
+                continue
+            if _has_toplevel_imp(c):
+                # elimination-rule minor premise (`P \<Longrightarrow> R`), not a
+                # flat hypothesis — head-absence says nothing about droppability.
                 consumed[c] = None      # not assessable
                 body_consumed[c] = False
                 continue
