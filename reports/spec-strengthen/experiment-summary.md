@@ -78,15 +78,15 @@ reports/spec-strengthen/   ← 本目录:方法论、工作流、收敛记录、
 
 ### 4.1 detector 扫描(给方向)
 
-[spec_slot_hints.py](../../spec-strengthen/scripts/spec_slot_hints.py) /
-[spec_frame_gap.py](../../spec-strengthen/scripts/spec_frame_gap.py) 纯静态扫描
-lemma,**不调 prover**。加性强化的完整逻辑分解 = 三个槽:
-
+实验主要针对下面三种类型的spec增强
 | 槽 | "有潜力"的判据 |
 |---|---|
 | **P**(更弱前提) | 某前提 conjunct 的 head 在证明文本里**前缀匹配不到**、且不在后置(非 frame)→ 这个前提疑似多余、可删 |
 | **Q**(更强后置) | 后置可被重定向到更强形式(redirect 四分类 + exactness) |
 | **F**(frame) | post 缺了一个 frame conjunct(`pre P → post P`) |
+P和Q的实现：[spec_slot_hints.py](../../spec-strengthen/scripts/spec_slot_hints.py) 
+F的实现：[spec_frame_gap.py](../../spec-strengthen/scripts/spec_frame_gap.py) 
+这些方法纯静态扫描lemma,**不调 prover**。
 
 P 槽下 7 个信号按严格优先级把候选排成 high/low(决定**值不值得花 trial**,不影响判真):
 rule-precondition 依赖 → comp-wp idiom → 写类 op → differential。
@@ -148,6 +148,126 @@ object-level 数据或非-tactic 特征族。
 每个交付包是自包含审计单元:`proposal.json` · `patch.diff` · `trial.log` ·
 `p_claim_check.json` · `measurement.json` · `agent-raw.txt`(claude -p 全过程)·
 `decision.md` · `ledger-events.jsonl`。
+
+### 5.1 成功案例:两个 claude -p 交互实录
+
+下面直接贴 claude -p 的交互日志(取自交付包的 `agent.log`),让读者看见"detector
+给 hint → claude 思考 → 产出带 rationale 的候选 → trial 判真"这条链是怎么走的。
+
+**案例 A — `get_simple_ko_valid_obj'`(read-op,删冗余前提)**
+
+detector 注入 9 条 hint,claude 选中其中关于 `get_simple_ko_valid_obj` 的两条
+(read 类 op `get_simple_ko`),先读证明体再下判断:
+
+```text
+$ claude -p <prompt:85768 chars> --model sonnet --tools "" --effort low
+      --max-turns 6 --output-format stream-json --verbose
+  ● session init: model=claude-sonnet-4-6 cwd=/tmp tools=0
+  ◇ (thinking) Looking at the hints, I'll focus on the best 2 P-slot candidates.
+      Hints 0 & 1 are about `get_simple_ko_valid_obj` (L346) - a READ op
+      (get_simple_ko). Good candidates. The proof at L350-357: ...
+  ▸ proposal:
+      lemma get_simple_ko_valid_obj'[wp]:
+        "⟨ valid_objs ⟩ get_simple_ko f ep ⟨ λr. valid_obj ep (f r) ⟩"
+        apply (simp add: get_simple_ko_def) ...
+      rationale: "get_simple_ko is a read/decode operation. If the object at ep
+        does not satisfy bound (partial_inv f ko) then get_simple_ko assert-fails,
+        making the Hoare triple vacuously true. When it succeeds, get_object_valid
+        already supplies valid_obj ep ko ... no use of the obj_at conjunct is made."
+  ✓ result: 1 turn, 104796ms $0.3585
+[spec_agent] 1 proposal emitted
+```
+
+**结果**:trial 通过。原 lemma 的前提里有一个 `obj_at (bound ...) ep`,claude 论证
+它在两种分支下都不被用到(失败分支 vacuous、成功分支由 `get_object_valid` 直接供给),
+trial 在临时副本上真编译验证了这个判断 → 进交付包。
+
+> 看点:claude 没有去"在脑子里证明",它给的是一个**可被证伪的结构论证**;真假由
+> trial 定。这正是分工的样子。
+
+**案例 B — `pd_at_asid_unique_no_vspace_objs`(differential 信号,一次产 3 个候选)**
+
+这是一条蕴含式 lemma。detector 的 differential 信号发现:5 个前提 conjunct 在证明体里
+可见被消费,唯独 `valid_vspace_objs` 从不出现 → high。claude 据此一次产出 3 个并行候选
+(分别试删不同前提):
+
+```text
+  ◇ (thinking) Let me analyze the hints carefully and pick the 3 best candidates.
+  ▸ proposal #1: pd_at_asid_unique_no_vspace_objs  (drop valid_vspace_objs)
+      rationale: "The proof body of pd_at_asid_unique uses only valid_vs_lookupD,
+        unique_table_refsD, and asid_low_high_bits. None of these require
+        valid_vspace_objs. The scanner confirmed valid_vspace_objs never appears
+        despite 5 other conjuncts being visibly consumed — strong differential."
+  ▸ proposal #2: pd_at_asid_unique_no_global_objs  (drop valid_global_objs, 同构论证)
+  ▸ proposal #3: lookup_pt_slot_is_aligned_no_global_objs (另一条 lemma 的并行删)
+  ✓ result: 1 turn, 104020ms $0.3971
+[spec_agent] 3 proposals emitted
+```
+
+**结果**:proposal #1、#2 trial 通过并进交付包。看点:detector 的 differential 信号
+("别的前提都看得见被用,就这一个没有")给了一个**高可信方向**,claude 把它转成具体
+statement 并复用同一证明体 —— 一个 hint 撬动多个强化。
+
+### 5.2 失败案例分析:trial 是怎么否决的
+
+失败案例不是浪费:它们进 ledger 当负例,**正是 meta-loop 提炼 detector 信号的原料**。
+下面两个 trial-failed 案例,恰好对应 detector 现在的两个降级信号——它们就是这么被学到的。
+
+**失败案例 C — 删 `valid_mdb`(write-op,信号 #4 的来源)**
+
+`retype_region` 是 write 类 op。detector 的 hint 已经**把 `valid_mdb` 标成
+write-op 降级(low)**;但 claude 看到证明体很短,赌了一把:
+
+```text
+  ▸ proposal: retype_region_no_cap_to_obj_no_mdb  (drop valid_mdb)
+      proof: apply (rule hoare_gen_asm)+
+             apply (simp add: no_cap_to_obj_with_diff_ref_null_filter)
+             apply (wp retype_region_caps_of | simp)+ ; apply fastforce ; done
+      rationale: "The string `valid_mdb` never appears in the proof body ...
+        The `valid_mdb` conjunct is a write-op demoted hint BUT the proof is
+        sufficiently short and opaque that a trial is warranted."
+```
+
+**trial 否决**(64.6s 后 FAILED):
+
+```text
+*** Failed to apply proof method (line 497):
+*** goal (1 subgoal):
+***  1. ⟦range_cover ...; valid_pspace s ∧ caps_overlap_reserved ... ∧ ...⟧
+***       ⟹ valid_mdb s ∧ ...           ← 删掉的前提在目标里又冒出来了
+```
+
+> 分析:`valid_mdb` 虽然不在证明文本里出现,但 `retype_region_caps_of` 的 wp 链
+> **隐形消费**了它(write op 改 caps_of_state,需要 MDB 完整性)。这正是 op 读/写
+> 分类信号(#4)存在的理由:**写类 op 的前提通常承重,即使文本里看不见。** 这次失败
+> 是该信号的实证来源之一(write-op 4/4 FAIL)。claude 明知信号降级仍试 → trial 兜底。
+
+**失败案例 D — 删 `equal_kernel_mappings`(rule-precondition,信号 #6 的来源)**
+
+这条更典型:claude **自己预判了会失败**,但因为一次 trial 只花一分钟,仍决定试:
+
+```text
+  ▸ proposal: lookup_pt_slot_ptes_aligned_valid_no_ekm  (drop equal_kernel_mappings)
+      rationale: "equal_kernel_mappings does not appear textually in the proof body;
+        it is forwarded implicitly to kernel_mapping_slots_empty_pdeI. HOWEVER
+        kernel_mapping_slots_empty_pdeI at L481 explicitly lists
+        equal_kernel_mappings as a hypothesis, so THIS DROP WILL LIKELY FAIL —
+        but the trial cost is one build minute ... worth the trial."
+```
+
+**trial 否决**(38.2s 后 FAILED):目标里 `kernel_mapping_slots_empty_pdeI` 这一步
+卡住,前提集里赫然缺了 `equal_kernel_mappings`。
+
+> 分析:这条前提从不出现在证明文本,却被**喂进了一个被调用规则
+> (`kernel_mapping_slots_empty_pdeI`)的前提**——经那条规则隐形消费,几乎必然承重。
+> claude 在 rationale 里精确指出了这一点(甚至 cite 了规则定义的行号),却仍选择 trial。
+> 这个观察后来被固化成 detector 的 **rule-precondition 依赖信号(#6)**:扫描时若发现
+> 某前提的 head 喂了被调用规则的前提,直接降级。**一次失败 → 一条确定性信号**,下次任何
+> 文件遇到同结构都免 trial 直接降级。
+
+> 两个失败的共同教训:**"前提不在证明文本里"是必要非充分条件**——它可能被 wp 链或被
+> 调用规则隐形消费。trial 是唯一能区分"真冗余"和"隐形承重"的裁判;而失败的模式被
+> meta-loop 提炼成信号后,detector 下次就能在花 trial 前**预测**这类承重前提。
 
 ---
 
