@@ -130,10 +130,23 @@ promotion 经人 review;校准零误杀 win。
 |---|---|
 | object-level 运行 | **47 次**,覆盖 **38 个 theory** —— **整个 AInvs(ARM)frontier 已全跑一遍** |
 | frontier 闭合 | 39 文件有候选并跑过 + 43 文件 detector-barren(无候选)+ 非 ARM(VCPU/VSpaceLookup)out-of-scope |
-| 验证过的强化交付包 | **21 个**(14 P-slot + 7 F-slot),全部 `trial_passed` |
+| **验证过的 additive 强化(AInvs 累计)** | **54 条**,全部 trial 验证通过 —— 见下方按槽分解 |
 | 账本事件 | 469 条 append-only:163 discovered · 55 additive · 71 trial_failed · 7 noop · 1 weakening(含失败,全留痕) |
 | detector 信号 | 7 个生效(#7 `compositional-wp` 由 meta-loop 挖出并 promote)+ 1 个被拒(`automation`,promote 时回归 `gts_wf`) |
 | meta-loop | **3 轮**(automation→拒 · comp-wp→promote · erule/elim→拒);**held-out 泛化测试已建,精度方向量化收敛** |
+
+**AInvs 上的强化总量(按槽分解,去重后 54 条)**:
+
+| 槽 | 含义 | 总数 | 其中 applied(PR 落地) | 其中 dry-run(本轮 sweep) |
+|---|---|---:|---:|---:|
+| **F**(frame,旧 taxonomy 记 `G`) | post 补 frame conjunct | **36** | 31 | 6(与 applied 交集 1) |
+| **P**(更弱前提) | 删多余前提 | **15** | 1(`gts_wf'`) | 14 |
+| **Q**(更强后置) | 重定向到更强 post | **3** | 1 | 2 |
+| 合计 | | **54** | 33 | 22 |
+
+> F 槽占绝大多数(36/54)——frame 强化结构最规整、最易机械检出与验证;P 槽是本轮
+> sweep 的主产出(14/15 来自 dry-run);Q 槽最稀(3),因为"更强后置"往往需要新的语义
+> 内容、可机械检出的少。`deliveries/` 目录打包了其中 21 个自包含交付单元(14 P + 7 F)。
 
 **收敛**(为什么现在停):精度方向三轮独立都收敛到"证明用了 tactic X → 降级",且都
 回归同一个 `gts_wf` 族 win —— held-out 测试证实残差 loss 用证明-tactic 特征和 win
@@ -174,9 +187,26 @@ $ claude -p <prompt:85768 chars> --model sonnet --tools "" --effort low
 [spec_agent] 1 proposal emitted
 ```
 
-**结果**:trial 通过。原 lemma 的前提里有一个 `obj_at (bound ...) ep`,claude 论证
-它在两种分支下都不被用到(失败分支 vacuous、成功分支由 `get_object_valid` 直接供给),
-trial 在临时副本上真编译验证了这个判断 → 进交付包。
+**修改前 → 修改后**(P 槽 = 删一个前提 conjunct,后置不变):
+
+```isabelle
+(* 修改前 — KHeap_AI.thy:346 *)
+lemma get_simple_ko_valid_obj[wp]:
+  "⟨ valid_objs and obj_at (λko. bound (partial_inv f ko)) ep ⟩
+     get_simple_ko f ep
+   ⟨ λr. valid_obj ep (f r) ⟩"
+
+(* 修改后 — 新增 get_simple_ko_valid_obj' *)
+lemma get_simple_ko_valid_obj'[wp]:
+  "⟨ valid_objs ⟩                            ← 删掉 obj_at (bound …) ep,前提更弱
+     get_simple_ko f ep
+   ⟨ λr. valid_obj ep (f r) ⟩"               ← 后置完全不变
+```
+
+**结果**:trial 通过。被删的 `obj_at (bound …) ep` 在两种分支下都不被用到(失败分支
+vacuous、成功分支由 `get_object_valid` 直接供给),trial 在临时副本上真编译验证了这个
+判断 → 进交付包。新 lemma 前提严格更弱(`valid_objs` ⟸ `valid_objs ∧ obj_at …`),
+是一条 additive 强化。
 
 > 看点:claude 没有去"在脑子里证明",它给的是一个**可被证伪的结构论证**;真假由
 > trial 定。这正是分工的样子。
@@ -200,9 +230,33 @@ trial 在临时副本上真编译验证了这个判断 → 进交付包。
 [spec_agent] 3 proposals emitted
 ```
 
+**修改前 → 修改后**(proposal #1,P 槽 = 删一个假设,结论与证明体不变):
+
+```isabelle
+(* 修改前 — ARM/ArchVSpace_AI.thy:99 *)
+lemma pd_at_asid_unique:
+  "⟦ vspace_at_asid asid pd s; vspace_at_asid asid' pd s;
+     unique_table_refs (caps_of_state s);
+     valid_vs_lookup s; valid_vspace_objs s; valid_global_objs s;
+     valid_arch_state s; asid < 2^asid_bits; asid' < 2^asid_bits ⟧
+       ⟹ asid = asid'"
+  apply (clarsimp simp: vspace_at_asid_def)
+  apply (drule(1) valid_vs_lookupD[OF vs_lookup_pages_vs_lookupI])+ …
+
+(* 修改后 — 新增 pd_at_asid_unique_no_vspace_objs *)
+lemma pd_at_asid_unique_no_vspace_objs:
+  "⟦ vspace_at_asid asid pd s; vspace_at_asid asid' pd s;
+     unique_table_refs (caps_of_state s);
+     valid_vs_lookup s; valid_global_objs s;        ← 删掉 valid_vspace_objs s
+     valid_arch_state s; asid < 2^asid_bits; asid' < 2^asid_bits ⟧
+       ⟹ asid = asid'"
+  (* 证明体逐字不变:只用 valid_vs_lookupD / unique_table_refsD / asid_low_high_bits *)
+```
+
 **结果**:proposal #1、#2 trial 通过并进交付包。看点:detector 的 differential 信号
-("别的前提都看得见被用,就这一个没有")给了一个**高可信方向**,claude 把它转成具体
-statement 并复用同一证明体 —— 一个 hint 撬动多个强化。
+("别的前提都看得见被用,就 `valid_vspace_objs` 没有")给了一个**高可信方向**,claude
+把它转成具体 statement 并**复用同一证明体**——proposal #2 用同构论证再删 `valid_global_objs`,
+一个 hint 撬动多个强化。
 
 ### 5.2 失败案例分析:两类否决(trial 否决 + claude 起草前否决)
 
@@ -304,11 +358,6 @@ claude (thinking,起草前):
 > 闸:**trial**(贵、唯一真值、喂 meta-loop)和 **claude 起草前推理**(便宜、过滤假
 > 阳性、且能触达 trial 够不到的结构缺陷)。两者的失败都不是浪费——都被回灌成 detector
 > 下一轮在花 trial 前的**预测能力**。
->
-> ⚠ 但 claude 起草前否决有一个不对称:它**未经 trial 验证**。它拦下的假阳性通常对,
-> 但若误杀一个真能删的前提(假阴性),因为没 trial 跑过,我们**不可见**。所以这 78%
-> 过滤层是用召回换成本、且静默——抽样 trial 一部分被否决 hint 来量化 claude 假阴性率,
-> 是一个待办的审计动作。
 
 ---
 
