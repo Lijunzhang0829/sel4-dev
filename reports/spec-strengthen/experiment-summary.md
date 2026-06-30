@@ -3,10 +3,6 @@
 > 一份自包含的实验总结:**我们在做什么、为什么这么设计、做到了哪一步**;读到最后
 > 若想知道**每个环节具体怎么实现**,§7 给出每个模块的核心代码与链接。
 > 全程 **dry-run**(不写 l4v 源码,产出在 deliveries + ledger)。日期:2026-06-30。
->
-> 延伸阅读:[detector-vs-llm-methodology.md](detector-vs-llm-methodology.md)(三角色分工 +
-> 两条硬拒绝)· [experiment-workflow.md](experiment-workflow.md)(模块链接总图)·
-> [signal-proposals/MINING-LOG.md](signal-proposals/MINING-LOG.md)(meta-loop 逐轮记录)。
 
 ---
 
@@ -208,10 +204,17 @@ trial 在临时副本上真编译验证了这个判断 → 进交付包。
 ("别的前提都看得见被用,就这一个没有")给了一个**高可信方向**,claude 把它转成具体
 statement 并复用同一证明体 —— 一个 hint 撬动多个强化。
 
-### 5.2 失败案例分析:trial 是怎么否决的
+### 5.2 失败案例分析:两类否决(trial 否决 + claude 起草前否决)
 
-失败案例不是浪费:它们进 ledger 当负例,**正是 meta-loop 提炼 detector 信号的原料**。
-下面两个 trial-failed 案例,恰好对应 detector 现在的两个降级信号——它们就是这么被学到的。
+一个 detector 候选可能在**两个不同环节**被否决,两者都是宝贵的负信号:
+- **trial 否决**(案例 C/D)—— claude 起草了,但 Isabelle 真编译失败。贵(花一次
+  build),进 ledger 当负例,是 meta-loop 挖信号的主料。
+- **claude 起草前否决**(案例 E)—— claude 读懂证明结构,判定某 hint 不可做,**根本
+  没起草**。便宜(零 build),是 detector 假阳性的廉价过滤层。本实验 **78% 的 hint
+  (360→78)是这样被滤掉的**;9 个 run 被全否决。
+
+下面 C/D 两个 trial-failed 恰好对应 detector 现在的两个降级信号;E 是一个 claude
+起草前否决,它直接**暴露并修掉了 detector 的一个解析 bug**。
 
 **失败案例 C — 删 `valid_mdb`(write-op,信号 #4 的来源)**
 
@@ -265,9 +268,47 @@ write-op 降级(low)**;但 claude 看到证明体很短,赌了一把:
 > 某前提的 head 喂了被调用规则的前提,直接降级。**一次失败 → 一条确定性信号**,下次任何
 > 文件遇到同结构都免 trial 直接降级。
 
-> 两个失败的共同教训:**"前提不在证明文本里"是必要非充分条件**——它可能被 wp 链或被
-> 调用规则隐形消费。trial 是唯一能区分"真冗余"和"隐形承重"的裁判;而失败的模式被
-> meta-loop 提炼成信号后,detector 下次就能在花 trial 前**预测**这类承重前提。
+**失败案例 E — claude 起草前否决 `pspace_alignedE`(暴露 detector 解析 bug)**
+
+在 `Invariants_AI` 上 detector 给了 12 条 hint,claude 逐条读后**一条没起草**(全否决)。
+其中对 `pspace_alignedE`(源码标了 `[elim]`)的否决直指 detector 的一个 bug:
+
+```text
+源码:  lemma pspace_alignedE [elim]:
+         "⟦ pspace_aligned s; x ∈ dom (kheap s);
+            is_aligned x (obj_bits (the (kheap s x))) ⟹ R ⟧ ⟹ R"
+
+detector hint:  删 `is_aligned x (obj_bits (the (kheap s x)))`(head 不在证明体)
+claude (thinking,起草前):
+  "The hint suggests dropping the `is_aligned x ...` conjunct, but that's
+   actually the conclusion premise in this ELIMINATION rule. Without it you'd
+   lose the alignment assumption entirely, making the rule unsound."
+→ proposal: []   (空,零 trial)
+```
+
+> 分析:detector 把消去规则的小前提 `is_aligned x … ⟹ R`(一个嵌套蕴含)当成了
+> 普通可删 conjunct——它按 `;` 切假设、取 head `is_aligned`、又因结论是裸变量 `R`
+> 没匹配上而漏掉了 frame 豁免。这是一个**真实的解析缺陷**,而且关键:**任何基于 trial
+> 的挖掘都永远发现不了它**——因为 claude 在 trial 前就把它滤掉了,它从不进 win/loss
+> 标注集。这正是"claude 起草前否决"作为信号源的独特价值:它覆盖了 trial-mining 的盲区。
+>
+> **已修复并 smoke-test**(commit `ff95cbd`):新增 `_has_toplevel_imp()`——conjunct
+> 在括号深度 0 含 `⟹` 即 higher-order 规则前提,`scan_p` 标 not-assessable、永不 flag。
+> 用这些旧案例验证:全 invariant-abstract(81 文件)的此类假阳性 **2→0**
+> (`pspace_alignedE` + `cap_master_cap_tcb_cap_valid_arch` 的条件前提);已知 win
+> `pd_at_asid_unique` 仍正常 flag(无回归)。**一次 claude 否决 → 一个 detector 精度
+> 修复**,与 C/D 的"trial 失败 → 信号"同构,只是更便宜、且够得到 trial 的盲区。
+
+> 三个失败的共同教训:**"前提不在证明文本里"是必要非充分条件**——它可能被 wp 链
+> (C)、被调用规则(D)、或消去规则结构(E)隐形承重。区分"真冗余"和"隐形承重"有两道
+> 闸:**trial**(贵、唯一真值、喂 meta-loop)和 **claude 起草前推理**(便宜、过滤假
+> 阳性、且能触达 trial 够不到的结构缺陷)。两者的失败都不是浪费——都被回灌成 detector
+> 下一轮在花 trial 前的**预测能力**。
+>
+> ⚠ 但 claude 起草前否决有一个不对称:它**未经 trial 验证**。它拦下的假阳性通常对,
+> 但若误杀一个真能删的前提(假阴性),因为没 trial 跑过,我们**不可见**。所以这 78%
+> 过滤层是用召回换成本、且静默——抽样 trial 一部分被否决 hint 来量化 claude 假阴性率,
+> 是一个待办的审计动作。
 
 ---
 
