@@ -1,0 +1,7 @@
+[genstat-stateful] arm_asid_table_delete_ev2 @ proof/infoflow/ARM/ArchArch_IF.thy
+[init ok]
+[reached arm_asid_table_delete_ev2]
+== target: by (auto simp: reads_equiv_def2 affects_equiv_def2 intro!: states_equi
+   A_goal: True \<and> reads_equiv aag (s\<lparr>arch_state := arch_state s\<lparr>arm_asid_table := \<lambda>a. if a = asid_high_b
+   B: close the goal (0 subgoals)
+  round 0: gen=486.6s (claude 400.1s) -> []

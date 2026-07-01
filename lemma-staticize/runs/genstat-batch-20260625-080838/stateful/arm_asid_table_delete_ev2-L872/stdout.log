@@ -1,0 +1,10 @@
+[genstat-stateful] arm_asid_table_delete_ev2 @ proof/infoflow/ARM/ArchArch_IF.thy
+[init ok]
+[reached arm_asid_table_delete_ev2]
+== target: by (auto simp: reads_equiv_def2 affects_equiv_def2 intro!: states_equi
+   A_goal: True \<and> reads_equiv aag (s\<lparr>arch_state := arch_state s\<lparr>arm_asid_table := \<lambda>a. if a = asid_high_b
+   B: close the goal (0 subgoals)
+  step 0: gen=317.9s (claude 32.2s) -> ['apply (intro conjI)', 'apply (rule TrueI)', 'apply (unfold reads_equiv_def2)']
+  step 0: OK -> 2 subgoal(s); applied=['apply (intro conjI)', 'apply (rule TrueI)', 'apply (unfold reads_equiv_def2)']
+  step 1: gen=68.6s (claude 68.2s) -> ['apply (intro conjI)', 'apply (rule states_equiv_forI)']
+  step 1: OK -> 10 subgoal(s); applied=['apply (intro conjI)', 'apply (rule TrueI)', 'apply (unfold reads_equiv_def2)', 'apply (intro conjI)', 'apply (rule states_equiv_forI)']

@@ -1,0 +1,24 @@
+[init ok]
+[reached valid_pspace_s0]
+== target line 8: apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def
+   facts: []
+[error] An error occurred while calling t._step_without_timeout.
+: de.unruh.isabelle.control.IsabelleDestroyedException: Isabelle process was destroyed: null
+	at de.unruh.isabelle.control.Isabelle.checkDestroyed(Isabelle.scala:597)
+	at de.unruh.isabelle.control.Isabelle.send(Isabelle.scala:604)
+	at de.unruh.isabelle.control.Isabelle.applyFunction(Isabelle.scala:727)
+	at de.unruh.isabelle.control.Isabelle.$anonfun$applyFunction$3(Isabelle.scala:734)
+	at scala.concurrent.impl.Promise$Transformation.run(Promise.scala:470)
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.exec(ForkJoinTask.java:1423)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312)
+	at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)
+Caused by: java.io.EOFException
+	at java.base/java.io.DataInputStream.readFully(DataInputStream.java:210)
+	at java.base/java.io.DataInputStream.readLong(DataInputStream.java:407)
+	at de.unruh.isabelle.control.Isabelle.de$unruh$isabelle$control$Isabelle$$parseIsabelle(Isabelle.scala:277)
+	at de.unruh.isabelle.control.Isabelle$$anon$2.run(Isabelle.scala:486)
+
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-valid_pspace_s0-P25833.json

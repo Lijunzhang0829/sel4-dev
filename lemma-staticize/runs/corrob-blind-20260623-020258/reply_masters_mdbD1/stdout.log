@@ -1,0 +1,16 @@
+[genstat-stateful] reply_masters_mdbD1 @ proof/access-control/CNode_AC.thy
+[init ok]
+[reached reply_masters_mdbD1]
+== target: by (fastforce simp:reply_masters_mdb_def simp del:split_paired_All)
+   A_goal: m slot = None
+   B: close the goal (0 subgoals)
+  round 0: 103.6s -> ['apply (unfold reply_masters_mdb_def)', 'apply (drule_tac x=slot in spec)', 'apply (drule_tac x=t in spec)', 'apply (drule_tac x=R in spec)', 'apply (drule mp)', 'apply assumption', 'apply (elim conjE)', 'done']
+  round 0: BUILD-FAIL `done` failed: failed for prove the goal using the tactic `done`. Get msg: Faile
+  round 1: 400.6s -> []
+  round 2: 135.2s -> ['apply (unfold reply_masters_mdb_def)', 'apply (drule_tac x=slot in spec)', 'apply (drule_tac x=t in spec)', 'apply (drule_tac x=R in spec)', 'apply (erule impE)', 'apply assumption', 'apply (erule conjE)', 'done']
+  round 2: BUILD-FAIL `done` failed: failed for prove the goal using the tactic `done`. Get msg: Faile
+  round 3: 301.4s -> ['apply (unfold reply_masters_mdb_def)', 'apply (drule_tac x=t in spec)', 'apply (drule_tac x=slot in spec)', 'apply (drule_tac x=R in spec)', 'apply (erule impE)', 'apply assumption', 'apply (erule conjE)', 'done']
+  round 3: BUILD-FAIL `apply (drule_tac x=t in spec)` failed: failed for prove the goal using the tact
+  round 4: 474.7s -> ['apply (unfold reply_masters_mdb_def)', 'apply (drule_tac x=slot in spec)', 'apply (drule_tac x=t in spec)', 'apply (drule_tac x=R in spec)', 'apply (drule (1) mp)', 'apply (erule conjE)', 'apply assumption', 'done']
+  round 4: REACHED-B
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-reply_masters_mdbD1.json  verdict=REACHED-B

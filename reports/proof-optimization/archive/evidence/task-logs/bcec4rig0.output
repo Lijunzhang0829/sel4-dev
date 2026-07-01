@@ -1,0 +1,4 @@
+exit=0 elapsed=180s
+=== errors ===
+=== theory timing line ===
+### 0.457s elapsed time, 0.615s cpu time, 0.323s GC time

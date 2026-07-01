@@ -1,0 +1,108 @@
+{
+ "lemma": "cap_swap_silc_inv",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/FinalCaps.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "by (fastforce simp: all_children_def simp del: split_paired_All | simp add: all_children_def del: split_paired_All)+",
+ "B_sig": [],
+ "facts": [
+  "all_children_def",
+  "split_paired_All"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (rule all_children_def)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule all_children_def)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (drule all_children_def)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (frule all_children_def)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (simp only: all_children_def)",
+   "ok": false,
+   "obs": "failed for prove the goal using the tactic `apply (simp only: all_children_def)`. Get msg: Timeout a"
+  },
+  {
+   "action": "apply (rule split_paired_All)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule split_paired_All)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (drule split_paired_All)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (frule split_paired_All)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (subst split_paired_All)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 17515.7
+}

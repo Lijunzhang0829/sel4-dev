@@ -1,0 +1,43 @@
+########## dmo_bind_ev' (InfoFlow, fastforce, 93) ##########
+  clarsimp BUILD-FAIL -> FAILED (24569ms)
+[result] {"lemma": "dmo_bind_ev'", "thy": "proof/infoflow/Retype_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## dmo_user_memory_update_reads_respects_g (InfoFlow, fastforce, 133) ##########
+  clarsimp BUILD-FAIL -> *** Failed to apply proof method (line 135 of "/tmp/tmp.wj8NqXl7a4/Tmp_864549d0a3356a09.thy"): *** goal (2 subgoals): *** 1. \<And>s t. *** \<lbrakk>a
+[result] {"lemma": "dmo_user_memory_update_reads_respects_g", "thy": "proof/infoflow/UserOp_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## storeWord_equiv_but_for_labels (InfoFlow, fastforce, 45) ##########
+  clarsimp BUILD-FAIL -> *** Failed to apply proof method (line 47 of "/tmp/tmp.rTnPNiWYvK/Tmp_d25ca1008dea1499.thy"): *** goal (10 subgoals): *** 1. \<And>sa x. *** \<lbrakk>
+[result] {"lemma": "storeWord_equiv_but_for_labels", "thy": "proof/infoflow/ARM/ArchIpc_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## perform_asid_control_invocation_silc_inv (InfoFlow, fastforce, 229) ##########
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (1 subgoal): *** 1. \<And>s x a b aa ba xa. *** \<lbrakk>SilcLabel \<noteq> pasSubject aag; *** \<forall>x. *** p
+[result] {"lemma": "perform_asid_control_invocation_silc_inv", "thy": "proof/infoflow/ARM/ArchFinalCaps.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## set_object_reads_respects_scheduler (InfoFlow, auto, 446) ##########
+  clarsimp BUILD-FAIL -> *** Failed to finish proof (line 451 of "/tmp/tmp.abXLHshEmZ/Tmp_179f4f12bcd62288.thy"): *** goal (1 subgoal): *** 1. \<And>s y t. *** \<lbrakk>a_type
+[result] {"lemma": "set_object_reads_respects_scheduler", "thy": "proof/infoflow/ARM/ArchScheduler_IF.thy", "session": "InfoFlow", "tactic": "auto", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## dmo_loadWord_reads_respects (InfoFlow, fastforce, 217) ##########
+  clarsimp BUILD-FAIL -> *** Failed to apply proof method (line 219 of "/tmp/tmp.VssskZR57D/Tmp_eaf793deb08463e8.thy"): *** goal (12 subgoals): *** 1. \<And>rv rv' s t. *** \<
+[result] {"lemma": "dmo_loadWord_reads_respects", "thy": "proof/infoflow/ARM/ArchIpc_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## dmo_bind_ev (InfoFlow, fastforce, 87) ##########
+  clarsimp BUILD-FAIL -> *** Failed to finish proof (line 88 of "/tmp/tmp.pNb0R5KN96/Tmp_6101150b36ac996e.thy"): *** goal (1 subgoal): *** 1. (\<forall>s t. *** P s \<and> P t
+[result] {"lemma": "dmo_bind_ev", "thy": "proof/infoflow/Retype_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## copy_mrs_reads_respects (InfoFlow, fastforce, 321) ##########
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (1 subgoal): *** 1. \<And>x xa n'. *** \<lbrakk>aag_can_read_or_affect aag l sender; unat n < 128; *** sbuf = Som
+[result] {"lemma": "copy_mrs_reads_respects", "thy": "proof/infoflow/ARM/ArchIpc_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## set_tcb_queue_reads_respects (InfoFlow, force, 147) ##########
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (1 subgoal): *** 1. \<And>s t x p. *** \<lbrakk>\<forall>d\<in>subjectReads (pasPolicy aag) *** (pasSubject aag).
+[result] {"lemma": "set_tcb_queue_reads_respects", "thy": "proof/infoflow/ARM/ArchFinalise_IF.thy", "session": "InfoFlow", "tactic": "force", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## invoke_tcb_irq_masks (InfoFlow, fastforce, 149) ##########
+  clarsimp BUILD-FAIL -> FAILED (46415ms)
+[result] {"lemma": "invoke_tcb_irq_masks", "thy": "proof/infoflow/ARM/ArchIRQMasks_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## decode_tcb_configure_authorised_helper (Access, auto, 467) ##########
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (1 subgoal): *** 1. \<And>x41 a b x43 x44 x45 x46 x47 x48 aa ba c aaa baa ca. *** \<lbrakk>\<forall>x\<in>case x4
+[result] {"lemma": "decode_tcb_configure_authorised_helper", "thy": "proof/access-control/Tcb_AC.thy", "session": "Access", "tactic": "auto", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## decode_arch_invocation_authorised_for_globals (InfoFlow, auto, 171) ##########
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (2 subgoals): *** 1. \<And>s x41 aa b ys xc pd ref. *** \<lbrakk>s \<turnstile> ArchObjectCap (PageTableCap x41 N
+[result] {"lemma": "decode_arch_invocation_authorised_for_globals", "thy": "proof/infoflow/ARM/ArchSyscall_IF.thy", "session": "InfoFlow", "tactic": "auto", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## perform_page_invocation_silc_inv (InfoFlow, fastforce, 201) ##########
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (1 subgoal): *** 1. \<And>s aa ba x xa xb xc xd. *** \<lbrakk>blah = PageUnmap (PageCap x xa xb xc xd) (aa, ba); 
+[result] {"lemma": "perform_page_invocation_silc_inv", "thy": "proof/infoflow/ARM/ArchFinalCaps.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+########## equiv_asids_non_asid_pool_kheap_update (InfoFlow, fastforce, 41) ##########
+  clarsimp BUILD-FAIL -> *** Failed to finish proof: *** goal (1 subgoal): *** 1. \<And>asid. *** \<lbrakk>\<forall>asid. *** (R asid \<longrightarrow> *** (\<exists>y. *** as
+[result] {"lemma": "equiv_asids_non_asid_pool_kheap_update", "thy": "proof/infoflow/ARM/ArchInfoFlow_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+[RESCAN DONE]

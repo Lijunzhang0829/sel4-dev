@@ -1,0 +1,21 @@
+{
+ "cases": [
+  {
+   "lemma": "set_cap_slots_holding_overlapping_caps_other",
+   "thy": "proof/infoflow/FinalCaps.thy",
+   "session": "InfoFlow",
+   "proof_line": 666,
+   "tactic": "fastforce",
+   "cpu_s": 35.99,
+   "file_lines": 2875,
+   "enc_cmd": "lemma",
+   "init_able": true,
+   "feasible": true,
+   "work_suspect": false,
+   "n_simp_defs": 10,
+   "hot_line": " apply (fastforce simp: get_cap_def get_object_def bind_def split_def gets_def get_def return_def as",
+   "lemma_search_lines": 1,
+   "lemma_search_cpu": 35.99
+  }
+ ]
+}

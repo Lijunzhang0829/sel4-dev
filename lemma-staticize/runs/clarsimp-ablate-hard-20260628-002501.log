@@ -1,0 +1,53 @@
+[batch] set=hard  reps=3  per-timeout=1800s  -> lemma-staticize/runs/clarsimp-ablate-hard-20260628-002501.log
+==== cap_insert_simple_arch_caps_no_ap (AInvs) proof/invariant-abstract/ARM/ArchCSpace_AI.thy:518  auto->clarsimp ====
+[ablate] cap_insert_simple_arch_caps_no_ap proof/invariant-abstract/ARM/ArchCSpace_AI.thy:518-518  auto->clarsimp
+  orig:   by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)
+  clar:   by (clarsimp simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)
+  clarsimp BUILD-FAIL -> *** Failed to finish proof (line 518 of "/tmp/tmp.rHvXN1CYgC/Tmp_0c8d6958552f51c4.thy"): *** goal (5 subgoals): *** 1. \<And>s capa x xa xb. *** \<lbr
+[result] {"lemma": "cap_insert_simple_arch_caps_no_ap", "thy": "proof/invariant-abstract/ARM/ArchCSpace_AI.thy", "session": "AInvs", "tactic": "auto", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+
+==== SAC_partsSubjectAffects_exceptT (InfoFlow) proof/infoflow/PolicySystemSAC.thy:921  auto->clarsimp ====
+[ablate] SAC_partsSubjectAffects_exceptT proof/infoflow/PolicySystemSAC.thy:921-921  auto->clarsimp
+  orig:   apply (auto simp: SAC_affects SAC_reads)
+  clar:   apply (clarsimp simp: SAC_affects SAC_reads)
+  clarsimp BUILD-FAIL -> timeout
+[result] {"lemma": "SAC_partsSubjectAffects_exceptT", "thy": "proof/infoflow/PolicySystemSAC.thy", "session": "InfoFlow", "tactic": "auto", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+
+==== refinement2_both (CRefine) proof/crefine/ARM/Refine_C.thy:1019  fastforce->clarsimp ====
+[ablate] refinement2_both proof/crefine/ARM/Refine_C.thy:1019-1019  fastforce->clarsimp
+  orig:   apply (fastforce simp: ct_running'_C)
+  clar:   apply (clarsimp simp: ct_running'_C)
+  clarsimp BUILD-FAIL -> *** Failed to apply proof method (line 1021 of "/tmp/tmp.OBGEnuhedM/Tmp_7b1c25d5921682e4.thy"): *** goal (3 subgoals): *** 1. \<And>b ab bb bd bf af x
+[result] {"lemma": "refinement2_both", "thy": "proof/crefine/ARM/Refine_C.thy", "session": "CRefine", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+
+==== requiv_user_mem_eq (InfoFlow) proof/infoflow/ARM/ArchUserOp_IF.thy:859  fastforce->clarsimp ====
+[ablate] requiv_user_mem_eq proof/infoflow/ARM/ArchUserOp_IF.thy:859-860  fastforce->clarsimp
+  orig:   apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def
+  clar:   apply (clarsimp simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def
+
+  clarsimp BUILD-FAIL -> timeout
+[result] {"lemma": "requiv_user_mem_eq", "thy": "proof/infoflow/ARM/ArchUserOp_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+
+==== requiv_device_mem_eq (InfoFlow) proof/infoflow/ARM/ArchUserOp_IF.thy:811  fastforce->clarsimp ====
+[ablate] requiv_device_mem_eq proof/infoflow/ARM/ArchUserOp_IF.thy:811-812  fastforce->clarsimp
+  orig:   apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def
+  clar:   apply (clarsimp simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def
+
+  clarsimp BUILD-FAIL -> Error: another Isabelle tool is already running on session 'InfoFlow' (lock: /tmp/isabelle-session-InfoFlow.lock). Invoke skill tools serially — see S
+[result] {"lemma": "requiv_device_mem_eq", "thy": "proof/infoflow/ARM/ArchUserOp_IF.thy", "session": "InfoFlow", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+
+==== abstract_invs (InfoFlowC) proof/infoflow/refine/ADT_IF_Refine.thy:812  fastforce->clarsimp ====
+[ablate] abstract_invs proof/infoflow/refine/ADT_IF_Refine.thy:812-812  fastforce->clarsimp
+  orig:   apply (fastforce simp: full_invs_if_def ADT_A_if_def step_restrict_def)+
+  clar:   apply (clarsimp simp: full_invs_if_def ADT_A_if_def step_restrict_def)+
+  clarsimp BUILD-FAIL -> FAILED (10652ms)
+[result] {"lemma": "abstract_invs", "thy": "proof/infoflow/refine/ADT_IF_Refine.thy", "session": "InfoFlowC", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+
+==== ckernel_invariant (Refine) proof/refine/ARM/Refine.thy:875  fastforce->clarsimp ====
+[ablate] ckernel_invariant proof/refine/ARM/Refine.thy:875-876  fastforce->clarsimp
+  orig:   subgoal by (fastforce simp: ex_abs_def sch_act_simple_def ct_running_related ct_idle_relat
+  clar:   subgoal by (clarsimp simp: ex_abs_def sch_act_simple_def ct_running_related ct_idle_relate
+  clarsimp BUILD-FAIL -> timeout
+[result] {"lemma": "ckernel_invariant", "thy": "proof/refine/ARM/Refine.thy", "session": "Refine", "tactic": "fastforce", "clar_builds": false, "base_ms_med": null, "clar_ms_med": null}
+
+[batch done] -> lemma-staticize/runs/clarsimp-ablate-hard-20260628-002501.log

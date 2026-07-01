@@ -1,0 +1,10 @@
+[genstat-stateful] rm_affects @ proof/infoflow/PolicySystemSAC.thy
+[init ok]
+[reached rm_affects]
+== target: by (simp, blast?)+
+   A_goal: partition_label RM \<in> {partition_label NicA, partition_label NicB, partition_label NicD, partition_label R, partition
+   B: close the goal (0 subgoals)
+  round 0: gen=113.2s (claude 74.8s) -> ['apply (simp only: subjectAffects_def SACAuthGraph_def)', 'done']
+  round 0: BUILD-FAIL `apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: failed for prov
+  round 1: gen=376.5s (claude 375.9s) -> ['apply (unfold subjectAffects_def SACAuthGraph_def)', 'apply (simp only: insert_iff singleton_iff Un_iff mem_Collect_eq)+', 'done']
+  round 1: BUILD-FAIL `done` failed: failed for prove the goal using the tactic `done`. Get msg: Faile

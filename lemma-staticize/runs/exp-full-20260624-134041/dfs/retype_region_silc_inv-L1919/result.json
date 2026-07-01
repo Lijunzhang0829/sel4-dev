@@ -1,0 +1,541 @@
+{
+ "lemma": "retype_region_silc_inv",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/FinalCaps.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "subgoal\nby (fastforce elim: cte_wp_atE intro: cte_wp_at_cteI cte_wp_at_tcbI)",
+ "B_sig": [
+  "1. \\<And>s a b cap. \\<lbrakk>range_cover ptr sz (obj_bits_api type o_bits) num_objects; \\<forall>x\\<in>up_aligned_area ptr sz. is_subject aag x; type \\<noteq> Untyped; SilcLabel \\<noteq> pasSubject aag; \\<forall>x. pasObjectAbs aag x = SilcLabel \\<longrightarrow> (\\<exists>sz. cap_table_at sz x s); \\<forall>y. (\\<exists>auth. (y, auth, SilcLabel) \\<in> pasPolicy aag) \\<longrightarrow> y = SilcLabel; \\<forall>a b cap. cte_wp_at ((=) cap) (a, b) s \\<and> \\<not> intra_label_cap aag (a, b) s \\<longrightarrow> (\\<exists>a. (\\<exists>b. (a, b) \\<in> slots_holding_overlapping_caps cap s) \\<and> pasObjectAbs aag a = SilcLabel); all_children (\\<lambda>x. pasObjectAbs aag (fst x) = SilcLabel) (cdt s); silc_dom_equiv aag st s; \\<forall>a. pasObjectAbs aag a = SilcLabel \\<longrightarrow> (\\<forall>b. \\<not> cte_wp_at (\\<lambda>cap. cap \\<noteq> NullCap \\<and> is_transferable_cap cap) (a, b) st); cte_wp_at ((=) cap) (a, b) (s\\<lparr>kheap := \\<lambda>a. if a \\<in> (\\<lambda>x. ptr_add ptr (x * 2 ^ obj_bits_api type o_bits)) ` {0..<num_objects} then Some (default_object type dev o_bits) else kheap s a\\<rparr>) \\<and> \\<not> intra_label_cap aag (a, b) (s\\<lparr>kheap := \\<lambda>a. if a \\<in> (\\<lambda>x. ptr_add ptr (x * 2 ^ obj_bits_api type o_bits)) ` {0..<num_objects} then Some (default_object type dev o_bits) else kheap s a\\<rparr>); a \\<notin> (\\<lambda>p. ptr_add ptr (p * 2 ^ obj_bits_api type o_bits)) ` {0..<num_objects}\\<rbrakk> \\<Longrightarrow> \\<not> intra_label_cap aag (a, b) s"
+ ],
+ "facts": [
+  "cte_wp_atE",
+  "cte_wp_at_cteI",
+  "cte_wp_at_tcbI"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s a b cap. \\<lbrakk>range_cover ptr sz (obj_bits_api type o_bits) num_objects; \\<forall>x\\<in>up_aligned_area ptr sz. is_subject aag x; type \\<noteq> Untyped; SilcLabel \\<noteq> pasSubject aa"
+  },
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s a b cap. \\<lbrakk>range_cover ptr sz (obj_bits_api type o_bits) num_objects; \\<forall>x\\<in>up_aligned_area ptr sz. is_subject aag x; SilcLabel \\<noteq> pasSubject aag; \\<forall>x. pasObjec"
+  },
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s a b cap. \\<lbrakk>range_cover ptr sz (obj_bits_api type o_bits) num_objects; \\<forall>x\\<in>up_aligned_area ptr sz. is_subject aag x; type \\<noteq> Untyped; SilcLabel \\<noteq> pasSubject aa"
+  },
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule cte_wp_atE)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>s a b cap. \\<lbrakk>range_cover ptr sz (obj_bits_api type o_bits) num_objects; \\<forall>x\\<in>up_aligned_area ptr sz. is_subject aag x; type \\<noteq> Untyped; SilcLabel \\<noteq> pasSubject aa"
+  },
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst cte_wp_atE)",
+   "ok": true,
+   "obs": "[5sg] 1. \\<And>s a b cap. \\<lbrakk>range_cover ptr sz (obj_bits_api type o_bits) num_objects; \\<forall>x\\<in>up_aligned_area ptr sz. is_subject aag x; type \\<noteq> Untyped; SilcLabel \\<noteq> pasSubject aa"
+  },
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_cteI)",
+   "ok": true,
+   "obs": "[5sg] 1. \\<And>s a b cap. \\<lbrakk>range_cover ptr sz (obj_bits_api type o_bits) num_objects; \\<forall>x\\<in>up_aligned_area ptr sz. is_subject aag x; type \\<noteq> Untyped; SilcLabel \\<noteq> pasSubject aa"
+  },
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_tcbI)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>s a b cap. \\<lbrakk>range_cover ptr sz (obj_bits_api type o_bits) num_objects; \\<forall>x\\<in>up_aligned_area ptr sz. is_subject aag x; type \\<noteq> Untyped; SilcLabel \\<noteq> pasSubject aa"
+  },
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_tcbI)",
+   "ok": true,
+   "obs": "[5sg] 1. \\<And>s a b cap. \\<lbrakk>range_cover ptr sz (obj_bits_api type o_bits) num_objects; \\<forall>x\\<in>up_aligned_area ptr sz. is_subject aag x; type \\<noteq> Untyped; SilcLabel \\<noteq> pasSubject aa"
+  },
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_atE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_tcbI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_cteI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 30345.2
+}

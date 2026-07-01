@@ -1,0 +1,25 @@
+[init ok]
+[reached transfer_caps_loop_reads_respects']
+== target line 34: subgoal
+by (fastforce simp: neq_Nil_conv cte_wp_at_caps_of_state)
+   facts: ['cte_wp_at_caps_of_state', 'distinct_tl', 'neq_Nil_conv']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule impE)  [3sg] 1. \<And>caps slots cap obj ind s actual_cap x. \<lbrak
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [2sg] 1. \<And>caps slots cap obj ind s actual_cap x. \<lbrak
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst cte_wp_at_caps_of_state)  [2sg] 1. \<And>caps slots cap obj ind s actual_cap x. \<lbrak
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule distinct_tl)  [2sg] 1. \<And>caps slots cap obj ind s actual_cap x. \<lbrak
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule distinct_tl)  [2sg] 1. \<And>caps slots cap obj ind s actual_cap x. \<lbrak
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+    ↩ backtrack
+    ↩ backtrack
+    ↩ backtrack
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-transfer_caps_loop_reads_respects'-P25826.json

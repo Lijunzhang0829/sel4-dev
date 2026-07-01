@@ -1,0 +1,75 @@
+{
+ "experiment": "full 56-feasible search-reduction scan, clean own-session stock CPU",
+ "date": "2026-06-30",
+ "n_feasible": 56,
+ "n_variants_clean_measured": 24,
+ "rerun_campaign_verdicts": {
+  "FASTER": 9,
+  "NO-PATH": 20,
+  "TIMEOUT": 2,
+  "ERROR": 3,
+  "REACHED-B-NOT-FASTER": 8,
+  "NO-TARGET": 2
+ },
+ "robust_real_speedups": [
+  {
+   "lemma": "is_stateAssert_gets",
+   "clean_cpu_pct": 100.0
+  },
+  {
+   "lemma": "in_whileLoop_corres",
+   "clean_cpu_pct": 97.9
+  },
+  {
+   "lemma": "is_derived_cap_arch_asid_issues",
+   "clean_cpu_pct": 56.5
+  },
+  {
+   "lemma": "set_cap_valid_arch_caps",
+   "clean_cpu_pct": 54.9
+  },
+  {
+   "lemma": "requiv_device_mem_eq",
+   "clean_cpu_pct": 30.7
+  },
+  {
+   "lemma": "empty_slot_pas_refined",
+   "clean_cpu_pct": 22.7
+  },
+  {
+   "lemma": "weak_derived_valid_cap",
+   "clean_cpu_pct": 22.6
+  }
+ ],
+ "n_robust": 7,
+ "n_borderline": 3,
+ "n_noise_or_slower": 9,
+ "n_build_fail": 5,
+ "methodology": "in-REPL reported 22 FASTER; clean own-session CPU shows 7 robust (3x inflation; false positives incl -121%/-33% reported faster). NO false negatives.",
+ "per_lemma_clean": {
+  "in_whileLoop_corres": 97.9,
+  "is_derived_cap_arch_asid_issues": 56.5,
+  "requiv_device_mem_eq": 30.7,
+  "empty_slot_pas_refined": 22.7,
+  "insert_cap_child_corres": 14.3,
+  "cap_insert_pas_refined": 12.7,
+  "cap_swap_silc_inv": 6.8,
+  "transfer_caps_loop_reads_respects'": 6.4,
+  "abd_affects": 3.7,
+  "requiv_user_mem_eq": 1.9,
+  "send_sync_ipc_corres": 1.8,
+  "ntfn123_reads": -1.0,
+  "invoke_cnode_silc_inv": -14.7,
+  "dmo_bind_ev'": -33.5,
+  "gets_apply_ready_queues_reads_respects": 13.5,
+  "Sys1AgentMap_simps": null,
+  "valid_pspace_s0": null,
+  "invoke_cnode_reads_respects_f": null,
+  "c_reads": -1.7,
+  "insert_cap_sibling_corres": null,
+  "is_stateAssert_gets": 100.0,
+  "retype_region_silc_inv": null,
+  "set_cap_valid_arch_caps": 54.9,
+  "weak_derived_valid_cap": 22.6
+ }
+}

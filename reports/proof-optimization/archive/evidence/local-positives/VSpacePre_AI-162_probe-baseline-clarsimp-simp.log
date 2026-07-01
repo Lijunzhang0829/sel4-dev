@@ -1,0 +1,7 @@
+=== BASELINE ===
+OK (23398ms)
+=== clarsimp variant ===
+OK (18288ms)
+=== simp variant ===
+***              untyped_range c' \<subseteq> untyped_range c \<or>
+***              untyped_range c \<inter> untyped_range c' = {}) \<and>

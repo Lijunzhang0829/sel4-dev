@@ -1,0 +1,12 @@
+method	lemma	line	session	verdict	accelerated	saved_ms	secs
+stateful	partsSubjectAffects_IRQ0	249	InfoFlow	NO-TARGET	None	None	49
+blind	partsSubjectAffects_IRQ0	249	InfoFlow	NO-TARGET	None	None	49
+dfs	partsSubjectAffects_IRQ0	249	InfoFlow	NO-TARGET	None	None	56
+stateful	retype_region_silc_inv	1889	InfoFlow	NO-TARGET	None	None	245
+dfs	retype_region_silc_inv	1889	InfoFlow	NO-TARGET	None	None	255
+blind	retype_region_silc_inv	1889	InfoFlow	NO-TARGET	None	None	248
+stateful	retype_region_silc_inv	1914	InfoFlow	NO-TARGET	None	None	249
+blind	retype_region_silc_inv	1914	InfoFlow	NO-TARGET	None	None	248
+dfs	retype_region_silc_inv	1914	InfoFlow	NO-TARGET	None	None	258
+dfs	retype_region_silc_inv	1919	InfoFlow	NO-PATH	None	None	211
+dfs	empty_slot_pas_refined	1103	Access	NO-PATH	None	None	286

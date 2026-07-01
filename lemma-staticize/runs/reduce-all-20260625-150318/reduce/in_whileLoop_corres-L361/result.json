@@ -1,0 +1,112 @@
+{
+ "lemma": "in_whileLoop_corres",
+ "thy": "/sel4-project/verification/l4v/lib/ExtraCorres.thy",
+ "session": "Lib",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 4697.5,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (frule (1) corres_underlyingD2[OF body_corres]; (clarsimp simp: cond no_fail_def; fastforce dest: nf)?)"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 3,
+   "gen_secs": 24.5,
+   "claude_secs": 23.7
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce dest: nf simp: cond no_fail_def)?)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 4028.4,
+   "saved_ms": 669.1,
+   "faster": true,
+   "gen_secs": 143.1,
+   "claude_secs": 142.4
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (frule (1) corres_underlyingD2[OF body_corres]; (clarsimp simp: no_fail_def cond dest: nf)?)"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 3,
+   "gen_secs": 40.0,
+   "claude_secs": 39.7
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply (frule (1) corres_underlyingD2[OF body_corres]; (auto dest: nf simp: cond no_fail_def)?)"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 2,
+   "gen_secs": 193.2,
+   "claude_secs": 192.8
+  },
+  {
+   "round": 4,
+   "variant": [
+    "apply (frule (1) corres_underlyingD2[OF body_corres]; (clarsimp simp: cond no_fail_def; fastforce dest: nf)?)"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 3,
+   "gen_secs": 53.6,
+   "claude_secs": 53.3
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce dest!: nf simp: cond no_fail_def)?)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 3934.1,
+   "saved_ms": 763.4,
+   "faster": true,
+   "gen_secs": 233.3,
+   "claude_secs": 233.0
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce simp only: no_fail_def cond dest: nf)?)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 298.6,
+   "saved_ms": 4398.9,
+   "faster": true,
+   "gen_secs": 42.5,
+   "claude_secs": 42.4
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (frule (1) corres_underlyingD2[OF body_corres]; (clarsimp simp: cond no_fail_def dest: nf)?)"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 3,
+   "gen_secs": 51.6,
+   "claude_secs": 51.2
+  }
+ ],
+ "target": "apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce dest: nf simp: cond no_fail_def)?)",
+ "B_sig": [
+  "1. \\<And>r s r' s' r'' s'' sa ra. \\<lbrakk>C' r s; (r', s') \\<in> fst (B' r s); (r'', s'') \\<in> fst (whileLoop C' B' r' s'); \\<forall>s r. (s, s') \\<in> srel \\<and> rrel r r' \\<and> P r s \\<and> P' r' s' \\<longrightarrow> (\\<exists>rv t. (rv, t) \\<in> fst (whileLoop C B r s) \\<and> (t, s'') \\<in> srel \\<and> rrel rv r''); (sa, s) \\<in> srel; rrel ra r; P ra sa; P' r s; \\<exists>(r, t)\\<in>fst (B ra sa). (t, s') \\<in> srel \\<and> rrel r r'\\<rbrakk> \\<Longrightarrow> \\<exists>rv t. (rv, t) \\<in> fst (whileLoop C B ra sa) \\<and> (t, s'') \\<in> srel \\<and> rrel rv r''"
+ ],
+ "facts": [
+  "cond",
+  "nf",
+  "no_fail_def"
+ ],
+ "path": [
+  "apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce simp only: no_fail_def cond dest: nf)?)"
+ ],
+ "variant_ms": 298.6,
+ "saved_ms": 4398.9,
+ "frac_saved": 0.936,
+ "accelerated": true
+}

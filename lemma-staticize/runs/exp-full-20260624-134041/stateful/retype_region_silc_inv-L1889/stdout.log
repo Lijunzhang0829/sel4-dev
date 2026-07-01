@@ -1,0 +1,12 @@
+[genstat-stateful] retype_region_silc_inv @ proof/infoflow/FinalCaps.thy
+[init ok]
+[reached retype_region_silc_inv]
+== target: subgoal
+by (fastforce simp: default_object_def empty_cnode_def split: 
+   A_goal: cap = NullCap
+   B: reach EXACTLY this 2-subgoal state:
+1. \<And>s b cap p tcb getF setF restr. \<lb
+  step 0: gen=150.7s (claude 56.3s) -> ['apply (simp only: default_object_def empty_cnode_def split: apiobject_type.splits if_splits)']
+  step 0: OK -> 10 subgoal(s); applied=['apply (simp only: default_object_def empty_cnode_def split: apiobject_type.splits if_splits)']
+  step 1: gen=257.4s (claude 35.6s) -> ['apply assumption']
+  step 1: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass

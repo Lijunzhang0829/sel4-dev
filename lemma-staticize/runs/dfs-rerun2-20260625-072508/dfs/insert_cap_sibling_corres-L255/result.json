@@ -1,0 +1,213 @@
+{
+ "lemma": "insert_cap_sibling_corres",
+ "thy": "/sel4-project/verification/l4v/proof/drefine/CNode_DR.thy",
+ "session": "DRefine",
+ "mode": "react",
+ "target": "by (auto dest: mdb_cte_atD is_untyped_cap_eqD simp: revokable_cap_insert_dest_original valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)",
+ "B_sig": [],
+ "facts": [
+  "cte_wp_at_caps_of_state",
+  "is_untyped_cap_eqD",
+  "mdb_cte_atD",
+  "not_idle_thread_def",
+  "revokable_cap_insert_dest_original",
+  "swp_def",
+  "valid_mdb_def"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (rule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (subst is_untyped_cap_eqD)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (rule mdb_cte_atD)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule mdb_cte_atD)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (rule not_idle_thread_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule not_idle_thread_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (drule not_idle_thread_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (frule not_idle_thread_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (unfold not_idle_thread_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (rule revokable_cap_insert_dest_original)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule revokable_cap_insert_dest_original)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (drule revokable_cap_insert_dest_original)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (frule revokable_cap_insert_dest_original)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (subst revokable_cap_insert_dest_original)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (rule swp_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule swp_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (drule swp_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (frule swp_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (rule valid_mdb_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (erule valid_mdb_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (drule valid_mdb_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (frule valid_mdb_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  },
+  {
+   "action": "apply (unfold valid_mdb_def)",
+   "ok": false,
+   "obs": "FAILED: goal (145 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 23244.0
+}

@@ -1,0 +1,30 @@
+{
+ "lemma": "SAC_partsSubjectAffects_exceptT",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "NO-PATH",
+ "orig_ms": 7083.9,
+ "rounds": [],
+ "target": "apply ((erule disjE, clarify, simp add:SAC_affects SAC_reads, blast?)+, simp add:SAC_affects SAC_reads, blast?)+",
+ "B_sig": [
+  "1. x \\<noteq> T \\<Longrightarrow> partsSubjectAffects SACAuthGraph x \\<subseteq> SACFlowDoms"
+ ],
+ "facts": [
+  "SAC_affects",
+  "SAC_reads",
+  "SAC_reads(1)",
+  "SAC_reads(2)",
+  "SAC_reads(3)",
+  "SAC_reads(4)",
+  "SAC_reads(5)",
+  "SAC_reads(6)",
+  "SAC_reads(7)",
+  "ccfv_threshold",
+  "insert_commute",
+  "insert_subset",
+  "subjectAffects.affects_lrefl",
+  "subset_insertI",
+  "verit"
+ ]
+}

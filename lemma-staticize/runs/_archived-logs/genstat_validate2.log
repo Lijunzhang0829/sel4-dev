@@ -1,0 +1,29 @@
+[genstat-stateful] sep_heap_domD @ proof/capDL-api/RWHelper_DP.thy
+[init ok]
+[reached sep_heap_domD]
+== target: by (fastforce simp:sep_heap_dom_def)
+   A_goal: p \<notin> dom (sep_heap s)
+   B: close the goal (0 subgoals)
+  step 0: 19.0s -> ['apply (simp only: sep_heap_dom_def)', 'apply assumption']
+  step 0: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 1: 75.1s -> ['apply (drule spec[where x=s])', 'apply (drule (1) mp)', 'apply (erule subst, assumption)']
+  step 1: FAILED `apply (drule spec[where x=s])` failed: failed for prove the goal using the tact
+  step 2: 61.6s -> ['apply (unfold sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)']
+  step 2: OK -> 1 subgoal(s); applied=['apply (unfold sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)']
+  step 3: 17.0s -> ['apply assumption']
+  step 3: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 4: 310.9s -> ['apply (simp only: sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)']
+  step 4: OK -> 1 subgoal(s); applied=['apply (unfold sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)', 'apply (simp only: sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)']
+  step 5: 13.0s -> ['apply assumption']
+  step 5: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 6: 335.9s -> ['apply (simp only: sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)']
+  step 7: 307.8s -> ['apply (simp only: domIff not_not)', 'apply assumption']
+  step 7: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 8: 401.0s -> []
+  step 9: 292.3s -> ['apply (unfold sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)']
+  step 9: OK -> 1 subgoal(s); applied=['apply (unfold sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)', 'apply (simp only: sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)', 'apply (unfold sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)']
+  step 10: 9.5s -> ['apply assumption']
+  step 10: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 11: 207.7s -> ['apply (unfold sep_heap_dom_def)', 'apply (drule spec[where x=s])', 'apply (drule (1) mp)']
+  step 12: 119.1s -> ['apply (drule spec[where x=p])', 'apply assumption']
+  step 12: FAILED `apply (drule spec[where x=p])` failed: failed for prove the goal using the tact

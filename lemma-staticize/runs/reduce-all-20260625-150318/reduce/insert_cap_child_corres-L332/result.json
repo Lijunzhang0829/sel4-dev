@@ -1,0 +1,125 @@
+{
+ "lemma": "insert_cap_child_corres",
+ "thy": "/sel4-project/verification/l4v/proof/drefine/CNode_DR.thy",
+ "session": "DRefine",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 22818.0,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (simp only: valid_mdb_def not_idle_thread_def cte_wp_at_caps_of_state)",
+    "apply (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI; auto dest: mdb_cte_atD is_untyped_cap_eqD simp: swp_def)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: valid_mdb_def not_idle_thread_def cte_wp_at_caps_of_state)` failed: failed for prove the goal using the tactic `apply (simp only: valid_mdb_def not_idle_thread_def cte_wp_at_caps_of",
+   "gen_secs": 32.0,
+   "claude_secs": 31.7
+  },
+  {
+   "round": 1,
+   "variant": [
+    "by (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI; clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def; auto dest: mdb_cte_atD is_untyped_cap_eqD)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 18487.6,
+   "saved_ms": 4330.4,
+   "faster": true,
+   "gen_secs": 29.5,
+   "claude_secs": 29.1
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI)",
+    "apply (clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)",
+    "apply (auto dest: mdb_cte_atD is_untyped_cap_eqD)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (53 subgoals):\n 1. \\<And>s' capa a b aa ba. \\<lbrakk>should_be_parent_of capa (is_original_cap s",
+   "gen_secs": 41.1,
+   "claude_secs": 40.6
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI; clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def; auto dest: mdb_cte_atD is_untyped_cap_eqD)",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 18909.7,
+   "saved_ms": 3908.3,
+   "faster": true,
+   "gen_secs": 60.0,
+   "claude_secs": 59.8
+  },
+  {
+   "round": 4,
+   "variant": [
+    "by (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI;"
+   ],
+   "outcome": "FAILED",
+   "diag": "`by (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI;` failed: failed for prove the goal using the tactic `by (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI;`. Get msg: Outer syntax error (line ",
+   "gen_secs": 137.1,
+   "claude_secs": 136.9
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI)",
+    "apply (clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)",
+    "apply (auto dest: mdb_cte_atD is_untyped_cap_eqD)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (53 subgoals):\n 1. \\<And>s' capa a b aa ba. \\<lbrakk>should_be_parent_of capa (is_original_cap s",
+   "gen_secs": 63.0,
+   "claude_secs": 62.3
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply (case_tac \"cdt s' child\")",
+    "apply (safe intro!: mdb_cte_atI)",
+    "apply (clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)",
+    "apply (auto dest: mdb_cte_atD is_untyped_cap_eqD)"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 10,
+   "gen_secs": 22.5,
+   "claude_secs": 22.1
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply clarsimp",
+    "by (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI; auto dest: mdb_cte_atD is_untyped_cap_eqD simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<And>s' capa. \\<lbrakk>should_be_parent_of ",
+   "gen_secs": 42.5,
+   "claude_secs": 42.0
+  }
+ ],
+ "target": "by (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI; auto dest: mdb_cte_atD is_untyped_cap_eqD simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)",
+ "B_sig": [],
+ "facts": [
+  "cte_wp_at_caps_of_state",
+  "is_untyped_cap_eqD",
+  "mdb_cte_atD",
+  "mdb_cte_atI",
+  "not_idle_thread_def",
+  "swp_def",
+  "valid_mdb_def"
+ ],
+ "path": [
+  "by (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI; clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def; auto dest: mdb_cte_atD is_untyped_cap_eqD)"
+ ],
+ "variant_ms": 18487.6,
+ "saved_ms": 4330.4,
+ "frac_saved": 0.19,
+ "accelerated": true
+}

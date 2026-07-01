@@ -1,0 +1,6 @@
+[orig]    subgoal by (simp add: cap_frame_cap_lift_def cap_lift_def cap_tag_defs mask_def word_bw_assocs)
+[variant] subgoal by (simp add: cap_frame_cap_lift_def cap_lift_def cap_tag_defs mask_def word_bw_assocs del: ctes_of_not_0)
+[orig result] {"green": true, "wall": 958.7, "line_ms": 135.398, "theory_ms": 1505.1, "err": ""}
+[variant result] {"green": true, "wall": 876.2, "line_ms": 125.441, "theory_ms": 1367.6, "err": ""}
+[SUMMARY] {"line": 2408, "modifier": "del: ctes_of_not_0", "orig": {"green": true, "wall": 958.7, "line_ms": 135.398, "theory_ms": 1505.1, "err": ""}, "variant": {"green": true, "wall": 876.2, "line_ms": 125.441, "theory_ms": 1367.6, "err": ""}, "line_speedup_pct": 7.4}
+EXIT=0

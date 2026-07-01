@@ -1,0 +1,23 @@
+[init ok]
+[reached requiv_device_mem_eq]
+== target: apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_ca
+   orig_ms=2807  B: leave EXACTLY these 2 subgoal(s):
+1. \<And>sz. \<lbrakk>globals_equiv 
+  round 0: gen=22.5s (claude 22.1s) -> ['apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)', 'apply (intro typ_at_device_data_at | fastforce)+']
+  round 0: WRONG-STATE (5 subgoals)
+  round 1: gen=82.6s (claude 82.5s) -> ['apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)', 'apply (fastforce | intro typ_at_device_data_at)+']
+  round 1: WRONG-STATE (5 subgoals)
+  round 2: gen=134.2s (claude 133.5s) -> ['apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)', 'apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_device_data_at)+']
+  round 2: REACH-B variant_ms=4826 orig_ms=2807 saved=-2018.8 faster=False
+  round 3: gen=34.0s (claude 33.6s) -> ['apply (intro typ_at_device_data_at | fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)+']
+  round 3: REACH-B variant_ms=1374 orig_ms=2807 saved=1433.0 faster=True
+  round 4: gen=33.5s (claude 32.9s) -> ['apply (intro typ_at_device_data_at | fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)+']
+  round 4: REACH-B variant_ms=1361 orig_ms=2807 saved=1446.5 faster=True
+  round 5: gen=28.5s (claude 28.1s) -> ['apply (clarsimp simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_device_data_at)+']
+  round 5: WRONG-STATE (7 subgoals)
+  round 6: gen=43.6s (claude 43.2s) -> ['apply (fastforce simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_device_data_at)+']
+  round 6: WRONG-STATE (3 subgoals)
+  round 7: gen=125.2s (claude 124.9s) -> ['apply (simp only: reads_equiv_def2)', 'apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_device_data_at)+']
+  round 7: REACH-B variant_ms=2706 orig_ms=2807 saved=101.4 faster=False
+[WIN] 2807ms -> 1361ms  saved=1446.5ms (52%)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-requiv_device_mem_eq-P25901.json  verdict=FASTER

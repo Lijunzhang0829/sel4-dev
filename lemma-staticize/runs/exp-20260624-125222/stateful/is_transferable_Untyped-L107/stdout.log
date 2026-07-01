@@ -1,0 +1,14 @@
+[genstat-stateful] is_transferable_Untyped @ proof/access-control/Access_AC.thy
+[init ok]
+[reached is_transferable_Untyped]
+== target: by (blast elim: is_transferable.cases)
+   A_goal: \<not> is_transferable_cap (UntypedCap dev ptr sz freeIndex)
+   B: close the goal (0 subgoals)
+  step 0: gen=15.0s (claude 14.5s) -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 0: OK -> 2 subgoal(s); applied=['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 1: gen=9.5s (claude 8.8s) -> ['apply assumption', 'apply (simp only: cap.distinct option.distinct)+', 'apply (simp only: cap.simps option.simps)', 'apply (simp only: cap.distinct option.distinct)']
+  step 1: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 2: gen=42.5s (claude 42.2s) -> ['apply (simp only: option.inject cap.distinct)+']
+  step 2: OK -> 0 subgoal(s); applied=['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+', 'apply (simp only: option.inject cap.distinct)+']
+[speed] orig=13ms static=44ms saved=-31ms accel=False
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-is_transferable_Untyped-P25800.json  verdict=REACHED-B

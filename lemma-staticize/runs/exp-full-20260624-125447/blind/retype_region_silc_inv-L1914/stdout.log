@@ -1,0 +1,5 @@
+[genstat-stateful] retype_region_silc_inv @ proof/infoflow/FinalCaps.thy
+[init ok]
+[reached retype_region_silc_inv]
+[no target classical line]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-retype_region_silc_inv-P25808.json  verdict=NO-TARGET

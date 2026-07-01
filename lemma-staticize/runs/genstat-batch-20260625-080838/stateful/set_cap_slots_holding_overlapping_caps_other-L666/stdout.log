@@ -1,0 +1,9 @@
+[genstat-stateful] set_cap_slots_holding_overlapping_caps_other @ proof/infoflow/FinalCaps.thy
+[init ok]
+[reached set_cap_slots_holding_overlapping_caps_other]
+== target: apply (fastforce simp: get_cap_def get_object_def bind_def split_def g
+   A_goal: (\<forall>xb xc. ko = CNode xb xc \<longrightarrow> xaa \<in> dom xc \<and> well_formed_cnode_n xb xc \<longrightarrow> 
+   B: reach EXACTLY this 1-subgoal state:
+1. \<And>s xa xaa ko. \<lbrakk>x \<in> slots
+  step 0: gen=511.6s (claude 340.6s) -> ['apply (simp only: get_cap_def get_object_def bind_def split_def gets_def get_def return_def assert_def assert_opt_def fail_def split: kernel_object.splits if_splits option.splits)']
+  step 0: OK -> 2 subgoal(s); applied=['apply (simp only: get_cap_def get_object_def bind_def split_def gets_def get_def return_def assert_def assert_opt_def fail_def split: kernel_object.splits if_splits option.splits)']

@@ -1,0 +1,9 @@
+[genstat-stateful] retype_region_silc_inv @ proof/infoflow/FinalCaps.thy
+[init ok]
+[reached retype_region_silc_inv]
+== target: by (fastforce elim: cte_wp_atE intro: cte_wp_at_cteI cte_wp_at_tcbI)
+   A_goal: cte_wp_at ((=) cap_) (a_, b_) s_
+   B: reach EXACTLY this 1-subgoal state:
+1. \<And>s a b cap. \<lbrakk>range_cover ptr
+  step 0: gen=47.1s (claude 46.5s) -> ['apply (rule cte_wp_at_cteI)', 'apply assumption']
+  step 0: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass

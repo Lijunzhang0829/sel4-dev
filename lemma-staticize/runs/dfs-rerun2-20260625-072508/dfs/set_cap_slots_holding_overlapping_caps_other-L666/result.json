@@ -1,0 +1,736 @@
+{
+ "lemma": "set_cap_slots_holding_overlapping_caps_other",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/FinalCaps.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (fastforce simp: get_cap_def get_object_def bind_def split_def gets_def get_def return_def assert_def assert_opt_def fail_def split: kernel_object.splits if_splits option.splits)",
+ "B_sig": [
+  "1. \\<And>s xa xaa ko. \\<lbrakk>x \\<in> slots_holding_overlapping_caps capa s; pasObjectAbs aag (fst x) \\<noteq> pasObjectAbs aag xa; slot = (xa, xaa); ko_at ko xa s; \\<not> (obj_refs capa = {} \\<and> cap_irqs capa = {})\\<rbrakk> \\<Longrightarrow> (\\<forall>xb xc. ko = CNode xb xc \\<longrightarrow> xaa \\<in> dom xc \\<and> well_formed_cnode_n xb xc \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> CNode xb (\\<lambda>a. if a = xaa then Some cap else xc a))\\<rparr>)) \\<and> (\\<forall>xb. ko = TCB xb \\<longrightarrow> (xaa = tcb_cnode_index 0 \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> TCB (xb\\<lparr>tcb_ctable := cap\\<rparr>))\\<rparr>)) \\<and> (xaa \\<noteq> tcb_cnode_index 0 \\<longrightarrow> (xaa = tcb_cnode_index (Suc 0) \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> TCB (xb\\<lparr>tcb_vtable := cap\\<rparr>))\\<rparr>)) \\<and> (xaa \\<noteq> tcb_cnode_index (Suc 0) \\<longrightarrow> (xaa = tcb_cnode_index 2 \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> TCB (xb\\<lparr>tcb_reply := cap\\<rparr>))\\<rparr>)) \\<and> (xaa \\<noteq> tcb_cnode_index 2 \\<longrightarrow> (xaa = tcb_cnode_index 3 \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> TCB (xb\\<lparr>tcb_caller := cap\\<rparr>))\\<rparr>)) \\<and> (xaa \\<noteq> tcb_cnode_index 3 \\<longrightarrow> xaa = tcb_cnode_index 4 \\<longrightarrow> x \\<in> slots_holding_overlapping_caps capa (s\\<lparr>kheap := (kheap s)(xa \\<mapsto> TCB (xb\\<lparr>tcb_ipcframe := cap\\<rparr>))\\<rparr>))))))"
+ ],
+ "facts": [
+  "assert_def",
+  "assert_opt_def",
+  "bind_def",
+  "fail_def",
+  "get_cap_def",
+  "get_def",
+  "get_object_def",
+  "gets_def",
+  "if_splits",
+  "kernel_object.splits",
+  "option.splits",
+  "return_def",
+  "split_def"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": true,
+   "obs": "[3sg] 1. \\<And>s xa xaa ko cap'. \\<lbrakk>pasObjectAbs aag (fst x) \\<noteq> pasObjectAbs aag xa; slot = (xa, xaa); ko_at ko xa s; obj_refs capa = {}; cap_irqs capa = {}; fst (get_cap x s) = {(cap', s)}; arc"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s xa xaa ko cap'. \\<lbrakk>slot = (xa, xaa); ko_at ko xa s; obj_refs capa = {}; cap_irqs capa = {}; fst (get_cap x s) = {(cap', s)}; arch_gen_refs capa \\<inter> arch_gen_refs cap' \\<noteq> {}"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule get_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule get_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule get_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule get_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold get_cap_def)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s xa xaa ko cap'. \\<lbrakk>pasObjectAbs aag (fst x) \\<noteq> pasObjectAbs aag xa; slot = (xa, xaa); ko_at ko xa s; obj_refs capa = {}; cap_irqs capa = {}; fst ((case x of (oref, cref) \\<Right"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: fail_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule get_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule get_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule get_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule get_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule get_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule get_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule get_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule get_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold get_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: get_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule get_object_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule get_object_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule get_object_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule get_object_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold get_object_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: get_object_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule gets_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule gets_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule gets_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule gets_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold gets_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: gets_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule if_splits)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule if_splits)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule if_splits)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule if_splits)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst if_splits)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s xa xaa ko cap'. \\<lbrakk>pasObjectAbs aag (fst x) \\<noteq> pasObjectAbs aag xa; slot = (xa, xaa); ko_at ko xa s; obj_refs capa = {}; cap_irqs capa = {}; fst (get_cap x s) = {(cap', s)}; arc"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: assert_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: assert_opt_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: bind_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 71972.9
+}

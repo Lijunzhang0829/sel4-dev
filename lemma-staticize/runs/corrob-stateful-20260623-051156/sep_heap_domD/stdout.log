@@ -1,0 +1,11 @@
+[genstat-stateful] sep_heap_domD @ proof/capDL-api/RWHelper_DP.thy
+[init ok]
+[reached sep_heap_domD]
+== target: by (fastforce simp:sep_heap_dom_def)
+   A_goal: p \<notin> dom (sep_heap s)
+   B: close the goal (0 subgoals)
+  step 0: 33.5s -> ['apply (simp only: sep_heap_dom_def)', 'apply assumption']
+  step 0: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 1: 229.2s -> ['apply (simp only: sep_heap_dom_def)', 'apply (rule notI)', 'apply assumption']
+  step 1: OK -> 0 subgoal(s); applied=['apply (simp only: sep_heap_dom_def)', 'apply (rule notI)', 'apply assumption']
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-sep_heap_domD.json  verdict=REACHED-B

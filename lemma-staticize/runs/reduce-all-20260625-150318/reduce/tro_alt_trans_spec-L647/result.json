@@ -1,0 +1,10 @@
+{
+ "lemma": "tro_alt_trans_spec",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/Access_AC.thy",
+ "session": "Access",
+ "mode": "reduce",
+ "verdict": "ERROR",
+ "orig_ms": null,
+ "rounds": [],
+ "error": "An error occurred while calling t._step_without_timeout"
+}

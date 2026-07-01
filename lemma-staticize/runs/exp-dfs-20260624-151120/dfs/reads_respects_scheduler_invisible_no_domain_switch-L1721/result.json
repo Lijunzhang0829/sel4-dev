@@ -1,0 +1,631 @@
+{
+ "lemma": "reads_respects_scheduler_invisible_no_domain_switch",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/Scheduler_IF.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "by (safe; (fastforce simp: switch_thread_runnable | fastforce dest!: switch_to_cur_domain cur_thread_cur_domain | fastforce simp: st_tcb_at_def obj_at_def))+",
+ "B_sig": [],
+ "facts": [
+  "cur_thread_cur_domain",
+  "obj_at_def",
+  "st_tcb_at_def",
+  "switch_thread_runnable",
+  "switch_to_cur_domain"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": true,
+   "obs": "[3sg] 1. \\<And>st s sta. \\<lbrakk>pas_refined aag s; invs s; valid_sched s; guarded_pas_domain aag s; domain_time s \\<noteq> 0; pasDomainAbs aag (cur_domain s) \\<inter> reads_scheduler aag l = {}; scheduler"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>st s sta. \\<lbrakk>pas_refined aag s; invs s; valid_sched s; guarded_pas_domain aag s; pasDomainAbs aag (cur_domain s) \\<inter> reads_scheduler aag l = {}; scheduler_equiv aag st s; scheduler"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold st_tcb_at_def)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>st s sta. \\<lbrakk>pas_refined aag s; invs s; valid_sched s; guarded_pas_domain aag s; domain_time s \\<noteq> 0; pasDomainAbs aag (cur_domain s) \\<inter> reads_scheduler aag l = {}; scheduler"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule switch_thread_runnable)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule switch_thread_runnable)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule switch_thread_runnable)",
+   "ok": true,
+   "obs": "[3sg] 1. \\<And>st s sta. \\<lbrakk>pas_refined aag s; invs s; guarded_pas_domain aag s; domain_time s \\<noteq> 0; pasDomainAbs aag (cur_domain s) \\<inter> reads_scheduler aag l = {}; scheduler_equiv aag st s"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule switch_thread_runnable)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule switch_thread_runnable)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule switch_thread_runnable)",
+   "ok": true,
+   "obs": "[3sg] 1. \\<And>st s sta. \\<lbrakk>pas_refined aag s; invs s; valid_sched s; guarded_pas_domain aag s; domain_time s \\<noteq> 0; pasDomainAbs aag (cur_domain s) \\<inter> reads_scheduler aag l = {}; scheduler"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: obj_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule st_tcb_at_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule switch_thread_runnable)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule switch_thread_runnable)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst switch_thread_runnable)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>st s sta x. \\<lbrakk>pas_refined aag s; invs s; valid_sched s; guarded_pas_domain aag s; domain_time s \\<noteq> 0; pasDomainAbs aag (cur_domain s) \\<inter> reads_scheduler aag l = {}; schedul"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule cur_thread_cur_domain)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 169085.6
+}

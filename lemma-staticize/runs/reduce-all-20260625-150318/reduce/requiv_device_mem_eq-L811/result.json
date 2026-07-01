@@ -1,0 +1,120 @@
+{
+ "lemma": "requiv_device_mem_eq",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/ArchUserOp_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 2807.4,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)",
+    "apply (intro typ_at_device_data_at | fastforce)+"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 5,
+   "gen_secs": 22.5,
+   "claude_secs": 22.1
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)",
+    "apply (fastforce | intro typ_at_device_data_at)+"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 5,
+   "gen_secs": 82.6,
+   "claude_secs": 82.5
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)",
+    "apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_device_data_at)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 4826.2,
+   "saved_ms": -2018.8,
+   "faster": false,
+   "gen_secs": 134.2,
+   "claude_secs": 133.5
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply (intro typ_at_device_data_at | fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 1374.4,
+   "saved_ms": 1433.0,
+   "faster": true,
+   "gen_secs": 34.0,
+   "claude_secs": 33.6
+  },
+  {
+   "round": 4,
+   "variant": [
+    "apply (intro typ_at_device_data_at | fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 1360.9,
+   "saved_ms": 1446.5,
+   "faster": true,
+   "gen_secs": 33.5,
+   "claude_secs": 32.9
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (clarsimp simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_device_data_at)+"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 7,
+   "gen_secs": 28.5,
+   "claude_secs": 28.1
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply (fastforce simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_device_data_at)+"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 3,
+   "gen_secs": 43.6,
+   "claude_secs": 43.2
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (simp only: reads_equiv_def2)",
+    "apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_device_data_at)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 2706.0,
+   "saved_ms": 101.4,
+   "faster": false,
+   "gen_secs": 125.2,
+   "claude_secs": 124.9
+  }
+ ],
+ "target": "apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_device_data_at)+",
+ "B_sig": [
+  "1. \\<And>sz. \\<lbrakk>globals_equiv s s'; invs s; invs s'; \\<forall>x\\<in>ran (kheap s). obj_valid_pdpt x; \\<forall>x\\<in>ran (kheap s'). obj_valid_pdpt x; is_subject aag (cur_thread s'); AllowRead \\<in> ptable_rights_s s x; ptable_lift_s s x = Some y; pas_refined aag s; pas_refined aag s'; equiv_for (aag_can_read aag) kheap s s'; equiv_for (aag_can_read aag \\<circ> fst) cdt s s'; equiv_for (aag_can_read aag \\<circ> fst) cdt_list s s'; equiv_for (aag_can_read aag) ekheap s s'; equiv_for (aag_can_read aag \\<circ> fst) is_original_cap s s'; equiv_for (aag_can_read_irq aag) interrupt_states s s'; equiv_for (aag_can_read_irq aag) interrupt_irq_node s s'; equiv_asids (aag_can_read_asid aag) s s'; equiv_for (aag_can_read_domain aag) ready_queues s s'; cur_thread s = cur_thread s'; cur_domain s = cur_domain s'; scheduler_action s = scheduler_action s'; work_units_completed s = work_units_completed s'; equiv_irq_state (machine_state s) (machine_state s'); equiv_for (aag_can_read aag) device_state (machine_state s) (machine_state s'); typ_at (AArch (ADeviceData sz)) (ptrFromPAddr y && ~~ mask (pageBitsForSize sz)) s; \\<And>x. aag_can_read aag x \\<Longrightarrow> underlying_memory (machine_state s) x = underlying_memory (machine_state s') x; (pasObjectAbs aag (cur_thread s'), Read, pasObjectAbs aag (ptrFromPAddr (y && ~~ mask (pageBitsForSize sz)))) \\<in> pasPolicy aag\\<rbrakk> \\<Longrightarrow> aag_can_read aag (ptrFromPAddr y && ~~ mask (pageBitsForSize sz))",
+  "2. \\<lbrakk>reads_equiv aag s s'; globals_equiv s s'; invs s; invs s'; \\<forall>x\\<in>ran (kheap s). obj_valid_pdpt x; \\<forall>x\\<in>ran (kheap s'). obj_valid_pdpt x; is_subject aag (cur_thread s); AllowRead \\<in> ptable_rights_s s x; ptable_lift_s s x = Some y; pas_refined aag s; pas_refined aag s'\\<rbrakk> \\<Longrightarrow> \\<not> in_device_frame (ptrFromPAddr y) s \\<longrightarrow> \\<not> in_device_frame (ptrFromPAddr y) s'"
+ ],
+ "facts": [
+  "ptable_lift_s_def",
+  "ptable_rights_s_def",
+  "typ_at_device_data_at",
+  "vspace_cap_rights_to_auth_def"
+ ],
+ "path": [
+  "apply (intro typ_at_device_data_at | fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)+"
+ ],
+ "variant_ms": 1360.9,
+ "saved_ms": 1446.5,
+ "frac_saved": 0.515,
+ "accelerated": true
+}

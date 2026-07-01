@@ -1,0 +1,8 @@
+Loading theory "Draft.iso_simp_plain"
+### theory "Draft.iso_simp_plain"
+### 0.106s elapsed time, 0.144s cpu time, 0.037s GC time
+*** Failed to finish proof (line 5 of "/workspace/lemma-staticize/isa-repl/profiler/iso_simp_plain.thy"):
+*** goal (1 subgoal):
+***  1. \<Sum> {0..<700} = 244650
+*** At command "by" (line 5 of "/workspace/lemma-staticize/isa-repl/profiler/iso_simp_plain.thy")
+Exception- TOPLEVEL_ERROR raised

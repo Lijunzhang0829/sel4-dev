@@ -1,0 +1,4 @@
+Loading theory "Draft.iso_simpok_plain"
+### theory "Draft.iso_simpok_plain"
+### 0.162s elapsed time, 0.210s cpu time, 0.077s GC time
+val it = (): unit

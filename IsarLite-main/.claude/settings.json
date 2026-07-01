@@ -1,0 +1,16 @@
+{
+    "permissions": {
+        "allow": [
+            "Read(/refs/**)",
+            "Read(~/.isabelle/**)",
+            "Bash(python ./lab/*)",
+            "Bash(/refs/Isabelle*/**/isabelle getenv *)",
+            "Bash(/refs/Isabelle*/**/poly)"
+        ],
+        "deny": [
+            "Write(/refs/**)",
+            "Bash(python -c *)",
+            "Bash(python3 -c *)"
+        ]
+    }
+}

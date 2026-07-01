@@ -1,0 +1,19 @@
+[genstat-stateful] is_transferable_Endpoint @ proof/access-control/Access_AC.thy
+[init ok]
+[reached is_transferable_Endpoint]
+== target: by (blast elim: is_transferable.cases)
+   A_goal: \<not> is_transferable_cap (EndpointCap ntfn badge R)
+   B: close the goal (0 subgoals)
+  step 0: 9.5s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 0: OK -> 2 subgoal(s); applied=['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 1: 13.0s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 1: REPEAT-CHUNK (work already done)
+  step 2: 89.6s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 2: REPEAT-CHUNK (work already done)
+  step 3: 37.5s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 3: REPEAT-CHUNK (work already done)
+  step 4: 76.1s -> ['apply (rule notI; erule is_transferable.cases; (simp only: cap.distinct option.distinct)+)']
+  step 4: FAILED `apply (rule notI; erule is_transferable.cases; (simp only: cap.distinct option.
+  step 5: 283.4s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.simps option.simps)+']
+  step 5: OK -> 0 subgoal(s); applied=['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+', 'apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.simps option.simps)+']
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-is_transferable_Endpoint.json  verdict=REACHED-B

@@ -1,0 +1,6 @@
+[genstat-stateful] rm_reads @ proof/infoflow/PolicySystemSAC.thy
+[init ok]
+[reached rm_reads]
+== target: by (simp, blast?)+
+   A_goal: l' \<in> {partition_label NicB, partition_label RM, partition_label R, partition_label NicA, partition_label NicD, parti
+   B: close the goal (0 subgoals)

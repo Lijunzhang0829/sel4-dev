@@ -1,0 +1,8 @@
+[init ok]
+[reached dmo_setExMonitor_reads_respects_g]
+== target: apply (auto simp: reads_equiv_g_def reads_equiv_def affects_equiv_def 
+   orig_ms=10268  B: close the goal (0 subgoals)
+  round 0: gen=43.5s (claude 43.0s) -> ['apply clarsimp', 'apply (auto simp: reads_equiv_g_def reads_equiv_def affects_equiv_def states_equiv_for_def equiv_for_def equiv_asids_def equiv_asid_def globals_equiv_def idle_equiv_def split: if_splits)', 'done']
+  round 0: REACH-B variant_ms=31589 orig_ms=10268 saved=-21321.5 faster=False
+  round 1: gen=43.5s (claude 43.0s) -> []
+  round 2: gen=49.5s (claude 49.2s) -> ['apply (simp only: reads_equiv_g_def reads_equiv_def affects_equiv_def states_equiv_for_def equiv_for_def equiv_asids_def equiv_asid_def globals_equiv_def idle_equiv_def)', 'apply (fastforce split: if_splits)']

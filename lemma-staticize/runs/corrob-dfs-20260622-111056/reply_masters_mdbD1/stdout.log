@@ -1,0 +1,11 @@
+[init ok]
+[reached reply_masters_mdbD1]
+== target line 0: by (fastforce simp:reply_masters_mdb_def simp del:split_paired_All)
+   facts: ['reply_masters_mdb_def', 'split_paired_All']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold reply_masters_mdb_def)  [1sg] 1. \<lbrakk>\<forall>ptr t rights. cs ptr = Some (Reply
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ✓✓ apply (simp only: reply_masters_mdb_def)  -> CLOSES
+
+[result] verdict=PATH-FOUND  path=['apply (unfold reply_masters_mdb_def)', 'apply (simp only: reply_masters_mdb_def)']
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-reply_masters_mdbD1.json
