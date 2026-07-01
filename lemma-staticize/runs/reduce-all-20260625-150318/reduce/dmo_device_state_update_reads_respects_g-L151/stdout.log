@@ -1,0 +1,4 @@
+[init ok]
+[reached dmo_device_state_update_reads_respects_g]
+[error] 
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-dmo_device_state_update_reads_respects_g-P25918.json  verdict=ERROR

@@ -1,0 +1,8 @@
+[init ok]
+[reached set_cap_slots_holding_overlapping_caps_other]
+== target: apply (fastforce simp: get_cap_def get_object_def bind_def split_def g
+   orig_ms=42449  B: leave EXACTLY these 1 subgoal(s):
+1. \<And>s xa xaa ko. \<lbrakk>x \<i
+  round 0: gen=68.6s (claude 68.2s) -> ['apply clarsimp', 'apply (fastforce simp: get_cap_def get_object_def bind_def split_def gets_def get_def return_def assert_def assert_opt_def fail_def split: kernel_object.splits if_splits option.splits)']
+  round 0: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+  round 1: gen=90.1s (claude 89.3s) -> ['apply (simp only: get_cap_def get_object_def bind_def split_def gets_def get_def return_def assert_def assert_opt_def fail_def split: option.splits kernel_object.splits)', 'apply (fastforce split: if_splits)']

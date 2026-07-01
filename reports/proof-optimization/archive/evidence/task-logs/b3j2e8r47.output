@@ -1,0 +1,16 @@
+START 17:00:53
+[profile] lemma=empty_slot_CONTROL session=Access CONTROL(no-profile)
+[profile] file=/workspace/verification/l4v/proof/access-control/CNode_AC.thy
+[profile] proof lines 1103-1105:
+    ORIG:   by (fastforce dest: all_childrenD is_transferable_all_children
+                      pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable]
+                      pas_refined_Control)
+[profile] patched theory: /tmp/prof_lm8rxag2/Tmp_prof_32de86db5017.thy
+[profile] running: isabelle process -l Access -T Tmp_prof_32de86db5017
+[profile] TIMEOUT after 850s
+[profile] raw output -> /workspace/tools/seL4-proof-search/Isa-Repl/profiler/raw-empty_slot_CONTROL.out  (0 @@PROF lines)
+NO PROFILE DATA FOUND.
+(check that the tactic ran under time_profile and tracing was captured)
+
+
+END 17:15:04 — elapsed 851s

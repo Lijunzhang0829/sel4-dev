@@ -1,0 +1,20 @@
+[profile] lemma=empty_slot_pas_refined session=Access
+[profile] file=/workspace/verification/l4v/proof/access-control/CNode_AC.thy
+[profile] wrapping lines 1103-1105:
+    ORIG:   by (fastforce dest: all_childrenD is_transferable_all_children
+                      pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable]
+                      pas_refined_Control)
+    WRAP:   by (time_profile ‹(fastforce dest: all_childrenD is_transferable_all_children
+                      pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable]
+                      pas_ref
+[profile] patched theory: /tmp/prof_hcqpwlyn/Tmp_prof_d4407a4c91ac.thy
+[profile] running: isabelle process -l Access -T Tmp_prof_d4407a4c91ac
+[profile] raw output -> /workspace/tools/seL4-proof-search/Isa-Repl/profiler/raw-empty_slot_pas_refined.out  (0 @@PROF lines)
+NO PROFILE DATA FOUND.
+(check that the tactic ran under time_profile and tracing was captured)
+
+
+[profile] build *** lines:
+*** Malformed command syntax
+*** At command "<malformed>" (line 1124 of "/tmp/prof_hcqpwlyn/Tmp_prof_d4407a4c91ac.thy")
+

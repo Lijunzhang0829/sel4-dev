@@ -1,0 +1,20 @@
+[init ok]
+[reached Sys1AgentMap_simps]
+== target line 2: by (auto simp: s0_ptr_defs ptr_range_def pageBits_def)
+   facts: ['pageBits_def', 'ptr_range_def', 's0_ptr_defs']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule impI)  [1sg] 1. \<And>p. \<lbrakk>p \<in> ptr_range shared_page_ptr_
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold pageBits_def)  [1sg] 1. \<And>p. p \<in> ptr_range shared_page_ptr_virt 12 \
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold ptr_range_def)  [1sg] 1. \<And>p. p \<in> {shared_page_ptr_virt..shared_page_
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst s0_ptr_defs)  [1sg] 1. \<And>p. p \<in> ptr_range shared_page_ptr_virt page
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+    ↩ backtrack
+    ↩ backtrack
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-Sys1AgentMap_simps-P25836.json

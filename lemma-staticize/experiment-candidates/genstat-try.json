@@ -1,0 +1,38 @@
+{
+ "cases": [
+  {
+   "lemma": "decode_cnode_invocation_rev",
+   "thy": "proof/infoflow/Decode_IF.thy",
+   "session": "InfoFlow",
+   "proof_line": 73,
+   "tactic": "auto",
+   "cpu_s": 10.69,
+   "file_lines": 403,
+   "enc_cmd": "lemma",
+   "init_able": true,
+   "feasible": true,
+   "work_suspect": false,
+   "n_simp_defs": 0,
+   "hot_line": " apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subj",
+   "lemma_search_lines": 1,
+   "lemma_search_cpu": 10.69
+  },
+  {
+   "lemma": "blocked_cancel_ipc_invs",
+   "thy": "proof/invariant-abstract/IpcCancel_AI.thy",
+   "session": "AInvs",
+   "proof_line": 369,
+   "tactic": "auto",
+   "cpu_s": 116.79,
+   "file_lines": 1220,
+   "enc_cmd": "lemma",
+   "init_able": true,
+   "feasible": true,
+   "work_suspect": false,
+   "n_simp_defs": 1,
+   "hot_line": " apply (auto elim!: delta_sym_refs pred_tcb_weaken_strongerE simp: obj_at_def is_ep_def2 idle_not_qu",
+   "lemma_search_lines": 1,
+   "lemma_search_cpu": 116.79
+  }
+ ]
+}

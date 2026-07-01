@@ -1,0 +1,10 @@
+{
+ "lemma": "decode_untyped_invocation_authorised",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/Retype_AC.thy",
+ "session": "Access",
+ "mode": "reduce",
+ "verdict": "ERROR",
+ "orig_ms": null,
+ "rounds": [],
+ "error": ""
+}

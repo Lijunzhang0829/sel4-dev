@@ -1,0 +1,123 @@
+{
+ "lemma": "cap_swap_silc_inv",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/FinalCaps.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 22001.6,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "by (clarsimp simp: all_children_def simp del: split_paired_All | fastforce simp: all_children_def simp del: split_paired_All)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 8970.7,
+   "saved_ms": 13030.9,
+   "faster": true,
+   "gen_secs": 27.1,
+   "claude_secs": 26.1
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply (clarsimp simp: all_children_def simp del: split_paired_All)",
+    "by (fastforce simp del: split_paired_All)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`by (fastforce simp del: split_paired_All)` failed: failed for prove the goal using the tactic `by (fastforce simp del: split_paired_All)`. Get msg: Failed to finish proof (line 1):\ngoal (11 subgoals)",
+   "gen_secs": 23.0,
+   "claude_secs": 22.5
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (clarsimp simp: all_children_def simp del: split_paired_All)",
+    "by (fastforce simp: all_children_def simp del: split_paired_All | simp add: all_children_def del: split_paired_All)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 8899.9,
+   "saved_ms": 13101.7,
+   "faster": true,
+   "gen_secs": 23.0,
+   "claude_secs": 22.4
+  },
+  {
+   "round": 3,
+   "variant": [
+    "by (clarsimp simp: all_children_def simp del: split_paired_All | fastforce simp: all_children_def simp del: split_paired_All)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 8908.5,
+   "saved_ms": 13093.1,
+   "faster": true,
+   "gen_secs": 28.0,
+   "claude_secs": 27.5
+  },
+  {
+   "round": 4,
+   "variant": [
+    "by (clarsimp simp: all_children_def simp del: split_paired_All | fastforce simp del: split_paired_All)+",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Bad context for command \"done\" (line 1)\nAt command \"done\" (line 1)",
+   "gen_secs": 38.6,
+   "claude_secs": 38.3
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (clarsimp simp del: split_paired_All)",
+    "apply (fastforce simp: all_children_def simp del: split_paired_All | simp add: all_children_def del: split_paired_All)+",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 8311.0,
+   "saved_ms": 13690.6,
+   "faster": true,
+   "gen_secs": 24.5,
+   "claude_secs": 24.3
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply (clarsimp simp: all_children_def simp del: split_paired_All)",
+    "by (fastforce simp del: split_paired_All | simp del: split_paired_All)+"
+   ],
+   "outcome": "FAILED",
+   "diag": "`by (fastforce simp del: split_paired_All | simp del: split_paired_All)+` failed: failed for prove the goal using the tactic `by (fastforce simp del: split_paired_All | simp del: split_paired_All)+`. ",
+   "gen_secs": 23.0,
+   "claude_secs": 22.6
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (clarsimp simp: all_children_def simp del: split_paired_All)",
+    "by (fastforce simp: all_children_def simp del: split_paired_All | simp add: all_children_def del: split_paired_All)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 8381.7,
+   "saved_ms": 13619.9,
+   "faster": true,
+   "gen_secs": 20.0,
+   "claude_secs": 19.7
+  }
+ ],
+ "target": "by (fastforce simp: all_children_def simp del: split_paired_All | simp add: all_children_def del: split_paired_All)+",
+ "B_sig": [],
+ "facts": [
+  "all_children_def",
+  "split_paired_All",
+  "z3"
+ ],
+ "path": [
+  "apply (clarsimp simp del: split_paired_All)",
+  "apply (fastforce simp: all_children_def simp del: split_paired_All | simp add: all_children_def del: split_paired_All)+",
+  "done"
+ ],
+ "variant_ms": 8311.0,
+ "saved_ms": 13690.6,
+ "frac_saved": 0.622,
+ "accelerated": true
+}

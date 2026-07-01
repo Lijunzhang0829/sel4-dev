@@ -1,0 +1,65 @@
+[
+ {
+  "lemma": "cap_insert_simple_arch_caps_no_ap",
+  "session": "AInvs",
+  "thy": "proof/invariant-abstract/ARM/ArchCSpace_AI.thy",
+  "proof_line": 518,
+  "tactic": "auto",
+  "elapsed": 27.4,
+  "flines": 647
+ },
+ {
+  "lemma": "SAC_partsSubjectAffects_exceptT",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/PolicySystemSAC.thy",
+  "proof_line": 921,
+  "tactic": "auto",
+  "elapsed": 22.23,
+  "flines": 962
+ },
+ {
+  "lemma": "refinement2_both",
+  "session": "CRefine",
+  "thy": "proof/crefine/ARM/Refine_C.thy",
+  "proof_line": 1019,
+  "tactic": "fastforce",
+  "elapsed": 12.66,
+  "flines": 1201
+ },
+ {
+  "lemma": "requiv_user_mem_eq",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchUserOp_IF.thy",
+  "proof_line": 859,
+  "tactic": "fastforce",
+  "elapsed": 10.85,
+  "flines": 1012
+ },
+ {
+  "lemma": "requiv_device_mem_eq",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchUserOp_IF.thy",
+  "proof_line": 811,
+  "tactic": "fastforce",
+  "elapsed": 10.49,
+  "flines": 1012
+ },
+ {
+  "lemma": "abstract_invs",
+  "session": "InfoFlowC",
+  "thy": "proof/infoflow/refine/ADT_IF_Refine.thy",
+  "proof_line": 812,
+  "tactic": "fastforce",
+  "elapsed": 8.59,
+  "flines": 1352
+ },
+ {
+  "lemma": "ckernel_invariant",
+  "session": "Refine",
+  "thy": "proof/refine/ARM/Refine.thy",
+  "proof_line": 875,
+  "tactic": "fastforce",
+  "elapsed": 6.24,
+  "flines": 1026
+ }
+]

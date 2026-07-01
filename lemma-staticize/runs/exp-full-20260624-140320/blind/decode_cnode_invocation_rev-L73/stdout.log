@@ -1,0 +1,6 @@
+[genstat-stateful] decode_cnode_invocation_rev @ proof/infoflow/Decode_IF.thy
+[init ok]
+[reached decode_cnode_invocation_rev]
+== target: apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! 
+   A_goal: (0 < data_to_nat (args ! Suc 0) \<and> data_to_nat (args ! Suc 0) \<le> word_bits \<longrightarrow> is_cnode_cap cap \<l
+   B: close the goal (0 subgoals)

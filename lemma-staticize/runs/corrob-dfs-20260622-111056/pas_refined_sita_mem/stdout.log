@@ -1,0 +1,11 @@
+[init ok]
+[reached pas_refined_sita_mem]
+== target line 0: by (auto simp: pas_refined_def)
+   facts: ['pas_refined_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold pas_refined_def)  [1sg] 1. \<lbrakk>(x, auth, y) \<in> state_irqs_to_policy aag
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-pas_refined_sita_mem.json

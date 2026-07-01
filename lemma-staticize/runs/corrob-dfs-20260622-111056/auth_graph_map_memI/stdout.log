@@ -1,0 +1,14 @@
+[init ok]
+[reached auth_graph_map_memI]
+== target line 0: by (fastforce simp add: auth_graph_map_mem)
+   facts: ['auth_graph_map_mem']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply hypsubst  [1sg] 1. \<lbrakk>(x', auth, y') \<in> S; y = f y'; x = f x'\
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst auth_graph_map_mem)  [1sg] 1. \<lbrakk>(x', auth, y') \<in> S; x = f x'; y = f y'\
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-auth_graph_map_memI.json

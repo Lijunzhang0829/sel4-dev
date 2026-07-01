@@ -1,0 +1,108 @@
+{
+ "lemma": "SAC_partsSubjectAffects_exceptT",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (auto simp: SAC_affects SAC_reads)",
+ "B_sig": [],
+ "facts": [
+  "SAC_affects",
+  "SAC_reads"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule iffI)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (rule refl)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (rule SAC_affects)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (erule SAC_affects)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (drule SAC_affects)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (frule SAC_affects)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (subst SAC_affects)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (rule SAC_reads)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (erule SAC_reads)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (drule SAC_reads)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (frule SAC_reads)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  },
+  {
+   "action": "apply (subst SAC_reads)",
+   "ok": false,
+   "obs": "FAILED: goal (144 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 28327.8
+}

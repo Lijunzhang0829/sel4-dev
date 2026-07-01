@@ -1,0 +1,8 @@
+method	lemma	line	session	verdict	accelerated	saved_ms	secs
+dfs	invoke_untyped_corres	1595	DRefine	NO-PATH	None	None	252
+dfs	decode_untyped_invocation_authorised	1197	Access	NO-PATH	None	None	46
+dfs	dmo_device_state_update_reads_respects_g	151	InfoFlow	NO-PATH	None	None	48
+dfs	tro_alt_trans_spec	647	Access	NO-PATH	None	None	979
+dfs	send_sync_ipc_corres	2654	DRefine	NO-PATH	None	None	442
+dfs	insert_cap_sibling_corres	255	DRefine	NO-PATH	None	None	155
+dfs	set_cap_slots_holding_overlapping_caps_other	666	InfoFlow	NO-PATH	None	None	174

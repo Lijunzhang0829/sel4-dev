@@ -1,0 +1,74 @@
+[
+ {
+  "lemma": "pas_refined_sita_mem",
+  "thy": "proof/access-control/Access_AC.thy",
+  "session": "Access",
+  "steps": 4
+ },
+ {
+  "lemma": "reply_masters_mdbD1",
+  "thy": "proof/access-control/CNode_AC.thy",
+  "session": "Access",
+  "steps": 7
+ },
+ {
+  "lemma": "sep_irq_node_domD'",
+  "thy": "proof/capDL-api/RWHelper_DP.thy",
+  "session": "DSpecProofs",
+  "steps": 4
+ },
+ {
+  "lemma": "tcb_domain_map_wellformed_mono",
+  "thy": "proof/access-control/Access_AC.thy",
+  "session": "Access",
+  "steps": 5
+ },
+ {
+  "lemma": "auth_graph_map_memI",
+  "thy": "proof/access-control/Access_AC.thy",
+  "session": "Access",
+  "steps": 4
+ },
+ {
+  "lemma": "is_transferable_Endpoint",
+  "thy": "proof/access-control/Access_AC.thy",
+  "session": "Access",
+  "steps": 3
+ },
+ {
+  "lemma": "is_transferable_Untyped",
+  "thy": "proof/access-control/Access_AC.thy",
+  "session": "Access",
+  "steps": 3
+ },
+ {
+  "lemma": "sep_heap_domD'",
+  "thy": "proof/capDL-api/RWHelper_DP.thy",
+  "session": "DSpecProofs",
+  "steps": 4
+ },
+ {
+  "lemma": "is_transferable_Ntfn",
+  "thy": "proof/access-control/Access_AC.thy",
+  "session": "Access",
+  "steps": 3
+ },
+ {
+  "lemma": "sep_heap_domD",
+  "thy": "proof/capDL-api/RWHelper_DP.thy",
+  "session": "DSpecProofs",
+  "steps": 5
+ },
+ {
+  "lemma": "is_transferable_IRQ",
+  "thy": "proof/access-control/Access_AC.thy",
+  "session": "Access",
+  "steps": 3
+ },
+ {
+  "lemma": "is_transferable_Zombie",
+  "thy": "proof/access-control/Access_AC.thy",
+  "session": "Access",
+  "steps": 3
+ }
+]

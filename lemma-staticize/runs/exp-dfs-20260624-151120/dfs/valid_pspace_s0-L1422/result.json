@@ -1,0 +1,761 @@
+{
+ "lemma": "valid_pspace_s0",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)",
+ "B_sig": [
+  "1. ex_nonz_cap_to 0xE0000200 s0_internal",
+  "2. ex_nonz_cap_to 0xE0000010 s0_internal",
+  "3. zombies_final s0_internal \\<and> sym_refs (state_refs_of s0_internal) \\<and> sym_refs (state_hyp_refs_of s0_internal)"
+ ],
+ "facts": [
+  "High_caps_def",
+  "cte_wp_at_cases",
+  "dom_empty_cnode",
+  "kh0_def",
+  "kh0_obj_def",
+  "nat_to_bl_def",
+  "s0_internal_def",
+  "s0_ptr_defs",
+  "tcb_cap_cases_def",
+  "the_nat_to_bl_def",
+  "well_formed_cnode_n_def"
+ ],
+ "steps": [
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_cases)",
+   "ok": true,
+   "obs": "[4sg] 1. (\\<exists>sz fun cap. kheap s0_internal (fst (High_cnode_ptr, the_nat_to_bl 10 1)) = Some (CNode sz fun) \\<and> well_formed_cnode_n sz fun \\<and> fun (snd (High_cnode_ptr, the_nat_to_bl 10 1)) = So"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (subst dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule s0_internal_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule s0_internal_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule s0_internal_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule s0_internal_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold s0_internal_def)",
+   "ok": true,
+   "obs": "[4sg] 1. cte_wp_at (\\<lambda>c. 0xE0000400 \\<in> zobj_refs c) (High_cnode_ptr, the_nat_to_bl 10 1) \\<lparr>kheap = kh0, cdt = \\<lambda>x. None, is_original_cap = (\\<lambda>_. False)((Low_tcb_ptr, tcb_cnode_"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (subst dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: nat_to_bl_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule s0_internal_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule s0_internal_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule s0_internal_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule s0_internal_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: s0_internal_def)",
+   "ok": true,
+   "obs": "[4sg] 1. cte_wp_at (\\<lambda>c. 0xE0000400 \\<in> zobj_refs c) (High_cnode_ptr, the_nat_to_bl 10 1) \\<lparr>kheap = kh0, cdt = \\<lambda>x. None, is_original_cap = (\\<lambda>_. False)((Low_tcb_ptr, tcb_cnode_"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: High_caps_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_cases)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (subst dom_empty_cnode)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: kh0_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (unfold kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (simp only: kh0_obj_def)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 27889.4
+}

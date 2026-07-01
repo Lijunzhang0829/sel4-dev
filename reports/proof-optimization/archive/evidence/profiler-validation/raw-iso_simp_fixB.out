@@ -1,0 +1,15 @@
+Loading theory "Draft.iso_simp_fixB"
+ML_profilingkind=timeprofile_time:
+ML_profiling_entryname=Table().retrieve(4)find(1)count=1           1 Table().retrieve(4)find(1)
+ML_profiling_entryname=Term.argument_type_of(2)count=1           1 Term.argument_type_of(2)
+ML_profiling_entryname=GARBAGE COLLECTION (total)count=2           2 GARBAGE COLLECTION (total)
+ML_profiling_entryname=UNKNOWNcount=2           2 UNKNOWN
+ML_profiling_entryname=GARBAGE COLLECTION (minor collection)count=2           2 GARBAGE COLLECTION (minor collection)
+           8 TOTAL
+### theory "Draft.iso_simp_fixB"
+### 0.262s elapsed time, 0.304s cpu time, 0.051s GC time
+*** Failed to finish proof (line 10 of "/workspace/tools/seL4-proof-search/Isa-Repl/profiler/iso_simp_fixB.thy"):
+*** goal (1 subgoal):
+***  1. \<Sum> {0..<700} = 244650
+*** At command "by" (line 10 of "/workspace/tools/seL4-proof-search/Isa-Repl/profiler/iso_simp_fixB.thy")
+Exception- TOPLEVEL_ERROR raised

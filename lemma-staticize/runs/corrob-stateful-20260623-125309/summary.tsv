@@ -1,0 +1,8 @@
+lemma	session	verdict	effort	secs
+cap_insert_simple_arch_caps_no_ap	AInvs	(noresult)	0	600
+SAC_partsSubjectAffects_exceptT	InfoFlow	(noresult)	0	600
+refinement2_both	CRefine	(noresult)	0	600
+requiv_user_mem_eq	InfoFlow	(noresult)	0	600
+requiv_device_mem_eq	InfoFlow	(noresult)	0	600
+abstract_invs	InfoFlowC	(noresult)	0	600
+ckernel_invariant	Refine	(noresult)	0	601

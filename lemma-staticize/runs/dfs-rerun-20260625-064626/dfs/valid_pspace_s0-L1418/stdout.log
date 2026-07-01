@@ -1,0 +1,15 @@
+[init ok]
+[reached valid_pspace_s0]
+== target line 8: apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def
+   facts: ['High_caps_def', 'cte_wp_at_cases', 'dom_empty_cnode', 'kh0_def', 'kh0_obj_def', 'nat_to_bl_def', 's0_internal_def', 's0_ptr_defs', 'tcb_cap_cases_def', 'the_nat_to_bl_def', 'well_formed_cnode_n_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst cte_wp_at_cases)  [4sg] 1. (\<exists>sz fun cap. kheap s0_internal (fst (High_c
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold s0_internal_def)  [4sg] 1. cte_wp_at (\<lambda>c. 0xE0000400 \<in> zobj_refs c)
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (simp only: s0_internal_def)  [4sg] 1. cte_wp_at (\<lambda>c. 0xE0000400 \<in> zobj_refs c)
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-valid_pspace_s0-P25807.json

@@ -1,0 +1,16 @@
+[genstat-stateful] decode_cnode_invocation_rev @ proof/infoflow/Decode_IF.thy
+[init ok]
+[reached decode_cnode_invocation_rev]
+== target: apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! 
+   A_goal: (0 < data_to_nat (args ! Suc 0) \<and> data_to_nat (args ! Suc 0) \<le> word_bits \<longrightarrow> is_cnode_cap cap \<l
+   B: close the goal (0 subgoals)
+  step 0: gen=57.1s (claude 56.5s) -> ['apply (intro conjI impI)']
+  step 0: OK -> 5 subgoal(s); applied=['apply (intro conjI impI)']
+  step 1: gen=60.1s (claude 59.8s) -> ['apply (drule is_cnode_into_is_subject)', 'apply assumption']
+  step 1: OK -> 6 subgoal(s); applied=['apply (intro conjI impI)', 'apply (drule is_cnode_into_is_subject)', 'apply assumption']
+  step 2: gen=39.6s (claude 38.8s) -> ['apply assumption']
+  step 2: REPEAT-CHUNK (work already done)
+  step 3: gen=251.8s (claude 251.7s) -> ['apply (drule (1) bspec[where x="excaps ! 0"])', 'apply assumption']
+  step 3: FAILED `apply (drule (1) bspec[where x="excaps ! 0"])` failed: failed for prove the goa
+  step 4: gen=131.1s (claude 130.6s) -> ['apply (drule bspec[where x="excaps ! 0"])', 'apply (rule nth_mem)', 'apply assumption']
+  step 4: FAILED `apply (drule bspec[where x="excaps ! 0"])` failed: failed for prove the goal us

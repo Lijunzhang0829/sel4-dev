@@ -1,0 +1,38 @@
+{
+ "lemma": "arm_asid_table_delete_ev2",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/ArchArch_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "ERROR",
+ "orig_ms": 26961.0,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (clarsimp simp: reads_equiv_def2 affects_equiv_def2)",
+    "apply (fastforce intro!: states_equiv_forI equiv_forI equiv_asids_arm_asid_table_delete",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (fastforce intro!: states_equiv_forI equiv_forI equiv_asids_arm_asid_table_delete` failed: failed for prove the goal using the tactic `apply (fastforce intro!: states_equiv_forI equiv_forI equi",
+   "gen_secs": 50.0,
+   "claude_secs": 49.7
+  }
+ ],
+ "target": "by (auto simp: reads_equiv_def2 affects_equiv_def2 intro!: states_equiv_forI equiv_forI equiv_asids_arm_asid_table_delete elim!: states_equiv_forE equiv_forE elim: is_subject_kheap_eq[simplified reads_equiv_def2 states_equiv_for_def, rotated])",
+ "B_sig": [],
+ "facts": [
+  "affects_equiv_def2",
+  "equiv_asids_arm_asid_table_delete",
+  "equiv_forE",
+  "equiv_forI",
+  "is_subject_kheap_eq",
+  "reads_equiv_def2",
+  "rotated",
+  "simplified",
+  "states_equiv_forE",
+  "states_equiv_forI",
+  "states_equiv_for_def"
+ ],
+ "error": "An error occurred while calling t._step_without_timeout"
+}

@@ -1,0 +1,19 @@
+[init ok]
+[reached SAC_partsSubjectAffects_exceptT]
+== target: apply (auto simp: SAC_affects SAC_reads)
+   orig_ms=7645  B: close the goal (0 subgoals)
+  round 0: gen=24.5s (claude 23.9s) -> ['apply (simp only: SAC_affects SAC_reads)', 'done']
+  round 0: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 1: gen=35.0s (claude 34.7s) -> ['apply (auto simp only: SAC_affects SAC_reads)', 'done']
+  round 1: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 2: gen=22.0s (claude 21.5s) -> ['apply clarsimp', 'apply (auto simp: SAC_affects SAC_reads)', 'done']
+  round 2: REACH-B variant_ms=20102 orig_ms=7645 saved=-12456.8 faster=False
+  round 3: gen=37.5s (claude 37.3s) -> []
+  round 4: gen=42.5s (claude 42.0s) -> []
+  round 5: gen=37.0s (claude 36.3s) -> ['apply (auto simp only: SAC_affects SAC_reads)', 'done']
+  round 5: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 6: gen=45.5s (claude 45.2s) -> ['apply clarify', 'apply (auto simp: SAC_affects SAC_reads)', 'done']
+  round 6: REACH-B variant_ms=7556 orig_ms=7645 saved=89.2 faster=False
+  round 7: gen=24.5s (claude 23.9s) -> ['apply (simp only: SAC_affects SAC_reads)', 'apply auto', 'done']
+  round 7: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-SAC_partsSubjectAffects_exceptT-P25922.json  verdict=REACHED-B-NOT-FASTER

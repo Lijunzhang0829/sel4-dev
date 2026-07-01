@@ -1,0 +1,10 @@
+[genstat-stateful] reads_respects_scheduler_invisible_no_domain_switch @ proof/infoflow/Scheduler_IF.thy
+[init ok]
+[reached reads_respects_scheduler_invisible_no_domain_switch]
+== target: by (safe; (fastforce simp: switch_thread_runnable | fastforce dest!: s
+   A_goal: (\<forall>x. scheduler_action s = switch_thread x \<longrightarrow> (runnable sta \<longrightarrow> st_tcb_at runnable x
+   B: close the goal (0 subgoals)
+  round 0: gen=154.7s (claude 153.9s) -> ['apply (intro conjI impI allI ballI notI)+', 'apply (erule conjE)+', 'apply (simp only: switch_thread_runnable; assumption)+', 'apply (drule switch_to_cur_domain; drule cur_thread_cur_domain; assumption)+', 'apply (simp only: st_tcb_at_def obj_at_def; assumption)+', 'done']
+  round 0: BUILD-FAIL `apply (erule conjE)+` failed: failed for prove the goal using the tactic `apply
+  round 1: gen=249.3s (claude 248.6s) -> ['apply (safe; ((simp only: switch_thread_runnable; assumption) |', 'done']
+  round 1: BUILD-FAIL `apply (safe; ((simp only: switch_thread_runnable; assumption) |` failed: failed

@@ -1,0 +1,48 @@
+{
+ "lemma": "cap_insert_pas_refined",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/CNode_AC.thy",
+ "session": "Access",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 14697.2,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (clarsimp simp: cte_wp_at_caps_of_state Option.is_none_def simp del: split_paired_All)",
+    "apply (fastforce split: if_split_asm simp: pas_refined_refl F[symmetric] valid_mdb_def2 mdb_cte_at_def simp del: split_paired_All dest: aag_cdt_link_Control aag_cdt_link_DeleteDerived cap_auth_caps_of_state)",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 12628.7,
+   "saved_ms": 2068.5,
+   "faster": true,
+   "gen_secs": 40.5,
+   "claude_secs": 40.1
+  }
+ ],
+ "target": "by (fastforce split: if_split_asm simp: cte_wp_at_caps_of_state pas_refined_refl F[symmetric] valid_mdb_def2 mdb_cte_at_def Option.is_none_def simp del: split_paired_All dest: aag_cdt_link_Control aag_cdt_link_DeleteDerived cap_auth_caps_of_state)",
+ "B_sig": [],
+ "facts": [
+  "F",
+  "Option.is_none_def",
+  "aag_cdt_link_Control",
+  "aag_cdt_link_DeleteDerived",
+  "cap_auth_caps_of_state",
+  "cte_wp_at_caps_of_state",
+  "mdb_cte_at_def",
+  "pas_refined_refl",
+  "split_paired_All",
+  "symmetric",
+  "valid_mdb_def2"
+ ],
+ "path": [
+  "apply (clarsimp simp: cte_wp_at_caps_of_state Option.is_none_def simp del: split_paired_All)",
+  "apply (fastforce split: if_split_asm simp: pas_refined_refl F[symmetric] valid_mdb_def2 mdb_cte_at_def simp del: split_paired_All dest: aag_cdt_link_Control aag_cdt_link_DeleteDerived cap_auth_caps_of_state)",
+  "done"
+ ],
+ "variant_ms": 12628.7,
+ "saved_ms": 2068.5,
+ "frac_saved": 0.141,
+ "accelerated": true
+}

@@ -1,0 +1,283 @@
+{
+ "lemma": "caps_of_state_init_A_st_Null",
+ "thy": "/sel4-project/verification/l4v/proof/invariant-abstract/ARM/ArchKernelInit_AI.thy",
+ "session": "AInvs",
+ "mode": "react",
+ "target": "apply (auto simp add: state_defs tcb_cap_cases_def split: if_split_asm)",
+ "B_sig": [],
+ "facts": [
+  "state_defs",
+  "tcb_cap_cases_def"
+ ],
+ "steps": [
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>sz fun cte. \\<lbrakk>kheap init_A_st (fst x) = Some (CNode sz fun); well_formed_cnode_n sz fun; fun (snd x) = Some cte\\<rbrakk> \\<Longrightarrow> NullCap = cte"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold tcb_cap_cases_def)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>sz fun cte. \\<lbrakk>kheap init_A_st (fst x) = Some (CNode sz fun); well_formed_cnode_n sz fun; fun (snd x) = Some cte; NullCap \\<noteq> cte\\<rbrakk> \\<Longrightarrow> False"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst state_defs)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: tcb_cap_cases_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 36747.0
+}

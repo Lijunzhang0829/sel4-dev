@@ -1,0 +1,9 @@
+[genstat-stateful] pas_refined_sita_mem @ proof/access-control/Access_AC.thy
+[init ok]
+[reached pas_refined_sita_mem]
+== target: by (auto simp: pas_refined_def)
+   A_goal: (x, auth, y) \<in> pasPolicy aag
+   B: close the goal (0 subgoals)
+  round 0: 90.1s -> ['apply (unfold pas_refined_def)', 'apply (elim conjE)+', 'apply (drule (1) subsetD)', 'apply assumption', 'done']
+  round 0: REACHED-B
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-pas_refined_sita_mem.json  verdict=REACHED-B

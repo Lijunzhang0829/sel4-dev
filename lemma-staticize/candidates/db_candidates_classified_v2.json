@@ -1,0 +1,4141 @@
+[
+ {
+  "file": "/workspace/verification/l4v/proof/access-control/CNode_AC.thy",
+  "lemma_line": 1103,
+  "name_at_line": "by (fastforce dest: all_childrenD is_transferable_",
+  "total_s": 147.571,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-search-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-search-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-search-lean": 147.571
+  },
+  "hot_cmds": [
+   {
+    "line": 1103,
+    "name": "by",
+    "elapsed_s": 147.571,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "by (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/FinalCaps.thy",
+  "lemma_line": 1919,
+  "name_at_line": "by (fastforce elim: cte_wp_atE intro: cte_wp_at_ct",
+  "total_s": 95.004,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-search-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-search-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-search-lean": 95.004
+  },
+  "hot_cmds": [
+   {
+    "line": 1919,
+    "name": "by",
+    "elapsed_s": 95.004,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "by (fastforce elim: cte_wp_atE intro: cte_wp_at_cteI cte_wp_at_tcbI)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/Untyped_AI.thy",
+  "lemma_line": 3593,
+  "name_at_line": "lemma invoke_untyp_invs':",
+  "total_s": 37.415,
+  "search_frac": 0.488,
+  "class_v2": "ambiguous-search-lean",
+  "dominant_share": 0.488,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-search-lean share=0.49",
+  "bucket_s": {
+   "ambiguous-search-lean": 18.25,
+   "simp-pure": 17.306,
+   "other": 0.838,
+   "structured": 0.704,
+   "wp-vcg": 0.317
+  },
+  "hot_cmds": [
+   {
+    "line": 3809,
+    "name": "apply",
+    "elapsed_s": 18.25,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply (auto dest: invoke_untyped_proofs.idx_le_new_offs)[1]"
+   },
+   {
+    "line": 3827,
+    "name": "apply",
+    "elapsed_s": 2.716,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (frule untyped_mdb_descendants_range, clarsimp+, erule invoke_untyped_proofs.descendants_range, simp_all+)[1]"
+   },
+   {
+    "line": 3704,
+    "name": "apply",
+    "elapsed_s": 1.748,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp add: cte_wp_at_conj ball_conj_distrib split del: if_split | wp hoare_vcg_const_Ball_lift set_tuple_pick retype_region_ex_cte_cap_to"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/FinalCaps.thy",
+  "lemma_line": 1914,
+  "name_at_line": "subgoal by (fastforce elim: cte_wp_atE intro: cte_",
+  "total_s": 37.052,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-search-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-search-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-search-lean": 37.052
+  },
+  "hot_cmds": [
+   {
+    "line": 1914,
+    "name": "by",
+    "elapsed_s": 37.052,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "subgoal by (fastforce elim: cte_wp_atE intro: cte_wp_at_cteI cte_wp_at_tcbI)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CNodeInv_R.thy",
+  "lemma_line": 5578,
+  "name_at_line": "apply (auto dest!: isCapDs)[1]",
+  "total_s": 33.502,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-search-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-search-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-search-lean": 33.502
+  },
+  "hot_cmds": [
+   {
+    "line": 5578,
+    "name": "apply",
+    "elapsed_s": 33.502,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply (auto dest!: isCapDs)[1]"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CSpace_R.thy",
+  "lemma_line": 3537,
+  "name_at_line": "lemma corres_caps_decomposition:",
+  "total_s": 14.418,
+  "search_frac": 0.648,
+  "class_v2": "ambiguous-search-lean",
+  "dominant_share": 0.377,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-search-lean share=0.38",
+  "bucket_s": {
+   "ambiguous-search-lean": 5.432,
+   "ambiguous-unknown": 3.143,
+   "structured": 2.499,
+   "simp-pure": 2.22,
+   "ambiguous-simp-lean": 0.766,
+   "other": 0.231,
+   "wp-vcg": 0.127
+  },
+  "hot_cmds": [
+   {
+    "line": 3929,
+    "name": "apply",
+    "elapsed_s": 5.432,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply (fastforce dest: pspace_relation_no_reply_caps state_relation_pspace_relation)"
+   },
+   {
+    "line": 3985,
+    "name": "apply",
+    "elapsed_s": 2.783,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "apply fastforce"
+   },
+   {
+    "line": 3653,
+    "name": "apply",
+    "elapsed_s": 2.499,
+    "bucket": "structured",
+    "note": "alternation x2, families=['clarsimp', 'simp']",
+    "text": "apply (intro z[simplified o_def] conjI | simp add: state_relation_def pspace_relations_def swp_cte_at | (clarsimp, drule (1) z(6), simp add: state_relation_def))+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+  "lemma_line": 249,
+  "name_at_line": "by (auto simp: s0_ptr_defs)",
+  "total_s": 125.98,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 125.98
+  },
+  "hot_cmds": [
+   {
+    "line": 249,
+    "name": "by",
+    "elapsed_s": 125.98,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: s0_ptr_defs)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Arch_R.thy",
+  "lemma_line": 38,
+  "name_at_line": "lemma vp_strgs':",
+  "total_s": 74.314,
+  "search_frac": 0.616,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.616,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.62",
+  "bucket_s": {
+   "ambiguous-simp-lean": 45.758,
+   "simp-pure": 22.739,
+   "wp-vcg": 5.147,
+   "other": 0.341,
+   "structured": 0.329
+  },
+  "hot_cmds": [
+   {
+    "line": 268,
+    "name": "apply",
+    "elapsed_s": 40.542,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: cte_wp_at_caps_of_state descendants_range_def2 empty_descendants_range_in invs_untyped_children)"
+   },
+   {
+    "line": 328,
+    "name": "apply",
+    "elapsed_s": 6.686,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (intro conjI, simp_all add: is_simple_cap'_def isCap_simps descendants_range'_def2 null_filter_descendants_of'[OF null_filter_simp'] capAli"
+   },
+   {
+    "line": 234,
+    "name": "apply",
+    "elapsed_s": 1.412,
+    "bucket": "wp-vcg",
+    "note": "wp/vcg method",
+    "text": "apply (wp updateFreeIndex_forward_invs' updateFreeIndex_pspace_no_overlap' updateFreeIndex_caps_no_overlap'' updateFreeIndex_descendants_of2 updateFreeIndex_cte"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/ADT_C.thy",
+  "lemma_line": 658,
+  "name_at_line": "lemma cready_queues_to_H_correct:",
+  "total_s": 64.236,
+  "search_frac": 0.619,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.565,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.57",
+  "bucket_s": {
+   "ambiguous-simp-lean": 36.297,
+   "simp-pure": 23.464,
+   "ambiguous-unknown": 1.833,
+   "ambiguous-search-lean": 1.279,
+   "other": 0.986,
+   "structured": 0.377
+  },
+  "hot_cmds": [
+   {
+    "line": 942,
+    "name": "by",
+    "elapsed_s": 23.019,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: NtfnState_Active_def NtfnState_Idle_def NtfnState_Waiting_def typ_heap_simps cnotification_relation_def Let_def tcb_queue_rel'_clift_unique opt"
+   },
+   {
+    "line": 681,
+    "name": "apply",
+    "elapsed_s": 4.435,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (prop_tac \"tcb_at' queue_end s\", fastforce simp: tcbQueueEmpty_def obj_at'_def)"
+   },
+   {
+    "line": 680,
+    "name": "apply",
+    "elapsed_s": 3.469,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (prop_tac \"tcb_at' queue_head s\", fastforce simp: tcbQueueEmpty_def obj_at'_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CSpace1_R.thy",
+  "lemma_line": 2729,
+  "name_at_line": "lemma zbits_map_eq[simp]:",
+  "total_s": 59.319,
+  "search_frac": 0.756,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.756,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.76",
+  "bucket_s": {
+   "ambiguous-simp-lean": 44.834,
+   "simp-pure": 14.31,
+   "other": 0.175
+  },
+  "hot_cmds": [
+   {
+    "line": 2751,
+    "name": "apply",
+    "elapsed_s": 20.972,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto simp add: cap_badge_def capBadge_ordering_def split: cap.splits)"
+   },
+   {
+    "line": 2738,
+    "name": "by",
+    "elapsed_s": 16.042,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp add: cap_master_cap_def capMasterCap_def split: cap.splits arch_cap.splits)"
+   },
+   {
+    "line": 2793,
+    "name": "apply",
+    "elapsed_s": 6.372,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp_all add: isCap_simps is_cap_simps cap_master_cap_def vs_cap_ref_def vsCapRef_def capMasterCap_def split: cap_relation_split_asm arch_cap.split_asm)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CSpace_R.thy",
+  "lemma_line": 1652,
+  "name_at_line": "lemma cteInsert_mdb_chain_0:",
+  "total_s": 53.089,
+  "search_frac": 0.656,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.6,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.60",
+  "bucket_s": {
+   "ambiguous-simp-lean": 31.87,
+   "simp-pure": 16.659,
+   "ambiguous-unknown": 2.968,
+   "wp-vcg": 1.247,
+   "other": 0.345
+  },
+  "hot_cmds": [
+   {
+    "line": 2334,
+    "name": "by",
+    "elapsed_s": 17.794,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (cases src_cap, auto simp:mdb_next_unfold isCap_simps sameRegionAs_def Let_def split: if_splits)"
+   },
+   {
+    "line": 2327,
+    "name": "by",
+    "elapsed_s": 7.137,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (case_tac src_cap,auto simp:isCap_simps sameRegionAs_def)"
+   },
+   {
+    "line": 2344,
+    "name": "by",
+    "elapsed_s": 6.186,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp:isCap_simps sameRegionAs_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/DetSchedSchedule_AI.thy",
+  "lemma_line": 2229,
+  "name_at_line": "by (fastforce simp: valid_sched_def valid_etcbs_de",
+  "total_s": 47.905,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 47.905
+  },
+  "hot_cmds": [
+   {
+    "line": 2229,
+    "name": "by",
+    "elapsed_s": 47.905,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (fastforce simp: valid_sched_def valid_etcbs_def valid_queues_def pred_tcb_weakenE valid_sched_action_def weak_valid_sched_action_def etcb_at_def is_etcb_at_def get_etcb_def in_cu"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/drefine/KHeap_DR.thy",
+  "lemma_line": 369,
+  "name_at_line": "lemma opt_cap_wp_at_def':",
+  "total_s": 43.419,
+  "search_frac": 0.741,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.741,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.74",
+  "bucket_s": {
+   "ambiguous-simp-lean": 32.162,
+   "simp-pure": 9.884,
+   "structured": 1.216,
+   "other": 0.157
+  },
+  "hot_cmds": [
+   {
+    "line": 474,
+    "name": "by",
+    "elapsed_s": 20.699,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: transform_cap_def cap_has_object_def cap_counts_def cdl_cap_irq_def split: cap.splits arch_cap.splits if_split_asm)"
+   },
+   {
+    "line": 664,
+    "name": "by",
+    "elapsed_s": 10.967,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto split: cap.splits arch_cap.splits)"
+   },
+   {
+    "line": 697,
+    "name": "by",
+    "elapsed_s": 2.678,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "by (simp add:transform_cap_def is_cap_simps split:cap.splits if_split_asm arch_cap.splits)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/TcbAcc_R.thy",
+  "lemma_line": 186,
+  "name_at_line": "lemma valid_objs'_valid_tcbs'[elim!]:",
+  "total_s": 38.217,
+  "search_frac": 0.633,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.627,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.63",
+  "bucket_s": {
+   "ambiguous-simp-lean": 23.978,
+   "simp-pure": 13.555,
+   "other": 0.327,
+   "search-pure": 0.231,
+   "wp-vcg": 0.126
+  },
+  "hot_cmds": [
+   {
+    "line": 224,
+    "name": "by",
+    "elapsed_s": 21.549,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: valid_tcb'_def valid_tcb_state'_def valid_bound_tcb'_def valid_bound_ntfn'_def split: option.splits thread_state.splits)"
+   },
+   {
+    "line": 353,
+    "name": "apply",
+    "elapsed_s": 2.92,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: in_monad split_def bind_def gets_def get_def Bex_def put_def return_def modify_def get_object_def projectKOs obj_at_def updateObje"
+   },
+   {
+    "line": 541,
+    "name": "apply",
+    "elapsed_s": 2.39,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp add: return_def thread_set_def gets_the_def assert_def assert_opt_def simpler_gets_def set_object_def get_object_def put_def get_def bind_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/DetSchedSchedule_AI.thy",
+  "lemma_line": 344,
+  "name_at_line": "apply (force simp: not_queued_def)",
+  "total_s": 37.037,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 37.037
+  },
+  "hot_cmds": [
+   {
+    "line": 344,
+    "name": "apply",
+    "elapsed_s": 37.037,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (force simp: not_queued_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/ARM/ArchVSpace_AI.thy",
+  "lemma_line": 2766,
+  "name_at_line": "by (auto simp: store_pde_def simpler_set_pd_def ge",
+  "total_s": 34.028,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 34.028
+  },
+  "hot_cmds": [
+   {
+    "line": 2766,
+    "name": "by",
+    "elapsed_s": 34.028,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: store_pde_def simpler_set_pd_def get_object_def simpler_gets_def assert_def return_def fail_def set_object_def get_def put_def bind_def get_pd_def split: Str"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/FinalCaps.thy",
+  "lemma_line": 666,
+  "name_at_line": "apply (fastforce simp: get_cap_def get_object_def ",
+  "total_s": 29.511,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 29.511
+  },
+  "hot_cmds": [
+   {
+    "line": 666,
+    "name": "apply",
+    "elapsed_s": 29.511,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: get_cap_def get_object_def bind_def split_def gets_def get_def return_def assert_def assert_opt_def fail_def split: kernel_object.sp"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CSpace1_R.thy",
+  "lemma_line": 3400,
+  "name_at_line": "lemma src_no_mdb_parent:",
+  "total_s": 24.427,
+  "search_frac": 0.798,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.442,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.44",
+  "bucket_s": {
+   "ambiguous-simp-lean": 10.804,
+   "ambiguous-search-lean": 8.699,
+   "simp-pure": 4.625,
+   "other": 0.299
+  },
+  "hot_cmds": [
+   {
+    "line": 3408,
+    "name": "apply",
+    "elapsed_s": 10.804,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (cases src_cap,auto simp:capMasterCap_def revokable'_def vsCapRef_def freeIndex_update_def isCap_simps split:capability.splits arch_capability.splits)[1]"
+   },
+   {
+    "line": 3442,
+    "name": "apply",
+    "elapsed_s": 8.699,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply (fastforce elim: capBadge_ordering_trans)+"
+   },
+   {
+    "line": 3412,
+    "name": "apply",
+    "elapsed_s": 2.426,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: isCap_simps sameRegionAs_def3 freeIndex_update_def capRange_def vsCapRef_def split:capability.splits simp del: Int_atLeastAtMost atLeastAt"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Untyped_R.thy",
+  "lemma_line": 5002,
+  "name_at_line": "apply (auto split: if_split)[1]",
+  "total_s": 24.37,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 24.37
+  },
+  "hot_cmds": [
+   {
+    "line": 5002,
+    "name": "apply",
+    "elapsed_s": 24.37,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto split: if_split)[1]"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+  "lemma_line": 893,
+  "name_at_line": "lemma Sys1AgentMap_simps:",
+  "total_s": 21.592,
+  "search_frac": 0.956,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.956,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.96",
+  "bucket_s": {
+   "ambiguous-simp-lean": 20.638,
+   "other": 0.824,
+   "simp-pure": 0.13
+  },
+  "hot_cmds": [
+   {
+    "line": 910,
+    "name": "by",
+    "elapsed_s": 20.638,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: s0_ptr_defs ptr_range_def pageBits_def)"
+   },
+   {
+    "line": 893,
+    "name": "lemma",
+    "elapsed_s": 0.824,
+    "bucket": "other",
+    "note": "no recognized method",
+    "text": "lemma Sys1AgentMap_simps:"
+   },
+   {
+    "line": 909,
+    "name": "apply",
+    "elapsed_s": 0.13,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply simp_all"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/lib/clib/CCorresLemmas.thy",
+  "lemma_line": 1078,
+  "name_at_line": "lemma ccorres_While:",
+  "total_s": 21.103,
+  "search_frac": 0.875,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.354,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.35",
+  "bucket_s": {
+   "ambiguous-simp-lean": 7.46,
+   "ambiguous-search-lean": 7.454,
+   "ambiguous-unknown": 3.561,
+   "simp-pure": 2.152,
+   "other": 0.476
+  },
+  "hot_cmds": [
+   {
+    "line": 1175,
+    "name": "apply",
+    "elapsed_s": 4.28,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: conseq_under_new_pre)"
+   },
+   {
+    "line": 1225,
+    "name": "apply",
+    "elapsed_s": 3.075,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (rule hoarep_conj_lift_pre_fix; fastforce simp: Collect_mono conseq_under_new_pre)"
+   },
+   {
+    "line": 1176,
+    "name": "apply",
+    "elapsed_s": 2.719,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (fastforce intro!: hoarep_conj_lift_pre_fix simp: Collect_mono conseq_under_new_pre)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/access-control/CNode_AC.thy",
+  "lemma_line": 1032,
+  "name_at_line": "by (fastforce split: if_split_asm                 ",
+  "total_s": 20.712,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 20.712
+  },
+  "hot_cmds": [
+   {
+    "line": 1032,
+    "name": "by",
+    "elapsed_s": 20.712,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (fastforce split: if_split_asm simp: cte_wp_at_caps_of_state pas_refined_refl F[symmetric] valid_mdb_def2 mdb_cte_at_def Option.is_none_def simp"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/CNodeInv_AI.thy",
+  "lemma_line": 517,
+  "name_at_line": "subgoal by (auto,(clarsimp simp:is_cap_simps updat",
+  "total_s": 20.655,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 20.655
+  },
+  "hot_cmds": [
+   {
+    "line": 517,
+    "name": "by",
+    "elapsed_s": 20.655,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (auto,(clarsimp simp:is_cap_simps update_cap_data_def)+)[1](* Bad practise *)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Finalise_R.thy",
+  "lemma_line": 1576,
+  "name_at_line": "apply (drule updateMDB_the_lot, force simp: pspace",
+  "total_s": 19.559,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 19.559
+  },
+  "hot_cmds": [
+   {
+    "line": 1576,
+    "name": "apply",
+    "elapsed_s": 19.559,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (drule updateMDB_the_lot, force simp: pspace_relations_def, assumption+, simp)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/Ipc_IF.thy",
+  "lemma_line": 922,
+  "name_at_line": "by (fastforce simp: cte_wp_at_caps_of_state masked",
+  "total_s": 19.201,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 19.201
+  },
+  "hot_cmds": [
+   {
+    "line": 922,
+    "name": "by",
+    "elapsed_s": 19.201,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (fastforce simp: cte_wp_at_caps_of_state masked_as_full_def is_cap_simps split: if_splits)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/ARM/ArchFinalise_AI.thy",
+  "lemma_line": 740,
+  "name_at_line": "apply (fastforce simp: is_pt_cap_def)+",
+  "total_s": 15.2,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 15.2
+  },
+  "hot_cmds": [
+   {
+    "line": 740,
+    "name": "apply",
+    "elapsed_s": 15.2,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: is_pt_cap_def)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+  "lemma_line": 1418,
+  "name_at_line": "apply (force simp: cte_wp_at_cases s0_internal_def",
+  "total_s": 14.57,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 14.57
+  },
+  "hot_cmds": [
+   {
+    "line": 1418,
+    "name": "apply",
+    "elapsed_s": 14.57,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def Low_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/drefine/Ipc_DR.thy",
+  "lemma_line": 2654,
+  "name_at_line": "apply (clarsimp simp:pred_tcb_at_def obj_at_def,  ",
+  "total_s": 14.379,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 14.379
+  },
+  "hot_cmds": [
+   {
+    "line": 2654,
+    "name": "apply",
+    "elapsed_s": 14.379,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (clarsimp simp:pred_tcb_at_def obj_at_def, simp split:Structures_A.thread_state.splits, fastforce)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Untyped_R.thy",
+  "lemma_line": 3865,
+  "name_at_line": "by (auto simp: cte_wp_at_ctes_of)",
+  "total_s": 14.153,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 14.153
+  },
+  "hot_cmds": [
+   {
+    "line": 3865,
+    "name": "by",
+    "elapsed_s": 14.153,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: cte_wp_at_ctes_of)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/UserOp_IF.thy",
+  "lemma_line": 151,
+  "name_at_line": "apply (fastforce simp: equiv_valid_def2 equiv_vali",
+  "total_s": 13.913,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 13.913
+  },
+  "hot_cmds": [
+   {
+    "line": 151,
+    "name": "apply",
+    "elapsed_s": 13.913,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: equiv_valid_def2 equiv_valid_2_def in_monad do_machine_op_def device_memory_update_def select_f_def idle_equiv_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/ARM/ArchCSpaceInv_AI.thy",
+  "lemma_line": 163,
+  "name_at_line": "lemma is_derived_arch_non_arch:",
+  "total_s": 13.845,
+  "search_frac": 0.789,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.789,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.79",
+  "bucket_s": {
+   "ambiguous-simp-lean": 10.924,
+   "simp-pure": 2.821,
+   "other": 0.1
+  },
+  "hot_cmds": [
+   {
+    "line": 198,
+    "name": "by",
+    "elapsed_s": 7.284,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)"
+   },
+   {
+    "line": 168,
+    "name": "by",
+    "elapsed_s": 2.811,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto split: cap.splits)"
+   },
+   {
+    "line": 206,
+    "name": "apply",
+    "elapsed_s": 1.69,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (cases cap; cases cap'; simp)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Refine.thy",
+  "lemma_line": 742,
+  "name_at_line": "lemma checkActiveIRQ_valid_duplicates':",
+  "total_s": 13.537,
+  "search_frac": 0.671,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.671,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.67",
+  "bucket_s": {
+   "ambiguous-simp-lean": 9.078,
+   "simp-pure": 4.104,
+   "other": 0.355
+  },
+  "hot_cmds": [
+   {
+    "line": 875,
+    "name": "by",
+    "elapsed_s": 5.432,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (fastforce simp: ex_abs_def sch_act_simple_def ct_running_related ct_idle_related sched_act_rct_related)"
+   },
+   {
+    "line": 936,
+    "name": "apply",
+    "elapsed_s": 0.836,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: ex_abs_def)"
+   },
+   {
+    "line": 872,
+    "name": "apply",
+    "elapsed_s": 0.806,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: ex_abs_def sch_act_simple_def ct_running_related ct_idle_related sched_act_rct_related)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/ARM/ArchTcbAcc_AI.thy",
+  "lemma_line": 18,
+  "name_at_line": "lemma cap_master_cap_arch_eqDs:",
+  "total_s": 12.708,
+  "search_frac": 0.814,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.814,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.81",
+  "bucket_s": {
+   "ambiguous-simp-lean": 10.339,
+   "other": 2.142,
+   "simp-pure": 0.227
+  },
+  "hot_cmds": [
+   {
+    "line": 50,
+    "name": "by",
+    "elapsed_s": 9.022,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: cap_master_cap_def tcb_cap_valid_def tcb_cap_cases_def valid_ipc_buffer_cap_def is_cap_simps is_nondevice_page_cap_simps is_nondevice_page_cap_arch_de"
+   },
+   {
+    "line": 172,
+    "name": "interpret",
+    "elapsed_s": 1.904,
+    "bucket": "other",
+    "note": "no recognized method",
+    "text": "interpret Arch ."
+   },
+   {
+    "line": 77,
+    "name": "apply",
+    "elapsed_s": 1.317,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: valid_machine_state_def in_user_frame_def assert_def simpler_modify_def fail_def bind_def return_def pageBits_def aligned_offset_ignore"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CNodeInv_R.thy",
+  "lemma_line": 5600,
+  "name_at_line": "subgoal by (fastforce simp: isCap_simps sameRegion",
+  "total_s": 12.655,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 12.655
+  },
+  "hot_cmds": [
+   {
+    "line": 5600,
+    "name": "by",
+    "elapsed_s": 12.655,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (fastforce simp: isCap_simps sameRegionAs_def3)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+  "lemma_line": 1422,
+  "name_at_line": "apply (force simp: cte_wp_at_cases s0_internal_def",
+  "total_s": 12.255,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 12.255
+  },
+  "hot_cmds": [
+   {
+    "line": 1422,
+    "name": "apply",
+    "elapsed_s": 12.255,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+  "lemma_line": 1414,
+  "name_at_line": "apply (force simp: cte_wp_at_cases s0_internal_def",
+  "total_s": 12.203,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 12.203
+  },
+  "hot_cmds": [
+   {
+    "line": 1414,
+    "name": "apply",
+    "elapsed_s": 12.203,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/Retype_IF.thy",
+  "lemma_line": 93,
+  "name_at_line": "by (fastforce simp: do_machine_op_def gets_def get",
+  "total_s": 11.816,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 11.816
+  },
+  "hot_cmds": [
+   {
+    "line": 93,
+    "name": "by",
+    "elapsed_s": 11.816,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def return_def bind_def equiv_valid_def2 equiv_valid_2_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/TcbAcc_C.thy",
+  "lemma_line": 14,
+  "name_at_line": "lemma ccorres_pre_threadGet:",
+  "total_s": 11.571,
+  "search_frac": 0.54,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 0.54,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=0.54",
+  "bucket_s": {
+   "ambiguous-simp-lean": 6.251,
+   "simp-pure": 3.85,
+   "other": 0.954,
+   "wp-vcg": 0.516
+  },
+  "hot_cmds": [
+   {
+    "line": 203,
+    "name": "apply",
+    "elapsed_s": 6.251,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto simp: C_register_defs sanitiseRegister_def word_0_sle_from_less split: register.split)"
+   },
+   {
+    "line": 93,
+    "name": "apply",
+    "elapsed_s": 1.874,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply clarsimp"
+   },
+   {
+    "line": 145,
+    "name": "apply",
+    "elapsed_s": 1.259,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: mex_def meq_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/DetSchedSchedule_AI.thy",
+  "lemma_line": 914,
+  "name_at_line": "apply (fastforce simp: valid_sched_def valid_etcbs",
+  "total_s": 11.187,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 11.187
+  },
+  "hot_cmds": [
+   {
+    "line": 914,
+    "name": "apply",
+    "elapsed_s": 11.187,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: valid_sched_def valid_etcbs_def valid_queues_def valid_sched_action_def is_activatable_def weak_valid_sched_action_def st_tcb_a"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/access-control/Retype_AC.thy",
+  "lemma_line": 1197,
+  "name_at_line": "apply (case_tac \"excaps ! 0\", simp_all, fastforce ",
+  "total_s": 11.1,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 11.1
+  },
+  "hot_cmds": [
+   {
+    "line": 1197,
+    "name": "apply",
+    "elapsed_s": 11.1,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (case_tac \"excaps ! 0\", simp_all, fastforce simp: nonzero_data_to_nat_simp)[1]"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/Ipc_IF.thy",
+  "lemma_line": 923,
+  "name_at_line": "subgoal by (fastforce simp: neq_Nil_conv cte_wp_at",
+  "total_s": 11.018,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 11.018
+  },
+  "hot_cmds": [
+   {
+    "line": 923,
+    "name": "by",
+    "elapsed_s": 11.018,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (fastforce simp: neq_Nil_conv cte_wp_at_caps_of_state)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/DetSchedSchedule_AI.thy",
+  "lemma_line": 2041,
+  "name_at_line": "by (fastforce simp: valid_sched_def valid_etcbs_de",
+  "total_s": 10.993,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 10.993
+  },
+  "hot_cmds": [
+   {
+    "line": 2041,
+    "name": "by",
+    "elapsed_s": 10.993,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (fastforce simp: valid_sched_def valid_etcbs_def valid_queues_def valid_sched_action_def is_activatable_def weak_valid_sched_action_def st_tcb_at_kh_if_s"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/ARM/ArchCSpace_AI.thy",
+  "lemma_line": 518,
+  "name_at_line": "by (auto simp:is_simple_cap_def[simplified is_simp",
+  "total_s": 10.915,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 10.915
+  },
+  "hot_cmds": [
+   {
+    "line": 518,
+    "name": "by",
+    "elapsed_s": 10.915,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/ARM/ArchUserOp_IF.thy",
+  "lemma_line": 913,
+  "name_at_line": "apply (auto simp: reads_equiv_g_def reads_equiv_de",
+  "total_s": 10.789,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 10.789
+  },
+  "hot_cmds": [
+   {
+    "line": 913,
+    "name": "apply",
+    "elapsed_s": 10.789,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto simp: reads_equiv_g_def reads_equiv_def affects_equiv_def states_equiv_for_def equiv_for_def equiv_asids_def equiv_asid_def globals_equiv_def idle_equiv_def"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/CSpace_AI.thy",
+  "lemma_line": 472,
+  "name_at_line": "apply (auto simp: set_cap_def2 split_def in_monad ",
+  "total_s": 10.579,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 10.579
+  },
+  "hot_cmds": [
+   {
+    "line": 472,
+    "name": "apply",
+    "elapsed_s": 10.579,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto simp: set_cap_def2 split_def in_monad cte_wp_at_cases get_object_def set_object_def wf_cs_upd split: Structures_A.kernel_object.splits if_split_asm"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/AInvs.thy",
+  "lemma_line": 71,
+  "name_at_line": "by (fastforce split: if_splits) (* takes 20 secs *",
+  "total_s": 10.443,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 10.443
+  },
+  "hot_cmds": [
+   {
+    "line": 71,
+    "name": "by",
+    "elapsed_s": 10.443,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (fastforce split: if_splits) (* takes 20 secs *)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/ARM/ArchCSpaceInv_AI.thy",
+  "lemma_line": 123,
+  "name_at_line": "apply (fastforce split: if_split_asm simp: is_cap_",
+  "total_s": 10.335,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 10.335
+  },
+  "hot_cmds": [
+   {
+    "line": 123,
+    "name": "apply",
+    "elapsed_s": 10.335,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce split: if_split_asm simp: is_cap_simps)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Finalise_R.thy",
+  "lemma_line": 2339,
+  "name_at_line": "apply (auto simp add: ran_def split: if_split_asm)",
+  "total_s": 10.234,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-simp-lean",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-simp-lean share=1.00",
+  "bucket_s": {
+   "ambiguous-simp-lean": 10.234
+  },
+  "hot_cmds": [
+   {
+    "line": 2339,
+    "name": "apply",
+    "elapsed_s": 10.234,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto simp add: ran_def split: if_split_asm)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/IpcCancel_AI.thy",
+  "lemma_line": 369,
+  "name_at_line": "apply (auto elim!: delta_sym_refs pred_tcb_weaken_",
+  "total_s": 124.779,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 124.779
+  },
+  "hot_cmds": [
+   {
+    "line": 369,
+    "name": "apply",
+    "elapsed_s": 124.779,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (auto elim!: delta_sym_refs pred_tcb_weaken_strongerE simp: obj_at_def is_ep_def2 idle_not_queued refs_in_tcb_bound_refs dest: idle_no_refs spl"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/SR_lemmas_C.thy",
+  "lemma_line": 1292,
+  "name_at_line": "lemma null_sched_queue:",
+  "total_s": 70.539,
+  "search_frac": 0.912,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.912,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.91",
+  "bucket_s": {
+   "ambiguous-unknown": 64.302,
+   "simp-pure": 5.534,
+   "other": 0.703
+  },
+  "hot_cmds": [
+   {
+    "line": 1482,
+    "name": "by",
+    "elapsed_s": 32.373,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto elim!: obj_atE' intro!: map_to_ctes_upd_other map_comp_eqI simp: projectKOs projectKO_opts_defs split: if_split if_split_asm Structures_H.kernel_object.split_asm arch_k"
+   },
+   {
+    "line": 1531,
+    "name": "by",
+    "elapsed_s": 10.444,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto elim!: obj_atE' intro!: map_comp_eqI map_to_ctes_upd_other split: if_split_asm if_split simp: projectKOs, auto simp: projectKO_opts_defs)"
+   },
+   {
+    "line": 1509,
+    "name": "by",
+    "elapsed_s": 9.199,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto elim!: obj_atE' intro!: map_comp_eqI map_to_ctes_upd_other split: if_split_asm if_split simp: projectKOs, auto simp: projectKO_opts_defs)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/IpcCancel_R.thy",
+  "lemma_line": 1907,
+  "name_at_line": "lemma setObject_ko_wp_at':",
+  "total_s": 28.153,
+  "search_frac": 0.672,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.614,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.61",
+  "bucket_s": {
+   "ambiguous-unknown": 17.287,
+   "simp-pure": 5.813,
+   "wp-vcg": 3.109,
+   "ambiguous-simp-lean": 1.52,
+   "other": 0.318,
+   "search-pure": 0.106
+  },
+  "hot_cmds": [
+   {
+    "line": 2061,
+    "name": "by",
+    "elapsed_s": 16.204,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (fastforce elim!: obj_atE' simp: state_refs_of'_def tcb_bound_refs'_def subsetD symreftype_inverse' projectKOs split: if_split_asm)+"
+   },
+   {
+    "line": 2048,
+    "name": "apply",
+    "elapsed_s": 1.474,
+    "bucket": "wp-vcg",
+    "note": "wp/vcg method",
+    "text": "apply (wp valid_irq_node_lift hoare_vcg_const_Ball_lift sts_sch_act' sch_act_wf_lift valid_irq_handlers_lift'' cur_tcb_lift irqs_masked_lift sts_st_tcb' untyped_ranges_zero_l"
+   },
+   {
+    "line": 2059,
+    "name": "apply",
+    "elapsed_s": 1.382,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: valid_idle'_def pred_tcb_at'_def obj_at'_def idle_tcb'_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/InfoFlow_IF.thy",
+  "lemma_line": 175,
+  "name_at_line": "lemma states_equiv_for_identical_kheap_updates:",
+  "total_s": 27.836,
+  "search_frac": 0.806,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.487,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.49",
+  "bucket_s": {
+   "ambiguous-unknown": 13.569,
+   "simp-pure": 5.126,
+   "ambiguous-search-lean": 4.269,
+   "ambiguous-simp-lean": 2.964,
+   "structured": 1.454,
+   "search-pure": 0.353,
+   "other": 0.101
+  },
+  "hot_cmds": [
+   {
+    "line": 769,
+    "name": "by",
+    "elapsed_s": 3.692,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (fastforce simp: equiv_valid_2_def gets_def get_def return_def bind_def elim: reads_equivE affects_equivE equiv_forE intro: equiv_forI)"
+   },
+   {
+    "line": 917,
+    "name": "apply",
+    "elapsed_s": 3.253,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply (fastforce elim: reads_equivE affects_equivE equiv_forE intro: equiv_forI)"
+   },
+   {
+    "line": 685,
+    "name": "by",
+    "elapsed_s": 2.06,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (fastforce simp: equiv_valid_def2 equiv_valid_2_def set_object_def bind_def get_def gets_def put_def return_def assert_def get_object_def dest: update_object_n"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/access-control/CNode_AC.thy",
+  "lemma_line": 1117,
+  "name_at_line": "by (fastforce simp: cte_wp_at_caps_of_state       ",
+  "total_s": 27.345,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 27.345
+  },
+  "hot_cmds": [
+   {
+    "line": 1117,
+    "name": "by",
+    "elapsed_s": 27.345,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (fastforce simp: cte_wp_at_caps_of_state dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable])"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/Ipc_AI.thy",
+  "lemma_line": 2756,
+  "name_at_line": "apply (fastforce simp: pred_tcb_at_def2 tcb_bound_",
+  "total_s": 25.198,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 25.198
+  },
+  "hot_cmds": [
+   {
+    "line": 2756,
+    "name": "apply",
+    "elapsed_s": 25.198,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (fastforce simp: pred_tcb_at_def2 tcb_bound_refs_def2 dest!: symreftype_inverse')"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Detype_R.thy",
+  "lemma_line": 3646,
+  "name_at_line": "lemma valid_arch_state'_updateMDB:",
+  "total_s": 25.16,
+  "search_frac": 0.439,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.439,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.44",
+  "bucket_s": {
+   "ambiguous-unknown": 11.056,
+   "simp-pure": 9.255,
+   "other": 2.528,
+   "structured": 1.723,
+   "wp-vcg": 0.598
+  },
+  "hot_cmds": [
+   {
+    "line": 3885,
+    "name": "by",
+    "elapsed_s": 11.056,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "subgoal by (intro conjI impI; fastforce)"
+   },
+   {
+    "line": 4158,
+    "name": "by",
+    "elapsed_s": 2.861,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "by ((clarsimp simp: apiGetObjectSize_def ARM_H.toAPIType_def tcbBlockSizeBits_def ARM_H.getObjectSize_def objBits_simps epSizeBits_def ntfnS"
+   },
+   {
+    "line": 3742,
+    "name": "apply",
+    "elapsed_s": 2.284,
+    "bucket": "other",
+    "note": "no recognized method",
+    "text": "apply (strengthen monad_commute_guard_imp[OF monad_commute_split[where P=\"\\<top>\" and Q=\"\\<top>\\<top>\"], OF _ _ hoare_vcg_prop, THEN commute_commute] monad_commute_guard_imp[OF monad_c"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/ARM/ArchArch_IF.thy",
+  "lemma_line": 188,
+  "name_at_line": "lemma cte_wp_at_page_directory_not_in_globals:",
+  "total_s": 24.653,
+  "search_frac": 0.6,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.6,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.60",
+  "bucket_s": {
+   "ambiguous-unknown": 14.8,
+   "simp-pure": 8.78,
+   "wp-vcg": 0.959,
+   "other": 0.114
+  },
+  "hot_cmds": [
+   {
+    "line": 415,
+    "name": "by",
+    "elapsed_s": 5.129,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto simp: reads_equiv_def affects_equiv_def states_equiv_for_def equiv_for_def intro: equiv_asids_triv' split: if_splits)"
+   },
+   {
+    "line": 424,
+    "name": "by",
+    "elapsed_s": 4.893,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto simp: reads_equiv_def affects_equiv_def states_equiv_for_def equiv_for_def intro: equiv_asids_triv' split: if_splits)"
+   },
+   {
+    "line": 432,
+    "name": "by",
+    "elapsed_s": 4.778,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto simp: reads_equiv_def affects_equiv_def states_equiv_for_def equiv_for_def intro: equiv_asids_triv' split: if_splits)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/Noninterference.thy",
+  "lemma_line": 3288,
+  "name_at_line": "lemma non_PSched_steps_run_in_lock_step':",
+  "total_s": 20.935,
+  "search_frac": 0.598,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.533,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.53",
+  "bucket_s": {
+   "ambiguous-unknown": 11.165,
+   "simp-pure": 6.131,
+   "structured": 1.719,
+   "ambiguous-simp-lean": 0.653,
+   "wp-vcg": 0.639,
+   "ambiguous-search-lean": 0.52,
+   "other": 0.108
+  },
+  "hot_cmds": [
+   {
+    "line": 3315,
+    "name": "apply",
+    "elapsed_s": 8.133,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply ((fastforce simp: uwr_sym dest: schedIncludesCurrentDom simp: refl_onD[OF policyFlows_refl, simplified])+)[9] (* slowish *)"
+   },
+   {
+    "line": 3355,
+    "name": "apply",
+    "elapsed_s": 3.408,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (drule_tac as=asa and asa=as in non_PSched_steps_run_in_lock_step', (simp add: uwr_sym)+)"
+   },
+   {
+    "line": 3310,
+    "name": "apply",
+    "elapsed_s": 3.032,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply ((fastforce simp: uwr_sym dest: schedIncludesCurrentDom simp: refl_onD[OF policyFlows_refl, simplified])+)[9]"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CSpace_R.thy",
+  "lemma_line": 4202,
+  "name_at_line": "lemma mdb_next_pres:",
+  "total_s": 20.771,
+  "search_frac": 0.602,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.602,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.60",
+  "bucket_s": {
+   "ambiguous-unknown": 12.511,
+   "simp-pure": 7.301,
+   "wp-vcg": 0.578,
+   "other": 0.381
+  },
+  "hot_cmds": [
+   {
+    "line": 4308,
+    "name": "by",
+    "elapsed_s": 3.076,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "subgoal by fastforce"
+   },
+   {
+    "line": 4445,
+    "name": "apply",
+    "elapsed_s": 2.439,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "apply fastforce"
+   },
+   {
+    "line": 4296,
+    "name": "by",
+    "elapsed_s": 1.502,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "subgoal by fastforce"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/ARM/ArchArch_IF.thy",
+  "lemma_line": 872,
+  "name_at_line": "by (auto simp: reads_equiv_def2 affects_equiv_def2",
+  "total_s": 19.181,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 19.181
+  },
+  "hot_cmds": [
+   {
+    "line": 872,
+    "name": "by",
+    "elapsed_s": 19.181,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto simp: reads_equiv_def2 affects_equiv_def2 intro!: states_equiv_forI equiv_forI equiv_asids_arm_asid_table_delete elim!: states_equiv_forE equiv_forE elim: is_sub"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/drefine/CNode_DR.thy",
+  "lemma_line": 332,
+  "name_at_line": "by (case_tac \"cdt s' child\", safe intro!: mdb_cte_",
+  "total_s": 18.89,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 18.89
+  },
+  "hot_cmds": [
+   {
+    "line": 332,
+    "name": "by",
+    "elapsed_s": 18.89,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI; auto dest: mdb_cte_atD is_untyped_cap_eqD simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Detype_R.thy",
+  "lemma_line": 1069,
+  "name_at_line": "lemma live_idle_untyped_range':",
+  "total_s": 17.35,
+  "search_frac": 0.501,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.308,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.31",
+  "bucket_s": {
+   "ambiguous-unknown": 5.338,
+   "simp-pure": 4.841,
+   "other": 3.813,
+   "ambiguous-simp-lean": 2.449,
+   "structured": 0.909
+  },
+  "hot_cmds": [
+   {
+    "line": 1381,
+    "name": "interpret",
+    "elapsed_s": 3.349,
+    "bucket": "other",
+    "note": "no recognized method",
+    "text": "interpret Arch . (*FIXME: arch_split*)"
+   },
+   {
+    "line": 1619,
+    "name": "apply",
+    "elapsed_s": 2.32,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto simp add: x_power_minus_1)"
+   },
+   {
+    "line": 1539,
+    "name": "by",
+    "elapsed_s": 2.153,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "by fastforce"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CSpace_R.thy",
+  "lemma_line": 61,
+  "name_at_line": "lemma [intro?]:",
+  "total_s": 16.894,
+  "search_frac": 0.896,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.896,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.90",
+  "bucket_s": {
+   "ambiguous-unknown": 15.134,
+   "simp-pure": 1.441,
+   "other": 0.319
+  },
+  "hot_cmds": [
+   {
+    "line": 151,
+    "name": "by",
+    "elapsed_s": 2.371,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "subgoal by fastforce"
+   },
+   {
+    "line": 173,
+    "name": "by",
+    "elapsed_s": 1.849,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "subgoal by fastforce"
+   },
+   {
+    "line": 160,
+    "name": "by",
+    "elapsed_s": 1.3,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "subgoal by fastforce"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/TcbAcc_R.thy",
+  "lemma_line": 5393,
+  "name_at_line": "by (intro conjI impI;       force dest!: hd_in_set",
+  "total_s": 16.451,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 16.451
+  },
+  "hot_cmds": [
+   {
+    "line": 5393,
+    "name": "by",
+    "elapsed_s": 16.451,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (intro conjI impI; force dest!: hd_in_set heap_path_head simp: inQ_def opt_pred_def opt_map_def obj_at'_def projectKOs split: if_splits)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+  "lemma_line": 1622,
+  "name_at_line": "by auto",
+  "total_s": 15.744,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 15.744
+  },
+  "hot_cmds": [
+   {
+    "line": 1622,
+    "name": "by",
+    "elapsed_s": 15.744,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "by auto"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/Syscall_IF.thy",
+  "lemma_line": 248,
+  "name_at_line": "apply (auto intro: real_cte_emptyable_strg[rule_fo",
+  "total_s": 15.023,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 15.023
+  },
+  "hot_cmds": [
+   {
+    "line": 248,
+    "name": "apply",
+    "elapsed_s": 15.023,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (auto intro: real_cte_emptyable_strg[rule_format] simp: silc_inv_def reads_equiv_f_def requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCa"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/drefine/CNode_DR.thy",
+  "lemma_line": 255,
+  "name_at_line": "by (auto dest: mdb_cte_atD is_untyped_cap_eqD     ",
+  "total_s": 14.674,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 14.674
+  },
+  "hot_cmds": [
+   {
+    "line": 255,
+    "name": "by",
+    "elapsed_s": 14.674,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto dest: mdb_cte_atD is_untyped_cap_eqD simp: revokable_cap_insert_dest_original valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Detype_R.thy",
+  "lemma_line": 799,
+  "name_at_line": "lemma ksASIDMapSafeI:",
+  "total_s": 14.611,
+  "search_frac": 0.827,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.784,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.78",
+  "bucket_s": {
+   "ambiguous-unknown": 11.456,
+   "simp-pure": 1.706,
+   "structured": 0.479,
+   "ambiguous-simp-lean": 0.447,
+   "other": 0.345,
+   "ambiguous-search-lean": 0.178
+  },
+  "hot_cmds": [
+   {
+    "line": 999,
+    "name": "by",
+    "elapsed_s": 10.349,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "subgoal by fastforce"
+   },
+   {
+    "line": 1060,
+    "name": "apply",
+    "elapsed_s": 0.479,
+    "bucket": "structured",
+    "note": "alternation x3, families=['simp', 'wp_vcg']",
+    "text": "apply (wp hoare_vcg_ex_lift hoare_vcg_ball_lift | wps | simp add: invs_def valid_state_def valid_pspace_def descendants_range_def | wp (once) hoare_drop_imps)+"
+   },
+   {
+    "line": 1026,
+    "name": "apply",
+    "elapsed_s": 0.42,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp add: detype_def, rule state.equality; simp add: detype_ext_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/TcbAcc_R.thy",
+  "lemma_line": 2670,
+  "name_at_line": "by (auto dest!: hd_in_set             simp: inQ_de",
+  "total_s": 14.308,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 14.308
+  },
+  "hot_cmds": [
+   {
+    "line": 2670,
+    "name": "by",
+    "elapsed_s": 14.308,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto dest!: hd_in_set simp: inQ_def in_opt_pred opt_map_def fun_upd_apply obj_at'_def projectKOs split: if_splits option.splits)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/ADT_C.thy",
+  "lemma_line": 1294,
+  "name_at_line": "lemma (in kernel_m) cDomSchedule_to_H_correct:",
+  "total_s": 13.769,
+  "search_frac": 0.361,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.361,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.36",
+  "bucket_s": {
+   "ambiguous-unknown": 4.964,
+   "other": 4.762,
+   "simp-pure": 4.043
+  },
+  "hot_cmds": [
+   {
+    "line": 1308,
+    "name": "apply",
+    "elapsed_s": 4.964,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "apply auto"
+   },
+   {
+    "line": 1294,
+    "name": "lemma",
+    "elapsed_s": 3.864,
+    "bucket": "other",
+    "note": "no recognized method",
+    "text": "lemma (in kernel_m) cDomSchedule_to_H_correct:"
+   },
+   {
+    "line": 1301,
+    "name": "apply",
+    "elapsed_s": 1.67,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (rule the_equality, simp)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/CNodeInv_AI.thy",
+  "lemma_line": 3428,
+  "name_at_line": "lemma cap_move_ex_cap_cte:",
+  "total_s": 13.67,
+  "search_frac": 0.722,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.722,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.72",
+  "bucket_s": {
+   "ambiguous-unknown": 9.876,
+   "wp-vcg": 2.886,
+   "simp-pure": 0.465,
+   "other": 0.443
+  },
+  "hot_cmds": [
+   {
+    "line": 3568,
+    "name": "apply",
+    "elapsed_s": 7.867,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (intro conjI, (fastforce simp: cte_wp_at_caps_of_state dest: real_cte_weak_derived_not_reply_masterD)+)[1]"
+   },
+   {
+    "line": 3571,
+    "name": "apply",
+    "elapsed_s": 1.862,
+    "bucket": "wp-vcg",
+    "note": "wp/vcg method",
+    "text": "apply (wpsimp wp: hoare_drop_imps get_cap_wp)+"
+   },
+   {
+    "line": 3556,
+    "name": "apply",
+    "elapsed_s": 1.756,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (fastforce simp: real_cte_tcb_valid ex_cte_cap_to_cnode_always_appropriate_strg dest: real_cte_weak_derived_not_reply_masterD)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/IpcCancel_R.thy",
+  "lemma_line": 870,
+  "name_at_line": "by (auto elim!: delta_sym_refs                simp",
+  "total_s": 13.101,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 13.101
+  },
+  "hot_cmds": [
+   {
+    "line": 870,
+    "name": "by",
+    "elapsed_s": 13.101,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto elim!: delta_sym_refs simp: symreftype_inverse' tcb_st_refs_of'_def tcb_bound_refs'_def split: thread_state.splits if_split_asm)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+  "lemma_line": 241,
+  "name_at_line": "by auto",
+  "total_s": 12.59,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 12.59
+  },
+  "hot_cmds": [
+   {
+    "line": 241,
+    "name": "by",
+    "elapsed_s": 12.59,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "by auto"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/Finalise_IF.thy",
+  "lemma_line": 523,
+  "name_at_line": "apply (force elim: reads_equivE simp: equiv_for_de",
+  "total_s": 12.348,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 12.348
+  },
+  "hot_cmds": [
+   {
+    "line": 523,
+    "name": "apply",
+    "elapsed_s": 12.348,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (force elim: reads_equivE simp: equiv_for_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Arch_R.thy",
+  "lemma_line": 988,
+  "name_at_line": "apply fastforce",
+  "total_s": 11.86,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 11.86
+  },
+  "hot_cmds": [
+   {
+    "line": 988,
+    "name": "apply",
+    "elapsed_s": 11.86,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "apply fastforce"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/lib/SubMonadLib.thy",
+  "lemma_line": 197,
+  "name_at_line": "lemma (in submonad_args) submonad_fn_gets:",
+  "total_s": 11.042,
+  "search_frac": 0.907,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.864,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.86",
+  "bucket_s": {
+   "ambiguous-unknown": 9.544,
+   "simp-pure": 0.921,
+   "ambiguous-simp-lean": 0.467,
+   "other": 0.11
+  },
+  "hot_cmds": [
+   {
+    "line": 523,
+    "name": "apply",
+    "elapsed_s": 8.216,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "apply fastforce"
+   },
+   {
+    "line": 537,
+    "name": "apply",
+    "elapsed_s": 0.739,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "apply force"
+   },
+   {
+    "line": 225,
+    "name": "apply",
+    "elapsed_s": 0.553,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: o_def mapM_Cons return_def bind_def)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Tcb_R.thy",
+  "lemma_line": 894,
+  "name_at_line": "lemma untyped_derived_eq_from_sameObjectAs:",
+  "total_s": 10.595,
+  "search_frac": 0.906,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 0.906,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=0.91",
+  "bucket_s": {
+   "ambiguous-unknown": 9.599,
+   "simp-pure": 0.654,
+   "other": 0.342
+  },
+  "hot_cmds": [
+   {
+    "line": 927,
+    "name": "by",
+    "elapsed_s": 9.599,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "subgoal by fastforce"
+   },
+   {
+    "line": 928,
+    "name": "apply",
+    "elapsed_s": 0.268,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: isCap_simps cteCaps_of_def)"
+   },
+   {
+    "line": 894,
+    "name": "lemma",
+    "elapsed_s": 0.213,
+    "bucket": "other",
+    "note": "no recognized method",
+    "text": "lemma untyped_derived_eq_from_sameObjectAs:"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/Ipc_AI.thy",
+  "lemma_line": 2685,
+  "name_at_line": "apply (fastforce dest!: symreftype_inverse'       ",
+  "total_s": 10.401,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 10.401
+  },
+  "hot_cmds": [
+   {
+    "line": 2685,
+    "name": "apply",
+    "elapsed_s": 10.401,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (fastforce dest!: symreftype_inverse' simp: pred_tcb_at_def2 tcb_bound_refs_def2)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/access-control/DomainSepInv.thy",
+  "lemma_line": 230,
+  "name_at_line": "apply (force simp: domain_sep_inv_def domain_sep_i",
+  "total_s": 10.4,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 10.4
+  },
+  "hot_cmds": [
+   {
+    "line": 230,
+    "name": "apply",
+    "elapsed_s": 10.4,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (force simp: domain_sep_inv_def domain_sep_inv_cap_def split: cap.splits dest: cte_wp_at_norm weak_derived_irq_handler weak_derived_DomainCap)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Ipc_R.thy",
+  "lemma_line": 3725,
+  "name_at_line": "apply (fastforce simp: tcb_bound_refs'_def        ",
+  "total_s": 10.034,
+  "search_frac": 1.0,
+  "class_v2": "ambiguous-unknown",
+  "dominant_share": 1.0,
+  "needs_profiling": true,
+  "reason": "dominant=ambiguous-unknown share=1.00",
+  "bucket_s": {
+   "ambiguous-unknown": 10.034
+  },
+  "hot_cmds": [
+   {
+    "line": 3725,
+    "name": "apply",
+    "elapsed_s": 10.034,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (fastforce simp: tcb_bound_refs'_def dest: symreftype_inverse' split: if_split_asm)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/Ipc_C.thy",
+  "lemma_line": 4851,
+  "name_at_line": "lemma receiveIPC_block_ccorres_helper:",
+  "total_s": 1215.937,
+  "search_frac": 0.419,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.55,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.55",
+  "bucket_s": {
+   "simp-pure": 669.08,
+   "ambiguous-simp-lean": 488.046,
+   "wp-vcg": 35.525,
+   "ambiguous-unknown": 21.269,
+   "other": 2.017
+  },
+  "hot_cmds": [
+   {
+    "line": 5503,
+    "name": "by",
+    "elapsed_s": 204.32,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (fastforce simp: obj_at'_def is_aligned_neg_mask objBits_simps' projectKOs invs'_def valid_state'_def st_tcb_at'_def"
+   },
+   {
+    "line": 5515,
+    "name": "by",
+    "elapsed_s": 97.22,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (fastforce simp: obj_at'_def is_aligned_neg_mask objBits_simps' projectKOs invs'_def valid_state'_def st_tcb_at'_def"
+   },
+   {
+    "line": 6239,
+    "name": "by",
+    "elapsed_s": 92.349,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (fastforce simp: obj_at'_def is_aligned_neg_mask objBits_simps' projectKOs invs'_def valid_state'_def st_tcb_at'_def valid_tcb_state'_def"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/Tcb_C.thy",
+  "lemma_line": 70,
+  "name_at_line": "lemma getObject_state:",
+  "total_s": 569.115,
+  "search_frac": 0.302,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.385,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.39",
+  "bucket_s": {
+   "simp-pure": 219.32,
+   "wp-vcg": 165.376,
+   "ambiguous-search-lean": 158.431,
+   "ambiguous-simp-lean": 11.67,
+   "other": 6.678,
+   "structured": 5.619,
+   "ambiguous-unknown": 2.021
+  },
+  "hot_cmds": [
+   {
+    "line": 447,
+    "name": "apply",
+    "elapsed_s": 158.072,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply (auto intro: valid_capAligned dest: ctes_of_valid')[1]"
+   },
+   {
+    "line": 494,
+    "name": "apply",
+    "elapsed_s": 33.194,
+    "bucket": "wp-vcg",
+    "note": "wp/vcg method",
+    "text": "apply (cinit lift: target_' slot_' faultep_' mcp_' priority_' cRoot_newCap_' cRoot_srcSlot_' vRoot_newCap_' vRoot_srcSlot_' bufferAddr_' bufferSrcSlot_' bufferCap_'"
+   },
+   {
+    "line": 812,
+    "name": "apply",
+    "elapsed_s": 31.645,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (rule ccorres_split_throws, rule ccorres_return_C_errorE, simp+)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/Recycle_C.thy",
+  "lemma_line": 501,
+  "name_at_line": "lemma ccorres_subst_basic_helper:",
+  "total_s": 219.9,
+  "search_frac": 0.428,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.514,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.51",
+  "bucket_s": {
+   "simp-pure": 112.928,
+   "ambiguous-unknown": 79.236,
+   "ambiguous-simp-lean": 14.488,
+   "wp-vcg": 11.994,
+   "other": 0.917,
+   "ambiguous-search-lean": 0.337
+  },
+  "hot_cmds": [
+   {
+    "line": 765,
+    "name": "by",
+    "elapsed_s": 49.325,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "subgoal by fastforce"
+   },
+   {
+    "line": 756,
+    "name": "by",
+    "elapsed_s": 27.549,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "subgoal by fastforce"
+   },
+   {
+    "line": 678,
+    "name": "by",
+    "elapsed_s": 18.628,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "subgoal by simp"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/Fastpath_C.thy",
+  "lemma_line": 1141,
+  "name_at_line": "lemma fastpath_dequeue_ccorres:",
+  "total_s": 214.464,
+  "search_frac": 0.317,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.601,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.60",
+  "bucket_s": {
+   "simp-pure": 128.902,
+   "ambiguous-search-lean": 30.407,
+   "structured": 20.713,
+   "ambiguous-unknown": 13.915,
+   "other": 13.648,
+   "wp-vcg": 3.778,
+   "ambiguous-simp-lean": 3.101
+  },
+  "hot_cmds": [
+   {
+    "line": 1418,
+    "name": "apply",
+    "elapsed_s": 14.629,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply (erule notE[rotated], rule_tac ntfnptr=p and ntfn=a in st_tcb_at_not_in_ntfn_queue, assumption+, auto dest!: map_to_ko_atI)[1]"
+   },
+   {
+    "line": 1363,
+    "name": "apply",
+    "elapsed_s": 12.858,
+    "bucket": "other",
+    "note": "no recognized method",
+    "text": "apply (drule_tac qend=\"tcb_ptr_to_ctcb_ptr (last list)\" and qend'=\"tcb_ptr_to_ctcb_ptr (ksCurThread \\<sigma>)\" and tn_update=\"tcbEPNext_C_update\""
+   },
+   {
+    "line": 1390,
+    "name": "apply",
+    "elapsed_s": 12.408,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply (erule notE[rotated], erule_tac ntfnptr=p and ntfn=a in st_tcb_at_not_in_ntfn_queue, auto dest!: map_to_ko_atI)[1]"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/refine/ARM/Example_Valid_StateH.thy",
+  "lemma_line": 2803,
+  "name_at_line": "lemma s0H_invs:",
+  "total_s": 181.342,
+  "search_frac": 0.451,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.547,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.55",
+  "bucket_s": {
+   "simp-pure": 99.159,
+   "ambiguous-simp-lean": 81.842,
+   "other": 0.341
+  },
+  "hot_cmds": [
+   {
+    "line": 3096,
+    "name": "apply",
+    "elapsed_s": 19.806,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: kh0_def kh0_obj_def s0_ptr_defs image_def)"
+   },
+   {
+    "line": 3117,
+    "name": "apply",
+    "elapsed_s": 14.043,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (force simp: kh0_def kh0_obj_def image_def s0_ptr_defs cte_map_def' dom_caps)"
+   },
+   {
+    "line": 3112,
+    "name": "apply",
+    "elapsed_s": 12.141,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (force simp: kh0_def kh0_obj_def image_def s0_ptr_defs cte_map_def' dom_caps)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CSpace1_R.thy",
+  "lemma_line": 1973,
+  "name_at_line": "lemma descendants_of_update_ztc:",
+  "total_s": 92.406,
+  "search_frac": 0.448,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.546,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.55",
+  "bucket_s": {
+   "simp-pure": 50.48,
+   "ambiguous-simp-lean": 16.467,
+   "ambiguous-unknown": 12.761,
+   "ambiguous-search-lean": 12.213,
+   "other": 0.365,
+   "wp-vcg": 0.12
+  },
+  "hot_cmds": [
+   {
+    "line": 2343,
+    "name": "apply",
+    "elapsed_s": 15.628,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto simp: is_cap_simps isCap_simps)[1]"
+   },
+   {
+    "line": 2346,
+    "name": "apply",
+    "elapsed_s": 12.77,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp add: is_cap_simps, elim disjE exE, simp_all)[1]"
+   },
+   {
+    "line": 2326,
+    "name": "apply",
+    "elapsed_s": 12.213,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply (auto elim!: modify_map_casesE)[1]"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CNodeInv_R.thy",
+  "lemma_line": 1555,
+  "name_at_line": "lemma (in mdb_swap) cteSwap_chain:",
+  "total_s": 63.881,
+  "search_frac": 0.348,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.649,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.65",
+  "bucket_s": {
+   "simp-pure": 41.486,
+   "ambiguous-simp-lean": 13.876,
+   "ambiguous-unknown": 8.335,
+   "other": 0.184
+  },
+  "hot_cmds": [
+   {
+    "line": 4181,
+    "name": "by",
+    "elapsed_s": 12.882,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (simp add: n_def modify_map_if dest2_node_def n'_def, auto)"
+   },
+   {
+    "line": 4187,
+    "name": "apply",
+    "elapsed_s": 10.085,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp add: n_def modify_map_cases n'_def)"
+   },
+   {
+    "line": 2806,
+    "name": "apply",
+    "elapsed_s": 4.774,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp add: modify_map_same modify_map_other)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CNodeInv_R.thy",
+  "lemma_line": 7809,
+  "name_at_line": "lemma m_to_src:",
+  "total_s": 62.45,
+  "search_frac": 0.581,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.414,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.41",
+  "bucket_s": {
+   "simp-pure": 25.855,
+   "ambiguous-simp-lean": 21.939,
+   "ambiguous-unknown": 13.371,
+   "ambiguous-search-lean": 1.003,
+   "other": 0.282
+  },
+  "hot_cmds": [
+   {
+    "line": 7931,
+    "name": "apply",
+    "elapsed_s": 15.78,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (clarsimp simp: capMasterCap_def split: capability.splits arch_capability.splits ; fastforce simp: sameRegionAs_def ARM_H.sameRegionAs_def isCap_simps split: if_split_asm)+"
+   },
+   {
+    "line": 8151,
+    "name": "by",
+    "elapsed_s": 9.326,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "by fastforce"
+   },
+   {
+    "line": 7924,
+    "name": "apply",
+    "elapsed_s": 6.159,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto simp: m'_def n_def src dest modify_map_if neq)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/Refine_C.thy",
+  "lemma_line": 771,
+  "name_at_line": "lemma user_memory_update_corres_C_helper:",
+  "total_s": 62.321,
+  "search_frac": 0.459,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.393,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.39",
+  "bucket_s": {
+   "simp-pure": 24.494,
+   "ambiguous-unknown": 18.13,
+   "ambiguous-simp-lean": 10.078,
+   "other": 9.221,
+   "search-pure": 0.267,
+   "ambiguous-search-lean": 0.131
+  },
+  "hot_cmds": [
+   {
+    "line": 1021,
+    "name": "apply",
+    "elapsed_s": 13.64,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "apply fastforce"
+   },
+   {
+    "line": 783,
+    "name": "apply",
+    "elapsed_s": 8.786,
+    "bucket": "other",
+    "note": "no recognized method",
+    "text": "apply (induct e)"
+   },
+   {
+    "line": 1019,
+    "name": "apply",
+    "elapsed_s": 7.339,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: ct_running'_C)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CSpace1_R.thy",
+  "lemma_line": 30,
+  "name_at_line": "lemma isMDBParentOf_CTE1:",
+  "total_s": 58.882,
+  "search_frac": 0.334,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.624,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.62",
+  "bucket_s": {
+   "simp-pure": 36.753,
+   "ambiguous-simp-lean": 12.508,
+   "ambiguous-unknown": 7.188,
+   "other": 2.322,
+   "wp-vcg": 0.111
+  },
+  "hot_cmds": [
+   {
+    "line": 607,
+    "name": "apply",
+    "elapsed_s": 7.556,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (corresKsimp search: getSlotCap_corres IH wp: get_cap_wp getSlotCap_valid no_fail_stateAssert simp: locateSlot_conv)"
+   },
+   {
+    "line": 583,
+    "name": "by",
+    "elapsed_s": 6.621,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "by (auto simp: in_monad intro!: get_cap_success) (* takes time *)"
+   },
+   {
+    "line": 295,
+    "name": "apply",
+    "elapsed_s": 6.135,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp add: isCap_defs)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Detype_R.thy",
+  "lemma_line": 2260,
+  "name_at_line": "lemma locateCTE_commute:",
+  "total_s": 50.483,
+  "search_frac": 0.344,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.36,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.36",
+  "bucket_s": {
+   "simp-pure": 18.186,
+   "ambiguous-simp-lean": 15.555,
+   "wp-vcg": 13.923,
+   "ambiguous-unknown": 1.827,
+   "structured": 0.874,
+   "other": 0.118
+  },
+  "hot_cmds": [
+   {
+    "line": 3176,
+    "name": "apply",
+    "elapsed_s": 13.581,
+    "bucket": "wp-vcg",
+    "note": "wp/vcg method",
+    "text": "apply (wp locateCTE_cte_no_fail no_fail_modify modify_pde_pspace_distinct' modify_pde_pspace_aligned'| subst modify_specify)+"
+   },
+   {
+    "line": 3316,
+    "name": "by",
+    "elapsed_s": 8.171,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: monad_commute_def setCTE_def setObject_def split_def bind_def return_def simpler_modify_def simpler_gets_def assert_opt_def fail_def simpler_updateObje"
+   },
+   {
+    "line": 3308,
+    "name": "by",
+    "elapsed_s": 3.807,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: monad_commute_def setCTE_def setObject_def split_def bind_def return_def simpler_modify_def simpler_gets_def assert_opt_def fail_def simpler_updateObje"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/ADT_C.thy",
+  "lemma_line": 1392,
+  "name_at_line": "lemma (in kernel_m) cstate_to_H_correct:",
+  "total_s": 45.989,
+  "search_frac": 0.322,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.583,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.58",
+  "bucket_s": {
+   "simp-pure": 26.834,
+   "ambiguous-simp-lean": 14.825,
+   "other": 4.33
+  },
+  "hot_cmds": [
+   {
+    "line": 1454,
+    "name": "apply",
+    "elapsed_s": 17.029,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: valid_state'_def st_tcb_at'_def obj_at'_real_def ko_wp_at'_def objBitsKO_def projectKO_opt_tcb split: kernel_object.splits)"
+   },
+   {
+    "line": 1412,
+    "name": "apply",
+    "elapsed_s": 14.825,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: cstate_relation_def cpspace_relation_def Let_def ghost_size_rel_def unat_eq_0 split: if_split)"
+   },
+   {
+    "line": 1392,
+    "name": "lemma",
+    "elapsed_s": 3.828,
+    "bucket": "other",
+    "note": "no recognized method",
+    "text": "lemma (in kernel_m) cstate_to_H_correct:"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/StoreWord_C.thy",
+  "lemma_line": 669,
+  "name_at_line": "lemma storeWordDevice_rf_sr_upd':",
+  "total_s": 32.249,
+  "search_frac": 0.404,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.588,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.59",
+  "bucket_s": {
+   "simp-pure": 18.964,
+   "ambiguous-simp-lean": 8.742,
+   "ambiguous-unknown": 4.279,
+   "other": 0.264
+  },
+  "hot_cmds": [
+   {
+    "line": 1046,
+    "name": "apply",
+    "elapsed_s": 7.898,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto split: if_split simp: fun_upd_idem)[1]"
+   },
+   {
+    "line": 1080,
+    "name": "apply",
+    "elapsed_s": 3.836,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: nth_list_update split: if_split)"
+   },
+   {
+    "line": 941,
+    "name": "apply",
+    "elapsed_s": 1.438,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: rl' tag_disj_via_td_name)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Detype_R.thy",
+  "lemma_line": 4207,
+  "name_at_line": "lemma no_overlap_check:",
+  "total_s": 29.537,
+  "search_frac": 0.448,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.469,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.47",
+  "bucket_s": {
+   "simp-pure": 13.866,
+   "ambiguous-simp-lean": 12.722,
+   "wp-vcg": 2.074,
+   "ambiguous-unknown": 0.498,
+   "other": 0.253,
+   "structured": 0.124
+  },
+  "hot_cmds": [
+   {
+    "line": 4592,
+    "name": "by",
+    "elapsed_s": 6.155,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: createObjects'_def split_def bind_assoc return_def unless_def when_def simpler_gets_def alignError_def fail_def assert_def simpler_modify_def bind_def split:"
+   },
+   {
+    "line": 4608,
+    "name": "by",
+    "elapsed_s": 6.098,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: createObjects'_def split_def bind_assoc return_def unless_def when_def simpler_gets_def alignError_def fail_def assert_def simpler_modify_def bind_def split:"
+   },
+   {
+    "line": 5478,
+    "name": "apply",
+    "elapsed_s": 1.777,
+    "bucket": "wp-vcg",
+    "note": "wp/vcg method",
+    "text": "apply (wp doMachineOp_psp_no_overlap createObjects'_pspace_no_overlap2 hoare_when_weak_wp copyGlobalMappings_pspace_no_overlap' createObjects'_psp_aligned[whe"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Finalise_R.thy",
+  "lemma_line": 173,
+  "name_at_line": "lemma n_revokable:",
+  "total_s": 27.245,
+  "search_frac": 0.504,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.484,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.48",
+  "bucket_s": {
+   "simp-pure": 13.186,
+   "ambiguous-simp-lean": 12.03,
+   "ambiguous-unknown": 1.706,
+   "other": 0.323
+  },
+  "hot_cmds": [
+   {
+    "line": 494,
+    "name": "apply",
+    "elapsed_s": 5.206,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (erule sameRegionAsE, auto simp: isCap_simps capMasterCap_def split:capability.splits)[1]"
+   },
+   {
+    "line": 578,
+    "name": "apply",
+    "elapsed_s": 2.127,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: isMDBParentOf_def isCap_simps split: if_split_asm cong: if_cong)"
+   },
+   {
+    "line": 491,
+    "name": "apply",
+    "elapsed_s": 2.017,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp:isCap_simps capMasterCap_def split:capability.splits)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CSpace_I.thy",
+  "lemma_line": 617,
+  "name_at_line": "lemma capBadge_simps[simp]:",
+  "total_s": 26.676,
+  "search_frac": 0.491,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.504,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.50",
+  "bucket_s": {
+   "simp-pure": 13.432,
+   "ambiguous-simp-lean": 7.641,
+   "ambiguous-unknown": 5.466,
+   "other": 0.137
+  },
+  "hot_cmds": [
+   {
+    "line": 823,
+    "name": "apply",
+    "elapsed_s": 7.53,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto simp: isCap_simps)"
+   },
+   {
+    "line": 725,
+    "name": "apply",
+    "elapsed_s": 5.466,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "apply fastforce"
+   },
+   {
+    "line": 700,
+    "name": "apply",
+    "elapsed_s": 3.19,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp add: ARM_H.sameRegionAs_def isCap_simps split: arch_capability.split split del: if_split cong: if_cong)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/ArchAcc_R.thy",
+  "lemma_line": 1147,
+  "name_at_line": "lemma createMappingEntries_valid_slots' [wp]:",
+  "total_s": 25.927,
+  "search_frac": 0.417,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.529,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.53",
+  "bucket_s": {
+   "simp-pure": 13.725,
+   "ambiguous-simp-lean": 10.328,
+   "other": 0.627,
+   "ambiguous-unknown": 0.496,
+   "structured": 0.389,
+   "wp-vcg": 0.362
+  },
+  "hot_cmds": [
+   {
+    "line": 1201,
+    "name": "apply",
+    "elapsed_s": 10.462,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (corresKsimp simp: liftE_bindE assertE_assert mask_asid_low_bits_ucast_ucast lookup_failure_map_def wp: getPDE_wp getASID_wp sea"
+   },
+   {
+    "line": 1168,
+    "name": "by",
+    "elapsed_s": 10.164,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (corresKsimp corresK: mapME_x_corresK_inv wp: get_master_pte_wp get_master_pde_wp getPTE_wp getPDE_wp; auto simp add: valid_mapping_entries_def)+"
+   },
+   {
+    "line": 1166,
+    "name": "apply",
+    "elapsed_s": 0.741,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (cases m; cases m'; simp; match premises in \"(_ \\<otimes> (=)) p p'\" for p p' \\<Rightarrow> \\<open>cases \"fst p\"; cases \"fst p'\"\\<close>; clarsimp)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/TcbQueue_C.thy",
+  "lemma_line": 14,
+  "name_at_line": "lemma tcb_queueD:",
+  "total_s": 24.953,
+  "search_frac": 0.347,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.555,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.56",
+  "bucket_s": {
+   "simp-pure": 13.85,
+   "ambiguous-simp-lean": 6.821,
+   "other": 2.456,
+   "ambiguous-unknown": 1.826
+  },
+  "hot_cmds": [
+   {
+    "line": 382,
+    "name": "apply",
+    "elapsed_s": 9.652,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp add: inj_eq split: if_split_asm)"
+   },
+   {
+    "line": 393,
+    "name": "by",
+    "elapsed_s": 4.241,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (fastforce simp: last_conv_nth distinct_nth distinct_nth_cons nth_first_not_member)"
+   },
+   {
+    "line": 391,
+    "name": "by",
+    "elapsed_s": 2.58,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "subgoal by (fastforce simp: last_conv_nth distinct_nth distinct_nth_cons nth_first_not_member)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/SR_lemmas_C.thy",
+  "lemma_line": 309,
+  "name_at_line": "lemma tcb_cte_cases_proj_eq [simp]:",
+  "total_s": 20.946,
+  "search_frac": 0.336,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.664,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.66",
+  "bucket_s": {
+   "simp-pure": 13.914,
+   "ambiguous-simp-lean": 6.032,
+   "ambiguous-unknown": 1.0
+  },
+  "hot_cmds": [
+   {
+    "line": 863,
+    "name": "apply",
+    "elapsed_s": 7.789,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp add: tcb_cte_cases_def field_simps split: if_split_asm)"
+   },
+   {
+    "line": 313,
+    "name": "by",
+    "elapsed_s": 5.806,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto split: if_split_asm)"
+   },
+   {
+    "line": 333,
+    "name": "by",
+    "elapsed_s": 1.253,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "by (cases z, simp)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/InterruptAcc_R.thy",
+  "lemma_line": 26,
+  "name_at_line": "lemma setIRQState_corres:",
+  "total_s": 16.523,
+  "search_frac": 0.507,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.461,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.46",
+  "bucket_s": {
+   "simp-pure": 7.625,
+   "ambiguous-simp-lean": 6.613,
+   "ambiguous-unknown": 1.757,
+   "other": 0.326,
+   "structured": 0.202
+  },
+  "hot_cmds": [
+   {
+    "line": 99,
+    "name": "by",
+    "elapsed_s": 6.613,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: preemption_point_def preemptionPoint_def o_def gets_def liftE_def whenE_def getActiveIRQ_def corres_underlying_def select_def bind_def get_def bindE_def select_f_def mo"
+   },
+   {
+    "line": 158,
+    "name": "apply",
+    "elapsed_s": 2.161,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (case_tac \"ksSchedulerAction s\", simp_all)"
+   },
+   {
+    "line": 160,
+    "name": "apply",
+    "elapsed_s": 1.844,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (case_tac \"ksSchedulerAction s\", simp_all)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/lib/clib/SimplRewrite.thy",
+  "lemma_line": 195,
+  "name_at_line": "lemma spec_statefn_simulates_via_statefn:",
+  "total_s": 16.483,
+  "search_frac": 0.355,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.351,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.35",
+  "bucket_s": {
+   "simp-pure": 5.786,
+   "ambiguous-search-lean": 5.688,
+   "other": 4.85,
+   "structured": 0.159
+  },
+  "hot_cmds": [
+   {
+    "line": 695,
+    "name": "qed",
+    "elapsed_s": 3.663,
+    "bucket": "other",
+    "note": "no recognized method",
+    "text": "qed gs_simple_cases"
+   },
+   {
+    "line": 317,
+    "name": "apply",
+    "elapsed_s": 2.96,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply ((force elim: exec.Seq exec.cases notE)+)[4]"
+   },
+   {
+    "line": 489,
+    "name": "apply",
+    "elapsed_s": 1.207,
+    "bucket": "ambiguous-search-lean",
+    "note": "auto/ff/force + dest:/elim:/intro: args",
+    "text": "apply (fastforce intro: exec.intros)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/StoreWord_C.thy",
+  "lemma_line": 361,
+  "name_at_line": "lemma storeWordUser_rf_sr_upd':",
+  "total_s": 16.236,
+  "search_frac": 0.355,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.608,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.61",
+  "bucket_s": {
+   "simp-pure": 9.873,
+   "ambiguous-unknown": 5.761,
+   "other": 0.602
+  },
+  "hot_cmds": [
+   {
+    "line": 555,
+    "name": "apply",
+    "elapsed_s": 4.628,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (fastforce simp: heap_to_user_data_def Let_def user_data_relation_upd cmap_relation_def dest: bspec)"
+   },
+   {
+    "line": 633,
+    "name": "apply",
+    "elapsed_s": 1.608,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: rl' tag_disj_via_td_name)"
+   },
+   {
+    "line": 473,
+    "name": "apply",
+    "elapsed_s": 1.023,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (subst index_fold_update | clarsimp)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Untyped_R.thy",
+  "lemma_line": 2412,
+  "name_at_line": "lemma caps_contained_n' [simp]: \"caps_contained' n",
+  "total_s": 15.003,
+  "search_frac": 0.317,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.645,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.64",
+  "bucket_s": {
+   "simp-pure": 9.67,
+   "search-pure": 4.749,
+   "other": 0.584
+  },
+  "hot_cmds": [
+   {
+    "line": 2472,
+    "name": "apply",
+    "elapsed_s": 6.337,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: descendants_of'_def parency_n' split: if_split_asm)"
+   },
+   {
+    "line": 2571,
+    "name": "apply",
+    "elapsed_s": 2.79,
+    "bucket": "search-pure",
+    "note": "classical-only (blast/metis/fast/safe)",
+    "text": "apply blast"
+   },
+   {
+    "line": 2451,
+    "name": "apply",
+    "elapsed_s": 1.429,
+    "bucket": "search-pure",
+    "note": "classical-only (blast/metis/fast/safe)",
+    "text": "apply blast"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/ADT_C.thy",
+  "lemma_line": 1059,
+  "name_at_line": "lemma map_to_cnes_eq:",
+  "total_s": 14.609,
+  "search_frac": 0.383,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.56,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.56",
+  "bucket_s": {
+   "simp-pure": 8.183,
+   "ambiguous-simp-lean": 4.741,
+   "ambiguous-search-lean": 0.85,
+   "other": 0.835
+  },
+  "hot_cmds": [
+   {
+    "line": 1222,
+    "name": "by",
+    "elapsed_s": 4.468,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: ksPSpace_eq_imp_obj_at'_eq[OF ksPSpace] ksPSpace_eq_imp_valid_cap'_eq[OF ksPSpace] valid_tcb'_def valid_tcb_state'_def valid_bound_ntfn'_def"
+   },
+   {
+    "line": 1187,
+    "name": "apply",
+    "elapsed_s": 3.747,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: projectKO_opts map_comp_def split: kernel_object.splits arch_kernel_object.splits option.splits)"
+   },
+   {
+    "line": 1185,
+    "name": "apply",
+    "elapsed_s": 0.628,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (case_tac a, simp_all add: projectKO_opts split: arch_kernel_object.splits)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/TcbAcc_R.thy",
+  "lemma_line": 5857,
+  "name_at_line": "lemma non_exst_same_prio_upd[simp]:",
+  "total_s": 12.904,
+  "search_frac": 0.456,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.544,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.54",
+  "bucket_s": {
+   "simp-pure": 7.025,
+   "ambiguous-simp-lean": 5.688,
+   "search-pure": 0.191
+  },
+  "hot_cmds": [
+   {
+    "line": 5921,
+    "name": "apply",
+    "elapsed_s": 2.978,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: opt_map_def obj_at'_def projectKOs non_exst_same_def split: option.splits)"
+   },
+   {
+    "line": 5923,
+    "name": "apply",
+    "elapsed_s": 2.71,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (fastforce simp: opt_map_def obj_at'_def projectKOs non_exst_same_def split: option.splits)"
+   },
+   {
+    "line": 5885,
+    "name": "apply",
+    "elapsed_s": 2.574,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: in_monad split_def bind_def gets_def get_def Bex_def put_def return_def modify_def get_object_def projectKOs updateObject_default_"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Interrupt_R.thy",
+  "lemma_line": 95,
+  "name_at_line": "lemma decodeIRQHandlerInvocation_corres:",
+  "total_s": 11.957,
+  "search_frac": 0.308,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.54,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.54",
+  "bucket_s": {
+   "simp-pure": 6.461,
+   "ambiguous-simp-lean": 3.374,
+   "structured": 1.474,
+   "other": 0.337,
+   "ambiguous-unknown": 0.311
+  },
+  "hot_cmds": [
+   {
+    "line": 142,
+    "name": "apply",
+    "elapsed_s": 3.024,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp add: irq_state_relation_def split: irqstate.split_asm irq_state.split_asm)"
+   },
+   {
+    "line": 210,
+    "name": "apply",
+    "elapsed_s": 2.663,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto split: arch_invocation_label.splits list.splits invocation_label.splits simp: length_Suc_conv list_all2_Cons1 whenE_rangeCheck_eq liftE_bindE split_def)[2]"
+   },
+   {
+    "line": 126,
+    "name": "apply",
+    "elapsed_s": 1.474,
+    "bucket": "structured",
+    "note": "alternation x2, families=['simp', 'wp_vcg']",
+    "text": "apply (wp | wpc | simp)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/drefine/Intent_DR.thy",
+  "lemma_line": 202,
+  "name_at_line": "lemma not_generates_pending_is_null:",
+  "total_s": 11.541,
+  "search_frac": 0.478,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.502,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.50",
+  "bucket_s": {
+   "simp-pure": 5.789,
+   "ambiguous-simp-lean": 5.03,
+   "structured": 0.483,
+   "other": 0.239
+  },
+  "hot_cmds": [
+   {
+    "line": 259,
+    "name": "by",
+    "elapsed_s": 3.042,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "by (auto simp: corrupt_tcb_intent_def update_thread_def select_def gets_the_def return_def fail_def gets_def get_def assert_opt_def bind_def put_def modify_def KHea"
+   },
+   {
+    "line": 253,
+    "name": "apply",
+    "elapsed_s": 1.439,
+    "bucket": "ambiguous-simp-lean",
+    "note": "auto/ff/force + simp:/split: args",
+    "text": "apply (auto simp:corrupt_tcb_intent_def update_thread_def select_def gets_the_def return_def fail_def gets_def get_def assert_opt_def bind_def put_def modify_def KHeap_D.set_object"
+   },
+   {
+    "line": 1011,
+    "name": "apply",
+    "elapsed_s": 0.695,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: assert_opt_def return_def split: cdl_cap.splits)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Syscall_R.thy",
+  "lemma_line": 131,
+  "name_at_line": "lemma decodeDomainInvocation_corres:",
+  "total_s": 11.518,
+  "search_frac": 0.411,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.397,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.40",
+  "bucket_s": {
+   "simp-pure": 4.574,
+   "ambiguous-unknown": 4.313,
+   "wp-vcg": 1.903,
+   "ambiguous-simp-lean": 0.3,
+   "other": 0.194,
+   "ambiguous-search-lean": 0.126,
+   "structured": 0.108
+  },
+  "hot_cmds": [
+   {
+    "line": 390,
+    "name": "apply",
+    "elapsed_s": 3.895,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force bare (no discriminating args)",
+    "text": "apply fastforce"
+   },
+   {
+    "line": 502,
+    "name": "apply",
+    "elapsed_s": 2.505,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp only: cases_simp if_cancel simp_thms conj_comms pred_conj_def Let_def split_def getThreadVSpaceRoot | (simp split del: if_split cong: if_cong) | (w"
+   },
+   {
+    "line": 367,
+    "name": "apply",
+    "elapsed_s": 1.085,
+    "bucket": "wp-vcg",
+    "note": "wp/vcg method",
+    "text": "apply ((wpsimp wp: hoare_vcg_imp_lift' ethread_set_not_queued_valid_queues hoare_vcg_all_lift | strengthen valid_objs'_valid_tcbs' valid_queues_in_correct_ready_q"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CNodeInv_R.thy",
+  "lemma_line": 8340,
+  "name_at_line": "lemma cteMove_iflive'[wp]:",
+  "total_s": 10.043,
+  "search_frac": 0.387,
+  "class_v2": "simp-pure",
+  "dominant_share": 0.577,
+  "needs_profiling": false,
+  "reason": "dominant=simp-pure share=0.58",
+  "bucket_s": {
+   "simp-pure": 5.798,
+   "ambiguous-unknown": 3.887,
+   "wp-vcg": 0.215,
+   "other": 0.143
+  },
+  "hot_cmds": [
+   {
+    "line": 8410,
+    "name": "apply",
+    "elapsed_s": 3.887,
+    "bucket": "ambiguous-unknown",
+    "note": "auto/ff/force + both arg kinds",
+    "text": "apply (auto simp: modify_map_def dest!: weak_derived_cte_refs split: if_split_asm)[1]"
+   },
+   {
+    "line": 8391,
+    "name": "apply",
+    "elapsed_s": 2.181,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp_all add: valid_mdb'_def cte_wp_at_ctes_of nullPointer_def weak_derived'_def)"
+   },
+   {
+    "line": 8373,
+    "name": "apply",
+    "elapsed_s": 0.849,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (wp sch_act_wf_lift valid_queues_lift cur_tcb_lift updateCap_no_0 updateCap_ctes_of_wp getCTE_wp | simp)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/refine/ARM/Example_Valid_StateH.thy",
+  "lemma_line": 1849,
+  "name_at_line": "lemma map_to_ctes_kh0H_SomeD:",
+  "total_s": 745.442,
+  "search_frac": 0.928,
+  "class_v2": "structured",
+  "dominant_share": 0.928,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=0.93",
+  "bucket_s": {
+   "structured": 691.798,
+   "simp-pure": 53.533,
+   "other": 0.111
+  },
+  "hot_cmds": [
+   {
+    "line": 1920,
+    "name": "by",
+    "elapsed_s": 691.798,
+    "bucket": "structured",
+    "note": "alternation x4, families=['clarsimp', 'simp', 'simp_bearing']",
+    "text": "by (simp | erule disjE | clarsimp simp: kh0H_dom_sets_distinct[THEN orthD1] | clarsimp simp: kh0H_dom_sets_distinct[THEN orthD2] | fastforce simp: s0_ptr_defs objBitsKO_def pag"
+   },
+   {
+    "line": 1874,
+    "name": "by",
+    "elapsed_s": 41.076,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "by (drule offs_range_correct, clarsimp simp: offs_in_range)+"
+   },
+   {
+    "line": 1873,
+    "name": "apply",
+    "elapsed_s": 12.457,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (clarsimp simp: idle_tcb_cte_def idle_tcbH_def Low_tcb_cte_def Low_tcbH_def Low_capsH_def High_tcb_cte_def High_tcbH_def High_capsH_def the_nat_to_bl_def nat_to_bl_def)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/Retype_C.thy",
+  "lemma_line": 6410,
+  "name_at_line": "lemma insertNewCap_preserves_bytes:",
+  "total_s": 171.061,
+  "search_frac": 0.481,
+  "class_v2": "structured",
+  "dominant_share": 0.481,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=0.48",
+  "bucket_s": {
+   "structured": 82.343,
+   "wp-vcg": 48.833,
+   "simp-pure": 38.182,
+   "other": 1.703
+  },
+  "hot_cmds": [
+   {
+    "line": 6446,
+    "name": "by",
+    "elapsed_s": 47.39,
+    "bucket": "structured",
+    "note": "classical + simp methods combined",
+    "text": "by (safe intro!: byte_regions_unmodified_hrs_mem_update elim!: byte_regions_unmodified_trans byte_regions_unmodified_trans[rotated], (simp_all add: h_t_valid_field)+)"
+   },
+   {
+    "line": 6494,
+    "name": "apply",
+    "elapsed_s": 27.703,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (simp_all add: object_type_from_H_def Kernel_C_defs APIType_capBits_def split: object_type.split_asm apiobject_type.split_asm)"
+   },
+   {
+    "line": 6468,
+    "name": "by",
+    "elapsed_s": 25.239,
+    "bucket": "structured",
+    "note": "classical + simp methods combined",
+    "text": "by (safe intro!: byte_regions_unmodified_hrs_mem_update elim!: byte_regions_unmodified_trans byte_regions_unmodified_trans[rotated], (simp_all add: h_t_valid_field)+)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/CNodeInv_R.thy",
+  "lemma_line": 75,
+  "name_at_line": "lemma cap_relation_NullCap:",
+  "total_s": 86.293,
+  "search_frac": 0.355,
+  "class_v2": "structured",
+  "dominant_share": 0.409,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=0.41",
+  "bucket_s": {
+   "structured": 35.324,
+   "simp-pure": 27.65,
+   "ambiguous-simp-lean": 18.207,
+   "wp-vcg": 2.717,
+   "ambiguous-unknown": 1.438,
+   "other": 0.957
+  },
+  "hot_cmds": [
+   {
+    "line": 208,
+    "name": "apply",
+    "elapsed_s": 14.614,
+    "bucket": "structured",
+    "note": "alternation x2, families=['simp', 'wp_vcg']",
+    "text": "apply (wp | wpc | simp(no_asm))+"
+   },
+   {
+    "line": 522,
+    "name": "by",
+    "elapsed_s": 11.025,
+    "bucket": "structured",
+    "note": "alternation x2, families=['classical', 'simp', 'wp_vcg']",
+    "text": "by (safe intro!: hoare_pre[where P=P], (wp hoare_drop_imps | simp | wpcw)+)"
+   },
+   {
+    "line": 443,
+    "name": "apply",
+    "elapsed_s": 8.731,
+    "bucket": "structured",
+    "note": "alternation x2, families=['simp', 'wp_vcg']",
+    "text": "apply (wp whenE_throwError_wp getCTE_wp | wpc | simp(no_asm))+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/Scheduler_IF.thy",
+  "lemma_line": 1721,
+  "name_at_line": "by (safe; (fastforce simp: switch_thread_runnable ",
+  "total_s": 60.754,
+  "search_frac": 1.0,
+  "class_v2": "structured",
+  "dominant_share": 1.0,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=1.00",
+  "bucket_s": {
+   "structured": 60.754
+  },
+  "hot_cmds": [
+   {
+    "line": 1721,
+    "name": "by",
+    "elapsed_s": 60.754,
+    "bucket": "structured",
+    "note": "alternation x2, families=['classical', 'simp', 'simp_bearing']",
+    "text": "by (safe; (fastforce simp: switch_thread_runnable | fastforce dest!: switch_to_cur_domain cur_thread_cur_domain | fastforce simp: st_tcb_at_def obj_at_def))+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/Syscall_AI.thy",
+  "lemma_line": 574,
+  "name_at_line": "by (wp set_thread_state_valid_cap hoare_vcg_all_li",
+  "total_s": 48.161,
+  "search_frac": 1.0,
+  "class_v2": "structured",
+  "dominant_share": 1.0,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=1.00",
+  "bucket_s": {
+   "structured": 48.161
+  },
+  "hot_cmds": [
+   {
+    "line": 574,
+    "name": "by",
+    "elapsed_s": 48.161,
+    "bucket": "structured",
+    "note": "alternation x3, families=['classical', 'simp', 'wp_vcg']",
+    "text": "by (wp set_thread_state_valid_cap hoare_vcg_all_lift hoare_vcg_const_imp_lift | simp add: tcb_at_typ split: option.split | safe | wp sts_obj_at_impossible)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/EmptyFail_H.thy",
+  "lemma_line": 140,
+  "name_at_line": "by (simp | wp | wpc | safe)+",
+  "total_s": 28.878,
+  "search_frac": 1.0,
+  "class_v2": "structured",
+  "dominant_share": 1.0,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=1.00",
+  "bucket_s": {
+   "structured": 28.878
+  },
+  "hot_cmds": [
+   {
+    "line": 140,
+    "name": "by",
+    "elapsed_s": 28.878,
+    "bucket": "structured",
+    "note": "alternation x3, families=['classical', 'simp', 'wp_vcg']",
+    "text": "by (simp | wp | wpc | safe)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+  "lemma_line": 183,
+  "name_at_line": "by (simp, blast?)+",
+  "total_s": 19.085,
+  "search_frac": 1.0,
+  "class_v2": "structured",
+  "dominant_share": 1.0,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=1.00",
+  "bucket_s": {
+   "structured": 19.085
+  },
+  "hot_cmds": [
+   {
+    "line": 183,
+    "name": "by",
+    "elapsed_s": 19.085,
+    "bucket": "structured",
+    "note": "classical + simp methods combined",
+    "text": "by (simp, blast?)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/crefine/ARM/IsolatedThreadAction.thy",
+  "lemma_line": 314,
+  "name_at_line": "lemma getCTE_assert_opt:",
+  "total_s": 18.573,
+  "search_frac": 0.596,
+  "class_v2": "structured",
+  "dominant_share": 0.596,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=0.60",
+  "bucket_s": {
+   "structured": 11.068,
+   "simp-pure": 6.864,
+   "other": 0.641
+  },
+  "hot_cmds": [
+   {
+    "line": 870,
+    "name": "by",
+    "elapsed_s": 6.767,
+    "bucket": "structured",
+    "note": "classical + simp methods combined",
+    "text": "by (safe intro!: oblivious_bind oblivious_bindE oblivious_catch | simp_all add: liftE_def getHWASID_def findPDForASID_def liftME_def loadHWASID_def"
+   },
+   {
+    "line": 662,
+    "name": "apply",
+    "elapsed_s": 3.436,
+    "bucket": "simp-pure",
+    "note": "simp/clarsimp-only",
+    "text": "apply (wp hoare_drop_imps | simp add: page_directory_at_partial_overwrite)+"
+   },
+   {
+    "line": 853,
+    "name": "by",
+    "elapsed_s": 2.316,
+    "bucket": "structured",
+    "note": "classical + simp methods combined",
+    "text": "by (safe intro!: oblivious_bind, simp_all)"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+  "lemma_line": 742,
+  "name_at_line": "by (simp add:SACAuthGraph_def, blast?)+",
+  "total_s": 14.1,
+  "search_frac": 1.0,
+  "class_v2": "structured",
+  "dominant_share": 1.0,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=1.00",
+  "bucket_s": {
+   "structured": 14.1
+  },
+  "hot_cmds": [
+   {
+    "line": 742,
+    "name": "by",
+    "elapsed_s": 14.1,
+    "bucket": "structured",
+    "note": "classical + simp methods combined",
+    "text": "by (simp add:SACAuthGraph_def, blast?)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+  "lemma_line": 355,
+  "name_at_line": "by (simp, blast?)+",
+  "total_s": 13.79,
+  "search_frac": 1.0,
+  "class_v2": "structured",
+  "dominant_share": 1.0,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=1.00",
+  "bucket_s": {
+   "structured": 13.79
+  },
+  "hot_cmds": [
+   {
+    "line": 355,
+    "name": "by",
+    "elapsed_s": 13.79,
+    "bucket": "structured",
+    "note": "classical + simp methods combined",
+    "text": "by (simp, blast?)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/refine/ARM/Ipc_R.thy",
+  "lemma_line": 2949,
+  "name_at_line": "by (wp set_ntfn_minor_invs'         | rule conjI  ",
+  "total_s": 11.734,
+  "search_frac": 1.0,
+  "class_v2": "structured",
+  "dominant_share": 1.0,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=1.00",
+  "bucket_s": {
+   "structured": 11.734
+  },
+  "hot_cmds": [
+   {
+    "line": 2949,
+    "name": "by",
+    "elapsed_s": 11.734,
+    "bucket": "structured",
+    "note": "alternation x3, families=['clarsimp', 'simp', 'simp_bearing', 'wp_vcg']",
+    "text": "by (wp set_ntfn_minor_invs' | rule conjI | clarsimp elim!: st_tcb_ex_cap'' | fastforce simp: receiveBlocked_def projectKOs pred_tcb_at'_def obj_at'_def dest!"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/invariant-abstract/ARM/ArchCSpaceInvPre_AI.thy",
+  "lemma_line": 241,
+  "name_at_line": "by simp_all blast+",
+  "total_s": 11.165,
+  "search_frac": 1.0,
+  "class_v2": "structured",
+  "dominant_share": 1.0,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=1.00",
+  "bucket_s": {
+   "structured": 11.165
+  },
+  "hot_cmds": [
+   {
+    "line": 241,
+    "name": "by",
+    "elapsed_s": 11.165,
+    "bucket": "structured",
+    "note": "classical + simp methods combined",
+    "text": "by simp_all blast+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/access-control/Access_AC.thy",
+  "lemma_line": 599,
+  "name_at_line": "apply (simp | rule tcb.equality | fastforce)+",
+  "total_s": 10.935,
+  "search_frac": 1.0,
+  "class_v2": "structured",
+  "dominant_share": 1.0,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=1.00",
+  "bucket_s": {
+   "structured": 10.935
+  },
+  "hot_cmds": [
+   {
+    "line": 599,
+    "name": "apply",
+    "elapsed_s": 10.935,
+    "bucket": "structured",
+    "note": "alternation x2, families=['simp', 'simp_bearing']",
+    "text": "apply (simp | rule tcb.equality | fastforce)+"
+   }
+  ]
+ },
+ {
+  "file": "/workspace/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+  "lemma_line": 439,
+  "name_at_line": "by (simp, blast?)+",
+  "total_s": 10.595,
+  "search_frac": 1.0,
+  "class_v2": "structured",
+  "dominant_share": 1.0,
+  "needs_profiling": false,
+  "reason": "dominant=structured share=1.00",
+  "bucket_s": {
+   "structured": 10.595
+  },
+  "hot_cmds": [
+   {
+    "line": 439,
+    "name": "by",
+    "elapsed_s": 10.595,
+    "bucket": "structured",
+    "note": "classical + simp methods combined",
+    "text": "by (simp, blast?)+"
+   }
+  ]
+ }
+]

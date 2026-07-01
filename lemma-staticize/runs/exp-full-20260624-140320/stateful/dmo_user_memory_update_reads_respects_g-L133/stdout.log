@@ -1,0 +1,9 @@
+[genstat-stateful] dmo_user_memory_update_reads_respects_g @ proof/infoflow/UserOp_IF.thy
+[init ok]
+[reached dmo_user_memory_update_reads_respects_g]
+== target: apply (fastforce simp: equiv_valid_def2 equiv_valid_2_def in_monad do_
+   A_goal: reads_equiv aag (s\<lparr>machine_state := machine_state s\<lparr>underlying_memory := \<lambda>a. case um a of None \<R
+   B: reach EXACTLY this 1-subgoal state:
+1. \<And>s t. \<lbrakk>affects_equiv aag l s
+  step 0: gen=403.9s (claude 5.2s) -> ['apply (intro conjI; assumption)']
+  step 0: FAILED `apply (intro conjI; assumption)` failed: failed for prove the goal using the ta

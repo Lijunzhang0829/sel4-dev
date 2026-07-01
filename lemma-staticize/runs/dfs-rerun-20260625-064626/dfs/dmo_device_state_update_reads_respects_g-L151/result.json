@@ -1,0 +1,14 @@
+{
+ "lemma": "dmo_device_state_update_reads_respects_g",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/UserOp_IF.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": null,
+ "B_sig": null,
+ "facts": [],
+ "steps": [],
+ "path": null,
+ "audit": false,
+ "verdict": "NO-PATH",
+ "error": ""
+}

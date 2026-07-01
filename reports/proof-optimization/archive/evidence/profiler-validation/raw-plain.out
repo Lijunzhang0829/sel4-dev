@@ -1,0 +1,8 @@
+Loading theory "Draft.Prof_empty_slot_plain"
+locale CNode_AC_3
+  fixes aag :: "'a PAS"
+    and val_t :: "'b"
+  assumes "CNode_AC_3 TYPE('b) aag"
+### theory "Draft.Prof_empty_slot_plain"
+### 0.457s elapsed time, 0.615s cpu time, 0.323s GC time
+val it = (): unit

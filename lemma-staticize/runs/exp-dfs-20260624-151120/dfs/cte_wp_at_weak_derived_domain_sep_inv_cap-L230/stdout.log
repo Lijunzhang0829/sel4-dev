@@ -1,0 +1,23 @@
+[init ok]
+[reached cte_wp_at_weak_derived_domain_sep_inv_cap]
+== target line 1: apply (force simp: domain_sep_inv_def domain_sep_inv_cap_def split: ca
+   facts: ['cap.splits', 'cte_wp_at_norm', 'domain_sep_inv_cap_def', 'domain_sep_inv_def', 'weak_derived_DomainCap', 'weak_derived_irq_handler']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply hypsubst  [1sg] 1. \<And>a b. \<lbrakk>domain_sep_inv irqs st s; cte_wp
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst cap.splits)  [1sg] 1. \<And>a b. \<lbrakk>domain_sep_inv irqs st s; cte_wp
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule cte_wp_at_norm)  [1sg] 1. \<And>a b. \<lbrakk>domain_sep_inv irqs st s; slot =
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule cte_wp_at_norm)  [1sg] 1. \<And>a b. \<lbrakk>domain_sep_inv irqs st s; cte_wp
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold domain_sep_inv_cap_def)  [1sg] 1. \<And>a b. \<lbrakk>domain_sep_inv irqs st s; cte_wp
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (simp only: domain_sep_inv_cap_def)  [1sg] 1. \<And>a b. \<lbrakk>domain_sep_inv irqs st s; cte_wp
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold domain_sep_inv_def)  [1sg] 1. \<And>a b. \<lbrakk>(\<forall>slot. \<not> cte_wp_at
+  [think d7] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-cte_wp_at_weak_derived_domain_sep_inv_cap-P25813.json

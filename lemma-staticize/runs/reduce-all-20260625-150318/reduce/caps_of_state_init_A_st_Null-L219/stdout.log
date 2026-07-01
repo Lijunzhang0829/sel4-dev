@@ -1,0 +1,18 @@
+[init ok]
+[reached caps_of_state_init_A_st_Null]
+== target: apply (auto simp add: state_defs tcb_cap_cases_def split: if_split_asm
+   orig_ms=10128  B: close the goal (0 subgoals)
+  round 0: gen=25.5s (claude 25.4s) -> ['apply (clarsimp simp: state_defs split: if_split_asm)', 'apply (auto simp add: tcb_cap_cases_def split: if_split_asm)', 'done']
+  round 0: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 1: gen=48.1s (claude 47.4s) -> []
+  round 2: gen=33.0s (claude 32.8s) -> ['apply clarsimp', 'apply (auto simp add: state_defs tcb_cap_cases_def split: if_split_asm)', 'done']
+  round 2: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+  round 3: gen=32.1s (claude 31.6s) -> ['apply (fastforce simp add: state_defs tcb_cap_cases_def split: if_split_asm)', 'done']
+  round 3: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 4: gen=83.6s (claude 83.3s) -> []
+  round 5: gen=22.0s (claude 21.3s) -> ['apply (clarsimp simp add: state_defs split: if_split_asm)', 'apply (auto simp add: tcb_cap_cases_def)']
+  round 5: WRONG-STATE (1 subgoals)
+  round 6: gen=51.6s (claude 51.1s) -> []
+  round 7: gen=32.5s (claude 31.8s) -> ['apply clarsimp', 'apply (auto simp add: state_defs tcb_cap_cases_def split: if_split_asm)', 'done']
+  round 7: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-caps_of_state_init_A_st_Null-P25907.json  verdict=NO-PATH

@@ -1,0 +1,8 @@
+[init ok]
+[reached insert_cap_sibling_corres]
+== target line 42: by (auto dest: mdb_cte_atD is_untyped_cap_eqD simp: revokable_cap_inse
+   facts: ['cte_wp_at_caps_of_state', 'is_untyped_cap_eqD', 'mdb_cte_atD', 'not_idle_thread_def', 'revokable_cap_insert_dest_original', 'swp_def', 'valid_mdb_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-insert_cap_sibling_corres-P25805.json

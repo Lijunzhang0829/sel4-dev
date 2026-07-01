@@ -93,3 +93,11 @@ test_output.log
 __pycache__/
 *.pyc
 .DS_Store
+
+# proof-optimization/ — LLM proof-acceleration study (2 directions + overall + archive). Tracked.
+!reports/proof-optimization/
+!reports/proof-optimization/**
+
+# llm-isabelle-benchmark/ — thesis/benchmark positioning + l4v-path infra. Tracked.
+!reports/llm-isabelle-benchmark/
+!reports/llm-isabelle-benchmark/**

@@ -1,0 +1,21 @@
+[init ok]
+[reached is_derived_cap_arch_asid_issues]
+== target: by (auto simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap
+   orig_ms=27847  B: close the goal (0 subgoals)
+  round 0: gen=31.5s (claude 31.0s) -> ['by (fastforce simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)']
+  round 0: REACH-B variant_ms=2630 orig_ms=27847 saved=25217.7 faster=True
+  round 1: gen=42.5s (claude 42.5s) -> []
+  round 2: gen=29.0s (claude 28.5s) -> ['by (clarsimp simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)']
+  round 2: REACH-B variant_ms=6195 orig_ms=27847 saved=21652.8 faster=True
+  round 3: gen=55.1s (claude 54.4s) -> ['apply (simp only: is_cap_simps cap_master_cap_def cap_asid_def)', 'apply (clarsimp split: cap.splits arch_cap.splits option.splits)', 'done']
+  round 3: REACH-B variant_ms=5050 orig_ms=27847 saved=22797.0 faster=True
+  round 4: gen=58.1s (claude 57.7s) -> ['by (fastforce simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)']
+  round 4: REACH-B variant_ms=2651 orig_ms=27847 saved=25196.1 faster=True
+  round 5: gen=26.5s (claude 26.4s) -> ['apply (simp only: cap_master_cap_def is_cap_simps cap_asid_def)', 'apply (auto split: cap.splits arch_cap.splits option.splits)', 'done']
+  round 5: REACH-B variant_ms=5506 orig_ms=27847 saved=22341.7 faster=True
+  round 6: gen=40.5s (claude 40.4s) -> ['apply (clarsimp simp: is_cap_simps cap_asid_def split: cap.splits arch_cap.splits)', 'by (fastforce simp: cap_master_cap_def split: option.splits)']
+  round 6: FAILED `by (fastforce simp: cap_master_cap_def split: option.splits)` failed:
+  round 7: gen=31.5s (claude 31.1s) -> ['by (fastforce simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)']
+  round 7: REACH-B variant_ms=2603 orig_ms=27847 saved=25244.4 faster=True
+[WIN] 27847ms -> 2603ms  saved=25244.4ms (91%)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-is_derived_cap_arch_asid_issues-P25911.json  verdict=FASTER

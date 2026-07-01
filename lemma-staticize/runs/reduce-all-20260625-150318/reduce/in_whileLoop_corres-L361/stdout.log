@@ -1,0 +1,23 @@
+[init ok]
+[reached in_whileLoop_corres]
+== target: apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce dest:
+   orig_ms=4698  B: leave EXACTLY these 1 subgoal(s):
+1. \<And>r s r' s' r'' s'' sa ra. \<
+  round 0: gen=24.5s (claude 23.7s) -> ['apply (frule (1) corres_underlyingD2[OF body_corres]; (clarsimp simp: cond no_fail_def; fastforce dest: nf)?)']
+  round 0: WRONG-STATE (3 subgoals)
+  round 1: gen=143.1s (claude 142.4s) -> ['apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce dest: nf simp: cond no_fail_def)?)']
+  round 1: REACH-B variant_ms=4028 orig_ms=4698 saved=669.1 faster=True
+  round 2: gen=40.0s (claude 39.7s) -> ['apply (frule (1) corres_underlyingD2[OF body_corres]; (clarsimp simp: no_fail_def cond dest: nf)?)']
+  round 2: WRONG-STATE (3 subgoals)
+  round 3: gen=193.2s (claude 192.8s) -> ['apply (frule (1) corres_underlyingD2[OF body_corres]; (auto dest: nf simp: cond no_fail_def)?)']
+  round 3: WRONG-STATE (2 subgoals)
+  round 4: gen=53.6s (claude 53.3s) -> ['apply (frule (1) corres_underlyingD2[OF body_corres]; (clarsimp simp: cond no_fail_def; fastforce dest: nf)?)']
+  round 4: WRONG-STATE (3 subgoals)
+  round 5: gen=233.3s (claude 233.0s) -> ['apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce dest!: nf simp: cond no_fail_def)?)']
+  round 5: REACH-B variant_ms=3934 orig_ms=4698 saved=763.4 faster=True
+  round 6: gen=42.5s (claude 42.4s) -> ['apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce simp only: no_fail_def cond dest: nf)?)']
+  round 6: REACH-B variant_ms=299 orig_ms=4698 saved=4398.9 faster=True
+  round 7: gen=51.6s (claude 51.2s) -> ['apply (frule (1) corres_underlyingD2[OF body_corres]; (clarsimp simp: cond no_fail_def dest: nf)?)']
+  round 7: WRONG-STATE (3 subgoals)
+[WIN] 4698ms -> 299ms  saved=4398.9ms (94%)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-in_whileLoop_corres-P25906.json  verdict=FASTER

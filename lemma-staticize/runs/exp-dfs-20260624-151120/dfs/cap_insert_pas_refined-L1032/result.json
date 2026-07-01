@@ -1,0 +1,677 @@
+{
+ "lemma": "cap_insert_pas_refined",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/CNode_AC.thy",
+ "session": "Access",
+ "mode": "react",
+ "target": "by (fastforce split: if_split_asm simp: cte_wp_at_caps_of_state pas_refined_refl F[symmetric] valid_mdb_def2 mdb_cte_at_def Option.is_none_def simp del: split_paired_All dest: aag_cdt_link_Control aag_cdt_link_DeleteDerived cap_auth_caps_of_state)",
+ "B_sig": [],
+ "facts": [
+  "F",
+  "Option.is_none_def",
+  "aag_cdt_link_Control",
+  "aag_cdt_link_DeleteDerived",
+  "cap_auth_caps_of_state",
+  "cte_wp_at_caps_of_state",
+  "mdb_cte_at_def",
+  "pas_refined_refl",
+  "split_paired_All",
+  "symmetric",
+  "valid_mdb_def2"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>s cap. \\<lbrakk>is_subject aag (fst dest_slot) \\<and> is_subject aag (fst src_slot) \\<and> pas_cap_cur_auth aag new_cap; pas_refined aag s \\<and> pspace_aligned s \\<and> valid_vspace_objs s \\"
+  },
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>s. \\<lbrakk>pas_refined aag s \\<and> pspace_aligned s \\<and> valid_vspace_objs s \\<and> valid_arch_state s \\<and> valid_mdb s \\<and> (is_transferable_in src_slot s \\<and> \\<not> Option.is_non"
+  },
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (unfold Option.is_none_def)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>s. \\<lbrakk>is_subject aag (fst dest_slot) \\<and> is_subject aag (fst src_slot) \\<and> pas_cap_cur_auth aag new_cap; pas_refined aag s \\<and> pspace_aligned s \\<and> valid_vspace_objs s \\<and"
+  },
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst aag_cdt_link_Control)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>s xa x cap. \\<lbrakk>is_subject aag (fst dest_slot) \\<and> is_subject aag (fst src_slot) \\<and> pas_cap_cur_auth aag new_cap; pas_refined aag s \\<and> pspace_aligned s \\<and> valid_vspace_obj"
+  },
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule aag_cdt_link_DeleteDerived)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule aag_cdt_link_DeleteDerived)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule aag_cdt_link_DeleteDerived)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule aag_cdt_link_DeleteDerived)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst aag_cdt_link_DeleteDerived)",
+   "ok": true,
+   "obs": "[3sg] 1. \\<And>s xa x cap. \\<lbrakk>is_subject aag (fst dest_slot) \\<and> is_subject aag (fst src_slot) \\<and> pas_cap_cur_auth aag new_cap; pas_refined aag s \\<and> pspace_aligned s \\<and> valid_vspace_obj"
+  },
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst F)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule Option.is_none_def)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule aag_cdt_link_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule aag_cdt_link_DeleteDerived)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule aag_cdt_link_DeleteDerived)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule aag_cdt_link_DeleteDerived)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule aag_cdt_link_DeleteDerived)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cap_auth_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cap_auth_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cap_auth_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cap_auth_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cap_auth_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule cte_wp_at_caps_of_state)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst cte_wp_at_caps_of_state)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>s. \\<lbrakk>is_subject aag (fst dest_slot) \\<and> is_subject aag (fst src_slot) \\<and> pas_cap_cur_auth aag new_cap; pas_refined aag s \\<and> pspace_aligned s \\<and> valid_vspace_objs s \\<and"
+  },
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 36505.0
+}

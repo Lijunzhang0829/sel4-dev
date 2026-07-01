@@ -1,0 +1,23 @@
+[init ok]
+[reached arm_asid_table_delete_ev2]
+== target line 1: by (auto simp: reads_equiv_def2 affects_equiv_def2 intro!: states_equi
+   facts: ['affects_equiv_def2', 'equiv_asids_arm_asid_table_delete', 'equiv_forE', 'equiv_forI', 'is_subject_kheap_eq', 'reads_equiv_def2', 'rotated', 'simplified', 'states_equiv_forE', 'states_equiv_forI', 'states_equiv_for_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [2sg] 1. \<And>s t. \<lbrakk>reads_equiv aag s t; affects_equ
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply hypsubst  [1sg] 1. \<And>s t. \<lbrakk>reads_equiv aag s t; affects_equ
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst affects_equiv_def2)  [1sg] 1. \<And>s t. \<lbrakk>reads_equiv aag s t; affects_equ
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule equiv_forE)  [2sg] 1. \<And>s t. \<lbrakk>reads_equiv aag s t; affects_equ
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst equiv_forE)  [3sg] 1. \<And>s t. \<lbrakk>reads_equiv aag s t; affects_equ
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule equiv_forI)  [1sg] 1. \<And>s t. \<lbrakk>reads_equiv aag s t; affects_equ
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule is_subject_kheap_eq)  [2sg] 1. \<And>s t. \<lbrakk>affects_equiv aag l s t; rv = as
+  [think d7] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-arm_asid_table_delete_ev2-P25835.json

@@ -1,0 +1,97 @@
+{
+ "lemma": "gets_apply_ready_queues_reads_respects",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/Finalise_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "REACHED-B-NOT-FASTER",
+ "orig_ms": 16703.9,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (simp only: equiv_for_def)",
+    "apply (fastforce elim: reads_equivE)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: equiv_for_def)` failed: failed for prove the goal using the tactic `apply (simp only: equiv_for_def)`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<forall",
+   "gen_secs": 29.5,
+   "claude_secs": 29.1
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply (fastforce elim: reads_equivE simp: equiv_for_def)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 51101.9,
+   "saved_ms": -34398.0,
+   "faster": false,
+   "gen_secs": 20.5,
+   "claude_secs": 20.1
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply (clarsimp simp: equiv_for_def elim!: reads_equivE)"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 1,
+   "gen_secs": 43.0,
+   "claude_secs": 42.4
+  },
+  {
+   "round": 4,
+   "variant": [
+    "apply (erule reads_equivE)",
+    "apply (fastforce simp: equiv_for_def)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (erule reads_equivE)` failed: failed for prove the goal using the tactic `apply (erule reads_equivE)`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<forall>s t. reads_",
+   "gen_secs": 76.6,
+   "claude_secs": 76.2
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (simp only: equiv_for_def)",
+    "apply (force elim: reads_equivE)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: equiv_for_def)` failed: failed for prove the goal using the tactic `apply (simp only: equiv_for_def)`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<forall",
+   "gen_secs": 19.5,
+   "claude_secs": 18.8
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply (fastforce elim: reads_equivE simp: equiv_for_def)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 51186.1,
+   "saved_ms": -34482.2,
+   "faster": false,
+   "gen_secs": 20.5,
+   "claude_secs": 20.2
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (simp only: equiv_for_def)",
+    "apply (force elim: reads_equivE)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: equiv_for_def)` failed: failed for prove the goal using the tactic `apply (simp only: equiv_for_def)`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<forall",
+   "gen_secs": 62.6,
+   "claude_secs": 62.2
+  }
+ ],
+ "target": "apply (force elim: reads_equivE simp: equiv_for_def)",
+ "B_sig": [],
+ "facts": [
+  "equiv_for_def",
+  "reads_equivE"
+ ],
+ "accelerated": false
+}

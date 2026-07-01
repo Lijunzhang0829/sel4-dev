@@ -1,0 +1,9 @@
+Loading theory "Draft.iso_conjI_fixB"
+### theory "Draft.iso_conjI_fixB"
+### 0.279s elapsed time, 0.318s cpu time, 0.061s GC time
+*** Failed to finish proof (line 10 of "/workspace/tools/seL4-proof-search/Isa-Repl/profiler/iso_conjI_fixB.thy"):
+*** goal (2 subgoals):
+***  1. P
+***  2. Q
+*** At command "by" (line 10 of "/workspace/tools/seL4-proof-search/Isa-Repl/profiler/iso_conjI_fixB.thy")
+Exception- TOPLEVEL_ERROR raised

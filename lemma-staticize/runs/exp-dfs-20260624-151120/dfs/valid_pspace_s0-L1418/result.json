@@ -1,0 +1,18 @@
+{
+ "lemma": "valid_pspace_s0",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)",
+ "B_sig": [
+  "1. ex_nonz_cap_to 0xE0000200 s0_internal",
+  "2. ex_nonz_cap_to 0xE0000010 s0_internal",
+  "3. zombies_final s0_internal \\<and> sym_refs (state_refs_of s0_internal) \\<and> sym_refs (state_hyp_refs_of s0_internal)"
+ ],
+ "facts": [],
+ "steps": [],
+ "path": null,
+ "audit": false,
+ "verdict": "NO-PATH",
+ "error": "An error occurred while calling t._step_without_timeout.\n: de.unruh.isabelle.control.IsabelleDestroyedException: Isabelle process was destroyed: null\n\tat de.unruh.isabelle.control.Isabelle.checkDestro"
+}

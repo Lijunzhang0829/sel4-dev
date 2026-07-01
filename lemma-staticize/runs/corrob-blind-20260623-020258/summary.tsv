@@ -1,0 +1,13 @@
+lemma	session	verdict	effort	secs
+sep_heap_domD	DSpecProofs	REACHED-B	4	1105
+sep_heap_domD'	DSpecProofs	REACHED-B	3	109
+sep_irq_node_domD'	DSpecProofs	REACHED-B	2	68
+is_transferable_Untyped	Access	REACHED-B	4	713
+is_transferable_Endpoint	Access	REACHED-B	1	52
+is_transferable_IRQ	Access	REACHED-B	1	47
+is_transferable_Ntfn	Access	REACHED-B	1	45
+is_transferable_Zombie	Access	REACHED-B	1	44
+auth_graph_map_memI	Access	REACHED-B	2	209
+pas_refined_sita_mem	Access	REACHED-B	1	128
+tcb_domain_map_wellformed_mono	Access	REACHED-B	1	85
+reply_masters_mdbD1	Access	REACHED-B	5	1458
