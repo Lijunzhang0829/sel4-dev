@@ -1,206 +1,164 @@
 ---
 name: isabelle-prover-proof
-description: "Per-lemma search-space elimination for seL4 proof build wall time. ONE strategy: record what the search tactic finds, replace it with deterministic rule application. Use when targeting individual lemmas in `proof/**/*.thy`."
+description: "Per-lemma static-ization for seL4 proof build wall time. Rewrite automation tactics (auto, simp, simp add:, blast, fastforce, force, clarsimp, eval, presburger, arith, linarith, metis, smt, meson) into deterministic STATIC tactics. GATE FIRST: per-line time + classify search-vs-work via Isa-REPL; only attack lines that are hot AND classical-search-dominated. Rewrite via the A→B reconstruction agent (hammer gives FACTS only; agent searches a deterministic audit-passing path). Use on individual lemmas in `proof/**/*.thy`."
 ---
 
-# Proof type — search-space elimination via rule replacement
+# Proof type — static-ization, gated by per-line timing
 
-This skill targets ONE axis with ONE strategy: **eliminate the search a
-tactic performs at verify time** by recording its successful resolution
-and replacing the search tactic with deterministic rule application.
+ONE axis: **shrink the search a tactic does at verify time** by replacing
+automation with deterministic, named rule applications — for wall time.
 
-If this strategy yields < 5% file-wall drop, **DO NOT try other strategies**.
-The reasoning: this strategy is the theoretical limit (drives T_search → 0).
-If T_search elimination doesn't help, then T_search wasn't significant —
-no other intervention will help more. Pivot to a different lemma.
+Two hard lessons (see `reference/`) shape the method:
 
-## The model
+- **search-free ≠ faster.** A lemma can be fully static-ized and gain ~0 wall,
+  because its cost was `simp`-rewriting *work*, not search. → gate before rewriting.
+- **sledgehammer is not a static oracle.** It returns `metis`/`meson`/`smt`
+  (themselves search) — a *fact set*, not a deterministic *path*. → use the
+  **A→B reconstruction agent** to turn facts into an explicit static path.
 
-For any single tactic invocation:
+## Core principle (hard contract for an accepted patch)
 
-```
-  T_total = T_search    +    T_work
-            (试错回溯)        (kernel 必做的工作)
-```
+> An accepted patch contains **no** `auto`, `simp`, `simp add:`, `simp_all`,
+> `blast`, `fastforce`, `force`, `clarsimp`, `eval`, `presburger`, `sos`,
+> `arith`, `linarith`, `metis`, `smt`, or `meson` in the rewritten region.
+> The only rewrite-style tactic permitted is `simp only:` with an explicit,
+> complete rule set. Every other step is a named rule application. AND the
+> target line's own wall must drop. If a site can't be made fully static, or
+> the lemma isn't search-dominated, the lemma is **not a target — pivot.**
 
-- **T_total**: directly measurable via `time_methods` wrapping
-- **T_search**: the only part this skill targets
-- **T_work**: rule resolution + simp loop + unification; this skill CANNOT reduce it
+## A verified negative is a first-class result (why we record the process)
 
-Empirical: on this codebase, `T_search` is often a small fraction of `T_total`
-(cases 14/15: 0.3-3% of file wall). Set expectations accordingly.
+Every rewrite still serves ONE purpose: optimize the lemma **from the
+search-elimination angle** for wall time. But the goal is not only "make it
+static and faster." A rigorously-established **negative** — "this seL4 lemma
+*cannot* be optimized from the search angle" — is itself a valuable result, not
+a failure. That value is **conditional**: it only counts if the path that
+reached it is **rigorous and reproducible**. A hand-waved "I tried, it didn't
+work" is worthless; a replayable verification that the cost is work/structure
+and not search is a real finding.
 
-## Threshold
+This is exactly why the generative rewriter (**GenStat**,
+`tools/seL4-proof-search/Isa-Repl/rewrite_agent.py`) is driven through
+`claude -p` with the **whole process recorded** — every generated static script,
+the real `check-theory` build verdict, and the Isabelle `***` diagnostic fed
+back each round. The transcript IS the audit trail: a reader can replay *why* a
+lemma was judged search-irreducible instead of taking the claim on faith. So a
+`pivot` / `inconclusive` outcome (below) is not a dead end to discard — it is a
+recorded, reproducible verification that this lemma's cost is not search, and
+must be captured as such (experiment record, kept transcript), with the same
+rigor as an accepted patch.
 
-| Patch scope | File-wall drop required |
-|---|---|
-| Single-lemma patch | **≥ 5%** |
-| Multi-lemma batch (same file) | **≥ 20%** |
+## Search-space hierarchy
 
-Below threshold: noise (±2-5% heap-cache drift). Discard the patch, pivot.
-
-## Targeting
-
-Pick a single `.thy` file. Optional helpers:
-
-- **`heaps/db-archive-pre-swap/<SESSION>.db`** — `theory_timings` column gives
-  reliable per-file relative ranking (8-thread parallel baseline, 2026-05-09,
-  pre-experiment clean rebuild)
-- **`reports/layer2-theory/theory-axis-2d.md`** — DAG-derived which files block
-  downstream (structure 100% reliable, weights partially distorted)
-
-Once a file is chosen, the rest is per-lemma work below.
-
-## The strategy — record search, replace with rules
-
-### Step 1 — Profile via time_methods
-
-```
-python3 tools/critical_path/lemma_search_profile.py <session> <file.thy> <lemma>
-```
-
-Output for each top-level `apply`/`by`/`subgoal by`:
-
-- per-tactic real elapsed (sequential, via `time_methods` wrapping)
-- tactic class (search-class = `auto`/`force`/`fastforce`/`blast`/`metis`/`smt`/`safe`/`fast`)
-- lemma total wall + search-class fraction
-
-Cost: ~3 min per lemma.
-
-### Step 2 — Sanity check
-
-From the output, compute:
-
-```
-theoretical_upper_bound_on_file_wall_savings
-  = (search_class_total in lemma) / (file_wall)
-```
-
-| upper bound | Decision |
-|---|---|
-| < 5% | **Skip**. Even perfect search elimination won't clear threshold. Pivot. |
-| ≥ 5% | Proceed to Step 3. |
-
-### Step 3 — Find the rules each search-class tactic uses
-
-For each search-class tactic in the lemma whose individual `time_methods`
-elapsed is ≥ 1s:
-
-```
-bash $ISA_SCRIPTS/sledgehammer.sh <file.thy> <line> <session>
-```
-
-Wall: 30-180s per call. Output: candidate `by (metis X Y Z)` /
-`by (smt (cvc4) X)` reconstructions. **Pick the shortest plausible one**
-(fewer named lemmas = smaller patch, easier to maintain).
-
-If sledgehammer finds nothing for a line, that line is not a candidate
-under this strategy. Skip it. If NO line yields a sledgehammer
-reconstruction, **the lemma is not attackable under this skill**. Pivot.
-
-### Step 4 — Build and verify the patch
-
-Replace each search-class tactic with the sledgehammer-found reconstruction:
-
-```isabelle
-(* original *)
-apply (force simp: foo bar)
-
-(* replacement, after sledgehammer *)
-apply (metis foo bar rule_a rule_b)
-```
-
-Then:
-
-```bash
-# baseline
-bash $ISA_SCRIPTS/check-theory.sh <file> <session>
-
-# trial
-bash $ISA_SCRIPTS/check-theory.sh <file> <session> --patch <patch>
-```
-
-Compute:
-```
-wall_delta_pct = (trial_wall - baseline_wall) / baseline_wall
-```
-
-### Step 5 — Decide
-
-| Result | Action |
-|---|---|
-| `wall_delta_pct ≤ −5%` (single lemma) or `≤ −20%` (batch) | **Apply** |
-| `−5% < wall_delta_pct ≤ 0%` | **Discard the patch. Pivot to another lemma.** Do NOT try other strategies on this lemma — see top of skill for why. |
-| `wall_delta_pct > 0%` (regression) | **Discard. Pivot.** |
-| FAIL (proof breaks) | Sledgehammer reconstruction was incomplete; try a longer suggestion. If still no go, pivot. |
-
-```bash
-bash $ISA_SCRIPTS/check-theory.sh <file> <session> --apply <patch>
-```
-
-### Step 6 — Record
-
-Append to `reports/layer3-lemma/lemma-strengthen-<branch>-<YYYYMMDD>.md`:
-
-| # | Lemma | File | Search command replaced | wall Δ% | Applied? |
-|---:|---|---|---|---:|:---:|
-
-With: lemma, file, what search-class command was replaced (e.g.
-`apply (force simp: foo)` at L1950), baseline → trial wall, delta %,
-patch sha.
-
-## Tools (authoritative)
-
-| Tool | Purpose | Cost |
+| Tier | Tactics | Status |
 |---|---|---|
-| `tools/critical_path/lemma_search_profile.py` | Per-tactic real wall via `time_methods` wrapping. THE primary profiler. | ~3 min per lemma |
-| `$ISA_SCRIPTS/sledgehammer.sh <file> <line> <session>` | Find `by (metis ...)` / `by (smt ...)` reconstruction for the goal at that line | 30-180s per call |
-| `$ISA_SCRIPTS/check-theory.sh <file> <session>` | File baseline wall measurement | ~ file wall |
-| `$ISA_SCRIPTS/check-theory.sh <file> <session> --patch <p>` | Trial: apply patch in sandbox | same |
-| `$ISA_SCRIPTS/check-theory.sh <file> <session> --apply <p>` | Commit verified patch | same |
+| ① | `auto`,`force`,`blast`,`fastforce`,`metis`,`smt`,`meson`,`clarsimp` | FORBIDDEN — classical/resolution backtracking |
+| ② | `simp`,`simp add: X`,`simp_all` | FORBIDDEN — rewrites against the whole default simpset + conditional rewriting |
+| ③ʳ | `simp only: <full named set>` | ALLOWED — rewriting limited to exactly the named rules |
+| ④ | `rule/erule/drule/frule/intro/elim <named>`, `subst`/`subst (asm)`, `unfold`, `cases x rule:`, `case_tac x` | ALLOWED — single deterministic application |
 
-## ⚠ DO NOT USE — deprecated
+`simp add:` is tier ② (drags in the default simpset) — NOT acceptable; only
+`simp only:` (complete set) is permitted. If it won't close, drop to
+`subst`/`unfold`/`rule`, else pivot.
 
-| Item | Why |
+## Tooling — Isa-REPL inner loop (built & validated)
+
+`IsaREPL.jar` at `tools/seL4-proof-search/Isa-Repl/target/`; py4j installed;
+driven inside the `sel4-l4v` container.
+
+1. `IsaRepl(session="Refine")`; `init(thy)` loads the session heap ONCE (~25s).
+   For session init do **NOT** call `_compile()`.
+2. Reach a deep lemma cheaply: parse the file, **`sorry`-replace all preceding
+   proofs** (an Isa-REPL exploration device — NEVER in a patch; the patch is
+   verified `sorry`-free by `check-theory.sh`), step the prefix (~15s), step the
+   lemma statement. Prefix paid once.
+3. `clone("base")` checkpoints; `try_tactic(cmd)` = timed step (per-line wall +
+   CPU-ablation signal); `focus("base")` rewinds. `goal()` reads the goal;
+   `_prove_by_hammer` / `_extract_hammer_facts_with_thy_names` give candidate
+   **facts only**.
+
+| Also | role |
 |---|---|
-| `tools/critical_path/lemma_profile.py` | Based on `command_timings`: 0.1s threshold drops fast tactics; `pos_of tr` offset misaligns to source keywords; records aggregate non-tactic work |
-| `tools/critical_path/lemma_search_ratio.py` | Same problem as above |
-| `reports/lemma-search-ratio-*.md` (13 files) | Generated from above tools; numbers wrong by 10-100× |
-| `reports/layer3-lemma/lemma-optimization-targets.md` | Based on above; rankings unreliable |
+| `$ISA_SCRIPTS/check-theory.sh <file> <session> [--patch/--apply p]` | whole-file correctness gate (≈ file check time; ~7.5 min for a 3.5k-line Refine theory) |
+| full session build | final downstream gate |
 
-Root cause: see `reports/layer3-lemma/lemma-optimization-master-log-20260526.md`
-end sections.
+> Cost reality: `check-theory.sh`/`goal-at.sh` re-process the whole file per
+> call — minutes for big Refine theories. Use Isa-REPL for iteration; reserve
+> check-theory for the final file gate.
 
-## Known patterns — evidence summary
+## Phase 0 — GATE (mandatory; most lemmas stop here)
 
-### Confirmed wins (historical, when a different strategy was available — DO NOT use those strategies under this simplified skill)
+1. **Per-line time** the lemma in Isa-REPL. Find the few lines that dominate.
+2. **Classify each hot line — search vs work** by ablation (CPU-ish time):
+   `clarsimp` vs `simp` (clarify search negligible?); `simp add:` vs
+   `simp only: <obvious>` (no progress ⇒ default-simpset conditional rewriting =
+   **work**); the classical tactic timed alone.
+3. **Decide:** hot AND classical-search-dominated → Phase 1; hot but `simp`-work
+   → **pivot**; cheap (<~50 ms classical) → **pivot**.
 
-| Pattern | Δ file wall | Note |
-|---|---:|---|
-| `subgoal by fastforce → subgoal by force` cluster on state-relation premises (Finalise_R 1557-1565, CSpace_R 802-814) | −6% ~ −13% | Tactic-swap strategy, predates this simplified skill |
+Empirically in refine proofs: per-line classical search is cheap (~10–65 ms);
+the >500 ms lines are `simp`-over-big-terms (work). Expect to pivot often.
 
-These are kept for historical reference. **Under the current simplified
-skill, do not attempt tactic swaps.** The reasoning: tactic swap only
-shifts WHICH search engine runs, not WHETHER. Sledgehammer→metis is the
-clean test for "does eliminating search matter here at all".
+## Phase 1 — Rewrite via the A→B reconstruction agent
 
-### Confirmed non-wins (these prove search elimination has limited room)
+`tools/seL4-proof-search/Isa-Repl/ab_agent.py` — see
+`reference/ab-reconstruction.md`. Per qualifying line:
 
-| Pattern | Lemma | Δ | What it proved |
-|---|---|---:|---|
-| `apply safe → apply (rule iffI); ...; apply simp` | `eq_ucast_word8` (Tcb_R), 95% reported search | **−0.33%** | The 20s "search" in heap-log was mostly T_work; eliminating search saved 0.7s wall, sub-threshold |
-| `auto/fastforce → force` on dual search command | `invs_A` (ArchKernelInit_AI), 25% reported search | −0.48% | Same lesson — search-time was barely there |
+1. Capture **A** (goal before the automation tactic) as a `clone_tls`
+   checkpoint and **B** (the subgoal *signature* the original tactic leaves).
+2. **Candidate facts** = `_prove_by_hammer` facts (PARSED OUT of the
+   `meson/metis/using …` reconstruction — the tactic itself is discarded) ∪
+   source hints (`intro:/dest:/elim:/simp:` args) ∪ a small background library
+   (`r_into_trancl`, `trancl_into_trancl`, `r_r_into_trancl`, `domI`, `conjI`,
+   `exI`, `refl`, `TrueI`).
+3. **Bounded search** over allowed templates (`rule/erule/drule/frule F`,
+   `intro F`, `assumption`, `erule conjE`, one `simp only: <facts>`) applied
+   from the checkpoint with a timeout; success = resulting signature **equals
+   B** (leaves the identical remaining subgoals). `focus_tls` backtracks.
+4. If no path is found (the path stays hidden in `meson`, or it needs a goal the
+   agent can't reach) → pivot. NEVER keep the `metis/meson` reconstruction — it
+   fails the audit.
 
-**These two negative results are why this skill is "single strategy, no
-fallback".** If the cleanest possible test (full search elimination via
-sledgehammer-found metis or rule chain) doesn't move wall ≥ 5%, then by
-construction nothing weaker will.
+> **Sledgehammer returns automation, not a path.** It only seeds the fact pool.
+
+## Phase 2 — Audit + measure + commit
+
+1. **Audit grep** the rewritten region (any hit but `simp only:` = FAIL):
+   ```bash
+   grep -nE '\b(auto|blast|fastforce|force|clarsimp|eval|presburger|sos|arith|linarith|metis|smt|meson)\b' <region>
+   grep -nE '\bsimp(_all)?\b' <region> | grep -vE '\bsimp only:'
+   grep -nE '(\brule\s*$|\brule\s*\)|^\s*\.\.\s*$)' <region>   # implicit: bare rule / ..
+   ```
+2. **After per-line timing** (Isa-REPL): target line's own wall must drop.
+3. **Authoritative verify + commit (parent Rule 1):** `check-theory.sh --patch`
+   green → `--apply` (auto-writes `attempts/impact` logs, Rule 3/4) → full
+   session build green. The **recorded** metric is the whole-file check-theory
+   wall vs the golden baseline (per-line REPL time is only the Phase-0 signal).
+4. **Submit (parent Rule 5):** topic branch `proof-strengthen` → experiment
+   record `reports/experiments/<NNNN>-<name>/` (`patch.diff`, `command.sh`,
+   `measurement.json` with `baseline_ref → reports/golden-baseline/walls.json`,
+   `decision.md`; no `derivability.thy` — statement unchanged) → PR to `main`.
+
+| Outcome | Action |
+|---|---|
+| audit clean + green + whole-file wall ↓ (≤95% of a ≥30s baseline) | **Accept** → experiment record + PR |
+| audit clean + green + file wall flat | record `inconclusive`, **pivot** |
+| any audit hit / can't make static | **Reject, pivot** |
 
 ## Anti-patterns (DO NOT)
-
 | Anti-pattern | Why |
 |---|---|
-| Bulk `force → fastforce` whole-file sweeps | Empirically regress +7% to +160% (Tcb_AC, Syscall_AC, CNode_AC, InfoFlow Noninterference) — context-specific behavior |
-| Trying multiple strategies on the same lemma after one fails | Wasted budget. The simplified strategy IS the upper-bound test. |
-| Optimizing T_work (Isar decomposition, lemma splitting) | Out of scope — different optimization axis, different skill |
-| Trusting `command_timings` / `lemma_profile.py` / search-ratio reports | Structurally unreliable — see deprecated list above |
+| Skipping Phase 0, rewriting by eye | You'll attack cheap or work-bound lines for 0 gain. |
+| Treating `_prove_by_hammer` output as static | `metis/meson/smt` are automation — fail the audit; use as fact seed only. |
+| Keeping `simp add:` / `simp_all` as "static" | Tier ②, fails the audit. |
+| Partial-rollback of a stubborn line to automation | Leaves automation in → fails the contract; pivot. |
+| Iterating the FULL session build per round | Use Isa-REPL (prefix once); full build only as final gate. |
+| Whole-session wall as the per-lemma metric | Per-lemma payoff is invisible there; use per-line REPL timing. |
+
+## References
+- `reference/positive-cases.md` — the technique that works (confirmed full
+  static-izations, replacement-pattern library, trap catalog).
+- `reference/negative-cases.md` — when to pivot (per-line timing showing
+  work-bound / cheap-search lemmas; the search-vs-work ablation).
+- `reference/ab-reconstruction.md` — the A→B agent: algorithm, validated
+  `n_tranclD` paths, v0 limits and v1 directions.

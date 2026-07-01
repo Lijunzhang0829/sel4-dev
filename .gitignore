@@ -5,28 +5,10 @@ stack_cache/*
 !stack_cache/README.md
 
 # --- Isabelle session heaps (binary, multi-GB) — NOT tracked in git.
-<<<<<<< HEAD
-# The heaps themselves live inside the docker container at
-# /root/.isabelle/heaps/. The git-tracked record of those heaps is
-# reports/golden-baseline/{walls.json, heap-sizes.txt, env.json}.
-heaps/*
-
-# Runtime artifacts produced by run.sh / isabelle_prover skill
-logs/
-test_output.log
-
-# Note: reports/ is TRACKED — it's where experiment records live.
-# Each experiment branches off baseline, adds reports/audit-framework/<id>/,
-# and PRs back to main.
-
-# Explicit allowlist for the experiments audit-trail subtree (parent
-# SKILL rule 5). Every accepted strengthening patch lives here as a
-# permanent re-runnable bundle.
-!reports/audit-framework/
-!reports/audit-framework/**
-=======
-# heaps/build_log.txt IS tracked: it's the per-theory timing baseline
-# we benchmark experiments against.
+# The heaps live inside the docker container (e.g. /root/.isabelle/heaps/);
+# the git-tracked record of them is reports/golden-baseline/{walls.json,
+# heap-sizes.txt, env.json}. heaps/build_log.txt IS tracked: it's the
+# per-theory timing baseline we benchmark experiments against.
 # To restore the heap binaries themselves, see reports/baseline-restore.md.
 heaps/*
 !heaps/build_log.txt
@@ -81,6 +63,11 @@ reports/baseline/*
 # golden-baseline/ — build measurement baseline. Tracked, including build logs.
 !reports/golden-baseline/
 !reports/golden-baseline/**
+
+# repair/ — co-evolution/repair topic: l4v repair-distribution survey +
+# reproducible classifier + design docs. Tracked.
+!reports/repair/
+!reports/repair/**
 
 test_output.log
 

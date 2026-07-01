@@ -14,6 +14,8 @@ matches your target type:
 | `.thy` under `spec/abstract/`, `proof/invariant-abstract/` | **`isabelle_prover_spec`** | Tighter postconditions / invariants |
 | `.hs` / `.lhs` under `spec/haskell/` | **`isabelle_prover_haskell`** | Haskell Design Spec + downstream re-verification |
 | C source in seL4 kernel | **`isabelle_prover_c`** | C implementation + CRefine maintenance |
+| Regenerate a whole refinement layer (research: LLM-vs-human) | **`isabelle_prover_regen`** | Layer-level proof regeneration + quality benchmark + memorization-gap |
+| Repair the proof chain after a spec/haskell/C change (research: maintenance/co-evolution) | **`isabelle_prover_coevolve`** | Artifact-triggered, multi-file/cross-session proof repair; commit-pair benchmark |
 
 The rest of this file describes the **common contract** all four sub-skills
 share. Sub-skills only specify their workflow / strategies / type-specific
