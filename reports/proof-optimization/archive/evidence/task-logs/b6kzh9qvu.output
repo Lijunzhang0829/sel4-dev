@@ -11,7 +11,7 @@ START 18:21:58
 [profile] patched theory: /tmp/prof_h7h2ov5v/Tmp_prof_c37083047420.thy
 [profile] running (KILL timeout 1800s): isabelle process -l Access -T Tmp_prof_c37083047420
 [profile] isabelle exit=1 (137=KILLed after hang, output still captured)
-[profile] raw output -> /workspace/tools/seL4-proof-search/Isa-Repl/profiler/raw-empty_slot_faithful.out  (0 @@PROF lines)
+[profile] raw output -> /workspace/lemma-staticize/isa-repl/profiler/raw-empty_slot_faithful.out  (0 @@PROF lines)
 NO PROFILE DATA FOUND.
 (check that the tactic ran under time_profile and tracing was captured)
 

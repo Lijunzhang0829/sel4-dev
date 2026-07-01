@@ -16,7 +16,7 @@ eliminated), but it is often **wasteful** (so it can be reduced).
 
 ## Candidate set (reproducible)
 
-`tools/seL4-proof-search/Isa-Repl/extract_high_value.py` reads the build's own per-command
+`lemma-staticize/isa-repl/extract_high_value.py` reads the build's own per-command
 `command_timings` (heap DBs) and emits every proof command that is BOTH valuable
 (elapsed ≥ `MIN_CPU`=10s) and a rewrite target (tactic ∈ {auto,fastforce,force,blast}), tagged
 feasible/infeasible for the REPL methods. Fully env-parameterised, no manual picking.
@@ -197,7 +197,7 @@ small slice of it.
   build-rejected); the reduce variant on the same line is **different** and build-green — the
   line is genuinely accelerable, just not the way DFS hallucinated.
 
-## Reusable assets (`tools/seL4-proof-search/Isa-Repl/`)
+## Reusable assets (`lemma-staticize/isa-repl/`)
 
 - `extract_high_value.py` — reproducible high-value candidate extraction from build timings.
 - `reduce_agent.py` — Direction-A LLM agent (claude -p via the host bridge, full transcript

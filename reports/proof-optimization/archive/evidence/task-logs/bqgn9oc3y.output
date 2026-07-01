@@ -9,7 +9,7 @@
                       pas_ref
 [profile] patched theory: /tmp/prof_hcqpwlyn/Tmp_prof_d4407a4c91ac.thy
 [profile] running: isabelle process -l Access -T Tmp_prof_d4407a4c91ac
-[profile] raw output -> /workspace/tools/seL4-proof-search/Isa-Repl/profiler/raw-empty_slot_pas_refined.out  (0 @@PROF lines)
+[profile] raw output -> /workspace/lemma-staticize/isa-repl/profiler/raw-empty_slot_pas_refined.out  (0 @@PROF lines)
 NO PROFILE DATA FOUND.
 (check that the tactic ran under time_profile and tracing was captured)
 

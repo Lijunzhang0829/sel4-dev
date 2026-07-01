@@ -8,7 +8,7 @@ START 17:00:53
 [profile] patched theory: /tmp/prof_lm8rxag2/Tmp_prof_32de86db5017.thy
 [profile] running: isabelle process -l Access -T Tmp_prof_32de86db5017
 [profile] TIMEOUT after 850s
-[profile] raw output -> /workspace/tools/seL4-proof-search/Isa-Repl/profiler/raw-empty_slot_CONTROL.out  (0 @@PROF lines)
+[profile] raw output -> /workspace/lemma-staticize/isa-repl/profiler/raw-empty_slot_CONTROL.out  (0 @@PROF lines)
 NO PROFILE DATA FOUND.
 (check that the tactic ran under time_profile and tracing was captured)
 

@@ -1,6 +1,6 @@
 # claude -p 传输掉线重试方案（claude_loop 流水线通道）
 
-日期：2026-06-17 · 范围：`tools/seL4-proof-search/Isa-Repl/proposer_host.py`、`react_agent.py`
+日期：2026-06-17 · 范围：`lemma-staticize/isa-repl/proposer_host.py`、`react_agent.py`
 
 ## 一句话
 

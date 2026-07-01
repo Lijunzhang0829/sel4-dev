@@ -8,8 +8,8 @@ Loading theory "Draft.iso_simp_fixB"
            8 TOTAL
 ### theory "Draft.iso_simp_fixB"
 ### 0.262s elapsed time, 0.304s cpu time, 0.051s GC time
-*** Failed to finish proof (line 10 of "/workspace/tools/seL4-proof-search/Isa-Repl/profiler/iso_simp_fixB.thy"):
+*** Failed to finish proof (line 10 of "/workspace/lemma-staticize/isa-repl/profiler/iso_simp_fixB.thy"):
 *** goal (1 subgoal):
 ***  1. \<Sum> {0..<700} = 244650
-*** At command "by" (line 10 of "/workspace/tools/seL4-proof-search/Isa-Repl/profiler/iso_simp_fixB.thy")
+*** At command "by" (line 10 of "/workspace/lemma-staticize/isa-repl/profiler/iso_simp_fixB.thy")
 Exception- TOPLEVEL_ERROR raised

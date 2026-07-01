@@ -81,7 +81,7 @@ baseline 1/8 → +AP1+AP3 **1/8,0 flip**。AP3 确实加了域 facts(+6、+21、
 
 既然速度是死路,改写这件事的价值重定位为:① 可审计性/结构恢复(Apply2Isar 那条线,但它是符号工具、做结构轴,"LLM 做去自动化改写"是空白);② 改写数据集;③ 未验证的 **LLM-proposer 臂**(LLM 是否比启发式搜索强)。
 
-**PoC:claude -p 驱动改写,transcript 即记录。** 架构(全部在 `tools/seL4-proof-search/Isa-Repl/`):
+**PoC:claude -p 驱动改写,transcript 即记录。** 架构(全部在 `lemma-staticize/isa-repl/`):
 ```
 run_claude_rewrite.sh → claude -p "<prompt>" --output-format stream-json → transcript.jsonl
    └ claude 经 Bash 调 isa_tool_host.sh {state|try|commit|record|stop}

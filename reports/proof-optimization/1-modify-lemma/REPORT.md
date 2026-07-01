@@ -42,7 +42,7 @@ _自动化 tactic → static tactic 改写:三方法对比与"提速空间"的�
 
 | 候选集 | 选法 | 规模 | 产物 |
 |---|---|---|---|
-| DB 计时挖掘 | `scan_db_timings.py` 解 heap `command_timings` | 全量 | `tools/seL4-proof-search/Isa-Repl/runs/db_candidates.json` |
+| DB 计时挖掘 | `scan_db_timings.py` 解 heap `command_timings` | 全量 | `lemma-staticize/isa-repl/runs/db_candidates.json` |
 | **DB-hottest 冻结集** | `curate_candidates.py`,3-arm/2-source(search≤30 / work-suspect≤10 / hard≤8;source A=db-scan ≥10s 搜索主导,source B=wasted 2–60s 带)| 46 | `lemma-staticize/experiment-candidates/{candidates.json,manifest.md}` |
 | **佐证集**(历史已证可解) | `build_corroboration_set.py` | 16(fast 12) | `experiment-candidates/{corroboration-set.json,.manifest.md}` |
 | wasted-classical 高价值 | `wasted_classical_json.py`(2–60s 带,精炼文本过滤) | 7(其中 5 个 ≥10s)| `wasted_candidates.json`(31 条),`lemma-staticize/runs/wasted_hv_candidates.json`(7) |
@@ -56,15 +56,15 @@ _自动化 tactic → static tactic 改写:三方法对比与"提速空间"的�
 
 ## 2. 三种改写方法(统一判据:reach-B = 复现原 tactic 留下的目标状态)
 
-**统一 reach-B 测试床**(三方法共享,见 [`genstat_stateful.py` 头注](../../../tools/seL4-proof-search/Isa-Repl/genstat_stateful.py#L7)):REPL 用 `sorry` 替换目标 tactic 行 → 取 **A** = 进入该行的真实 goal(`isa._extract_goal`)→ 对 A 施一次原 tactic 得 **B** = 结果状态签名([`react_agent.py:183`](../../../tools/seL4-proof-search/Isa-Repl/react_agent.py#L183))→ 成功 = 存在一条**确定性静态路径**从 A 到达签名 == B 的状态(schematic 变量名规范化后比对,见 [`canon`](../../../tools/seL4-proof-search/Isa-Repl/genstat_stateful.py#L95))。三方法只在**如何生成这条路径**上不同。
+**统一 reach-B 测试床**(三方法共享,见 [`genstat_stateful.py` 头注](../../../lemma-staticize/isa-repl/genstat_stateful.py#L7)):REPL 用 `sorry` 替换目标 tactic 行 → 取 **A** = 进入该行的真实 goal(`isa._extract_goal`)→ 对 A 施一次原 tactic 得 **B** = 结果状态签名([`react_agent.py:183`](../../../lemma-staticize/isa-repl/react_agent.py#L183))→ 成功 = 存在一条**确定性静态路径**从 A 到达签名 == B 的状态(schematic 变量名规范化后比对,见 [`canon`](../../../lemma-staticize/isa-repl/genstat_stateful.py#L95))。三方法只在**如何生成这条路径**上不同。
 
 | 方法 | 工作流 | 关键 | 实现(点击查看) |
 |---|---|---|---|
-| **DFS** | ① 每节点构造受限、过审计的候选菜单(结构规则 + hammer facts)② 按结构序逐个试,死路**回溯**,已访状态规范化剪枝 ③ 仅 audit-passing 的静态 tactic 入路径 | 纯结构**菜单 + 回溯保证覆盖**(无 LLM 开放词表);天花板 = 菜单封顶(够不着库规则 / 复杂实例化) | [`react_agent.py` NO_CLAUDE](../../../tools/seL4-proof-search/Isa-Repl/react_agent.py#L151) · [菜单](../../../tools/seL4-proof-search/Isa-Repl/react_agent.py#L90) · [回溯循环](../../../tools/seL4-proof-search/Isa-Repl/react_agent.py#L219) · [审计](../../../tools/seL4-proof-search/Isa-Repl/react_agent.py#L123) |
-| **GenStat-stateful** | ① 给 claude 看**当前活 goal** ② claude 提下一 1–3 行静态 apply(开放词表、多行)③ REPL 施用并返回**活的步后态**,循环至 reach-B 或轮次耗尽;失败回灌错误 | **活状态 = 就地纠偏**;开放词表突破菜单封顶 | [`genstat_stateful.py` SHOW_STATE=1](../../../tools/seL4-proof-search/Isa-Repl/genstat_stateful.py#L39) · [逐步施用](../../../tools/seL4-proof-search/Isa-Repl/genstat_stateful.py#L202) |
-| **GenStat-blind** | ① 只给 claude **A + 目标 B**(无中间态)② 一次性生成**整段** apply-script ③ REPL reach-B 验证;失败回灌错误后整段重生成 | **一次性整段**:免逐步 churn,但无中途纠偏 | [`genstat_stateful.py` SHOW_STATE=0](../../../tools/seL4-proof-search/Isa-Repl/genstat_stateful.py#L298) |
+| **DFS** | ① 每节点构造受限、过审计的候选菜单(结构规则 + hammer facts)② 按结构序逐个试,死路**回溯**,已访状态规范化剪枝 ③ 仅 audit-passing 的静态 tactic 入路径 | 纯结构**菜单 + 回溯保证覆盖**(无 LLM 开放词表);天花板 = 菜单封顶(够不着库规则 / 复杂实例化) | [`react_agent.py` NO_CLAUDE](../../../lemma-staticize/isa-repl/react_agent.py#L151) · [菜单](../../../lemma-staticize/isa-repl/react_agent.py#L90) · [回溯循环](../../../lemma-staticize/isa-repl/react_agent.py#L219) · [审计](../../../lemma-staticize/isa-repl/react_agent.py#L123) |
+| **GenStat-stateful** | ① 给 claude 看**当前活 goal** ② claude 提下一 1–3 行静态 apply(开放词表、多行)③ REPL 施用并返回**活的步后态**,循环至 reach-B 或轮次耗尽;失败回灌错误 | **活状态 = 就地纠偏**;开放词表突破菜单封顶 | [`genstat_stateful.py` SHOW_STATE=1](../../../lemma-staticize/isa-repl/genstat_stateful.py#L39) · [逐步施用](../../../lemma-staticize/isa-repl/genstat_stateful.py#L202) |
+| **GenStat-blind** | ① 只给 claude **A + 目标 B**(无中间态)② 一次性生成**整段** apply-script ③ REPL reach-B 验证;失败回灌错误后整段重生成 | **一次性整段**:免逐步 churn,但无中途纠偏 | [`genstat_stateful.py` SHOW_STATE=0](../../../lemma-staticize/isa-repl/genstat_stateful.py#L298) |
 
-桥接:容器内无 `claude` 二进制 → [`proposer_host.py`](../../../tools/seL4-proof-search/Isa-Repl/proposer_host.py#L40) 在 host 跑 `claude -p`(host OAuth,仅 goal 文本 + 候选 tactics 过桥,通道错误经 `err` 回传)。
+桥接:容器内无 `claude` 二进制 → [`proposer_host.py`](../../../lemma-staticize/isa-repl/proposer_host.py#L40) 在 host 跑 `claude -p`(host OAuth,仅 goal 文本 + 候选 tactics 过桥,通道错误经 `err` 回传)。
 
 ---
 
@@ -80,11 +80,11 @@ _自动化 tactic → static tactic 改写:三方法对比与"提速空间"的�
 - **结论**:开放词表(stateful/blind)在 reach-B 覆盖上**碾压菜单 DFS**;DFS 卡在菜单封顶(够不着库规则/实例化)。
 - **stateful ≈ blind**:活状态是**效率杠杆**,非能力天花板;churn 经 apply_chunk 修复后基本消除(单一案例 Zombie 即由此翻盘)。注:三者中**仅 Blind 是单跑干净 12/12**;Stateful 首跑 7/12 受通道不稳(2 CHANNEL-FAIL)+ Zombie churn 拖累,经重试+修复才累计 12/12——"覆盖率相当"指**能力**相当,非首跑稳定性相当。
 
-**实验设置**:12 个佐证案例(历史已证可解的小 lemma)× 3 方法,统一 reach-B、串行。DFS 纯菜单无 LLM;stateful/blind 经 [`proposer_host.py`](../../../tools/seL4-proof-search/Isa-Repl/proposer_host.py#L40) 在 host 用 `claude -p` 提议,每轮交互(`prompt` + `response`)落盘 transcript 供审计。
+**实验设置**:12 个佐证案例(历史已证可解的小 lemma)× 3 方法,统一 reach-B、串行。DFS 纯菜单无 LLM;stateful/blind 经 [`proposer_host.py`](../../../lemma-staticize/isa-repl/proposer_host.py#L40) 在 host 用 `claude -p` 提议,每轮交互(`prompt` + `response`)落盘 transcript 供审计。
 
 **claude -p 交互日志(点击逐轮看 claude 如何处理)** —— 每条记录:`prompt` = 喂给 claude 的目标 / 当前 goal,`response` = claude 提议的静态 apply,`claude_secs` = 真实 claude -p 耗时:
-- **Stateful**(逐步,`prompt` 为 "…STEP BY STEP … look at the CURRENT goal"):[`…is_transferable_IRQ.jsonl`](../../../tools/seL4-proof-search/Isa-Repl/runs/genstat-transcript-is_transferable_IRQ.jsonl)(6 轮,turn 5 claude 复盘"前两次各缺一块 → 合并 `option.inject`+`cap.distinct`+`option.distinct`"并闭合);[`…is_transferable_Zombie.jsonl`](../../../tools/seL4-proof-search/Isa-Repl/runs/genstat-transcript-is_transferable_Zombie.jsonl)(turn 1 提 `apply assumption` 被 REPL 拒回残余 goal → turn 2 据残余补 `option.inject` 闭合)。
-- **Blind**(一次性,`prompt` 为 "…DETERMINISTIC static apply-script … to the SAME state … You do NOT get [中间态]"):[`…rm_affects-P25905.jsonl`](../../../tools/seL4-proof-search/Isa-Repl/runs/genstat-transcript-rm_affects-P25905.jsonl)(round 0 整段 `simp only: …; done`(74.8s)→ 失败后 round 1 **整段重生**为 `unfold …; simp only: …; done`(375.9s),全程无中间态)。
+- **Stateful**(逐步,`prompt` 为 "…STEP BY STEP … look at the CURRENT goal"):[`…is_transferable_IRQ.jsonl`](../../../lemma-staticize/isa-repl/runs/genstat-transcript-is_transferable_IRQ.jsonl)(6 轮,turn 5 claude 复盘"前两次各缺一块 → 合并 `option.inject`+`cap.distinct`+`option.distinct`"并闭合);[`…is_transferable_Zombie.jsonl`](../../../lemma-staticize/isa-repl/runs/genstat-transcript-is_transferable_Zombie.jsonl)(turn 1 提 `apply assumption` 被 REPL 拒回残余 goal → turn 2 据残余补 `option.inject` 闭合)。
+- **Blind**(一次性,`prompt` 为 "…DETERMINISTIC static apply-script … to the SAME state … You do NOT get [中间态]"):[`…rm_affects-P25905.jsonl`](../../../lemma-staticize/isa-repl/runs/genstat-transcript-rm_affects-P25905.jsonl)(round 0 整段 `simp only: …; done`(74.8s)→ 失败后 round 1 **整段重生**为 `unfold …; simp only: …; done`(375.9s),全程无中间态)。
 
 ### 3.2 慢案例为何失败(reach-B 够不着)
 三方在慢案例全失败(7-案例集,三方 **0/7**,详见 §3.4)。**(更正:无独立"8-案例"run;原稿"0/8"系与 §3.4 7-案例集混记。)** 从失败 claude -p 日志 + lemma 代码看,两类失败机制:
@@ -105,13 +105,13 @@ lemma SAC_partsSubjectAffects_exceptT : "x \<noteq> T \<Longrightarrow> partsSub
   done
 ```
 
-claude(blind)只提朴素 `apply (simp only: SAC_affects SAC_reads) done`(38.7s)→ 第二轮 `Reached max turns`,失败。搜索 tactic 在线枚举的 case 树,reach-B 静态重建够不着。日志:[`…SAC_partsSubjectAffects_exceptT.jsonl`](../../../tools/seL4-proof-search/Isa-Repl/runs/genstat-transcript-SAC_partsSubjectAffects_exceptT.jsonl)。
+claude(blind)只提朴素 `apply (simp only: SAC_affects SAC_reads) done`(38.7s)→ 第二轮 `Reached max turns`,失败。搜索 tactic 在线枚举的 case 树,reach-B 静态重建够不着。日志:[`…SAC_partsSubjectAffects_exceptT.jsonl`](../../../lemma-staticize/isa-repl/runs/genstat-transcript-SAC_partsSubjectAffects_exceptT.jsonl)。
 
-**② 巨型 goal——claude -p 自身超时** · [`requiv_user_mem_eq`](../../../verification/l4v/proof/infoflow/ARM/ArchUserOp_IF.thy#L817)(InfoFlow,`fastforce` 行 10.8s,**11 个前提**、深层 `fastforce simp:…`/`frule`/`context_conjI'` 证明)。[claude -p 日志](../../../tools/seL4-proof-search/Isa-Repl/runs/genstat-transcript-requiv_user_mem_eq.jsonl):round 0 `claude_secs=400.1 err='timeout'`、**空 response**——goal/上下文体量太大,LLM 调用本身超时,瓶颈是 goal 大小而非推理。
+**② 巨型 goal——claude -p 自身超时** · [`requiv_user_mem_eq`](../../../verification/l4v/proof/infoflow/ARM/ArchUserOp_IF.thy#L817)(InfoFlow,`fastforce` 行 10.8s,**11 个前提**、深层 `fastforce simp:…`/`frule`/`context_conjI'` 证明)。[claude -p 日志](../../../lemma-staticize/isa-repl/runs/genstat-transcript-requiv_user_mem_eq.jsonl):round 0 `claude_secs=400.1 err='timeout'`、**空 response**——goal/上下文体量太大,LLM 调用本身超时,瓶颈是 goal 大小而非推理。
 
 ### 3.3 提速实测:工具、指标、以及"该测 CPU"的质疑
 
-- **用的工具(粗筛)** = [`time_rewrite.py`](../../../tools/seL4-proof-search/Isa-Repl/time_rewrite.py):in-REPL A/B(py4j JavaGateway + `time.monotonic()`),从 checkpoint A 克隆,分别跑原 tactic 与 reach-B 静态路径;丢 warm-up → ≥9 reps **中位** → 每步减 py4j **IPC 基线** → 天花板 `C_i = orig_ms_adj − static_ms_adj` → A/A **噪声地板** `aa_spread`(原 tactic 跑两次)→ `C_i > 2×aa_spread` 才记显著。粗筛结果:成功案例全 **sub-60ms**、`significant:false`、blast 系为负。
+- **用的工具(粗筛)** = [`time_rewrite.py`](../../../lemma-staticize/isa-repl/time_rewrite.py):in-REPL A/B(py4j JavaGateway + `time.monotonic()`),从 checkpoint A 克隆,分别跑原 tactic 与 reach-B 静态路径;丢 warm-up → ≥9 reps **中位** → 每步减 py4j **IPC 基线** → 天花板 `C_i = orig_ms_adj − static_ms_adj` → A/A **噪声地板** `aa_spread`(原 tactic 跑两次)→ `C_i > 2×aa_spread` 才记显著。粗筛结果:成功案例全 **sub-60ms**、`significant:false`、blast 系为负。
 
 - **⚠️ 这个测量不该当真,而且测错了量**:
   1. **它量的是墙钟,不是 CPU**——`time.monotonic()` 包住 py4j step,含 IPC + JVM GC + 冷启;`measurement-tools.md` 实测冷启 ↑4.5×、run-to-run 噪声 ≤58%(足以翻盘)。我们真正关心的是**重写后 tactic 的 CPU 时间有没有降**,in-REPL 墙钟答不了;残余噪声也远大于这些 sub-60ms 信号。
@@ -142,7 +142,7 @@ clarsimp 4 个明确 fail = `cap_insert_simple_arch_caps_no_ap` 留 5 子目标�
 
 **这个实验说明**:在**同一组高价值/慢 lemma** 上,**reach-B 重建(三方 0/7)与 clarsimp 降级(可决 4/4 fail)都不成立**——高价值频段上"移除"和"降级"两条 search 路都走不通;clarsimp 降级留下大量未闭合子目标,正说明 classical 搜索在这些 lemma 上是**真 case-work**(非"白费")。限定:3 个重 session 因 build 成本不可决,故是"未观察到成功",非"全证伪"(见下"外部效度")。
 
-**(B) 行为式筛器臂**——不靠文本启发式,用 [`wasted_ablate.py`](../../../tools/seL4-proof-search/Isa-Repl/wasted_ablate.py) **真换 clarsimp**:先 build(便宜拒绝,多数死在这)→ 能 build 再 A/B 测 file-wall,报 `frac_saved`(省的文件墙比例)+ `non_overlap`(最差 clarsimp build 仍胜最好 baseline)。跑 26 个 ≥2s 候选(Access+InfoFlow:[pilot 12](../../../lemma-staticize/runs/_archived-logs/pilot_ablate2.log) + [rescan 14](../../../lemma-staticize/runs/_archived-logs/rescan_ablate.log))。
+**(B) 行为式筛器臂**——不靠文本启发式,用 [`wasted_ablate.py`](../../../lemma-staticize/isa-repl/wasted_ablate.py) **真换 clarsimp**:先 build(便宜拒绝,多数死在这)→ 能 build 再 A/B 测 file-wall,报 `frac_saved`(省的文件墙比例)+ `non_overlap`(最差 clarsimp build 仍胜最好 baseline)。跑 26 个 ≥2s 候选(Access+InfoFlow:[pilot 12](../../../lemma-staticize/runs/_archived-logs/pilot_ablate2.log) + [rescan 14](../../../lemma-staticize/runs/_archived-logs/rescan_ablate.log))。
 
 **这 26 个怎么来的**:`session_candidates.py` 实测扫出 1283 个 ≥2s 行 → 按 **wasted-classical 模式**过滤(`auto/ff/force` + `simp:`、且**无** `dest/elim/intro/split` 规则链 = "classical 最可能白费"的形态)→ 落在 Access / InfoFlow 两 session 的 26 个。
 
@@ -174,7 +174,7 @@ clarsimp 4 个明确 fail = `cap_insert_simple_arch_caps_no_ap` 留 5 子目标�
 
 **为什么不复用消除集 `candidates.json`(§1,46 条)**:① 那是为"消除"实验**手工 3-arm 策展**的(search≤30 / work-suspect≤10 / hard≤8,2-source 混合),带经验挑选成分;② 它与本实验的目标行**基本不相交**(实测 lemma 交集 = 0,见下);③ 它含 `hard` 臂的重 session lemma(CRefine/Refine),本实验的 REPL 内层根本 init 不动。强行复用既不可复现、又大半跑不了。
 
-**缩减实验改用 `high_value_candidates.json`,由 [`extract_high_value.py`](../../../tools/seL4-proof-search/Isa-Repl/extract_high_value.py) 生成**。设计与理由(逐条,均可复现):
+**缩减实验改用 `high_value_candidates.json`,由 [`extract_high_value.py`](../../../lemma-staticize/isa-repl/extract_high_value.py) 生成**。设计与理由(逐条,均可复现):
 
 | 设计 | 取值 | 凭什么(convincing reason) |
 |---|---|---|
@@ -197,9 +197,9 @@ clarsimp 4 个明确 fail = `cap_insert_simple_arch_caps_no_ap` 留 5 子目标�
 
 #### 3.5.2 方法与工具
 
-**改写 agent** = [`reduce_agent.py`](../../../tools/seL4-proof-search/Isa-Repl/reduce_agent.py):给 claude 看 lemma 陈述 + 原 tactic + 目标态 B + hammer facts,让它提**缩减变体**(开放词表,见 §3.5 手法);逐轮反馈(失败/到错状态/不更快 → 回灌诊断重提)。claude -p 经 [`proposer_host.py`](../../../tools/seL4-proof-search/Isa-Repl/proposer_host.py) 桥接,全程 transcript 落盘。
+**改写 agent** = [`reduce_agent.py`](../../../lemma-staticize/isa-repl/reduce_agent.py):给 claude 看 lemma 陈述 + 原 tactic + 目标态 B + hammer facts,让它提**缩减变体**(开放词表,见 §3.5 手法);逐轮反馈(失败/到错状态/不更快 → 回灌诊断重提)。claude -p 经 [`proposer_host.py`](../../../lemma-staticize/isa-repl/proposer_host.py) 桥接,全程 transcript 落盘。
 
-**双闸门验证**:① **reach-B**(in-REPL 快速预筛,与 §2 同判据;⚠️ 长 goal 会 signature 碰撞假阳性 → 闸门②强制);② **更快 + build-green**——in-REPL A/B 判更快 + **stock `isabelle build` 验正确**([`build_verify_reachb.py`](../../../tools/seL4-proof-search/Isa-Repl/build_verify_reachb.py),B_sig 感知 splice:中段行不加 `done`)。per-lemma CPU 铁数用 [`measure_build_elapsed.py`](../../../tools/seL4-proof-search/Isa-Repl/measure_build_elapsed.py)(`threads=1` 串行 build 读 command_timings,orig/variant 同条件)。
+**双闸门验证**:① **reach-B**(in-REPL 快速预筛,与 §2 同判据;⚠️ 长 goal 会 signature 碰撞假阳性 → 闸门②强制);② **更快 + build-green**——in-REPL A/B 判更快 + **stock `isabelle build` 验正确**([`build_verify_reachb.py`](../../../lemma-staticize/isa-repl/build_verify_reachb.py),B_sig 感知 splice:中段行不加 `done`)。per-lemma CPU 铁数用 [`measure_build_elapsed.py`](../../../lemma-staticize/isa-repl/measure_build_elapsed.py)(`threads=1` 串行 build 读 command_timings,orig/variant 同条件)。
 
 #### 3.5.3 结果
 
@@ -207,7 +207,7 @@ clarsimp 4 个明确 fail = `cap_insert_simple_arch_caps_no_ap` 留 5 子目标�
 >
 > 下方早稿的"10 confirmed faster"是基于 **in-REPL 计时**的软估计(其中 6 个"干净复核被 proof-cache 污染、未独立坐实")。2026-06-30 用 **own-session 单 theory stock build**(§3.6.1 那套:`parent=<session>` 只读 + 改名,单 theory 串行 ⇒ 干净 per-lemma CPU,无 proof-cache/冷启动污染;span 感知 splice 处理多行 tactic)对 **56 feasible 候选全量重扫**,结论硬化:
 >
-> **流程**:① 现有 reduce 变体 18 个直接干净测;② 对尚无 FASTER 变体的 44 个候选**串行**重跑 in-REPL reduce_agent(重启后 REPL 恢复;串行避免内存竞争)生成新变体;③ 新 FASTER 干净测。工具:[`measure_cases.py`](../../../tools/seL4-proof-search/Isa-Repl/measure_cases.py)(span-splice + 多命令求和)、[`rerun_campaign.sh`](../../../tools/seL4-proof-search/Isa-Repl/rerun_campaign.sh);铁数:[`runs/full_scan_final.json`](../../../tools/seL4-proof-search/Isa-Repl/runs/full_scan_final.json)。
+> **流程**:① 现有 reduce 变体 18 个直接干净测;② 对尚无 FASTER 变体的 44 个候选**串行**重跑 in-REPL reduce_agent(重启后 REPL 恢复;串行避免内存竞争)生成新变体;③ 新 FASTER 干净测。工具:[`measure_cases.py`](../../../lemma-staticize/isa-repl/measure_cases.py)(span-splice + 多命令求和)、[`rerun_campaign.sh`](../../../lemma-staticize/isa-repl/rerun_campaign.sh);铁数:[`runs/full_scan_final.json`](../../../lemma-staticize/isa-repl/runs/full_scan_final.json)。
 >
 > **44 重跑候选 verdict**:NO-PATH 20 · FASTER 9 · REACHED-B-NOT-FASTER 8 · ERROR 3 · TIMEOUT 2 · NO-TARGET 2。
 >
@@ -270,7 +270,7 @@ clarsimp 4 个明确 fail = `cap_insert_simple_arch_caps_no_ap` 留 5 子目标�
 #### 3.5.4 分析:per-lemma 真加速,wall 不动是数据集 + 并行的必然
 
 - **lemma 本体(干净 own-session stock CPU)层面:LLM 缩减是真加速、可行,但有限**——**56 feasible 全扫**(§3.5.3 更新块):24 个变体干净测 → **7 个稳健真加速(≥20%)**(含 2 个近乎消除 + empty_slot 省 40s)、3 临界、9 噪声/更慢、5 build-fail;另 ~22 候选 NO-PATH(LLM 缩不动)。**早稿基于 in-REPL 的"10 confirmed faster"虚高约 3×,已被全扫取代。** 这是本报告里**唯一为正**的 search 子角度(§3.1–3.4 全负);而 CRefine 关键路径 simp 经 §3.6 直测**不可缩**。
-- **为什么不反映到 wall(双重原因,都已实证)**:① **数据集层面**——feasible 45 行**按设计全在并行旁支**(关键路径 CRefine 的 48 条被划为 infeasible,§3.5.1);② **并行层面**——端到端实测:把 empty_slot+cap_insert 应用后重建 Access ×3,**914→902s,delta 13s < 组内噪声 ±32s**([`build_wall_test.py`](../../../tools/seL4-proof-search/Isa-Repl/build_wall_test.py)),省的 CPU 落进并行 slack。**所以"per-lemma 加速 ≠ build 加速"既是数据集选择的结果、也是并行调度的结果**,与 §4 的 wall 负结论完全自洽。
+- **为什么不反映到 wall(双重原因,都已实证)**:① **数据集层面**——feasible 45 行**按设计全在并行旁支**(关键路径 CRefine 的 48 条被划为 infeasible,§3.5.1);② **并行层面**——端到端实测:把 empty_slot+cap_insert 应用后重建 Access ×3,**914→902s,delta 13s < 组内噪声 ±32s**([`build_wall_test.py`](../../../lemma-staticize/isa-repl/build_wall_test.py)),省的 CPU 落进并行 slack。**所以"per-lemma 加速 ≠ build 加速"既是数据集选择的结果、也是并行调度的结果**,与 §4 的 wall 负结论完全自洽。
 - **测量纪律(本节硬知识,详见 [`measurement-tools.md`](../../../.claude/skills/isabelle_prover/references/measurement-tools.md))**:per-lemma 的正确度量 = **CPU 时间(lemma 串行)**;但干净测量极难——in-REPL 有 proof-cache + 冷启动污染、command_timings 只存 elapsed 且跨并行 build 噪声 30–60%、whole-theory/wall 被并行隐藏、串行 build 太慢、IsarLite 坏。最干净可得 = `threads=1` 串行 build 读 command_timings(empty_slot 23.3% 即此)。**注:§3.6 已用 own-session 单 theory build 攻克 CRefine 的测量成本,此处"CRefine 不可行"已被 §3.6 取代。**
 
 ### 3.6 关键路径直测:own-session + goal-aware + anon% 扫描(闭合 §4.5 的 open question)
@@ -283,7 +283,7 @@ clarsimp 4 个明确 fail = `cap_insert_simple_arch_caps_no_ap` 留 5 子目标�
 
 CRefine 测不了的两个原因:① Isa-REPL **init 不动**重 session(重建 heap 34min / gateway 超时 / churn-OOM);② 整 CRefine session build **2.5h/次**(实测 A/A 探针 wall 9467s),且 per-step 默认并行噪声 **12–54%**(同源 A/A 实测)。
 
-**解法 = own-session 单 theory build**([`crefine_ownsession_probe.sh`](../../../lemma-staticize/scripts/crefine_ownsession_probe.sh) / [`goal_aware_reduce.py`](../../../tools/seL4-proof-search/Isa-Repl/goal_aware_reduce.py) `_mk`):把目标 theory 改名 + imports 加 `CRefine.` 限定 → 建一个 `parent = CRefine`(**只读**)的 mini-session,`isabelle build` **只 elaborate 这一个 theory**(其余从已建 CRefine heap 秒加载)。**不碰 CRefine heap、不触 REPL init 墙**。成本 = 单 theory(分钟级),且单 theory 串行 → 噪声低。
+**解法 = own-session 单 theory build**([`crefine_ownsession_probe.sh`](../../../lemma-staticize/scripts/crefine_ownsession_probe.sh) / [`goal_aware_reduce.py`](../../../lemma-staticize/isa-repl/goal_aware_reduce.py) `_mk`):把目标 theory 改名 + imports 加 `CRefine.` 限定 → 建一个 `parent = CRefine`(**只读**)的 mini-session,`isabelle build` **只 elaborate 这一个 theory**(其余从已建 CRefine heap 秒加载)。**不碰 CRefine heap、不触 REPL init 墙**。成本 = 单 theory(分钟级),且单 theory 串行 → 噪声低。
 
 验证:PSpace_C(200 行)mini-build **94s**;Tcb_C(4564 行)**20min**(vs 整 CRefine 2.5h);Tcb_C 9 个 tent-pole 行 own-session vs golden 并行**比值 0.72–0.95、中位 0.87x、排序保留**(远紧于全量并行 A/A 的 12–54%)→ own-session 是**干净、可比、低噪声**的关键路径 per-step 测量。
 
@@ -291,7 +291,7 @@ CRefine 测不了的两个原因:① Isa-REPL **init 不动**重 session(重建 
 
 #### 3.6.2 goal-aware 缩减(claude-driven + simp_trace profiling)
 
-重 session 没有 in-REPL 廉价反馈(每轮验证 = 一次 own-session build),所以**前置 profiling 让 claude 一开始就 goal-aware**([`goal_aware_reduce.py`](../../../tools/seL4-proof-search/Isa-Repl/goal_aware_reduce.py),由 [`run_reduce.sh`](../../../tools/seL4-proof-search/Isa-Repl/run_reduce.sh) 按 session 路由:轻→in-REPL,重→goal-aware):
+重 session 没有 in-REPL 廉价反馈(每轮验证 = 一次 own-session build),所以**前置 profiling 让 claude 一开始就 goal-aware**([`goal_aware_reduce.py`](../../../lemma-staticize/isa-repl/goal_aware_reduce.py),由 [`run_reduce.sh`](../../../lemma-staticize/isa-repl/run_reduce.sh) 按 session 路由:轻→in-REPL,重→goal-aware):
 
 1. **profile**:把目标行的 method 用 `use [[simp_trace]] in \<open>…\<close>` **scope 到这一步**(避免全局 trace 抓错 goal),`isabelle process -T` → 该步真实 goal + 逐条 rewrite 规则频率 + **`anon%`**(匿名 def-展开 rewrite 占比);
 2. **claude 决定**:goal + 规则频率 + 5 手法 + few-shot 经 proposer_host bridge 喂给 claude(**全程 transcript 记录**)→ claude 据证据做精确缩减;
@@ -312,7 +312,7 @@ CRefine 测不了的两个原因:① Isa-REPL **init 不动**重 session(重建 
 
 > **⚠️ 本小节结论已被 §3.7 部分推翻**:下表的 `anon%` 实为 `Adding rewrite rule "??.unknown"`(simpset 重复构造)占比,**不是** def-unfolding 计算占比;据此的"不可缩"判定失效,关键路径行实测**局部可缩 7.4%**。保留本节以存证据链。
 
-对 CRefine simp tent-poles 扫 anon%([`anon_scan.py`](../../../tools/seL4-proof-search/Isa-Repl/anon_scan.py),scoped simp_trace,`runs/anon_scan.json`):
+对 CRefine simp tent-poles 扫 anon%([`anon_scan.py`](../../../lemma-staticize/isa-repl/anon_scan.py),scoped simp_trace,`runs/anon_scan.json`):
 
 | 行 | 耗时 | **anon%** | 主导具名规则(fire) | 判定 |
 |---|---|---|---|---|
@@ -343,9 +343,9 @@ CRefine 测不了的两个原因:① Isa-REPL **init 不动**重 session(重建 
 
 §3.1–3.6 都在"**改一条 tactic 的写法**"这个轴上。本节换轴:**不改写法,只减少 tactic 面对的 ambient 引用集**(全局 `[simp]`/`[wp]` 声明、局部再加进 simpset 的规则)。动机:若某条关键路径 simp 慢在"被喂了太多规则去匹配 / 去试",那缩小引用集能**一次让作用域内很多 lemma 都变快**——这是之前所有 per-lemma 点修复都缺的**全局乘数**性质,也是唯一有希望绕开"per-lemma 加速落进并行 slack"的角度。
 
-**工具**(run 目录 [`runs/reference-reduction-20260701/`](../../../tools/seL4-proof-search/Isa-Repl/runs/reference-reduction-20260701/)):
-- [`trial_probe.py`](../../../tools/seL4-proof-search/Isa-Repl/trial_probe.py):比 §3.6 profiler 更细的 trace 解析器。旧 profiler 只数 `rewrite rule "X"`、且 `simp_trace_depth_limit=1`,把四件事混成一个数;新解析器分开:真 fire 的 `Rewriting:`、条件规则 `Trying to rewrite:` 及其 **FAILED(白试)/ SUCCEEDED**、以及 **`Adding rewrite rule`(往 simpset 加规则,根本不是 rewrite)**。
-- [`mutation_test.py`](../../../tools/seL4-proof-search/Isa-Repl/mutation_test.py) / [`theory_simpdel_test.py`](../../../tools/seL4-proof-search/Isa-Repl/theory_simpdel_test.py):own-session 单 theory build 的 A/B(读真 `command_timings`),分别测"某行 `del:` 一条规则"与"整 theory `[simp del]` 一条规则"的 wall+绿变化。
+**工具**(run 目录 [`runs/reference-reduction-20260701/`](../../../lemma-staticize/isa-repl/runs/reference-reduction-20260701/)):
+- [`trial_probe.py`](../../../lemma-staticize/isa-repl/trial_probe.py):比 §3.6 profiler 更细的 trace 解析器。旧 profiler 只数 `rewrite rule "X"`、且 `simp_trace_depth_limit=1`,把四件事混成一个数;新解析器分开:真 fire 的 `Rewriting:`、条件规则 `Trying to rewrite:` 及其 **FAILED(白试)/ SUCCEEDED**、以及 **`Adding rewrite rule`(往 simpset 加规则,根本不是 rewrite)**。
+- [`mutation_test.py`](../../../lemma-staticize/isa-repl/mutation_test.py) / [`theory_simpdel_test.py`](../../../lemma-staticize/isa-repl/theory_simpdel_test.py):own-session 单 theory build 的 A/B(读真 `command_timings`),分别测"某行 `del:` 一条规则"与"整 theory `[simp del]` 一条规则"的 wall+绿变化。
 
 #### 3.7.1 纠正:§3.6 的 anon% 大部分是 `Adding rewrite rule` 假象
 
@@ -499,13 +499,13 @@ reach-B 重建与"提速"系统性错位,三块数据互锁:
 |---|---|---|
 | 候选集(冻结+manifest) | `lemma-staticize/experiment-candidates/` | 主repo `313fbc6` 起 |
 | 三方法 per-run 快照 | `lemma-staticize/runs/corrob-{dfs,stateful,blind}-*/`(`stdout.log`/`result.json`/`transcript.jsonl`) | submodule `fb69f1d` |
-| claude I/O 审计 | `tools/seL4-proof-search/Isa-Repl/runs/genstat-transcript-*.jsonl`、`genstat-stateful-*.json` | — |
+| claude I/O 审计 | `lemma-staticize/isa-repl/runs/genstat-transcript-*.jsonl`、`genstat-stateful-*.json` | — |
 | ablation/筛器/计时日志 | `lemma-staticize/runs/_archived-logs/*.log` | (本报告归档) |
 | Direction 4 ceiling 闭环 | `lemma-staticize/runs/ceiling-pilot-*/ceiling.log`、`{tools/seL4-proof-search/Isa-Repl,lemma-staticize}/runs/report_ceiling_orig.json`(v2,含 verdict/span/floor) | (本会话) |
 | ceiling 工具 | `verify_path.py`(stock VERIFY)、`time_rewrite.py`(SCREEN,噪声纪律)、`report_orig_timing.py`(REPORT,golden,**v2**:lemma-名定位区间 + BELOW-FLOOR 三态 verdict + 文件 elapsed 分布) | (本会话) |
 | 实测筛器工具 | `session_candidates.py`、`wasted_ablate.py`(frac_saved/non_overlap) | (本会话) |
 | 候选源 | `runs/{db_candidates,wasted_candidates,session_candidates,reachb_paths}.json` | — |
-| 方法论 | `tools/seL4-proof-search/Isa-Repl/GENSTAT.md` | submodule `72a66e1` |
+| 方法论 | `lemma-staticize/isa-repl/GENSTAT.md` | submodule `72a66e1` |
 | 代码(三方法+修复) | `react_agent.py` / `genstat_stateful.py` / `proposer_host.py` / `run_corroboration.sh` / `wasted_ablate.py` / `session_candidates.py` | submodule `0eb311e`→`9a929e4` |
 
 每个 per-run 目录自洽(stdout + 结构化 result + 逐次 transcript,不互相覆盖),可独立复盘任一 case 的"被告知什么 → 提了什么 → REPL 裁决"。

@@ -12,8 +12,8 @@ Loading theory "Draft.iso_simp_old"
           21 TOTAL
 ### theory "Draft.iso_simp_old"
 ### 0.292s elapsed time, 0.329s cpu time, 0.054s GC time
-*** Failed to finish proof (line 11 of "/workspace/tools/seL4-proof-search/Isa-Repl/profiler/iso_simp_old.thy"):
+*** Failed to finish proof (line 11 of "/workspace/lemma-staticize/isa-repl/profiler/iso_simp_old.thy"):
 *** goal (1 subgoal):
 ***  1. \<Sum> {0..<700} = 244650
-*** At command "by" (line 11 of "/workspace/tools/seL4-proof-search/Isa-Repl/profiler/iso_simp_old.thy")
+*** At command "by" (line 11 of "/workspace/lemma-staticize/isa-repl/profiler/iso_simp_old.thy")
 Exception- TOPLEVEL_ERROR raised

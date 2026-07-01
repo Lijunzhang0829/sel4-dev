@@ -48,7 +48,7 @@
 
 ### 本轮新发现(引用-B,写在方向一详报 §3.7)
 
-1. **纠正了方向一 §3.6 的一个错误结论**:§3.6 用 anon% 判"关键路径 simp 不可缩",但更细的 trace 解析器([`trial_probe.py`](../../tools/seL4-proof-search/Isa-Repl/trial_probe.py))实测那 93.8%–99.7% 是 **`Adding rewrite rule`(simpset 重复构造)**、不是 def 展开。**旧证据失效。**
+1. **纠正了方向一 §3.6 的一个错误结论**:§3.6 用 anon% 判"关键路径 simp 不可缩",但更细的 trace 解析器([`trial_probe.py`](../../lemma-staticize/isa-repl/trial_probe.py))实测那 93.8%–99.7% 是 **`Adding rewrite rule`(simpset 重复构造)**、不是 def 展开。**旧证据失效。**
 2. **关键路径行实测可缩**:`CSpace_C:2408` 删一条白试全局 `[simp]`(`ctes_of_not_0`,试了又失败 96–107 次)→ **−7.4% 且绿**。**推翻 §3.6 的"不可缩"。**
 3. **但廉价全局删证伪**:该规则**承重**,整 theory 删即断(CSpace_C:1064)。删"没用到"的声明又**本身无效**(discrimination net 让匹配不上的规则近乎免费)。→ 引用轴**无 LLM 可廉价推进的格子,关闭**。
 

@@ -20,14 +20,14 @@
 与这条路线直接相关的原始材料包括：
 
 - 原 loop 设计与审计：  
-  [tools/seL4-proof-search/Isa-Repl/audit/README.md](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/audit/README.md)  
-  [tools/seL4-proof-search/Isa-Repl/audit/block4-loop-design.md](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/audit/block4-loop-design.md)
+  [lemma-staticize/isa-repl/audit/README.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/README.md)  
+  [lemma-staticize/isa-repl/audit/block4-loop-design.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block4-loop-design.md)
 - 原候选集与筛选脚本：  
-  [tools/seL4-proof-search/Isa-Repl/runs/db_candidates.json](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/runs/db_candidates.json)  
-  [tools/seL4-proof-search/Isa-Repl/scan_db_timings.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/scan_db_timings.py)
+  [lemma-staticize/isa-repl/runs/db_candidates.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates.json)  
+  [lemma-staticize/isa-repl/scan_db_timings.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/scan_db_timings.py)
 - 原实验和负结论上下文：  
-  [tools/seL4-proof-search/Isa-Repl/audit/block2-scripts.md](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/audit/block2-scripts.md)  
-  [tools/seL4-proof-search/Isa-Repl/audit/block6-threats-and-verdict.md](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/audit/block6-threats-and-verdict.md)
+  [lemma-staticize/isa-repl/audit/block2-scripts.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block2-scripts.md)  
+  [lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md)
 
 原方法大致是这样实现的：
 
@@ -67,9 +67,9 @@
 
 原分类器见：
 
-- [tools/seL4-proof-search/Isa-Repl/classify_db_candidates.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/classify_db_candidates.py)
+- [lemma-staticize/isa-repl/classify_db_candidates.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/classify_db_candidates.py)
 - 输出：  
-  [tools/seL4-proof-search/Isa-Repl/runs/db_candidates_classified.json](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/runs/db_candidates_classified.json)
+  [lemma-staticize/isa-repl/runs/db_candidates_classified.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates_classified.json)
 
 它基本按 proof 命令文本归桶：
 
@@ -139,9 +139,9 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 
 新分类器见：
 
-- [tools/seL4-proof-search/Isa-Repl/classify_db_candidates_v2.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/classify_db_candidates_v2.py)
+- [lemma-staticize/isa-repl/classify_db_candidates_v2.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/classify_db_candidates_v2.py)
 - 输出：  
-  [tools/seL4-proof-search/Isa-Repl/runs/db_candidates_classified_v2.json](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/runs/db_candidates_classified_v2.json)
+  [lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json)
 
 `v2` 的核心原则是：
 
@@ -209,10 +209,10 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 
 相关工具在：
 
-- [tools/seL4-proof-search/Isa-Repl/profiler/time_profile.snippet.thy](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/time_profile.snippet.thy)
-- [tools/seL4-proof-search/Isa-Repl/profiler/parse_profile.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/parse_profile.py)
-- [tools/seL4-proof-search/Isa-Repl/profiler/profile_lemma.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/profile_lemma.py)
-- [tools/seL4-proof-search/Isa-Repl/profiler/run_profile.sh](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/run_profile.sh)
+- [lemma-staticize/isa-repl/profiler/time_profile.snippet.thy](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/time_profile.snippet.thy)
+- [lemma-staticize/isa-repl/profiler/parse_profile.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/parse_profile.py)
+- [lemma-staticize/isa-repl/profiler/profile_lemma.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/profile_lemma.py)
+- [lemma-staticize/isa-repl/profiler/run_profile.sh](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/run_profile.sh)
 
 思路是：
 
@@ -357,7 +357,7 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 
 相关工具：
 
-- [tools/seL4-proof-search/Isa-Repl/profiler/db_cpu_vs_elapsed.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/db_cpu_vs_elapsed.py)
+- [lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py)
 
 我们进一步比对了：
 
@@ -430,7 +430,7 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 
 使用工具：
 
-- [tools/seL4-proof-search/Isa-Repl/profiler/quantify_setup.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/quantify_setup.py)
+- [lemma-staticize/isa-repl/profiler/quantify_setup.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/quantify_setup.py)
 
 输入是全部 session build DB 里的 timed commands。  
 输出是按命令类别和关键字的 elapsed 汇总。
@@ -723,28 +723,28 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 
 ### 12.1 原路线与审计
 
-- [tools/seL4-proof-search/Isa-Repl/audit/README.md](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/audit/README.md)
-- [tools/seL4-proof-search/Isa-Repl/audit/block2-scripts.md](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/audit/block2-scripts.md)
-- [tools/seL4-proof-search/Isa-Repl/audit/block4-loop-design.md](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/audit/block4-loop-design.md)
-- [tools/seL4-proof-search/Isa-Repl/audit/block6-threats-and-verdict.md](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/audit/block6-threats-and-verdict.md)
+- [lemma-staticize/isa-repl/audit/README.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/README.md)
+- [lemma-staticize/isa-repl/audit/block2-scripts.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block2-scripts.md)
+- [lemma-staticize/isa-repl/audit/block4-loop-design.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block4-loop-design.md)
+- [lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md)
 
 ### 12.2 分类器与候选集
 
-- [tools/seL4-proof-search/Isa-Repl/scan_db_timings.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/scan_db_timings.py)
-- [tools/seL4-proof-search/Isa-Repl/classify_db_candidates.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/classify_db_candidates.py)
-- [tools/seL4-proof-search/Isa-Repl/classify_db_candidates_v2.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/classify_db_candidates_v2.py)
-- [tools/seL4-proof-search/Isa-Repl/runs/db_candidates.json](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/runs/db_candidates.json)
-- [tools/seL4-proof-search/Isa-Repl/runs/db_candidates_classified.json](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/runs/db_candidates_classified.json)
-- [tools/seL4-proof-search/Isa-Repl/runs/db_candidates_classified_v2.json](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/runs/db_candidates_classified_v2.json)
+- [lemma-staticize/isa-repl/scan_db_timings.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/scan_db_timings.py)
+- [lemma-staticize/isa-repl/classify_db_candidates.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/classify_db_candidates.py)
+- [lemma-staticize/isa-repl/classify_db_candidates_v2.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/classify_db_candidates_v2.py)
+- [lemma-staticize/isa-repl/runs/db_candidates.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates.json)
+- [lemma-staticize/isa-repl/runs/db_candidates_classified.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates_classified.json)
+- [lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json)
 
 ### 12.3 profiler 工具链
 
-- [tools/seL4-proof-search/Isa-Repl/profiler/time_profile.snippet.thy](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/time_profile.snippet.thy)
-- [tools/seL4-proof-search/Isa-Repl/profiler/parse_profile.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/parse_profile.py)
-- [tools/seL4-proof-search/Isa-Repl/profiler/profile_lemma.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/profile_lemma.py)
-- [tools/seL4-proof-search/Isa-Repl/profiler/run_profile.sh](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/run_profile.sh)
-- [tools/seL4-proof-search/Isa-Repl/profiler/db_cpu_vs_elapsed.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/db_cpu_vs_elapsed.py)
-- [tools/seL4-proof-search/Isa-Repl/profiler/quantify_setup.py](/home/lijun/seL4-docker-main/tools/seL4-proof-search/Isa-Repl/profiler/quantify_setup.py)
+- [lemma-staticize/isa-repl/profiler/time_profile.snippet.thy](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/time_profile.snippet.thy)
+- [lemma-staticize/isa-repl/profiler/parse_profile.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/parse_profile.py)
+- [lemma-staticize/isa-repl/profiler/profile_lemma.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/profile_lemma.py)
+- [lemma-staticize/isa-repl/profiler/run_profile.sh](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/run_profile.sh)
+- [lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py)
+- [lemma-staticize/isa-repl/profiler/quantify_setup.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/quantify_setup.py)
 
 ### 12.4 关键证据目录
 

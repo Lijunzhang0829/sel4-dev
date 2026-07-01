@@ -776,14 +776,14 @@ index 0000000..3f3e074
 +If it doesn't appear at all, premise is likely-removable.
 +
 +**Future enhancement** (verified feasible — Exp 4b, 2026-05-31):
-+connect to Isa-REPL via `tools/seL4-proof-search/Isa-Repl/`, init the
++connect to Isa-REPL via `lemma-staticize/isa-repl/`, init the
 +target `.thy` file, step through the existing proof, and capture the
 +subgoal at each step. If `valid_objs` appears in no subgoal of any
 +step, it's strongly removable. The `_compile(snippet)` API hit
 +"context too complex" for AInvs — production integration needs
 +`_step()` over the existing theory, not isolated `_compile` of a
 +fragment. Effort estimate: ~200 lines wrapping
-+`tools/seL4-proof-search/Isa-Repl/run.sh` + py4j client.
++`lemma-staticize/isa-repl/run.sh` + py4j client.
 +
 +This step is **optional today, mandatory once the REPL wrapper
 +lands**.

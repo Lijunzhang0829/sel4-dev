@@ -7,8 +7,8 @@ Loading theory "Draft.prof_validate"
            4 TOTAL
 ### theory "Draft.prof_validate"
 ### 0.482s elapsed time, 0.542s cpu time, 0.118s GC time
-*** Failed to finish proof (line 18 of "/workspace/tools/seL4-proof-search/Isa-Repl/profiler/prof_validate.thy"):
+*** Failed to finish proof (line 18 of "/workspace/lemma-staticize/isa-repl/profiler/prof_validate.thy"):
 *** goal (1 subgoal):
 ***  1. \<Sum> {0..<700} = 244650
-*** At command "by" (line 18 of "/workspace/tools/seL4-proof-search/Isa-Repl/profiler/prof_validate.thy")
+*** At command "by" (line 18 of "/workspace/lemma-staticize/isa-repl/profiler/prof_validate.thy")
 Exception- TOPLEVEL_ERROR raised

@@ -18,7 +18,7 @@ was concurrent.
   /sel4-project/verification/l4v`); confirmed live in the running container; exec'd
   processes inherit it. The agents (`ab_agent`/`react_agent`/`poc_repl_server`)
   already default to `/sel4-project` via `L4V_DIR`.
-- **(b) sweep**: rewrote **33 scripts** under `tools/seL4-proof-search/Isa-Repl/**`
+- **(b) sweep**: rewrote **33 scripts** under `lemma-staticize/isa-repl/**`
   (+ `profiler/**`) that hardcoded `/workspace/verification/l4v` → now read
   `os.environ.get("L4V_DIR", "/sel4-project/verification/l4v")` (literal swap for the
   few non-os files / inline full paths). `isarepl_client.py` default also moved to

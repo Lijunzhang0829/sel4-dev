@@ -11,7 +11,7 @@ Each (method-variant x goal) is its OWN theory & process run; raw saved.
 """
 import subprocess, os
 
-PROF = "/workspace/tools/seL4-proof-search/Isa-Repl/profiler"
+PROF = "/workspace/lemma-staticize/isa-repl/profiler"
 ISA = "/workspace/verification/isabelle/bin/isabelle"
 
 TP_OLD = r'''method_setup tp_old = \<open>
