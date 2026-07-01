@@ -20,14 +20,14 @@
 与这条路线直接相关的原始材料包括：
 
 - 原 loop 设计与审计：  
-  [lemma-staticize/isa-repl/audit/README.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/README.md)  
-  [lemma-staticize/isa-repl/audit/block4-loop-design.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block4-loop-design.md)
+  [lemma-staticize/isa-repl/audit/README.md](../../../lemma-staticize/isa-repl/audit/README.md)  
+  [lemma-staticize/isa-repl/audit/block4-loop-design.md](../../../lemma-staticize/isa-repl/audit/block4-loop-design.md)
 - 原候选集与筛选脚本：  
-  [lemma-staticize/isa-repl/runs/db_candidates.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates.json)  
-  [lemma-staticize/isa-repl/scan_db_timings.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/scan_db_timings.py)
+  [lemma-staticize/isa-repl/runs/db_candidates.json](../../../lemma-staticize/isa-repl/runs/db_candidates.json)  
+  [lemma-staticize/isa-repl/scan_db_timings.py](../../../lemma-staticize/isa-repl/scan_db_timings.py)
 - 原实验和负结论上下文：  
-  [lemma-staticize/isa-repl/audit/block2-scripts.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block2-scripts.md)  
-  [lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md)
+  [lemma-staticize/isa-repl/audit/block2-scripts.md](../../../lemma-staticize/isa-repl/audit/block2-scripts.md)  
+  [lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md](../../../lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md)
 
 原方法大致是这样实现的：
 
@@ -67,9 +67,9 @@
 
 原分类器见：
 
-- [lemma-staticize/isa-repl/classify_db_candidates.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/classify_db_candidates.py)
+- [lemma-staticize/isa-repl/classify_db_candidates.py](../../../lemma-staticize/isa-repl/classify_db_candidates.py)
 - 输出：  
-  [lemma-staticize/isa-repl/runs/db_candidates_classified.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates_classified.json)
+  [lemma-staticize/isa-repl/runs/db_candidates_classified.json](../../../lemma-staticize/isa-repl/runs/db_candidates_classified.json)
 
 它基本按 proof 命令文本归桶：
 
@@ -139,9 +139,9 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 
 新分类器见：
 
-- [lemma-staticize/isa-repl/classify_db_candidates_v2.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/classify_db_candidates_v2.py)
+- [lemma-staticize/isa-repl/classify_db_candidates_v2.py](../../../lemma-staticize/isa-repl/classify_db_candidates_v2.py)
 - 输出：  
-  [lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json)
+  [lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json](../../../lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json)
 
 `v2` 的核心原则是：
 
@@ -209,10 +209,10 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 
 相关工具在：
 
-- [lemma-staticize/isa-repl/profiler/time_profile.snippet.thy](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/time_profile.snippet.thy)
-- [lemma-staticize/isa-repl/profiler/parse_profile.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/parse_profile.py)
-- [lemma-staticize/isa-repl/profiler/profile_lemma.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/profile_lemma.py)
-- [lemma-staticize/isa-repl/profiler/run_profile.sh](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/run_profile.sh)
+- [lemma-staticize/isa-repl/profiler/time_profile.snippet.thy](../../../lemma-staticize/isa-repl/profiler/time_profile.snippet.thy)
+- [lemma-staticize/isa-repl/profiler/parse_profile.py](../../../lemma-staticize/isa-repl/profiler/parse_profile.py)
+- [lemma-staticize/isa-repl/profiler/profile_lemma.py](../../../lemma-staticize/isa-repl/profiler/profile_lemma.py)
+- [lemma-staticize/isa-repl/profiler/run_profile.sh](../../../lemma-staticize/isa-repl/profiler/run_profile.sh)
 
 思路是：
 
@@ -357,7 +357,7 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 
 相关工具：
 
-- [lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py)
+- [lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py](../../../lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py)
 
 我们进一步比对了：
 
@@ -430,7 +430,7 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 
 使用工具：
 
-- [lemma-staticize/isa-repl/profiler/quantify_setup.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/quantify_setup.py)
+- [lemma-staticize/isa-repl/profiler/quantify_setup.py](../../../lemma-staticize/isa-repl/profiler/quantify_setup.py)
 
 输入是全部 session build DB 里的 timed commands。  
 输出是按命令类别和关键字的 elapsed 汇总。
@@ -563,7 +563,7 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 ### 9.1 正例一：`VSpacePre_AI.thy:162`，`arch_update_cap_valid_mdb`
 
 当前源码位置：  
-[verification/l4v/proof/invariant-abstract/VSpacePre_AI.thy](/home/lijun/seL4-docker-main/verification/l4v/proof/invariant-abstract/VSpacePre_AI.thy:162)
+[verification/l4v/proof/invariant-abstract/VSpacePre_AI.thy](../../../verification/l4v/proof/invariant-abstract/VSpacePre_AI.thy:162)
 
 改写如下：
 
@@ -595,7 +595,7 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 ### 9.2 正例二：`Decode_IF.thy:137`，`OR_choice_def2`
 
 当前源码位置：  
-[verification/l4v/proof/infoflow/Decode_IF.thy](/home/lijun/seL4-docker-main/verification/l4v/proof/infoflow/Decode_IF.thy:137)
+[verification/l4v/proof/infoflow/Decode_IF.thy](../../../verification/l4v/proof/infoflow/Decode_IF.thy:137)
 
 改写如下：
 
@@ -723,28 +723,28 @@ by (simp | erule disjE | clarsimp simp: … | fastforce simp: …)+
 
 ### 12.1 原路线与审计
 
-- [lemma-staticize/isa-repl/audit/README.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/README.md)
-- [lemma-staticize/isa-repl/audit/block2-scripts.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block2-scripts.md)
-- [lemma-staticize/isa-repl/audit/block4-loop-design.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block4-loop-design.md)
-- [lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md)
+- [lemma-staticize/isa-repl/audit/README.md](../../../lemma-staticize/isa-repl/audit/README.md)
+- [lemma-staticize/isa-repl/audit/block2-scripts.md](../../../lemma-staticize/isa-repl/audit/block2-scripts.md)
+- [lemma-staticize/isa-repl/audit/block4-loop-design.md](../../../lemma-staticize/isa-repl/audit/block4-loop-design.md)
+- [lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md](../../../lemma-staticize/isa-repl/audit/block6-threats-and-verdict.md)
 
 ### 12.2 分类器与候选集
 
-- [lemma-staticize/isa-repl/scan_db_timings.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/scan_db_timings.py)
-- [lemma-staticize/isa-repl/classify_db_candidates.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/classify_db_candidates.py)
-- [lemma-staticize/isa-repl/classify_db_candidates_v2.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/classify_db_candidates_v2.py)
-- [lemma-staticize/isa-repl/runs/db_candidates.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates.json)
-- [lemma-staticize/isa-repl/runs/db_candidates_classified.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates_classified.json)
-- [lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json)
+- [lemma-staticize/isa-repl/scan_db_timings.py](../../../lemma-staticize/isa-repl/scan_db_timings.py)
+- [lemma-staticize/isa-repl/classify_db_candidates.py](../../../lemma-staticize/isa-repl/classify_db_candidates.py)
+- [lemma-staticize/isa-repl/classify_db_candidates_v2.py](../../../lemma-staticize/isa-repl/classify_db_candidates_v2.py)
+- [lemma-staticize/isa-repl/runs/db_candidates.json](../../../lemma-staticize/isa-repl/runs/db_candidates.json)
+- [lemma-staticize/isa-repl/runs/db_candidates_classified.json](../../../lemma-staticize/isa-repl/runs/db_candidates_classified.json)
+- [lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json](../../../lemma-staticize/isa-repl/runs/db_candidates_classified_v2.json)
 
 ### 12.3 profiler 工具链
 
-- [lemma-staticize/isa-repl/profiler/time_profile.snippet.thy](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/time_profile.snippet.thy)
-- [lemma-staticize/isa-repl/profiler/parse_profile.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/parse_profile.py)
-- [lemma-staticize/isa-repl/profiler/profile_lemma.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/profile_lemma.py)
-- [lemma-staticize/isa-repl/profiler/run_profile.sh](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/run_profile.sh)
-- [lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py)
-- [lemma-staticize/isa-repl/profiler/quantify_setup.py](/home/lijun/seL4-docker-main/lemma-staticize/isa-repl/profiler/quantify_setup.py)
+- [lemma-staticize/isa-repl/profiler/time_profile.snippet.thy](../../../lemma-staticize/isa-repl/profiler/time_profile.snippet.thy)
+- [lemma-staticize/isa-repl/profiler/parse_profile.py](../../../lemma-staticize/isa-repl/profiler/parse_profile.py)
+- [lemma-staticize/isa-repl/profiler/profile_lemma.py](../../../lemma-staticize/isa-repl/profiler/profile_lemma.py)
+- [lemma-staticize/isa-repl/profiler/run_profile.sh](../../../lemma-staticize/isa-repl/profiler/run_profile.sh)
+- [lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py](../../../lemma-staticize/isa-repl/profiler/db_cpu_vs_elapsed.py)
+- [lemma-staticize/isa-repl/profiler/quantify_setup.py](../../../lemma-staticize/isa-repl/profiler/quantify_setup.py)
 
 ### 12.4 关键证据目录
 
