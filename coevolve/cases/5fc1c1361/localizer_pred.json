@@ -1,0 +1,197 @@
+{
+ "work_list": [
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchInvariants_AI.thy",
+   "lemmas": [
+    {
+     "name": "is_page_aligned_physBase",
+     "statement_must_evolve": false,
+     "reason": "Shadow lemma body must change from inline simp to 'by (rule is_page_aligned_physBase[folded pageBits_def])' \u2014 cannot compile until machine-layer lemma exists"
+    },
+    {
+     "name": "kernel_window_sufficient",
+     "statement_must_evolve": false,
+     "reason": "Shadow lemma body must change to 'by (rule kernel_window_sufficient[folded kernel_window_bits_def])' \u2014 statement already uses abstract names (pptrBase, kernelELFBase), body was inline simp before"
+    },
+    {
+     "name": "kernel_elf_window_at_least_page",
+     "statement_must_evolve": false,
+     "reason": "Shadow lemma body must change to forwarding rule call with [folded pageBits_def]"
+    },
+    {
+     "name": "kernelELFBase_no_overflow",
+     "statement_must_evolve": false,
+     "reason": "Shadow lemma body must change to 'by (rule kernelELFBase_no_overflow[folded pageBits_def])'"
+    },
+    {
+     "name": "pptr_base_kernel_elf_base",
+     "statement_must_evolve": false,
+     "reason": "Body must reference new pptrBase_kernelELFBase; statement 'pptr_base < kernel_elf_base' is unchanged but previous inline proof expanded pptrBase_def/kernelELFBase_def manually"
+    }
+   ],
+   "file_reason": "Primary target of this change: holds the 'shadow lemma' block explicitly documented as delegating to Arch_Kernel_Config_Lemmas; references pptrBase_kernelELFBase by name which did not exist before this diff"
+  }
+ ],
+ "cleared": [
+  {
+   "file": "proof/crefine/RISCV64/Arch_C.thy",
+   "why": "pptrBase and is_aligned appear only in inline tactic arguments (pptrBase_def, is_aligned_def unfolding); no dependency on new named machine-layer lemmas"
+  },
+  {
+   "file": "proof/crefine/RISCV64/VSpace_C.thy",
+   "why": "pptrBase and kernelELFBase used via raw definition unfolding in tactics; no reference to new lemma names"
+  },
+  {
+   "file": "proof/access-control/Arch_AC.thy",
+   "why": "is_aligned-only mention; is_aligned definition unchanged, no dependency on new lemmas"
+  },
+  {
+   "file": "proof/access-control/Ipc_AC.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchArch_AC.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchIpc_AC.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchRetype_AC.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/access-control/Retype_AC.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/Move_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/ADT_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/ArchMove_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/CSpace_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/CSpace_RAB_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/DetWP.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/Detype_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/Finalise_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/Invoke_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/Ipc_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/Recycle_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/Retype_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/SR_lemmas_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/StateRelation_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/StoreWord_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/SyscallArgs_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/Syscall_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/TcbAcc_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/TcbQueue_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/Tcb_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/RISCV64/Wellformed_C.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/drefine/Arch_DR.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/drefine/CNode_DR.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/drefine/Finalise_DR.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/drefine/Intent_DR.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/drefine/Ipc_DR.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/drefine/Tcb_DR.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/drefine/Untyped_DR.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/infoflow/Ipc_IF.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/infoflow/RISCV64/ArchArch_IF.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/infoflow/RISCV64/ArchFinalise_IF.thy",
+   "why": "is_aligned-only; definition unchanged"
+  },
+  {
+   "file": "proof/infoflow/RISCV64/ArchIpc_IF.thy",
+   "why": "is_aligned-only; definition unchanged"
+  }
+ ]
+}

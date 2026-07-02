@@ -1,0 +1,139 @@
+{
+ "identifiers": [
+  "the_arch_cap"
+ ],
+ "candidates": [
+  {
+   "file": "proof/access-control/ARM/ArchArch_AC.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/infoflow/ARM/ArchFinalCaps.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/infoflow/RISCV64/ArchFinalCaps.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchADT_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchCNodeInv_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchCSpaceInvPre_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchTcb_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/ARM/ArchADT_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/ARM/ArchCNodeInv_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/ARM/ArchTcb_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/ArchADT_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/ArchCNodeInv_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/ArchTcb_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/CSpace_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchADT_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchCNodeInv_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchTcb_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/X64/ArchADT_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/X64/ArchCNodeInv_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/X64/ArchTcb_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/X64/ArchVSpace_AI.thy",
+   "mentions": [
+    "the_arch_cap"
+   ]
+  }
+ ]
+}

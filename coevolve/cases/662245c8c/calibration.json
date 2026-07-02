@@ -1,0 +1,32 @@
+{
+ "file_precision": 0.0,
+ "file_recall": 0.0,
+ "n_gt_files": 1,
+ "n_pred_files": 4,
+ "n_tp_files": 0,
+ "gt_files": [
+  "proof/crefine/RISCV64/VSpace_C.thy"
+ ],
+ "pred_files": [
+  "proof/invariant-abstract/RISCV64/ArchInvariants_AI.thy",
+  "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+  "spec/design/RISCV64/Hardware_H.thy",
+  "spec/machine/RISCV64/Arch_Kernel_Config_Lemmas.thy"
+ ],
+ "lemma_recall_modified": null,
+ "n_matchable": 0,
+ "n_lem_hits": 0,
+ "n_gt_added": 0,
+ "evolve_flag_accuracy": null,
+ "n_evo_ok": 0,
+ "n_evo_total": 0,
+ "lemma_rows": [
+  {
+   "file": "proof/crefine/RISCV64/VSpace_C.thy",
+   "lemma": "addrFromKPPtr_spec",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  }
+ ]
+}

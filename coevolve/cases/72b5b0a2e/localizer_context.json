@@ -1,0 +1,98 @@
+{
+ "identifiers": [
+  "defs",
+  "makeVCPUObject"
+ ],
+ "candidates": [
+  {
+   "file": "proof/bisim/document/root.tex",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/crefine/AARCH64/StateRelation_C.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/infoflow/figs/example-auth-graph2.svg",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/infoflow/refine/ADT_IF_Refine.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInterrupt_AI.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/ArchAcc_R.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/CSpace_R.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Detype_R.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Init_R.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Invariants_H.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/IpcCancel_R.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Refine.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Tcb_R.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Untyped_R.thy",
+   "mentions": [
+    "defs"
+   ]
+  },
+  {
+   "file": "proof/crefine/AARCH64/Retype_C.thy",
+   "mentions": [
+    "makeVCPUObject"
+   ]
+  }
+ ]
+}

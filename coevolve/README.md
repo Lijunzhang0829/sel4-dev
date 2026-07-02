@@ -23,18 +23,25 @@ python3 scripts/localize_agent.py --l4v verification/l4v --case cases/<hash> --m
 python3 scripts/calibrate.py cases/<hash>
 ```
 
-## Calibration state (2026-07-01, model=sonnet, 4 rounds on df5e1611 + 0e8048b49)
+## Calibration state (2026-07-01, model=sonnet)
 
-| Seed | fileP | fileR | lemR | evoAcc |
-|---|---|---|---|---|
-| df5e1611 (clearMemory match-C) | 0.50 | **1.00** | **1.00** | 0.0 |
-| 0e8048b49 (user_vtop ≥→>) | 0.50 | **1.00** | 0.0* | – |
+**Full 15-seed sweep (MICRO-AVG): fileP=0.22 fileR=0.38 lemR=0.58 evoAcc=0.57**
+(n=14 scored, 1 JSON-parse skip). Per-case table in cases/*/calibration.json.
 
-\* GT lemmas here are human-ADDED helpers — name-matching additions is
-unfair; calibrate.py should split added vs modified (open item).
+Honest read: the 2-seed-tuned prompt did NOT generalize.
+- 6 seeds: EMPTY prediction (agent judges "proof survives" on constant-
+  abstraction changes like physBase/pptrBase; human edited anyway).
+- 1 seed: 22-file over-prediction (every mention of the_arch_cap; human: 1).
+- 2 seeds died on identifier-extraction noise (type_synonym/defs captured as
+  names) — deterministic bug, FIXED in localize_agent.py (keyword regex +
+  stoplist), not yet re-swept.
+- Where extraction was clean + candidates small: 71f5a8658 and 18b0cef0c
+  scored 1.00 across the board; df5e1611/0e8048b49/c4390d8e7 fileR=1.00.
 
-**File-level localization works** (recall 1.0 both). Precision 0.5 =
-maintainer-plausible extra files. evoAcc is the open front.
+Conclusion: the agent oscillates between under- (survives) and over-
+(every-mention) prediction; further prompt tuning would overfit the library.
+**Next lever = the build oracle (mode=build): reconstruct the broken tree,
+let check-theory adjudicate which breaks are real.**
 
 ## Failure→fix taxonomy (each calibration failure became a deterministic fix)
 

@@ -28,7 +28,9 @@ def git(repo, *args, ok_fail=False):
 
 HUNK_CTX_RE = re.compile(
     r"^@@[^@]*@@\s+(?:(?:definition|abbreviation|fun|primrec|function|"
-    r"lemma|theorem)\s+(?:\(\s*input\s*\)\s+)?)?\"?([A-Za-z_][A-Za-z0-9_']*)")
+    r"lemma|theorem|type_synonym|datatype|record|consts|crunch(?:es)?|"
+    r"instantiation|overloading)\s+(?:\(\s*input\s*\)\s+)?)?"
+    r"\"?([A-Za-z_][A-Za-z0-9_']*)")
 
 
 def changed_identifiers(diff_text):
@@ -38,7 +40,13 @@ def changed_identifiers(diff_text):
 
     STOP = {"where", "and", "shows", "assumes", "fixes", "lemmas", "lemma",
             "definition", "abbreviation", "text", "section", "subsection",
-            "end", "context", "locale", "theory", "imports", "begin"}
+            "end", "context", "locale", "theory", "imports", "begin",
+            # keywords the ctx-regex may still capture + generic tokens that
+            # poison grep (measured on the 15-seed sweep)
+            "type_synonym", "datatype", "record", "consts", "crunch",
+            "crunches", "instantiation", "overloading", "defs", "cap",
+            "frame", "if", "then", "else", "let", "in", "do", "od", "return",
+            "is_aligned", "word", "nat", "bool", "unit"}
 
     def add(name):
         if name and name not in STOP and name not in ids:

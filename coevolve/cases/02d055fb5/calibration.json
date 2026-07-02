@@ -1,0 +1,121 @@
+{
+ "file_precision": 0.0,
+ "file_recall": 0.0,
+ "n_gt_files": 4,
+ "n_pred_files": 0,
+ "n_tp_files": 0,
+ "gt_files": [
+  "proof/invariant-abstract/AARCH64/ArchAInvsPre.thy",
+  "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+  "proof/invariant-abstract/AARCH64/ArchFinalise_AI.thy",
+  "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy"
+ ],
+ "pred_files": [],
+ "lemma_recall_modified": null,
+ "n_matchable": 0,
+ "n_lem_hits": 0,
+ "n_gt_added": 6,
+ "evolve_flag_accuracy": null,
+ "n_evo_ok": 0,
+ "n_evo_total": 0,
+ "lemma_rows": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAInvsPre.thy",
+   "lemma": "is_aligned_pptrBaseOffset_pt_bits_left",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAInvsPre.thy",
+   "lemma": "is_aligned_ptrFromPAddr_n_eq",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+   "lemma": "kernel_regionsI",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+   "lemma": "kernel_regions_pptr_base",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+   "lemma": "level_type_less_max_pt_level",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+   "lemma": "ptTranslationBits_NormalPT_T_leq",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+   "lemma": "unique_vs_lookup_table",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+   "lemma": "user_region_canonical_pptr_base",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+   "lemma": "is_aligned_addrFromPPtr",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+   "lemma": "is_aligned_addrFromPPtr_n",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+   "lemma": "is_aligned_ptrFromPAddr",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+   "lemma": "is_aligned_ptrFromPAddr_n",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+   "lemma": "is_aligned_ptrFromPAddr_pt_bits",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+   "lemma": "vspace_for_asid_SomeI",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  }
+ ]
+}

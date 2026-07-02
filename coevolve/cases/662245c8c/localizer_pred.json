@@ -1,0 +1,88 @@
+{
+ "work_list": [
+  {
+   "file": "spec/machine/RISCV64/Arch_Kernel_Config_Lemmas.thy",
+   "lemmas": [
+    {
+     "name": "pptrBase_kernelELFBase",
+     "statement_must_evolve": false,
+     "reason": "Statement ('pptrBase < kernelELFBase') is unchanged but proof body must add pptrTop_def to the simp set since kernelELFBase_def now unfolds one step further via pptrTop"
+    },
+    {
+     "name": "kernel_window_sufficient",
+     "statement_must_evolve": false,
+     "reason": "Statement unchanged; proof body unfolds kernelELFBase_def and must add pptrTop_def to reach the concrete numeric value"
+    },
+    {
+     "name": "kernelELFBase_kdevBase",
+     "statement_must_evolve": false,
+     "reason": "Statement unchanged; proof body unfolding kernelELFBase_def needs pptrTop_def appended"
+    },
+    {
+     "name": "kernelELFBase_no_overflow",
+     "statement_must_evolve": false,
+     "reason": "Statement unchanged; numeric proof by unfolding kernelELFBase_def must also unfold pptrTop_def"
+    }
+   ],
+   "file_reason": "All four boundary lemmas unfold kernelELFBase_def to do arithmetic; after the change that unfold yields pptrTop + ... instead of - (1<<31) + ..., so pptrTop_def must be added to every proof that reaches the concrete numeric value"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchInvariants_AI.thy",
+   "lemmas": [
+    {
+     "name": "is_page_aligned_pptrTop",
+     "statement_must_evolve": false,
+     "reason": "Entirely new helper lemma (is_aligned pptrTop pageBits) introduced to factor out the alignment sub-goal that was previously implicit inside the kernelELFBase alignment proof"
+    },
+    {
+     "name": "is_page_aligned_kernel_elf_base",
+     "statement_must_evolve": false,
+     "reason": "Statement unchanged (is_aligned kernel_elf_base pageBits); proof body must unfold kernelELFBase_def and invoke is_page_aligned_pptrTop + is_aligned_add instead of the old direct numeric proof"
+    }
+   ],
+   "file_reason": "The alignment proof for kernel_elf_base can no longer reduce kernelELFBase to a literal in one unfold; it now needs the new pptrTop alignment helper and an is_aligned_add step"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemmas": [
+    {
+     "name": "merge_kernelELFPAddrBase_masks",
+     "statement_must_evolve": false,
+     "reason": "New helper lemma whose statement is expressed in terms of pptrTop (the new constant); needed to close the addrFromKPPtr calculation that previously relied on the inline literal"
+    },
+    {
+     "name": "is_aligned_ptrFromPAddr_kernelELFPAddrBase",
+     "statement_must_evolve": false,
+     "reason": "Statement unchanged; proof body gains pptrTop_def in the simp/ring arithmetic step because kernelELFBase_def now introduces pptrTop"
+    },
+    {
+     "name": "kernelELFPAddrBase_addrFromKPPtr",
+     "statement_must_evolve": false,
+     "reason": "Statement unchanged; proof body must unfold kernelELFBase_def then invoke merge_kernelELFPAddrBase_masks and pptrTop_def to close the arithmetic goal"
+    }
+   ],
+   "file_reason": "Multiple proof bodies that compute with kernelELFBase numerically now require pptrTop_def in their simp/unfold sets; the masking algebra lemma is newly introduced to handle the split arithmetic"
+  },
+  {
+   "file": "spec/design/RISCV64/Hardware_H.thy",
+   "lemmas": [
+    {
+     "name": "<crunch-or-setup>",
+     "statement_must_evolve": false,
+     "reason": "Generated file must be regenerated from the updated skel whose NOT-list now excludes pptrTop, ensuring pptrTop is not re-imported from Haskell (it is now defined in Platform.thy)"
+    }
+   ],
+   "file_reason": "This is the committed generated copy of the skel; the skel's NOT-list change must be propagated by running the generation step so pptrTop is absent from the produced theory"
+  }
+ ],
+ "cleared": [
+  {
+   "file": "proof/infoflow/RISCV64/Example_Valid_State.thy",
+   "why": "Only references kernelELFPAddrBase (unchanged definition) via simp hints for lemmas whose statements are invariant; no proof body unfolds kernelELFBase_def or relies on pptrTop"
+  },
+  {
+   "file": "proof/infoflow/refine/RISCV64/Example_Valid_StateH.thy",
+   "why": "The single reference is kernelELFPAddrBase used as a numeric value in a PagePTE term construction, not inside a proof obligation about the changed constants"
+  }
+ ]
+}

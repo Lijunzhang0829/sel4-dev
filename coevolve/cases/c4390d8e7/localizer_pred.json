@@ -1,0 +1,88 @@
+{
+ "work_list": [
+  {
+   "file": "proof/refine/AARCH64/VSpace_R.thy",
+   "lemmas": [
+    {
+     "name": "vcpuSave_corres",
+     "statement_must_evolve": false,
+     "reason": "Proof unfolds armvVCPUSave_def (line 523); old tactic had corres_split[OF vcpuSaveRegRange_corres] + corres_machine_op step for doMachineOp isb \u2014 after removal that split collapses to a direct vcpuSaveRegRange_corres application"
+    }
+   ],
+   "file_reason": "Only file with a step-explicit corres proof that unfolded armvVCPUSave_def and matched the now-deleted doMachineOp isb bind on both abstract and Haskell sides"
+  },
+  {
+   "file": "proof/crefine/AARCH64/VSpace_C.thy",
+   "lemmas": [
+    {
+     "name": "armv_vcpu_save_ccorres",
+     "statement_must_evolve": false,
+     "reason": "C armv_vcpu_save was co-updated to drop isb; old proof's (ctac add: isb_ccorres) step no longer has a matching C instruction to consume"
+    }
+   ],
+   "file_reason": "Direct ccorres proof for armvVCPUSave/armv_vcpu_save_'proc must lose its isb_ccorres ctac step when C code drops the isb call"
+  }
+ ],
+ "cleared": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchVCPU_AI.thy",
+   "why": "Only crunches and wpsimp with [wp]-tagged lemmas for vcpu_save; removing do_machine_op isb makes those goals strictly easier"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchVSpace_AI.thy",
+   "why": "vcpu_save_invs uses wpsimp + dmo_isb_invs[wp]; the [wp] lemma simply stops firing when there is no isb subgoal \u2014 no failure"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+   "why": "Mentions vcpu_save only in crunches; invariant preservation trivially easier without isb"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchDetSchedDomainTime_AI.thy",
+   "why": "Crunches only; unaffected"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchDetSchedSchedule_AI.thy",
+   "why": "Crunches only; unaffected"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchDeterministic_AI.thy",
+   "why": "Crunches only; unaffected"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchEmptyFail_AI.thy",
+   "why": "empty_fail for vcpu_save: removing a step only helps"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchFinalise_AI.thy",
+   "why": "High-level vcpu_save lemma statements unchanged; crunch goals easier"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchSchedule_AI.thy",
+   "why": "Crunches only; unaffected"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchVSpaceEntries_AI.thy",
+   "why": "Crunches only; unaffected"
+  },
+  {
+   "file": "proof/refine/AARCH64/CNodeInv_R.thy",
+   "why": "Mentions vcpuDisable whose definition is unchanged; no vcpu_save/armvVCPUSave proofs"
+  },
+  {
+   "file": "proof/refine/AARCH64/Finalise_R.thy",
+   "why": "vcpuDisable only; definition unchanged"
+  },
+  {
+   "file": "proof/refine/AARCH64/Schedule_R.thy",
+   "why": "vcpuDisable only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/AARCH64/IsolatedThreadAction.thy",
+   "why": "vcpuDisable only; definition unchanged"
+  },
+  {
+   "file": "proof/crefine/AARCH64/TcbAcc_C.thy",
+   "why": "vcpuDisable only; definition unchanged"
+  }
+ ]
+}

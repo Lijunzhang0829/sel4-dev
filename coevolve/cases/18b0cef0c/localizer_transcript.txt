@@ -1,0 +1,93 @@
+PROMPT (5921 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs b/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
+index 5696231d..d30d90e5 100644
+--- a/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
++++ b/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
+@@ -544,6 +544,10 @@ decodeARMFrameInvocationMap cte cap vptr rightsMask attr vspaceCap = do
+     let attributes = attribsFromWord attr
+     let frameSize = capFSize cap
+     let vmRights = maskVMRights (capFVMRights cap) $ rightsFromWord rightsMask
++    let basePtr = capFBasePtr cap
++    assert (fromVPtr pptrBase <= fromPPtr basePtr &&
++            fromPPtr basePtr < fromVPtr pptrTop)
++           "cap ptr must be in kernel window"
+     (vspace,asid) <- checkVSpaceRoot vspaceCap 1
+     vspaceCheck <- lookupErrorOnFailure False $ findVSpaceForASID asid
+     when (vspaceCheck /= vspace) $ throw $ InvalidCapability 1
+@@ -558,7 +562,7 @@ decodeARMFrameInvocationMap cte cap vptr rightsMask attr vspaceCap = do
+             when (vtop > pptrUserTop) $ throw $ InvalidArgument 0
+     (bitsLeft, slot) <- withoutFailure $ lookupPTSlot vspace vptr
+     unless (bitsLeft == pgBits) $ throw $ FailedLookup False $ MissingCapability bitsLeft
+-    let base = addrFromPPtr (capFBasePtr cap)
++    let base = addrFromPPtr basePtr
+     return $ InvokePage $ PageMap {
+         pageMapCap = cap { capFMappedAddress = Just (asid,vptr) },
+         pageMapCTSlot = cte,
+
+```
+
+## Identifiers whose definitions changed (mechanically extracted)
+["decodeARMFrameInvocationMap", "cap"]
+
+## Candidate proof files that mention these identifiers (grep at pre-change rev)
+- proof/refine/AARCH64/Arch_R.thy  (mentions: cap, decodeARMFrameInvocationMap)
+- proof/access-control/ARM/ArchADT_AC.thy  (mentions: cap)
+- proof/access-control/ARM/ArchAccess_
+
+=== RAW REPLY ===
+Now I have all the information I need. Let me analyze:
+
+**The diff** adds an `assert (pptrBase ≤ basePtr ∧ basePtr < pptrTop)` at the start of `decodeARMFrameInvocationMap` (before `checkVSpaceRoot`). The abstract spec's `decode_fr_inv_map` has **no** corresponding assert — it calls `check_vspace_root` directly.
+
+**Key observations:**
+
+1. `proof/refine/AARCH64/Arch_R.thy` is the only candidate file that mentions `decodeARMFrameInvocationMap` itself; all access-control/bisim/capDL files match only the generic `cap` identifier.
+
+2. `decodeARMFrameInvocation_corres` (line 594): the `corres` tactic at line 615 already lists `corres_assert_gen_asm` (to absorb Haskell-side asserts not present in the abstract), but the new `assert` inserts a new monadic step **before** `checkVSpaceRoot`. The existing tactic script's goal numbering shifts; a new discharge subgoal is needed, citing `valid_FrameCap_user_region_assert` (line 585) which already proves exactly `pptrBase ≤ p ∧ p < pptrTop` from `valid_cap`. The statement (precondition: `invs ∧ valid_cap …`) is already sufficient — no evolution needed.
+
+3. `decodeARMFrameInvocationMap_valid_arch_inv'[wp]` (line 1552): the proof unfolds the definition via `unfolding … decodeARMFrameInvocationMap_def` (line 1559). The new `assert` generates a new wp obligation (`pptrBase ≤ word ∧ word < pptrTop`) that the current `wpsimp` block doesn't discharge. The statement's precondition `invs' ∧ valid_cap' …` is already sufficient — body-only fix.
+
+4. Abstract spec (`ArchDecode_A.thy`): no assert present or needed — invariant-based design; no edit required.
+
+5. All access-control, bisim, capDL-api files: match `cap` as a generic pattern variable; they don't reason about `decodeARMFrameInvocationMap` internals; the change only adds a guard that is unreachable under invariants, leaving downstream call-site semantics unchanged.
+
+```json
+{
+  "work_list": [
+    {
+      "file": "proof/refine/AARCH64/Arch_R.thy",
+      "file_reason": "Only candidate file that directly unfolds decodeARMFrameInvocationMap; both the corres proof and the wp lemma must accommodate the new assert step inserted before checkVSpaceRoot.",
+      "lemmas": [
+        {
+          "name": "decodeARMFrameInvocation_corres",
+          "statement_must_evolve": false,
+          "reason": "Precondition already contains invs and valid_cap (ArchObjectCap (FrameCap p ...)); valid_FrameCap_user_region_assert discharges pptrBase<=p<pptrTop from these, so no new hypothesis is needed — but the tactic body must add a discharge step for the new assert via corres_assert_gen_asm before the checkVSpaceRoot corres step."
+        },
+        {
+          "name": "decodeARMFrameInvocationMap_valid_arch_inv'",
+          "statement_must_evolve": false,
+          "reason": "The unfolded definition now contains assert (pptrBase<=word && word<pptrTop) as a new wp obligation; current wpsimp block does not discharge it; body must add a simp/fastforce step using valid_cap'_def and the kernel-window bound, but the stated precondition invs' and valid_cap' is already sufficient."
+        }
+      ]
+    }
+  ],
+  "cleared": [
+    {"file": "proof/access-control/ARM/ArchADT_AC.thy", "why": "Matches only generic cap; no reference to decodeARMFrameInvocationMap or its kernel-window semantics."},
+    {"file": "proof/access-control/ARM/ArchArch_AC.thy", "why": "Same — cap only; AC proofs reason about policy, not decode-function internals."},
+    {"file": "proof/access-control/Access.thy", "why": "Generic cap match; downstream of a lemma whose statement is unchanged."},
+    {"file": "proof/bisim/Separation.thy", "why": "Generic cap match; bisim layer does not unfold arch decode functions."},
+    {"file": "proof/bisim/Syscall_S.thy", "why": "Generic cap match; only uses top-level invocation results, unchanged."},
+    {"file": "proof/capDL-api/Arch_DP.thy", "why": "capDL layer models object capabilities abstractly; decodeARMFrameInvocationMap not referenced."},
+    {"file": "proof/capDL-api/Invocation_DP.thy", "why": "Same capDL abstraction; no direct reference to the changed Haskell function."},
+    {"file": "proof/access-control/ARM/ArchAccess_AC.thy", "why": "Generic cap match only; no decode-path reasoning."},
+    {"file": "proof/access-control/ARM/ArchFinalise_AC.thy", "why": "Generic cap match; finalise path, not decode path."},
+    {"file": "proof/access-control/Syscall_AC.thy", "why": "Uses invocation results via top-level syscall interface; the new guard is unreachable under invariants so call-site semantics are unchanged."}
+  ]
+}
+```
+=== STDERR ===
+

@@ -1,0 +1,73 @@
+{
+ "identifiers": [
+  "type_synonym"
+ ],
+ "candidates": [
+  {
+   "file": "proof/access-control/Types.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  },
+  {
+   "file": "proof/capDL-api/Kernel_DP.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  },
+  {
+   "file": "proof/drefine/StateTranslation_D.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  },
+  {
+   "file": "proof/infoflow/ADT_IF.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/ADT_AI.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/KernelInitSep_AI.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  },
+  {
+   "file": "proof/sep-capDL/AbstractSeparation_SD.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  },
+  {
+   "file": "proof/sep-capDL/Lookups_D.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  },
+  {
+   "file": "proof/sep-capDL/Separation_SD.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  },
+  {
+   "file": "proof/sep-capDL/Types_SD.thy",
+   "mentions": [
+    "type_synonym"
+   ]
+  }
+ ]
+}

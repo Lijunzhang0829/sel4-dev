@@ -1,0 +1,79 @@
+{
+ "identifiers": [
+  "lookupPTSlotFromLevel"
+ ],
+ "candidates": [
+  {
+   "file": "proof/crefine/AARCH64/Arch_C.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/crefine/AARCH64/VSpace_C.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/Arch_C.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/VSpace_C.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/ArchAcc_R.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Bits_R.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/EmptyFail_H.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Invariants_H.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/refine/RISCV64/ArchAcc_R.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/refine/RISCV64/Bits_R.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/refine/RISCV64/EmptyFail_H.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  },
+  {
+   "file": "proof/refine/RISCV64/Invariants_H.thy",
+   "mentions": [
+    "lookupPTSlotFromLevel"
+   ]
+  }
+ ]
+}

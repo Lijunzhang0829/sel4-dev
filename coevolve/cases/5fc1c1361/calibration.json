@@ -1,0 +1,128 @@
+{
+ "file_precision": 1.0,
+ "file_recall": 0.5,
+ "n_gt_files": 2,
+ "n_pred_files": 1,
+ "n_tp_files": 1,
+ "gt_files": [
+  "proof/invariant-abstract/RISCV64/ArchInvariants_AI.thy",
+  "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy"
+ ],
+ "pred_files": [
+  "proof/invariant-abstract/RISCV64/ArchInvariants_AI.thy"
+ ],
+ "lemma_recall_modified": 0.5,
+ "n_matchable": 2,
+ "n_lem_hits": 1,
+ "n_gt_added": 24,
+ "evolve_flag_accuracy": 0.0,
+ "n_evo_ok": 0,
+ "n_evo_total": 1,
+ "lemma_rows": [
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchInvariants_AI.thy",
+   "lemma": "canonical_user_pptr_base",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchInvariants_AI.thy",
+   "lemma": "pptr_base_kernel_elf_base",
+   "gt_evolved": true,
+   "pred_evolve": false,
+   "status": "HIT"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "elf_window_1M",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "global_pt_kernel_window_init_arch_state",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "idle_thread_in_kernel_window_init_arch_state",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "irq_node_in_kernel_window_init_arch_state'",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "irq_node_pptr_base_kernel_elf_base",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "kernel_elf_window_init_st",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "kernel_mapping_slots_0x1FE",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "kernel_window_1G",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "kernel_window_init_st",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "pt_walk_init_A_st",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "table_index_riscv_global_pt_ptr",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "translate_address_kernel_elf_window",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy",
+   "lemma": "translate_address_kernel_window",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  }
+ ]
+}

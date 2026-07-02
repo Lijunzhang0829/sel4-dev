@@ -1,0 +1,250 @@
+{
+ "identifiers": [
+  "pptrBase",
+  "is_aligned",
+  "kernelELFBase"
+ ],
+ "candidates": [
+  {
+   "file": "proof/crefine/RISCV64/Arch_C.thy",
+   "mentions": [
+    "is_aligned",
+    "pptrBase"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/VSpace_C.thy",
+   "mentions": [
+    "pptrBase"
+   ]
+  },
+  {
+   "file": "proof/access-control/Arch_AC.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/access-control/Ipc_AC.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchArch_AC.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchIpc_AC.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchRetype_AC.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/access-control/Retype_AC.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/Move_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/ADT_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/ArchMove_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/CSpace_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/CSpace_RAB_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/DetWP.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/Detype_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/Finalise_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/Invoke_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/Ipc_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/Recycle_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/Retype_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/SR_lemmas_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/StateRelation_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/StoreWord_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/SyscallArgs_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/Syscall_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/TcbAcc_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/TcbQueue_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/Tcb_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/crefine/RISCV64/Wellformed_C.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/drefine/Arch_DR.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/drefine/CNode_DR.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/drefine/Finalise_DR.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/drefine/Intent_DR.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/drefine/Ipc_DR.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/drefine/Tcb_DR.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/drefine/Untyped_DR.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/infoflow/Ipc_IF.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/infoflow/RISCV64/ArchArch_IF.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/infoflow/RISCV64/ArchFinalise_IF.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  },
+  {
+   "file": "proof/infoflow/RISCV64/ArchIpc_IF.thy",
+   "mentions": [
+    "is_aligned"
+   ]
+  }
+ ]
+}

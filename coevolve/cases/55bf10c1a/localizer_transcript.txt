@@ -1,0 +1,43 @@
+PROMPT (2852 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/abstract/AARCH64/Arch_Structs_A.thy b/spec/abstract/AARCH64/Arch_Structs_A.thy
+index 8cf7e5ce..294c8738 100644
+--- a/spec/abstract/AARCH64/Arch_Structs_A.thy
++++ b/spec/abstract/AARCH64/Arch_Structs_A.thy
+@@ -88,6 +88,11 @@ text \<open>
+ value_type ppn_len = "ipa_size - pageBits"
+ type_synonym ppn = "ppn_len word"
+ 
++text \<open>This lemma encodes @{typ ppn_len} value above as a term, so we can use it generically:\<close>
++lemma ppn_len_def':
++  "ppn_len = ipa_size - pageBits"
++  by (simp add: ppn_len_def pageBits_def ipa_size_def Kernel_Config.config_ARM_PA_SIZE_BITS_40_def)
++
+ datatype pte =
+     InvalidPTE
+   | PagePTE
+
+```
+
+## Identifiers whose definitions changed (mechanically extracted)
+["ppn_len"]
+
+## Candidate proof files that mention these identifiers (grep at pre-change rev)
+(none found)
+
+## Your task
+Predict the work-list a seL4 PROOF MAINTAINER would carry out for this change — which proof files need edits, which lemma blocks, and for each lemma whether its STATEMENT must evolve versus a body-only re-proof.
+
+Rules:
+- **Maintainer-aligned, not merely compiler-forced.** If the spec's semantics shifted (e.g. a boundary guard), lemmas whose statements express the OLD semantics must be evolved to track the new one, EVEN IF the old proof might still compile. Predict what the maintainer changes, not only what fails.
+- **work_list contains ONLY files that need edits.** A file you examined and judged fine must NOT appear in work_list (mention it in a separate top-level key "cleared": [{"file":.., "why":..}]).
+- **Breakage stops at unchanged lemma statements.** A downstream file needs no edit if it only uses lemmas whose statements survive.
+- STAY WITHIN the candidate list unless you have strong structural evidence (crunch/lo
+
+=== RAW REPLY ===
+{"work_list": [], "cleared": [{"file": "spec/abstract/AARCH64/Arch_Structs_A.thy", "why": "The diff is purely additive: a new lemma ppn_len_def' is inserted, no existing definition or lemma statement is altered. The lemma body closes immediately via simp from already-proven constants."}], "analysis": "The grep found zero candidate files referencing ppn_len. The diff touches no existing datatype, definition, or lemma — it only adds ppn_len_def' as a derived convenience lemma. Because (1) no definition changed semantics, (2) no existing lemma statement was touched, and (3) no downstream file references ppn_len, the transitive proof impact is empty. No proof file requires any edit."}
+=== STDERR ===
+

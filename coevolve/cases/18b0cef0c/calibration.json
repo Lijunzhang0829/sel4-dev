@@ -1,0 +1,29 @@
+{
+ "file_precision": 1.0,
+ "file_recall": 1.0,
+ "n_gt_files": 1,
+ "n_pred_files": 1,
+ "n_tp_files": 1,
+ "gt_files": [
+  "proof/refine/AARCH64/Arch_R.thy"
+ ],
+ "pred_files": [
+  "proof/refine/AARCH64/Arch_R.thy"
+ ],
+ "lemma_recall_modified": 1.0,
+ "n_matchable": 1,
+ "n_lem_hits": 1,
+ "n_gt_added": 1,
+ "evolve_flag_accuracy": 1.0,
+ "n_evo_ok": 1,
+ "n_evo_total": 1,
+ "lemma_rows": [
+  {
+   "file": "proof/refine/AARCH64/Arch_R.thy",
+   "lemma": "decodeARMFrameInvocation_corres",
+   "gt_evolved": false,
+   "pred_evolve": false,
+   "status": "HIT"
+  }
+ ]
+}

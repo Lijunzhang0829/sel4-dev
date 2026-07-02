@@ -1,0 +1,25 @@
+{
+ "work_list": [],
+ "cleared": [
+  {
+   "file": "proof/crefine/AARCH64/VSpace_C.thy",
+   "why": "Uses pptrBase_def and kernelELFBase_def as definition-unfolding simp rules (lines 313,321,330) \u2014 not the removed derived inequality; proofs discharge numerically."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchKernelInit_AI.thy",
+   "why": "Uses kernel_elf_base_def as a definitional simp rule (lines 103,247,314) and pptr_base_num numerically; does not cite pptrBase_kernelELFBase and has no derived pptr_base < kernel_elf_base lemma."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+   "why": "Contains no reference to pptrBase_kernelELFBase or kernel_elf_base; pptrBase uses are all alignment-based via pptrBaseOffset_def."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAInvsPre.thy",
+   "why": "Uses pptrBaseOffset_def / pptrBase_def for address arithmetic only; does not use the removed inequality."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchKernelInit_AI.thy (kernel window proofs)",
+   "why": "kernel_window_def proofs inline numeric values via kernel_elf_base_def[simp] \u2014 no reliance on pptrBase < kernelELFBase as a named fact."
+  }
+ ]
+}
