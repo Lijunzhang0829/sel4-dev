@@ -1,0 +1,26 @@
+diff --git a/spec/abstract/AARCH64/VCPUAcc_A.thy b/spec/abstract/AARCH64/VCPUAcc_A.thy
+index 9154bd95..a579885c 100644
+--- a/spec/abstract/AARCH64/VCPUAcc_A.thy
++++ b/spec/abstract/AARCH64/VCPUAcc_A.thy
+@@ -196,8 +196,7 @@ definition vcpu_save :: "(obj_ref \<times> bool) option \<Rightarrow> (unit,'z::
+             gicIndices;
+ 
+           \<comment> \<open>armvVCPUSave\<close>
+-          vcpu_save_reg_range vr VCPURegTTBR0 VCPURegSPSR_EL1;
+-          do_machine_op isb
++          vcpu_save_reg_range vr VCPURegTTBR0 VCPURegSPSR_EL1
+        od
+      | _ \<Rightarrow> fail"
+ 
+diff --git a/spec/haskell/src/SEL4/Object/VCPU/AARCH64.hs b/spec/haskell/src/SEL4/Object/VCPU/AARCH64.hs
+index ab35da8e..88f6b6aa 100644
+--- a/spec/haskell/src/SEL4/Object/VCPU/AARCH64.hs
++++ b/spec/haskell/src/SEL4/Object/VCPU/AARCH64.hs
+@@ -404,7 +404,6 @@ vcpuDisable vcpuPtrOpt = do
+ armvVCPUSave :: PPtr VCPU -> Bool -> Kernel ()
+ armvVCPUSave vcpuPtr active = do
+     vcpuSaveRegRange vcpuPtr VCPURegTTBR0 VCPURegSPSR_EL1
+-    doMachineOp isb
+ 
+ vcpuSave :: Maybe (PPtr VCPU, Bool) -> Kernel ()
+ vcpuSave (Just (vcpuPtr, active)) = do

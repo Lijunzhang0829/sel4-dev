@@ -1,0 +1,17 @@
+{
+ "commit": "6d7b5409638a4d0ff9dbb15ea04df22b2bd85fca",
+ "parent": "7514d9ee69a63ba31b654c66d311519cd5c5f164",
+ "date": "2023-03-29 11:05:26 +1100",
+ "subject": "aarch64 machine+ainvs: physBase abstraction",
+ "artifact_files": [
+  "spec/machine/AARCH64/Arch_Kernel_Config_Lemmas.thy"
+ ],
+ "proof_files": [
+  "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+  "proof/invariant-abstract/AARCH64/ArchKernelInit_AI.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "AInvs"
+ ]
+}

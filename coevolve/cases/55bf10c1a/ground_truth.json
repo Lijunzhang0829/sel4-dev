@@ -1,0 +1,41 @@
+{
+ "proof/invariant-abstract/AARCH64/ArchArch_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "neg_mask_user_region": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma neg_mask_user_region: \"p \\<in> user_region \\<Longrightarrow> p && ~~mask n \\<in> user_region\"",
+    "stmt_post": "lemma neg_mask_user_region: \"p \\<in> user_region \\<Longrightarrow> p && ~~mask n \\<in> user_region\""
+   },
+   "ptrFromPAddr_addr_from_ppn": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma ptrFromPAddr_addr_from_ppn: \"\\<lbrakk> is_aligned pt_ptr pageBits; pptr_base \\<le> pt_ptr; pt_ptr < pptrTop \\<rbrakk> \\<Longrightarrow> ptrFromPAddr (paddr_from_ppn (ppn_from_pptr pt_ptr)) = pt_ptr\"",
+    "stmt_post": "lemma ptrFromPAddr_addr_from_ppn: \"\\<lbrakk> is_aligned pt_ptr pageBits; pptr_base \\<le> pt_ptr; pt_ptr < pptrTop \\<rbrakk> \\<Longrightarrow> ptrFromPAddr (paddr_from_ppn (ppn_from_pptr pt_ptr)) = pt_ptr\""
+   },
+   "ucast_ucast_ppn": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   }
+  }
+ },
+ "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "ucast_ucast_ppn": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma ucast_ucast_ppn: \"ucast (ucast ptr::ppn) = ptr && mask ppn_len\" for ptr::obj_ref"
+   }
+  }
+ }
+}

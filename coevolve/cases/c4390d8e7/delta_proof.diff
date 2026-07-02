@@ -1,0 +1,43 @@
+diff --git a/proof/crefine/AARCH64/VSpace_C.thy b/proof/crefine/AARCH64/VSpace_C.thy
+index 170a37a5..e99f7dea 100644
+--- a/proof/crefine/AARCH64/VSpace_C.thy
++++ b/proof/crefine/AARCH64/VSpace_C.thy
+@@ -2468,18 +2468,12 @@ lemma save_virt_timer_ccorres:
+                    vcpureg_eq_use_types[where reg=VCPURegCNTKCTL_EL1, simplified, symmetric])
+   done
+ 
+-(* FIXME AARCH64 fix specs, no isb *)
+-lemma armvVCPUSave_def_FIXME:
+-  "armvVCPUSave vcpuptr act = vcpuSaveRegRange vcpuptr VCPURegTTBR0 VCPURegSPSR_EL1"
+-  sorry
+-
+ lemma armv_vcpu_save_ccorres:
+   "ccorres dc xfdc
+      (vcpu_at' vcpuptr)
+      (\<lbrace> \<acute>vcpu = vcpu_Ptr vcpuptr \<rbrace> \<inter> \<lbrace> \<acute>active = from_bool act \<rbrace>) hs
+      (armvVCPUSave vcpuptr act) (Call armv_vcpu_save_'proc)"
+-  (* FIXME AARCH64 *)
+-  apply (cinit' lift: vcpu_' active_') apply (simp add: armvVCPUSave_def_FIXME)
++  apply (cinit lift: vcpu_' active_')
+    apply (ctac (no_vcg) add: vcpu_save_reg_range_ccorres)
+   apply wpsimp
+   apply (clarsimp split: if_splits simp: seL4_VCPUReg_defs fromEnum_def enum_vcpureg)
+diff --git a/proof/refine/AARCH64/VSpace_R.thy b/proof/refine/AARCH64/VSpace_R.thy
+index 6dca8c33..e20c5d96 100644
+--- a/proof/refine/AARCH64/VSpace_R.thy
++++ b/proof/refine/AARCH64/VSpace_R.thy
+@@ -557,11 +557,9 @@ lemma vcpuSave_corres:
+                           apply (clarsimp, fold dc_def)
+                           apply (rule vgicUpdateLR_corres)
+                          apply wpsimp+
+-                    apply (rule corres_split[OF vcpuSaveRegRange_corres])
+-                      apply (rule corres_machine_op)
+-                      apply (rule corres_Id; wpsimp)
+-                     apply (wpsimp wp: mapM_x_wp_inv hoare_vcg_imp_lift'
+-                                 simp: if_apply_def2)+
++                    apply (rule vcpuSaveRegRange_corres)
++                    apply (wpsimp wp: mapM_x_wp_inv hoare_vcg_imp_lift'
++                                simp: if_apply_def2)+
+   done
+ 
+ lemma vcpuDisable_corres:

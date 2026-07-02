@@ -1,0 +1,19 @@
+{
+ "commit": "02d055fb5e96f7c7d0ca606256e31fc3337b73fa",
+ "parent": "de9fb23fb8cbc6097efacbfbdf11c4718c34493e",
+ "date": "2023-02-06 09:56:35 +1100",
+ "subject": "aarch64 aspec+ainvs: resolve FIXME move",
+ "artifact_files": [
+  "spec/abstract/AARCH64/ArchVSpaceAcc_A.thy"
+ ],
+ "proof_files": [
+  "proof/invariant-abstract/AARCH64/ArchAInvsPre.thy",
+  "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+  "proof/invariant-abstract/AARCH64/ArchFinalise_AI.thy",
+  "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "AInvs"
+ ]
+}

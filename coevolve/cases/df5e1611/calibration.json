@@ -1,0 +1,22 @@
+{
+ "file_precision": 0.5,
+ "file_recall": 1.0,
+ "gt_files": [
+  "proof/invariant-abstract/AARCH64/Machine_AI.thy"
+ ],
+ "pred_files": [
+  "proof/invariant-abstract/AARCH64/ArchRetype_AI.thy",
+  "proof/invariant-abstract/AARCH64/Machine_AI.thy"
+ ],
+ "lemma_recall_in_tp_files": 1.0,
+ "evolve_flag_accuracy": 0.0,
+ "lemma_rows": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/Machine_AI.thy",
+   "lemma": "no_fail_clearMemory",
+   "gt_evolved": true,
+   "pred_evolve": false,
+   "status": "HIT"
+  }
+ ]
+}

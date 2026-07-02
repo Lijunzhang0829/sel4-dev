@@ -1,0 +1,33 @@
+diff --git a/spec/design/skel/AARCH64/ArchVSpace_H.thy b/spec/design/skel/AARCH64/ArchVSpace_H.thy
+index e4cbe6dc..3da0ae4f 100644
+--- a/spec/design/skel/AARCH64/ArchVSpace_H.thy
++++ b/spec/design/skel/AARCH64/ArchVSpace_H.thy
+@@ -55,7 +55,10 @@ where
+         odE
+   odE"
+ 
+-#INCLUDE_HASKELL SEL4/Kernel/VSpace/AARCH64.hs CONTEXT AARCH64_H bodies_only ArchInv=ArchRetypeDecls_H NOT lookupPTSlotFromLevel lookupPTFromLevel pteAtIndex getPPtrFromHWPTE isPageTablePTE ptBitsLeft checkPTAt
++#INCLUDE_HASKELL SEL4/Kernel/VSpace/AARCH64.hs CONTEXT AARCH64_H bodies_only ArchInv=ArchRetypeDecls_H NOT lookupPTSlotFromLevel lookupPTFromLevel pteAtIndex getPPtrFromHWPTE isPageTablePTE ptBitsLeft checkPTAt checkValidMappingSize
++
++defs checkValidMappingSize_def:
++  "checkValidMappingSize sz \<equiv> stateAssert (\<lambda>s. 2 ^ sz <= gsMaxObjectSize s) []"
+ 
+ end
+ 
+diff --git a/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs b/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
+index 179b303f..54c78d55 100644
+--- a/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
++++ b/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
+@@ -188,7 +188,11 @@ lookupFrame vspaceRoot vPtr = do
+     (bitsLeft, ptePtr) <- lookupPTSlot vspaceRoot vPtr
+     pte <- getObject ptePtr
+     if isPagePTE pte
+-        then return $ Just (bitsLeft, pteBaseAddress pte)
++        then do
++            let baseAddr = pteBaseAddress pte
++            assert (fromPAddr baseAddr .&. mask bitsLeft == 0)
++                   "frame address must be aligned"
++            return $ Just (bitsLeft, baseAddr)
+         else return Nothing
+ 
+ {- Page Table Modification -}

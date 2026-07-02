@@ -1,0 +1,37 @@
+{
+ "proof/crefine/AARCH64/Retype_C.thy": {
+  "session": "CRefine",
+  "lemmas": {
+   "monadic_rewrite_setObject_vcpu_as_init": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": false,
+    "stmt_pre": "lemma monadic_rewrite_setObject_vcpu_as_init: defines \"vcpu0 \\<equiv> fromzeroVCPU\" defines \"vcpu1 \\<equiv> (vcpuRegs_update (\\<lambda>_. (vcpuRegs vcpu0)(VCPURegSCTLR := sctlrDefault)) vcpu0)\" defines \"vcpu2 \\<equiv> (vcpuVGIC_update (\\<lambda>_. vgicHCR_update (\\<lambda>_. vgicHCREN) (vcpuVGIC vcpu1)) vcpu1)\" shows \"monadic_rewrite True False (K (v \\<noteq> 0) and ko_at' fromzeroVCPU v) (setObje",
+    "stmt_post": "lemma monadic_rewrite_setObject_vcpu_as_init: defines \"vcpu0 \\<equiv> fromzeroVCPU\" defines \"vcpu1 \\<equiv> (vcpuRegs_update (\\<lambda>_. (vcpuRegs vcpu0)(VCPURegSCTLR := sctlrEL1VM)) vcpu0)\" defines \"vcpu2 \\<equiv> (vcpuVGIC_update (\\<lambda>_. vgicHCR_update (\\<lambda>_. vgicHCREN) (vcpuVGIC vcpu1)) vcpu1)\" shows \"monadic_rewrite True False (K (v \\<noteq> 0) and ko_at' fromzeroVCPU v) (setObject"
+   },
+   "placeNewObject_vcpu_fromzero_ccorres": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma placeNewObject_vcpu_fromzero_ccorres: \"ccorres dc xfdc (valid_global_refs' and pspace_aligned' and pspace_distinct' and pspace_no_overlap' regionBase vcpuBits and (\\<lambda>s. 2 ^ vcpuBits \\<le> gsMaxObjectSize s) and ret_zero regionBase (2 ^ vcpuBits) and K (regionBase \\<noteq> 0 \\<and> range_cover regionBase vcpuBits vcpuBits 1 \\<and> ({regionBase..+2 ^ vcpuBits} \\<inter> kernel_data_refs ",
+    "stmt_post": "lemma placeNewObject_vcpu_fromzero_ccorres: \"ccorres dc xfdc (valid_global_refs' and pspace_aligned' and pspace_distinct' and pspace_no_overlap' regionBase vcpuBits and (\\<lambda>s. 2 ^ vcpuBits \\<le> gsMaxObjectSize s) and ret_zero regionBase (2 ^ vcpuBits) and K (regionBase \\<noteq> 0 \\<and> range_cover regionBase vcpuBits vcpuBits 1 \\<and> ({regionBase..+2 ^ vcpuBits} \\<inter> kernel_data_refs "
+   },
+   "sctlrDefault_def_FIXME": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   },
+   "proof@5771": {
+    "kw": "proof",
+    "kind": "other-block"
+   },
+   "proof@5776": {
+    "kw": "proof",
+    "kind": "other-block"
+   }
+  }
+ }
+}

@@ -1,0 +1,30 @@
+{
+ "proof/invariant-abstract/AARCH64/ArchArch_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "pageBitsForSize_level_0_eq": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma pageBitsForSize_level_0_eq: \"pt_bits_left level = pageBitsForSize vmpage_size \\<Longrightarrow> (vmpage_size = ARMSmallPage) = (level = 0)\"",
+    "stmt_post": "lemma pageBitsForSize_level_0_eq: \"pt_bits_left level = pageBitsForSize vmpage_size \\<Longrightarrow> (vmpage_size = ARMSmallPage) = (level = 0)\""
+   },
+   "user_vtop_leq_canonical_user": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma user_vtop_leq_canonical_user: \"vref \\<le> user_vtop \\<Longrightarrow> vref \\<le> canonical_user\""
+   },
+   "proof@1445": {
+    "kw": "proof",
+    "kind": "other-block"
+   },
+   "proof@1450": {
+    "kw": "proof",
+    "kind": "other-block"
+   }
+  }
+ }
+}

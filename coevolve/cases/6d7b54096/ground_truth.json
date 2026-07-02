@@ -1,0 +1,26 @@
+{
+ "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "pptr_base_kernel_elf_base": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma pptr_base_kernel_elf_base: (* FIXME MK: candidate for Kernel_Config_Lemmas *) \"pptr_base < kernel_elf_base\"",
+    "stmt_post": "lemma pptr_base_kernel_elf_base: \"pptr_base < kernel_elf_base\""
+   }
+  }
+ },
+ "proof/invariant-abstract/AARCH64/ArchKernelInit_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "irq_node_pptr_base_kernel_elf_base": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   }
+  }
+ }
+}

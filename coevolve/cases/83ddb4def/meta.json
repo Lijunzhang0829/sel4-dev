@@ -1,0 +1,16 @@
+{
+ "commit": "83ddb4def9be5620e030595e73fb5715c1716e8c",
+ "parent": "5a7e6406cd407aa018ea35d1674ee4d4cb6f2bdf",
+ "date": "2023-04-05 13:50:33 +1000",
+ "subject": "aarch64 ainvs: remove unused physBase lemmas (#625)",
+ "artifact_files": [
+  "spec/machine/AARCH64/Arch_Kernel_Config_Lemmas.thy"
+ ],
+ "proof_files": [
+  "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "AInvs"
+ ]
+}

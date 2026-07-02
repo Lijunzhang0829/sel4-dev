@@ -1,0 +1,35 @@
+{
+ "proof/invariant-abstract/AARCH64/Machine_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "crunches@377": {
+    "kw": "crunches",
+    "kind": "other-block"
+   },
+   "crunches@90": {
+    "kw": "crunches",
+    "kind": "other-block"
+   },
+   "no_fail_clearMemory": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma no_fail_clearMemory[simp, wp]: \"no_fail (\\<lambda>_. is_aligned p 3) (clearMemory p b)\"",
+    "stmt_post": "lemma no_fail_clearMemory[unfolded word_size_bits_def, simp, wp]: \"no_fail (\\<lambda>_. is_aligned p word_size_bits) (clearMemory p b)\""
+   },
+   "no_irq_clearMemory": {
+    "kw": "lemma",
+    "kind": "relocated",
+    "statement_evolved": false,
+    "body_changed": false,
+    "stmt_pre": "lemma no_irq_clearMemory: \"no_irq (clearMemory a b)\"",
+    "stmt_post": "lemma no_irq_clearMemory: \"no_irq (clearMemory a b)\""
+   },
+   "text@371": {
+    "kw": "text",
+    "kind": "other-block"
+   }
+  }
+ }
+}

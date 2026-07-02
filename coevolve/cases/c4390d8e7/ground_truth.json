@@ -1,0 +1,42 @@
+{
+ "proof/crefine/AARCH64/VSpace_C.thy": {
+  "session": "CRefine",
+  "lemmas": {
+   "armvVCPUSave_def_FIXME": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   },
+   "armv_vcpu_save_ccorres": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma armv_vcpu_save_ccorres: \"ccorres dc xfdc (vcpu_at' vcpuptr) (\\<lbrace> \\<acute>vcpu = vcpu_Ptr vcpuptr \\<rbrace> \\<inter> \\<lbrace> \\<acute>active = from_bool act \\<rbrace>) hs (armvVCPUSave vcpuptr act) (Call armv_vcpu_save_'proc)\" (* FIXME AARCH64 *)",
+    "stmt_post": "lemma armv_vcpu_save_ccorres: \"ccorres dc xfdc (vcpu_at' vcpuptr) (\\<lbrace> \\<acute>vcpu = vcpu_Ptr vcpuptr \\<rbrace> \\<inter> \\<lbrace> \\<acute>active = from_bool act \\<rbrace>) hs (armvVCPUSave vcpuptr act) (Call armv_vcpu_save_'proc)\""
+   },
+   "save_virt_timer_ccorres": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma save_virt_timer_ccorres: \"ccorres dc xfdc (vcpu_at' vcpuptr) (\\<lbrace> \\<acute>vcpu = vcpu_Ptr vcpuptr \\<rbrace>) hs (saveVirtTimer vcpuptr) (Call save_virt_timer_'proc)\"",
+    "stmt_post": "lemma save_virt_timer_ccorres: \"ccorres dc xfdc (vcpu_at' vcpuptr) (\\<lbrace> \\<acute>vcpu = vcpu_Ptr vcpuptr \\<rbrace>) hs (saveVirtTimer vcpuptr) (Call save_virt_timer_'proc)\""
+   }
+  }
+ },
+ "proof/refine/AARCH64/VSpace_R.thy": {
+  "session": "Refine",
+  "lemmas": {
+   "vcpuSave_corres": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma vcpuSave_corres: \"corres dc (vcpu_at (fst cvcpu)) (vcpu_at' (fst cvcpu) and no_0_obj') (vcpu_save (Some cvcpu)) (vcpuSave (Some cvcpu))\"",
+    "stmt_post": "lemma vcpuSave_corres: \"corres dc (vcpu_at (fst cvcpu)) (vcpu_at' (fst cvcpu) and no_0_obj') (vcpu_save (Some cvcpu)) (vcpuSave (Some cvcpu))\""
+   }
+  }
+ }
+}

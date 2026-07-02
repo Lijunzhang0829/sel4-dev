@@ -1,0 +1,34 @@
+diff --git a/spec/machine/AARCH64/MachineOps.thy b/spec/machine/AARCH64/MachineOps.thy
+index 9311a728..30ec6cbe 100644
+--- a/spec/machine/AARCH64/MachineOps.thy
++++ b/spec/machine/AARCH64/MachineOps.thy
+@@ -342,9 +342,9 @@ definition read_cntpct :: "64 word machine_monad" where
+ 
+ subsection "Hypervisor Banked Registers"
+ 
+-consts' vcpuHardwareRegVal :: "vcpureg \<Rightarrow> machine_state \<Rightarrow> machine_word"
++consts' vcpuHardwareReg_val :: "vcpureg \<Rightarrow> machine_state \<Rightarrow> machine_word"
+ definition readVCPUHardwareReg :: "vcpureg \<Rightarrow> machine_word machine_monad" where
+-  "readVCPUHardwareReg reg \<equiv> gets (vcpuHardwareRegVal reg)"
++  "readVCPUHardwareReg reg \<equiv> gets (vcpuHardwareReg_val reg)"
+ 
+ consts' writeVCPUHardwareReg_impl :: "vcpureg \<Rightarrow> machine_word \<Rightarrow> unit machine_rest_monad"
+ definition writeVCPUHardwareReg :: "vcpureg \<Rightarrow> machine_word \<Rightarrow> unit machine_monad" where
+diff --git a/spec/machine/ARM_HYP/MachineOps.thy b/spec/machine/ARM_HYP/MachineOps.thy
+index daeb2e3f..2146b43a 100644
+--- a/spec/machine/ARM_HYP/MachineOps.thy
++++ b/spec/machine/ARM_HYP/MachineOps.thy
+@@ -705,11 +705,11 @@ where
+ subsection "Hypervisor Banked Registers"
+ 
+ consts'
+-  vcpuHardwareRegVal :: "vcpureg \<Rightarrow> machine_state \<Rightarrow> machine_word"
++  vcpuHardwareReg_val :: "vcpureg \<Rightarrow> machine_state \<Rightarrow> machine_word"
+ definition
+   readVCPUHardwareReg :: "vcpureg \<Rightarrow> machine_word machine_monad"
+ where
+-  "readVCPUHardwareReg reg \<equiv> gets (vcpuHardwareRegVal reg)"
++  "readVCPUHardwareReg reg \<equiv> gets (vcpuHardwareReg_val reg)"
+ 
+ consts'
+   writeVCPUHardwareReg_impl :: "vcpureg \<Rightarrow> machine_word \<Rightarrow> unit machine_rest_monad"

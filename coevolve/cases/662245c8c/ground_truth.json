@@ -1,0 +1,15 @@
+{
+ "proof/crefine/RISCV64/VSpace_C.thy": {
+  "session": "CRefine",
+  "lemmas": {
+   "addrFromKPPtr_spec": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma addrFromKPPtr_spec: \"\\<forall>s. \\<Gamma> \\<turnstile> {s} Call addrFromKPPtr_'proc \\<lbrace>\\<acute>ret__unsigned_long = addrFromKPPtr (ptr_val (pptr_' s))\\<rbrace>\"",
+    "stmt_post": "lemma addrFromKPPtr_spec: \"\\<forall>s. \\<Gamma> \\<turnstile> {s} Call addrFromKPPtr_'proc \\<lbrace>\\<acute>ret__unsigned_long = addrFromKPPtr (ptr_val (pptr_' s))\\<rbrace>\""
+   }
+  }
+ }
+}

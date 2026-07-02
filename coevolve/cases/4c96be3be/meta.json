@@ -1,0 +1,19 @@
+{
+ "commit": "4c96be3bef047a3cb3838a3ff540a5f72e351379",
+ "parent": "32fa673f4ae4f44ceaa079e801f45ffada3476c9",
+ "date": "2024-03-13 14:06:52 +0100",
+ "subject": "aarch64 haskell+refine+crefine: use lookupPTSlot_ccorres assertion",
+ "artifact_files": [
+  "spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs"
+ ],
+ "proof_files": [
+  "proof/crefine/AARCH64/Arch_C.thy",
+  "proof/crefine/AARCH64/VSpace_C.thy",
+  "proof/refine/AARCH64/ArchAcc_R.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "CRefine",
+  "Refine"
+ ]
+}

@@ -1,0 +1,16 @@
+{
+ "commit": "8f6373c7ef6049beb2e08a3502ab33202b5c4d19",
+ "parent": "6d31cd631c41c6bf3dbae6caa7ca75cc9a21bfeb",
+ "date": "2023-02-06 09:56:36 +1100",
+ "subject": "aspec + aarch64 ainvs: remove duplicate definition of the_arch_cap",
+ "artifact_files": [
+  "spec/abstract/Structures_A.thy"
+ ],
+ "proof_files": [
+  "proof/invariant-abstract/AARCH64/ArchCSpaceInvPre_AI.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "AInvs"
+ ]
+}

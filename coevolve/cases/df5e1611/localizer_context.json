@@ -1,0 +1,157 @@
+{
+ "identifiers": [
+  "setInterruptMode",
+  "clearMemory",
+  "clearMemoryVM",
+  "initMemory",
+  "freeMemory"
+ ],
+ "candidates": [
+  {
+   "file": "proof/access-control/Retype_AC.thy",
+   "mentions": [
+    "clearMemory",
+    "freeMemory"
+   ]
+  },
+  {
+   "file": "proof/drefine/Untyped_DR.thy",
+   "mentions": [
+    "clearMemory",
+    "freeMemory"
+   ]
+  },
+  {
+   "file": "proof/infoflow/Retype_IF.thy",
+   "mentions": [
+    "clearMemory",
+    "freeMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchBCorres2_AI.thy",
+   "mentions": [
+    "clearMemory",
+    "freeMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchRetype_AI.thy",
+   "mentions": [
+    "clearMemory",
+    "clearMemoryVM"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/Machine_AI.thy",
+   "mentions": [
+    "clearMemory",
+    "freeMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/DetSchedDomainTime_AI.thy",
+   "mentions": [
+    "clearMemory",
+    "freeMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/Retype_AI.thy",
+   "mentions": [
+    "clearMemory",
+    "clearMemoryVM"
+   ]
+  },
+  {
+   "file": "proof/crefine/AARCH64/Invoke_C.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/crefine/AARCH64/Recycle_C.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/drefine/Ipc_DR.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/drefine/Syscall_DR.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchCNodeInv_AI.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchCrunchSetup_AI.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchVSpaceEntries_AI.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/BCorres2_AI.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/CNodeInv_AI.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/Finalise_AI.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/ArchAcc_R.thy",
+   "mentions": [
+    "clearMemory"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Bits_R.thy",
+   "mentions": [
+    "clearMemoryVM"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchDetype_AI.thy",
+   "mentions": [
+    "freeMemory"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/Detype_AI.thy",
+   "mentions": [
+    "freeMemory"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Detype_R.thy",
+   "mentions": [
+    "freeMemory"
+   ]
+  }
+ ]
+}

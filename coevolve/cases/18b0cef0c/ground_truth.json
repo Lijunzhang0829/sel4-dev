@@ -1,0 +1,22 @@
+{
+ "proof/refine/AARCH64/Arch_R.thy": {
+  "session": "Refine",
+  "lemmas": {
+   "decodeARMFrameInvocation_corres": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma decodeARMFrameInvocation_corres: \"\\<lbrakk>cap = arch_cap.FrameCap p R sz d opt; acap_relation cap cap'; list_all2 cap_relation (map fst excaps) (map fst excaps'); list_all2 (\\<lambda>s s'. s' = cte_map s) (map snd excaps) (map snd excaps') \\<rbrakk> \\<Longrightarrow> corres (ser \\<oplus> archinv_relation) (invs and valid_cap (cap.ArchObjectCap cap) and cte_wp_at ((=) (cap.ArchObjectCap cap)",
+    "stmt_post": "lemma decodeARMFrameInvocation_corres: \"\\<lbrakk>cap = arch_cap.FrameCap p R sz d opt; acap_relation cap cap'; list_all2 cap_relation (map fst excaps) (map fst excaps'); list_all2 (\\<lambda>s s'. s' = cte_map s) (map snd excaps) (map snd excaps') \\<rbrakk> \\<Longrightarrow> corres (ser \\<oplus> archinv_relation) (invs and valid_cap (cap.ArchObjectCap cap) and cte_wp_at ((=) (cap.ArchObjectCap cap)"
+   },
+   "valid_FrameCap_user_region_assert": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma valid_FrameCap_user_region_assert: \"\\<lbrakk> s \\<turnstile> cap.ArchObjectCap (arch_cap.FrameCap p R sz d opt); pspace_in_kernel_window s; valid_uses s; pspace_aligned s \\<rbrakk> \\<Longrightarrow> pptrBase \\<le> p \\<and> p < pptrTop\""
+   }
+  }
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "commit": "0e8048b49e175a9a10c65db4f51edc5aeaafc6e4",
+ "parent": "522cef18c1bc8966518e14d3a8fa8606e04fb4b0",
+ "date": "2023-09-27 14:28:32 +1000",
+ "subject": "aarch64 aspec+ainvs: sync user_vtop check with C",
+ "artifact_files": [
+  "spec/abstract/AARCH64/ArchDecode_A.thy"
+ ],
+ "proof_files": [
+  "proof/invariant-abstract/AARCH64/ArchArch_AI.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "AInvs"
+ ]
+}

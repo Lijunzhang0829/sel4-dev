@@ -1,0 +1,13 @@
+diff --git a/proof/crefine/RISCV64/VSpace_C.thy b/proof/crefine/RISCV64/VSpace_C.thy
+index 319b437c..e9e65a56 100644
+--- a/proof/crefine/RISCV64/VSpace_C.thy
++++ b/proof/crefine/RISCV64/VSpace_C.thy
+@@ -868,7 +868,7 @@ lemma addrFromKPPtr_spec:
+    \<lbrace>\<acute>ret__unsigned_long = addrFromKPPtr (ptr_val (pptr_' s))\<rbrace>"
+   apply vcg
+   apply (simp add: addrFromKPPtr_def kernelELFBaseOffset_def
+-                   kernelELFBase_def kernelELFPAddrBase_def mask_def)
++                   kernelELFBase_def kernelELFPAddrBase_def mask_def pptrTop_def)
+   done
+ 
+ lemma isValidVTableRoot_def2:

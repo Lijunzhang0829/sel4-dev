@@ -1,0 +1,15 @@
+{
+ "proof/invariant-abstract/AARCH64/ArchCSpaceInvPre_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "set_cap_valid_table_caps": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma set_cap_valid_table_caps: \"\\<lbrace>\\<lambda>s. valid_table_caps s \\<and> (is_pt_cap cap \\<longrightarrow> cap_asid cap = None \\<longrightarrow> (\\<forall>r \\<in> obj_refs cap. pts_of s r = Some (empty_pt (cap_pt_type cap))))\\<rbrace> set_cap cap ptr \\<lbrace>\\<lambda>rv. valid_table_caps\\<rbrace>\"",
+    "stmt_post": "lemma set_cap_valid_table_caps: \"\\<lbrace>\\<lambda>s. valid_table_caps s \\<and> (is_pt_cap cap \\<longrightarrow> cap_asid cap = None \\<longrightarrow> (\\<forall>r \\<in> obj_refs cap. pts_of s r = Some (empty_pt (cap_pt_type cap))))\\<rbrace> set_cap cap ptr \\<lbrace>\\<lambda>rv. valid_table_caps\\<rbrace>\""
+   }
+  }
+ }
+}

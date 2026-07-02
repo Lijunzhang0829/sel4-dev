@@ -1,0 +1,29 @@
+{
+ "file_precision": 0.5,
+ "file_recall": 1.0,
+ "gt_files": [
+  "proof/invariant-abstract/AARCH64/ArchArch_AI.thy"
+ ],
+ "pred_files": [
+  "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+  "proof/refine/AARCH64/Arch_R.thy"
+ ],
+ "lemma_recall_in_tp_files": 0.0,
+ "evolve_flag_accuracy": null,
+ "lemma_rows": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+   "lemma": "pageBitsForSize_level_0_eq",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+   "lemma": "user_vtop_leq_canonical_user",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS"
+  }
+ ]
+}

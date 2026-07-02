@@ -1,0 +1,16 @@
+{
+ "commit": "df5e1611d0dcaadcb8dbde7c7601d8df0eedf156",
+ "parent": "dedad312c0d9b4c99957f2e8e439417c84f345cd",
+ "date": "2024-03-13 11:04:46 +0100",
+ "subject": "aarch64 machine+ainvs: update clearMemory to match C",
+ "artifact_files": [
+  "spec/machine/AARCH64/MachineOps.thy"
+ ],
+ "proof_files": [
+  "proof/invariant-abstract/AARCH64/Machine_AI.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "AInvs"
+ ]
+}

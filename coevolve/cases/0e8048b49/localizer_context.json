@@ -1,0 +1,13 @@
+{
+ "identifiers": [
+  "decode_fr_inv_map"
+ ],
+ "candidates": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+   "mentions": [
+    "decode_fr_inv_map"
+   ]
+  }
+ ]
+}

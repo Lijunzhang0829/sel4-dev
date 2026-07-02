@@ -1,0 +1,15 @@
+diff --git a/spec/machine/AARCH64/Arch_Kernel_Config_Lemmas.thy b/spec/machine/AARCH64/Arch_Kernel_Config_Lemmas.thy
+index f93ebdad..28081cc2 100644
+--- a/spec/machine/AARCH64/Arch_Kernel_Config_Lemmas.thy
++++ b/spec/machine/AARCH64/Arch_Kernel_Config_Lemmas.thy
+@@ -14,5 +14,10 @@ begin
+ 
+ context Arch begin global_naming AARCH64
+ 
++lemma pptrBase_kernelELFBase:
++  "pptrBase < kernelELFBase"
++  by (simp add: pptrBase_def canonical_bit_def kernelELFBase_def kernelELFPAddrBase_def pptrTop_def
++                Kernel_Config.physBase_def mask_def)
++
+ end
+ end

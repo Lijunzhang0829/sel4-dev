@@ -1,0 +1,17 @@
+{
+ "commit": "662245c8cb87f6c8fb05e38da2a38bb552cc8ff0",
+ "parent": "6d7b5409638a4d0ff9dbb15ea04df22b2bd85fca",
+ "date": "2023-03-29 11:05:26 +1100",
+ "subject": "riscv machine+design+crefine: explicitly set pptrTop",
+ "artifact_files": [
+  "spec/design/skel/RISCV64/Hardware_H.thy",
+  "spec/machine/RISCV64/Platform.thy"
+ ],
+ "proof_files": [
+  "proof/crefine/RISCV64/VSpace_C.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "CRefine"
+ ]
+}

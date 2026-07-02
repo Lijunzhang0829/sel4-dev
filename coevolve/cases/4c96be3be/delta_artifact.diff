@@ -1,0 +1,15 @@
+diff --git a/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs b/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
+index 54c78d55..5696231d 100644
+--- a/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
++++ b/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
+@@ -181,7 +181,9 @@ lookupPTSlotFromLevel level ptPtr vPtr = do
+ -- a given virtual address, together with the number of bits left to translate,
+ -- indicating the size of the frame.
+ lookupPTSlot :: PPtr PTE -> VPtr -> Kernel (Int, PPtr PTE)
+-lookupPTSlot = lookupPTSlotFromLevel maxPTLevel
++lookupPTSlot pt vptr = do
++    checkPTAt VSRootPT_T pt
++    lookupPTSlotFromLevel maxPTLevel pt vptr
+ 
+ lookupFrame :: PPtr PTE -> VPtr -> Kernel (Maybe (Int, PAddr))
+ lookupFrame vspaceRoot vPtr = do
