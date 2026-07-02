@@ -71,3 +71,39 @@ let check-theory adjudicate which breaks are real.**
   synthetic weakenings (negatives).
 - Sweep all 15 seeds once localizer prompt stabilizes; then wire into the
   repair driver (Step 2 of the skill's First cut).
+
+## Build-oracle adjudication (2026-07-02, first batch — 4 cleanly-reverting seeds)
+
+Reconstruction: current tree − Δ_proof (reverse-apply in an isolated
+worktree) checked against the AARCH64 heap. `adjudicate.py`; per-case logs in
+`cases/*/adjudication*.{json,log}`.
+
+| seed | agent said | broken state | verdict |
+|---|---|---|---|
+| 83ddb4def | empty ("survives") | **RED** | agent wrong — compiler-forced break missed |
+| 0e8048b49 | deep "survives" reasoning | **RED** | plausible-but-wrong; Isabelle refutes it |
+| df5e1611 | statement need not evolve | **RED** | old stmt+proof does not build |
+| 8f6373c7e | (over-predicted 22 files) | **GREEN** | human's edit was maintainer-CHOICE — GT itself is non-forced |
+
+**Consequences (adopted):**
+1. **Agent static "survives" judgments are not trustworthy** even when the
+   reasoning cites exact lemma structure. In deployment the RED set comes FREE
+   from the build — the agent's role is re-scoped: interpret each break +
+   plan statement evolution + gate, NOT predict breakage. The 0.22/0.38
+   localizer scores measured a capability deployment doesn't need.
+2. **Dual-track ground truth from now on**: build-RED = forced set (P/R on it
+   = localization ability); human-fix ∖ forced = choice set (recall on it =
+   maintainer-alignment, softer). ≥1/4 of first batch was pure choice —
+   no prior repair work build-cleans its ground truth.
+3. Cost model: reverse-apply onto the CURRENT tree reuses today's heap —
+   no per-case parent-era heap rebuild for cleanly-reverting seeds (4/8
+   tested clean). Era-bucketing only needed for old seeds.
+
+## Ground-truth distribution (15 co-change seeds — `gt-distribution.md`)
+
+**11/15 involve statement evolution (L2), only 4 pure body-repair (L1).**
+Lemma-edit mix: 35 added · 27 body-only · 13 stmt-evolved · 14 deleted —
+the dominant human response is ADD new helpers + evolve statements, not
+re-prove bodies. Selection-bias caveat: co-change commits may over-represent
+L2 (statement changes force atomic commits); the pair-form benchmark will
+give the unbiased distribution.
