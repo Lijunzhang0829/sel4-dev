@@ -64,6 +64,12 @@ L1 is the majority of the real maintenance tax → **start here**. L3 is rare
 Value lives in **CRefine**; develop the method on **AInvs/Refine** (lighter,
 avoids the Refine/CRefine heap-init + OOM wall — see [[infoflow-repl-init-wall]]).
 
+> **Fork-① decision (C, below) makes this a SCOPE ladder only.** Statement
+> evolution is permitted from day one at every level — whenever Δ demands it
+> the agent may evolve the statement, and the fixpoint obligation (consumers
+> stay green) applies wherever that happens, even in a single-session run.
+> The L-levels stratify session fan-out, not statement mutability.
+
 ## Two orthogonal axes — measure BOTH (do not conflate)
 
 **Fan-out (breadth) ≠ repair-depth.** A 155-file `monad refactor` repair may
@@ -100,14 +106,29 @@ refactor. This keeps synthetic breaks on the real distribution.
 Primary tests ecological validity + gives the human baseline; secondary tests
 decontaminated capability.
 
+## Resolved design decisions (2026-07, operator-confirmed)
+
+| Fork | Decision | Consequence |
+|---|---|---|
+| **① Statement mutability** | **C — fully open.** Statements may evolve from day one. An **agent** performs both RED-set collection (reads build errors + Δ + DAG into the work-list, decides which statements must evolve) and the semantic half of the gate. | Viable ONLY with a proper **harness**: the real case library (archetype seeds + the 4.5% co-change set, with each human `C_p` as ground truth) is the calibration set — tune the localizer/gate agents against known human fixes until they localize & judge those correctly, before trusting them on new breaks. Archive every transcript. The deterministic gate half (below) stays mechanical and can never be overridden. |
+| **② Repair granularity** | **per-FILE** (check-theory's native unit; serial rolling repair within a file). | Zero new scaffolding. Upgrade to per-lemma ONLY if context precision proves sufficient — a sorry-scaffold isolator would be needed; build it only when large fan-out seeds demand it. |
+| **③ Cost accounting** | **Machine-side only** (wall, tokens, repair rounds). | Human-cost proxies (LOC / commit-interval / person-month anchors) are OUT of the metric set — a pipeline with a good restore-green rate can fill that gap later. `C_p` stays as a QUALITY reference (divergence-diff), not a cost baseline. |
+
+**Build order implied by ①: the fork-① harness is the FIRST standalone
+deliverable** — agent-driven break localization + evolution-aware gate,
+calibrated on the case library — built and validated *before* the repair
+driver is attached. The remaining pipeline stages are then filled in
+incrementally until the task is complete.
+
 ## Pipeline (reuses existing assets — little new infra)
 
 ```
 [green chain @ C_a's parent]
   → apply Δ (real C_a artifact diff  OR  synthetic perturbation)
-  → BUILD (check-theory) + theory-DAG → localize the RED set:
-        work-list {(lemma, Δ-context, Isabelle error, goal, deps)}
-  → REPAIR DRIVER (per item, DAG order):
+  → BUILD (check-theory) + theory-DAG + LOCALIZER AGENT → the RED set:
+        work-list {(file, lemmas, Δ-context, Isabelle errors, goals, deps,
+                     statements-that-must-evolve)}
+  → REPAIR DRIVER (per FILE, DAG order; serial rolling within a file):
         propose (claude -p, the spec-strengthen streaming+repair loop)
         → check-theory --patch → green?  ↑ feed *** back, bounded rounds
         → GATE (anti-cheat, below)
@@ -122,16 +143,25 @@ The inner loop is the `spec-strengthen` propose→trial→repair loop with a
 different payload. Batch `check-theory` is the oracle — do **not** rely on
 interactive REPL stepping at Refine/CRefine (heap-init + OOM wall).
 
-## Oracle & anti-cheat gate
+## Oracle & anti-cheat gate (hybrid: deterministic core + calibrated agent judgment)
 
-A repair is valid iff `check-theory` green **and**:
-- **No weakened statement.** L1: the broken lemma's statement is unchanged.
-  L2/L3: a statement may *evolve* but must not be weakened to a triviality —
-  and every consumer of the evolved statement must still close (that is what
-  makes L2/L3 a *fixpoint* obligation, not a local edit).
-- **No `sorry`/`oops`/`axiomatization`; the lemma is not deleted to dodge it.**
-- **End-to-end**: for L3 the whole downstream chain builds, not just the
-  edited theory.
+A repair is valid iff `check-theory` green **and** it passes BOTH gate halves:
+
+**Deterministic half (mechanical, non-negotiable, agent can never override):**
+- No `sorry`/`oops`/`axiomatization`; no deleting a lemma to dodge the break.
+- Every consumer of an evolved statement still closes — statement evolution
+  is a **fixpoint** obligation at every level, not a local edit.
+- End-to-end: the whole affected scope builds (the session for single-session
+  runs; the downstream chain for cross-session runs).
+
+**Agent half (fork-① decision C):**
+- "Is the evolved statement a faithful co-evolution of the old one, rather
+  than a weakening to triviality?" — with fully-open statement evolution no
+  regex can decide this, so a **gate agent** judges it. Discipline: the gate
+  agent is **calibrated on the case library first** (real human `C_p` fixes =
+  ground truth for what faithful evolution looks like); its verdict + written
+  rationale are archived per candidate; disagreement with the deterministic
+  half always resolves to reject.
 
 ## Memorization-gap discipline (mandatory — reviewer defense)
 
@@ -146,10 +176,12 @@ not a result.
 
 1. **Restore-green success rate** — per Level and per change-type.
 2. **Breadth & depth** — files/sessions/lemmas repaired; per-lemma proof-delta.
-3. **vs human** — better / worse / different-but-valid against `C_p`
-   (edit-distance + structural diff); wall vs the human maintenance cost
-   (fastpath ~5 person-months, SOSP'09 <5%-code = 17%-proof).
-4. **Memorization gap** — headline number, from the controls above.
+3. **vs `C_p` (quality reference, NOT cost)** — better / worse /
+   different-but-valid (edit-distance + structural diff).
+4. **Machine-side cost** — wall, tokens, repair rounds per repair. Human-cost
+   estimation is deliberately out of scope (fork-③): a pipeline with a good
+   restore-green rate can fill that comparison later.
+5. **Memorization gap** — headline number, from the controls above.
 
 ## Significance & positioning (OSDI, 3-year verification thread)
 
@@ -171,11 +203,19 @@ changes trigger separate repair; CRefine dominates"), and the payoff is
 
 ## First cut
 
-**L1, AInvs or Refine, commit-pair replay from an archetype seed** (e.g.
-`0e8048b4`/`df5e1611` — "sync/match C" with an AInvs fix). Reconstruct the
-break, run the repair driver, restore green, measure breadth+depth vs `C_p`,
-report the temporal+perturbation gap. Signal there → scale fan-out, then L2
-(statement evolution), then L3 / CRefine.
+**Step 1 — the fork-① harness, standalone.** Agent-driven RED-set
+collection + evolution-aware gate, tuned on the archetype case library
+(`0e8048b4`/`df5e1611`/`c4390d8e` and the 4.5% co-change set). Input: a
+broken tree + Δ. Output: the work-list (which files / lemmas / statements
+must evolve) + gate verdicts — validated against the known human answers
+(`C_p`). The harness is DONE when it localizes and judges the known cases
+correctly.
+
+**Step 2 — attach the repair driver** (per-file, single-session scope,
+AInvs/Refine, commit-pair replay from the same seeds): reconstruct the
+break, repair, restore green, measure breadth+depth vs `C_p` + machine cost,
+report the temporal+perturbation gap. Signal there → scale fan-out →
+cross-session / CRefine.
 
 ## Anti-patterns (DO NOT)
 
@@ -184,7 +224,7 @@ report the temporal+perturbation gap. Signal there → scale fan-out, then L2
 | Framing as narrow single-lemma **repair** | That corner is done (Baldur/CoqDev/Sisyphus); the data shows artifact-triggered multi-file evolution — that's the empty cell. |
 | Assuming **change+fix in one commit** | Only 4.5%; the real unit is a commit **pair**. |
 | Advertising **fan-out as difficulty** | 155 files may be easy-but-many; report breadth and depth separately. |
-| **Weakening a statement** to close | Voids correctness; L2/L3 statements may evolve but not trivialize, and consumers must stay green. |
+| **Weakening a statement** to close | Voids correctness; statements may evolve at any level but not trivialize (agent-gated, `C_p`-calibrated), and consumers must stay green. |
 | Competing on **pass-rate** vs Stepwise | Wrong axis — the contribution is maintenance + systems impact, not synthesis %. |
 | Shipping without a **memorization gap** | First thing a reviewer attacks. |
 | Driving the loop through **interactive REPL** at Refine/CRefine | Hits the heap-init + OOM wall; use batch `check-theory`. |
@@ -198,18 +238,20 @@ report the temporal+perturbation gap. Signal there → scale fan-out, then L2
 | `spec-strengthen/strengthen.sh` loop + `spec_agent.py` | propose→trial→repair inner loop; repoint payload to "repair the break" | **exists, adapt** |
 | `$ISA_SCRIPTS/check-theory.sh` | The only verification gate; dense per-lemma oracle via `--patch` | **exists** |
 | proof-track measurement (per-file wall, golden baseline) | Cost / wall side of the metric | **exists** |
+| **fork-① harness**: localizer agent (RED-set work-list) + gate agent (evolution-vs-weakening), calibrated on the case library | **The FIRST standalone deliverable** | **to build (first)** |
 | commit-pair miner (reconstruct broken state from `C_a`, pair with `C_p`) | Benchmark builder — the primary source | **to build** |
 | perturbation generator (taxonomy from observed change types) | Decontaminated secondary benchmark | **to build** |
 | memorization-gap harness (temporal / perturbation / ablation / divergence-diff) | Mandatory reviewer-defense metric | **to build** |
 
-## Relation to `isabelle_prover_regen`
+## Relation to the regen direction (maintained elsewhere)
 
 Same axis, different blast radius: **co-evolve** repairs the few proofs a
-change breaks; **regen** deletes and rebuilds a whole layer. They share the
-entire lower stack (check-theory oracle, theory-DAG, spec-strengthen loop,
-memorization discipline, proof-track measurement) — build the harness once,
-serve both. regen is co-evolve's maximal case (the "change" is "delete
-everything").
+change breaks; **regen** — the sibling corpus-regeneration study, maintained
+on the other machine and **not present on this coevolve-only checkout** —
+deletes and rebuilds a whole layer. They share the same lower stack
+(check-theory oracle, theory-DAG, the spec-strengthen propose→trial→repair
+loop, memorization discipline). regen is co-evolve's maximal case (the
+"change" is "delete everything").
 
 ## Inherited rules
 
@@ -227,5 +269,4 @@ table**, the **vs-`C_p` comparison**, and the **memorization-gap report**.
 | Why repair/co-evolution is the empty cell (seL4 ∩ repair = ∅) | `literature/README.md`, `literature/ABSTRACTS-SUMMARY.md` |
 | Nearest non-seL4 repair precedents | CoqDev/Adapt, ExVerus, PUMPKIN Pi, Sisyphus — `literature/01…`, `literature/02…` |
 | Maintenance cost baselines | seL4 SOSP'09 (17%/<5%), fastpath (~5pm) — `literature/02-sel4-optimization-verification/` |
-| The inner loop this reuses | `.claude/skills/isabelle_prover_spec/SKILL.md` |
-| The sibling whole-layer variant | `.claude/skills/isabelle_prover_regen/SKILL.md` |
+| The inner loop this reuses (propose→trial→repair) | `spec-strengthen/strengthen.sh`, `spec-strengthen/scripts/spec_agent.py` |

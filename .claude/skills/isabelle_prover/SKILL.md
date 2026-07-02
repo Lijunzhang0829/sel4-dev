@@ -1,6 +1,6 @@
 ---
 name: isabelle-prover
-description: "Strengthen seL4 formal verification. Dispatcher — routes to type-specific sub-skills for proof / spec / haskell / c."
+description: "seL4 refinement-proof co-evolution/repair. This checkout is scoped to the single coevolve task; shared scripts (check-theory.sh etc.) and the hard-rule contract live here."
 ---
 
 # Isabelle/HOL Strengthen — dispatcher
@@ -10,14 +10,13 @@ matches your target type:
 
 | Target | Sub-skill | Domain |
 |---|---|---|
-| `.thy` under `proof/` (build wall optimization) | **`isabelle_prover_proof`** | Lemma tactic optimization driven by CSTR-2 DAG |
-| `.thy` under `spec/abstract/`, `proof/invariant-abstract/` | **`isabelle_prover_spec`** | Tighter postconditions / invariants |
-| `.hs` / `.lhs` under `spec/haskell/` | **`isabelle_prover_haskell`** | Haskell Design Spec + downstream re-verification |
-| C source in seL4 kernel | **`isabelle_prover_c`** | C implementation + CRefine maintenance |
-| Regenerate a whole refinement layer (research: LLM-vs-human) | **`isabelle_prover_regen`** | Layer-level proof regeneration + quality benchmark + memorization-gap |
 | Repair the proof chain after a spec/haskell/C change (research: maintenance/co-evolution) | **`isabelle_prover_coevolve`** | Artifact-triggered, multi-file/cross-session proof repair; commit-pair benchmark |
 
-The rest of this file describes the **common contract** all four sub-skills
+> This checkout is **coevolve-only**. The other task sub-skills (proof / spec /
+> haskell / c / regen) were removed; `isabelle_prover/` is kept as shared
+> infrastructure (scripts + hard rules the coevolve skill inherits).
+
+The rest of this file describes the **common contract** the coevolve sub-skill
 share. Sub-skills only specify their workflow / strategies / type-specific
 tools — they inherit everything below.
 
