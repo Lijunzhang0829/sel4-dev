@@ -76,6 +76,9 @@ def main():
     ap.add_argument("names", nargs="+")
     ap.add_argument("--session", default=None,
                     help="restrict output to one session (e.g. AInvs)")
+    ap.add_argument("--by-session", action="store_true",
+                    help="summarize dependents per session (derived session "
+                         "view: L1/L3 classification + implicated heaps)")
     args = ap.parse_args()
 
     dag_path = args.dag or (REPO / "reports" /
@@ -88,6 +91,18 @@ def main():
 
     if args.cmd == "dependents":
         dep = dependents_closure(importers, args.names)
+        if args.by_session:
+            per = {}
+            for v in dep:
+                per.setdefault(nodes[v]["session"], []).append(v)
+            root_sess = {nodes[n]["session"] for n in args.names}
+            for sess in sorted(per, key=lambda k: -len(per[k])):
+                tag = "SAME" if sess in root_sess else "CROSS"
+                print("%-18s %4d theories  [%s]" % (sess, len(per[sess]), tag))
+            print("# level hint: %d session(s) implicated -> %s"
+                  % (len(per), "L1 (single-session)" if len(per) <= 1
+                     else "L3-shaped (cross-session upper bound)"))
+            return
         if args.session:
             dep = {v for v in dep if nodes[v]["session"] == args.session}
         for v in topo_order(imports, dep):
