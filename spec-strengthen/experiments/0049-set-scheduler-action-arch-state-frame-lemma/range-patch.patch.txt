@@ -1,0 +1,6 @@
+3451 3451
+  by (wpsimp simp: set_scheduler_action_def)
+
+lemma set_scheduler_action_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_scheduler_action action \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  by (wpsimp simp: set_scheduler_action_def)

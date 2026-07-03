@@ -1,0 +1,5 @@
+345 345
+          \<Longrightarrow> arch_valid_obj ao s'" by simp
+
+lemma wellformed_arch_pspace_no_kheap: "\<And>ao. arch_valid_obj ao s \<Longrightarrow> arch_valid_obj ao s'"
+  by simp

@@ -1,0 +1,13 @@
+296 296
+  done
+
+lemma vs_cap_ref_master_no_base [CNodeInv_AI_assms]:
+  "\<lbrakk> cap_master_cap cap = cap_master_cap cap';
+           cap_asid cap = cap_asid cap';
+           cap_vptr cap = cap_vptr cap' \<rbrakk>
+       \<Longrightarrow> vs_cap_ref cap = vs_cap_ref cap'"
+  apply (rule ccontr)
+  apply (clarsimp simp: vs_cap_ref_def cap_master_cap_def
+                 split: cap.split_asm)
+  apply (clarsimp simp: cap_asid_def split: arch_cap.split_asm option.split_asm)
+  done

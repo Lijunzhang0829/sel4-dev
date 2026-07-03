@@ -1,0 +1,6 @@
+1649 1649
+  by (wpsimp wp: get_object_wp simp: set_cap_def | clarsimp)+
+
+lemma set_cap_domain_time[wp]:
+  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_cap cap a \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
+  by (wpsimp wp: get_object_wp simp: set_cap_def | clarsimp)+

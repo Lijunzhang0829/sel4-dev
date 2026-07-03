@@ -1,0 +1,14 @@
+diff --git a/proof/invariant-abstract/CSpace_AI.thy b/proof/invariant-abstract/CSpace_AI.thy
+--- a/proof/invariant-abstract/CSpace_AI.thy
++++ b/proof/invariant-abstract/CSpace_AI.thy
+@@ -433,6 +433,10 @@
+   "\<lbrace>\<top>\<rbrace> set_cdt t \<lbrace>\<lambda>_ s. cdt s = t\<rbrace>"
+   by (wpsimp simp: set_cdt_def)
+ 
++lemma set_cdt_is_original_cap[wp]:
++  "\<lbrace>\<lambda>s. P (is_original_cap s)\<rbrace> set_cdt m \<lbrace>\<lambda>_ s. P (is_original_cap s)\<rbrace>"
++  by (wpsimp simp: set_cdt_def)
++
+ lemma cte_at_pspace:
+   "cte_wp_at P p s \<Longrightarrow> \<exists>ko. kheap s (fst p) = Some ko"
+   by (auto simp: cte_wp_at_cases)

@@ -1,0 +1,17 @@
+325 325
+  done
+
+lemma store_pde_valid_kernel_mappings_map_global_no_arch_state:
+  "\\<lbrace>valid_kernel_mappings and valid_global_objs
+       and K (VSRef (p \\<and>\\<and> mask pd_bits >> 2) (Some APageDirectory)
+                  \\<in> kernel_vsrefs)
+       and (\\<lambda>s. \\<forall>p. pde_ref pde = Some p
+               \\<longrightarrow> p \\<in> set (arm_global_pts (arch_state s)))\\<rbrace>
+       store_pde p pde
+     \\<lbrace>\\<lambda>rv. valid_kernel_mappings\\<rbrace>"
+  apply (simp add: store_pde_def)
+  apply (wp set_pd_valid_kernel_mappings_map)
+  apply (clarsimp simp: obj_at_def)
+  apply (rule conjI, rule glob_vs_refs_add_one')
+  apply (clarsimp simp: ucast_ucast_mask_shift_helper)
+  done

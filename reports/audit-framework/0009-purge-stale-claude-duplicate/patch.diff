@@ -1,0 +1,618 @@
+diff --git a/.claude/skills/isabelle_prover/scripts/_dx.sh b/.claude/skills/isabelle_prover/scripts/_dx.sh
+index 654c09e..ed1bc7c 100755
+--- a/.claude/skills/isabelle_prover/scripts/_dx.sh
++++ b/.claude/skills/isabelle_prover/scripts/_dx.sh
+@@ -16,8 +16,8 @@ WRAPPER_NAME="$(basename "${BASH_SOURCE[1]}")"
+ # Compute the in-container path of scripts-container/ from this script's
+ # location relative to the host repo root. The compose service mounts
+ # $REPO_ROOT to /workspace, so:
+-#   <REPO_ROOT>/claude/.claude/skills/.../scripts/  →
+-#   /workspace/claude/.claude/skills/.../scripts-container/
++#   <REPO_ROOT>/.claude/skills/.../scripts/  →
++#   /workspace/.claude/skills/.../scripts-container/
+ SCRIPT_DIR_REL="${SCRIPT_DIR#${REPO_ROOT}/}"
+ CONTAINER_SCRIPT_DIR="/workspace/${SCRIPT_DIR_REL%/scripts}/scripts-container"
+ 
+diff --git a/claude/.claude/skills/isabelle_prover_c/SKILL.md b/claude/.claude/skills/isabelle_prover_c/SKILL.md
+deleted file mode 100644
+index f237b5d..0000000
+--- a/claude/.claude/skills/isabelle_prover_c/SKILL.md
++++ /dev/null
+@@ -1,56 +0,0 @@
+----
+-name: isabelle-prover-c
+-description: "Optimize seL4 kernel C source while keeping CRefine green. Use when modifying C files in the kernel and the change must still refine the Haskell Design Spec."
+----
+-
+-# C type — kernel implementation optimization
+-
+-Optimize seL4 kernel C source while keeping the CRefine session green.
+-
+-Inherits common contract from `isabelle_prover` (3 hard rules, common tools,
+-patch format, session mapping).
+-
+-## Pipeline
+-
+-```
+-seL4/src/**.c, **.h   ──edit──▶  c-parser  ──▶  Substitute.thy (generated)
+-                                                       │
+-                                                       ▼
+-                                                 CRefine proofs
+-                                                 (proof/crefine/**/*.thy)
+-```
+-
+-C can **diverge from Haskell** — it only needs to refine (behave
+-equivalently with respect to the abstract spec). So C changes go through:
+-
+-1. **c-parser step** — C → Isabelle term (mechanical)
+-2. **CRefine session** — verify Design ↔ C refinement still holds
+-
+-No Abstract / Refine impact unless the C change reveals a missing Design
+-spec invariant.
+-
+-## Status: minimal scope
+-
+-This sub-skill currently does not have a full automated workflow tool.
+-Treat changes as **manual** — edit, run c-parser, fix CRefine breakage.
+-
+-Read [`references/strengthen-guide.md`](../isabelle_prover/references/strengthen-guide.md)
+-for the type-by-type workflow, and
+-[`references/autocorres-guide.md`](../isabelle_prover/references/autocorres-guide.md)
+-for how the C lifting works.
+-
+-## Key commands
+-
+-| Step | Command |
+-|---|---|
+-| Run c-parser on changed C source | (mechanism depends on build setup — verify against current Makefile) |
+-| Verify a crefine proof file | `bash $ISA_SCRIPTS/check-theory.sh <file> CRefine` |
+-
+-## TODO
+-
+-- [ ] Add a `c-impact.sh` that, given a changed C file, prints which
+-  CRefine .thy files mention the affected function and need re-verification
+-- [ ] Document patterns for keeping CRefine stable across C refactors
+-  (extract helper functions, reorder branches, add asserts, …)
+-- [ ] Cross-link with `isabelle_prover_haskell` for paired Haskell + C
+-  changes
+diff --git a/claude/.claude/skills/isabelle_prover_haskell/SKILL.md b/claude/.claude/skills/isabelle_prover_haskell/SKILL.md
+deleted file mode 100644
+index 0fe953a..0000000
+--- a/claude/.claude/skills/isabelle_prover_haskell/SKILL.md
++++ /dev/null
+@@ -1,63 +0,0 @@
+----
+-name: isabelle-prover-haskell
+-description: "Optimize the Haskell Design Spec under spec/haskell/ and propagate through the refine/crefine proof chain. Use when changing .hs/.lhs algorithms in the kernel design spec."
+----
+-
+-# Haskell type — design-spec optimization
+-
+-Optimize Haskell Design Spec algorithms (`spec/haskell/**`) while keeping the
+-downstream verification chain green.
+-
+-Inherits common contract from `isabelle_prover` (3 hard rules, common tools,
+-patch format, session mapping). Wall-drop threshold for this type is set
+-per-change (no universal default — depends on whether the change is for
+-correctness, clarity, or performance).
+-
+-## Pipeline
+-
+-```
+-spec/haskell/**.hs   ──edit──▶  re-translate  ──▶  spec/design/**.thy
+-                                                       │
+-                                                       ▼
+-                                                 Refine proofs
+-                                                 (proof/refine/**/*.thy)
+-                                                       │
+-                                                       ▼
+-                                                 CRefine proofs
+-                                                 (proof/crefine/**/*.thy)
+-```
+-
+-A Haskell change has **3-tier downstream verification cost**:
+-
+-1. **Translation step** — Haskell → Isabelle (mechanical, via `make exec`)
+-2. **Refine session** — Abstract ↔ Design refinement proofs
+-3. **CRefine session** — Design ↔ C refinement proofs
+-
+-You must keep all three green.
+-
+-## Status: minimal scope
+-
+-This sub-skill currently does not have a full automated workflow tool
+-(unlike `isabelle_prover_proof`'s `lemma_profile.py`). Treat changes as
+-**manual** — edit, retranslate, run each session, fix what breaks.
+-
+-Read [`references/strengthen-guide.md`](../isabelle_prover/references/strengthen-guide.md)
+-for the type-by-type workflow.
+-
+-## Key commands
+-
+-| Step | Command |
+-|---|---|
+-| Re-translate Haskell → design spec | `make -C verification/l4v/spec/haskell exec` (verify against current build setup) |
+-| Verify a refine proof file | `bash $ISA_SCRIPTS/check-theory.sh <file> Refine` |
+-| Verify a crefine proof file | `bash $ISA_SCRIPTS/check-theory.sh <file> CRefine` |
+-
+-## TODO
+-
+-- [ ] Add a `translate-and-verify.sh` wrapper that detects which proof
+-  files import the changed design spec module and runs `check-theory.sh`
+-  on each
+-- [ ] Document representative algorithm-change patterns (data structure
+-  swap, loop unroll, …) with the typical proof-chain impact
+-- [ ] Cross-link with `isabelle_prover_c` since C changes often pair with
+-  Haskell changes
+diff --git a/claude/.claude/skills/isabelle_prover_proof/SKILL.md b/claude/.claude/skills/isabelle_prover_proof/SKILL.md
+deleted file mode 100644
+index a764a48..0000000
+--- a/claude/.claude/skills/isabelle_prover_proof/SKILL.md
++++ /dev/null
+@@ -1,206 +0,0 @@
+----
+-name: isabelle-prover-proof
+-description: "Per-lemma search-space elimination for seL4 proof build wall time. ONE strategy: record what the search tactic finds, replace it with deterministic rule application. Use when targeting individual lemmas in `proof/**/*.thy`."
+----
+-
+-# Proof type — search-space elimination via rule replacement
+-
+-This skill targets ONE axis with ONE strategy: **eliminate the search a
+-tactic performs at verify time** by recording its successful resolution
+-and replacing the search tactic with deterministic rule application.
+-
+-If this strategy yields < 5% file-wall drop, **DO NOT try other strategies**.
+-The reasoning: this strategy is the theoretical limit (drives T_search → 0).
+-If T_search elimination doesn't help, then T_search wasn't significant —
+-no other intervention will help more. Pivot to a different lemma.
+-
+-## The model
+-
+-For any single tactic invocation:
+-
+-```
+-  T_total = T_search    +    T_work
+-            (试错回溯)        (kernel 必做的工作)
+-```
+-
+-- **T_total**: directly measurable via `time_methods` wrapping
+-- **T_search**: the only part this skill targets
+-- **T_work**: rule resolution + simp loop + unification; this skill CANNOT reduce it
+-
+-Empirical: on this codebase, `T_search` is often a small fraction of `T_total`
+-(cases 14/15: 0.3-3% of file wall). Set expectations accordingly.
+-
+-## Threshold
+-
+-| Patch scope | File-wall drop required |
+-|---|---|
+-| Single-lemma patch | **≥ 5%** |
+-| Multi-lemma batch (same file) | **≥ 20%** |
+-
+-Below threshold: noise (±2-5% heap-cache drift). Discard the patch, pivot.
+-
+-## Targeting
+-
+-Pick a single `.thy` file. Optional helpers:
+-
+-- **`heaps/db-archive-pre-swap/<SESSION>.db`** — `theory_timings` column gives
+-  reliable per-file relative ranking (8-thread parallel baseline, 2026-05-09,
+-  pre-experiment clean rebuild)
+-- **`reports/layer2-theory/theory-axis-2d.md`** — DAG-derived which files block
+-  downstream (structure 100% reliable, weights partially distorted)
+-
+-Once a file is chosen, the rest is per-lemma work below.
+-
+-## The strategy — record search, replace with rules
+-
+-### Step 1 — Profile via time_methods
+-
+-```
+-python3 tools/critical_path/lemma_search_profile.py <session> <file.thy> <lemma>
+-```
+-
+-Output for each top-level `apply`/`by`/`subgoal by`:
+-
+-- per-tactic real elapsed (sequential, via `time_methods` wrapping)
+-- tactic class (search-class = `auto`/`force`/`fastforce`/`blast`/`metis`/`smt`/`safe`/`fast`)
+-- lemma total wall + search-class fraction
+-
+-Cost: ~3 min per lemma.
+-
+-### Step 2 — Sanity check
+-
+-From the output, compute:
+-
+-```
+-theoretical_upper_bound_on_file_wall_savings
+-  = (search_class_total in lemma) / (file_wall)
+-```
+-
+-| upper bound | Decision |
+-|---|---|
+-| < 5% | **Skip**. Even perfect search elimination won't clear threshold. Pivot. |
+-| ≥ 5% | Proceed to Step 3. |
+-
+-### Step 3 — Find the rules each search-class tactic uses
+-
+-For each search-class tactic in the lemma whose individual `time_methods`
+-elapsed is ≥ 1s:
+-
+-```
+-bash $ISA_SCRIPTS/sledgehammer.sh <file.thy> <line> <session>
+-```
+-
+-Wall: 30-180s per call. Output: candidate `by (metis X Y Z)` /
+-`by (smt (cvc4) X)` reconstructions. **Pick the shortest plausible one**
+-(fewer named lemmas = smaller patch, easier to maintain).
+-
+-If sledgehammer finds nothing for a line, that line is not a candidate
+-under this strategy. Skip it. If NO line yields a sledgehammer
+-reconstruction, **the lemma is not attackable under this skill**. Pivot.
+-
+-### Step 4 — Build and verify the patch
+-
+-Replace each search-class tactic with the sledgehammer-found reconstruction:
+-
+-```isabelle
+-(* original *)
+-apply (force simp: foo bar)
+-
+-(* replacement, after sledgehammer *)
+-apply (metis foo bar rule_a rule_b)
+-```
+-
+-Then:
+-
+-```bash
+-# baseline
+-bash $ISA_SCRIPTS/check-theory.sh <file> <session>
+-
+-# trial
+-bash $ISA_SCRIPTS/check-theory.sh <file> <session> --patch <patch>
+-```
+-
+-Compute:
+-```
+-wall_delta_pct = (trial_wall - baseline_wall) / baseline_wall
+-```
+-
+-### Step 5 — Decide
+-
+-| Result | Action |
+-|---|---|
+-| `wall_delta_pct ≤ −5%` (single lemma) or `≤ −20%` (batch) | **Apply** |
+-| `−5% < wall_delta_pct ≤ 0%` | **Discard the patch. Pivot to another lemma.** Do NOT try other strategies on this lemma — see top of skill for why. |
+-| `wall_delta_pct > 0%` (regression) | **Discard. Pivot.** |
+-| FAIL (proof breaks) | Sledgehammer reconstruction was incomplete; try a longer suggestion. If still no go, pivot. |
+-
+-```bash
+-bash $ISA_SCRIPTS/check-theory.sh <file> <session> --apply <patch>
+-```
+-
+-### Step 6 — Record
+-
+-Append to `reports/layer3-lemma/lemma-strengthen-<branch>-<YYYYMMDD>.md`:
+-
+-| # | Lemma | File | Search command replaced | wall Δ% | Applied? |
+-|---:|---|---|---|---:|:---:|
+-
+-With: lemma, file, what search-class command was replaced (e.g.
+-`apply (force simp: foo)` at L1950), baseline → trial wall, delta %,
+-patch sha.
+-
+-## Tools (authoritative)
+-
+-| Tool | Purpose | Cost |
+-|---|---|---|
+-| `tools/critical_path/lemma_search_profile.py` | Per-tactic real wall via `time_methods` wrapping. THE primary profiler. | ~3 min per lemma |
+-| `$ISA_SCRIPTS/sledgehammer.sh <file> <line> <session>` | Find `by (metis ...)` / `by (smt ...)` reconstruction for the goal at that line | 30-180s per call |
+-| `$ISA_SCRIPTS/check-theory.sh <file> <session>` | File baseline wall measurement | ~ file wall |
+-| `$ISA_SCRIPTS/check-theory.sh <file> <session> --patch <p>` | Trial: apply patch in sandbox | same |
+-| `$ISA_SCRIPTS/check-theory.sh <file> <session> --apply <p>` | Commit verified patch | same |
+-
+-## ⚠ DO NOT USE — deprecated
+-
+-| Item | Why |
+-|---|---|
+-| `tools/critical_path/lemma_profile.py` | Based on `command_timings`: 0.1s threshold drops fast tactics; `pos_of tr` offset misaligns to source keywords; records aggregate non-tactic work |
+-| `tools/critical_path/lemma_search_ratio.py` | Same problem as above |
+-| `reports/lemma-search-ratio-*.md` (13 files) | Generated from above tools; numbers wrong by 10-100× |
+-| `reports/layer3-lemma/lemma-optimization-targets.md` | Based on above; rankings unreliable |
+-
+-Root cause: see `reports/layer3-lemma/lemma-optimization-master-log-20260526.md`
+-end sections.
+-
+-## Known patterns — evidence summary
+-
+-### Confirmed wins (historical, when a different strategy was available — DO NOT use those strategies under this simplified skill)
+-
+-| Pattern | Δ file wall | Note |
+-|---|---:|---|
+-| `subgoal by fastforce → subgoal by force` cluster on state-relation premises (Finalise_R 1557-1565, CSpace_R 802-814) | −6% ~ −13% | Tactic-swap strategy, predates this simplified skill |
+-
+-These are kept for historical reference. **Under the current simplified
+-skill, do not attempt tactic swaps.** The reasoning: tactic swap only
+-shifts WHICH search engine runs, not WHETHER. Sledgehammer→metis is the
+-clean test for "does eliminating search matter here at all".
+-
+-### Confirmed non-wins (these prove search elimination has limited room)
+-
+-| Pattern | Lemma | Δ | What it proved |
+-|---|---|---:|---|
+-| `apply safe → apply (rule iffI); ...; apply simp` | `eq_ucast_word8` (Tcb_R), 95% reported search | **−0.33%** | The 20s "search" in heap-log was mostly T_work; eliminating search saved 0.7s wall, sub-threshold |
+-| `auto/fastforce → force` on dual search command | `invs_A` (ArchKernelInit_AI), 25% reported search | −0.48% | Same lesson — search-time was barely there |
+-
+-**These two negative results are why this skill is "single strategy, no
+-fallback".** If the cleanest possible test (full search elimination via
+-sledgehammer-found metis or rule chain) doesn't move wall ≥ 5%, then by
+-construction nothing weaker will.
+-
+-## Anti-patterns (DO NOT)
+-
+-| Anti-pattern | Why |
+-|---|---|
+-| Bulk `force → fastforce` whole-file sweeps | Empirically regress +7% to +160% (Tcb_AC, Syscall_AC, CNode_AC, InfoFlow Noninterference) — context-specific behavior |
+-| Trying multiple strategies on the same lemma after one fails | Wasted budget. The simplified strategy IS the upper-bound test. |
+-| Optimizing T_work (Isar decomposition, lemma splitting) | Out of scope — different optimization axis, different skill |
+-| Trusting `command_timings` / `lemma_profile.py` / search-ratio reports | Structurally unreliable — see deprecated list above |
+diff --git a/claude/.claude/skills/isabelle_prover_spec/SKILL.md b/claude/.claude/skills/isabelle_prover_spec/SKILL.md
+deleted file mode 100644
+index 18244b3..0000000
+--- a/claude/.claude/skills/isabelle_prover_spec/SKILL.md
++++ /dev/null
+@@ -1,233 +0,0 @@
+----
+-name: isabelle-prover-spec
+-description: "Strengthen seL4 Abstract Spec postconditions and invariant-abstract guarantees. Use when adding stronger statements to spec/abstract/ or proof/invariant-abstract/."
+----
+-
+-# Spec type — strengthen the specification
+-
+-Tis sub-skill **strengthens the statement itself**.The goal isn't faster build — it's a specification that catches more real
+-bugs, exposes more usable postconditions, and removes redundant noise.
+-
+-Inherits the common contract from `isabelle_prover` (3 hard rules, common
+-tools, patch format, session mapping).
+-
+-## Targets
+-
+-| Path | Session |
+-|---|---|
+-| `spec/abstract/**` | `ASpec` |
+-| `proof/invariant-abstract/**` | `AInvs` |
+-| `proof/refine/**` (`_R` lemmas; statement-not-tactic changes) | `Refine` |
+-
+-## Patterns — ordered by empirical ROI
+-
+-Based on past sessions ([20260525](../../../reports/spec-strengthen/AInvs-20260525.md),
+-[20260526](../../../reports/spec-strengthen/AInvs-20260526.md)). Detailed
+-worked examples in
+-[`references/spec-strengthen-patterns.md`](../isabelle_prover/references/spec-strengthen-patterns.md).
+-
+-| Pattern | Move | Empirical ROI | Risk |
+-|---|---|---|---|
+-| **C — Premise removal** | Drop a `valid_objs` / `invs` / `sym_refs` conjunct that the proof body doesn't use | **High** — every consumer call saves wp discharges | Low; if premise is load-bearing, `--patch` fails immediately |
+-| **B — Functional postcond** | Add `\<lbrace>\<top>\<rbrace> set_X v \<lbrace>\<lambda>_ s. X s = v\<rbrace>` | **Low immediate** — additive; no existing consumers benefit unless they currently unfold the def manually | Zero — pure addition |
+-| **E — Compound `_invs`** | Combine 5+ separate preservation lemmas into one `op_invs` | **High in theory, often infeasible in practice** — `invs` has 25+ components; missing any single `set_X_<comp>[wp]` blocks the proof | High; preflight check required (see below) |
+-| **A — Paired weak/strong** | Inline strong form or delete weak | **Near-zero downstream** — the weak form becomes an alias for the strong; consumers see equivalent postcond | **High false-positive rate (~70-80%)** — see warning below |
+-| **D — Loose bound → exact** | `≤` / `\<subseteq>` → `=` | Untested in this codebase | Variable |
+-
+-### ⚠ Pattern A false-positive warning
+-
+-Scanner-flagged Pattern A pairs are **wrong about 70-80% of the time**. Two
+-failure modes:
+-
+-1. **Wrong direction** — the "weak" lemma is the granular building block,
+-   the "strong" lemma is a compound built FROM it (e.g. `cap_insert_invs`
+-   composes `cap_insert_valid_pspace`, `cap_insert_mdb`, …). Deleting the
+-   building blocks breaks the compound.
+-2. **Cross-op false positives** — two lemmas share a Hoare-body identifier
+-   (e.g. both wrap `set_cap`) but have incomparable preconditions; not
+-   substitutable.
+-
+-**Always read both lemmas + grep cross-file usages before acting on a
+-Pattern A.** Pattern A is the LAST pattern to try, not the first.
+-
+-### ⚠ Pattern E preflight checklist
+-
+-Before attempting `op_invs` for an op X:
+-
+-1. Does `op_invs_minor`, `op_invs_<variant>`, or `op_<state>_invs` already
+-   exist? Check via `grep '^lemma op.*invs' verification/l4v/proof/`. If
+-   yes, the gap is already filled — skip.
+-2. Does op have a `[wp]` preservation rule for **every** component of
+-   `invs`? Roughly 25 components including arch-specific ones
+-   (`valid_arch_state`, `valid_machine_state`, `valid_vspace_objs`,
+-   `valid_global_refs`, `valid_irq_handlers`, `pspace_in_kernel_window`,
+-   `cap_refs_in_kernel_window`, `pspace_respects_device_region`,
+-   `cap_refs_respects_device_region`, …). If any is missing, attempting
+-   `op_invs` will fail with "Unification bound exceeded" or "Failed to
+-   finish proof" — you'd have to add the missing preservation rules first
+-   (significant work).
+-
+-The candidates file ranks Pattern E ops by *common* invariant count, but
+-that's a rough filter. Verify component coverage before committing.
+-
+-## Targeting — read the candidates file
+-
+-**Do not** read 4700 lines of `CSpace_AI.thy` by hand or rely on inline
+-file-richness rankings (they go stale as work is done). The ranked
+-candidates file is the targeting source of truth:
+-
+-```
+-reports/spec-strengthen/candidates-<YYYYMMDD>.md
+-```
+-
+-Generated by:
+-
+-```
+-python3 tools/critical_path/rank_candidates.py --limit 30 \
+-  --out reports/spec-strengthen/candidates-<YYYYMMDD>.md
+-```
+-
+-Re-run after a strengthening session to refresh the `[done]` markers and
+-demote lemmas already handled.
+-
+-The candidates file is grouped by Pattern (C → E → B → A) and within each
+-group ranked by **consumer count** (downstream surface = ROI proxy).
+-Start at the top of Pattern C.
+-
+-### Scanner reliability (calibration)
+-
+-| Pattern | Scanner accuracy | Recommended validation |
+-|---|---|---|
+-| C — premise removal | ~50% (premise may be load-bearing) | `check-theory.sh --patch` is the cheap test (~60s) — fail fast |
+-| B — functional postcond | ~95% detection; but downstream consumer existence rare | Manual review for `unfolds set_X_def` in consumer proofs |
+-| A — paired weak/strong | ~20-30% real opportunities | Read both lemmas + grep cross-file before acting |
+-| E — preflight check | Component-coverage check before commit | See preflight checklist above |
+-
+-The scanner ranks; the human judges; `check-theory.sh` is the only
+-acceptance gate. Treat scanner output as a work queue, not a verdict.
+-
+-## Workflow (per candidate)
+-
+-### Step 1 — pick from candidates file
+-
+-Open the dated candidates file. Pick the top **un-done** Pattern C entry
+-unless you have a specific reason to do another pattern. Read ±20 lines
+-around `file:line` in the actual `.thy` file.
+-
+-For Pattern A candidates: read both lemmas + run `grep -rln 'name' proof/`
+-on both names. Confirm the pairing is real and the direction is right
+-(see Pattern A warning above).
+-
+-### Step 2 — draft the patch
+-
+-Patch goes under `logs/spec-strengthen-<file>-<pattern>-<YYYYMMDD>.patch`.
+-Patch format described in `isabelle_prover` SKILL.md.
+-
+-| Pattern | Move |
+-|---|---|
+-| C | Edit the existing lemma; remove the suspect conjunct from precondition. Proof body usually unchanged. |
+-| B | Insert a new lemma below the existing preservation lemma. |
+-| E | Add new compound lemma below the last preservation lemma. |
+-| A | Inline strong form, OR tag weak with `[wp del]` (conservative), OR delete weak (only if `grep` showed no cross-file users). |
+-| D | Replace `≤` / `\<subseteq>` with `=` in postcondition. |
+-
+-### Step 3 — verify in isolation
+-
+-```
+-bash $ISA_SCRIPTS/check-theory.sh <file.thy> <session>                  # baseline
+-bash $ISA_SCRIPTS/check-theory.sh <file.thy> <session> --patch <patch>  # trial
+-```
+-
+-The patch must reach `OK`. **No `sorry` / `oops` / `axiomatization`.**
+-
+-Note on wall times: baseline and trial differ ±5% from noise alone (JVM,
+-disk cache). Don't read into single-run timing differences; spec_impact's
+-gates use these only as a coarse regression check.
+-
+-### Step 4 — measure impact (MANDATORY)
+-
+-```
+-python3 tools/critical_path/spec_impact.py <patch> <file.thy> \
+-  --baseline-wall <ms> --trial-wall <ms> \
+-  --tree verification/l4v/proof \
+-  --append-to reports/spec-strengthen/<session>-<YYYYMMDD>.md
+-```
+-
+-The report is appended to your dated strengthen-log automatically. Gates:
+-
+-| Gate | Required |
+-|---|---|
+-| No `weakening` verdict | HARD STOP |
+-| ≥ 1 lemma with one of `premise-weaken` / `monotone-strengthen` / `postcond-strengthen` / `additive` | yes |
+-| Trial wall ≤ baseline × 1.30 | yes (noise tolerance; ±5% is normal) |
+-
+-**Verdict interpretation (use this to prioritize):**
+-
+-| Verdict | Pattern | Downstream ROI |
+-|---|---|---|
+-| `premise-weaken` | C | **✓✓ High** — every consumer discharges fewer premises |
+-| `monotone-strengthen` | C + post-grow | **✓✓ High** (combines both) |
+-| `postcond-strengthen` | A "dedupe" | **Low** — consumers may need to weaken back |
+-| `additive` | B / E | **Opt-in only** — no existing consumers affected |
+-| `rewrite` | — | manual review needed |
+-| `weakening` | — | **abandon** |
+-
+-### Step 5 — apply
+-
+-```
+-bash $ISA_SCRIPTS/check-theory.sh <file.thy> <session> --apply <patch>
+-```
+-
+-**Important**: `--apply` writes the source file but does NOT rebuild the
+-session heap. The session heap still holds the OLD lemma signature until
+-the next full `isabelle build`. Consequences:
+-
+-- `check-theory.sh ARM/Other.thy AInvs` after `--apply` runs against the
+-  OLD heap → it does NOT measure the strengthening's downstream impact.
+-  It only checks syntactic compatibility with the OLD signature.
+-- The actual wp-engine work reduction (the real ROI) only materializes
+-  AFTER a full `isabelle build AInvs`. Budget hours.
+-
+-**Recommended cadence**: don't rebuild AInvs after each patch. **Batch
+-5-10 strengthenings** then do one full session rebuild, then measure
+-session-total wall vs the pre-batch baseline. Single-patch downstream
+-measurement costs ~80 min for ambiguous numbers in the noise band.
+-
+-After `--apply`, prepend one short paragraph to the auto-appended impact
+-block in the strengthen-log:
+-- Pattern letter
+-- One sentence on what the strengthening enables downstream
+-- Whether a session rebuild has been done (default: not yet)
+-
+-## Acceptance
+-
+-Apply iff the Step 4 gates all pass and the statement is **strictly more
+-informative** (weaker pre, stronger post, or both — Tier 1 numbers
+-confirm). The 3 hard rules from `isabelle_prover` (no `sorry` / `oops` /
+-`axiomatization`, check-theory.sh as only gate, etc.) are inherited.
+-
+-Spec strengthening trades build time for verification strength — a
+-slightly slower build with a stronger spec is the intended direction.
+-
+-## Tools
+-
+-| Tool | Purpose |
+-|---|---|
+-| `tools/critical_path/rank_candidates.py --out FILE` | Refresh the dated candidates file (Patterns A/B/C/E ranked by consumer count, with `[done]` dedup). |
+-| `tools/critical_path/spec_strengthen_scan.py <path>` | Raw scanner — emits A/B/C hits per file. `rank_candidates.py` calls this. Pattern D and E not detected here. |
+-| `tools/critical_path/spec_impact.py <patch> <thy>` | **MANDATORY** post-patch metric tool. Verdict gate for Step 4. |
+-| `verification/l4v/tools/proofcount/` (upstream) | Heavyweight ground-truth metrics. Run at most once per branch (full session rebuild). |
+-| `$ISA_SCRIPTS/goal-at.sh <file> <line> <session>` | Inspect goal state after a strengthening edit. |
+-| `$ISA_SCRIPTS/sledgehammer.sh <file> <line> <session>` | Find proof body for a new lemma. |
+-
+-Common tools (`check-theory.sh`, …) in the top-level `isabelle_prover` skill.
+-
+-## References (read on demand)
+-
+-| When | Read |
+-|---|---|
+-| Current targeting candidates | [`reports/spec-strengthen/candidates-<YYYYMMDD>.md`](../../../reports/spec-strengthen/) |
+-| Worked examples of each pattern | [`references/spec-strengthen-patterns.md`](../isabelle_prover/references/spec-strengthen-patterns.md) |
+-| Session dependency map (what rebuilds for which change) | [`references/spec-downstream-map.md`](../isabelle_prover/references/spec-downstream-map.md) |
+-| Refinement relation strengthening | [`references/refinement-proofs.md`](../isabelle_prover/references/refinement-proofs.md) |
+-| Past strengthening logs (precedents + failure modes) | [`reports/spec-strengthen/AInvs-*.md`](../../../reports/spec-strengthen/) |
+diff --git a/run.sh b/run.sh
+index ace98a4..ebc1fc7 100644
+--- a/run.sh
++++ b/run.sh
+@@ -44,15 +44,8 @@ fi
+ L4V_PATH="${SCRIPT_DIR}/verification/l4v"
+ 
+ # Wrappers agent will call; cwd-relative because we chdir below.
+-# This repo nests the skill under claude/.claude/ rather than at the repo root,
+-# so the default points there. Override with $ISA_SCRIPTS if you've symlinked
+-# .claude/ → claude/.claude at the project root.
+ if [ -z "${ISA_SCRIPTS:-}" ]; then
+-  if [ -d "${SCRIPT_DIR}/claude/.claude/skills/isabelle_prover/scripts" ]; then
+-    export ISA_SCRIPTS="claude/.claude/skills/isabelle_prover/scripts"
+-  else
+-    export ISA_SCRIPTS=".claude/skills/isabelle_prover/scripts"
+-  fi
++  export ISA_SCRIPTS=".claude/skills/isabelle_prover/scripts"
+ fi
+ 
+ # In-container paths.

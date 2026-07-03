@@ -1,0 +1,12 @@
+245 245
+  done
+
+lemma ifunsafe_tcb_update':
+    "\<lbrakk> if_unsafe_then_cap s \<rbrakk>
+    \<Longrightarrow> if_unsafe_then_cap (s\<lparr>kheap := (kheap s)(t \<mapsto> TCB tcb)\<rparr>)"
+    apply (simp add: if_unsafe_then_cap_def, elim allEI)
+    apply (clarsimp dest!: caps_of_state_cteD
+                     simp: cte_wp_at_after_update fun_upd_def)
+    apply (clarsimp simp: cte_wp_at_caps_of_state
+                          ex_cte_cap_to_after_update)
+    done

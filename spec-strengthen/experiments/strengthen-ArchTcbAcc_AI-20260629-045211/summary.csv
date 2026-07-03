@@ -1,0 +1,4 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-P-get_cap_valid_ipc_no_valid_objs_,get_cap_valid_ipc_no_valid_objs,P,named,TRIAL-FAILED,,
+01-P-cap_master_cap_tcb_cap_valid_arch_no_is_arch_cap_,cap_master_cap_tcb_cap_valid_arch_no_is_arch_cap,P,named,TRIAL-FAILED,,
+02-P-cap_master_cap_tcb_cap_valid_arch_no_vtable_hyp_,cap_master_cap_tcb_cap_valid_arch_no_vtable_hyp,P,named,TRIAL-FAILED,,

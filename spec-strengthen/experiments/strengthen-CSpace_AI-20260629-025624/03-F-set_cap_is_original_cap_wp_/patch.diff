@@ -1,0 +1,14 @@
+diff --git a/proof/invariant-abstract/CSpace_AI.thy b/proof/invariant-abstract/CSpace_AI.thy
+--- a/proof/invariant-abstract/CSpace_AI.thy
++++ b/proof/invariant-abstract/CSpace_AI.thy
+@@ -881,6 +881,10 @@
+   by (clarsimp simp: set_cap_def in_monad split_def get_object_def set_object_def
+                split: if_split_asm Structures_A.kernel_object.splits)
+ 
++lemma set_cap_is_original_cap_wp[wp]:
++  "\<lbrace>\<lambda>s. P (is_original_cap s)\<rbrace> set_cap cap p \<lbrace>\<lambda>_ s. P (is_original_cap s)\<rbrace>"
++  by (wpsimp simp: set_cap_def split_def set_object_def wp: get_object_wp | clarsimp)+
++
+ 
+ lemma mdb_set_cap:
+   "(x,s') \<in> fst (set_cap p c s) \<Longrightarrow> cdt s' = cdt s"

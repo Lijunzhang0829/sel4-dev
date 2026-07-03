@@ -1,0 +1,8 @@
+{
+ "ok": true,
+ "reason": "pure premise-weakening verified (strict pre-conjunct subset, identical post)",
+ "claim": "(valid_pdpt_objs and invs and valid_cnode_inv i) ==> (valid_pdpt_objs and valid_cnode_inv i) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `invs`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "dropped_conjuncts": [
+  "invs"
+ ]
+}

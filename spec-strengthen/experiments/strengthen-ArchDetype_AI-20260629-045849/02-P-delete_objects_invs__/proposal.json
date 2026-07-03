@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Any caller of delete_objects_invs that holds invs and the untyped cte_wp_at/descendants_range witnesses but not ct_active (e.g. non-active-thread delete paths)",
+ "hint_lemma": "delete_objects_invs",
+ "lemma_name": "delete_objects_invs'",
+ "anchor_line": 586,
+ "new_lemma": "lemma delete_objects_invs'[wp]:\n  \"\\<lbrace>(\\<lambda>s. \\<exists>slot. cte_wp_at ((=) (cap.UntypedCap dev ptr bits f)) slot s\n    \\<and> descendants_range (cap.UntypedCap dev ptr bits f) slot s) and\n    invs\\<rbrace>\n    delete_objects ptr bits \\<lbrace>\\<lambda>_. invs\\<rbrace>\"\n  apply (simp add: delete_objects_def)\n  apply (simp add: freeMemory_def word_size_def bind_assoc\n                   empty_fail_mapM_x ef_storeWord)\n   apply (rule hoare_pre)\n   apply (rule_tac G=\"is_aligned ptr bits \\<and> word_size_bits \\<le> bits \\<and> bits \\<le> word_bits\"\n                in hoare_grab_asm)\n   apply (simp add: mapM_storeWord_clear_um[unfolded word_size_def]\n                    intvl_range_conv[where 'a=machine_word_len, folded word_bits_def])\n   apply wp\n  apply clarsimp\n  apply (frule invs_untyped_children)\n  apply (frule detype_invariants, clarsimp+)\n  apply (drule invs_valid_objs)\n  apply (drule (1) cte_wp_valid_cap)\n  apply (simp add: valid_cap_def cap_aligned_def word_size_bits_def untyped_min_bits_def)\n  done",
+ "rationale": "The proof body of the original `delete_objects_invs` never references `ct_active` — no `rule ct_active`, no `simp add: ct_active_def`, no `drule ct_active`. The detype_invariants frule needs the `detype_locale` hypotheses (invs + untyped cap witnesses), not ct_active specifically. If the trial succeeds, this gives a strictly weaker precondition usable in paths where the current thread is not active.",
+ "strengthening_claim": "((\\<lambda>s. \\<exists>slot. cte_wp_at ((=) (cap.UntypedCap dev ptr bits f)) slot s\n    \\<and> descendants_range (cap.UntypedCap dev ptr bits f) slot s) and\n    invs and ct_active) ==> ((\\<lambda>s. \\<exists>slot. cte_wp_at ((=) (cap.UntypedCap dev ptr bits f)) slot s\n    \\<and> descendants_range (cap.UntypedCap dev ptr bits f) slot s) and\n    invs) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `ct_active`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

@@ -1,0 +1,3 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-Q-cap_delete_one_deletes_reply_strong_,cap_delete_one_deletes_reply_strong,Q,named,TRIAL-FAILED,,
+01-Q-cancel_ipc_caps_of_state_inv_,cancel_ipc_caps_of_state_inv,Q,named,TRIAL-FAILED,,

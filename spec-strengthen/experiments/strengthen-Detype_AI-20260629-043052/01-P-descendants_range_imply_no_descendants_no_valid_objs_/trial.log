@@ -1,0 +1,21 @@
+FAILED (41336ms)
+*** Failed to apply proof method (line 357 of "/tmp/tmp.Egef9uqJhv/Tmp_5dfc915618323f47.thy"):
+*** goal (1 subgoal):
+***  1. \<And>dev r bits f a b capa.
+***        \<lbrakk>caps_of_state s p = Some (UntypedCap dev r bits f);
+***         valid_mdb s; cap = UntypedCap dev r bits f;
+***         cap_class capa = PhysicalClass;
+***         cap_range capa \<subseteq> {r..r + 2 ^ bits - 1};
+***         caps_of_state s (a, b) = Some capa;
+***         cap_range capa \<inter> {r..r + 2 ^ bits - 1} = {}\<rbrakk>
+***        \<Longrightarrow> False
+*** At command "apply" (line 357 of "/tmp/tmp.Egef9uqJhv/Tmp_5dfc915618323f47.thy")
+*** Failed to apply proof method (line 357 of "/tmp/tmp.Egef9uqJhv/Tmp_5dfc915618323f47.thy"):
+*** goal (1 subgoal):
+***  1. \<And>dev r bits f a b capa.
+***        \<lbrakk>caps_of_state s p = Some (UntypedCap dev r bits f);
+***         valid_mdb s; cap = UntypedCap dev r bits f;
+***         cap_class capa = PhysicalClass;
+***         cap_range capa \<subseteq> {r..r + 2 ^ bits - 1};
+***         caps_of_state s (a, b) = Some capa;
+***         cap_range capa \<inter> {r..r + 2 ^ bits - 1} = {}\<rbrakk>

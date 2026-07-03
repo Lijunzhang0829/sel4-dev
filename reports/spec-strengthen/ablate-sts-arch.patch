@@ -1,0 +1,2 @@
+1490 1492
+(* ABLATION: set_thread_state_arch_state[wp] removed for consumer trace *)

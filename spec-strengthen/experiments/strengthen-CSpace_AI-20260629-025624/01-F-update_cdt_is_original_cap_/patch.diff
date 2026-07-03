@@ -1,0 +1,14 @@
+diff --git a/proof/invariant-abstract/CSpace_AI.thy b/proof/invariant-abstract/CSpace_AI.thy
+--- a/proof/invariant-abstract/CSpace_AI.thy
++++ b/proof/invariant-abstract/CSpace_AI.thy
+@@ -137,6 +137,10 @@
+   "\<lbrace>\<lambda>s. valid_mdb (cdt_update (\<lambda>_. (m (cdt s))) s)\<rbrace> update_cdt m \<lbrace>\<lambda>_. valid_mdb\<rbrace>"
+   by (simp add: update_cdt_def set_cdt_def) wp
+ 
++lemma update_cdt_is_original_cap[wp]:
++  "\<lbrace>\<lambda>s. P (is_original_cap s)\<rbrace> update_cdt f \<lbrace>\<lambda>_ s. P (is_original_cap s)\<rbrace>"
++  by (wpsimp simp: update_cdt_def)
++
+ (* FIXME: rename *)
+ lemma unpleasant_helper:
+   "(\<forall>a b. (\<exists>c. a = f c \<and> b = g c \<and> P c) \<longrightarrow> Q a b) = (\<forall>c. P c \<longrightarrow> Q (f c) (g c))"

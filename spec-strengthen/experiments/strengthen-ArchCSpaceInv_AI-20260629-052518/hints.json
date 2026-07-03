@@ -1,0 +1,18 @@
+[
+ {
+  "slot": "P",
+  "kind": "unused-premise",
+  "lemma": "unique_table_refs_no_cap_asidE",
+  "line": 35,
+  "statement": "\\<lbrakk>caps_of_state s p = Some cap;\n    unique_table_refs (caps_of_state s)\\<rbrakk>\n   \\<Longrightarrow> no_cap_to_obj_with_diff_ref cap S s",
+  "op": "",
+  "op_class": "unknown",
+  "form": "impl",
+  "evidence": "[implication lemma — assumption-weakening] conjunct `caps_of_state s p = Some cap` head `caps_of_state` never appears in the proof body (prefix match incl. _def/_E forms); 1 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `` is unknown; wp-chain implicit use is the trial's job",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": "caps_of_state s p = Some cap",
+  "position": null,
+  "priority": "high"
+ }
+]

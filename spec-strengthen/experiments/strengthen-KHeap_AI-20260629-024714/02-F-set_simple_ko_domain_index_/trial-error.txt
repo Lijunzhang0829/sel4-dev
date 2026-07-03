@@ -1,0 +1,21 @@
+FAILED (43291ms)
+*** Failed to finish proof (line 1442 of "/tmp/tmp.nM46VqcQmJ/Tmp_2b7cf51b123be46b.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrace>\<lambda>s. P (domain_index s)\<rbrace> get_object ptr 
+***     \<lbrace>\<lambda>obj s.
+***                 (a_type obj = AEndpoint \<longrightarrow>
+***                  (\<exists>y. partial_inv f obj = Some y) \<longrightarrow>
+***                  P (domain_index s)) \<and>
+***                 (a_type obj = ANTFN \<longrightarrow>
+***                  (\<exists>y. partial_inv f obj = Some y) \<longrightarrow>
+***                  P (domain_index s))\<rbrace>
+*** At command "by" (line 1442 of "/tmp/tmp.nM46VqcQmJ/Tmp_2b7cf51b123be46b.thy")
+*** Failed to finish proof (line 1442 of "/tmp/tmp.nM46VqcQmJ/Tmp_2b7cf51b123be46b.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrace>\<lambda>s. P (domain_index s)\<rbrace> get_object ptr 
+***     \<lbrace>\<lambda>obj s.
+***                 (a_type obj = AEndpoint \<longrightarrow>
+***                  (\<exists>y. partial_inv f obj = Some y) \<longrightarrow>
+***                  P (domain_index s)) \<and>
+***                 (a_type obj = ANTFN \<longrightarrow>
+***                  (\<exists>y. partial_inv f obj = Some y) \<longrightarrow>

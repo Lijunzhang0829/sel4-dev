@@ -1,0 +1,30 @@
+583 583
+  done
+
+lemma cap_insert_simple_invs_no_tcb_cap_valid:
+  "\<lbrace>invs and valid_cap cap and
+    ex_cte_cap_wp_to (appropriate_cte_cap cap) dest and
+    cte_wp_at (\<lambda>c. is_untyped_cap c \<longrightarrow> usable_untyped_range c = {}) src and
+    cte_wp_at (\<lambda>c. c = cap.NullCap) dest and
+    no_cap_to_obj_with_diff_ref cap {dest} and
+    (\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s) and
+    K (is_simple_cap cap \<and> \<not>is_ap_cap cap) and (\<lambda>s. \<forall>irq \<in> cap_irqs cap. irq_issued irq s)\<rbrace>
+  cap_insert cap src dest \<lbrace>\<lambda>rv. invs\<rbrace>"
+  apply (simp add: invs_def valid_state_def valid_pspace_def)
+  apply (rule hoare_pre)
+   apply (wp cap_insert_simple_mdb cap_insert_iflive
+             cap_insert_zombies cap_insert_ifunsafe
+             cap_insert_valid_global_refs cap_insert_idle
+             valid_irq_node_typ cap_insert_simple_arch_caps_no_ap)
+  apply (clarsimp simp: is_simple_cap_def cte_wp_at_caps_of_state)
+  apply (frule safe_parent_cap_range)
+  apply simp
+  apply (rule conjI)
+   prefer 2
+   apply (clarsimp simp: is_cap_simps safe_parent_for_def)
+  apply (clarsimp simp: cte_wp_at_caps_of_state)
+  apply (drule_tac p="(a,b)" in caps_of_state_valid_cap, fastforce)
+  apply (clarsimp dest!: is_cap_simps' [THEN iffD1])
+  apply (auto simp add: valid_cap_def [where c="cap.Zombie a b x" for a b x]
+              dest: obj_ref_is_tcb obj_ref_is_cap_table split: option.splits)
+  done

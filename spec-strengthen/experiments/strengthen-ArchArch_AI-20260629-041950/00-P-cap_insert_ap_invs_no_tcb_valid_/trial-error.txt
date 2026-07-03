@@ -1,0 +1,21 @@
+FAILED (65395ms)
+*** Failed to apply proof method (line 652 of "/tmp/tmp.GaJrS8Zene/Tmp_a56e886f28ecf80a.thy"):
+*** goal (2 subgoals):
+***  1. \<And>s capa a b ba n.
+***        \<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s;
+***         if_live_then_nonz_cap s; zombies_final s;
+***         sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s);
+***         valid_mdb s; valid_ioc s; valid_idle s; only_idle s;
+***         if_unsafe_then_cap s; valid_reply_caps s; valid_reply_masters s;
+***         valid_global_refs s; valid_arch_state s; valid_irq_node s;
+***         valid_irq_handlers s; valid_irq_states s; valid_machine_state s;
+***         valid_vspace_objs s; valid_arch_caps s; valid_global_objs s;
+***         valid_kernel_mappings s; equal_kernel_mappings s; valid_asid_map s;
+***         valid_global_vspace_mappings s; pspace_in_kernel_window s;
+***         cap_refs_in_kernel_window s; pspace_respects_device_region s;
+***         cap_refs_respects_device_region s; cur_tcb s;
+***         s \<turnstile> ArchObjectCap (ASIDPoolCap ap asid);
+***         ex_cte_cap_wp_to
+***          (appropriate_cte_cap (ArchObjectCap (ASIDPoolCap ap asid))) dest s;
+***         caps_of_state s dest = Some NullCap;
+***         no_cap_to_obj_with_diff_ref (ArchObjectCap (ASIDPoolCap ap asid))

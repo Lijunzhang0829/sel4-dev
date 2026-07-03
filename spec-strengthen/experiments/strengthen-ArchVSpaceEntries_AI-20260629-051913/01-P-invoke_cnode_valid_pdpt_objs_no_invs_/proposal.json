@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "A strengthened version of invoke_cnode_valid_pdpt_objs usable wherever valid_pdpt_objs preservation is needed without an invs requirement; e.g. future refactors of handle_invocation callers",
+ "lemma_name": "invoke_cnode_valid_pdpt_objs_no_invs",
+ "anchor_line": 614,
+ "hint_lemma": "invoke_cnode_valid_pdpt_objs",
+ "new_lemma": "lemma invoke_cnode_valid_pdpt_objs_no_invs:\n  \"\\<lbrace>valid_pdpt_objs and valid_cnode_inv i\\<rbrace> invoke_cnode i \\<lbrace>\\<lambda>rv. valid_pdpt_objs\\<rbrace>\"\n  apply (simp add: invoke_cnode_def)\n  apply (rule hoare_pre)\n   apply (wp get_cap_wp | wpc | simp split del: if_split)+\n  done",
+ "rationale": "All operations invoked inside invoke_cnode (cap_insert, cap_swap_for_delete, empty_slot, cap_delete, cap_move, etc.) are already proven [wp] for valid_pdpt_objs with only valid_pdpt_objs in their preconditions (L92, L607, L418). The proof fully delegates to those [wp] lemmas via a crunch-style wp chain; invs never appears in the proof text and no consumed conjunct is identified, making it a pure opaque delegation. The decode op classification (read/decode shape) further supports droppability.",
+ "strengthening_claim": "(valid_pdpt_objs and invs and valid_cnode_inv i) ==> (valid_pdpt_objs and valid_cnode_inv i) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `invs`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

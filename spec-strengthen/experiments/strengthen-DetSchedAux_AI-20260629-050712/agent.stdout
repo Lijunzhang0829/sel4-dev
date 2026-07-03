@@ -1,0 +1,41 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "retype_region_etcb_at or any future consumer of retype_etcb_at_helper that does not hold valid_etcbs_2",
+  "hint_lemma": "retype_etcb_at_helper",
+  "lemma_name": "retype_etcb_at_helper_no_valid_etcbs",
+  "anchor_line": 72,
+  "new_lemma": "lemma retype_etcb_at_helper_no_valid_etcbs: \"\\<lbrakk>etcb_at' P t ekh; d \\<noteq> apiobject_type.Untyped;\n        foldr (\\<lambda>p kh. kh(p \\<mapsto> default_object d dev c))\n         ptrs\n         kh t =\n        Some (TCB tcb);\n        tcb_state tcb \\<noteq> Inactive\\<rbrakk>\n       \\<Longrightarrow> etcb_at' P t\n           ((foldr (\\<lambda>p ekh. ekh(p := default_ext d cdom))\n             ptrs)\n             ekh)\"\n  apply (induct ptrs)\n  apply simp\n  apply (case_tac d)\n  apply (clarsimp split: if_split_asm simp: default_tcb_def default_object_def default_ext_def etcb_at'_def)+\n  done",
+  "rationale": "The proof of retype_etcb_at_helper (L68-72) never mentions valid_etcbs_2: the induction and case_tac on d only use d ≠ Untyped, etcb_at', and the foldr-TCB equation. Dropping valid_etcbs_2 gives a strictly stronger implication.",
+  "strengthening_claim": "(etcb_at' P t ekh ∧ d ≠ Untyped ∧ foldr...t = Some(TCB tcb) ∧ tcb_state tcb ≠ Inactive) ==> (etcb_at' P t ekh ∧ valid_etcbs_2 ekh kh ∧ d ≠ Untyped ∧ foldr...t = Some(TCB tcb) ∧ tcb_state tcb ≠ Inactive)",
+  "grace_period_weeks": 8
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "retype_region_etcb_at or any future consumer of retype_etcb_at_helper where tcb_state is not known",
+  "hint_lemma": "retype_etcb_at_helper",
+  "lemma_name": "retype_etcb_at_helper_no_inactive",
+  "anchor_line": 72,
+  "new_lemma": "lemma retype_etcb_at_helper_no_inactive: \"\\<lbrakk>etcb_at' P t ekh; valid_etcbs_2 ekh kh; d \\<noteq> apiobject_type.Untyped;\n        foldr (\\<lambda>p kh. kh(p \\<mapsto> default_object d dev c))\n         ptrs\n         kh t =\n        Some (TCB tcb)\\<rbrakk>\n       \\<Longrightarrow> etcb_at' P t\n           ((foldr (\\<lambda>p ekh. ekh(p := default_ext d cdom))\n             ptrs)\n             ekh)\"\n  apply (induct ptrs)\n  apply simp\n  apply (case_tac d)\n  apply (clarsimp split: if_split_asm simp: default_tcb_def default_object_def default_ext_def etcb_at'_def)+\n  done",
+  "rationale": "The proof of retype_etcb_at_helper (L68-72) never references tcb_state: the induction and clarsimp only inspect d and etcb_at'. The tcb_state ≠ Inactive conjunct is therefore not consumed by the proof.",
+  "strengthening_claim": "(etcb_at' P t ekh ∧ valid_etcbs_2 ekh kh ∧ d ≠ Untyped ∧ foldr...t = Some(TCB tcb)) ==> (etcb_at' P t ekh ∧ valid_etcbs_2 ekh kh ∧ d ≠ Untyped ∧ foldr...t = Some(TCB tcb) ∧ tcb_state tcb ≠ Inactive)",
+  "grace_period_weeks": 8
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "callers of invoke_untyped_valid_sched that already hold invs (which subsumes valid_idle via invs_valid_idle)",
+  "hint_lemma": "invoke_untyped_valid_sched",
+  "lemma_name": "invoke_untyped_valid_sched'",
+  "anchor_line": 326,
+  "new_lemma": "lemma invoke_untyped_valid_sched':\n  \"\\<lbrace>invs and valid_untyped_inv ui and ct_active and valid_sched\\<rbrace>\n     invoke_untyped ui\n   \\<lbrace>\\<lambda>_. valid_sched\\<rbrace>\"\n  apply (rule hoare_pre)\n   apply (rule_tac I=\"invs and valid_untyped_inv ui and ct_active\"\n                in valid_sched_tcb_state_preservation)\n          apply (wpsimp wp: invoke_untyped_st_tcb_at invoke_untyped_etcb_at)+\n     apply (rule hoare_strengthen_postE, rule invoke_untyp_invs; simp add: invs_valid_idle)\n    apply simp\n   apply (rule_tac f=\"\\<lambda>s. P (scheduler_action s)\" in hoare_lift_Pf)\n    apply (rule_tac f=\"\\<lambda>s. x (ready_queues s)\" in hoare_lift_Pf)\n     apply wp+\n  apply simp+\n  done",
+  "rationale": "The proof at L320 already uses `invs_valid_idle` to derive valid_idle from invs inside valid_sched_tcb_state_preservation's assumption discharge. Therefore the outer precondition `valid_idle` is redundant: it is already entailed by `invs` which is a required conjunct. Dropping it gives a strictly stronger Hoare triple.",
+  "strengthening_claim": "(invs and valid_untyped_inv ui and ct_active and valid_sched) ==> (invs and valid_untyped_inv ui and ct_active and valid_sched and valid_idle)",
+  "grace_period_weeks": 8
+ }
+]
