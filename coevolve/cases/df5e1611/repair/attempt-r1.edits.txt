@@ -1,0 +1,61 @@
+<<<<SEARCH
+crunches loadWord, storeWord, machine_op_lift, clearMemory
+  for (empty_fail) empty_fail[intro!, wp, simp]
+  (ignore: Nondet_Monad.bind mapM_x simp: machine_op_lift_def empty_fail_cond)
+====
+crunches loadWord, storeWord, machine_op_lift
+  for (empty_fail) empty_fail[intro!, wp, simp]
+  (ignore: Nondet_Monad.bind mapM_x simp: machine_op_lift_def empty_fail_cond)
+>>>>
+
+<<<<SEARCH
+lemma no_fail_clearMemory[simp, wp]:
+  "no_fail (\<lambda>_. is_aligned p 3) (clearMemory p b)"
+  apply (simp add: clearMemory_def mapM_x_mapM)
+  apply (rule no_fail_pre)
+   apply (wp no_fail_mapM' no_fail_storeWord )
+  apply (clarsimp simp: upto_enum_step_def)
+  apply (erule aligned_add_aligned)
+   apply (simp add: word_size_def)
+   apply (rule is_aligned_mult_triv2 [where n = 3, simplified])
+  apply simp
+  done
+
+====
+>>>>
+
+<<<<SEARCH
+lemma no_irq_clearMemory: "no_irq (clearMemory a b)"
+  by (wpsimp simp: clearMemory_def no_irq_mapM_x no_irq_storeWord)
+
+====
+>>>>
+
+<<<<SEARCH
+crunches getFPUState, getRegister, getRestartPC, setNextPC, ackInterrupt, maskInterrupt
+====
+crunches clearMemory
+  for (empty_fail) empty_fail[intro!, wp, simp]
+  (ignore: Nondet_Monad.bind mapM_x simp: machine_op_lift_def empty_fail_cond)
+
+lemma no_fail_clearMemory[simp, wp]:
+  "no_fail (\<lambda>_. is_aligned p 3) (clearMemory p b)"
+  apply (simp add: clearMemory_def mapM_x_mapM)
+  apply (rule no_fail_pre)
+   apply (wp no_fail_mapM' no_fail_storeWord)
+  apply (clarsimp simp: upto_enum_step_def)
+  apply (erule aligned_add_aligned)
+   apply (simp add: word_size_def)
+   apply (rule is_aligned_mult_triv2 [where n = 3, simplified])
+  apply simp
+  done
+
+lemma no_irq_clearMemory: "no_irq (clearMemory a b)"
+  by (wpsimp simp: clearMemory_def no_irq_mapM_x no_irq_storeWord)
+
+crunches getFPUState, getRegister, getRestartPC, setNextPC, ackInterrupt, maskInterrupt
+>>>>
+
+
+=== VERDICT: GREEN ===
+OK (25697ms)
