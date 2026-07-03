@@ -249,11 +249,14 @@ def assign_session_for_thy(thy_path: Path, parsed: dict) -> str | None:
     for d, names in parsed["theory_search_paths"].items():
         try:
             d_path = Path(d)
-            if abs_p.is_relative_to(d_path):
-                depth = len(d_path.parts)
-                if best is None or depth > best[0]:
-                    # If multiple sessions share same dir, just pick the first deterministically.
-                    best = (depth, sorted(names)[0])
+            # py3.8-safe containment test: relative_to raises ValueError when
+            # not contained, which the enclosing except already treats as skip
+            # (Path.is_relative_to needs 3.9+; server B runs 3.8).
+            abs_p.relative_to(d_path)
+            depth = len(d_path.parts)
+            if best is None or depth > best[0]:
+                # If multiple sessions share same dir, just pick the first deterministically.
+                best = (depth, sorted(names)[0])
         except ValueError:
             continue
     return best[1] if best else None
