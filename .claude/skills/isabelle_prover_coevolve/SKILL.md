@@ -234,7 +234,7 @@ cross-session / CRefine.
 | Tool | Role | Status |
 |---|---|---|
 | `reports/repair/classify_commits.py` | Repair-distribution classifier over l4v git log (the preliminary exploration) | **exists** |
-| theory-DAG tooling (`tools/`, cstr-2graph line) | Break blast-radius + propagation order | **exists** |
+| theory-DAG: `tools/theory_dag/` (`parse_theory_imports.py` + `dag_query.py`; restored 2026-07 from the cstr-2graph line after cleanup 9d51c97 dropped it; arch-parameterized via `L4V_ARCH`; recompute once per campaign, read-only during it) | Blast-radius upper bound (`dependents` = reverse closure, topo repair order); the build oracle stays the only truth | **exists (restored)** |
 | `spec-strengthen/strengthen.sh` loop + `spec_agent.py` | propose→trial→repair inner loop; repoint payload to "repair the break" | **exists, adapt** |
 | `$ISA_SCRIPTS/check-theory.sh` | The only verification gate; dense per-lemma oracle via `--patch` | **exists** |
 | proof-track measurement (per-file wall, golden baseline) | Cost / wall side of the metric | **exists** |
