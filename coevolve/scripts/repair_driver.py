@@ -5,7 +5,7 @@ v2: prompt via STDIN (argv 128KB limit); error-centric window for big files;
 CUMULATIVE repair (keep progress across rounds); per-call wall logging.
 Canonical copy lives in B:coevolve/scripts/ — A's /tmp scratchpad is volatile.
 """
-import json, os, re, subprocess, sys, time
+import difflib, json, os, re, subprocess, sys, time
 
 SSH = ["ssh", "-o", "BatchMode=yes", "zljj@114.212.82.216"]
 B_REPO = "/data/zljj/sel4-dev"
@@ -70,6 +70,43 @@ def make_view(content, err):
                   "anchor edits ONLY on text visible here)" % (lo + 1, hi, len(lines)))
 
 
+def make_patch(orig, new):
+    """check-theory patch: minimal hunks (whole-file payload trips the
+    parser when file content contains a literal '---' line)."""
+    ol, nl = orig.split("\n"), new.split("\n")
+    sm = difflib.SequenceMatcher(None, ol, nl, autojunk=False)
+    hunks = []
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if tag == "equal":
+            continue
+        repl = nl[j1:j2]
+        if i1 == i2:            # pure insert: anchor on previous line
+            if i1 > 0:
+                start, end, repl = i1, i1, [ol[i1 - 1]] + repl
+            else:
+                start, end, repl = 1, 1, repl + [ol[0]]
+        elif not repl:          # pure delete: rewrite prev line to keep block non-empty
+            if i1 > 0:
+                start, end, repl = i1, i2, [ol[i1 - 1]]
+            else:
+                start, end, repl = 1, i2, []
+        else:
+            start, end = i1 + 1, i2
+        assert all(l.strip() != "---" for l in repl), "replacement contains ---"
+        hunks.append("%d %d\n%s" % (start, end, "\n".join(repl)))
+    return "\n---\n".join(hunks) + "\n"
+
+
+def anchor_hint(content, search):
+    first = search.split("\n")[0].strip()
+    lines = content.split("\n")
+    m = difflib.get_close_matches(first, [l.strip() for l in lines], n=1, cutoff=0.5)
+    if not m:
+        return "(no similar line found)"
+    idx = [l.strip() for l in lines].index(m[0])
+    return "\n".join(lines[max(0, idx - 2):idx + 6])
+
+
 PROMPT = """You are repairing seL4/l4v proofs broken by an upstream artifact \
 change (proof co-evolution). The artifact change is ALREADY applied to the \
 spec; the proof file below no longer builds.
@@ -99,7 +136,9 @@ something that no longer exists AND nothing in this file uses it.
 Forbidden: sorry / oops / axiomatization; weakening a statement to triviality.
 
 Output ONLY edit blocks (nothing else). Each SEARCH must be an exact, \
-contiguous, UNIQUE substring of the current file text:
+contiguous, UNIQUE substring of the current file text — COPY it \
+character-for-character from the file shown above; do NOT retype, reflow, \
+or reconstruct it from memory (any mismatch aborts the edit):
 <<<<SEARCH
 (exact text)
 ====
@@ -114,7 +153,7 @@ def run_claude(prompt, log_path):
     for attempt in (1, 2):
         try:
             r = subprocess.run(cmd, input=prompt, capture_output=True,
-                               text=True, timeout=1200)
+                               text=True, timeout=1500)
             break
         except subprocess.TimeoutExpired:
             if attempt == 2:
@@ -172,7 +211,9 @@ def main():
             for i, (s, rpl) in enumerate(blocks):
                 n = new_content.count(s)
                 if n != 1:
-                    fails.append("block %d: SEARCH occurs %d times" % (i, n))
+                    hint = anchor_hint(new_content, s) if n == 0 else ""
+                    fails.append("block %d: SEARCH occurs %d times%s" % (i, n,
+                        ("; closest ACTUAL text in file:\n" + hint) if hint else ""))
                 else:
                     new_content = new_content.replace(s, rpl)
             if fails:
@@ -182,7 +223,7 @@ def main():
                not re.search(r"\b(sorry|oops|axiomatization)\b", broken):
                 err = err + "\nREJECTED: edit introduces sorry/oops/axiomatization"
                 continue
-            patch = "1 %s\n%s" % (nline, new_content)
+            patch = make_patch(broken, new_content)
             b_write("%s/logs/repair-%s-r%d.patch" % (B_REPO, c, k), patch)
             verdict, out = check(gt_file, "/workspace/logs/repair-%s-r%d.patch"
                                  % (c, k))

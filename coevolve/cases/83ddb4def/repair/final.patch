@@ -1,0 +1,5 @@
+1522 1522
+  by (simp add: pptr_base_def kernel_elf_base_def pptrBase_def canonical_bit_def kernelELFBase_def
+                kernelELFPAddrBase_def pptrTop_def Kernel_Config.physBase_def mask_def ipa_size_def)
+
+
