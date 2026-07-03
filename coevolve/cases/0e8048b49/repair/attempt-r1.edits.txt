@@ -1,0 +1,24 @@
+Looking at the diff, the spec changes `whenE (vtop \<ge> user_vtop)` to `whenE (vtop > user_vtop)`. On the success (no-throw) branch, the negated condition changes:
+
+- Old: `¬(vtop ≥ user_vtop)` = `vtop < user_vtop` = `¬(user_vtop ≤ vtop)`
+- New: `¬(vtop > user_vtop)` = `vtop ≤ user_vtop` = `¬(user_vtop < vtop)`
+
+This is exactly what the `prop_tac` in `decode_fr_inv_map_wf` encodes. The condition, the negation lemma, and the derived inequality lemma all need to track from strict to non-strict.
+
+<<<<SEARCH
+    apply (prop_tac "\<not> user_vtop \<le> args ! 0 + mask (pageBitsForSize vmpage_size) \<longrightarrow> args!0 \<in> user_region")
+     apply (clarsimp simp: user_region_def not_le)
+     apply (rule user_vtop_canonical_user)
+     apply (erule aligned_add_mask_lessD)
+     apply (simp add: vmsz_aligned_def)
+====
+    apply (prop_tac "\<not> user_vtop < args ! 0 + mask (pageBitsForSize vmpage_size) \<longrightarrow> args!0 \<in> user_region")
+     apply (clarsimp simp: user_region_def not_less)
+     apply (rule user_vtop_canonical_user)
+     apply (erule aligned_add_mask_leD)
+     apply (simp add: vmsz_aligned_def)
+>>>>
+
+
+=== VERDICT: RED ===
+FAILED (68341ms)

@@ -39,7 +39,7 @@ def b_write(path, content):
 
 def check(gt_file, patch_container_path):
     cmd = ("cd %s && docker compose exec -T %s l4v bash %s "
-           "/sel4-project/verification/l4v/%s AInvs --patch %s 2>&1 | tail -60"
+           "/sel4-project/verification/l4v/%s AInvs --patch %s 2>&1 | tail -1200"
            % (B_REPO, " ".join(ENVS), CT, gt_file, patch_container_path))
     rc, out, err = ssh(cmd, timeout=2400)
     green = bool(re.search(r"^OK\b", out, re.M)) or "\nOK" in out
@@ -47,8 +47,12 @@ def check(gt_file, patch_container_path):
 
 
 def extract_err(out):
-    lines = [l for l in out.split("\n") if l.startswith("***")]
-    return "\n".join(lines)[:2500] or out[-1500:]
+    # keep the *** block AND the goal-state dump that follows it (the ***
+    # header can sit hundreds of lines above the tail — grab from first ***)
+    idx = out.find("***")
+    if idx >= 0:
+        return out[idx:idx + 3500]
+    return out[-1500:]
 
 
 def err_line_no(err):

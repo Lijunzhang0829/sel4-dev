@@ -107,3 +107,22 @@ the dominant human response is ADD new helpers + evolve statements, not
 re-prove bodies. Selection-bias caveat: co-change commits may over-represent
 L2 (statement changes force atomic commits); the pair-form benchmark will
 give the unbiased distribution.
+
+## Repair experiment — final scorecard (2026-07-03, Step-2 first cut)
+
+3 build-adjudicated RED seeds, repair agent = claude -p sonnet, closed loop
+(propose SEARCH/REPLACE → check-theory → feed error back, ≤3 rounds,
+cumulative). Full transcripts in `cases/*/repair/`.
+
+| seed | shape | verdict | rounds | vs human C_p |
+|---|---|---|---|---|
+| df5e1611 | crunches + decl-order relocation | **GREEN → SESSION-GREEN** (full AInvs AARCH64 build) | 1 (892s) | isomorphic, smaller (kept stmt; human also symbolized 3→word_size_bits = choice, build-proven non-forced) |
+| 83ddb4def | obsolete-lemma repair | **GREEN → SESSION-GREEN** | 2 (581s) | **divergent & stronger**: human deleted the lemma; agent kept it, re-proved by inlining the deleted upstream defs |
+| 0e8048b49 | boundary flip → stmt evolution + new helper | RED (unresolved) | — | agent 3× produced the correct semantic move (prop_tac `<`→`≤`, not_le→not_less — byte-identical to half of C_p) but was **never given a usable error**: goal dump >250 lines pushed `***` out of the harness tail window; with mid-file default windows it correctly said "break is outside my view" each time. Harness-attributed, not capability. tail→1200 fix landed; last attempt pending |
+
+**Conclusion (fork-① capability question): the agent CAN repair.** 2/3
+session-green with human-divergent-yet-valid fixes; the third blocked
+exclusively by harness I/O (error truncation, argv limit, patch-parser `---`
+mine, transport stalls at ~80KB prompts) — each failure became a
+deterministic harness fix; zero failures attributable to proof reasoning.
+Machine-side cost per success: ~10-15 min wall, 1-2 rounds.
