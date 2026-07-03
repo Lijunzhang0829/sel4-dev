@@ -1,0 +1,25 @@
+The actual current file has `VCPUSetTCB` already (added by r1/r2) but is missing `VCPUInjectIRQ` — that's the new constructor added to `vcpu_invocation` by the spec change. The fix is to add the missing case.
+<tool_call>
+{"name": "Bash", "input": {"command": "docker exec seL4-regen grep -c 'VCPUAckVPPI vcpu_ptr vppi' /sel4-project/proof/invariant-abstract/AARCH64/ArchArch_AI.thy"}}
+</tool_call>
+<tool_response>
+1
+</tool_response>
+
+The SEARCH text is unique. Here is the minimal edit:
+
+<<<<SEARCH
+     | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr"
+====
+     | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr
+     | VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr"
+>>>>
+
+
+=== VERDICT: RED ===
+FAILED (14311ms)
+*** Error in case expression:
+*** Not a datatype constructor: VCPUReadRegister
+*** In clause
+*** VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
+*** At command "definition" (line 26 of "/tmp/tmp.wta00AOiPM/Tmp_7aeb44715f565332.thy")

@@ -227,7 +227,11 @@ def main():
                not re.search(r"\b(sorry|oops|axiomatization)\b", broken):
                 err = err + "\nREJECTED: edit introduces sorry/oops/axiomatization"
                 continue
-            patch = make_patch(broken, new_content)
+            # patch coordinates MUST be in CURRENT-file space (check-theory
+            # applies to the original file) — computing them against `broken`
+            # silently lands edits on the wrong lemma (83ddb4def retraction).
+            current_file = b_read("%s/verification/l4v/%s" % (B_REPO, gt_file))
+            patch = make_patch(current_file, new_content)
             b_write("%s/logs/repair-%s-r%d.patch" % (B_REPO, c, k), patch)
             verdict, out = check(gt_file, "/workspace/logs/repair-%s-r%d.patch"
                                  % (c, k))

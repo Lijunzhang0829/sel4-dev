@@ -126,3 +126,27 @@ exclusively by harness I/O (error truncation, argv limit, patch-parser `---`
 mine, transport stalls at ~80KB prompts) — each failure became a
 deterministic harness fix; zero failures attributable to proof reasoning.
 Machine-side cost per success: ~10-15 min wall, 1-2 rounds.
+
+## ⚠ RETRACTION & corrections (2026-07-03 evening audit)
+
+1. **83ddb4def GREEN/SESSION-GREEN RETRACTED.** Offline audit of
+   `final.patch` against the current tree showed the v3 driver computed
+   hunk coordinates in BROKEN-file space while check-theory applies them in
+   CURRENT-file space; the +7-line drift landed the edit on the UNRELATED
+   lemma `pptrTop_le_ipa_size` (whose proof happened to still close under
+   the substituted simp set → false GREEN, and the session build validated
+   that accidental state). The agent's intended repair was never tested.
+   Driver fixed (patch now computed vs the live current file); the agent's
+   r1+r2 edits are being replayed and properly verified. df5e1611 is
+   unaffected (v2 whole-file patch — coordinate-exact by construction).
+2. **Container recreation wiped the AARCH64 heap** (image-baked heaps are
+   ephemeral; timestamps reverted to the Apr-30 ARM originals) → every
+   check after the recreation ran against the WRONG-ARCH heap, producing
+   "Not a datatype constructor: VCPUSetTCB" artifacts. All 0e8048b49
+   attempts of 2026-07-03 afternoon are void as capability data. Heap
+   rebuilt; **heaps now also backed up to /workspace/heaps-backup/**
+   (host-mounted, survives recreation; restore = cp back + or rebuild).
+3. Harness-failure taxonomy grows to 8: (7) patch coordinate space,
+   (8) ephemeral-heap recreation. The audit that caught #7 was triggered
+   by a routine "should we re-verify on the new DAG" question — cheap
+   text-level audits of applied patches are now a standing gate step.
