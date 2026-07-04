@@ -150,3 +150,23 @@ Machine-side cost per success: ~10-15 min wall, 1-2 rounds.
    (8) ephemeral-heap recreation. The audit that caught #7 was triggered
    by a routine "should we re-verify on the new DAG" question — cheap
    text-level audits of applied patches are now a standing gate step.
+
+## Reinstatement + final open item (2026-07-03 night)
+
+- **83ddb4def REINSTATED**: replaying the agent's r1+r2 edits in broken space
+  and emitting the patch in CORRECT current-file coordinates verifies
+  **GREEN (68.6s)** — the inline-and-reprove repair is genuinely valid
+  (`logs/replay-83ddb4def.patch`). Pending: downstream session build of this
+  TRUE state (the earlier SESSION-GREEN validated the mis-anchored state).
+- **0e8048b49 stays open, fully attributed**: its failure has NEVER emitted
+  a capturable `***` block via stdout tail (since adjudication) — the error
+  detail lives in check-theory's temp log, not the tail. Harness item #9:
+  read the temp-log path instead of tailing stdout. The agent's final reply
+  states precisely the two missing inputs (omitted-region text or an error
+  line number); its semantic move (prop_tac `<`→`≤` + discharge-chain swap)
+  has been correct in every round that had any signal. No capability failure
+  on record for this seed — only I/O starvation.
+
+Score at campaign close: **2/3 valid GREEN** (df5e1611 session-validated;
+83ddb4def file-validated on true coordinates, session pending), 1/3 open
+with 9-item harness taxonomy and zero reasoning failures attributed.

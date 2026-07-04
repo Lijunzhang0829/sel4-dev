@@ -1,6 +1,5 @@
 {
- "rounds": 3,
+ "rounds": 0,
  "verdict": "RED",
- "n_edits": 1,
- "wall_s": 971
+ "wall_s": 5482
 }
