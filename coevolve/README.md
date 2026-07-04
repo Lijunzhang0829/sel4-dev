@@ -220,3 +220,22 @@ Consequences:
   used in downstream validation). Next session: either port/extend A's
   check_theory_selfqual fix, or add a tree-apply oracle mode to the
   repair driver (≈20 min/check; ~1.5-2 h for a full 3-round attempt).
+
+## 0e8048b49 — first SOUND test complete (2026-07-04, tree-apply oracle v4)
+
+Baseline GREEN (1225s) → broken RED with the REAL wf failure finally visible
+→ 2 effective repair rounds (r1 lost to transport):
+
+- **r2**: agent anchored the REAL prop_tac block and reproduced the human's
+  statement-evolution half **byte-for-byte** (`≤`→`<`, `not_le`→`not_less`);
+  guessed `aligned_add_mask_leD` for discharge → crisp "Undefined fact".
+- **r3**: replaced the guess with `order_trans[rotated]` +
+  `is_aligned_no_overflow'` — the same mathematical idea as the human's
+  `is_aligned_no_overflow_mask` route, different plumbing. Build RED with
+  the goal moved deeper.
+
+Verdict: **RED at budget (3 rounds, 2 effective) — a converging near-miss,
+not an incapability**. The missing step is the human's ≤-helper addition;
+trajectory suggests 1-2 more rounds would likely close. Recorded as the
+seed's first capability-attributable data point. Optional next: one
+extended run (MAX_ROUNDS=5, ~3-4h) for the definitive close.

@@ -1,0 +1,43 @@
+Now I have the exact picture. `aligned_add_mask_leD` and `user_vtop_canonical_user` (which takes `≤`) both exist. Let me see the exact lines in `ArchArch_AI.thy` around line 1443.
+
+<tool_call>
+{"name": "Bash", "input": {"command": "sed -n '1435,1455p' /sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy"}}
+</tool_call>
+<tool_response>
+    apply (clarsimp simp: if_distribR if_bool_simps disj_imp cong: if_cong split del: if_split)
+    apply (rule pull_out)
+    apply clarsimp
+    apply (prop_tac "\<not> user_vtop \<le> args ! 0 + mask (pageBitsForSize vmpage_size) \<longrightarrow> args!0 \<in> user_region")
+     apply (clarsimp simp: user_region_def not_le)
+     apply (rule user_vtop_canonical_user)
+     apply (erule aligned_add_mask_lessD)
+     apply (simp add: vmsz_aligned_def)
+    apply (rename_tac pte_ptr level)
+</thinking>
+
+The fix is clear. With the spec change from `≥` to `>`:
+- Old success condition: `¬(vtop ≥ user_vtop)` = `vtop < user_vtop` = `¬(user_vtop ≤ vtop)`
+- New success condition: `¬(vtop > user_vtop)` = `vtop ≤ user_vtop` = `¬(user_vtop < vtop)`
+
+The prop_tac and its sub-proof need to match. `user_vtop_canonical_user` takes `≤`, and `aligned_add_mask_leD` handles the `≤` case.
+
+<<<<SEARCH
+    apply (prop_tac "\<not> user_vtop \<le> args ! 0 + mask (pageBitsForSize vmpage_size) \<longrightarrow> args!0 \<in> user_region")
+     apply (clarsimp simp: user_region_def not_le)
+     apply (rule user_vtop_canonical_user)
+     apply (erule aligned_add_mask_lessD)
+     apply (simp add: vmsz_aligned_def)
+====
+    apply (prop_tac "\<not> user_vtop < args ! 0 + mask (pageBitsForSize vmpage_size) \<longrightarrow> args!0 \<in> user_region")
+     apply (clarsimp simp: user_region_def not_less)
+     apply (rule user_vtop_canonical_user)
+     apply (erule aligned_add_mask_leD)
+     apply (simp add: vmsz_aligned_def)
+>>>>
+
+
+=== VERDICT: RED ===
+*** Undefined fact: "aligned_add_mask_leD" (line 1422 of "/sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy")
+*** At command "apply" (line 1422 of "/sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy")
+Unfinished session(s): AInvs
+0:16:33 elapsed time, 1:26:01 cpu time, factor 5.19
