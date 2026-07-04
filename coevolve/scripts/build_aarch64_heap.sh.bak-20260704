@@ -2,7 +2,7 @@
 # One-time: build AARCH64 ASpec+AInvs heaps in a SEPARATE Isabelle home
 # (never touches the baked ARM heaps). Reused by all AArch64 adjudications.
 set -eu
-H=/root/.isabelle/aarch64  # via ISABELLE_IDENTIFIER (dist settings CLOBBERS exported ISABELLE_HOME_USER — see B-ISOLATION.md)
+H=/root/.isabelle-aarch64
 ML=polyml-5.9.1_x86_64_32-linux
 if [ ! -d "$H" ]; then
   mkdir -p "$H/heaps/$ML"
@@ -12,7 +12,7 @@ if [ ! -d "$H" ]; then
     [ -e "$src" ] && cp -a "$src" "$H/heaps/$ML/$s" && echo "reused $s"
   done
 fi
-export ISABELLE_IDENTIFIER=aarch64
+export ISABELLE_HOME_USER="$H"
 export L4V_ARCH=AARCH64
 echo "=== gen Kernel_Config.thy (AARCH64) $(date) ==="
 make -C /sel4-project/verification/l4v/spec/cspec/c config

@@ -1,4 +1,4 @@
-The error is "Not a datatype constructor: VCPUSetTCB" in the `valid_vcpu_invocation` definition, meaning `VCPUSetTCB` was removed from the `vcpu_invocation` datatype as part of the upstream spec change. The fix is to drop that case from the pattern match.
+The `VCPUSetTCB` constructor no longer exists in the spec (it was renamed, consistent with the seL4 C kernel using `invokeVCPU_AssociateTCB`). The fix is to rename it to `VCPUAssocTCB` in the definition.
 
 <<<<SEARCH
 definition
@@ -13,7 +13,10 @@ definition
 ====
 definition
   "valid_vcpu_invocation vi \<equiv> case vi of
-       VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr
+       VCPUAssocTCB vcpu_ptr tcb_ptr \<Rightarrow> vcpu_at vcpu_ptr and tcb_at tcb_ptr and
+                                       ex_nonz_cap_to vcpu_ptr and ex_nonz_cap_to tcb_ptr
+                                       and (\<lambda>s. tcb_ptr \<noteq> idle_thread s)
+     | VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr"
@@ -22,7 +25,10 @@ definition
 
 === VERDICT: RED ===
 *** Error in case expression:
-*** Not a datatype constructor: VCPUInjectIRQ
+*** Not a datatype constructor: VCPUAssocTCB
 *** In clause
-*** VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr
-*** At command "definition" (line 26 of "/tmp/tmp.aZ5Vj27Jjm/Tmp_30993c354dac817e.thy")
+*** VCPUAssocTCB vcpu_ptr tcb_ptr \<Rightarrow>
+***   vcpu_at vcpu_ptr and tcb_at tcb_ptr and ex_nonz_cap_to vcpu_ptr and
+***   ex_nonz_cap_to tcb_ptr and
+***   (\<lambda>s. tcb_ptr \<noteq> idle_thread s)
+*** At command "definition" (line 26 of "/tmp/tmp.nb9pxjkGnA/Tmp_79bdf17d46715720.thy")

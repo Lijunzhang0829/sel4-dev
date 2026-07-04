@@ -1,22 +1,18 @@
-The error says `VCPUInjectIRQ` is no longer a datatype constructor, so the upstream change removed it from the `vcpu_invocation` type. Removing that branch from the case expression is the minimal fix.
+Looking at the error, `VCPUAssocTCB` is no longer a valid constructor in the `vcpu_invocation` datatype — it was renamed to `VCPUSetTCB` to align with the seL4 invocation label naming convention.
 
 <<<<SEARCH
-  "valid_vcpu_invocation vi \<equiv> case vi of
-       VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr
-     | VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
-     | VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
-     | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr"
+       VCPUAssocTCB vcpu_ptr tcb_ptr \<Rightarrow> vcpu_at vcpu_ptr and tcb_at tcb_ptr and
 ====
-  "valid_vcpu_invocation vi \<equiv> case vi of
-       VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
-     | VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
-     | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr"
+       VCPUSetTCB vcpu_ptr tcb_ptr \<Rightarrow> vcpu_at vcpu_ptr and tcb_at tcb_ptr and
 >>>>
 
 
 === VERDICT: RED ===
 *** Error in case expression:
-*** Not a datatype constructor: VCPUReadRegister
+*** Not a datatype constructor: VCPUSetTCB
 *** In clause
-*** VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
-*** At command "definition" (line 26 of "/tmp/tmp.3UgAG9XC3o/Tmp_ebee285edac7546d.thy")
+*** VCPUSetTCB vcpu_ptr tcb_ptr \<Rightarrow>
+***   vcpu_at vcpu_ptr and tcb_at tcb_ptr and ex_nonz_cap_to vcpu_ptr and
+***   ex_nonz_cap_to tcb_ptr and
+***   (\<lambda>s. tcb_ptr \<noteq> idle_thread s)
+*** At command "definition" (line 26 of "/tmp/tmp.6cJKNabZEL/Tmp_78879bda96f93f93.thy")

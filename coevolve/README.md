@@ -194,3 +194,29 @@ New hard rules:
 
 Next session: diff rebuild2 log vs the July-2 build log; clean config-build
 cache and rebuild; baseline-test; then the (seventh, properly-fed) attempt.
+
+## 0e8048b49 — RECLASSIFIED (2026-07-04, probe-proven)
+
+A NO-OP whole-file patch (content = current file verbatim, exact header)
+fails identically at line 26 (`Not a datatype constructor: VCPUSetTCB`)
+while the no-patch baseline passes: **check-theory's --patch path yields a
+FALSE RED on this theory** (self-qualification false-negative class — the
+qualified-import temp env loses `arch_global_naming` constructor
+visibility; same family as the known FinalCaps rename false-negative).
+Probes archived: `logs/probe-noop-{exact,overshoot}.patch`.
+
+Consequences:
+- The seed's July-2 adjudication "broken=RED" is VOID (likely this same
+  artifact — the SIGPIPE bug hid the error text then). Its forced/chosen
+  status is UNKNOWN; it is dropped from the adjudication tally.
+- Every repair attempt on it was unrunnable-by-construction: the oracle
+  could never report the true wf failure. Seed excluded from capability
+  scoring (still zero capability failures overall).
+- df5e1611 remains double-validated (--patch GREEN AND tree-apply session
+  build GREEN). 83ddb4def's replay hunk avoids the header → unaffected;
+  its session validation stays queued.
+- Harness item **#13**: --patch oracle is unsound for arch_global_naming
+  theories; definitive oracle for them = tree-apply + session build (as
+  used in downstream validation). Next session: either port/extend A's
+  check_theory_selfqual fix, or add a tree-apply oracle mode to the
+  repair driver (≈20 min/check; ~1.5-2 h for a full 3-round attempt).

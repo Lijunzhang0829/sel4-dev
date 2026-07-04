@@ -1,22 +1,29 @@
-Looking at the error, `VCPUReadRegister` is no longer a constructor in the `vcpu_invocation` datatype (it was removed in the upstream spec). The fix is to remove that arm from `valid_vcpu_invocation`.
+Based on the error "Not a datatype constructor: VCPUSetTCB", the `vcpu_invocation` datatype in the current spec no longer has `VCPUSetTCB` as a constructor. The minimal fix is to remove that branch from `valid_vcpu_invocation`.
 
 <<<<SEARCH
 definition
   "valid_vcpu_invocation vi \<equiv> case vi of
-       VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
+       VCPUSetTCB vcpu_ptr tcb_ptr \<Rightarrow> vcpu_at vcpu_ptr and tcb_at tcb_ptr and
+
+                                       ex_nonz_cap_to vcpu_ptr and ex_nonz_cap_to tcb_ptr
+                                       and (\<lambda>s. tcb_ptr \<noteq> idle_thread s)
+     | VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr
+     | VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr"
 ====
 definition
   "valid_vcpu_invocation vi \<equiv> case vi of
-       VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
+       VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr
+     | VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
+     | VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr"
 >>>>
 
 
 === VERDICT: RED ===
 *** Error in case expression:
-*** Not a datatype constructor: VCPUWriteRegister
+*** Not a datatype constructor: VCPUInjectIRQ
 *** In clause
-*** VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
-*** At command "definition" (line 26 of "/tmp/tmp.91Cx9Yyz2R/Tmp_3ae5911ba38608c7.thy")
+*** VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr
+*** At command "definition" (line 26 of "/tmp/tmp.MzBIdSJzMd/Tmp_e54c3167cecc3913.thy")
