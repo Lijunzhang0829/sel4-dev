@@ -170,3 +170,27 @@ Machine-side cost per success: ~10-15 min wall, 1-2 rounds.
 Score at campaign close: **2/3 valid GREEN** (df5e1611 session-validated;
 83ddb4def file-validated on true coordinates, session pending), 1/3 open
 with 9-item harness taxonomy and zero reasoning failures attributed.
+
+## 0e8048b49 final status (2026-07-04) + two new hard rules
+
+Item #9's true root cause found and fixed: B ran an OLD check-theory whose
+`grep|head` under pipefail died of SIGPIPE before printing any `***` —
+every failure looked like a bare `FAILED` (blind repair). A-side had fixed
+this; the fix is now ported (harness item #10: cross-machine script drift).
+
+With errors finally visible, the next blocker surfaced: **baseline
+(unmodified file) is RED on the rebuilt heap** (`Not a datatype
+constructor: VCPUSetTCB`) while it was GREEN on the July-2 heap — two runs
+of build_aarch64_heap.sh are NOT equivalent (suspect: stale cross-container
+cmake config-build cache on the host mount, or partial build). All
+0e8048b49 rounds remain void; **zero capability failures on record**.
+
+New hard rules:
+1. **Baseline-first**: repair_driver now refuses to run any seed whose
+   unpatched baseline is not GREEN (INFRA-RED verdict, no claude spend).
+2. **Heap-event discipline**: after ANY heap rebuild/container event, run a
+   baseline check before experiments; back up good heaps to
+   /workspace/heaps-backup immediately after validating them.
+
+Next session: diff rebuild2 log vs the July-2 build log; clean config-build
+cache and rebuild; baseline-test; then the (seventh, properly-fed) attempt.

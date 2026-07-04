@@ -38,12 +38,20 @@ def b_write(path, content):
 
 
 def check(gt_file, patch_container_path):
-    cmd = ("cd %s && docker compose exec -T %s l4v bash %s "
-           "/sel4-project/verification/l4v/%s AInvs --patch %s 2>&1 | tail -1200"
-           % (B_REPO, " ".join(ENVS), CT, gt_file, patch_container_path))
+    # harness item #9: this file's failure buries the *** block under a
+    # >1200-line goal dump — tailing stdout starves the agent of the error.
+    # Capture FULL output to a file on B, then grep the *** section from it.
+    inner = ("docker compose exec -T %s l4v bash %s "
+             "/sel4-project/verification/l4v/%s AInvs --patch %s"
+             % (" ".join(ENVS), CT, gt_file, patch_container_path))
+    cmd = ("cd %s && %s > /tmp/ct-full.out 2>&1; rc=$?; "
+           "tail -4 /tmp/ct-full.out; echo __ERRSEC__; "
+           "grep -m1 -A80 '^\*\*\*' /tmp/ct-full.out | head -100; exit $rc"
+           % (B_REPO, inner))
     rc, out, err = ssh(cmd, timeout=2400)
-    green = bool(re.search(r"^OK\b", out, re.M)) or "\nOK" in out
-    return ("GREEN" if green else "RED"), out
+    head, _, errsec = out.partition("__ERRSEC__")
+    green = bool(re.search(r"^OK\b", head, re.M))
+    return ("GREEN" if green else "RED"), (errsec.strip() or head)
 
 
 def extract_err(out):

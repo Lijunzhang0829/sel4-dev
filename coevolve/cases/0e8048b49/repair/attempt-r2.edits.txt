@@ -1,14 +1,12 @@
-Looking at the error: `VCPUInjectIRQ` is no longer a datatype constructor in the `vcpu_invocation` type. The fix is to remove that case from `valid_vcpu_invocation`.
+The error says `VCPUInjectIRQ` is no longer a datatype constructor, so the upstream change removed it from the `vcpu_invocation` type. Removing that branch from the case expression is the minimal fix.
 
 <<<<SEARCH
-definition
   "valid_vcpu_invocation vi \<equiv> case vi of
        VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr"
 ====
-definition
   "valid_vcpu_invocation vi \<equiv> case vi of
        VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
@@ -17,9 +15,8 @@ definition
 
 
 === VERDICT: RED ===
-FAILED (14448ms)
 *** Error in case expression:
 *** Not a datatype constructor: VCPUReadRegister
 *** In clause
 *** VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
-*** At command "definition" (line 26 of "/tmp/tmp.lkOHDE9xkc/Tmp_90671c46949db1bc.thy")
+*** At command "definition" (line 26 of "/tmp/tmp.3UgAG9XC3o/Tmp_ebee285edac7546d.thy")

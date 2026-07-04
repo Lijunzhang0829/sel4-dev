@@ -1,4 +1,4 @@
-Looking at the error: `Not a datatype constructor: VCPUSetTCB`. The spec change accompanied removal of `VCPUSetTCB` from the `vcpu_invocation` datatype. The `valid_vcpu_invocation` definition (the only failing item visible in lines 1–285) must drop that clause.
+The error is "Not a datatype constructor: VCPUSetTCB" in the `valid_vcpu_invocation` definition, meaning `VCPUSetTCB` was removed from the `vcpu_invocation` datatype as part of the upstream spec change. The fix is to drop that case from the pattern match.
 
 <<<<SEARCH
 definition
@@ -21,9 +21,8 @@ definition
 
 
 === VERDICT: RED ===
-FAILED (14898ms)
 *** Error in case expression:
 *** Not a datatype constructor: VCPUInjectIRQ
 *** In clause
 *** VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr
-*** At command "definition" (line 26 of "/tmp/tmp.m7Nzo8kRbm/Tmp_338a8b8c69ffcda4.thy")
+*** At command "definition" (line 26 of "/tmp/tmp.aZ5Vj27Jjm/Tmp_30993c354dac817e.thy")

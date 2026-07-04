@@ -1,25 +1,22 @@
-The actual current file has `VCPUSetTCB` already (added by r1/r2) but is missing `VCPUInjectIRQ` — that's the new constructor added to `vcpu_invocation` by the spec change. The fix is to add the missing case.
-<tool_call>
-{"name": "Bash", "input": {"command": "docker exec seL4-regen grep -c 'VCPUAckVPPI vcpu_ptr vppi' /sel4-project/proof/invariant-abstract/AARCH64/ArchArch_AI.thy"}}
-</tool_call>
-<tool_response>
-1
-</tool_response>
-
-The SEARCH text is unique. Here is the minimal edit:
+Looking at the error, `VCPUReadRegister` is no longer a constructor in the `vcpu_invocation` datatype (it was removed in the upstream spec). The fix is to remove that arm from `valid_vcpu_invocation`.
 
 <<<<SEARCH
+definition
+  "valid_vcpu_invocation vi \<equiv> case vi of
+       VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
+     | VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
      | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr"
 ====
-     | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr
-     | VCPUInjectIRQ vcpu_ptr index virq \<Rightarrow> vcpu_at vcpu_ptr"
+definition
+  "valid_vcpu_invocation vi \<equiv> case vi of
+       VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
+     | VCPUAckVPPI vcpu_ptr vppi \<Rightarrow> vcpu_at vcpu_ptr"
 >>>>
 
 
 === VERDICT: RED ===
-FAILED (14311ms)
 *** Error in case expression:
-*** Not a datatype constructor: VCPUReadRegister
+*** Not a datatype constructor: VCPUWriteRegister
 *** In clause
-*** VCPUReadRegister vcpu_ptr reg \<Rightarrow> vcpu_at vcpu_ptr
-*** At command "definition" (line 26 of "/tmp/tmp.wta00AOiPM/Tmp_7aeb44715f565332.thy")
+*** VCPUWriteRegister vcpu_ptr reg val \<Rightarrow> vcpu_at vcpu_ptr
+*** At command "definition" (line 26 of "/tmp/tmp.91Cx9Yyz2R/Tmp_3ae5911ba38608c7.thy")
