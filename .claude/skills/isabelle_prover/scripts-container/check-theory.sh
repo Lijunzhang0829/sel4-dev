@@ -82,13 +82,31 @@ fi
 
 # Ensure session heap exists. Heap location follows Isabelle settings (ISABELLE_HEAPS),
 # which inside sel4-dev resolves to /isabelle/$L4V_ARCH per /tmp/isabelle_settings.
+#
+# SAFETY (2026-07-04): auto-rebuild on "heap missing" is DISABLED by default.
+# A rebuild launched from a degraded shell env (non-login docker exec, wrong
+# ISABELLE_HEAPS resolution) silently overwrites the baked heap chain with a
+# polluted one whose arch aliases (ARM_A.* etc.) are invisible to Draft-mode
+# overlays — the root cause of the 2026-07 B-machine heap-pollution incident,
+# twice. Restore from the container image instead (see B: restore_heaps.sh),
+# or opt in explicitly with CHECK_THEORY_AUTOREBUILD=1 from a login shell.
 HEAP_DIR="$(L4V_ARCH="${L4V_ARCH:-ARM}" "$ISA_HOME/bin/isabelle" getenv -b ISABELLE_HEAPS)/polyml-5.9.1_x86_64_32-linux"
+if [ -z "$(L4V_ARCH="${L4V_ARCH:-ARM}" "$ISA_HOME/bin/isabelle" getenv -b ISABELLE_HEAPS)" ]; then
+  echo "Error: ISABELLE_HEAPS resolved empty (degraded env?). Refusing to continue." >&2
+  exit 3
+fi
 if [ ! -f "${HEAP_DIR}/${SESSION}" ]; then
-  echo "[check-theory] ${SESSION} heap missing, rebuilding..." >&2
-  L4V_ARCH="${L4V_ARCH:-ARM}" "$ISA_HOME/bin/isabelle" build -b -d "$L4V_DIR" "$SESSION" >&2 2>&1
-  if [ ! -f "${HEAP_DIR}/${SESSION}" ]; then
-    echo "Error: ${SESSION} heap build failed" >&2
-    exit 1
+  if [ "${CHECK_THEORY_AUTOREBUILD:-0}" = "1" ]; then
+    echo "[check-theory] ${SESSION} heap missing, rebuilding (explicitly enabled)..." >&2
+    L4V_ARCH="${L4V_ARCH:-ARM}" "$ISA_HOME/bin/isabelle" build -b -d "$L4V_DIR" "$SESSION" >&2 2>&1
+    if [ ! -f "${HEAP_DIR}/${SESSION}" ]; then
+      echo "Error: ${SESSION} heap build failed" >&2
+      exit 1
+    fi
+  else
+    echo "Error: ${SESSION} heap missing at ${HEAP_DIR}. NOT auto-rebuilding (heap-pollution guard)." >&2
+    echo "  Restore baked heaps from the container image, or set CHECK_THEORY_AUTOREBUILD=1 (login shell only)." >&2
+    exit 3
   fi
 fi
 
@@ -349,8 +367,11 @@ if [ $RC -eq 0 ]; then
   echo "OK (${ELAPSED_MS}ms)"
 else
   echo "FAILED (${ELAPSED_MS}ms)"
-  # Extract error lines
-  ERR_LINES=$(echo "$OUTPUT" | grep "^\*\*\*" | head -20)
+  # Extract error lines. Use grep -m20 (stop after 20 matches) instead of
+  # `grep ... | head -20`: under `set -o pipefail`, head closing the pipe early
+  # sends SIGPIPE to grep and the whole script exits 141 BEFORE printing any
+  # error — so callers saw only "FAILED" with no *** detail (blind repair).
+  ERR_LINES=$(echo "$OUTPUT" | grep -m60 "^\*\*\*" || true)
   if [ -z "$ERR_LINES" ]; then
     echo "No *** lines found. Showing full output:"
     echo "$OUTPUT"
