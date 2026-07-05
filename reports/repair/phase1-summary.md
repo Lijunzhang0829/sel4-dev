@@ -138,14 +138,14 @@ synthesis SOTA (Stepwise 77.6%) on model power. **"Semi" is a feature:** the
 forced/chosen split IS the automation boundary (forced = auto-repair; chosen =
 suggest + human-review) — M6 measures it.
 
-**Gaps to the tool (assembly, no new research):**
-1. **Entrypoint** `coevolve_pipeline.sh <artifact-diff>` chaining all stages.
-2. **Detect from build** — discover the RED file set from build output +
-   DAG topo-order + multi-file fixpoint (designed in the skill, not coded;
-   all runs so far were single-known-file).
-3. **Report assembler** — PR-style human-review artifact (diff + rationale +
-   quality vector + transcripts + cost).
-4. **Autonomy accounting** (M6).
+**Gaps to the tool — ALL CLOSED + e2e-validated (2026-07-06):** the four
+assembly gaps (entrypoint coevolve_pipeline.sh; detect-from-build RED
+discovery; report assembler; M6 autonomy accounting) are built and proven by a
+first uninterrupted full run: --seed df5e1611 -> SESSION-GREEN, autonomy 1.0,
+1 round, $1.48, 39min (README milestone). The pipeline IS the tool; the
+single-session L1 path is validated end to end. Remaining: artifact-diff
+deployment mode (currently seed mode) and multi-file/cross-session paths
+(coded, untested at scale) — these fall out of batch scale-up, not new research.
 
 ## 8. Next phase (one path serves both tooling and statistics)
 
