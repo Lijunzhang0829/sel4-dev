@@ -17,16 +17,17 @@ def sh(cmd):
                           capture_output=True, text=True).stdout
 
 
-def rationale(transcript_path):
-    """Pull the prose the model wrote before its edit blocks (its reasoning)."""
-    txt = sh("cat %s 2>/dev/null" % transcript_path)
-    # take everything AFTER the reply marker (robust to marker variants)
-    for mk in ("=== REPLY (full) ===", "=== REPLY ==="):
-        if mk in txt:
-            txt = txt.rsplit(mk, 1)[1]
-            break
-    pre = txt.split("<<<<SEARCH")[0].strip()
-    return pre[:900] or "(no prose)"
+def rationale(transcripts):
+    """Prose from the last reply-bearing round (skip transport-timeout rounds,
+    which archive only a prompt)."""
+    for tp in reversed(transcripts):
+        txt = sh("cat %s 2>/dev/null" % tp)
+        if "=== REPLY (full) ===" in txt:
+            body = txt.rsplit("=== REPLY (full) ===", 1)[1]
+            pre = body.split("<<<<SEARCH")[0].strip()
+            if pre:
+                return pre[:900]
+    return "(no reply-bearing round — all transport timeouts)"
 
 
 def main():
@@ -64,8 +65,8 @@ def main():
         if diff.strip():
             L.append("```diff\n%s\n```" % diff.strip())
         if fr.get("transcripts"):
-            L.append("\n**LLM rationale (final round):**\n> %s\n"
-                     % rationale(fr["transcripts"][-1]).replace("\n", "\n> "))
+            L.append("\n**LLM rationale (last reply-bearing round):**\n> %s\n"
+                     % rationale(fr["transcripts"]).replace("\n", "\n> "))
 
     out = run_dir + "/report.md"
     sh("cat > %s <<'REPORTEOF'\n%s\nREPORTEOF" % (out, "\n".join(L)))
