@@ -1,0 +1,25 @@
+1478 1478
+  by (wpsimp simp: set_thread_state_def)
+
+lemma set_thread_state_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_thread_state t st \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  by (wpsimp simp: set_thread_state_def)
+---
+1491 1491
+  done
+
+lemma set_bound_notification_machine_state[wp]:
+  "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_bound_notification t ntfn \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+  by (wpsimp simp: set_bound_notification_def)
+
+lemma set_bound_notification_domain_index[wp]:
+  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_bound_notification t ntfn \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
+  by (wpsimp simp: set_bound_notification_def)
+
+lemma set_bound_notification_domain_time[wp]:
+  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_bound_notification t ntfn \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
+  by (wpsimp simp: set_bound_notification_def)
+
+lemma set_bound_notification_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_bound_notification t ntfn \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  by (wpsimp simp: set_bound_notification_def)

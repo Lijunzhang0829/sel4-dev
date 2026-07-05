@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Any caller that passes a kheap-equality proof to valid_arch_tcb_pspaceI; the stronger form needs only the valid_arch_tcb hypothesis",
+ "grace_period_weeks": 8,
+ "hint_lemma": "valid_arch_tcb_pspaceI",
+ "lemma_name": "valid_arch_tcb_pspaceI_no_kheap",
+ "anchor_line": 2397,
+ "new_lemma": "lemma valid_arch_tcb_pspaceI_no_kheap:\n  \"valid_arch_tcb t s \\<Longrightarrow> valid_arch_tcb t s'\"\n  by (simp add: valid_arch_tcb_def)",
+ "rationale": "valid_arch_tcb is defined as \\<lambda>a. \\<top> (L251), so valid_arch_tcb t s = True for every t and s. The premise valid_arch_tcb t s and the conclusion valid_arch_tcb t s' are both trivially True. The conjunct kheap s = kheap s' is therefore structurally irrelevant; simp add: valid_arch_tcb_def closes the stronger statement directly.",
+ "strengthening_claim": "(valid_arch_tcb t s) ==> (valid_arch_tcb t s \\<and> kheap s = kheap s')",
+ "anchor_text": ""
+}

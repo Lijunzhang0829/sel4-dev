@@ -1,0 +1,318 @@
+{
+ "proof/invariant-abstract/RISCV64/ArchInvariants_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "canonical_user_kernel_elf_base": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma canonical_user_kernel_elf_base: \"canonical_user < kernel_elf_base\""
+   },
+   "canonical_user_pptr_base": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma canonical_user_pptr_base: \"canonical_user < pptr_base\"",
+    "stmt_post": "lemma canonical_user_pptr_base: \"canonical_user < pptr_base\""
+   },
+   "is_page_aligned_kernelELFPAddrBase": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma is_page_aligned_kernelELFPAddrBase: \"is_aligned kernelELFPAddrBase pageBits\""
+   },
+   "is_page_aligned_kernel_elf_base": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma is_page_aligned_kernel_elf_base: \"is_aligned kernel_elf_base pageBits\""
+   },
+   "is_page_aligned_physBase": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma is_page_aligned_physBase: \"is_aligned physBase pageBits\""
+   },
+   "is_page_aligned_pptrTop": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma is_page_aligned_pptrTop: \"is_aligned pptrTop pageBits\""
+   },
+   "kernelELFBase_no_overflow": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma kernelELFBase_no_overflow: \"kernelELFBase < kernelELFBase + 2 ^ pageBits\""
+   },
+   "kernel_elf_window_at_least_page": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma kernel_elf_window_at_least_page: \"kernelELFBase + 2 ^ pageBits \\<le> kdevBase\""
+   },
+   "kernel_window_sufficient": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma kernel_window_sufficient: \"pptrBase + (1 << kernel_window_bits) \\<le> kernelELFBase\""
+   },
+   "pptr_base_kdev_base": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma pptr_base_kdev_base: \"pptr_base < kdev_base\""
+   },
+   "pptr_base_kernel_elf_base": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma pptr_base_kernel_elf_base: (* FIXME MK: candidate for Kernel_Config_Lemmas *) \"pptr_base < kernel_elf_base\"",
+    "stmt_post": "lemma pptr_base_kernel_elf_base: \"pptr_base < kernel_elf_base\""
+   }
+  }
+ },
+ "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "abs_kernel_elf_window_at_least_page": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma abs_kernel_elf_window_at_least_page: \"kernel_elf_base + 2 ^ pageBits \\<le> kdev_base\""
+   },
+   "abs_kernel_window_sufficient": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma abs_kernel_window_sufficient: \"pptr_base + (1 << kernel_window_bits) \\<le> kernel_elf_base\""
+   },
+   "elf_index_value": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma elf_index_value: \"elf_index = 0x1FE\""
+   },
+   "elf_window_1M": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   },
+   "elf_window_4k": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma elf_window_4k: \"\\<lbrakk> kernel_elf_base \\<le> vref; vref < kernel_elf_base + (1 << pageBits) \\<rbrakk> \\<Longrightarrow> table_index (pt_slot_offset max_pt_level riscv_global_pt_ptr vref) = elf_index\""
+   },
+   "global_pt_kernel_window_init_arch_state": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma global_pt_kernel_window_init_arch_state[simp]: \"obj_addrs init_global_pt riscv_global_pt_ptr \\<subseteq> kernel_window_2 (riscv_kernel_vspace init_arch_state)\"",
+    "stmt_post": "lemma global_pt_kernel_window_init_arch_state[simp]: \"obj_addrs init_global_pt riscv_global_pt_ptr \\<subseteq> kernel_window_2 (riscv_kernel_vspace init_arch_state)\""
+   },
+   "idle_thread_in_kernel_window_init_arch_state": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma idle_thread_in_kernel_window_init_arch_state[simp]: \"{idle_thread_ptr..0x3FF + idle_thread_ptr} \\<subseteq> kernel_window_2 (riscv_kernel_vspace init_arch_state)\"",
+    "stmt_post": "lemma idle_thread_in_kernel_window_init_arch_state[simp]: \"{idle_thread_ptr..0x3FF + idle_thread_ptr} \\<subseteq> kernel_window_2 (riscv_kernel_vspace init_arch_state)\""
+   },
+   "irq_node_in_kernel_window_init_arch_state'": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma irq_node_in_kernel_window_init_arch_state': \"\\<lbrakk> init_irq_node_ptr + m \\<le> x; x \\<le> init_irq_node_ptr + m + mask cte_level_bits; m \\<le> mask (size (irq::irq)) << cte_level_bits\\<rbrakk> \\<Longrightarrow> x \\<in> kernel_window_2 (riscv_kernel_vspace init_arch_state)\"",
+    "stmt_post": "lemma irq_node_in_kernel_window_init_arch_state': \"\\<lbrakk> init_irq_node_ptr + m \\<le> x; x \\<le> init_irq_node_ptr + m + mask cte_level_bits; m \\<le> mask (size (irq::irq)) << cte_level_bits\\<rbrakk> \\<Longrightarrow> x \\<in> kernel_window_2 (riscv_kernel_vspace init_arch_state)\""
+   },
+   "irq_node_pptr_base_kernel_elf_base": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma irq_node_pptr_base_kernel_elf_base: \"\\<lbrakk>x \\<le> pptr_base + (m + (mask cte_level_bits + 0x3000)); m \\<le> mask (size irq) << cte_level_bits \\<rbrakk> \\<Longrightarrow> \\<not> kernel_elf_base \\<le> x\" for irq::irq",
+    "stmt_post": "lemma irq_node_pptr_base_kernel_elf_base: fixes irq::irq assumes \"x \\<le> pptr_base + (m + (mask cte_level_bits + 0x3000))\" assumes \"m \\<le> mask (size irq) << cte_level_bits\" shows \"\\<not> kernel_elf_base \\<le> x\""
+   },
+   "is_aligned_ptrFromPAddr_kernelELFPAddrBase": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma is_aligned_ptrFromPAddr_kernelELFPAddrBase: \"is_aligned (ptrFromPAddr (addr_from_ppn (ucast (kernelELFPAddrBase && ~~ mask toplevel_bits >> pageBits)))) (pt_bits_left max_pt_level)\""
+   },
+   "kernelELFPAddrBase_addrFromKPPtr": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma kernelELFPAddrBase_addrFromKPPtr: \"\\<lbrakk> kernel_elf_base \\<le> vref; vref < kernel_elf_base + (1 << pageBits) \\<rbrakk> \\<Longrightarrow> addr_from_ppn (ucast (kernelELFPAddrBase && ~~ mask toplevel_bits >> pageBits)) + (vref && mask (pt_bits_left max_pt_level)) = addrFromKPPtr vref\""
+   },
+   "kernelELF_plus_page": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma kernelELF_plus_page: \"((kernelELFPAddrBase && mask toplevel_bits) + 2^pageBits) \\<le> 2^toplevel_bits\""
+   },
+   "kernel_elf_base_no_overflow": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma kernel_elf_base_no_overflow: \"kernel_elf_base < kernel_elf_base + 2 ^ pageBits\""
+   },
+   "kernel_elf_window_init_st": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma kernel_elf_window_init_st: \"kernel_elf_window init_A_st = { kernel_elf_base ..< kernel_elf_base + (1 << 20) }\"",
+    "stmt_post": "lemma kernel_elf_window_init_st: \"kernel_elf_window init_A_st = { kernel_elf_base ..< kernel_elf_base + (1 << pageBits) }\""
+   },
+   "kernel_mapping_slots_0x1FE": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   },
+   "kernel_mapping_slots_elf_index": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma kernel_mapping_slots_elf_index[simp]: \"elf_index \\<in> kernel_mapping_slots\""
+   },
+   "kernel_window_1G": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   },
+   "kernel_window_bits_table_index": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma kernel_window_bits_table_index: \"\\<lbrakk> pptr_base \\<le> vref; vref < pptr_base + (1 << kernel_window_bits) \\<rbrakk> \\<Longrightarrow> table_index (pt_slot_offset max_pt_level riscv_global_pt_ptr vref) = 0x100\""
+   },
+   "kernel_window_init_st": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma kernel_window_init_st: \"kernel_window init_A_st = { pptr_base ..< pptr_base + (1 << 30) }\"",
+    "stmt_post": "lemma kernel_window_init_st: \"kernel_window init_A_st = { pptr_base ..< pptr_base + (1 << kernel_window_bits) }\""
+   },
+   "leq_elf_index": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma leq_elf_index: \"0x100 \\<le> elf_index\""
+   },
+   "merge_kernelELFPAddrBase_masks": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma merge_kernelELFPAddrBase_masks: \"((kernelELFPAddrBase && ~~ mask 30) + (pptrTop + (kernelELFPAddrBase && mask 30) - kernelELFPAddrBase)) = pptrTop\""
+   },
+   "pptr_base_kernel_window_no_overflow": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma pptr_base_kernel_window_no_overflow: \"pptr_base \\<le> pptr_base + (1 << kernel_window_bits)\""
+   },
+   "pt_walk_init_A_st": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma pt_walk_init_A_st[simp]: \"pt_walk max_pt_level level riscv_global_pt_ptr vref (ptes_of init_A_st) = Some (max_pt_level, riscv_global_pt_ptr)\"",
+    "stmt_post": "lemma pt_walk_init_A_st[simp]: \"pt_walk max_pt_level level riscv_global_pt_ptr vref (ptes_of init_A_st) = Some (max_pt_level, riscv_global_pt_ptr)\""
+   },
+   "rewrite_eq_minus_to_plus_eq": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma rewrite_eq_minus_to_plus_eq: \"(x = a - b) = (b + x = a)\" for x :: \"'a::ring\""
+   },
+   "table_index_riscv_global_pt_ptr": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma table_index_riscv_global_pt_ptr: \"table_index (pt_slot_offset max_pt_level riscv_global_pt_ptr vref) = ucast ((vref >> ptTranslationBits * 2 + pageBits) && mask ptTranslationBits)\"",
+    "stmt_post": "lemma table_index_riscv_global_pt_ptr: \"table_index (pt_slot_offset max_pt_level riscv_global_pt_ptr vref) = ucast ((vref >> toplevel_bits) && mask ptTranslationBits)\""
+   },
+   "translate_address_kernel_elf_window": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma translate_address_kernel_elf_window: \"\\<lbrakk> kernel_elf_base \\<le> vref; vref < kernel_elf_base + (1 << 20) \\<rbrakk> \\<Longrightarrow> translate_address riscv_global_pt_ptr vref (ptes_of init_A_st) = Some (addrFromKPPtr vref)\"",
+    "stmt_post": "lemma translate_address_kernel_elf_window: \"\\<lbrakk> kernel_elf_base \\<le> vref; vref < kernel_elf_base + (1 << pageBits) \\<rbrakk> \\<Longrightarrow> translate_address riscv_global_pt_ptr vref (ptes_of init_A_st) = Some (addrFromKPPtr vref)\""
+   },
+   "translate_address_kernel_window": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma translate_address_kernel_window: \"\\<lbrakk> pptr_base \\<le> vref; vref < pptr_base + (1 << 30) \\<rbrakk>\\<Longrightarrow> translate_address riscv_global_pt_ptr vref (ptes_of init_A_st) = Some (addrFromPPtr vref)\"",
+    "stmt_post": "lemma translate_address_kernel_window: \"\\<lbrakk> pptr_base \\<le> vref; vref < pptr_base + (1 << kernel_window_bits) \\<rbrakk>\\<Longrightarrow> translate_address riscv_global_pt_ptr vref (ptes_of init_A_st) = Some (addrFromPPtr vref)\""
+   },
+   "proof@217": {
+    "kw": "proof",
+    "kind": "other-block"
+   },
+   "proof@323": {
+    "kw": "proof",
+    "kind": "other-block"
+   },
+   "proof@412": {
+    "kw": "proof",
+    "kind": "other-block"
+   },
+   "proof@488": {
+    "kw": "proof",
+    "kind": "other-block"
+   },
+   "qed@231": {
+    "kw": "qed",
+    "kind": "other-block"
+   },
+   "qed@501": {
+    "kw": "qed",
+    "kind": "other-block"
+   },
+   "toplevel_bits_value": {
+    "kw": "schematic_goal",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "schematic_goal toplevel_bits_value: \"toplevel_bits = ?v\""
+   }
+  }
+ }
+}

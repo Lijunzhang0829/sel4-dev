@@ -1,0 +1,16 @@
+diff --git a/proof/invariant-abstract/ARM/ArchKHeap_AI.thy b/proof/invariant-abstract/ARM/ArchKHeap_AI.thy
+--- a/proof/invariant-abstract/ARM/ArchKHeap_AI.thy
++++ b/proof/invariant-abstract/ARM/ArchKHeap_AI.thy
+@@ -833,6 +833,12 @@
+   by (induction ao rule: arch_kernel_obj.induct;
+          clarsimp simp: typ_at_same_type)
+ 
++lemma arch_valid_obj_same_type':
++  "\<lbrakk> arch_valid_obj ao s; kheap s p = Some ko \<rbrakk>
++   \<Longrightarrow> arch_valid_obj ao (s\<lparr>kheap := (kheap s)(p \<mapsto> k)\<rparr>)"
++  by (induction ao rule: arch_kernel_obj.induct;
++         clarsimp simp: typ_at_same_type)
++
+ 
+ lemma default_arch_object_not_live: "\<not> live (ArchObj (default_arch_object aty dev us))"
+   by (clarsimp simp: default_arch_object_def live_def hyp_live_def arch_live_def

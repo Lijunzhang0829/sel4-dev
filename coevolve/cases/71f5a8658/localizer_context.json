@@ -1,0 +1,82 @@
+{
+ "identifiers": [
+  "checkValidMappingSize",
+  "lookupFrame",
+  "frame"
+ ],
+ "candidates": [
+  {
+   "file": "proof/refine/AARCH64/Arch_R.thy",
+   "mentions": [
+    "frame",
+    "lookupFrame"
+   ]
+  },
+  {
+   "file": "proof/access-control/Tcb_AC.thy",
+   "mentions": [
+    "frame"
+   ]
+  },
+  {
+   "file": "proof/crefine/AARCH64/Arch_C.thy",
+   "mentions": [
+    "frame"
+   ]
+  },
+  {
+   "file": "proof/drefine/Arch_DR.thy",
+   "mentions": [
+    "frame"
+   ]
+  },
+  {
+   "file": "proof/drefine/StateTranslation_D.thy",
+   "mentions": [
+    "frame"
+   ]
+  },
+  {
+   "file": "proof/drefine/Tcb_DR.thy",
+   "mentions": [
+    "frame"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+   "mentions": [
+    "frame"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/KernelInitSep_AI.thy",
+   "mentions": [
+    "frame"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Tcb_R.thy",
+   "mentions": [
+    "frame"
+   ]
+  },
+  {
+   "file": "proof/sep-capDL/Frame_SD.thy",
+   "mentions": [
+    "frame"
+   ]
+  },
+  {
+   "file": "proof/sep-capDL/Helpers_SD.thy",
+   "mentions": [
+    "frame"
+   ]
+  },
+  {
+   "file": "proof/sep-capDL/README.md",
+   "mentions": [
+    "frame"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+Looking at the error: goal `0xFFC0000000 \<le> 2 ^ ipa_size - 1` at lines 1522–1523. My line count puts `by` at line 1523 of the source (the tmp file is likely off by one), which is the `pptr_base_kernel_elf_base` proof added by r1. The proof unfolds `pptrTop_def` (expanding `pptrTop` to a hex constant) and `mask_def` (expanding `mask ipa_size` to `2^ipa_size - 1`), but `ipa_size` is never evaluated because `ipa_size_def` is absent from the simp set and is not in `bit_simps` — the analogous `canonical_user_ge0` proof above explicitly lists `ipa_size_def` for exactly this reason.
+
+<<<<SEARCH
+lemma pptr_base_kernel_elf_base:
+  "pptr_base < kernel_elf_base"
+  by (simp add: pptr_base_def kernel_elf_base_def pptrBase_def canonical_bit_def kernelELFBase_def
+                kernelELFPAddrBase_def pptrTop_def Kernel_Config.physBase_def mask_def)
+====
+lemma pptr_base_kernel_elf_base:
+  "pptr_base < kernel_elf_base"
+  by (simp add: pptr_base_def kernel_elf_base_def pptrBase_def canonical_bit_def kernelELFBase_def
+                kernelELFPAddrBase_def pptrTop_def Kernel_Config.physBase_def mask_def ipa_size_def)
+>>>>
+
+
+=== VERDICT: GREEN ===
+OK (65376ms)

@@ -1,0 +1,69 @@
+diff --git a/proof/crefine/AARCH64/Arch_C.thy b/proof/crefine/AARCH64/Arch_C.thy
+index 5ec9eed7..087a06de 100644
+--- a/proof/crefine/AARCH64/Arch_C.thy
++++ b/proof/crefine/AARCH64/Arch_C.thy
+@@ -846,12 +846,12 @@ lemma lookupPTSlotFromLevel_bitsLeft_le_pptrBaseOffset_alignment:
+ lemma lookupPTSlot_bitsLeft_less_64:
+   "\<lbrace>\<top>\<rbrace> lookupPTSlot p vptr \<lbrace>\<lambda>rv _. fst rv < 64\<rbrace>"
+   unfolding lookupPTSlot_def
+-  by (rule lookupPTSlotFromLevel_bitsLeft_less_64, simp)
++  by (wpsimp wp: lookupPTSlotFromLevel_bitsLeft_less_64)
+ 
+ lemma lookupPTSlot_bitsLeft_le_pptrBaseOffset_alignment[wp]:
+   "\<lbrace>\<top>\<rbrace> lookupPTSlot p vptr \<lbrace>\<lambda>rv _. fst rv \<le> pptrBaseOffset_alignment\<rbrace>"
+   unfolding lookupPTSlot_def
+-  by (rule lookupPTSlotFromLevel_bitsLeft_le_pptrBaseOffset_alignment, simp)
++  by (wpsimp wp: lookupPTSlotFromLevel_bitsLeft_le_pptrBaseOffset_alignment)
+ 
+ (* See comment in decode ARMPageTableInvocation for why "20" *)
+ definition
+@@ -874,7 +874,7 @@ lemma lookupPTSlotFromLevel_enoughPTBits:
+ lemma lookupPTSlot_enoughPTBits[wp]:
+   "\<lbrace>\<top>\<rbrace> lookupPTSlot p vptr \<lbrace>\<lambda>rv _. enoughPTBits (fst rv)\<rbrace>"
+   unfolding lookupPTSlot_def
+-  by (rule lookupPTSlotFromLevel_enoughPTBits, simp)
++  by (wpsimp wp: lookupPTSlotFromLevel_enoughPTBits)
+ 
+ lemma slotcap_in_mem_VSpace:
+   "\<lbrakk> slotcap_in_mem cap slot (ctes_of s); (s, s') \<in> rf_sr \<rbrakk>
+diff --git a/proof/crefine/AARCH64/VSpace_C.thy b/proof/crefine/AARCH64/VSpace_C.thy
+index 5698eb48..d7b4b987 100644
+--- a/proof/crefine/AARCH64/VSpace_C.thy
++++ b/proof/crefine/AARCH64/VSpace_C.thy
+@@ -866,6 +866,7 @@ lemma lookupPTSlot_ccorres:
+      apply (rule ccorres_symb_exec_r2)
+        apply (rule ccorres_symb_exec_r2)
+          apply (rule ccorres_rhs_assoc2)+
++         apply (rule ccorres_checkPTAt)
+          apply simp
+          apply (rule lookupPTSlotFromLevel_ccorres[where level=maxPTLevel, simplified,
+                                                    simplified mask_ptTranslationBits_pt
+@@ -876,10 +877,8 @@ lemma lookupPTSlot_ccorres:
+      apply (vcg spec=modifies)
+     apply vcg
+    apply (vcg spec=modifies)
+-  apply simp
+   apply (simp add: bit_simps ptBitsLeft_def maxPTLevel_val split: if_split)
+-  sorry (* FIXME AARCH64: add checkPTAt assertion in Haskell lookupPTSlot for
+-                          gsPTTypes (ksArchState s) pt = Some VSRootPT_T *)
++  done
+ 
+ abbreviation
+   "findVSpaceForASID_xf \<equiv>
+diff --git a/proof/refine/AARCH64/ArchAcc_R.thy b/proof/refine/AARCH64/ArchAcc_R.thy
+index fe75c37b..28262e42 100644
+--- a/proof/refine/AARCH64/ArchAcc_R.thy
++++ b/proof/refine/AARCH64/ArchAcc_R.thy
+@@ -751,7 +751,11 @@ lemma lookupPTSlot_corres:
+           \<top>
+           (gets_the (pt_lookup_slot pt vptr \<circ> ptes_of)) (lookupPTSlot pt vptr)"
+   unfolding lookupPTSlot_def pt_lookup_slot_def
+-  by (corresKsimp corres: lookupPTSlotFromLevel_corres)
++  apply (corresKsimp corres: lookupPTSlotFromLevel_corres)
++  apply (fastforce simp: vspace_pt_at_eq pt_type_def
++                   dest!: valid_vspace_objs_strongD
++                   split: pt.splits)
++  done
+ 
+ lemma lookupPTFromLevel_corres:
+   "\<lbrakk> level' = size level; pt' = pt \<rbrakk> \<Longrightarrow>

@@ -1,0 +1,69 @@
+{
+ "work_list": [],
+ "cleared": [
+  {
+   "file": "proof/crefine/AARCH64/Retype_C.thy",
+   "why": "Pre-adapted to sctlrEL1VM (lines 5397, 5402, 5751); proof body uses sctlrEL1VM in vcpu1 def and fastforce simp: makeVCPUObject_def at 5430 \u2014 after the spec change makeVCPUObject_def also yields sctlrEL1VM so the equality holds; no edits needed"
+  },
+  {
+   "file": "proof/crefine/AARCH64/StateRelation_C.thy",
+   "why": "cvcpu_regs_relation at line 501-503 checks vcpuRegs equality pointwise without referencing the specific SCTLR init value; defs keyword only"
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInterrupt_AI.thy",
+   "why": "defs keyword only; VCPU interrupt handling does not reference default_vcpu initialization or SCTLR init value"
+  },
+  {
+   "file": "proof/refine/AARCH64/ArchAcc_R.thy",
+   "why": "defs keyword only; no VCPU initialization references"
+  },
+  {
+   "file": "proof/refine/AARCH64/CSpace_R.thy",
+   "why": "defs keyword only; unrelated to VCPU initialization"
+  },
+  {
+   "file": "proof/refine/AARCH64/Detype_R.thy",
+   "why": "defs keyword only; unrelated to VCPU initialization"
+  },
+  {
+   "file": "proof/refine/AARCH64/Init_R.thy",
+   "why": "defs keyword only; init refinement does not unfold VCPU register constants"
+  },
+  {
+   "file": "proof/refine/AARCH64/Invariants_H.thy",
+   "why": "defs keyword only; valid_vcpu' at line 543 checks only vcpuTCBPtr alignment, SCTLR-independent"
+  },
+  {
+   "file": "proof/refine/AARCH64/IpcCancel_R.thy",
+   "why": "defs keyword only; IPC cancellation does not touch VCPU initialization"
+  },
+  {
+   "file": "proof/refine/AARCH64/Refine.thy",
+   "why": "defs keyword only; top-level refinement statement unchanged"
+  },
+  {
+   "file": "proof/refine/AARCH64/Tcb_R.thy",
+   "why": "defs keyword only; TCB refinement does not reference default_vcpu SCTLR init"
+  },
+  {
+   "file": "proof/refine/AARCH64/Untyped_R.thy",
+   "why": "defs keyword only; untyped retype does not evaluate VCPU register constants"
+  },
+  {
+   "file": "proof/infoflow/refine/ADT_IF_Refine.thy",
+   "why": "defs keyword only; information-flow refinement does not reference VCPU initialization constants"
+  },
+  {
+   "file": "proof/bisim/document/root.tex",
+   "why": "documentation file; not a proof"
+  },
+  {
+   "file": "proof/infoflow/figs/example-auth-graph2.svg",
+   "why": "SVG image, not a proof file"
+  },
+  {
+   "file": "proof/refine/AARCH64/Retype_R.thy (found via grep, not in candidate list)",
+   "why": "auto simp at line 5577-5580 unfolds both default_vcpu_def and makeVCPUObject_def; both change symmetrically to sctlrEL1VM so vcpu_relation (vcpu_regs v = vcpuRegs v') is preserved; valid_obj_makeObject_vcpu at line 144 unfolds makeVCPUObject_def only for valid_vcpu' which is SCTLR-independent"
+  }
+ ]
+}

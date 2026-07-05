@@ -1,0 +1,49 @@
+PROMPT (3616 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/abstract/AARCH64/ArchVSpaceAcc_A.thy b/spec/abstract/AARCH64/ArchVSpaceAcc_A.thy
+index b466d469..6334ccda 100644
+--- a/spec/abstract/AARCH64/ArchVSpaceAcc_A.thy
++++ b/spec/abstract/AARCH64/ArchVSpaceAcc_A.thy
+@@ -96,6 +96,7 @@ type_synonym ptes_of = "pt_type \<Rightarrow> obj_ref \<rightharpoonup> pte"
+ locale_abbrev ptes_of :: "'z::state_ext state \<Rightarrow> ptes_of" where
+   "ptes_of s pt_t p \<equiv> level_pte_of pt_t p (pts_of s)"
+ 
++lemmas ptes_of_def = level_pte_of_def
+ 
+ text \<open>The following function takes a pointer to a PTE in kernel memory and returns the PTE.\<close>
+ locale_abbrev get_pte :: "pt_type \<Rightarrow> obj_ref \<Rightarrow> (pte,'z::state_ext) s_monad" where
+
+```
+
+## Identifiers whose definitions changed (mechanically extracted)
+["type_synonym"]
+
+## Candidate proof files that mention these identifiers (grep at pre-change rev)
+- proof/access-control/Types.thy  (mentions: type_synonym)
+- proof/capDL-api/Kernel_DP.thy  (mentions: type_synonym)
+- proof/drefine/StateTranslation_D.thy  (mentions: type_synonym)
+- proof/infoflow/ADT_IF.thy  (mentions: type_synonym)
+- proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy  (mentions: type_synonym)
+- proof/invariant-abstract/ADT_AI.thy  (mentions: type_synonym)
+- proof/invariant-abstract/KernelInitSep_AI.thy  (mentions: type_synonym)
+- proof/sep-capDL/AbstractSeparation_SD.thy  (mentions: type_synonym)
+- proof/sep-capDL/Lookups_D.thy  (mentions: type_synonym)
+- proof/sep-capDL/Separation_SD.thy  (mentions: type_synonym)
+- proof/sep-capDL/Types_SD.thy  (mentions: type_synonym)
+
+## Your task
+Predict the work-list a seL4 PROOF MAINTAINER would carry out for this change — which proof files need edits, which lemma blocks, and for each lemma whether its STATEMENT
+
+=== RAW REPLY ===
+No proof file references either `ptes_of_def` or `level_pte_of_def` — zero hits across the entire `proof/` tree. The candidate files all appeared via a broad `type_synonym` grep, which is a false-positive signal (every theory file with its own type synonyms matches that keyword).
+
+The change is purely additive: it exposes the existing unfold equation `level_pte_of_def` under the more intuitive alias `ptes_of_def`. No existing lemma statement references the new name (it didn't exist), no semantics changed, and there is no name clash. Nothing in `proof/` needs repair.
+
+```json
+{"work_list": [], "cleared": [{"file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy", "why": "grep matched type_synonym keyword in file body, not any reference to ptes_of_def or level_pte_of_def; no simp-set change, no statement evolution needed"}, {"file": "proof/invariant-abstract/ADT_AI.thy", "why": "same false-positive; neither ptes_of_def nor level_pte_of_def appear anywhere in proof/"}, {"file": "proof/invariant-abstract/KernelInitSep_AI.thy", "why": "false-positive type_synonym match; no reference to the new alias"}, {"file": "proof/access-control/Types.thy", "why": "false-positive; new lemmas alias is purely additive, no breakage"}, {"file": "proof/capDL-api/Kernel_DP.thy", "why": "false-positive; capDL layer does not reference ptes_of at all"}, {"file": "proof/drefine/StateTranslation_D.thy", "why": "false-positive; drefine type synonyms unrelated to AARCH64 pte unfold alias"}, {"file": "proof/infoflow/ADT_IF.thy", "why": "false-positive; no ptes_of_def reference"}, {"file": "proof/sep-capDL/AbstractSeparation_SD.thy", "why": "false-positive; capDL separation layer unaffected"}, {"file": "proof/sep-capDL/Lookups_D.thy", "why": "false-positive"}, {"file": "proof/sep-capDL/Separation_SD.thy", "why": "false-positive"}, {"file": "proof/sep-capDL/Types_SD.thy", "why": "false-positive"}]}
+```
+=== STDERR ===
+

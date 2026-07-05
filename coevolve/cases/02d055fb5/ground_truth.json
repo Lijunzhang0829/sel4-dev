@@ -1,0 +1,184 @@
+{
+ "proof/invariant-abstract/AARCH64/ArchAInvsPre.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "is_aligned_pptrBaseOffset_pt_bits_left": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   },
+   "is_aligned_ptrFromPAddr_n_eq": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   }
+  }
+ },
+ "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "kernel_regionsI": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma kernel_regionsI: \"p \\<in> kernel_window s \\<Longrightarrow> p \\<in> kernel_regions s\" \"p \\<in> kernel_device_window s \\<Longrightarrow> p \\<in> kernel_regions s\"",
+    "stmt_post": "lemma kernel_regionsI: \"p \\<in> kernel_window s \\<Longrightarrow> p \\<in> kernel_regions s\" \"p \\<in> kernel_device_window s \\<Longrightarrow> p \\<in> kernel_regions s\""
+   },
+   "kernel_regions_pptr_base": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   },
+   "level_type_less_max_pt_level": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   },
+   "ptTranslationBits_NormalPT_T_leq": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   },
+   "unique_vs_lookup_table": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma unique_vs_lookup_table: \"\\<lbrakk> vs_lookup_table level asid vref s = Some (level, p); vs_lookup_table level' asid' vref' s = Some (level', p'); p' = p; level \\<le> max_pt_level; level' \\<le> max_pt_level; vref \\<in> user_region; vref' \\<in> user_region; unique_table_refs s; valid_vs_lookup s; valid_vspace_objs s; valid_asid_table s; pspace_aligned s; valid_caps (caps_of_state s) s \\<rbrakk",
+    "stmt_post": "lemma unique_vs_lookup_table: \"\\<lbrakk> vs_lookup_table level asid vref s = Some (level, p); vs_lookup_table level' asid' vref' s = Some (level', p'); p' = p; level \\<le> max_pt_level; level' \\<le> max_pt_level; vref \\<in> user_region; vref' \\<in> user_region; unique_table_refs s; valid_vs_lookup s; valid_vspace_objs s; valid_asid_table s; pspace_aligned s; valid_caps (caps_of_state s) s \\<rbrakk"
+   },
+   "user_region_canonical_pptr_base": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   }
+  }
+ },
+ "proof/invariant-abstract/AARCH64/ArchFinalise_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "crunch@1644": {
+    "kw": "crunch",
+    "kind": "other-block"
+   },
+   "crunch@1648": {
+    "kw": "crunch",
+    "kind": "other-block"
+   }
+  }
+ },
+ "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "definition@2246": {
+    "kw": "definition",
+    "kind": "other-block"
+   },
+   "is_aligned_addrFromPPtr": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma is_aligned_addrFromPPtr[intro!]: \"is_aligned p pageBits \\<Longrightarrow> is_aligned (addrFromPPtr p) pageBits\"",
+    "stmt_post": "lemma is_aligned_addrFromPPtr[intro!]: \"is_aligned p pageBits \\<Longrightarrow> is_aligned (addrFromPPtr p) pageBits\""
+   },
+   "is_aligned_addrFromPPtr_n": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma is_aligned_addrFromPPtr_n: \"\\<lbrakk> is_aligned p n; n \\<le> 39 \\<rbrakk> \\<Longrightarrow> is_aligned (addrFromPPtr p) n\"",
+    "stmt_post": "lemma is_aligned_addrFromPPtr_n: \"\\<lbrakk> is_aligned p n; n \\<le> pptrBaseOffset_alignment \\<rbrakk> \\<Longrightarrow> is_aligned (addrFromPPtr p) n\""
+   },
+   "is_aligned_pptrBaseOffset_pt_bits_left": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma is_aligned_pptrBaseOffset_pt_bits_left: \"level \\<le> max_pt_level \\<Longrightarrow> is_aligned pptrBaseOffset (pt_bits_left level)\""
+   },
+   "is_aligned_ptrFromPAddr": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma is_aligned_ptrFromPAddr: \"is_aligned p pageBits \\<Longrightarrow> is_aligned (ptrFromPAddr p) pageBits\"",
+    "stmt_post": "lemma is_aligned_ptrFromPAddr: \"is_aligned p pageBits \\<Longrightarrow> is_aligned (ptrFromPAddr p) pageBits\""
+   },
+   "is_aligned_ptrFromPAddr_n": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_pre": "lemma is_aligned_ptrFromPAddr_n: \"\\<lbrakk>is_aligned x sz; sz \\<le> 39\\<rbrakk> \\<Longrightarrow> is_aligned (ptrFromPAddr x) sz\"",
+    "stmt_post": "lemma is_aligned_ptrFromPAddr_n: \"\\<lbrakk>is_aligned x sz; sz \\<le> pptrBaseOffset_alignment\\<rbrakk> \\<Longrightarrow> is_aligned (ptrFromPAddr x) sz\""
+   },
+   "is_aligned_ptrFromPAddr_n_eq": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma is_aligned_ptrFromPAddr_n_eq: \"level \\<le> max_pt_level \\<Longrightarrow> is_aligned (ptrFromPAddr x) (pt_bits_left level) = is_aligned x (pt_bits_left level)\""
+   },
+   "is_aligned_ptrFromPAddr_pt_bits": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma is_aligned_ptrFromPAddr_pt_bits[intro!]: \"is_aligned p (pt_bits pt_t) \\<Longrightarrow> is_aligned (ptrFromPAddr p) (pt_bits pt_t)\"",
+    "stmt_post": "lemma is_aligned_ptrFromPAddr_pt_bits[intro!]: \"is_aligned p (pt_bits pt_t) \\<Longrightarrow> is_aligned (ptrFromPAddr p) (pt_bits pt_t)\""
+   },
+   "level_type_less_max_pt_level": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma level_type_less_max_pt_level: \"level < max_pt_level \\<Longrightarrow> level_type level = NormalPT_T\""
+   },
+   "pptrBaseOffset_aligned": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma pptrBaseOffset_aligned[simp, intro!]: \"is_aligned pptrBaseOffset pptrBaseOffset_alignment\""
+   },
+   "pptrBaseOffset_alignment_pt_bits_left": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma pptrBaseOffset_alignment_pt_bits_left[simp, intro!]: \"pt_bits_left max_pt_level \\<le> pptrBaseOffset_alignment\""
+   },
+   "ptTranslationBits_NormalPT_T_leq": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma ptTranslationBits_NormalPT_T_leq: \"ptTranslationBits NormalPT_T \\<le> ptTranslationBits VSRootPT_T\""
+   },
+   "vspace_for_asid_SomeI": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma vspace_for_asid_SomeI: \"\\<lbrakk> asid_table s (asid_high_bits_of asid) = Some pool_ptr; asid_pools_of s pool_ptr = Some pool; pool (asid_low_bits_of asid) = Some entry; ap_vspace entry = pt_ptr; asid > 0 \\<rbrakk> \\<Longrightarrow> vspace_for_asid asid s = Some pt_ptr\"",
+    "stmt_post": "lemma vspace_for_asid_SomeI: \"\\<lbrakk> asid_table s (asid_high_bits_of asid) = Some pool_ptr; asid_pools_of s pool_ptr = Some pool; pool (asid_low_bits_of asid) = Some entry; ap_vspace entry = pt_ptr; asid > 0 \\<rbrakk> \\<Longrightarrow> vspace_for_asid asid s = Some pt_ptr\""
+   },
+   "pt_walk_0": {
+    "kw": "lemmas",
+    "kind": "other-block"
+   },
+   "ptes_of_def": {
+    "kw": "lemmas",
+    "kind": "other-block"
+   }
+  }
+ }
+}

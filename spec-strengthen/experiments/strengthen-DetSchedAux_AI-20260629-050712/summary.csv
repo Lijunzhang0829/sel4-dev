@@ -1,0 +1,4 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-P-retype_etcb_at_helper_no_valid_etcbs_,retype_etcb_at_helper_no_valid_etcbs,P,named,trial_passed,additive,-1.56
+01-P-retype_etcb_at_helper_no_inactive_,retype_etcb_at_helper_no_inactive,P,named,TRIAL-FAILED,,
+02-P-invoke_untyped_valid_sched__,invoke_untyped_valid_sched',P,named,TRIAL-FAILED,,

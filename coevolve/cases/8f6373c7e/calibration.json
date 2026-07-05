@@ -1,0 +1,50 @@
+{
+ "file_precision": 0.045,
+ "file_recall": 1.0,
+ "n_gt_files": 1,
+ "n_pred_files": 22,
+ "n_tp_files": 1,
+ "gt_files": [
+  "proof/invariant-abstract/AARCH64/ArchCSpaceInvPre_AI.thy"
+ ],
+ "pred_files": [
+  "proof/access-control/ARM/ArchArch_AC.thy",
+  "proof/infoflow/ARM/ArchFinalCaps.thy",
+  "proof/infoflow/RISCV64/ArchFinalCaps.thy",
+  "proof/invariant-abstract/AARCH64/ArchADT_AI.thy",
+  "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+  "proof/invariant-abstract/AARCH64/ArchCNodeInv_AI.thy",
+  "proof/invariant-abstract/AARCH64/ArchCSpaceInvPre_AI.thy",
+  "proof/invariant-abstract/AARCH64/ArchTcb_AI.thy",
+  "proof/invariant-abstract/ARM/ArchADT_AI.thy",
+  "proof/invariant-abstract/ARM/ArchCNodeInv_AI.thy",
+  "proof/invariant-abstract/ARM/ArchTcb_AI.thy",
+  "proof/invariant-abstract/ARM_HYP/ArchADT_AI.thy",
+  "proof/invariant-abstract/ARM_HYP/ArchCNodeInv_AI.thy",
+  "proof/invariant-abstract/ARM_HYP/ArchTcb_AI.thy",
+  "proof/invariant-abstract/CSpace_AI.thy",
+  "proof/invariant-abstract/RISCV64/ArchADT_AI.thy",
+  "proof/invariant-abstract/RISCV64/ArchCNodeInv_AI.thy",
+  "proof/invariant-abstract/RISCV64/ArchTcb_AI.thy",
+  "proof/invariant-abstract/X64/ArchADT_AI.thy",
+  "proof/invariant-abstract/X64/ArchCNodeInv_AI.thy",
+  "proof/invariant-abstract/X64/ArchTcb_AI.thy",
+  "proof/invariant-abstract/X64/ArchVSpace_AI.thy"
+ ],
+ "lemma_recall_modified": 0.0,
+ "n_matchable": 1,
+ "n_lem_hits": 0,
+ "n_gt_added": 0,
+ "evolve_flag_accuracy": null,
+ "n_evo_ok": 0,
+ "n_evo_total": 0,
+ "lemma_rows": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchCSpaceInvPre_AI.thy",
+   "lemma": "set_cap_valid_table_caps",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS"
+  }
+ ]
+}

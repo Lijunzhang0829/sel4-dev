@@ -1,0 +1,21 @@
+FAILED (30470ms)
+*** Failed to apply initial proof method (line 115 of "/tmp/tmp.wsDwhAqSZB/Tmp_3c23bb8d67a91fb2.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>\<forall>p p' cap cap'.
+***                 cps p = Some cap \<longrightarrow>
+***                 cps p' = Some cap' \<longrightarrow>
+***                 obj_refs cap' = obj_refs cap \<longrightarrow>
+***                 table_cap_ref cap' = table_cap_ref cap;
+***      cps p' = Some cap'; obj_refs cap = obj_refs cap'\<rbrakk>
+***     \<Longrightarrow> table_cap_ref cap = table_cap_ref cap'
+*** At command "by" (line 115 of "/tmp/tmp.wsDwhAqSZB/Tmp_3c23bb8d67a91fb2.thy")
+*** Failed to apply initial proof method (line 115 of "/tmp/tmp.wsDwhAqSZB/Tmp_3c23bb8d67a91fb2.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>\<forall>p p' cap cap'.
+***                 cps p = Some cap \<longrightarrow>
+***                 cps p' = Some cap' \<longrightarrow>
+***                 obj_refs cap' = obj_refs cap \<longrightarrow>
+***                 table_cap_ref cap' = table_cap_ref cap;
+***      cps p' = Some cap'; obj_refs cap = obj_refs cap'\<rbrakk>
+***     \<Longrightarrow> table_cap_ref cap = table_cap_ref cap'
+*** At command "by" (line 115 of "/tmp/tmp.wsDwhAqSZB/Tmp_3c23bb8d67a91fb2.thy")

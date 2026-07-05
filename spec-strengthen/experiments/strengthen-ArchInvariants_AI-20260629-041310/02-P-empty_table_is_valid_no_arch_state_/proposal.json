@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Callers of empty_table_is_valid that currently supply valid_arch_state s; the stronger form omits that witness",
+ "grace_period_weeks": 8,
+ "hint_lemma": "empty_table_is_valid",
+ "lemma_name": "empty_table_is_valid_no_arch_state",
+ "anchor_line": 1943,
+ "new_lemma": "lemma empty_table_is_valid_no_arch_state:\n  \"empty_table (set (arm_global_pts (arch_state s))) (ArchObj ao) \\<Longrightarrow>\n   valid_vspace_obj ao s\"\n  by (cases ao; simp add: empty_table_def)",
+ "rationale": "For a PageDirectory, empty_table forces every non-kernel-slot pde to be InvalidPDE; valid_vspace_obj (PageDirectory pd) requires valid_pde on those entries, which holds trivially for InvalidPDE (\\<top>). For a PageTable, empty_table forces every pte to InvalidPTE; valid_vspace_obj (PageTable pt) holds trivially. DataPage and ASIDPool are ruled out by empty_table_arch False. In none of these cases is valid_arch_state s consulted, so it can be dropped.",
+ "strengthening_claim": "(empty_table (set (arm_global_pts (arch_state s))) (ArchObj ao)) ==> (empty_table (set (arm_global_pts (arch_state s))) (ArchObj ao) \\<and> valid_arch_state s)",
+ "anchor_text": "   \\<Longrightarrow> valid_vspace_obj ao s\""
+}

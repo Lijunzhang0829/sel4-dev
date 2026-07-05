@@ -1,0 +1,41 @@
+{
+ "file_precision": 0.0,
+ "file_recall": 0.0,
+ "n_gt_files": 1,
+ "n_pred_files": 0,
+ "n_tp_files": 0,
+ "gt_files": [
+  "proof/crefine/AARCH64/Retype_C.thy"
+ ],
+ "pred_files": [],
+ "lemma_recall_modified": null,
+ "n_matchable": 0,
+ "n_lem_hits": 0,
+ "n_gt_added": 0,
+ "evolve_flag_accuracy": null,
+ "n_evo_ok": 0,
+ "n_evo_total": 0,
+ "lemma_rows": [
+  {
+   "file": "proof/crefine/AARCH64/Retype_C.thy",
+   "lemma": "monadic_rewrite_setObject_vcpu_as_init",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/crefine/AARCH64/Retype_C.thy",
+   "lemma": "placeNewObject_vcpu_fromzero_ccorres",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  },
+  {
+   "file": "proof/crefine/AARCH64/Retype_C.thy",
+   "lemma": "sctlrDefault_def_FIXME",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS-FILE"
+  }
+ ]
+}

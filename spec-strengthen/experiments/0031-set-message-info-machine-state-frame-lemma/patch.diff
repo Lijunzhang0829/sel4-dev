@@ -1,0 +1,14 @@
+diff --git a/proof/invariant-abstract/Ipc_AI.thy b/proof/invariant-abstract/Ipc_AI.thy
+--- a/proof/invariant-abstract/Ipc_AI.thy
++++ b/proof/invariant-abstract/Ipc_AI.thy
+@@ -2793,6 +2793,10 @@
+   "\<lbrace>valid_global_refs\<rbrace> set_message_info a b \<lbrace>\<lambda>_. valid_global_refs\<rbrace>"
+   by (rule valid_global_refs_cte_lift; wp)
+ 
++lemma set_message_info_machine_state[wp]:
++  "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_message_info thread info \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
++  by (wpsimp simp: set_message_info_def)
++
+ crunch irq_node[wp]: set_mrs "\<lambda>s. P (interrupt_irq_node s)"
+   (wp: crunch_wps simp: crunch_simps)
+ 

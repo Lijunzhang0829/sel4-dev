@@ -1,0 +1,17 @@
+[
+ {
+  "slot": "F",
+  "delivery": "wp",
+  "delivery_substate": null,
+  "delivery_target": null,
+  "lemma_name": "set_simple_ko_domain_index",
+  "anchor_line": 1437,
+  "new_lemma": "lemma set_simple_ko_domain_index[wp]:\n  \"set_simple_ko f ptr val \\<lbrace>\\<lambda>s. P (domain_index s)\\<rbrace>\"\n  unfolding set_simple_ko_def\n  by (wpsimp wp: set_object_domain_index)",
+  "rationale": "set_simple_ko_method generated residual CNode subgoals; unfolding set_simple_ko_def and delegating to set_object_domain_index[wp] via wpsimp avoids those case splits entirely.",
+  "strengthening_claim": "Pure-additive: new [wp] entry for domain_index field under set_simple_ko, not previously in the wp set.",
+  "grace_period_weeks": null,
+  "block_dependency_evidence": null,
+  "consumer_hunks": null,
+  "anchor_text": "  by (wpsimp wp: get_object_wp simp: set_object_def)"
+ }
+]

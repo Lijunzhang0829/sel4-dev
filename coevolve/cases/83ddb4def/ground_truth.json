@@ -1,0 +1,13 @@
+{
+ "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "pptr_base_kernel_elf_base": {
+    "kw": "lemma",
+    "kind": "deleted",
+    "statement_evolved": true,
+    "body_changed": true
+   }
+  }
+ }
+}

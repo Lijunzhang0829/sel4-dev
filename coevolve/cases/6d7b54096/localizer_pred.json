@@ -1,0 +1,24 @@
+{
+ "work_list": [],
+ "cleared": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+   "why": "No reference to kernelELFBase or the pptr_base_kernel_elf_base derived lemma; pptrBase used only via pptrBaseOffset_def/pptrBase_def inline expansions unrelated to the new inequality."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchKernelInit_AI.thy",
+   "why": "Uses kernel_elf_base_def as a numeric simp rule (lines 103, 247, 314) \u2014 expands to a literal and discharges goals directly; pptr_base < kernel_elf_base is never needed as a named fact, so the new machine lemma does not unlock or require anything here."
+  },
+  {
+   "file": "proof/crefine/AARCH64/VSpace_C.thy",
+   "why": "References kernelELFBase only inside addrFromKPPtr_def/kernelELFBaseOffset_def expansions (line 329-330); the new inequality pptrBase < kernelELFBase plays no role in those proofs."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAInvsPre.thy",
+   "why": "Uses pptrBase_def and pptrBaseOffset_def inline; no reference to the new pptrBase_kernelELFBase lemma or the inequality it provides."
+  },
+  {
+   "note": "The change is purely additive \u2014 a single new lemma pptrBase_kernelELFBase is inserted into an otherwise-empty context block. No definition was altered, so no existing statement is rendered stale and no existing proof tactic fails. The RISCV64 parallel (pptr_base_kernel_elf_base in ArchInvariants_AI/RISCV64) does not exist yet for AARCH64, but AARCH64 proofs currently discharge the equivalent fact by numeric expansion of kernel_elf_base_def, so no repair is compiler-forced or maintainer-required at this time."
+  }
+ ]
+}

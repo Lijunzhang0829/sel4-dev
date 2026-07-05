@@ -1,0 +1,17 @@
+{
+ "commit": "5fc1c13613818ca27d7c570a3fb9a6332cb8625a",
+ "parent": "c969e4769c1dba716d11946e8d5b470ded8f2e3c",
+ "date": "2023-03-29 11:05:27 +1100",
+ "subject": "riscv machine+ainvs: physBase abstraction",
+ "artifact_files": [
+  "spec/machine/RISCV64/Arch_Kernel_Config_Lemmas.thy"
+ ],
+ "proof_files": [
+  "proof/invariant-abstract/RISCV64/ArchInvariants_AI.thy",
+  "proof/invariant-abstract/RISCV64/ArchKernelInit_AI.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "AInvs"
+ ]
+}

@@ -1,0 +1,7 @@
+1279 1279
+  by (wpsimp wp: set_object_wp_strong)
+
+lemma set_simple_ko_machine_state[wp]:
+  "set_simple_ko f ptr val \<lbrace>\<lambda>s. P (machine_state s)\<rbrace>"
+  unfolding set_simple_ko_def
+  by (wpsimp wp: set_object_machine_state get_object_wp)

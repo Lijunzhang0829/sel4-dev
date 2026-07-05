@@ -1,0 +1,15 @@
+122 122
+  done
+
+lemma get_cap_valid_ipc_no_valid_objs [TcbAcc_AI_assms]:
+  "\<lbrace>obj_at (\<lambda>ko. \<exists>tcb. ko = TCB tcb \<and> tcb_ipc_buffer tcb = v) t\<rbrace>
+     get_cap (t, tcb_cnode_index 4)
+   \<lbrace>\<lambda>rv s. valid_ipc_buffer_cap rv v\<rbrace>"
+  apply (wp get_cap_wp)
+  apply clarsimp
+  apply (drule(1) cte_wp_tcb_cap_valid)
+  apply (clarsimp simp add: tcb_cap_valid_def obj_at_def)
+  apply (simp add: valid_ipc_buffer_cap_def mask_cap_def cap_rights_update_def
+                   acap_rights_update_def is_tcb
+             split: cap.split_asm arch_cap.split_asm)
+  done

@@ -1,0 +1,62 @@
+{
+ "work_list": [
+  {
+   "file": "proof/refine/AARCH64/Arch_R.thy",
+   "file_reason": "Only candidate file that directly unfolds decodeARMFrameInvocationMap; both the corres proof and the wp lemma must accommodate the new assert step inserted before checkVSpaceRoot.",
+   "lemmas": [
+    {
+     "name": "decodeARMFrameInvocation_corres",
+     "statement_must_evolve": false,
+     "reason": "Precondition already contains invs and valid_cap (ArchObjectCap (FrameCap p ...)); valid_FrameCap_user_region_assert discharges pptrBase<=p<pptrTop from these, so no new hypothesis is needed \u2014 but the tactic body must add a discharge step for the new assert via corres_assert_gen_asm before the checkVSpaceRoot corres step."
+    },
+    {
+     "name": "decodeARMFrameInvocationMap_valid_arch_inv'",
+     "statement_must_evolve": false,
+     "reason": "The unfolded definition now contains assert (pptrBase<=word && word<pptrTop) as a new wp obligation; current wpsimp block does not discharge it; body must add a simp/fastforce step using valid_cap'_def and the kernel-window bound, but the stated precondition invs' and valid_cap' is already sufficient."
+    }
+   ]
+  }
+ ],
+ "cleared": [
+  {
+   "file": "proof/access-control/ARM/ArchADT_AC.thy",
+   "why": "Matches only generic cap; no reference to decodeARMFrameInvocationMap or its kernel-window semantics."
+  },
+  {
+   "file": "proof/access-control/ARM/ArchArch_AC.thy",
+   "why": "Same \u2014 cap only; AC proofs reason about policy, not decode-function internals."
+  },
+  {
+   "file": "proof/access-control/Access.thy",
+   "why": "Generic cap match; downstream of a lemma whose statement is unchanged."
+  },
+  {
+   "file": "proof/bisim/Separation.thy",
+   "why": "Generic cap match; bisim layer does not unfold arch decode functions."
+  },
+  {
+   "file": "proof/bisim/Syscall_S.thy",
+   "why": "Generic cap match; only uses top-level invocation results, unchanged."
+  },
+  {
+   "file": "proof/capDL-api/Arch_DP.thy",
+   "why": "capDL layer models object capabilities abstractly; decodeARMFrameInvocationMap not referenced."
+  },
+  {
+   "file": "proof/capDL-api/Invocation_DP.thy",
+   "why": "Same capDL abstraction; no direct reference to the changed Haskell function."
+  },
+  {
+   "file": "proof/access-control/ARM/ArchAccess_AC.thy",
+   "why": "Generic cap match only; no decode-path reasoning."
+  },
+  {
+   "file": "proof/access-control/ARM/ArchFinalise_AC.thy",
+   "why": "Generic cap match; finalise path, not decode path."
+  },
+  {
+   "file": "proof/access-control/Syscall_AC.thy",
+   "why": "Uses invocation results via top-level syscall interface; the new guard is unreachable under invariants so call-site semantics are unchanged."
+  }
+ ]
+}

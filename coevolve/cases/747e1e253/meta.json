@@ -1,0 +1,17 @@
+{
+ "commit": "747e1e25313e65f6f78883b53cb862ee73e28154",
+ "parent": "02d055fb5e96f7c7d0ca606256e31fc3337b73fa",
+ "date": "2023-02-06 09:56:36 +1100",
+ "subject": "arm_hyp+aarch64 machine: use standard machine op naming scheme",
+ "artifact_files": [
+  "spec/machine/AARCH64/MachineOps.thy",
+  "spec/machine/ARM_HYP/MachineOps.thy"
+ ],
+ "proof_files": [
+  "proof/invariant-abstract/AARCH64/Machine_AI.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "AInvs"
+ ]
+}

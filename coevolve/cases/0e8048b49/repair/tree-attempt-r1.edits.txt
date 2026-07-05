@@ -1,0 +1,22 @@
+Now I have everything needed. The fix is to change the `prop_tac` condition from `¬(user_vtop ≤ vtop)` to `¬(user_vtop < vtop)` (matching the spec change from `≥` to `>`), then update the sub-proof to handle `≤` instead of `<`. Since `canonical_user = user_vtop` numerically, unfolding their definitions lets `aligned_add_mask_leD` close it directly:
+
+<<<<SEARCH
+    apply (prop_tac "\<not> user_vtop \<le> args ! 0 + mask (pageBitsForSize vmpage_size) \<longrightarrow> args!0 \<in> user_region")
+     apply (clarsimp simp: user_region_def not_le)
+     apply (rule user_vtop_canonical_user)
+     apply (erule aligned_add_mask_lessD)
+     apply (simp add: vmsz_aligned_def)
+====
+    apply (prop_tac "\<not> user_vtop < args ! 0 + mask (pageBitsForSize vmpage_size) \<longrightarrow> args!0 \<in> user_region")
+     apply (clarsimp simp: user_region_def not_less user_vtop_def pptrUserTop_def
+                           canonical_user_def ipa_size_def bit_simps)
+     apply (erule aligned_add_mask_leD)
+     apply (simp add: vmsz_aligned_def)
+>>>>
+
+
+=== VERDICT: RED ===
+*** Undefined fact: "aligned_add_mask_leD" (line 1422 of "/sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy")
+*** At command "apply" (line 1422 of "/sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy")
+Unfinished session(s): AInvs
+0:15:22 elapsed time, 1:17:48 cpu time, factor 5.06

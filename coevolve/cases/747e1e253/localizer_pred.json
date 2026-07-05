@@ -1,0 +1,41 @@
+{
+ "work_list": [],
+ "cleared": [
+  {
+   "file": "proof/crefine/ARM_HYP/Machine_C.thy",
+   "why": "Only references readVCPUHardwareReg via a locale assume (unchanged name/type); neither vcpuHardwareRegVal nor vcpuHardwareReg_val appear anywhere in this file."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/Machine_AI.thy",
+   "why": "readVCPUHardwareReg is only in a crunches list; crunch unfolds to gets(...) and relies on generic gets-monad wp rules, not on the underlying constant's name."
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/Machine_AI.thy",
+   "why": "no_irq_readVCPUHardwareReg proved by simp add: readVCPUHardwareReg_def; gets(...) no_irq holds regardless of inner constant name. Crunches list likewise unaffected."
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/ArchArch_AI.thy",
+   "why": "Only mentions read_cntpct, which was not changed (context-only in the diff hunk)."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchVSpace_AI.thy",
+   "why": "dmo_readVCPUHardwareReg_invs is a crunch-derived wp lemma proved via gets monad rules; statement and proof survive the rename intact."
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/ArchVSpace_AI.thy",
+   "why": "crunches and dmo_readVCPUHardwareReg_invs all go through readVCPUHardwareReg wrapper; no direct reference to vcpuHardwareRegVal."
+  },
+  {
+   "file": "proof/refine/ARM_HYP/ArchMove_R.thy",
+   "why": "readVCPUHardwareReg appears only in a crunches list; no constant-name-specific lemmas needed."
+  },
+  {
+   "file": "proof/refine/ARM_HYP/CNodeInv_R.thy",
+   "why": "crunches readVCPUHardwareReg only; gets-monad crunch rules apply generically."
+  },
+  {
+   "file": "proof/refine/ARM_HYP/VSpace_R.thy",
+   "why": "Proofs using simp: readVCPUHardwareReg_def gets_def in_monad and wp: no_irq_readVCPUHardwareReg all reduce through gets(...) monad lemmas; the inner constant name is irrelevant to every step."
+  }
+ ]
+}

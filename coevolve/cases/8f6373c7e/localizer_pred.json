@@ -1,0 +1,271 @@
+{
+ "work_list": [
+  {
+   "file": "proof/invariant-abstract/CSpace_AI.thy",
+   "lemmas": [
+    {
+     "name": "the_arch_cap_ArchObjectCap",
+     "statement_must_evolve": true,
+     "reason": "Lemma states the semantics of the deleted the_arch_cap definition; must be deleted."
+    }
+   ],
+   "file_reason": "Hosts the only arch-neutral simp lemma for the_arch_cap; must be removed since the definition is gone."
+  },
+  {
+   "file": "proof/invariant-abstract/ARM/ArchADT_AI.thy",
+   "lemmas": [
+    {
+     "name": "the_arch_cap_simp",
+     "statement_must_evolve": true,
+     "reason": "Simp lemma restates the deleted definition; must be deleted."
+    },
+    {
+     "name": "get_pd_of_thread_eq",
+     "statement_must_evolve": true,
+     "reason": "Conclusion at line 160 contains the_arch_cap (tcb_vtable tcb) inside the existential; must inline the case expression."
+    }
+   ],
+   "file_reason": "Has both the per-arch simp copy and a public lemma whose statement uses the_arch_cap."
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchADT_AI.thy",
+   "lemmas": [
+    {
+     "name": "the_arch_cap_simp",
+     "statement_must_evolve": true,
+     "reason": "Per-arch simp copy of the deleted definition; must be deleted."
+    }
+   ],
+   "file_reason": "Has only the simp lemma copy; no statement-level use of the_arch_cap in any exported lemma on RISCV64."
+  },
+  {
+   "file": "proof/invariant-abstract/X64/ArchADT_AI.thy",
+   "lemmas": [
+    {
+     "name": "the_arch_cap_simp",
+     "statement_must_evolve": true,
+     "reason": "Per-arch simp copy; must be deleted."
+    },
+    {
+     "name": "get_vspace_of_thread_eq",
+     "statement_must_evolve": true,
+     "reason": "Statement at line 147 contains the_arch_cap (tcb_vtable tcb) in the vs_lookup condition."
+    }
+   ],
+   "file_reason": "X64 arch copy has both the simp lemma and a vspace-equivalent of get_pd_of_thread_eq with the_arch_cap in its statement."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchADT_AI.thy",
+   "lemmas": [
+    {
+     "name": "the_arch_cap_simp",
+     "statement_must_evolve": true,
+     "reason": "Per-arch simp copy; must be deleted."
+    }
+   ],
+   "file_reason": "Has only the simp lemma; no statement-level exported use."
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/ArchADT_AI.thy",
+   "lemmas": [
+    {
+     "name": "the_arch_cap_simp",
+     "statement_must_evolve": true,
+     "reason": "Per-arch simp copy; must be deleted."
+    },
+    {
+     "name": "get_pd_of_thread_eq",
+     "statement_must_evolve": true,
+     "reason": "Statement at line 164 contains the_arch_cap (tcb_vtable tcb) in the vs_lookup condition."
+    }
+   ],
+   "file_reason": "ARM_HYP copy mirrors ARM: both the simp lemma and get_pd_of_thread_eq statement carry the_arch_cap."
+  },
+  {
+   "file": "proof/invariant-abstract/ARM/ArchCNodeInv_AI.thy",
+   "lemmas": [
+    {
+     "name": "same_object_as_def2",
+     "statement_must_evolve": true,
+     "reason": "RHS of the equational statement at line 90 uses case the_arch_cap cp of; must be rewritten to inline case cap of ArchObjectCap a => a."
+    }
+   ],
+   "file_reason": "same_object_as_def2 exposes the_arch_cap in its published equational statement."
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchCNodeInv_AI.thy",
+   "lemmas": [
+    {
+     "name": "same_object_as_def2",
+     "statement_must_evolve": true,
+     "reason": "Identical pattern to ARM; case the_arch_cap cp of in the statement at line 94."
+    }
+   ],
+   "file_reason": "RISCV64 arch copy of same_object_as_def2 has the same statement-level the_arch_cap use."
+  },
+  {
+   "file": "proof/invariant-abstract/X64/ArchCNodeInv_AI.thy",
+   "lemmas": [
+    {
+     "name": "same_object_as_def2",
+     "statement_must_evolve": true,
+     "reason": "Identical pattern; case the_arch_cap cp of at line 95."
+    }
+   ],
+   "file_reason": "X64 arch copy of same_object_as_def2."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchCNodeInv_AI.thy",
+   "lemmas": [
+    {
+     "name": "same_object_as_def2",
+     "statement_must_evolve": true,
+     "reason": "Identical pattern; case the_arch_cap cp of at line 95."
+    }
+   ],
+   "file_reason": "AARCH64 arch copy of same_object_as_def2."
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/ArchCNodeInv_AI.thy",
+   "lemmas": [
+    {
+     "name": "same_object_as_def2",
+     "statement_must_evolve": true,
+     "reason": "Identical pattern; case the_arch_cap cp of PageCap at line 101."
+    }
+   ],
+   "file_reason": "ARM_HYP arch copy of same_object_as_def2."
+  },
+  {
+   "file": "proof/invariant-abstract/ARM/ArchTcb_AI.thy",
+   "lemmas": [
+    {
+     "name": "same_object_obj_refs",
+     "statement_must_evolve": false,
+     "reason": "the_arch_cap appears only in tactic: by (cases the_arch_cap cap; cases the_arch_cap cap'; simp); statement is unchanged."
+    }
+   ],
+   "file_reason": "Body-only: the_arch_cap used only inside the closing tactic of same_object_obj_refs."
+  },
+  {
+   "file": "proof/invariant-abstract/RISCV64/ArchTcb_AI.thy",
+   "lemmas": [
+    {
+     "name": "same_object_obj_refs",
+     "statement_must_evolve": false,
+     "reason": "Same pattern as ARM; the_arch_cap only in closing tactic at line 45."
+    }
+   ],
+   "file_reason": "Body-only tactic edit."
+  },
+  {
+   "file": "proof/invariant-abstract/X64/ArchTcb_AI.thy",
+   "lemmas": [
+    {
+     "name": "same_object_obj_refs",
+     "statement_must_evolve": false,
+     "reason": "Same pattern; the_arch_cap only in closing tactic at line 46."
+    }
+   ],
+   "file_reason": "Body-only tactic edit."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchTcb_AI.thy",
+   "lemmas": [
+    {
+     "name": "same_object_obj_refs",
+     "statement_must_evolve": false,
+     "reason": "Same pattern; the_arch_cap only in closing tactic at line 43."
+    }
+   ],
+   "file_reason": "Body-only tactic edit."
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/ArchTcb_AI.thy",
+   "lemmas": [
+    {
+     "name": "same_object_obj_refs",
+     "statement_must_evolve": false,
+     "reason": "Same pattern; the_arch_cap only in closing tactic at line 46."
+    }
+   ],
+   "file_reason": "Body-only tactic edit."
+  },
+  {
+   "file": "proof/infoflow/ARM/ArchFinalCaps.thy",
+   "lemmas": [
+    {
+     "name": "perform_page_table_invocation_silc_inv_get_cap_helper",
+     "statement_must_evolve": true,
+     "reason": "Postcondition at line 107 is (lambda capa. ...) circ the_arch_cap; the composition with the deleted function is part of the published Hoare triple statement."
+    }
+   ],
+   "file_reason": "Hoare triple postcondition directly composes the deleted the_arch_cap into the spec."
+  },
+  {
+   "file": "proof/infoflow/RISCV64/ArchFinalCaps.thy",
+   "lemmas": [
+    {
+     "name": "perform_page_table_invocation_silc_inv_get_cap_helper",
+     "statement_must_evolve": true,
+     "reason": "Identical postcondition pattern at line 94; circ the_arch_cap in the published Hoare triple statement."
+    }
+   ],
+   "file_reason": "RISCV64 copy of the same helper lemma with the_arch_cap in its statement."
+  },
+  {
+   "file": "proof/access-control/ARM/ArchArch_AC.thy",
+   "lemmas": [
+    {
+     "name": "clas_update_map_data_strg",
+     "statement_must_evolve": true,
+     "reason": "Statement at line 201 contains the_arch_cap cap in the conclusion; must inline the case expression."
+    },
+    {
+     "name": "perform_page_table_invocation_pas_refined",
+     "statement_must_evolve": false,
+     "reason": "the_arch_cap at line 266 is inside a subgoal_tac string in the proof body, not the published Hoare triple statement."
+    }
+   ],
+   "file_reason": "clas_update_map_data_strg has the_arch_cap in its exported statement; the wp lemma has only a body-level use."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchAcc_AI.thy",
+   "lemmas": [
+    {
+     "name": "<crunch-or-setup>",
+     "statement_must_evolve": true,
+     "reason": "locale_abbrev cap_pt_type at line 167 is defined as acap_pt_type (the_arch_cap cap); the abbreviation itself must be rewritten."
+    },
+    {
+     "name": "cap_to_pt_is_pt_cap_and_type",
+     "statement_must_evolve": false,
+     "reason": "Only uses the_arch_cap_def inside a simp set in the proof body; statement is not affected."
+    }
+   ],
+   "file_reason": "The cap_pt_type locale abbreviation embeds the deleted definition and must be updated."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchCSpaceInvPre_AI.thy",
+   "lemmas": [
+    {
+     "name": "valid_table_capsD",
+     "statement_must_evolve": false,
+     "reason": "the_arch_cap_def appears only in the simp set at line 318 in the proof body; statement is unaffected."
+    }
+   ],
+   "file_reason": "Body-only: proof of valid_table_capsD unfolds the_arch_cap_def which no longer exists."
+  },
+  {
+   "file": "proof/invariant-abstract/X64/ArchVSpace_AI.thy",
+   "lemmas": [
+    {
+     "name": "perform_page_directory_invocation_invs",
+     "statement_must_evolve": false,
+     "reason": "Structures_A.the_arch_cap (ArchObjectCap ...) at lines 2998/3080/3192 is inside hoare_post_imp Q arguments in the proof body; the published wp statement is unchanged."
+    }
+   ],
+   "file_reason": "Body-only: three sites in proof chains apply the_arch_cap to a literal ArchObjectCap constructor, all inside tactic terms."
+  }
+ ]
+}

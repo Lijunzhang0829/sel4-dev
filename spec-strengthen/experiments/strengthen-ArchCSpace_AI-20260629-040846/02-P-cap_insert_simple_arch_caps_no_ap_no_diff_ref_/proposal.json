@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Sites inserting simple non-AP caps where no_cap_to_obj_with_diff_ref is not yet established but valid_arch_caps preservation is still desired.",
+ "grace_period_weeks": 8,
+ "lemma_name": "cap_insert_simple_arch_caps_no_ap_no_diff_ref",
+ "hint_lemma": "cap_insert_simple_arch_caps_no_ap",
+ "anchor_line": 518,
+ "new_lemma": "lemma cap_insert_simple_arch_caps_no_ap_no_diff_ref:\n  \"\\<lbrace>valid_arch_caps and (\\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s)\n              and K (is_simple_cap cap \\<and> \\<not>is_ap_cap cap)\\<rbrace>\n     cap_insert cap src dest\n   \\<lbrace>\\<lambda>rv. valid_arch_caps\\<rbrace>\"\n  apply (simp add: cap_insert_def)\n  apply (wp set_cap_valid_arch_caps set_untyped_cap_as_full_valid_arch_caps get_cap_wp\n    | simp split del: if_split)+\n  apply (wp hoare_vcg_all_lift hoare_vcg_conj_lift hoare_vcg_imp_lift hoare_vcg_ball_lift hoare_vcg_disj_lift\n    set_untyped_cap_as_full_cte_wp_at_neg set_untyped_cap_as_full_is_final_cap'_neg\n    set_untyped_cap_as_full_empty_table_at hoare_vcg_ex_lift\n    set_untyped_cap_as_full_caps_of_state_diff[where dest=dest]\n    | wps)+\n      apply (wp get_cap_wp)+\n  apply (clarsimp simp: cte_wp_at_caps_of_state)\n  apply (intro conjI impI allI)\n  by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)",
+ "rationale": "The proof body of cap_insert_simple_arch_caps_no_ap never mentions no_cap_to_obj_with_diff_ref textually. The final auto tactic only discharges is_simple_cap/is_cap_simps goals. For simple non-AP caps the unique_table lemmas used in set_cap_valid_arch_caps are satisfied by is_simple_cap alone (pt/pd caps are excluded). The trial will confirm whether the wp chain for set_cap_valid_arch_caps needs no_cap_to_obj_with_diff_ref or not.",
+ "strengthening_claim": "(valid_arch_caps and (\\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s)\n             and no_cap_to_obj_with_diff_ref cap {dest} and K (is_simple_cap cap \\<and> \\<not>is_ap_cap cap)) ==> (valid_arch_caps and (\\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s)\n              and K (is_simple_cap cap \\<and> \\<not>is_ap_cap cap)) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `no_cap_to_obj_with_diff_ref cap {dest}`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "anchor_text": "  by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)"
+}

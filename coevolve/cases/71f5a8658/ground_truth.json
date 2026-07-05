@@ -1,0 +1,37 @@
+{
+ "proof/refine/AARCH64/Arch_R.thy": {
+  "session": "Refine",
+  "lemmas": {
+   "data_at_is_frame_cap": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma data_at_is_frame_cap: \"\\<lbrakk> caps_of_state s cref = Some cap; obj_refs cap = {p}; data_at pgsz p s; valid_objs s \\<rbrakk> \\<Longrightarrow> is_frame_cap cap \\<and> cap_bits cap = pageBitsForSize pgsz\""
+   },
+   "decodeARMVSpaceInvocation_corres": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma decodeARMVSpaceInvocation_corres[corres]: \"\\<lbrakk> cap = arch_cap.PageTableCap pt VSRootPT_T map_data; acap_relation cap cap'; list_all2 cap_relation (map fst excaps) (map fst excaps'); list_all2 (\\<lambda>s s'. s' = cte_map s) (map snd excaps) (map snd excaps') \\<rbrakk> \\<Longrightarrow> corres (ser \\<oplus> archinv_relation) (invs and valid_cap (cap.ArchObjectCap cap) and cte_wp_at ((=)",
+    "stmt_post": "lemma decodeARMVSpaceInvocation_corres[corres]: \"\\<lbrakk> cap = arch_cap.PageTableCap pt VSRootPT_T map_data; acap_relation cap cap'; list_all2 cap_relation (map fst excaps) (map fst excaps'); list_all2 (\\<lambda>s s'. s' = cte_map s) (map snd excaps) (map snd excaps') \\<rbrakk> \\<Longrightarrow> corres (ser \\<oplus> archinv_relation) (invs and valid_cap (cap.ArchObjectCap cap) and cte_wp_at ((=)"
+   },
+   "lookupFrame_corres": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma lookupFrame_corres[@lift_corres_args, corres]: \"corres (\\<lambda>fr fr'. case (fr, fr') of (Some (vmsz, b), Some (bits, b')) \\<Rightarrow> bits = pageBitsForSize vmsz \\<and> b' = b | (None, None) \\<Rightarrow> True | _ \\<Rightarrow> False) (invs and \\<exists>\\<rhd> (max_pt_level, vspace) and K (vaddr \\<in> user_region)) \\<top> (gets (lookup_frame vspace vaddr \\<circ> ptes_of)) (lookupFrame v",
+    "stmt_post": "lemma lookupFrame_corres[@lift_corres_args, corres]: \"corres (\\<lambda>fr fr'. case (fr, fr') of (Some (vmsz, b), Some (bits, b')) \\<Rightarrow> bits = pageBitsForSize vmsz \\<and> b' = b | (None, None) \\<Rightarrow> True | _ \\<Rightarrow> False) (invs and \\<exists>\\<rhd> (max_pt_level, vspace) and K (vaddr \\<in> user_region)) \\<top> (gets (lookup_frame vspace vaddr \\<circ> ptes_of)) (lookupFrame v"
+   },
+   "max_page_le_max_pt_level": {
+    "kw": "lemma",
+    "kind": "added",
+    "statement_evolved": true,
+    "body_changed": true,
+    "stmt_post": "lemma max_page_le_max_pt_level: \"max_page_level \\<le> max_pt_level\""
+   }
+  }
+ }
+}

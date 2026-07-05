@@ -1,0 +1,63 @@
+diff --git a/reports/experiments/0015-set-cdt-machine-state-frame-lemma/patch.diff b/reports/experiments/0015-set-cdt-machine-state-frame-lemma/patch.diff
+index 86bb4c8..87923aa 100644
+--- a/reports/experiments/0015-set-cdt-machine-state-frame-lemma/patch.diff
++++ b/reports/experiments/0015-set-cdt-machine-state-frame-lemma/patch.diff
+@@ -1,12 +1,13 @@
+ diff --git a/proof/invariant-abstract/CSpace_AI.thy b/proof/invariant-abstract/CSpace_AI.thy
+ --- a/proof/invariant-abstract/CSpace_AI.thy
+ +++ b/proof/invariant-abstract/CSpace_AI.thy
+-@@ -3848,6 +3848,10 @@ lemma set_cdt_vms[wp]:
++@@ -3848,6 +3848,9 @@
+    "\<lbrace>valid_machine_state\<rbrace> set_cdt t \<lbrace>\<lambda>_. valid_machine_state\<rbrace>"
+    by (simp add: set_cdt_def, wp) (simp add: valid_machine_state_def)
+-
++ 
+ +lemma set_cdt_machine_state[wp]:
+ +  "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_cdt m \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+ +  by (wpsimp simp: set_cdt_def)
+-+
++ 
++ 
+  crunch vms[wp]: update_cdt valid_machine_state
+diff --git a/reports/experiments/0016-set-cdt-cur-thread-frame-lemma/patch.diff b/reports/experiments/0016-set-cdt-cur-thread-frame-lemma/patch.diff
+index 8652700..629b65e 100644
+--- a/reports/experiments/0016-set-cdt-cur-thread-frame-lemma/patch.diff
++++ b/reports/experiments/0016-set-cdt-cur-thread-frame-lemma/patch.diff
+@@ -1,12 +1,13 @@
+ diff --git a/proof/invariant-abstract/CSpace_AI.thy b/proof/invariant-abstract/CSpace_AI.thy
+ --- a/proof/invariant-abstract/CSpace_AI.thy
+ +++ b/proof/invariant-abstract/CSpace_AI.thy
+-@@ -3852,6 +3852,10 @@ lemma set_cdt_machine_state[wp]:
++@@ -3852,6 +3852,9 @@
+    "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_cdt m \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+    by (wpsimp simp: set_cdt_def)
+-
++ 
+ +lemma set_cdt_cur_thread[wp]:
+ +  "\<lbrace>\<lambda>s. P (cur_thread s)\<rbrace> set_cdt m \<lbrace>\<lambda>_ s. P (cur_thread s)\<rbrace>"
+ +  by (wpsimp simp: set_cdt_def)
+-+
++ 
+  crunch vms[wp]: update_cdt valid_machine_state
++ 
+diff --git a/reports/experiments/0017-set-cdt-idle-thread-frame-lemma/patch.diff b/reports/experiments/0017-set-cdt-idle-thread-frame-lemma/patch.diff
+index 2105630..e6b7d90 100644
+--- a/reports/experiments/0017-set-cdt-idle-thread-frame-lemma/patch.diff
++++ b/reports/experiments/0017-set-cdt-idle-thread-frame-lemma/patch.diff
+@@ -1,12 +1,14 @@
+ diff --git a/proof/invariant-abstract/CSpace_AI.thy b/proof/invariant-abstract/CSpace_AI.thy
+ --- a/proof/invariant-abstract/CSpace_AI.thy
+ +++ b/proof/invariant-abstract/CSpace_AI.thy
+-@@ -3856,6 +3856,10 @@ lemma set_cdt_cur_thread[wp]:
++@@ -3856,6 +3856,10 @@
+    "\<lbrace>\<lambda>s. P (cur_thread s)\<rbrace> set_cdt m \<lbrace>\<lambda>_ s. P (cur_thread s)\<rbrace>"
+    by (wpsimp simp: set_cdt_def)
+-
++ 
+ +lemma set_cdt_idle_thread[wp]:
+ +  "\<lbrace>\<lambda>s. P (idle_thread s)\<rbrace> set_cdt m \<lbrace>\<lambda>_ s. P (idle_thread s)\<rbrace>"
+ +  by (wpsimp simp: set_cdt_def)
+ +
+  crunch vms[wp]: update_cdt valid_machine_state
++ 
++ 

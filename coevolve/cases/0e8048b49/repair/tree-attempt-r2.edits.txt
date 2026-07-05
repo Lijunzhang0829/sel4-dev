@@ -1,0 +1,59 @@
+Looking at the error: `aligned_add_mask_leD` is referenced at line 1422 but doesn't exist. The spec change from `\<ge>` to `>` means the no-throw path now requires `vtop \<le> user_vtop` (non-strict), so `r1` introduced a reference to this lemma for the `\<le>` case, but the lemma itself was never defined.
+
+I need to add `aligned_add_mask_leD` as a helper lemma before `decode_fr_inv_map_wf`:
+
+<<<<SEARCH
+lemma pageBitsForSize_level_0_eq:
+  "pt_bits_left level = pageBitsForSize vmpage_size \<Longrightarrow> (vmpage_size = ARMSmallPage) = (level = 0)"
+  using vm_level.size_inj[where x=level and y=max_page_level, unfolded level_defs, simplified]
+  by (simp add: pageBitsForSize_def pt_bits_left_def ptTranslationBits_def
+           split: vmpage_size.splits if_split_asm)
+
+lemma decode_fr_inv_map_wf[wp]:
+====
+lemma pageBitsForSize_level_0_eq:
+  "pt_bits_left level = pageBitsForSize vmpage_size \<Longrightarrow> (vmpage_size = ARMSmallPage) = (level = 0)"
+  using vm_level.size_inj[where x=level and y=max_page_level, unfolded level_defs, simplified]
+  by (simp add: pageBitsForSize_def pt_bits_left_def ptTranslationBits_def
+           split: vmpage_size.splits if_split_asm)
+
+lemma aligned_add_mask_leD:
+  "\<lbrakk> x + mask n \<le> y; is_aligned x n \<rbrakk> \<Longrightarrow> x \<le> y"
+  by (meson is_aligned_no_overflow_mask order_trans)
+
+lemma decode_fr_inv_map_wf[wp]:
+>>>>
+
+
+=== VERDICT: RED ===
+Cap (FrameCap p rights vmpage_size dev option);
+***         cte_wp_at
+***          ((=) (ArchObjectCap (FrameCap p rights vmpage_size dev option)))
+***          slot s;
+***         ?x?set excaps. cte_wp_at ((=) (fst x)) (snd x) s; 2 < length args;
+***         excaps ? [];
+***         fst (excaps ! 0) =
+***         ArchObjectCap (PageTableCap pt VSRootPT_T (Some (asid, vref)));
+***         vspace_for_asid asid s = Some pt;
+***         vmsz_aligned (args ! 0) vmpage_size;
+***         option = None ?
+***         ? user_vtop < args ! 0 + mask (pageBitsForSize vmpage_size) ?
+***         option = Some (asid, args ! 0);
+***         pt_lookup_slot pt (args ! 0) (ptes_of s) = Some (x, b);
+***         pt_bits_left x = pageBitsForSize vmpage_size;
+***         ? user_vtop < args ! 0 + mask (pageBitsForSize vmpage_size) ?
+***         args ! 0 ? user_region?
+***        ? valid_arch_inv
+***            (InvokePage
+***              (PageMap
+***                (FrameCap p rights vmpage_size dev (Some (asid, args ! 0)))
+***                slot
+***                (make_user_pte (addrFromPPtr p)
+***                  (attribs_from_word (args ! 2))
+***                  (mask_vm_rights rights (data_to_rights (args ! Suc 0)))
+***                  vmpage_size,
+***                 b, x)))
+***            s
+*** At command "apply" (line 1427 of "/sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy")
+Unfinished session(s): AInvs
+0:15:21 elapsed time, 1:18:21 cpu time, factor 5.10

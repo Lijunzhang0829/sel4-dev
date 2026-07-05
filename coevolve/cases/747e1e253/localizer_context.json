@@ -1,0 +1,65 @@
+{
+ "identifiers": [
+  "read_cntpct",
+  "readVCPUHardwareReg"
+ ],
+ "candidates": [
+  {
+   "file": "proof/crefine/ARM_HYP/Machine_C.thy",
+   "mentions": [
+    "readVCPUHardwareReg",
+    "read_cntpct"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/Machine_AI.thy",
+   "mentions": [
+    "readVCPUHardwareReg",
+    "read_cntpct"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/Machine_AI.thy",
+   "mentions": [
+    "readVCPUHardwareReg",
+    "read_cntpct"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/ArchArch_AI.thy",
+   "mentions": [
+    "read_cntpct"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchVSpace_AI.thy",
+   "mentions": [
+    "readVCPUHardwareReg"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/ARM_HYP/ArchVSpace_AI.thy",
+   "mentions": [
+    "readVCPUHardwareReg"
+   ]
+  },
+  {
+   "file": "proof/refine/ARM_HYP/ArchMove_R.thy",
+   "mentions": [
+    "readVCPUHardwareReg"
+   ]
+  },
+  {
+   "file": "proof/refine/ARM_HYP/CNodeInv_R.thy",
+   "mentions": [
+    "readVCPUHardwareReg"
+   ]
+  },
+  {
+   "file": "proof/refine/ARM_HYP/VSpace_R.thy",
+   "mentions": [
+    "readVCPUHardwareReg"
+   ]
+  }
+ ]
+}

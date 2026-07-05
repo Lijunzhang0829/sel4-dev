@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "valid_vspace_obj_detype or any caller that can supply a vs_lookup witness but not a concrete ko_at for the page-structure object",
+ "hint_lemma": "valid_vspace_obj",
+ "lemma_name": "valid_vspace_obj'",
+ "anchor_line": 310,
+ "new_lemma": "lemma valid_vspace_obj':\n  \"\\<And>ao p. \\<lbrakk> valid_vspace_obj ao s; (\\<exists>\\<rhd>p) s \\<rbrakk> \\<Longrightarrow>\n       valid_vspace_obj ao (detype (untyped_range cap) s)\"\n  apply (case_tac ao; simp; erule allEI ballEI; clarsimp simp: ran_def;\n         drule vs_lookup_pages_vs_lookupI)\n  subgoal for p t r ref i by (crush i)\n  subgoal for p t i ref by (cases \"t i\"; crush i)\n  subgoal for p t i ref by (cases \"t i\"; crush i)\n  done",
+ "rationale": "The scanner reports ko_at never appears in the proof body. The proof drives entirely through vs_lookup_pages_preserved via the crush private method, which consumes the `(\\<exists>\\<rhd>p) s` witness; ko_at is not passed to any rule in the tactic chain. The new lemma is placed inside the same `context begin` block (L285–312) so the private `crush` method is still in scope.",
+ "strengthening_claim": "(valid_vspace_obj ao s \\<and> (\\<exists>\\<rhd>p) s) ==> (valid_vspace_obj ao s \\<and> ko_at (ArchObj ao) p s \\<and> (\\<exists>\\<rhd>p) s)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

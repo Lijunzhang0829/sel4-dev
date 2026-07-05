@@ -1,0 +1,53 @@
+PROMPT (4743 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/machine/AARCH64/MachineOps.thy b/spec/machine/AARCH64/MachineOps.thy
+index 9311a728..30ec6cbe 100644
+--- a/spec/machine/AARCH64/MachineOps.thy
++++ b/spec/machine/AARCH64/MachineOps.thy
+@@ -342,9 +342,9 @@ definition read_cntpct :: "64 word machine_monad" where
+ 
+ subsection "Hypervisor Banked Registers"
+ 
+-consts' vcpuHardwareRegVal :: "vcpureg \<Rightarrow> machine_state \<Rightarrow> machine_word"
++consts' vcpuHardwareReg_val :: "vcpureg \<Rightarrow> machine_state \<Rightarrow> machine_word"
+ definition readVCPUHardwareReg :: "vcpureg \<Rightarrow> machine_word machine_monad" where
+-  "readVCPUHardwareReg reg \<equiv> gets (vcpuHardwareRegVal reg)"
++  "readVCPUHardwareReg reg \<equiv> gets (vcpuHardwareReg_val reg)"
+ 
+ consts' writeVCPUHardwareReg_impl :: "vcpureg \<Rightarrow> machine_word \<Rightarrow> unit machine_rest_monad"
+ definition writeVCPUHardwareReg :: "vcpureg \<Rightarrow> machine_word \<Rightarrow> unit machine_monad" where
+diff --git a/spec/machine/ARM_HYP/MachineOps.thy b/spec/machine/ARM_HYP/MachineOps.thy
+index daeb2e3f..2146b43a 100644
+--- a/spec/machine/ARM_HYP/MachineOps.thy
++++ b/spec/machine/ARM_HYP/MachineOps.thy
+@@ -705,11 +705,11 @@ where
+ subsection "Hypervisor Banked Registers"
+ 
+ consts'
+-  vcpuHardwareRegVal :: "vcpureg \<Rightarrow> machine_state \<Rightarrow> machine_word"
++  vcpuHardwareReg_val :: "vcpureg \<Rightarrow> machine_state \<Rightarrow> machine_word"
+ definition
+   readVCPUHardwareReg :: "vcpureg \<Rightarrow> machine_word machine_monad"
+ where
+-  "readVCPUHardwareReg reg \<equiv> gets (vcpuHardwareRegVal reg)"
++  "readVCPUHardwareReg reg \<equiv> gets (vcpuHardwareReg_val reg)"
+ 
+ consts'
+   writeVCPUHardwareReg_impl :: "vcpureg \<Rightarrow> machine_word \<Rightarrow> unit machi
+
+=== RAW REPLY ===
+Zero hits for `vcpuHardwareRegVal` in the entire proof tree. The old constant name was never referenced directly in any proof file — all proofs use the wrapper `readVCPUHardwareReg` as their abstraction boundary.
+
+**Summary of evidence:**
+- The only semantic change is `consts' vcpuHardwareRegVal` → `consts' vcpuHardwareReg_val`, making `readVCPUHardwareReg_def` expand to `gets (vcpuHardwareReg_val reg)` instead of `gets (vcpuHardwareRegVal reg)`.
+- `readVCPUHardwareReg` itself has identical name, type, and observable monad behavior before and after.
+- All proof files that unfold `readVCPUHardwareReg_def` (VSpace_R.thy, Arch_R.thy, ArchFinalise_AI.thy, Machine_AI.thy) rely only on generic `gets`-monad properties (`no_irq`, `empty_fail`, state invariance) which hold for any pure getter regardless of the underlying constant's name.
+- `read_cntpct` in the candidate list is unchanged (it appears only as context in the diff hunk header).
+- No `crunch_ignore`, no axioms, and no named lemmas about `vcpuHardwareRegVal` exist in any proof file.
+
+{"work_list": [], "cleared": [{"file": "proof/crefine/ARM_HYP/Machine_C.thy", "why": "Only references readVCPUHardwareReg via a locale assume (unchanged name/type); neither vcpuHardwareRegVal nor vcpuHardwareReg_val appear anywhere in this file."}, {"file": "proof/invariant-abstract/AARCH64/Machine_AI.thy", "why": "readVCPUHardwareReg is only in a crunches list; crunch unfolds to gets(...) and relies on generic gets-monad wp rules, not on the underlying constant's name."}, {"file": "proof/invariant-abstract/ARM_HYP/Machine_AI.thy", "why": "no_irq_readVCPUHardwareReg proved by simp add: readVCPUHardwareReg_def; gets(...) no_irq holds regardless of inner constant name. Crunches list likewise unaffected."}, {"file": "proof/invariant-abstract/ARM_HYP/ArchArch_AI.thy", "why": "Only mentions read_cntpct, which was not changed (context-only in the diff hunk)."}, {"file": "proof/invariant-abstract/AARCH64/ArchVSpace_AI.thy", "why": "dmo_readVCPUHardwareReg_invs is a crunch-derived wp lemma proved via gets monad rules; statement and proof survive the rename intact."}, {"file": "proof/invariant-abstract/ARM_HYP/ArchVSpace_AI.thy", "why": "crunches and dmo_readVCPUHardwareReg_invs all go through readVCPUHardwareReg wrapper; no direct reference to vcpuHardwareRegVal."}, {"file": "proof/refine/ARM_HYP/ArchMove_R.thy", "why": "readVCPUHardwareReg appears only in a crunches list; no constant-name-specific lemmas needed."}, {"file": "proof/refine/ARM_HYP/CNodeInv_R.thy", "why": "crunches readVCPUHardwareReg only; gets-monad crunch rules apply generically."}, {"file": "proof/refine/ARM_HYP/VSpace_R.thy", "why": "Proofs using simp: readVCPUHardwareReg_def gets_def in_monad and wp: no_irq_readVCPUHardwareReg all reduce through gets(...) monad lemmas; the inner constant name is irrelevant to every step."}]}
+=== STDERR ===
+

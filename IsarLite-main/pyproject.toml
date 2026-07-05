@@ -1,0 +1,44 @@
+[project]
+name = "isarlite"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.13.4", "returns>=0.27.0"]
+
+[project.scripts]
+isar = "isarlite.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/isarlite"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["pytest>=9.0.3", "basedpyright>=1.39"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+norecursedirs = ["test/assets", "refs"]
+markers = [
+    "unit: fast unit tests (no prover needed)",
+    "integration: integration tests (require prover with built heaps)",
+]
+
+[tool.basedpyright]
+typeCheckingMode = "strict"
+exclude = ["test/assets", "refs"]
+
+[[tool.basedpyright.executionEnvironments]]
+root = "test"
+reportUnknownParameterType = "warning"
+reportMissingParameterType = "warning"
+reportUnknownVariableType = "warning"
+reportUnknownMemberType = "warning"
+reportUnknownArgumentType = "warning"
+reportAttributeAccessIssue = "warning"
+reportMissingTypeArgument = "warning"
+reportPrivateUsage = "warning"
+reportUnusedImport = "warning"
+reportMissingImports = "warning"

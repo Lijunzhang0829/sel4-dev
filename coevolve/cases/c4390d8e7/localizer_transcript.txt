@@ -1,0 +1,66 @@
+PROMPT (4587 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/abstract/AARCH64/VCPUAcc_A.thy b/spec/abstract/AARCH64/VCPUAcc_A.thy
+index 9154bd95..a579885c 100644
+--- a/spec/abstract/AARCH64/VCPUAcc_A.thy
++++ b/spec/abstract/AARCH64/VCPUAcc_A.thy
+@@ -196,8 +196,7 @@ definition vcpu_save :: "(obj_ref \<times> bool) option \<Rightarrow> (unit,'z::
+             gicIndices;
+ 
+           \<comment> \<open>armvVCPUSave\<close>
+-          vcpu_save_reg_range vr VCPURegTTBR0 VCPURegSPSR_EL1;
+-          do_machine_op isb
++          vcpu_save_reg_range vr VCPURegTTBR0 VCPURegSPSR_EL1
+        od
+      | _ \<Rightarrow> fail"
+ 
+diff --git a/spec/haskell/src/SEL4/Object/VCPU/AARCH64.hs b/spec/haskell/src/SEL4/Object/VCPU/AARCH64.hs
+index ab35da8e..88f6b6aa 100644
+--- a/spec/haskell/src/SEL4/Object/VCPU/AARCH64.hs
++++ b/spec/haskell/src/SEL4/Object/VCPU/AARCH64.hs
+@@ -404,7 +404,6 @@ vcpuDisable vcpuPtrOpt = do
+ armvVCPUSave :: PPtr VCPU -> Bool -> Kernel ()
+ armvVCPUSave vcpuPtr active = do
+     vcpuSaveRegRange vcpuPtr VCPURegTTBR0 VCPURegSPSR_EL1
+-    doMachineOp isb
+ 
+ vcpuSave :: Maybe (PPtr VCPU, Bool) -> Kernel ()
+ vcpuSave (Just (vcpuPtr, active)) = do
+
+```
+
+## Identifiers whose definitions changed (mechanically extracted)
+["vcpu_save", "vcpuDisable"]
+
+## Candidate proof files that mention these identifiers (grep at pre-change rev)
+- proof/refine/AARCH64/VSpace_R.thy  (mentions: vcpuDisable, vcpu_save)
+- proof/invariant-abstract/AARCH64/ArchArch_AI.thy  (mentions: vcpu_save)
+- proof/invariant-abstract/AARCH64/ArchDetSchedDomainTime_AI.thy  (mentions: vcpu_save)
+- proof/invariant-abstract/AARCH64/ArchDetSchedSchedule_AI.thy  (mentions: vcpu_save)
+- proof/invariant-abstract/AARCH64/ArchDeterministic_AI.thy  (mentions: vcpu_save)
+- proof/invariant-abstract/AARCH64/ArchEmptyFail_AI.thy  (mentions: 
+
+=== RAW REPLY ===
+Now I have enough to reason about the full repair picture. Let me consolidate:
+
+**What changed:** Both sides of the Haskell↔Abstract corres layer lost `isb`:  
+- abstract `vcpu_save`: removed `do_machine_op isb`  
+- Haskell `armvVCPUSave` (called from `vcpuSave`): removed `doMachineOp isb`  
+- `vcpuDisable` is *unchanged* — the `@@ vcpuDisable …` context line in the diff hunk header is just a proximity marker, not the changed function.
+
+**VSpace_R.thy `vcpuSave_corres` (lines 520-558):** The proof unfolds `vcpu_save_def vcpuSave_def armvVCPUSave_def` (line 523). In the old code the continuation after the gicIndices `mapM_x` loop was `vcpuSaveRegRange >> doMachineOp isb`, so the old proof had `corres_split[OF vcpuSaveRegRange_corres]` plus an explicit `corres_machine_op[OF corres_Id]` step for `isb`. The current on-disk proof at line 555 applies `vcpuSaveRegRange_corres` *directly* (no surrounding `corres_split`), which only type-checks when the remaining goal is bare `vcpuSaveRegRange` — confirming the body needs this simplification. Statement is unchanged (`corres dc (vcpu_at …) … (vcpu_save (Some …)) (vcpuSave (Some ...))`).
+
+**VSpace_R.thy `vcpuSave_invs'` (line 1348-1353) and `vcpuSave_invs_no_cicd'` (line 1091-1094):** Both use `wpsimp simp: armvVCPUSave_def`; the auto-discharged `[wp]` lemmas (e.g. `dmo'_gets_wp`) become unused but don't cause failure. Body survives.
+
+**VSpace_C.thy `armv_vcpu_save_ccorres` (line 2654-2663):** The C code `armv_vcpu_save_'proc` was co-updated (not in this diff but logically paired). The old proof had `(ctac add: vcpu_save_reg_range_ccorres)` then `(ctac add: isb_ccorres)`. With C `isb` removed the `isb_ccorres` step must be dropped. Statement unchanged.
+
+**All invariant-abstract files (ArchVCPU_AI, ArchVSpace_AI, ArchEmptyFail_AI, etc.):** Use `crunches` or `wpsimp` with `[wp]`-tagged machinery. Removing `do_machine_op isb` from `vcpu_save` makes every crunch/wp goal strictly easier. `dmo_isb_invs[wp]` just stops firing — no failure.
+
+**Refine files mentioning only `vcpuDisable` (CNodeInv_R, Finalise_R, Schedule_R, IsolatedThreadAction, TcbAcc_C):** `vcpuDisable`'s definition is unchanged; all proofs use its lemma *statements*, not its body. Unaffected.
+
+{"work_list": [{"file": "proof/refine/AARCH64/VSpace_R.thy", "lemmas": [{"name": "vcpuSave_corres", "statement_must_evolve": false, "reason": "Proof unfolds armvVCPUSave_def (line 523); old tactic had corres_split[OF vcpuSaveRegRange_corres] + corres_machine_op step for doMachineOp isb — after removal that split collapses to a direct vcpuSaveRegRange_corres application"}], "file_reason": "Only file with a step-explicit corres proof that unfolded armvVCPUSave_def and matched the now-deleted doMachineOp isb bind on both abstract and Haskell sides"}, {"file": "proof/crefine/AARCH64/VSpace_C.thy", "lemmas": [{"name": "armv_vcpu_save_ccorres", "statement_must_evolve": false, "reason": "C armv_vcpu_save was co-updated to drop isb; old proof's (ctac add: isb_ccorres) step no longer has a matching C instruction to consume"}], "file_reason": "Direct ccorres proof for armvVCPUSave/armv_vcpu_save_'proc must lose its isb_ccorres ctac step when C code drops the isb call"}], "cleared": [{"file": "proof/invariant-abstract/AARCH64/ArchVCPU_AI.thy", "why": "Only crunches and wpsimp with [wp]-tagged lemmas for vcpu_save; removing do_machine_op isb makes those goals strictly easier"}, {"file": "proof/invariant-abstract/AARCH64/ArchVSpace_AI.thy", "why": "vcpu_save_invs uses wpsimp + dmo_isb_invs[wp]; the [wp] lemma simply stops firing when there is no isb subgoal — no failure"}, {"file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy", "why": "Mentions vcpu_save only in crunches; invariant preservation trivially easier without isb"}, {"file": "proof/invariant-abstract/AARCH64/ArchDetSchedDomainTime_AI.thy", "why": "Crunches only; unaffected"}, {"file": "proof/invariant-abstract/AARCH64/ArchDetSchedSchedule_AI.thy", "why": "Crunches only; unaffected"}, {"file": "proof/invariant-abstract/AARCH64/ArchDeterministic_AI.thy", "why": "Crunches only; unaffected"}, {"file": "proof/invariant-abstract/AARCH64/ArchEmptyFail_AI.thy", "why": "empty_fail for vcpu_save: removing a step only helps"}, {"file": "proof/invariant-abstract/AARCH64/ArchFinalise_AI.thy", "why": "High-level vcpu_save lemma statements unchanged; crunch goals easier"}, {"file": "proof/invariant-abstract/AARCH64/ArchSchedule_AI.thy", "why": "Crunches only; unaffected"}, {"file": "proof/invariant-abstract/AARCH64/ArchVSpaceEntries_AI.thy", "why": "Crunches only; unaffected"}, {"file": "proof/refine/AARCH64/CNodeInv_R.thy", "why": "Mentions vcpuDisable whose definition is unchanged; no vcpu_save/armvVCPUSave proofs"}, {"file": "proof/refine/AARCH64/Finalise_R.thy", "why": "vcpuDisable only; definition unchanged"}, {"file": "proof/refine/AARCH64/Schedule_R.thy", "why": "vcpuDisable only; definition unchanged"}, {"file": "proof/crefine/AARCH64/IsolatedThreadAction.thy", "why": "vcpuDisable only; definition unchanged"}, {"file": "proof/crefine/AARCH64/TcbAcc_C.thy", "why": "vcpuDisable only; definition unchanged"}]}
+=== STDERR ===
+

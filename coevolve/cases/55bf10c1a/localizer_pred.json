@@ -1,0 +1,10 @@
+{
+ "work_list": [],
+ "cleared": [
+  {
+   "file": "spec/abstract/AARCH64/Arch_Structs_A.thy",
+   "why": "The diff is purely additive: a new lemma ppn_len_def' is inserted, no existing definition or lemma statement is altered. The lemma body closes immediately via simp from already-proven constants."
+  }
+ ],
+ "analysis": "The grep found zero candidate files referencing ppn_len. The diff touches no existing datatype, definition, or lemma \u2014 it only adds ppn_len_def' as a derived convenience lemma. Because (1) no definition changed semantics, (2) no existing lemma statement was touched, and (3) no downstream file references ppn_len, the transitive proof impact is empty. No proof file requires any edit."
+}

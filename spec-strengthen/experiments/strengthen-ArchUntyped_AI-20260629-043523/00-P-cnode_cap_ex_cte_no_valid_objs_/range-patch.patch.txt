@@ -1,0 +1,15 @@
+35 35
+  done
+
+lemma cnode_cap_ex_cte_no_valid_objs[Untyped_AI_assms]:
+  "\<lbrakk> is_cnode_cap cap; cte_wp_at (\<lambda>c. \<exists>m. cap = mask_cap m c) p s;
+     (s::'state_ext::state_ext state) \<turnstile> cap; pspace_aligned s \<rbrakk> \<Longrightarrow>
+    ex_cte_cap_wp_to is_cnode_cap (obj_ref_of cap, nat_to_cref (bits_of cap) x) s"
+  apply (simp only: ex_cte_cap_wp_to_def)
+  apply (rule exI, erule cte_wp_at_weakenE)
+  apply (clarsimp simp: is_cap_simps bits_of_def)
+  apply (case_tac c, simp_all add: mask_cap_def cap_rights_update_def split:bool.splits)
+  apply (clarsimp simp: nat_to_cref_def word_bits_def)
+  apply (erule(2) valid_CNodeCapE)
+  apply (simp add: word_bits_def cte_level_bits_def)
+  done

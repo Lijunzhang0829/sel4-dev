@@ -1,0 +1,21 @@
+FAILED (31094ms)
+*** Failed to apply proof method (line 288 of "/tmp/tmp.mgB4fV5WBS/Tmp_06c69b01d9d94f71.thy"):
+*** goal (1 subgoal):
+***  1. \<And>ref.
+***        \<lbrakk>\<forall>a b cap.
+***                    caps_of_state s (a, b) = Some cap \<longrightarrow>
+***                    {x. arm_kernel_vspace (arch_state s) x \<noteq>
+***                        ArmVSpaceKernelWindow} \<inter>
+***                    cap_range cap =
+***                    {};
+***         ref \<in> cap_range cap\<rbrakk>
+***        \<Longrightarrow> arm_kernel_vspace (arch_state s) ref =
+***                          ArmVSpaceKernelWindow
+*** At command "apply" (line 288 of "/tmp/tmp.mgB4fV5WBS/Tmp_06c69b01d9d94f71.thy")
+*** Failed to apply proof method (line 288 of "/tmp/tmp.mgB4fV5WBS/Tmp_06c69b01d9d94f71.thy"):
+*** goal (1 subgoal):
+***  1. \<And>ref.
+***        \<lbrakk>\<forall>a b cap.
+***                    caps_of_state s (a, b) = Some cap \<longrightarrow>
+***                    {x. arm_kernel_vspace (arch_state s) x \<noteq>
+***                        ArmVSpaceKernelWindow} \<inter>

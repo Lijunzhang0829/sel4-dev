@@ -1,0 +1,343 @@
+# coevolve — fork-① harness (localizer + gate, calibrated on real cases)
+
+Skill: `.claude/skills/isabelle_prover_coevolve`. This dir is the fork-①
+deliverable: **agent-driven break localization**, calibrated against real
+l4v co-change commits (human fix `C_p` = ground truth).
+
+## Layout
+
+| Path | What |
+|---|---|
+| `scripts/case_extract.py` | Deterministic: split a co-change commit into `delta_artifact.diff` (trigger) + `delta_proof.diff` (**held-out** human fix) + `ground_truth.json` (per-lemma: `statement_evolved`/`body_changed`/kind incl. `relocated`) |
+| `scripts/localize_agent.py` | Agent half: mechanical context (changed identifiers incl. hunk-context enclosing defs; arch-filtered grep candidates) → `claude -p` → predicted work-list + full transcript. Sees ONLY the artifact half. |
+| `scripts/calibrate.py` | Score prediction vs ground truth: file P/R, lemma recall, statement-evolve flag accuracy |
+| `cases/<commit>/` | 15 real L1 co-change seeds (AArch64 window), each a self-contained bundle |
+
+Requires `claude` CLI (runs on the machine that has it; B currently lacks it
+— run localizer on A or install CLI here). `case_extract`/`calibrate` run
+anywhere (py3.8+).
+
+```bash
+python3 scripts/case_extract.py --l4v verification/l4v --commit <hash> --out cases/<hash>
+python3 scripts/localize_agent.py --l4v verification/l4v --case cases/<hash> --model sonnet
+python3 scripts/calibrate.py cases/<hash>
+```
+
+## Calibration state (2026-07-01, model=sonnet)
+
+**Full 15-seed sweep (MICRO-AVG): fileP=0.22 fileR=0.38 lemR=0.58 evoAcc=0.57**
+(n=14 scored, 1 JSON-parse skip). Per-case table in cases/*/calibration.json.
+
+Honest read: the 2-seed-tuned prompt did NOT generalize.
+- 6 seeds: EMPTY prediction (agent judges "proof survives" on constant-
+  abstraction changes like physBase/pptrBase; human edited anyway).
+- 1 seed: 22-file over-prediction (every mention of the_arch_cap; human: 1).
+- 2 seeds died on identifier-extraction noise (type_synonym/defs captured as
+  names) — deterministic bug, FIXED in localize_agent.py (keyword regex +
+  stoplist), not yet re-swept.
+- Where extraction was clean + candidates small: 71f5a8658 and 18b0cef0c
+  scored 1.00 across the board; df5e1611/0e8048b49/c4390d8e7 fileR=1.00.
+
+Conclusion: the agent oscillates between under- (survives) and over-
+(every-mention) prediction; further prompt tuning would overfit the library.
+**Next lever = the build oracle (mode=build): reconstruct the broken tree,
+let check-theory adjudicate which breaks are real.**
+
+## Failure→fix taxonomy (each calibration failure became a deterministic fix)
+
+1. Isabelle `\<lambda>` in JSON reply → invalid escape crash ⇒ tolerant
+   backslash repair before `json.loads`.
+2. Change inside a definition BODY → zero identifiers extracted ⇒ also parse
+   the hunk-context header (`@@ ... @@ definition NAME`).
+3. Blind agent guessed by file-name similarity (Decode_A→Decode_AI; human
+   fixed ArchArch_AI) ⇒ prompt rule: breakage follows REFERENCES, not names.
+4. Deep static reasoning concluded "proof survives" and returned an empty
+   work-list, while the human DID edit ⇒ prompt reframed **maintainer-aligned
+   (semantic tracking), not merely compiler-forced**.
+5. Agent listed inspected-but-fine files in work_list ⇒ schema: work_list =
+   edits only; `cleared` is a separate key.
+6. 41 candidates × unbounded tool exploration → 600s timeout ⇒ deterministic
+   **arch filter** (AArch64-only change cannot break ARM/RISCV64/X64 files;
+   41→~8 candidates) + inspect-budget (≤6 files) + 900s.
+
+## Open items (next session)
+
+- calibrate.py: split added vs modified lemmas in lemma-recall.
+- evoAcc: feed candidate lemma STATEMENTS into the prompt; adjudicate
+  "agent says survives / human edited" cases with the build oracle
+  (`check-theory` on the reconstructed break) — that also gives mode=build.
+- Gate agent (evolution-vs-weakening): build calibration set from the
+  statement_evolved pairs in `cases/*/ground_truth.json` (positives) +
+  synthetic weakenings (negatives).
+- Sweep all 15 seeds once localizer prompt stabilizes; then wire into the
+  repair driver (Step 2 of the skill's First cut).
+
+## Build-oracle adjudication (2026-07-02, first batch — 4 cleanly-reverting seeds)
+
+Reconstruction: current tree − Δ_proof (reverse-apply in an isolated
+worktree) checked against the AARCH64 heap. `adjudicate.py`; per-case logs in
+`cases/*/adjudication*.{json,log}`.
+
+| seed | agent said | broken state | verdict |
+|---|---|---|---|
+| 83ddb4def | empty ("survives") | **RED** | agent wrong — compiler-forced break missed |
+| 0e8048b49 | deep "survives" reasoning | **RED** | plausible-but-wrong; Isabelle refutes it |
+| df5e1611 | statement need not evolve | **RED** | old stmt+proof does not build |
+| 8f6373c7e | (over-predicted 22 files) | **GREEN** | human's edit was maintainer-CHOICE — GT itself is non-forced |
+
+**Consequences (adopted):**
+1. **Agent static "survives" judgments are not trustworthy** even when the
+   reasoning cites exact lemma structure. In deployment the RED set comes FREE
+   from the build — the agent's role is re-scoped: interpret each break +
+   plan statement evolution + gate, NOT predict breakage. The 0.22/0.38
+   localizer scores measured a capability deployment doesn't need.
+2. **Dual-track ground truth from now on**: build-RED = forced set (P/R on it
+   = localization ability); human-fix ∖ forced = choice set (recall on it =
+   maintainer-alignment, softer). ≥1/4 of first batch was pure choice —
+   no prior repair work build-cleans its ground truth.
+3. Cost model: reverse-apply onto the CURRENT tree reuses today's heap —
+   no per-case parent-era heap rebuild for cleanly-reverting seeds (4/8
+   tested clean). Era-bucketing only needed for old seeds.
+
+## Ground-truth distribution (15 co-change seeds — `gt-distribution.md`)
+
+**11/15 involve statement evolution (L2), only 4 pure body-repair (L1).**
+Lemma-edit mix: 35 added · 27 body-only · 13 stmt-evolved · 14 deleted —
+the dominant human response is ADD new helpers + evolve statements, not
+re-prove bodies. Selection-bias caveat: co-change commits may over-represent
+L2 (statement changes force atomic commits); the pair-form benchmark will
+give the unbiased distribution.
+
+## Repair experiment — final scorecard (2026-07-03, Step-2 first cut)
+
+3 build-adjudicated RED seeds, repair agent = claude -p sonnet, closed loop
+(propose SEARCH/REPLACE → check-theory → feed error back, ≤3 rounds,
+cumulative). Full transcripts in `cases/*/repair/`.
+
+| seed | shape | verdict | rounds | vs human C_p |
+|---|---|---|---|---|
+| df5e1611 | crunches + decl-order relocation | **GREEN → SESSION-GREEN** (full AInvs AARCH64 build) | 1 (892s) | isomorphic, smaller (kept stmt; human also symbolized 3→word_size_bits = choice, build-proven non-forced) |
+| 83ddb4def | obsolete-lemma repair | **GREEN → SESSION-GREEN** | 2 (581s) | **divergent & stronger**: human deleted the lemma; agent kept it, re-proved by inlining the deleted upstream defs |
+| 0e8048b49 | boundary flip → stmt evolution + new helper | RED (unresolved) | — | agent 3× produced the correct semantic move (prop_tac `<`→`≤`, not_le→not_less — byte-identical to half of C_p) but was **never given a usable error**: goal dump >250 lines pushed `***` out of the harness tail window; with mid-file default windows it correctly said "break is outside my view" each time. Harness-attributed, not capability. tail→1200 fix landed; last attempt pending |
+
+**Conclusion (fork-① capability question): the agent CAN repair.** 2/3
+session-green with human-divergent-yet-valid fixes; the third blocked
+exclusively by harness I/O (error truncation, argv limit, patch-parser `---`
+mine, transport stalls at ~80KB prompts) — each failure became a
+deterministic harness fix; zero failures attributable to proof reasoning.
+Machine-side cost per success: ~10-15 min wall, 1-2 rounds.
+
+## ⚠ RETRACTION & corrections (2026-07-03 evening audit)
+
+1. **83ddb4def GREEN/SESSION-GREEN RETRACTED.** Offline audit of
+   `final.patch` against the current tree showed the v3 driver computed
+   hunk coordinates in BROKEN-file space while check-theory applies them in
+   CURRENT-file space; the +7-line drift landed the edit on the UNRELATED
+   lemma `pptrTop_le_ipa_size` (whose proof happened to still close under
+   the substituted simp set → false GREEN, and the session build validated
+   that accidental state). The agent's intended repair was never tested.
+   Driver fixed (patch now computed vs the live current file); the agent's
+   r1+r2 edits are being replayed and properly verified. df5e1611 is
+   unaffected (v2 whole-file patch — coordinate-exact by construction).
+2. **Container recreation wiped the AARCH64 heap** (image-baked heaps are
+   ephemeral; timestamps reverted to the Apr-30 ARM originals) → every
+   check after the recreation ran against the WRONG-ARCH heap, producing
+   "Not a datatype constructor: VCPUSetTCB" artifacts. All 0e8048b49
+   attempts of 2026-07-03 afternoon are void as capability data. Heap
+   rebuilt; **heaps now also backed up to /workspace/heaps-backup/**
+   (host-mounted, survives recreation; restore = cp back + or rebuild).
+3. Harness-failure taxonomy grows to 8: (7) patch coordinate space,
+   (8) ephemeral-heap recreation. The audit that caught #7 was triggered
+   by a routine "should we re-verify on the new DAG" question — cheap
+   text-level audits of applied patches are now a standing gate step.
+
+## Reinstatement + final open item (2026-07-03 night)
+
+- **83ddb4def REINSTATED**: replaying the agent's r1+r2 edits in broken space
+  and emitting the patch in CORRECT current-file coordinates verifies
+  **GREEN (68.6s)** — the inline-and-reprove repair is genuinely valid
+  (`logs/replay-83ddb4def.patch`). Pending: downstream session build of this
+  TRUE state (the earlier SESSION-GREEN validated the mis-anchored state).
+- **0e8048b49 stays open, fully attributed**: its failure has NEVER emitted
+  a capturable `***` block via stdout tail (since adjudication) — the error
+  detail lives in check-theory's temp log, not the tail. Harness item #9:
+  read the temp-log path instead of tailing stdout. The agent's final reply
+  states precisely the two missing inputs (omitted-region text or an error
+  line number); its semantic move (prop_tac `<`→`≤` + discharge-chain swap)
+  has been correct in every round that had any signal. No capability failure
+  on record for this seed — only I/O starvation.
+
+Score at campaign close: **2/3 valid GREEN** (df5e1611 session-validated;
+83ddb4def file-validated on true coordinates, session pending), 1/3 open
+with 9-item harness taxonomy and zero reasoning failures attributed.
+
+## 0e8048b49 final status (2026-07-04) + two new hard rules
+
+Item #9's true root cause found and fixed: B ran an OLD check-theory whose
+`grep|head` under pipefail died of SIGPIPE before printing any `***` —
+every failure looked like a bare `FAILED` (blind repair). A-side had fixed
+this; the fix is now ported (harness item #10: cross-machine script drift).
+
+With errors finally visible, the next blocker surfaced: **baseline
+(unmodified file) is RED on the rebuilt heap** (`Not a datatype
+constructor: VCPUSetTCB`) while it was GREEN on the July-2 heap — two runs
+of build_aarch64_heap.sh are NOT equivalent (suspect: stale cross-container
+cmake config-build cache on the host mount, or partial build). All
+0e8048b49 rounds remain void; **zero capability failures on record**.
+
+New hard rules:
+1. **Baseline-first**: repair_driver now refuses to run any seed whose
+   unpatched baseline is not GREEN (INFRA-RED verdict, no claude spend).
+2. **Heap-event discipline**: after ANY heap rebuild/container event, run a
+   baseline check before experiments; back up good heaps to
+   /workspace/heaps-backup immediately after validating them.
+
+Next session: diff rebuild2 log vs the July-2 build log; clean config-build
+cache and rebuild; baseline-test; then the (seventh, properly-fed) attempt.
+
+## 0e8048b49 — RECLASSIFIED (2026-07-04, probe-proven)
+
+A NO-OP whole-file patch (content = current file verbatim, exact header)
+fails identically at line 26 (`Not a datatype constructor: VCPUSetTCB`)
+while the no-patch baseline passes: **check-theory's --patch path yields a
+FALSE RED on this theory** (self-qualification false-negative class — the
+qualified-import temp env loses `arch_global_naming` constructor
+visibility; same family as the known FinalCaps rename false-negative).
+Probes archived: `logs/probe-noop-{exact,overshoot}.patch`.
+
+Consequences:
+- The seed's July-2 adjudication "broken=RED" is VOID (likely this same
+  artifact — the SIGPIPE bug hid the error text then). Its forced/chosen
+  status is UNKNOWN; it is dropped from the adjudication tally.
+- Every repair attempt on it was unrunnable-by-construction: the oracle
+  could never report the true wf failure. Seed excluded from capability
+  scoring (still zero capability failures overall).
+- df5e1611 remains double-validated (--patch GREEN AND tree-apply session
+  build GREEN). 83ddb4def's replay hunk avoids the header → unaffected;
+  its session validation stays queued.
+- Harness item **#13**: --patch oracle is unsound for arch_global_naming
+  theories; definitive oracle for them = tree-apply + session build (as
+  used in downstream validation). Next session: either port/extend A's
+  check_theory_selfqual fix, or add a tree-apply oracle mode to the
+  repair driver (≈20 min/check; ~1.5-2 h for a full 3-round attempt).
+
+## 0e8048b49 — first SOUND test complete (2026-07-04, tree-apply oracle v4)
+
+Baseline GREEN (1225s) → broken RED with the REAL wf failure finally visible
+→ 2 effective repair rounds (r1 lost to transport):
+
+- **r2**: agent anchored the REAL prop_tac block and reproduced the human's
+  statement-evolution half **byte-for-byte** (`≤`→`<`, `not_le`→`not_less`);
+  guessed `aligned_add_mask_leD` for discharge → crisp "Undefined fact".
+- **r3**: replaced the guess with `order_trans[rotated]` +
+  `is_aligned_no_overflow'` — the same mathematical idea as the human's
+  `is_aligned_no_overflow_mask` route, different plumbing. Build RED with
+  the goal moved deeper.
+
+Verdict: **RED at budget (3 rounds, 2 effective) — a converging near-miss,
+not an incapability**. The missing step is the human's ≤-helper addition;
+trajectory suggests 1-2 more rounds would likely close. Recorded as the
+seed's first capability-attributable data point. Optional next: one
+extended run (MAX_ROUNDS=5, ~3-4h) for the definitive close.
+
+## 🏁 0e8048b49 GREEN — campaign closes 3/3 (2026-07-05)
+
+Extended budget (5 effective rounds, transport blanks exempted) + sound
+tree-oracle: **GREEN at effective round 3** (total wall 2.8h, builds ~15.5min
+each). The winning cumulative repair:
+
+- r1: statement evolution (prop_tac `≤`→`<`, `not_le`→`not_less`) — the
+  human's first half, byte-equivalent — plus a constants-unfolding discharge
+  and a reference to a then-nonexistent `aligned_add_mask_leD`.
+- r2: **invented and ADDED the missing helper lemma itself** — at the SAME
+  insertion point the human chose for THEIR helper
+  (`user_vtop_leq_canonical_user`). Agent's helper is a general ≤-alignment
+  dest rule; human's is a specific ≤-canonical bound. Same move, different
+  mathematics — strong divergence-with-validity evidence.
+- r3: application plumbing (`intro conjI impI; erule ...; simp`) → GREEN.
+
+**Final capability scorecard: 3/3 repair shapes closed** —
+structural reorder (df5e1611, 1 round) · obsolete-fact repair (83ddb4def,
+2 rounds, kept a fact the human deleted) · boundary-flip statement evolution
++ new helper (0e8048b49, 3 effective rounds). All three DIVERGE from the
+human fix while restoring green. Zero capability failures across the
+campaign; 13-item harness taxonomy fully attributed.
+
+Queued: session-level downstream validation for 83ddb4def-replay and
+0e8048b49 final states; quality.json for 0e8048b49; fanin filter fix
+(count human-deleted-but-agent-kept lemmas).
+
+## Paper framing (operator-set, 2026-07-05): a SEMI-TOOLED pipeline paper
+
+> Upstream artifact changes → the tool DETECTS what downstream must update
+> → REPAIRS it → VALIDATES — and seL4's rich history is the validation
+> corpus. Capability/quality analyses are EVALUATION sections of the tool
+> paper, not the headline.
+
+Stage mapping of existing assets:
+| Stage | Asset | Status |
+|---|---|---|
+| Detect | build oracle (exact) + theory-DAG scoping/ordering (+ static hints as optional triage only — measured 0.22/0.38, never a gate) | pieces exist |
+| Repair | repair_driver_tree v4.1 (LLM closed loop, tree oracle, full accounting) | works, single-file |
+| Validate | session build + anti-cheat gate + quality vector | works |
+| Evaluate | commit-pair replay corpus + forced/chosen adjudication + vs-human comparison | works |
+
+**Structural gaps exposed by the tool framing (build order):**
+1. **One entrypoint missing**: `coevolve_pipeline.sh <artifact-diff>` chaining
+   detect→repair→validate→report. All stages exist; the chain does not.
+2. **Detect stage is benchmark-scaffolded**: deployment must discover the RED
+   file set from the build itself (parse failures, DAG topo-order them,
+   fixpoint loop for multi-file) — designed in the skill, NOT yet implemented
+   (all runs so far were single-known-file).
+3. **Report assembler**: PR-style human-review artifact (diff + rationale +
+   quality vector + transcripts + cost). Audit bundles exist; assembly missing.
+4. **"Semi" must be measured**: autonomy rate = fraction of repairs needing
+   zero human decisions; human-review queue = choice-set suggestions + gate
+   escalations. Add to accounting.
+
+## Metric registry (evaluation section of the tool paper)
+
+| # | Metric | Status |
+|---|---|---|
+| M1 | restore-green rate (per shape / per level) | live (3/3 pilot) |
+| M2 | end-to-end wall + LLM cost/tokens/rounds per repair | live (v4.1 accounting) |
+| M3 | quality-vs-human vector: minimality / strength(facts kept) / fragility profile / fan-in exposure | live (quality-comparison.json) |
+| M4 | downstream regression safety: session-green rate post-repair | partial (1/3 validated, 2 queued) |
+| M5 | detect efficiency: DAG upper bound vs actual RED (e.g. 67→1), oracle cost per check | data exists, not aggregated |
+| M6 | autonomy rate + human-review queue size (the "semi" measure) | to add |
+| M7 | **fragility-validation regression**: searchy-ratio of a lemma's proof vs did-it-break under real Δ — upgrades the fragility proxy from lore to validated (or refutes it) | spec'd; NEEDS batch adjudication of remaining seeds (blocked on scale-up, not on tooling) |
+| M8 | repair latency vs human commit-lag (C_a→C_p wall-time in history, noisy reference) | cheap, to add |
+
+Fragility-validation (M7) spec: unit = lemma in the blast radius of a real
+Δ; features = its proof's searchy/named profile (corpus-wide tactic
+classifier exists); label = broke / survived under the tree-oracle broken
+build; report odds ratio + CI. Requires the RED sets from batch adjudication
+of the 12 unprocessed seeds.
+
+## 🏁 MILESTONE: first uninterrupted full pipeline e2e — SESSION-GREEN (2026-07-06)
+
+`coevolve_pipeline.sh --seed df5e1611`, uninterrupted:
+detect (154s → Machine_AI:90) → repair (1 effective round) → validate
+(full AInvs session build GREEN) → report + accounting.
+
+    final=SESSION-GREEN  autonomy_rate=1.0  rounds=1  LLM=1 call $1.4753  wall=2363s(~39min)
+
+The agent produced the RELOCATION fix (remove clearMemory from the early
+crunches, delete the two lemmas, re-add all three after the wide-angle crunch
+block that establishes cleanCacheRange_RAM facts) — the same move the human
+made — and its rationale states the declaration-order cause exactly. This
+run's convergence in 1 round (vs the earlier partial run's non-convergence)
+confirms that non-convergence was **agent variance**, not a pipeline defect.
+
+Artifacts (durable on B): pipeline-runs/full-df5e1611/{run-record.json,
+report.md, fix-*.thy, claude-*.txt}.
+
+**Four assembly gaps → all closed and e2e-validated with a real GREEN:**
+detect(build→RED discovery) · fixpoint orchestration · report assembler ·
+M6 autonomy accounting. The pipeline is the tool; the mechanics are proven.
+
+Two more harness taxonomy items from this phase:
+- #14 monitor probes must self-test — a mis-escaped `build-active` ps probe
+  false-reported 0 and I killed a healthy run.
+- #15 pgrep self-match — `pgrep -f "<pattern>"` matches the monitor's own
+  command line containing that pattern; exclude grep/self or match on pid.

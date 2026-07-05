@@ -1,0 +1,11 @@
+{
+ "proof/invariant-abstract/AARCH64/Machine_AI.thy": {
+  "session": "AInvs",
+  "lemmas": {
+   "crunch_ignore@252": {
+    "kw": "crunch_ignore",
+    "kind": "other-block"
+   }
+  }
+ }
+}

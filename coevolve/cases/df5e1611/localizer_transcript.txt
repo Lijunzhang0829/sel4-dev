@@ -1,0 +1,185 @@
+PROMPT (7580 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/machine/AARCH64/MachineOps.thy b/spec/machine/AARCH64/MachineOps.thy
+index cdef617e..b5c8486a 100644
+--- a/spec/machine/AARCH64/MachineOps.thy
++++ b/spec/machine/AARCH64/MachineOps.thy
+@@ -132,33 +132,6 @@ definition setInterruptMode :: "irq \<Rightarrow> bool \<Rightarrow> bool \<Righ
+   "setInterruptMode \<equiv> \<lambda>irq levelTrigger polarityLow. return ()"
+ 
+ 
+-subsection "Clearing Memory"
+-
+-text \<open>Clear memory contents to recycle it as user memory\<close>
+-definition clearMemory :: "machine_word \<Rightarrow> nat \<Rightarrow> unit machine_monad" where
+-  "clearMemory ptr bytelength \<equiv>
+-     mapM_x (\<lambda>p. storeWord p 0) [ptr, ptr + word_size .e. ptr + (of_nat bytelength) - 1]"
+-
+-text \<open>Haskell simulator interface stub.\<close>
+-definition clearMemoryVM :: "machine_word \<Rightarrow> nat \<Rightarrow> unit machine_monad" where
+-  "clearMemoryVM ptr bits \<equiv> return ()"
+-
+-text \<open>
+-  Initialize memory to be used as user memory. Note that zeroing out the memory is redundant
+-  in the specifications. In any case, we cannot abstract from the call to cleanCacheRange, which
+-  appears in the implementation.\<close>
+-abbreviation (input) "initMemory == clearMemory"
+-
+-text \<open>
+-  Free memory that had been initialized as user memory. While freeing memory is a no-op in the
+-  implementation, we zero out the underlying memory in the specifications to avoid garbage. If we
+-  know that there is no garbage, we can compute from the implementation state what the exact memory
+-  content in the specifications is.\<close>
+-definition freeMemory :: "machine_word \<Rightarrow> nat \<Rightarrow> unit machine_monad" where
+-  "freeMemory ptr bits \<equiv>
+-     mapM_x (\<lambda>p. storeWord p 0) [ptr, ptr 
+
+=== RAW REPLY ===
+Now I have enough to produce the work-list. Let me compile the findings:
+
+**Key semantic change**: `clearMemory` now sequences `mapM_x storeWord` with `cleanCacheRange_RAM`. `freeMemory`, `clearMemoryVM`, `initMemory` are semantically unchanged (just relocated). The CRefine AARCH64 proofs (`Invoke_C`, `Recycle_C`) already have `cleanCacheRange_RAM_ccorres` and `doMachineOp_bind` in their proof structure — they were written anticipating this spec and don't need edits. The drefine files use `cleanCacheRange_PoC_def` (ARM-only) and don't run under AARCH64. InfoFlow/Access-Control have no AARCH64 arch instantiation yet. Files using `ignore: clearMemory` in crunches rely on established wp lemmas and auto-fix once the base lemmas are re-proved.
+
+```json
+{
+  "work_list": [
+    {
+      "file": "proof/invariant-abstract/AARCH64/Machine_AI.thy",
+      "file_reason": "Two hand-proofs unfold clearMemory_def and reason only about mapM_x+storeWord; new do-bind including cleanCacheRange_RAM breaks both.",
+      "lemmas": [
+        {
+          "name": "no_fail_clearMemory",
+          "statement_must_evolve": false,
+          "reason": "Statement (is_aligned p word_size_bits) remains sufficient since cleanCacheRange_RAM is no_fail ⊤; but body 'simp clearMemory_def mapM_x_mapM; wp no_fail_mapM' no_fail_storeWord' cannot handle the new bind with cleanCacheRange_RAM."
+        },
+        {
+          "name": "no_irq_clearMemory",
+          "statement_must_evolve": false,
+          "reason": "Statement 'no_irq (clearMemory a b)' still holds (cleanCacheRange_RAM has no_irq[wp]); body 'wpsimp simp: clearMemory_def no_irq_mapM_x no_irq_storeWord' fails on the new sequential bind."
+        },
+        {
+          "name": "<crunch-or-setup>",
+          "statement_must_evolve": false,
+          "reason": "crunches clearMemory for (empty_fail) — likely auto-succeeds since cleanCacheRange_RAM already has empty_fail, but the crunch now must traverse the new bind; may need a minor wp hint for cleanCacheRange_RAM."
+        }
+      ]
+    },
+    {
+      "file": "proof/invariant-abstract/AARCH64/ArchRetype_AI.thy",
+      "file_reason": "clearMemory_um_eq_0 unfolds clearMemory_def and handles only the mapM_x/storeWord pattern; three crunch declarations use ignore_del: clearMemory and will expand the new bind, requiring cleanCacheRange_RAM coverage.",
+      "lemmas": [
+        {
+          "name": "clearMemory_um_eq_0",
+          "statement_must_evolve": false,
+          "reason": "Preservation statement (underlying_memory p=0 → preserved) still correct since cleanCacheRange_RAM does not touch underlying_memory; but body 'clarsimp simp: clearMemory_def; wpsimp wp: mapM_x_wp_inv; wp storeWord_um_eq_0' fails on the new bind — needs cleanCacheRange_RAM's underlying_memory_inv discharge added."
+        },
+        {
+          "name": "<crunch-or-setup>",
+          "statement_must_evolve": false,
+          "reason": "crunch irq_masks_inv[wp]: storeWord, clearMemory (ignore_del: clearMemory) — expanding new clearMemory exposes cleanCacheRange_RAM; wp must pick up cleanCacheRange_RAM_irq_masks (already proved in Machine_AI), but the crunch hint may need explicit mention to guarantee discharge."
+        },
+        {
+          "name": "<crunch-or-setup>",
+          "statement_must_evolve": false,
+          "reason": "crunch underlying_mem_0[wp]: clearMemory (wp: storeWord_um_eq_0, ignore_del: clearMemory) — new bind exposes cleanCacheRange_RAM which needs underlying_memory_inv; cleanCacheRange_RAM_underlying_memory_inv[wp] is in scope from Machine_AI but may require an explicit wp hint in the crunch declaration."
+        },
+        {
+          "name": "<crunch-or-setup>",
+          "statement_must_evolve": false,
+          "reason": "crunch device_state_inv[wp]: clearMemory (wp: mapM_x_wp, ignore_del: clearMemory) — new bind exposes cleanCacheRange_RAM; cleanCacheRange_RAM already has device_state_inv[wp] from Machine_AI crunches but the mapM_x_wp hint alone may not suffice to discharge the second sequential step."
+        }
+      ]
+    }
+  ],
+  "cleared": [
+    {
+      "file": "proof/crefine/AARCH64/Invoke_C.thy",
+      "why": "clearMemory_untyped_ccorres already uses doMachineOp_bind + ccorres_split_nothrow_novcg_dc + cleanCacheRange_RAM_ccorres — proof structure is written for the new two-operation clearMemory; spec change makes it pass, no further edits needed."
+    },
+    {
+      "file": "proof/crefine/AARCH64/Recycle_C.thy",
+      "why": "clearMemory_PageCap_ccorres has the same doMachineOp_bind + ccorres_split + cleanCacheRange_RAM_ccorres structure as Invoke_C; already anticipates the new spec."
+    },
+    {
+      "file": "proof/refine/AARCH64/ArchAcc_R.thy",
+      "why": "clearMemory_vms' uses use_valid[OF _ clearMemory_um_eq_0] (by reference, no own clearMemory_def unfolding); dmo_clearMemory_invs' uses no_irq_clearMemory by reference — both auto-fix once Machine_AI and ArchRetype_AI are repaired."
+    },
+    {
+      "file": "proof/refine/AARCH64/Bits_R.thy",
+      "why": "Mentions only clearMemoryVM which is semantically unchanged (still 'return ()')."
+    },
+    {
+      "file": "proof/refine/AARCH64/Detype_R.thy",
+      "why": "Mentions only freeMemory which is semantically unchanged (definition identical, just repositioned in the file)."
+    },
+    {
+      "file": "proof/invariant-abstract/Retype_AI.thy",
+      "why": "Imports clearMemory/clearMemoryVM at the theory header level; all lemmas are either about clearMemoryVM (unchanged) or take clearMemory_invs as a locale assumption proved elsewhere; swp_clearMemoryVM lemma is unaffected."
+    },
+    {
+      "file": "proof/invariant-abstract/AARCH64/ArchCrunchSetup_AI.thy",
+      "why": "Only adds clearMemory and freeMemory to crunch ignore lists; semantics of the ignore directive are unaffected by the spec change."
+    },
+    {
+      "file": "proof/invariant-abstract/AARCH64/ArchBCorres2_AI.thy",
+      "why": "Uses 'ignore: clearMemory' throughout; relies on established [wp] lemmas for clearMemory — no own unfolding; auto-fixed by upstream repairs."
+    },
+    {
+      "file": "proof/invariant-abstract/BCorres2_AI.thy",
+      "why": "Same ignore: clearMemory pattern; no own clearMemory_def expansion."
+    },
+    {
+      "file": "proof/invariant-abstract/DetSchedDomainTime_AI.thy",
+      "why": "Uses 'ignore: freeMemory' and 'ignore: clearMemory'; freeMemory is unchanged, clearMemory is treated opaquely via established wp lemmas."
+    },
+    {
+      "file": "proof/invariant-abstract/AARCH64/ArchCNodeInv_AI.thy",
+      "why": "Clears clearMemory via ignore in crunches only; no_irq_clearMemory is imported by reference — auto-fixed once Machine_AI is repaired."
+    },
+    {
+      "file": "proof/invariant-abstract/AARCH64/ArchVSpaceEntries_AI.thy",
+      "why": "clearMemory appears only inside a crunch ignore list."
+    },
+    {
+      "file": "proof/invariant-abstract/CNodeInv_AI.thy",
+      "why": "clearMemory appears only in crunch ignore lists; clearMemory_invs is a locale assumption fulfilled by ArchRetype_AI."
+    },
+    {
+      "file": "proof/invariant-abstract/Finalise_AI.thy",
+      "why": "clearMemory/no_irq_clearMemory are requalify_facts re-exports and crunch ignores; auto-fixed when Machine_AI lemmas are re-proved."
+    },
+    {
+      "file": "proof/invariant-abstract/AARCH64/ArchDetype_AI.thy",
+      "why": "Mentions only freeMemory which is semantically unchanged."
+    },
+    {
+      "file": "proof/invariant-abstract/Detype_AI.thy",
+      "why": "Mentions only freeMemory which is semantically unchanged."
+    },
+    {
+      "file": "proof/drefine/Untyped_DR.thy",
+      "why": "Uses cleanCacheRange_PoC_def (ARM-specific) in its clearMemory proofs; DRefine does not build under AARCH64 (no AARCH64 arch subdir in drefine; ARM-only operation referenced)."
+    },
+    {
+      "file": "proof/drefine/Ipc_DR.thy",
+      "why": "Same reasoning as Untyped_DR.thy — drefine is ARM-only, AARCH64 spec change is out of scope."
+    },
+    {
+      "file": "proof/drefine/Syscall_DR.thy",
+      "why": "Same reasoning — drefine is ARM-only."
+    },
+    {
+      "file": "proof/infoflow/Retype_IF.thy",
+      "why": "clearMemory_ev and related properties are locale assumptions (Retype_IF_assms); there is no proof/infoflow/AARCH64/ directory, so no AARCH64 InfoFlow session exists yet to instantiate these assumptions."
+    },
+    {
+      "file": "proof/access-control/Retype_AC.thy",
+      "why": "clearMemory_ev, dmo_clearMemory_globals_equiv etc. are locale assumptions; proof/access-control/ has no AARCH64/ subdirectory, so the locale is never instantiated for AARCH64 — no concrete proof to break."
+    }
+  ]
+}
+```
+=== STDERR ===
+

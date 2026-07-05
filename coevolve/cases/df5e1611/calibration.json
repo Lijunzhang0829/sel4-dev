@@ -1,0 +1,30 @@
+{
+ "file_precision": 0.5,
+ "file_recall": 1.0,
+ "n_gt_files": 1,
+ "n_pred_files": 2,
+ "n_tp_files": 1,
+ "gt_files": [
+  "proof/invariant-abstract/AARCH64/Machine_AI.thy"
+ ],
+ "pred_files": [
+  "proof/invariant-abstract/AARCH64/ArchRetype_AI.thy",
+  "proof/invariant-abstract/AARCH64/Machine_AI.thy"
+ ],
+ "lemma_recall_modified": 1.0,
+ "n_matchable": 1,
+ "n_lem_hits": 1,
+ "n_gt_added": 0,
+ "evolve_flag_accuracy": 0.0,
+ "n_evo_ok": 0,
+ "n_evo_total": 1,
+ "lemma_rows": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/Machine_AI.thy",
+   "lemma": "no_fail_clearMemory",
+   "gt_evolved": true,
+   "pred_evolve": false,
+   "status": "HIT"
+  }
+ ]
+}

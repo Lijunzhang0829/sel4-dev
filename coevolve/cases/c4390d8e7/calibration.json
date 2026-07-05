@@ -1,0 +1,52 @@
+{
+ "file_precision": 1.0,
+ "file_recall": 1.0,
+ "n_gt_files": 2,
+ "n_pred_files": 2,
+ "n_tp_files": 2,
+ "gt_files": [
+  "proof/crefine/AARCH64/VSpace_C.thy",
+  "proof/refine/AARCH64/VSpace_R.thy"
+ ],
+ "pred_files": [
+  "proof/crefine/AARCH64/VSpace_C.thy",
+  "proof/refine/AARCH64/VSpace_R.thy"
+ ],
+ "lemma_recall_modified": 0.5,
+ "n_matchable": 4,
+ "n_lem_hits": 2,
+ "n_gt_added": 0,
+ "evolve_flag_accuracy": 0.5,
+ "n_evo_ok": 1,
+ "n_evo_total": 2,
+ "lemma_rows": [
+  {
+   "file": "proof/crefine/AARCH64/VSpace_C.thy",
+   "lemma": "armvVCPUSave_def_FIXME",
+   "gt_evolved": true,
+   "pred_evolve": null,
+   "status": "MISS"
+  },
+  {
+   "file": "proof/crefine/AARCH64/VSpace_C.thy",
+   "lemma": "armv_vcpu_save_ccorres",
+   "gt_evolved": true,
+   "pred_evolve": false,
+   "status": "HIT"
+  },
+  {
+   "file": "proof/crefine/AARCH64/VSpace_C.thy",
+   "lemma": "save_virt_timer_ccorres",
+   "gt_evolved": false,
+   "pred_evolve": null,
+   "status": "MISS"
+  },
+  {
+   "file": "proof/refine/AARCH64/VSpace_R.thy",
+   "lemma": "vcpuSave_corres",
+   "gt_evolved": false,
+   "pred_evolve": false,
+   "status": "HIT"
+  }
+ ]
+}

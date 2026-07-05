@@ -1,0 +1,10 @@
+== baseline ==
+OK (67060ms)
+
+== broken ==
+Traceback (most recent call last):
+  File "<string>", line 13, in <module>
+    start, end = int(header[0]), int(header[1])
+                 ~~~^^^^^^^^^^^
+ValueError: invalid literal for int() with base 10: '\\<close>'
+

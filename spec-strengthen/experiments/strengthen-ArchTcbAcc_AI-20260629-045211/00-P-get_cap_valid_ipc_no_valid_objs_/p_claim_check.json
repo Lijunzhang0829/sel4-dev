@@ -1,0 +1,8 @@
+{
+ "ok": true,
+ "reason": "pure premise-weakening verified (strict pre-conjunct subset, identical post)",
+ "claim": "(valid_objs and obj_at (\\<lambda>ko. \\<exists>tcb. ko = TCB tcb \\<and> tcb_ipc_buffer tcb = v) t) ==> (obj_at (\\<lambda>ko. \\<exists>tcb. ko = TCB tcb \\<and> tcb_ipc_buffer tcb = v) t) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `valid_objs`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "dropped_conjuncts": [
+  "valid_objs"
+ ]
+}

@@ -1,0 +1,111 @@
+{
+ "identifiers": [
+  "vcpu_save",
+  "vcpuDisable"
+ ],
+ "candidates": [
+  {
+   "file": "proof/refine/AARCH64/VSpace_R.thy",
+   "mentions": [
+    "vcpuDisable",
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+   "mentions": [
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchDetSchedDomainTime_AI.thy",
+   "mentions": [
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchDetSchedSchedule_AI.thy",
+   "mentions": [
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchDeterministic_AI.thy",
+   "mentions": [
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchEmptyFail_AI.thy",
+   "mentions": [
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchFinalise_AI.thy",
+   "mentions": [
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchSchedule_AI.thy",
+   "mentions": [
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchVCPU_AI.thy",
+   "mentions": [
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchVSpaceEntries_AI.thy",
+   "mentions": [
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchVSpace_AI.thy",
+   "mentions": [
+    "vcpu_save"
+   ]
+  },
+  {
+   "file": "proof/crefine/AARCH64/IsolatedThreadAction.thy",
+   "mentions": [
+    "vcpuDisable"
+   ]
+  },
+  {
+   "file": "proof/crefine/AARCH64/TcbAcc_C.thy",
+   "mentions": [
+    "vcpuDisable"
+   ]
+  },
+  {
+   "file": "proof/crefine/AARCH64/VSpace_C.thy",
+   "mentions": [
+    "vcpuDisable"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/CNodeInv_R.thy",
+   "mentions": [
+    "vcpuDisable"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Finalise_R.thy",
+   "mentions": [
+    "vcpuDisable"
+   ]
+  },
+  {
+   "file": "proof/refine/AARCH64/Schedule_R.thy",
+   "mentions": [
+    "vcpuDisable"
+   ]
+  }
+ ]
+}

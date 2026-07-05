@@ -1,0 +1,21 @@
+FAILED (44540ms)
+*** Failed to apply proof method (line 227 of "/tmp/tmp.lIhHRkcNsX/Tmp_5fb4a30b210df8c9.thy"):
+*** goal (3 subgoals):
+***  1. \<lbrakk>valid_tcb t tcb s;
+***      \<forall>ptr.
+***         (\<exists>y. kheap s ptr = Some y) \<longrightarrow>
+***         (\<exists>obj.
+***             kheap s ptr = Some obj \<and>
+***             (case obj of CNode sz cs \<Rightarrow> valid_cs sz cs s
+***              | TCB t \<Rightarrow> valid_tcb ptr t s
+***              | Endpoint p \<Rightarrow> valid_ep p s
+***              | Notification p \<Rightarrow> valid_ntfn p s
+***              | ArchObj ao \<Rightarrow> arch_valid_obj ao s))\<rbrakk>
+***     \<Longrightarrow> kheap s t = Some (?ko20 t)
+***  2. \<And>ptr.
+***        \<lbrakk>valid_tcb t tcb s;
+***         \<forall>ptr.
+***            (\<exists>y. kheap s ptr = Some y) \<longrightarrow>
+***            (\<exists>obj.
+***                kheap s ptr = Some obj \<and> valid_obj ptr obj s);
+***         ptr = t\<rbrakk>

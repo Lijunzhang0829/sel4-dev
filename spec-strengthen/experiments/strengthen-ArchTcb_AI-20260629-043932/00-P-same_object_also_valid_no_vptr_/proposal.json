@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future callers of same_object_also_valid that do not have cap_vptr cap = None in context",
+ "hint_lemma": "same_object_also_valid",
+ "lemma_name": "same_object_also_valid_no_vptr",
+ "anchor_line": 38,
+ "new_lemma": "lemma same_object_also_valid_no_vptr:  (* arch specific *)\n  \"\\<lbrakk> same_object_as cap cap'; s \\<turnstile> cap'; wellformed_cap cap;\n     cap_asid cap = None \\<or> (\\<exists>asid. cap_asid cap = Some asid \\<and> 0 < asid \\<and> asid \\<le> 2^asid_bits - 1);\n     cap_asid_base cap = None \\<rbrakk>\n     \\<Longrightarrow> s \\<turnstile> cap\"\n  apply (cases cap,\n         (clarsimp simp: same_object_as_def is_cap_simps cap_asid_def\n                         wellformed_cap_def wellformed_acap_def\n                         valid_cap_def bits_of_def cap_aligned_def\n                   split: cap.split_asm arch_cap.split_asm option.splits)+)\n  done",
+ "rationale": "The proof body of same_object_also_valid never mentions cap_vptr anywhere — not in any simp lemma name, frule, drule, or clarsimp hint. Dropping it yields a strictly stronger implication lemma. The proof body is copied verbatim.",
+ "strengthening_claim": "(same_object_as cap cap' \\<and> s \\<turnstile> cap' \\<and> wellformed_cap cap \\<and> cap_asid_cond \\<and> cap_asid_base cap = None) ==> (same_object_as cap cap' \\<and> s \\<turnstile> cap' \\<and> wellformed_cap cap \\<and> cap_asid_cond \\<and> cap_vptr cap = None \\<and> cap_asid_base cap = None)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

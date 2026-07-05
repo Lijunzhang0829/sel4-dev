@@ -1,0 +1,17 @@
+{
+ "commit": "55bf10c1abbb87ade23f96e585dd9af235ca2e54",
+ "parent": "e5036721df4d7efb9c75ef71f6aa53d3cef56cc8",
+ "date": "2023-02-06 09:56:37 +1100",
+ "subject": "aarch64 aspec+ainvs: provide+use symbolic ppn_len definition",
+ "artifact_files": [
+  "spec/abstract/AARCH64/Arch_Structs_A.thy"
+ ],
+ "proof_files": [
+  "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+  "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "AInvs"
+ ]
+}

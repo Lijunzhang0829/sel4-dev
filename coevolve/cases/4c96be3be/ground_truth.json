@@ -1,0 +1,57 @@
+{
+ "proof/crefine/AARCH64/Arch_C.thy": {
+  "session": "CRefine",
+  "lemmas": {
+   "lookupPTSlot_bitsLeft_le_pptrBaseOffset_alignment": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma lookupPTSlot_bitsLeft_le_pptrBaseOffset_alignment[wp]: \"\\<lbrace>\\<top>\\<rbrace> lookupPTSlot p vptr \\<lbrace>\\<lambda>rv _. fst rv \\<le> pptrBaseOffset_alignment\\<rbrace>\"",
+    "stmt_post": "lemma lookupPTSlot_bitsLeft_le_pptrBaseOffset_alignment[wp]: \"\\<lbrace>\\<top>\\<rbrace> lookupPTSlot p vptr \\<lbrace>\\<lambda>rv _. fst rv \\<le> pptrBaseOffset_alignment\\<rbrace>\""
+   },
+   "lookupPTSlot_bitsLeft_less_64": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma lookupPTSlot_bitsLeft_less_64: \"\\<lbrace>\\<top>\\<rbrace> lookupPTSlot p vptr \\<lbrace>\\<lambda>rv _. fst rv < 64\\<rbrace>\"",
+    "stmt_post": "lemma lookupPTSlot_bitsLeft_less_64: \"\\<lbrace>\\<top>\\<rbrace> lookupPTSlot p vptr \\<lbrace>\\<lambda>rv _. fst rv < 64\\<rbrace>\""
+   },
+   "lookupPTSlot_enoughPTBits": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma lookupPTSlot_enoughPTBits[wp]: \"\\<lbrace>\\<top>\\<rbrace> lookupPTSlot p vptr \\<lbrace>\\<lambda>rv _. enoughPTBits (fst rv)\\<rbrace>\"",
+    "stmt_post": "lemma lookupPTSlot_enoughPTBits[wp]: \"\\<lbrace>\\<top>\\<rbrace> lookupPTSlot p vptr \\<lbrace>\\<lambda>rv _. enoughPTBits (fst rv)\\<rbrace>\""
+   }
+  }
+ },
+ "proof/crefine/AARCH64/VSpace_C.thy": {
+  "session": "CRefine",
+  "lemmas": {
+   "lookupPTSlot_ccorres": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma lookupPTSlot_ccorres: \"ccorres (\\<lambda>(bitsLeft,ptSlot) cr. bitsLeft = unat (ptBitsLeft_C cr) \\<and> ptSlot_C cr = Ptr ptSlot) ret__struct_lookupPTSlot_ret_C_' (page_table_at' VSRootPT_T pt) (\\<lbrace>\\<acute>vptr = vptr \\<rbrace> \\<inter> \\<lbrace>\\<acute>vspace = Ptr pt \\<rbrace>) hs (lookupPTSlot pt vptr) (Call lookupPTSlot_'proc)\"",
+    "stmt_post": "lemma lookupPTSlot_ccorres: \"ccorres (\\<lambda>(bitsLeft,ptSlot) cr. bitsLeft = unat (ptBitsLeft_C cr) \\<and> ptSlot_C cr = Ptr ptSlot) ret__struct_lookupPTSlot_ret_C_' (page_table_at' VSRootPT_T pt) (\\<lbrace>\\<acute>vptr = vptr \\<rbrace> \\<inter> \\<lbrace>\\<acute>vspace = Ptr pt \\<rbrace>) hs (lookupPTSlot pt vptr) (Call lookupPTSlot_'proc)\""
+   }
+  }
+ },
+ "proof/refine/AARCH64/ArchAcc_R.thy": {
+  "session": "Refine",
+  "lemmas": {
+   "lookupPTSlot_corres": {
+    "kw": "lemma",
+    "kind": "modified",
+    "statement_evolved": false,
+    "body_changed": true,
+    "stmt_pre": "lemma lookupPTSlot_corres: \"corres (\\<lambda>(level, p) (bits, p'). bits = pt_bits_left level \\<and> p' = p) (pspace_aligned and pspace_distinct and valid_vspace_objs and valid_asid_table and \\<exists>\\<rhd>(max_pt_level,pt) and K (vptr \\<in> user_region)) \\<top> (gets_the (pt_lookup_slot pt vptr \\<circ> ptes_of)) (lookupPTSlot pt vptr)\"",
+    "stmt_post": "lemma lookupPTSlot_corres: \"corres (\\<lambda>(level, p) (bits, p'). bits = pt_bits_left level \\<and> p' = p) (pspace_aligned and pspace_distinct and valid_vspace_objs and valid_asid_table and \\<exists>\\<rhd>(max_pt_level,pt) and K (vptr \\<in> user_region)) \\<top> (gets_the (pt_lookup_slot pt vptr \\<circ> ptes_of)) (lookupPTSlot pt vptr)\""
+   }
+  }
+ }
+}

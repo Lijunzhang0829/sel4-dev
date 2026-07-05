@@ -1,0 +1,24 @@
+Looking at the visible file, the lemma `pptr_base_kernel_elf_base` relies on `pptrBase_kernelELFBase` which was just deleted from the spec. The fix is to inline its proof directly.
+
+<<<<SEARCH
+lemma pptr_base_kernel_elf_base:
+  "pptr_base < kernel_elf_base"
+  by (simp add: pptr_base_def kernel_elf_base_def pptrBase_kernelELFBase)
+====
+lemma pptr_base_kernel_elf_base:
+  "pptr_base < kernel_elf_base"
+  by (simp add: pptr_base_def kernel_elf_base_def pptrBase_def canonical_bit_def kernelELFBase_def
+                kernelELFPAddrBase_def pptrTop_def Kernel_Config.physBase_def mask_def)
+>>>>
+
+
+=== VERDICT: RED ===
+FAILED (65861ms)
+*** Failed to finish proof (line 1523 of "/tmp/tmp.axlF5M4uCG/Tmp_a7deb13364a58625.thy"):
+*** goal (1 subgoal):
+***  1. 0xFFC0000000 \<le> 2 ^ ipa_size - 1
+*** At command "by" (line 1522 of "/tmp/tmp.axlF5M4uCG/Tmp_a7deb13364a58625.thy")
+*** Failed to finish proof (line 1523 of "/tmp/tmp.axlF5M4uCG/Tmp_a7deb13364a58625.thy"):
+*** goal (1 subgoal):
+***  1. 0xFFC0000000 \<le> 2 ^ ipa_size - 1
+*** At command "by" (line 1522 of "/tmp/tmp.axlF5M4uCG/Tmp_a7deb13364a58625.thy")

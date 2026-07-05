@@ -1,0 +1,18 @@
+Looking at the error, `VCPUAssocTCB` is no longer a valid constructor in the `vcpu_invocation` datatype — it was renamed to `VCPUSetTCB` to align with the seL4 invocation label naming convention.
+
+<<<<SEARCH
+       VCPUAssocTCB vcpu_ptr tcb_ptr \<Rightarrow> vcpu_at vcpu_ptr and tcb_at tcb_ptr and
+====
+       VCPUSetTCB vcpu_ptr tcb_ptr \<Rightarrow> vcpu_at vcpu_ptr and tcb_at tcb_ptr and
+>>>>
+
+
+=== VERDICT: RED ===
+*** Error in case expression:
+*** Not a datatype constructor: VCPUSetTCB
+*** In clause
+*** VCPUSetTCB vcpu_ptr tcb_ptr \<Rightarrow>
+***   vcpu_at vcpu_ptr and tcb_at tcb_ptr and ex_nonz_cap_to vcpu_ptr and
+***   ex_nonz_cap_to tcb_ptr and
+***   (\<lambda>s. tcb_ptr \<noteq> idle_thread s)
+*** At command "definition" (line 26 of "/tmp/tmp.6cJKNabZEL/Tmp_78879bda96f93f93.thy")

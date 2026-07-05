@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Callers of valid_arch_state_global_pd that have valid_arch_state but not pspace_aligned",
+ "hint_lemma": "valid_arch_state_global_pd",
+ "lemma_name": "valid_arch_state_global_pd'",
+ "anchor_line": 467,
+ "new_lemma": "lemma valid_arch_state_global_pd':\n  \"valid_arch_state s\n    \\<Longrightarrow> obj_at (\\<lambda>ko. \\<exists>pd. ko = ArchObj (PageDirectory pd)) (arm_global_pd (arch_state s)) s\n           \\<and> is_aligned (arm_global_pd (arch_state s)) pd_bits\"\n  apply (clarsimp simp: valid_arch_state_def a_type_def\n                        pd_aligned pd_bits_def pageBits_def\n                 elim!: obj_at_weakenE)\n  apply (clarsimp split: Structures_A.kernel_object.split_asm\n                         arch_kernel_obj.split_asm if_split_asm)\n  done",
+ "rationale": "The conjunct `pspace_aligned s` never appears in the proof body of valid_arch_state_global_pd. The proof only uses `valid_arch_state_def`, `a_type_def`, `pd_aligned`, `pd_bits_def`, `pageBits_def`, and case splits — none of which require pspace_aligned as a hypothesis. This is a pure implication lemma making it a high-confidence P-slot candidate.",
+ "strengthening_claim": "valid_arch_state s ==> (valid_arch_state s \\<and> pspace_aligned s)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

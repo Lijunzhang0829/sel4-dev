@@ -1,0 +1,42 @@
+PROMPT (2767 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/machine/AARCH64/Arch_Kernel_Config_Lemmas.thy b/spec/machine/AARCH64/Arch_Kernel_Config_Lemmas.thy
+index f93ebdad..28081cc2 100644
+--- a/spec/machine/AARCH64/Arch_Kernel_Config_Lemmas.thy
++++ b/spec/machine/AARCH64/Arch_Kernel_Config_Lemmas.thy
+@@ -14,5 +14,10 @@ begin
+ 
+ context Arch begin global_naming AARCH64
+ 
++lemma pptrBase_kernelELFBase:
++  "pptrBase < kernelELFBase"
++  by (simp add: pptrBase_def canonical_bit_def kernelELFBase_def kernelELFPAddrBase_def pptrTop_def
++                Kernel_Config.physBase_def mask_def)
++
+ end
+ end
+
+```
+
+## Identifiers whose definitions changed (mechanically extracted)
+["pptrBase"]
+
+## Candidate proof files that mention these identifiers (grep at pre-change rev)
+(none found)
+
+## Your task
+Predict the work-list a seL4 PROOF MAINTAINER would carry out for this change — which proof files need edits, which lemma blocks, and for each lemma whether its STATEMENT must evolve versus a body-only re-proof.
+
+Rules:
+- **Maintainer-aligned, not merely compiler-forced.** If the spec's semantics shifted (e.g. a boundary guard), lemmas whose statements express the OLD semantics must be evolved to track the new one, EVEN IF the old proof might still compile. Predict what the maintainer changes, not only what fails.
+- **work_list contains ONLY files that need edits.** A file you examined and judged fine must NOT appear in work_list (mention it in a separate top-level key "cleared": [{"file":.., "why":..}]).
+- **Breakage stops at unchanged lemma statements.** A downstream file needs no edit if it only uses lemmas whose statements survive.
+- STAY WITHIN the candidate list unless you have strong structural evidence (crunch/locale fallout) — and NEVER pick a file merely because its name resembles the changed s
+
+=== RAW REPLY ===
+{"work_list": [], "cleared": [{"file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy", "why": "No reference to kernelELFBase or the pptr_base_kernel_elf_base derived lemma; pptrBase used only via pptrBaseOffset_def/pptrBase_def inline expansions unrelated to the new inequality."}, {"file": "proof/invariant-abstract/AARCH64/ArchKernelInit_AI.thy", "why": "Uses kernel_elf_base_def as a numeric simp rule (lines 103, 247, 314) — expands to a literal and discharges goals directly; pptr_base < kernel_elf_base is never needed as a named fact, so the new machine lemma does not unlock or require anything here."}, {"file": "proof/crefine/AARCH64/VSpace_C.thy", "why": "References kernelELFBase only inside addrFromKPPtr_def/kernelELFBaseOffset_def expansions (line 329-330); the new inequality pptrBase < kernelELFBase plays no role in those proofs."}, {"file": "proof/invariant-abstract/AARCH64/ArchAInvsPre.thy", "why": "Uses pptrBase_def and pptrBaseOffset_def inline; no reference to the new pptrBase_kernelELFBase lemma or the inequality it provides."}, {"note": "The change is purely additive — a single new lemma pptrBase_kernelELFBase is inserted into an otherwise-empty context block. No definition was altered, so no existing statement is rendered stale and no existing proof tactic fails. The RISCV64 parallel (pptr_base_kernel_elf_base in ArchInvariants_AI/RISCV64) does not exist yet for AARCH64, but AARCH64 proofs currently discharge the equivalent fact by numeric expansion of kernel_elf_base_def, so no repair is compiler-forced or maintainer-required at this time."}]}
+=== STDERR ===
+

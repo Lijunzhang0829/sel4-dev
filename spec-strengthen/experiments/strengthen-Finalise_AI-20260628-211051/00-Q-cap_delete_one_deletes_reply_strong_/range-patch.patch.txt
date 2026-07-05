@@ -1,0 +1,18 @@
+948 948
+  done
+
+lemma cap_delete_one_deletes_reply_strong:
+  "\<lbrace>cte_wp_at (is_reply_cap_to t) slot and valid_reply_caps\<rbrace>
+    cap_delete_one slot
+   \<lbrace>\<lambda>rv s. \<forall>sl' R. if (sl' = slot)
+       then cte_wp_at (\<lambda>c. c = cap.NullCap) sl' s
+       else caps_of_state s sl' \<noteq> Some (cap.ReplyCap t False R)\<rbrace>"
+  apply (simp add: cap_delete_one_def unless_def is_final_cap_def)
+  apply wp
+     apply (rule hoare_vcg_all_lift)
+     apply simp
+     apply (wp hoare_weak_lift_imp empty_slot_deletes empty_slot_caps_of_state get_cap_wp)+
+  apply (fastforce simp: cte_wp_at_caps_of_state valid_reply_caps_def
+                        is_cap_simps unique_reply_caps_def is_reply_cap_to_def
+              simp del: split_paired_All)
+  done

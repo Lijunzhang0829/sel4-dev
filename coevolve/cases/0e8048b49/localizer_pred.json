@@ -1,0 +1,32 @@
+{
+ "work_list": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+   "lemmas": [
+    {
+     "name": "decode_fr_inv_map_wf",
+     "statement_must_evolve": false,
+     "reason": "Postcondition valid_arch_inv is unchanged; only the proof body is affected: wp on 'whenE (vtop > user_vtop)' now yields '\u00ac(user_vtop < vtop)' (non-strict) as the safe-path hypothesis instead of '\u00ac(user_vtop \u2264 vtop)' = 'vtop < user_vtop' (strict), so the clarsimp at line 1421 and the subsequent pull_out/prop_tac discharge at lines 1422\u20131429 will need adjustment to the new operator form."
+    }
+   ],
+   "file_reason": "Sole proof-layer file that contains the direct wp proof of decode_fr_inv_map; guard operator changes from \u2265 to > so wpsimp generates a different safe-path condition, requiring body-level repair."
+  },
+  {
+   "file": "proof/refine/AARCH64/Arch_R.thy",
+   "lemmas": [
+    {
+     "name": "decodeARMFrameInvocation_corres",
+     "statement_must_evolve": false,
+     "reason": "Design spec (ArchVSpace_H.thy:517) already uses 'vtop > pptrUserTop' (strict >); old proof bridged abstract \u2265 to design > via 'term_simp: mask_def user_vtop_def' and 'simp add: mask_def user_vtop_def' at lines 618\u2013620; now that abstract also uses >, those arithmetic normalisation steps must be reworked to match the now-aligned operators, and the subgoal at lines 638\u2013641 using vmsz_aligned_user_region/not_less may need adjustment."
+    }
+   ],
+   "file_reason": "Proves corres between abstract decode_fr_inv_map (unfolded at lines 610\u2013611) and design decodeARMFrameInvocationMap; the old proof was specifically written to reconcile the \u2265/> mismatch and must be updated now that both sides use strict >."
+  }
+ ],
+ "cleared": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchEmptyFail_AI.thy",
+   "why": "References decode_fr_inv_map_def only as a simp lemma in a wpsimp block proving the empty_fail property; changing \u2265 to > does not affect whether the function always produces a result, so this proof survives without change."
+  }
+ ]
+}

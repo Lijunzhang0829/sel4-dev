@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "resolve_address_bits consumers that hold only invs (e.g. lookup_cap_and_slot_valid_fault2, hw_invs); follow-up patch replaces resolve_address_bits_valid_fault2 with this stronger form.",
+ "grace_period_weeks": 8,
+ "lemma_name": "resolve_address_bits_valid_fault2_invs",
+ "hint_lemma": "resolve_address_bits_valid_fault2",
+ "anchor_line": 823,
+ "new_lemma": "lemma resolve_address_bits_valid_fault2_invs:\n  \"\\<lbrace>invs\\<rbrace>\n   resolve_address_bits param\n   -,\\<lbrace>\\<lambda>f s. valid_fault (ExceptionTypes_A.fault.CapFault x y f)\\<rbrace>\"\n  apply (cut_tac resolve_address_bits_valid_fault[of param x y])\n  apply (clarsimp simp add: validE_E_def validE_def valid_def\n                  split: sum.splits)\n  apply (drule invs_valid_objs)\n  apply fastforce\n  done",
+ "rationale": "The conjunct `valid_cap (fst param)` does not appear in the proof body of `resolve_address_bits_valid_fault2`. The proof cuts in `resolve_address_bits_valid_fault` (which internally carries `valid_cap`), unfolds the validE_E obligation, obtains `valid_objs` from `invs_valid_objs`, and closes with `fastforce`. The `resolve_address_bits` op is read-only. The `valid_cap (fst param)` premise may be droppable if `fastforce` can close the residual obligation using only `valid_objs` together with the structure of valid_fault; the trial confirms this.",
+ "strengthening_claim": "(invs and valid_cap (fst param)) ==> (invs) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `valid_cap (fst param)`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "anchor_text": "  done"
+}

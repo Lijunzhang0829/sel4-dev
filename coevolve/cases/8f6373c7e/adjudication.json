@@ -1,0 +1,7 @@
+[
+ {
+  "file": "proof/invariant-abstract/AARCH64/ArchCSpaceInvPre_AI.thy",
+  "baseline": "GREEN",
+  "broken_state": "GREEN"
+ }
+]

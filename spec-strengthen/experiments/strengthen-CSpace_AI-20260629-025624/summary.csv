@@ -1,0 +1,5 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-F-set_cdt_is_original_cap_,set_cdt_is_original_cap,F,wp,trial_passed,additive,0.22
+01-F-update_cdt_is_original_cap_,update_cdt_is_original_cap,F,wp,trial_passed,additive,1.0
+02-F-set_cap_cdt_wp_,set_cap_cdt_wp,F,wp,trial_passed,additive,1.45
+03-F-set_cap_is_original_cap_wp_,set_cap_is_original_cap_wp,F,wp,trial_passed,additive,1.62

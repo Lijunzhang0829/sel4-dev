@@ -1,0 +1,18 @@
+72 72
+  done
+
+lemma retype_etcb_at_helper_no_valid_etcbs: "\<lbrakk>etcb_at' P t ekh; d \<noteq> apiobject_type.Untyped;
+        foldr (\<lambda>p kh. kh(p \<mapsto> default_object d dev c))
+         ptrs
+         kh t =
+        Some (TCB tcb);
+        tcb_state tcb \<noteq> Inactive\<rbrakk>
+       \<Longrightarrow> etcb_at' P t
+           ((foldr (\<lambda>p ekh. ekh(p := default_ext d cdom))
+             ptrs)
+             ekh)"
+  apply (induct ptrs)
+  apply simp
+  apply (case_tac d)
+  apply (clarsimp split: if_split_asm simp: default_tcb_def default_object_def default_ext_def etcb_at'_def)+
+  done

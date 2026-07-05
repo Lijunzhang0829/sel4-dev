@@ -1,0 +1,41 @@
+PROMPT (3043 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/abstract/AARCH64/ArchDecode_A.thy b/spec/abstract/AARCH64/ArchDecode_A.thy
+index dea11d6f..c0663c51 100644
+--- a/spec/abstract/AARCH64/ArchDecode_A.thy
++++ b/spec/abstract/AARCH64/ArchDecode_A.thy
+@@ -91,7 +91,7 @@ definition decode_fr_inv_map :: "'z::state_ext arch_decoder" where
+              odE
+            | None \<Rightarrow> doE
+                vtop \<leftarrow> returnOk $ vaddr + mask (pageBitsForSize pgsz);
+-               whenE (vtop \<ge> user_vtop) $ throwError $ InvalidArgument 0
++               whenE (vtop > user_vtop) $ throwError $ InvalidArgument 0
+              odE;
+            (level, slot) \<leftarrow> liftE $ gets_the $ pt_lookup_slot pt vaddr \<circ> ptes_of;
+            unlessE (pt_bits_left level = pg_bits) $
+
+```
+
+## Identifiers whose definitions changed (mechanically extracted)
+["decode_fr_inv_map"]
+
+## Candidate proof files that mention these identifiers (grep at pre-change rev)
+- proof/invariant-abstract/AARCH64/ArchArch_AI.thy  (mentions: decode_fr_inv_map)
+
+## Your task
+Predict the work-list a seL4 PROOF MAINTAINER would carry out for this change — which proof files need edits, which lemma blocks, and for each lemma whether its STATEMENT must evolve versus a body-only re-proof.
+
+Rules:
+- **Maintainer-aligned, not merely compiler-forced.** If the spec's semantics shifted (e.g. a boundary guard), lemmas whose statements express the OLD semantics must be evolved to track the new one, EVEN IF the old proof might still compile. Predict what the maintainer changes, not only what fails.
+- **work_list contains ONLY files that need edits.** A file you examined and judged fine must NOT appear in work_list (mention it in a separate top-level key "cleared": [{"file":.., "why":..}]).
+- **Breakage stops at unchan
+
+=== RAW REPLY ===
+Design spec uses `vtop > pptrUserTop` (strict `>`), confirming the abstract spec change from `≥` to `>` now aligns with the design side.
+
+{"work_list": [{"file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy", "lemmas": [{"name": "decode_fr_inv_map_wf", "statement_must_evolve": false, "reason": "Postcondition valid_arch_inv is unchanged; only the proof body is affected: wp on 'whenE (vtop > user_vtop)' now yields '¬(user_vtop < vtop)' (non-strict) as the safe-path hypothesis instead of '¬(user_vtop ≤ vtop)' = 'vtop < user_vtop' (strict), so the clarsimp at line 1421 and the subsequent pull_out/prop_tac discharge at lines 1422–1429 will need adjustment to the new operator form."}], "file_reason": "Sole proof-layer file that contains the direct wp proof of decode_fr_inv_map; guard operator changes from ≥ to > so wpsimp generates a different safe-path condition, requiring body-level repair."},{"file": "proof/refine/AARCH64/Arch_R.thy", "lemmas": [{"name": "decodeARMFrameInvocation_corres", "statement_must_evolve": false, "reason": "Design spec (ArchVSpace_H.thy:517) already uses 'vtop > pptrUserTop' (strict >); old proof bridged abstract ≥ to design > via 'term_simp: mask_def user_vtop_def' and 'simp add: mask_def user_vtop_def' at lines 618–620; now that abstract also uses >, those arithmetic normalisation steps must be reworked to match the now-aligned operators, and the subgoal at lines 638–641 using vmsz_aligned_user_region/not_less may need adjustment."}], "file_reason": "Proves corres between abstract decode_fr_inv_map (unfolded at lines 610–611) and design decodeARMFrameInvocationMap; the old proof was specifically written to reconcile the ≥/> mismatch and must be updated now that both sides use strict >."}], "cleared": [{"file": "proof/invariant-abstract/AARCH64/ArchEmptyFail_AI.thy", "why": "References decode_fr_inv_map_def only as a simp lemma in a wpsimp block proving the empty_fail property; changing ≥ to > does not affect whether the function always produces a result, so this proof survives without change."}]}
+=== STDERR ===
+

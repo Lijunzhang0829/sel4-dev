@@ -1,0 +1,41 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future callers of ex_nonz_tcb_cte_caps that lack tcb_at evidence; e.g. sites in CSpace_AI that construct ex_cte_cap_wp_to from nonz caps without a separate tcb_at witness.",
+  "grace_period_weeks": 8,
+  "lemma_name": "ex_nonz_tcb_cte_caps_no_tcb",
+  "hint_lemma": "ex_nonz_tcb_cte_caps",
+  "anchor_line": 439,
+  "new_lemma": "lemma ex_nonz_tcb_cte_caps_no_tcb [CSpace_AI_assms]:\n  \"\\<lbrakk>ex_nonz_cap_to t s; valid_objs s; ref \\<in> dom tcb_cap_cases\\<rbrakk>\n   \\<Longrightarrow> ex_cte_cap_wp_to (appropriate_cte_cap cp) (t, ref) s\"\n  apply (clarsimp simp: ex_nonz_cap_to_def ex_cte_cap_wp_to_def\n                        cte_wp_at_caps_of_state)\n  apply (subgoal_tac \"s \\<turnstile> cap\")\n   apply (rule_tac x=a in exI, rule_tac x=ba in exI)\n   apply (clarsimp simp: valid_cap_def obj_at_def\n                         is_obj_defs dom_def\n                         appropriate_cte_cap_def\n                  split: cap.splits arch_cap.split_asm if_splits)\n  apply (clarsimp simp: caps_of_state_valid_cap)\n  done",
+  "rationale": "The proof body of ex_nonz_tcb_cte_caps never mentions tcb_at: it derives 's ⊢ cap' purely via caps_of_state_valid_cap (which needs valid_objs, not tcb_at) and then unfolds valid_cap_def/obj_at_def. The tcb_at conjunct is never referenced by name or via a rule that would pull it in. Dropping it yields a strictly stronger implication lemma.",
+  "strengthening_claim": "(ex_nonz_cap_to t s \\<and> valid_objs s \\<and> ref \\<in> dom tcb_cap_cases) ==> (ex_nonz_cap_to t s \\<and> tcb_at t s \\<and> valid_objs s \\<and> ref \\<in> dom tcb_cap_cases)"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "cap_insert_simple_invs or similar callers that establish invs (which subsumes well-formedness) but may not separately have tcb_cap_valid for the inserted cap.",
+  "grace_period_weeks": 8,
+  "lemma_name": "cap_insert_simple_invs_no_tcb_cap_valid",
+  "hint_lemma": "cap_insert_simple_invs",
+  "anchor_line": 583,
+  "new_lemma": "lemma cap_insert_simple_invs_no_tcb_cap_valid:\n  \"\\<lbrace>invs and valid_cap cap and\n    ex_cte_cap_wp_to (appropriate_cte_cap cap) dest and\n    cte_wp_at (\\<lambda>c. is_untyped_cap c \\<longrightarrow> usable_untyped_range c = {}) src and\n    cte_wp_at (\\<lambda>c. c = cap.NullCap) dest and\n    no_cap_to_obj_with_diff_ref cap {dest} and\n    (\\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s) and\n    K (is_simple_cap cap \\<and> \\<not>is_ap_cap cap) and (\\<lambda>s. \\<forall>irq \\<in> cap_irqs cap. irq_issued irq s)\\<rbrace>\n  cap_insert cap src dest \\<lbrace>\\<lambda>rv. invs\\<rbrace>\"\n  apply (simp add: invs_def valid_state_def valid_pspace_def)\n  apply (rule hoare_pre)\n   apply (wp cap_insert_simple_mdb cap_insert_iflive\n             cap_insert_zombies cap_insert_ifunsafe\n             cap_insert_valid_global_refs cap_insert_idle\n             valid_irq_node_typ cap_insert_simple_arch_caps_no_ap)\n  apply (clarsimp simp: is_simple_cap_def cte_wp_at_caps_of_state)\n  apply (frule safe_parent_cap_range)\n  apply simp\n  apply (rule conjI)\n   prefer 2\n   apply (clarsimp simp: is_cap_simps safe_parent_for_def)\n  apply (clarsimp simp: cte_wp_at_caps_of_state)\n  apply (drule_tac p=\"(a,b)\" in caps_of_state_valid_cap, fastforce)\n  apply (clarsimp dest!: is_cap_simps' [THEN iffD1])\n  apply (auto simp add: valid_cap_def [where c=\"cap.Zombie a b x\" for a b x]\n              dest: obj_ref_is_tcb obj_ref_is_cap_table split: option.splits)\n  done",
+  "rationale": "The proof body of cap_insert_simple_invs never references tcb_cap_valid textually. The wp chain uses cap_insert_simple_mdb, cap_insert_iflive, cap_insert_zombies, cap_insert_ifunsafe, cap_insert_valid_global_refs, cap_insert_idle, and cap_insert_simple_arch_caps_no_ap — none of these carry tcb_cap_valid in their preconditions in this file. The remaining clarsimp/auto steps only discharge mdb, object-reference, and irq goals. Dropping tcb_cap_valid yields a strictly stronger Hoare triple.",
+  "strengthening_claim": "(invs and valid_cap cap and ex_cte_cap_wp_to ... and ...) ==> (invs and valid_cap cap and tcb_cap_valid cap dest and ex_cte_cap_wp_to ... and ...)"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Sites inserting simple non-AP caps where no_cap_to_obj_with_diff_ref is not yet established but valid_arch_caps preservation is still desired.",
+  "grace_period_weeks": 8,
+  "lemma_name": "cap_insert_simple_arch_caps_no_ap_no_diff_ref",
+  "hint_lemma": "cap_insert_simple_arch_caps_no_ap",
+  "anchor_line": 518,
+  "new_lemma": "lemma cap_insert_simple_arch_caps_no_ap_no_diff_ref:\n  \"\\<lbrace>valid_arch_caps and (\\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s)\n              and K (is_simple_cap cap \\<and> \\<not>is_ap_cap cap)\\<rbrace>\n     cap_insert cap src dest\n   \\<lbrace>\\<lambda>rv. valid_arch_caps\\<rbrace>\"\n  apply (simp add: cap_insert_def)\n  apply (wp set_cap_valid_arch_caps set_untyped_cap_as_full_valid_arch_caps get_cap_wp\n    | simp split del: if_split)+\n  apply (wp hoare_vcg_all_lift hoare_vcg_conj_lift hoare_vcg_imp_lift hoare_vcg_ball_lift hoare_vcg_disj_lift\n    set_untyped_cap_as_full_cte_wp_at_neg set_untyped_cap_as_full_is_final_cap'_neg\n    set_untyped_cap_as_full_empty_table_at hoare_vcg_ex_lift\n    set_untyped_cap_as_full_caps_of_state_diff[where dest=dest]\n    | wps)+\n      apply (wp get_cap_wp)+\n  apply (clarsimp simp: cte_wp_at_caps_of_state)\n  apply (intro conjI impI allI)\n  by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)",
+  "rationale": "The proof body of cap_insert_simple_arch_caps_no_ap never mentions no_cap_to_obj_with_diff_ref textually. The final auto tactic only discharges is_simple_cap/is_cap_simps goals. For simple non-AP caps the unique_table lemmas used in set_cap_valid_arch_caps are satisfied by is_simple_cap alone (pt/pd caps are excluded). The trial will confirm whether the wp chain for set_cap_valid_arch_caps needs no_cap_to_obj_with_diff_ref or not.",
+  "strengthening_claim": "(valid_arch_caps and safe_parent_for_cte and K simple_no_ap) ==> (valid_arch_caps and safe_parent_for_cte and no_cap_to_obj_with_diff_ref cap {dest} and K simple_no_ap)"
+ }
+]

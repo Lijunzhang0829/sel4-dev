@@ -1,0 +1,22 @@
+diff --git a/proof/invariant-abstract/ARM/ArchTcb_AI.thy b/proof/invariant-abstract/ARM/ArchTcb_AI.thy
+--- a/proof/invariant-abstract/ARM/ArchTcb_AI.thy
++++ b/proof/invariant-abstract/ARM/ArchTcb_AI.thy
+@@ -37,6 +37,18 @@
+                    split: cap.split_asm arch_cap.split_asm option.splits)+)
+   done
+ 
++lemma same_object_also_valid_no_asid_base:  (* arch specific *)
++  "\<lbrakk> same_object_as cap cap'; s \<turnstile> cap'; wellformed_cap cap;
++     cap_asid cap = None \<or> (\<exists>asid. cap_asid cap = Some asid \<and> 0 < asid \<and> asid \<le> 2^asid_bits - 1);
++     cap_vptr cap = None \<rbrakk>
++     \<Longrightarrow> s \<turnstile> cap"
++  apply (cases cap,
++         (clarsimp simp: same_object_as_def is_cap_simps cap_asid_def
++                         wellformed_cap_def wellformed_acap_def
++                         valid_cap_def bits_of_def cap_aligned_def
++                   split: cap.split_asm arch_cap.split_asm option.splits)+)
++  done
++
+ lemma same_object_obj_refs[Tcb_AI_asms]:
+   "\<lbrakk> same_object_as cap cap' \<rbrakk>
+      \<Longrightarrow> obj_refs cap = obj_refs cap'"

@@ -1,0 +1,39 @@
+diff --git a/spec/abstract/AARCH64/Arch_Structs_A.thy b/spec/abstract/AARCH64/Arch_Structs_A.thy
+index fbc51133..32aaf0bb 100644
+--- a/spec/abstract/AARCH64/Arch_Structs_A.thy
++++ b/spec/abstract/AARCH64/Arch_Structs_A.thy
+@@ -174,7 +174,7 @@ definition
+   "default_vcpu \<equiv> \<lparr>
+       vcpu_tcb    = None,
+       vcpu_vgic   = default_gic_vcpu_interface,
+-      vcpu_regs   = (\<lambda>_. 0) (VCPURegSCTLR := sctlrDefault),
++      vcpu_regs   = (\<lambda>_. 0) (VCPURegSCTLR := sctlrEL1VM),
+       vcpu_vppi_masked = (\<lambda>_. False),
+       vcpu_vtimer = VirtTimer 0
+    \<rparr>"
+diff --git a/spec/design/skel/AARCH64/ArchStructures_H.thy b/spec/design/skel/AARCH64/ArchStructures_H.thy
+index b11eeacf..67e0d81a 100644
+--- a/spec/design/skel/AARCH64/ArchStructures_H.thy
++++ b/spec/design/skel/AARCH64/ArchStructures_H.thy
+@@ -35,7 +35,7 @@ defs makeVCPUObject_def:
+                         , vgicAPR= 0
+                         , vgicLR= (\<lambda>_. 0)
+                         \<rparr>
+-        , vcpuRegs= funArray (const 0)  aLU  [(VCPURegSCTLR, sctlrDefault)]
++        , vcpuRegs= funArray (const 0)  aLU  [(VCPURegSCTLR, sctlrEL1VM)]
+         , vcpuVPPIMasked= (\<lambda>_. False)
+         , vcpuVTimer= VirtTimer 0
+         \<rparr>"
+diff --git a/spec/haskell/src/SEL4/Object/Structures/AARCH64.hs b/spec/haskell/src/SEL4/Object/Structures/AARCH64.hs
+index 224681b9..aa1d6ec3 100644
+--- a/spec/haskell/src/SEL4/Object/Structures/AARCH64.hs
++++ b/spec/haskell/src/SEL4/Object/Structures/AARCH64.hs
+@@ -145,7 +145,7 @@ makeVCPUObject =
+                         , vgicAPR = 0
+                         , vgicLR = vgicLR
+                         }
+-        , vcpuRegs = funArray (const 0) // [(VCPURegSCTLR, sctlrDefault)]
++        , vcpuRegs = funArray (const 0) // [(VCPURegSCTLR, sctlrEL1VM)]
+         , vcpuVPPIMasked = funArray (const False)
+         , vcpuVTimer = VirtTimer 0
+         }

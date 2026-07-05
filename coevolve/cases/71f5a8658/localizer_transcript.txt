@@ -1,0 +1,138 @@
+PROMPT (4509 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/design/skel/AARCH64/ArchVSpace_H.thy b/spec/design/skel/AARCH64/ArchVSpace_H.thy
+index e4cbe6dc..3da0ae4f 100644
+--- a/spec/design/skel/AARCH64/ArchVSpace_H.thy
++++ b/spec/design/skel/AARCH64/ArchVSpace_H.thy
+@@ -55,7 +55,10 @@ where
+         odE
+   odE"
+ 
+-#INCLUDE_HASKELL SEL4/Kernel/VSpace/AARCH64.hs CONTEXT AARCH64_H bodies_only ArchInv=ArchRetypeDecls_H NOT lookupPTSlotFromLevel lookupPTFromLevel pteAtIndex getPPtrFromHWPTE isPageTablePTE ptBitsLeft checkPTAt
++#INCLUDE_HASKELL SEL4/Kernel/VSpace/AARCH64.hs CONTEXT AARCH64_H bodies_only ArchInv=ArchRetypeDecls_H NOT lookupPTSlotFromLevel lookupPTFromLevel pteAtIndex getPPtrFromHWPTE isPageTablePTE ptBitsLeft checkPTAt checkValidMappingSize
++
++defs checkValidMappingSize_def:
++  "checkValidMappingSize sz \<equiv> stateAssert (\<lambda>s. 2 ^ sz <= gsMaxObjectSize s) []"
+ 
+ end
+ 
+diff --git a/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs b/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
+index 179b303f..54c78d55 100644
+--- a/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
++++ b/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
+@@ -188,7 +188,11 @@ lookupFrame vspaceRoot vPtr = do
+     (bitsLeft, ptePtr) <- lookupPTSlot vspaceRoot vPtr
+     pte <- getObject ptePtr
+     if isPagePTE pte
+-        then return $ Just (bitsLeft, pteBaseAddress pte)
++        then do
++            let baseAddr = pteBaseAddress pte
++            assert (fromPAddr baseAddr .&. mask bitsLeft == 0)
++                   "frame address must be aligned"
++            return $ Just (bitsLeft, baseAddr)
+         else return Nothing
+ 
+ {- Page Table Modification -}
+
+```
+
+## Identifiers whose definitions changed (mechanically extracted)
+["checkValidMappingSize", "lookupFrame", "frame"]
+
+## Candidate proof files that ment
+
+=== RAW REPLY ===
+I have enough evidence. Let me compile the final analysis.
+
+**Summary of findings:**
+
+1. **`spec/design/AARCH64/ArchVSpace_H.thy`** (already local post-change) shows:
+   - `lookupFrame_def` now has a `haskell_assert (fromPAddr baseAddr && mask bitsLeft = 0) []` before the return — a new monadic step
+   - `checkValidMappingSize` is manually defined as `stateAssert (λs. 2 ^ sz <= gsMaxObjectSize s) []`, and called from `decodeARMVSpaceInvocation` at line 640
+
+2. **`proof/refine/AARCH64/Arch_R.thy`**: `lookupFrame_corres` (line 887) and `decodeARMVSpaceInvocation_corres` (line 957) — the current proof discharges both obligations with `corres_assert_gen_asm_cross` and `corres_stateAssert_r_cross` respectively. Pre-change, these proof steps didn't exist.
+
+3. **`proof/crefine/AARCH64/Arch_C.thy`**: `decodeARMVSpaceRootInvocation_ccorres` (line 2467) — the current proof uses `ccorres_assert` (line 2612) + `ccorres_stateAssert` (line 2614) for the two new monadic guards.
+
+4. All other candidates (`drefine/`, `sep-capDL/`, `access-control/`, `ArchArch_AI`, `KernelInitSep_AI`, `Tcb_R`) match `frame` only in the ASID-pool / capability / capDL sense — no reference to `lookupFrame` or `checkValidMappingSize`. Cleared.
+
+```json
+{
+  "work_list": [
+    {
+      "file": "proof/refine/AARCH64/Arch_R.thy",
+      "file_reason": "lookupFrame_corres must discharge the new haskell_assert alignment guard; decodeARMVSpaceInvocation_corres must discharge the new stateAssert from checkValidMappingSize via corres_stateAssert_r_cross.",
+      "lemmas": [
+        {
+          "name": "lookupFrame_corres",
+          "statement_must_evolve": false,
+          "reason": "Statement (refines lookup_frame) is unchanged; body needs corres_assert_gen_asm_cross to prove fromPAddr baseAddr && mask bitsLeft = 0 from valid_vspace_objs alignment invariants, discharging the new haskell_assert step."
+        },
+        {
+          "name": "decodeARMVSpaceInvocation_corres",
+          "statement_must_evolve": false,
+          "reason": "Statement unchanged; body must add corres_stateAssert_r_cross to discharge checkValidMappingSize's stateAssert (2^bitsLeft <= gsMaxObjectSize) via valid_global_refsD_with_objSize."
+        }
+      ]
+    },
+    {
+      "file": "proof/crefine/AARCH64/Arch_C.thy",
+      "file_reason": "decodeARMVSpaceRootInvocation_ccorres unfolds lookupFrame_def and must handle two new monadic guards: the haskell_assert alignment check and the stateAssert from checkValidMappingSize.",
+      "lemmas": [
+        {
+          "name": "decodeARMVSpaceRootInvocation_ccorres",
+          "statement_must_evolve": false,
+          "reason": "C spec is unchanged; body needs ccorres_assert for the new haskell_assert in lookupFrame and ccorres_stateAssert for checkValidMappingSize's stateAssert, plus unfolding checkValidMappingSize_def as a simp rule."
+        }
+      ]
+    }
+  ],
+  "cleared": [
+    {
+      "file": "proof/access-control/Tcb_AC.thy",
+      "why": "Matches frame only as UntypedCap frame address in ASID pool creation; no reference to lookupFrame or checkValidMappingSize."
+    },
+    {
+      "file": "proof/drefine/Arch_DR.thy",
+      "why": "Matches frame only in capDL MakePool frame context; confirmed by grep: no lookupFrame or checkValidMappingSize reference."
+    },
+    {
+      "file": "proof/drefine/StateTranslation_D.thy",
+      "why": "State translation layer; frame match is in capDL/detype context, not VSpace frame lookup."
+    },
+    {
+      "file": "proof/drefine/Tcb_DR.thy",
+      "why": "TCB delta-refinement; frame match is in ASID pool creation invocation, unrelated to VSpace frame lookup."
+    },
+    {
+      "file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+      "why": "Matches frame only as MakePool UntypedCap frame parameter; no lookupFrame or checkValidMappingSize reference confirmed by grep."
+    },
+    {
+      "file": "proof/invariant-abstract/KernelInitSep_AI.thy",
+      "why": "Kernel init separation; frame matches are in separation-logic frame predicates, not VSpace frame lookup."
+    },
+    {
+      "file": "proof/refine/AARCH64/Tcb_R.thy",
+      "why": "TCB refinement; frame matches are in TCB/cap context, not VSpace lookup."
+    },
+    {
+      "file": "proof/sep-capDL/Frame_SD.thy",
+      "why": "capDL separation logic frame specification; entirely different layer with no connection to VSpace lookupFrame."
+    },
+    {
+      "file": "proof/sep-capDL/Helpers_SD.thy",
+      "why": "capDL helpers; frame in capDL sense, not VSpace."
+    },
+    {
+      "file": "proof/sep-capDL/README.md",
+      "why": "Documentation file; not a proof."
+    }
+  ]
+}
+```
+=== STDERR ===
+

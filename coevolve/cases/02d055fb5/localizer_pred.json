@@ -1,0 +1,49 @@
+{
+ "work_list": [],
+ "cleared": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchInvariants_AI.thy",
+   "why": "grep matched type_synonym keyword in file body, not any reference to ptes_of_def or level_pte_of_def; no simp-set change, no statement evolution needed"
+  },
+  {
+   "file": "proof/invariant-abstract/ADT_AI.thy",
+   "why": "same false-positive; neither ptes_of_def nor level_pte_of_def appear anywhere in proof/"
+  },
+  {
+   "file": "proof/invariant-abstract/KernelInitSep_AI.thy",
+   "why": "false-positive type_synonym match; no reference to the new alias"
+  },
+  {
+   "file": "proof/access-control/Types.thy",
+   "why": "false-positive; new lemmas alias is purely additive, no breakage"
+  },
+  {
+   "file": "proof/capDL-api/Kernel_DP.thy",
+   "why": "false-positive; capDL layer does not reference ptes_of at all"
+  },
+  {
+   "file": "proof/drefine/StateTranslation_D.thy",
+   "why": "false-positive; drefine type synonyms unrelated to AARCH64 pte unfold alias"
+  },
+  {
+   "file": "proof/infoflow/ADT_IF.thy",
+   "why": "false-positive; no ptes_of_def reference"
+  },
+  {
+   "file": "proof/sep-capDL/AbstractSeparation_SD.thy",
+   "why": "false-positive; capDL separation layer unaffected"
+  },
+  {
+   "file": "proof/sep-capDL/Lookups_D.thy",
+   "why": "false-positive"
+  },
+  {
+   "file": "proof/sep-capDL/Separation_SD.thy",
+   "why": "false-positive"
+  },
+  {
+   "file": "proof/sep-capDL/Types_SD.thy",
+   "why": "false-positive"
+  }
+ ]
+}

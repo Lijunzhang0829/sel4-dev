@@ -1,0 +1,9 @@
+{
+ "ok": true,
+ "reason": "pure premise-weakening verified (strict pre-conjunct subset, identical post)",
+ "claim": "(valid_asid_map and\n    cte_wp_at (weak_derived c) a and\n    cte_wp_at (weak_derived c') b) ==> (valid_asid_map) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `cte_wp_at (weak_derived c) a`; `cte_wp_at (weak_derived c') b`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "dropped_conjuncts": [
+  "cte_wp_at (weak_derived c) a",
+  "cte_wp_at (weak_derived c') b"
+ ]
+}

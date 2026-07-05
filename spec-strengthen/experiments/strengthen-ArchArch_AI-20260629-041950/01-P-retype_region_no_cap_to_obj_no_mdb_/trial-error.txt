@@ -1,0 +1,21 @@
+FAILED (64569ms)
+*** Failed to apply proof method (line 497 of "/tmp/tmp.1sEQbrluyd/Tmp_92b352b95e2dec25.thy"):
+*** goal (1 subgoal):
+***  1. \<And>s.
+***        \<lbrakk>range_cover ptr sz (obj_bits_api ty us) (Suc 0);
+***         ty = CapTableObject \<longrightarrow> 0 < us;
+***         valid_pspace s \<and>
+***         caps_overlap_reserved {ptr..ptr + 2 ^ obj_bits_api ty us - 1}
+***          s \<and>
+***         caps_no_overlap ptr sz s \<and>
+***         pspace_no_overlap (up_aligned_area ptr sz) s \<and>
+***         (\<forall>c\<in>ran (null_filter (caps_of_state s) |` (- S)).
+***             obj_refs c = obj_refs cap \<longrightarrow>
+***             table_cap_ref c = table_cap_ref cap) \<and>
+***         (\<exists>a b.
+***             cte_wp_at
+***              (\<lambda>c.
+***                  up_aligned_area ptr sz \<subseteq> cap_range c \<and>
+***                  cap_is_device c = dev)
+***              (a, b) s)\<rbrakk>
+***        \<Longrightarrow> valid_mdb s \<and>

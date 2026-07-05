@@ -1,0 +1,6 @@
+3439 3439
+  by wp (simp add: not_cur_thread_def)
+
+lemma set_scheduler_action_machine_state[wp]:
+  "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_scheduler_action action \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+  by (wpsimp simp: set_scheduler_action_def)

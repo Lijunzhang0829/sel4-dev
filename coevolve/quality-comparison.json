@@ -1,0 +1,76 @@
+{
+ "df5e1611": {
+  "human": {
+   "added": 25,
+   "searchy": 3,
+   "named": 4,
+   "new_lemmas": [
+    "no_fail_clearMemory",
+    "no_irq_clearMemory"
+   ]
+  },
+  "agent": {
+   "added": 22,
+   "searchy": 3,
+   "named": 4,
+   "new_lemmas": [
+    "no_fail_clearMemory",
+    "no_irq_clearMemory"
+   ]
+  },
+  "fanin_new_lemmas": {
+   "human": {
+    "no_fail_clearMemory": 5,
+    "no_irq_clearMemory": 28
+   },
+   "agent": {
+    "no_fail_clearMemory": 5,
+    "no_irq_clearMemory": 28
+   }
+  }
+ },
+ "83ddb4def": {
+  "human": {
+   "added": 0,
+   "searchy": 0,
+   "named": 0,
+   "new_lemmas": []
+  },
+  "agent": {
+   "added": 4,
+   "searchy": 1,
+   "named": 0,
+   "new_lemmas": []
+  },
+  "fanin_new_lemmas": {
+   "human": {},
+   "agent": {}
+  }
+ },
+ "0e8048b49": {
+  "human": {
+   "added": 10,
+   "searchy": 1,
+   "named": 2,
+   "new_lemmas": [
+    "user_vtop_leq_canonical_user"
+   ]
+  },
+  "agent": {
+   "added": 11,
+   "searchy": 3,
+   "named": 1,
+   "new_lemmas": [
+    "aligned_add_mask_leD"
+   ]
+  },
+  "fanin_new_lemmas": {
+   "human": {
+    "user_vtop_leq_canonical_user": 3
+   },
+   "agent": {
+    "aligned_add_mask_leD": 0
+   }
+  }
+ }
+}

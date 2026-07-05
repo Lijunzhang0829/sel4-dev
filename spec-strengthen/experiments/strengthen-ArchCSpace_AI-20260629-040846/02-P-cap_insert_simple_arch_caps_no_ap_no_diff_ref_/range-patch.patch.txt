@@ -1,0 +1,20 @@
+518 518
+  by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)
+
+lemma cap_insert_simple_arch_caps_no_ap_no_diff_ref:
+  "\<lbrace>valid_arch_caps and (\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s)
+              and K (is_simple_cap cap \<and> \<not>is_ap_cap cap)\<rbrace>
+     cap_insert cap src dest
+   \<lbrace>\<lambda>rv. valid_arch_caps\<rbrace>"
+  apply (simp add: cap_insert_def)
+  apply (wp set_cap_valid_arch_caps set_untyped_cap_as_full_valid_arch_caps get_cap_wp
+    | simp split del: if_split)+
+  apply (wp hoare_vcg_all_lift hoare_vcg_conj_lift hoare_vcg_imp_lift hoare_vcg_ball_lift hoare_vcg_disj_lift
+    set_untyped_cap_as_full_cte_wp_at_neg set_untyped_cap_as_full_is_final_cap'_neg
+    set_untyped_cap_as_full_empty_table_at hoare_vcg_ex_lift
+    set_untyped_cap_as_full_caps_of_state_diff[where dest=dest]
+    | wps)+
+      apply (wp get_cap_wp)+
+  apply (clarsimp simp: cte_wp_at_caps_of_state)
+  apply (intro conjI impI allI)
+  by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)

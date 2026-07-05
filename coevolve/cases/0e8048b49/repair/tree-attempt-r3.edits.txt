@@ -1,0 +1,21 @@
+Looking at the error, the failing `apply` is `erule aligned_add_mask_leD` (line 1427). After `clarsimp` unfolds the config-dependent `user_vtop`/`canonical_user` definitions, the goal lands in a conjunction-of-implications form (one branch per PA-size config):
+
+```
+(config_ARM_PA_SIZE_BITS_40 → vtop ≤ mask 40 → args!0 ≤ mask 40) ∧
+(¬config_ARM_PA_SIZE_BITS_40 → vtop ≤ mask 44 → args!0 ≤ mask 44)
+```
+
+With the old `≥` spec, the non-throw condition was `vtop < user_vtop` (strict), which clarsimp could flatten into a plain hypothesis. With the new `>` spec, the condition is `vtop ≤ user_vtop`, and after unfolding it lands in the `∧ (→ →)` form. `erule` can't fire because the `≤` premise is inside the implications, not a hypothesis. Fix: split with `intro conjI impI` first.
+
+<<<<SEARCH
+     apply (erule aligned_add_mask_leD)
+     apply (simp add: vmsz_aligned_def)
+====
+     apply (intro conjI impI; erule aligned_add_mask_leD; simp add: vmsz_aligned_def)
+>>>>
+
+
+=== VERDICT: GREEN ===
+Skipping theories "KernelInit_AI", "$L4V_ARCH/ArchDetSchedSchedule_AI" (undefined AINVS_QUICK_AND_DIRTY)
+Finished AInvs (0:15:19 elapsed time, 1:18:55 cpu time, factor 5.15)
+0:15:30 elapsed time, 1:18:55 cpu time, factor 5.09

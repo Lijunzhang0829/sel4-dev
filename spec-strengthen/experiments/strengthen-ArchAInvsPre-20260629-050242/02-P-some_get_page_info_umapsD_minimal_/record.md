@@ -1,0 +1,160 @@
+# record — `some_get_page_info_umapsD_minimal`  (P-slot, TRIAL-FAILED)
+
+| 字段 | 值 |
+|---|---|
+| 文件 | `proof/invariant-abstract/ARM/ArchAInvsPre.thy` |
+| Slot / delivery | P / named (planned) |
+| 裁决 | **TRIAL-FAILED** |
+| 墙钟 | baseline=33439 ms · trial=? ms · Δ ?% |
+| 锚点 | 插入于 L164 之后 |
+| 锚定的原 lemma | `some_get_page_info_umapsD` (L112) |
+
+## 1. 原 lemma（additive：保持原样，未被修改）
+
+```isabelle
+lemma some_get_page_info_umapsD:
+  "\<lbrakk>get_page_info (\<lambda>obj. get_arch_obj (kheap s obj)) pd_ref p = Some (b, a, attr, r);
+    (\<exists>\<rhd> pd_ref) s; p \<notin> kernel_mappings; valid_vspace_objs s; pspace_aligned s;
+    valid_asid_table (arm_asid_table (arch_state s)) s; valid_objs s\<rbrakk>
+   \<Longrightarrow> (\<exists>sz. pageBitsForSize sz = a \<and> is_aligned b a \<and>
+             data_at sz (ptrFromPAddr b) s)"
+  apply (clarsimp simp: get_page_info_def get_pd_entry_def get_arch_obj_def
+                        kernel_mappings_slots_eq
+                 split: option.splits Structures_A.kernel_object.splits
+                        arch_kernel_obj.splits)
+  apply (frule (1) valid_vspace_objsD[rotated 2])
+   apply (simp add: obj_at_def)
+  apply (simp add: valid_vspace_obj_def)
+  apply (drule bspec, simp)
+  apply (simp split: pde.splits)
+    apply (rename_tac rs pd pt_ref rights w)
+    apply (subgoal_tac
+        "((rs, pd_ref) \<rhd>1
+          (VSRef (ucast (ucast (p >> 20))) (Some APageDirectory) # rs,
+           ptrFromPAddr pt_ref)) s")
+     prefer 2
+     apply (rule vs_lookup1I[rotated 2], simp)
+      apply (simp add: obj_at_def)
+     apply (simp add: vs_refs_def pde_ref_def image_def graph_of_def)
+     apply (rule exI, rule conjI, simp+)
+    apply (frule (1) vs_lookup_step)
+    apply (drule (2) stronger_vspace_objsD[where ref="x # xs" for x xs])
+    apply clarsimp
+    apply (case_tac ao, simp_all add: a_type_simps obj_at_def )[1]
+     apply (simp add: get_pt_info_def get_pt_entry_def)
+     apply (drule_tac x="(ucast ((p >> 12) && mask 8))" in spec)
+     apply (clarsimp simp: obj_at_def split: pte.splits,intro exI conjI,simp_all)[1]
+      apply (frule obj_bits_data_at)
+      apply (clarsimp simp: pspace_aligned_def data_at_def)
+      apply (drule_tac x = "(ptrFromPAddr b)" in  bspec )
+       apply (fastforce simp: obj_at_def)
+      apply (clarsimp dest!: is_aligned_ptrFromPAddrD)
+     apply (frule (1) data_at_aligned)
+     apply (intro exI conjI, simp_all add: pageBits_def is_aligned_ptrFromPAddrD)[1]
+    apply (simp add: get_pt_info_def get_pt_entry_def)
+   apply (frule obj_bits_data_at)
+   apply (intro exI conjI, simp_all add: pageBits_def)[1]
+   apply (clarsimp simp: pspace_aligned_def data_at_def)
+   apply (drule_tac x = "(ptrFromPAddr b)" in  bspec)
+    apply (fastforce simp: obj_at_def)
+   apply (clarsimp dest!: is_aligned_ptrFromPAddrD)
+  apply (frule obj_bits_data_at)
+  apply (intro exI conjI, simp_all add: pageBits_def)[1]
+  apply (clarsimp simp: pspace_aligned_def data_at_def)
+  apply (drule_tac x = "(ptrFromPAddr b)" in  bspec)
+   apply (fastforce simp: obj_at_def)
+  apply (clarsimp dest!: is_aligned_ptrFromPAddrD)
+  done
+```
+
+## 2. 新增 lemma
+
+```isabelle
+lemma some_get_page_info_umapsD_minimal:
+  "\<lbrakk>get_page_info (\<lambda>obj. get_arch_obj (kheap s obj)) pd_ref p = Some (b, a, attr, r);
+    (\<exists>\<rhd> pd_ref) s; p \<notin> kernel_mappings; valid_vspace_objs s; pspace_aligned s\<rbrakk>
+   \<Longrightarrow> (\<exists>sz. pageBitsForSize sz = a \<and> is_aligned b a \<and>
+              data_at sz (ptrFromPAddr b) s)"
+  apply (clarsimp simp: get_page_info_def get_pd_entry_def get_arch_obj_def
+                        kernel_mappings_slots_eq
+                 split: option.splits Structures_A.kernel_object.splits
+                        arch_kernel_obj.splits)
+  apply (frule (1) valid_vspace_objsD[rotated 2])
+   apply (simp add: obj_at_def)
+  apply (simp add: valid_vspace_obj_def)
+  apply (drule bspec, simp)
+  apply (simp split: pde.splits)
+    apply (rename_tac rs pd pt_ref rights w)
+    apply (subgoal_tac
+        "((rs, pd_ref) \<rhd>1
+          (VSRef (ucast (ucast (p >> 20))) (Some APageDirectory) # rs,
+           ptrFromPAddr pt_ref)) s")
+     prefer 2
+     apply (rule vs_lookup1I[rotated 2], simp)
+      apply (simp add: obj_at_def)
+     apply (simp add: vs_refs_def pde_ref_def image_def graph_of_def)
+     apply (rule exI, rule conjI, simp+)
+    apply (frule (1) vs_lookup_step)
+    apply (drule (2) stronger_vspace_objsD[where ref="x # xs" for x xs])
+    apply clarsimp
+    apply (case_tac ao, simp_all add: a_type_simps obj_at_def )[1]
+     apply (simp add: get_pt_info_def get_pt_entry_def)
+     apply (drule_tac x="(ucast ((p >> 12) && mask 8))" in spec)
+     apply (clarsimp simp: obj_at_def split: pte.splits,intro exI conjI,simp_all)[1]
+      apply (frule obj_bits_data_at)
+      apply (clarsimp simp: pspace_aligned_def data_at_def)
+      apply (drule_tac x = "(ptrFromPAddr b)" in  bspec )
+       apply (fastforce simp: obj_at_def)
+      apply (clarsimp dest!: is_aligned_ptrFromPAddrD)
+     apply (frule (1) data_at_aligned)
+     apply (intro exI conjI, simp_all add: pageBits_def is_aligned_ptrFromPAddrD)[1]
+    apply (simp add: get_pt_info_def get_pt_entry_def)
+   apply (frule obj_bits_data_at)
+   apply (intro exI conjI, simp_all add: pageBits_def)[1]
+   apply (clarsimp simp: pspace_aligned_def data_at_def)
+   apply (drule_tac x = "(ptrFromPAddr b)" in  bspec)
+    apply (fastforce simp: obj_at_def)
+   apply (clarsimp dest!: is_aligned_ptrFromPAddrD)
+  apply (frule obj_bits_data_at)
+  apply (intro exI conjI, simp_all add: pageBits_def)[1]
+  apply (clarsimp simp: pspace_aligned_def data_at_def)
+  apply (drule_tac x = "(ptrFromPAddr b)" in  bspec)
+   apply (fastforce simp: obj_at_def)
+  apply (clarsimp dest!: is_aligned_ptrFromPAddrD)
+  done
+```
+（该候选未通过 trial，**不存在最终 diff**；上面是当时尝试插入的内容，原始补丁输入见 `range-patch.patch.txt`）
+
+## 3. 为什么这么改
+
+**检测器信号**（机械，`hints.json`）：kind=`unused-premise`，priority=high
+> [implication lemma — assumption-weakening] conjunct `valid_asid_table (arm_asid_table (arch_state s)) s` head `valid_asid_table` never appears in the proof body (prefix match incl. _def/_E forms); 3 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `` is unknown; wp-chain implicit use is the trial's job
+> 目标前提：`valid_asid_table (arm_asid_table (arch_state s)) s`
+
+**agent 论证**：Combined drop of both `valid_asid_table (arm_asid_table (arch_state s)) s` and `valid_objs s`. Neither appears in the proof body. This is the maximally strengthened form; if both individual drops verify, this combined version should also verify with the same proof body. Ranked third because it is the boldest claim — the trial for the two individual proposals will inform whether this one is worth running.
+
+**强化关系**（机械验证未通过：could not parse a Hoare pre；以下为 agent 自述）：(get_page_info ... = Some ... \<and> (\<exists>\<rhd> pd_ref) s \<and> p \<notin> kernel_mappings \<and> valid_vspace_objs s \<and> pspace_aligned s) ==> (get_page_info ... = Some ... \<and> (\<exists>\<rhd> pd_ref) s \<and> p \<notin> kernel_mappings \<and> valid_vspace_objs s \<and> pspace_aligned s \<and> valid_asid_table (arm_asid_table (arch_state s)) s \<and> valid_objs s)
+
+**delivery**：named，目标：Maximally weak form; ptable_rights_imp_frame and similar callers are candidate consumers once both drops verify individually.；gate：named-planned accepted (provisional, 8-week grace)
+
+## 4. 修改过程（试错链）
+
+一次通过，无修复轮。
+
+## 5. 验证
+
+**最后记录的 prover 输出**（`trial.log`——注意：失败候选若有多轮尝试/被中断，这里可能是较早一轮的输出，最终裁决以下一行为准）：
+```
+***         Some (b, a, attr, r);
+***         ((rs, pd_ref),
+***          VSRef
+```
+**最终裁决**：`TRIAL-FAILED`（ledger 终态事件：`discovered`）
+**落地**：未落地（TRIAL-FAILED）；该目录无 `command.sh`（仅成功候选生成）——复现方式：用 `range-patch.patch.txt` 重跑 `check-theory.sh <theory> <session> --patch <该文件>`
+
+## 6. 跨批次追踪
+
+```
+grep "P:ArchAInvsPre:some_get_page_info_umapsD_minimal" spec-strengthen/candidates/candidate-ledger.jsonl
+```
+（该 key 在 ledger 中暂无 delivery 状态记录）

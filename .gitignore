@@ -5,20 +5,84 @@ stack_cache/*
 !stack_cache/README.md
 
 # --- Isabelle session heaps (binary, multi-GB) — NOT tracked in git.
-# The heaps themselves live inside the docker container at
-# /root/.isabelle/heaps/. The git-tracked record of those heaps is
-# reports/golden-baseline/{walls.json, heap-sizes.txt, env.json}.
+# The heaps live inside the docker container (e.g. /root/.isabelle/heaps/);
+# the git-tracked record of them is reports/golden-baseline/{walls.json,
+# heap-sizes.txt, env.json}. heaps/build_log.txt IS tracked: it's the
+# per-theory timing baseline we benchmark experiments against.
+# To restore the heap binaries themselves, see reports/baseline-restore.md.
 heaps/*
+!heaps/build_log.txt
+!heaps/build_log.pre-swap.txt
 
 # Runtime artifacts produced by run.sh / isabelle_prover skill
 logs/
+
+# reports/ is organized into 4 subtrees (see reports/README.md):
+#   baseline/         — pre-CSTR measurements (slow-commands, slow-proofs,
+#                       scan-comparison, inventory). Mostly bulky and
+#                       reproducible from heaps/build_log.txt → gitignored.
+#   layer1-root-swap/ — CBaseRefine ROOT-swap evidence (critical-path
+#                       pre/post pairs + early build-config exp). Tracked.
+#   layer2-theory/    — theory pillar re-alignment evidence (axis 2D, DAG,
+#                       simulators, baseline snapshot). Tracked.
+#   layer3-lemma/     — per-tactic refinement evidence. Tracked.
+reports/*
+!reports/README.md
+!reports/lessons-learned-*.md
+
+# baseline/ — only the directory README is tracked; the raw measurement
+# dumps are large and regenerable, so they stay untracked.
+!reports/baseline/
+reports/baseline/*
+!reports/baseline/README.md
+!reports/baseline/baseline-restore.md
+
+# layer1-root-swap/ — all tracked
+!reports/layer1-root-swap/
+!reports/layer1-root-swap/**
+
+# layer2-theory/ — all tracked
+!reports/layer2-theory/
+!reports/layer2-theory/**
+
+# layer3-lemma/ — all tracked
+!reports/layer3-lemma/
+!reports/layer3-lemma/**
+
+# spec-strengthen/ — spec-strengthening work (moved 2026-06 to top-level
+# `spec-strengthen/`). The old `reports/spec-strengthen/` allowlist below is
+# vestigial — directory no longer exists — but kept harmless for now in case
+# a stale branch still has files there.
+!spec-strengthen/
+!spec-strengthen/**
+
+# audit-framework/ — audit-dir format reference + historical scaffold (rule 5). Tracked.
+!reports/audit-framework/
+!reports/audit-framework/**
+
+# golden-baseline/ — build measurement baseline. Tracked, including build logs.
+!reports/golden-baseline/
+!reports/golden-baseline/**
+
+# repair/ — co-evolution/repair topic: l4v repair-distribution survey +
+# reproducible classifier + design docs. Tracked.
+!reports/repair/
+!reports/repair/**
+
 test_output.log
 
-# Note: reports/ is TRACKED — it's where experiment records live.
-# Each experiment branches off baseline, adds reports/experiments/<id>/,
-# and PRs back to main.
+# Claude Code: per-user/per-machine permission overrides — gitignored
+# per Claude Code convention. Project-level permissions live in
+# .claude/settings.json (committed). This local file is for grants you
+# do not want to share with the team (machine-specific paths, broad
+# wildcards for personal convenience, etc).
+.claude/settings.local.json
 
 # Python / OS housekeeping
 __pycache__/
 *.pyc
 .DS_Store
+.anthropic_key
+
+# spec-strengthen ephemeral patches
+spec-strengthen/logs/

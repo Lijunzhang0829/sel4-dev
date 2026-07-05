@@ -1,0 +1,44 @@
+PROMPT (3810 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs b/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
+index 54c78d55..5696231d 100644
+--- a/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
++++ b/spec/haskell/src/SEL4/Kernel/VSpace/AARCH64.hs
+@@ -181,7 +181,9 @@ lookupPTSlotFromLevel level ptPtr vPtr = do
+ -- a given virtual address, together with the number of bits left to translate,
+ -- indicating the size of the frame.
+ lookupPTSlot :: PPtr PTE -> VPtr -> Kernel (Int, PPtr PTE)
+-lookupPTSlot = lookupPTSlotFromLevel maxPTLevel
++lookupPTSlot pt vptr = do
++    checkPTAt VSRootPT_T pt
++    lookupPTSlotFromLevel maxPTLevel pt vptr
+ 
+ lookupFrame :: PPtr PTE -> VPtr -> Kernel (Maybe (Int, PAddr))
+ lookupFrame vspaceRoot vPtr = do
+
+```
+
+## Identifiers whose definitions changed (mechanically extracted)
+["lookupPTSlotFromLevel"]
+
+## Candidate proof files that mention these identifiers (grep at pre-change rev)
+- proof/crefine/AARCH64/Arch_C.thy  (mentions: lookupPTSlotFromLevel)
+- proof/crefine/AARCH64/VSpace_C.thy  (mentions: lookupPTSlotFromLevel)
+- proof/crefine/RISCV64/Arch_C.thy  (mentions: lookupPTSlotFromLevel)
+- proof/crefine/RISCV64/VSpace_C.thy  (mentions: lookupPTSlotFromLevel)
+- proof/refine/AARCH64/ArchAcc_R.thy  (mentions: lookupPTSlotFromLevel)
+- proof/refine/AARCH64/Bits_R.thy  (mentions: lookupPTSlotFromLevel)
+- proof/refine/AARCH64/EmptyFail_H.thy  (mentions: lookupPTSlotFromLevel)
+- proof/refine/AARCH64/Invariants_H.thy  (mentions: lookupPTSlotFromLevel)
+- proof/refine/RISCV64/ArchAcc_R.thy  (mentions: lookupPTSlotFromLevel)
+- proof/refine/RISCV64/Bits_R.thy  (mentions: lookupPTSlotFromLevel)
+- proof/refine/RISCV64/EmptyFail_H.thy  (mentions: lookupPTSlotFromLevel)
+- proof/refine/RISCV64/Invariants_H.thy  (mentions: lookupPTSlotF
+
+=== RAW REPLY ===
+{"work_list": [{"file": "proof/refine/AARCH64/ArchAcc_R.thy", "lemmas": [{"name": "lookupPTSlot_corres", "statement_must_evolve": false, "reason": "Body unfolds lookupPTSlot_def which now exposes a new leading checkPTAt VSRootPT_T pt bind; checkPTAt_corres[corresK] already exists but corresKsimp must be guided to consume it before lookupPTSlotFromLevel_corres, and the stateAssert side-goal (pt_at VSRootPT_T pt) must be discharged—existing preconditions (\\<exists>\\<rhd>(max_pt_level,pt) and valid_vspace_objs) cover it but the fastforce line may need extending."}], "file_reason": "lookupPTSlot_corres unfolds lookupPTSlot_def; the new definition introduces checkPTAt VSRootPT_T pt before lookupPTSlotFromLevel, requiring the corres proof body to handle the extra stateAssert step."}, {"file": "proof/crefine/AARCH64/Arch_C.thy", "lemmas": [{"name": "lookupPTSlot_bitsLeft_less_64", "statement_must_evolve": false, "reason": "Unfolds lookupPTSlot_def then applies wpsimp; new definition binds checkPTAt (stateAssert) before lookupPTSlotFromLevel, so wpsimp needs simp: checkPTAt_def or an explicit hoare step to sequence through the new bind."}, {"name": "lookupPTSlot_bitsLeft_le_pptrBaseOffset_alignment", "statement_must_evolve": false, "reason": "Same structure as lookupPTSlot_bitsLeft_less_64: unfolds lookupPTSlot_def then wpsimp; new checkPTAt bind breaks the one-liner wp proof."}, {"name": "lookupPTSlot_enoughPTBits", "statement_must_evolve": false, "reason": "Same structure: unfolding lookupPTSlot_def then wpsimp wp: lookupPTSlotFromLevel_enoughPTBits no longer closes the goal without handling the new leading checkPTAt bind."}], "file_reason": "Three wp lemmas about lookupPTSlot each do 'unfolding lookupPTSlot_def' followed by a one-liner wpsimp; the new definition introduces a checkPTAt stateAssert bind that the existing wpsimp invocations do not handle."}, {"file": "proof/refine/AARCH64/EmptyFail_H.thy", "lemmas": [{"name": "<crunch-or-setup>", "statement_must_evolve": false, "reason": "A new empty_fail_lookupPTSlot[intro!, wp, simp] lemma must be added; the old implicit derivation (empty_fail_lookupPTSlotFromLevel[simp] applied after simp-unfolding the point-free definition) no longer fires because lookupPTSlot_def now expands to a checkPTAt bind, which simp cannot close via the existing lookupPTSlotFromLevel rule alone."}], "file_reason": "EmptyFail_H.thy has no explicit empty_fail_lookupPTSlot lemma; the prior implicit closure via the eta-equal lookupPTSlotFromLevel simp rule breaks when lookupPTSlot gains an explicit checkPTAt prefix bind."}], "cleared": [{"file": "proof/crefine/AARCH64/VSpace_C.thy", "why": "lookupPTSlot_ccorres already applies ccorres_checkPTAt (line 682) to consume a VSRootPT_T check before lookupPTSlotFromLevel_ccorres; this proof was structured for the new Haskell (matching the C which already called checkPTAt), so the Haskell change makes it consistent rather than requiring further edits."}, {"file": "proof/refine/AARCH64/Bits_R.thy", "why": "Contains only 'crunch_ignore (add: lookupPTSlotFromLevel ...)'; no lemmas about lookupPTSlot are defined here."}, {"file": "proof/refine/AARCH64/Invariants_H.thy", "why": "Contains only 'declare lookupPTSlotFromLevel.simps[simp del]'; no lemmas about lookupPTSlot are present."}, {"file": "proof/crefine/RISCV64/Arch_C.thy", "why": "RISCV64 architecture; the diff is AARCH64-only."}, {"file": "proof/crefine/RISCV64/VSpace_C.thy", "why": "RISCV64 architecture; unaffected."}, {"file": "proof/refine/RISCV64/ArchAcc_R.thy", "why": "RISCV64 architecture; unaffected."}, {"file": "proof/refine/RISCV64/Bits_R.thy", "why": "RISCV64 architecture; unaffected."}, {"file": "proof/refine/RISCV64/EmptyFail_H.thy", "why": "RISCV64 architecture; unaffected."}, {"file": "proof/refine/RISCV64/Invariants_H.thy", "why": "RISCV64 architecture; unaffected."}]}
+=== STDERR ===
+

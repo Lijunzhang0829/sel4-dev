@@ -1,0 +1,18 @@
+{
+ "commit": "72b5b0a2e69d615eff85f5b2f145c0572faea2cd",
+ "parent": "9e88462c8b583f4bc78d2a5a1a08d52e3638a795",
+ "date": "2024-03-13 14:06:46 +0100",
+ "subject": "aarch64 spec+crefine: use sctlrEL1VM in VCPU init",
+ "artifact_files": [
+  "spec/abstract/AARCH64/Arch_Structs_A.thy",
+  "spec/design/skel/AARCH64/ArchStructures_H.thy",
+  "spec/haskell/src/SEL4/Object/Structures/AARCH64.hs"
+ ],
+ "proof_files": [
+  "proof/crefine/AARCH64/Retype_C.thy"
+ ],
+ "other_files": [],
+ "sessions": [
+  "CRefine"
+ ]
+}

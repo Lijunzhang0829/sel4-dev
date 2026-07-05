@@ -1,0 +1,37 @@
+{
+ "file_precision": 0.5,
+ "file_recall": 1.0,
+ "n_gt_files": 1,
+ "n_pred_files": 2,
+ "n_tp_files": 1,
+ "gt_files": [
+  "proof/refine/AARCH64/Arch_R.thy"
+ ],
+ "pred_files": [
+  "proof/crefine/AARCH64/Arch_C.thy",
+  "proof/refine/AARCH64/Arch_R.thy"
+ ],
+ "lemma_recall_modified": 1.0,
+ "n_matchable": 2,
+ "n_lem_hits": 2,
+ "n_gt_added": 2,
+ "evolve_flag_accuracy": 1.0,
+ "n_evo_ok": 2,
+ "n_evo_total": 2,
+ "lemma_rows": [
+  {
+   "file": "proof/refine/AARCH64/Arch_R.thy",
+   "lemma": "decodeARMVSpaceInvocation_corres",
+   "gt_evolved": false,
+   "pred_evolve": false,
+   "status": "HIT"
+  },
+  {
+   "file": "proof/refine/AARCH64/Arch_R.thy",
+   "lemma": "lookupFrame_corres",
+   "gt_evolved": false,
+   "pred_evolve": false,
+   "status": "HIT"
+  }
+ ]
+}

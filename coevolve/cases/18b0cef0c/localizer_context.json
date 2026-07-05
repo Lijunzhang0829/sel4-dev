@@ -1,0 +1,249 @@
+{
+ "identifiers": [
+  "decodeARMFrameInvocationMap",
+  "cap"
+ ],
+ "candidates": [
+  {
+   "file": "proof/refine/AARCH64/Arch_R.thy",
+   "mentions": [
+    "cap",
+    "decodeARMFrameInvocationMap"
+   ]
+  },
+  {
+   "file": "proof/access-control/ARM/ArchADT_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/ARM/ArchAccess_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/ARM/ArchArch_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/ARM/ArchCNode_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/ARM/ArchFinalise_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/ARM/ArchInterrupt_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/ARM/ArchRetype_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/ARM/ExampleSystem.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/Access.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/Access_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/Arch_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/CNode_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/DomainSepInv.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/Finalise_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/Interrupt_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/Ipc_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchADT_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchAccess_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchArch_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchCNode_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchFinalise_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchInterrupt_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchRetype_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ArchTcb_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/RISCV64/ExampleSystem.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/Retype_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/Syscall_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/Tcb_AC.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/access-control/Types.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/bisim/Separation.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/bisim/Syscall_S.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/capDL-api/Arch_DP.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/capDL-api/CNode_DP.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/capDL-api/IRQ_DP.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/capDL-api/Invocation_DP.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/capDL-api/KHeap_DP.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/capDL-api/RWHelper_DP.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/capDL-api/Retype_DP.thy",
+   "mentions": [
+    "cap"
+   ]
+  },
+  {
+   "file": "proof/capDL-api/Sep_Tactic_Examples.thy",
+   "mentions": [
+    "cap"
+   ]
+  }
+ ]
+}

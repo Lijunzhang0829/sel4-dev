@@ -1,0 +1,115 @@
+{
+ "run_id": "e2e-df5e1611",
+ "seed": "df5e1611",
+ "session": "AInvs",
+ "touched": [
+  "proof/invariant-abstract/AARCH64/Machine_AI.thy"
+ ],
+ "files": [
+  {
+   "file": "proof/invariant-abstract/AARCH64/Machine_AI.thy",
+   "verdict": "RED",
+   "rounds": 2,
+   "iters": 4,
+   "escalated": true,
+   "human_decisions": 1,
+   "build_wall_s": 1849,
+   "llm": [
+    {
+     "wall_s": 2602,
+     "cost_usd": 1.3366967,
+     "usage": {
+      "input_tokens": 8,
+      "cache_creation_input_tokens": 17989,
+      "cache_read_input_tokens": 42249,
+      "output_tokens": 80433,
+      "server_tool_use": {
+       "web_search_requests": 0,
+       "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 17989,
+       "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+       {
+        "input_tokens": 3,
+        "output_tokens": 16433,
+        "cache_read_input_tokens": 20079,
+        "cache_creation_input_tokens": 41,
+        "cache_creation": {
+         "ephemeral_5m_input_tokens": 0,
+         "ephemeral_1h_input_tokens": 41
+        },
+        "type": "message"
+       }
+      ],
+      "speed": "standard"
+     },
+     "duration_api_ms": 1103343
+    },
+    {},
+    {
+     "wall_s": 2246,
+     "cost_usd": 0.8941371000000001,
+     "usage": {
+      "input_tokens": 5,
+      "cache_creation_input_tokens": 16775,
+      "cache_read_input_tokens": 20997,
+      "output_tokens": 51918,
+      "server_tool_use": {
+       "web_search_requests": 0,
+       "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 16775,
+       "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+       {
+        "input_tokens": 3,
+        "output_tokens": 19918,
+        "cache_read_input_tokens": 18866,
+        "cache_creation_input_tokens": 40,
+        "cache_creation": {
+         "ephemeral_5m_input_tokens": 0,
+         "ephemeral_1h_input_tokens": 40
+        },
+        "type": "message"
+       }
+      ],
+      "speed": "standard"
+     },
+     "duration_api_ms": 746596
+    },
+    {},
+    {},
+    {}
+   ],
+   "transcripts": [
+    "coevolve/pipeline-runs/e2e-df5e1611/claude-e2e-df5e1611-proof_invariant-abstract_AARCH64_Machine_AI.thy-i01.txt",
+    "coevolve/pipeline-runs/e2e-df5e1611/claude-e2e-df5e1611-proof_invariant-abstract_AARCH64_Machine_AI.thy-i02.txt",
+    "coevolve/pipeline-runs/e2e-df5e1611/claude-e2e-df5e1611-proof_invariant-abstract_AARCH64_Machine_AI.thy-i03.txt",
+    "coevolve/pipeline-runs/e2e-df5e1611/claude-e2e-df5e1611-proof_invariant-abstract_AARCH64_Machine_AI.thy-i04.txt",
+    "coevolve/pipeline-runs/e2e-df5e1611/claude-e2e-df5e1611-proof_invariant-abstract_AARCH64_Machine_AI.thy-i05.txt",
+    "coevolve/pipeline-runs/e2e-df5e1611/claude-e2e-df5e1611-proof_invariant-abstract_AARCH64_Machine_AI.thy-i06.txt"
+   ]
+  }
+ ],
+ "final": "ESCALATED",
+ "accounting": {
+  "files_repaired": 0,
+  "files_escalated": 1,
+  "autonomy_rate": 0.0,
+  "human_review_queue": [
+   "proof/invariant-abstract/AARCH64/Machine_AI.thy"
+  ],
+  "total_llm_calls": 6,
+  "total_cost_usd": 2.2308,
+  "wall_s": 11000
+ }
+}

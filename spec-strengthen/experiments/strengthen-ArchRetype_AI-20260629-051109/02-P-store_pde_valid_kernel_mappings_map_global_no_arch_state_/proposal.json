@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "future consumer: copy_global_invs_mappings_restricted wp chain for store_pde_valid_kernel_mappings_map_global",
+ "hint_lemma": "store_pde_valid_kernel_mappings_map_global",
+ "lemma_name": "store_pde_valid_kernel_mappings_map_global_no_arch_state",
+ "anchor_line": 325,
+ "new_lemma": "lemma store_pde_valid_kernel_mappings_map_global_no_arch_state:\n  \"\\\\<lbrace>valid_kernel_mappings and valid_global_objs\n       and K (VSRef (p \\\\<and>\\\\<and> mask pd_bits >> 2) (Some APageDirectory)\n                  \\\\<in> kernel_vsrefs)\n       and (\\\\<lambda>s. \\\\<forall>p. pde_ref pde = Some p\n               \\\\<longrightarrow> p \\\\<in> set (arm_global_pts (arch_state s)))\\\\<rbrace>\n       store_pde p pde\n     \\\\<lbrace>\\\\<lambda>rv. valid_kernel_mappings\\\\<rbrace>\"\n  apply (simp add: store_pde_def)\n  apply (wp set_pd_valid_kernel_mappings_map)\n  apply (clarsimp simp: obj_at_def)\n  apply (rule conjI, rule glob_vs_refs_add_one')\n  apply (clarsimp simp: ucast_ucast_mask_shift_helper)\n  done",
+ "rationale": "The proof of store_pde_valid_kernel_mappings_map_global never mentions `valid_arch_state` by name; the tactic chain is `wp set_pd_valid_kernel_mappings_map; clarsimp; rule glob_vs_refs_add_one'; clarsimp ucast_ucast_mask_shift_helper`. None of those steps reference `valid_arch_state`. The scanner notes NO conjunct visibly consumed and the op is a write-type (demoted priority), but the proof transparency here is higher than hints 8/9 — worth a trial.",
+ "strengthening_claim": "(valid_kernel_mappings and valid_global_objs and K (...) and <lambda>) <= (valid_kernel_mappings and valid_arch_state and valid_global_objs and K (...) and <lambda>)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

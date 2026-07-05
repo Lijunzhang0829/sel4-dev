@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "retype_region_etcb_at or any future consumer of retype_etcb_at_helper that does not hold valid_etcbs_2",
+ "hint_lemma": "retype_etcb_at_helper",
+ "lemma_name": "retype_etcb_at_helper_no_valid_etcbs",
+ "anchor_line": 72,
+ "new_lemma": "lemma retype_etcb_at_helper_no_valid_etcbs: \"\\<lbrakk>etcb_at' P t ekh; d \\<noteq> apiobject_type.Untyped;\n        foldr (\\<lambda>p kh. kh(p \\<mapsto> default_object d dev c))\n         ptrs\n         kh t =\n        Some (TCB tcb);\n        tcb_state tcb \\<noteq> Inactive\\<rbrakk>\n       \\<Longrightarrow> etcb_at' P t\n           ((foldr (\\<lambda>p ekh. ekh(p := default_ext d cdom))\n             ptrs)\n             ekh)\"\n  apply (induct ptrs)\n  apply simp\n  apply (case_tac d)\n  apply (clarsimp split: if_split_asm simp: default_tcb_def default_object_def default_ext_def etcb_at'_def)+\n  done",
+ "rationale": "The proof of retype_etcb_at_helper (L68-72) never mentions valid_etcbs_2: the induction and case_tac on d only use d ≠ Untyped, etcb_at', and the foldr-TCB equation. Dropping valid_etcbs_2 gives a strictly stronger implication.",
+ "strengthening_claim": "(etcb_at' P t ekh ∧ d ≠ Untyped ∧ foldr...t = Some(TCB tcb) ∧ tcb_state tcb ≠ Inactive) ==> (etcb_at' P t ekh ∧ valid_etcbs_2 ekh kh ∧ d ≠ Untyped ∧ foldr...t = Some(TCB tcb) ∧ tcb_state tcb ≠ Inactive)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

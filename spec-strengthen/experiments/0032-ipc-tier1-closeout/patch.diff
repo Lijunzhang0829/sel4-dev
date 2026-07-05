@@ -1,0 +1,72 @@
+diff --git a/proof/invariant-abstract/Ipc_AI.thy b/proof/invariant-abstract/Ipc_AI.thy
+--- a/proof/invariant-abstract/Ipc_AI.thy
++++ b/proof/invariant-abstract/Ipc_AI.thy
+@@ -1129,6 +1129,30 @@
+     \<lbrace>\<lambda>_. valid_machine_state\<rbrace>"
+   by (simp add: set_extra_badge_def) wp
+ 
++lemma do_machine_op_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> do_machine_op f \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wpsimp simp: do_machine_op_def)
++
++lemma do_machine_op_domain_time[wp]:
++  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> do_machine_op f \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
++  by (wpsimp simp: do_machine_op_def)
++
++lemma do_machine_op_arch_state[wp]:
++  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> do_machine_op f \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
++  by (wpsimp simp: do_machine_op_def)
++
++lemma set_extra_badge_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_extra_badge buffer badge n \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wpsimp simp: set_extra_badge_def store_word_offs_def)+
++
++lemma set_extra_badge_domain_time[wp]:
++  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_extra_badge buffer badge n \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
++  by (wpsimp simp: set_extra_badge_def store_word_offs_def)+
++
++lemma set_extra_badge_arch_state[wp]:
++  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_extra_badge buffer badge n \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
++  by (wpsimp simp: set_extra_badge_def store_word_offs_def)+
++
+ 
+ lemma transfer_caps_loop_vms[wp]:
+   "\<And>ep buffer n caps slots mi.
+@@ -1849,6 +1873,18 @@
+   "\<lbrace>\<lambda>s. P(machine_state s)\<rbrace> as_user r f \<lbrace>\<lambda>_. \<lambda>s. P(machine_state s)\<rbrace>"
+   by (wp | simp add: as_user_def split_def)+
+ 
++lemma as_user_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> as_user r f \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wp | simp add: as_user_def split_def)+
++
++lemma as_user_domain_time[wp]:
++  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> as_user r f \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
++  by (wp | simp add: as_user_def split_def)+
++
++lemma as_user_arch_state[wp]:
++  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> as_user r f \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
++  by (wp | simp add: as_user_def split_def)+
++
+ lemma set_mrs_def2:
+   "set_mrs thread buf msgs \<equiv>
+    do thread_set
+@@ -2797,6 +2833,18 @@
+   "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_message_info thread info \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+   by (wpsimp simp: set_message_info_def)
+ 
++lemma set_message_info_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_message_info thread info \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wpsimp simp: set_message_info_def)
++
++lemma set_message_info_domain_time[wp]:
++  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_message_info thread info \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
++  by (wpsimp simp: set_message_info_def)
++
++lemma set_message_info_arch_state[wp]:
++  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_message_info thread info \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
++  by (wpsimp simp: set_message_info_def)
++
+ crunch irq_node[wp]: set_mrs "\<lambda>s. P (interrupt_irq_node s)"
+   (wp: crunch_wps simp: crunch_simps)
+ 

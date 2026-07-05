@@ -1,0 +1,69 @@
+PROMPT (6292 chars, diff truncated at 60k)
+You are a seL4/l4v proof-maintenance analyst. An upstream ARTIFACT change (spec/machine/haskell) was applied; the proofs have NOT been updated yet. Predict the repair work-list.
+
+## The artifact change (unified diff)
+```diff
+diff --git a/spec/machine/RISCV64/Arch_Kernel_Config_Lemmas.thy b/spec/machine/RISCV64/Arch_Kernel_Config_Lemmas.thy
+index 064537b0..ae9fd4d6 100644
+--- a/spec/machine/RISCV64/Arch_Kernel_Config_Lemmas.thy
++++ b/spec/machine/RISCV64/Arch_Kernel_Config_Lemmas.thy
+@@ -14,5 +14,33 @@ begin
+ 
+ context Arch begin global_naming RISCV64
+ 
++lemma pptrBase_kernelELFBase:
++  "pptrBase < kernelELFBase"
++  by (simp add: pptrBase_def canonical_bit_def kernelELFBase_def kernelELFPAddrBase_def pptrTop_def
++                Kernel_Config.physBase_def mask_def)
++
++(* 12 in this lemma and below is pageBits, which is not yet defined in this theory.
++   Definition will be folded and the lemmas shadowed in AInvs. *)
++lemma is_page_aligned_physBase:
++  "is_aligned physBase 12"
++  by (simp add: Kernel_Config.physBase_def is_aligned_def)
++
++(* 22 is kernel_window_bits, defined in Init_A. To be folded in AInvs. *)
++lemma kernel_window_sufficient:
++  "pptrBase + (1 << 22) \<le> kernelELFBase"
++  unfolding pptrBase_def canonical_bit_def kernelELFBase_def kernelELFPAddrBase_def pptrTop_def
++  by (simp add: mask_def Kernel_Config.physBase_def)
++
++lemma kernel_elf_window_at_least_page:
++  "kernelELFBase + 2 ^ 12 \<le> kdevBase"
++  unfolding kernelELFBase_def kernelELFPAddrBase_def kdevBase_def pptrTop_def
++  by (simp add: mask_def Kernel_Config.physBase_def)
++
++(* This doesn't follow from alignment, because we need <, not \<le> *)
++lemma kernelELFBase_no_overflow:
++  "kernelELFBase < kernelELFBase + 2 ^ 12"
++  unfolding kernelELFBase_def kernelELFPAddrBase_def pptrTop_def
++  by (simp add: mask_def Kernel_Config.physBase_def)
++
+ end
+ end
+
+```
+
+## Identifiers whose definitions changed (mechanically extracted)
+["pptrBase", "is_aligned", "kernelELFBase"]
+
+## Candidate proof files
+
+=== RAW REPLY ===
+Now I have enough evidence. Let me compile the analysis.
+
+**Key findings:**
+
+1. The diff is **purely additive** — 5 new lemmas in `Arch_Kernel_Config_Lemmas.thy`, no definition changes. The identifiers listed (`pptrBase`, `is_aligned`, `kernelELFBase`) appear inside the new lemma bodies/statements but their definitions are unchanged.
+
+2. `ArchInvariants_AI.thy` (not in the candidate list, but structurally required) has:
+   - A comment block "Shadow lemmas from Arch_Kernel_Config_Lemmas" (line 1284) with forwarding lemmas like `by (rule is_page_aligned_physBase[folded pageBits_def])` — these **cannot compile** before the machine-layer lemmas exist
+   - `pptr_base_kernel_elf_base` (line 1313) `by (simp add: pptr_base_def kernel_elf_base_def pptrBase_kernelELFBase)` — uses the new `pptrBase_kernelELFBase`
+
+3. `ArchKernelInit_AI.thy` uses only the shadow names from `ArchInvariants_AI` (e.g., `kernel_window_sufficient`, `kernelELFBase_no_overflow`) — these were present as shadow lemmas before too (just proved inline), so no change needed there.
+
+4. All candidate files: the `is_aligned`-only mentions are a generic function unchanged by this diff. The two `pptrBase` files (`Arch_C.thy`, `VSpace_C.thy`) prove facts inline via `pptrBase_def`, `kernelELFBase_def` etc. — no named-lemma dependency on the new machine-layer lemmas.
+
+{"work_list": [{"file": "proof/invariant-abstract/RISCV64/ArchInvariants_AI.thy", "lemmas": [{"name": "is_page_aligned_physBase", "statement_must_evolve": false, "reason": "Shadow lemma body must change from inline simp to 'by (rule is_page_aligned_physBase[folded pageBits_def])' — cannot compile until machine-layer lemma exists"}, {"name": "kernel_window_sufficient", "statement_must_evolve": false, "reason": "Shadow lemma body must change to 'by (rule kernel_window_sufficient[folded kernel_window_bits_def])' — statement already uses abstract names (pptrBase, kernelELFBase), body was inline simp before"}, {"name": "kernel_elf_window_at_least_page", "statement_must_evolve": false, "reason": "Shadow lemma body must change to forwarding rule call with [folded pageBits_def]"}, {"name": "kernelELFBase_no_overflow", "statement_must_evolve": false, "reason": "Shadow lemma body must change to 'by (rule kernelELFBase_no_overflow[folded pageBits_def])'"}, {"name": "pptr_base_kernel_elf_base", "statement_must_evolve": false, "reason": "Body must reference new pptrBase_kernelELFBase; statement 'pptr_base < kernel_elf_base' is unchanged but previous inline proof expanded pptrBase_def/kernelELFBase_def manually"}], "file_reason": "Primary target of this change: holds the 'shadow lemma' block explicitly documented as delegating to Arch_Kernel_Config_Lemmas; references pptrBase_kernelELFBase by name which did not exist before this diff"}], "cleared": [{"file": "proof/crefine/RISCV64/Arch_C.thy", "why": "pptrBase and is_aligned appear only in inline tactic arguments (pptrBase_def, is_aligned_def unfolding); no dependency on new named machine-layer lemmas"}, {"file": "proof/crefine/RISCV64/VSpace_C.thy", "why": "pptrBase and kernelELFBase used via raw definition unfolding in tactics; no reference to new lemma names"}, {"file": "proof/access-control/Arch_AC.thy", "why": "is_aligned-only mention; is_aligned definition unchanged, no dependency on new lemmas"}, {"file": "proof/access-control/Ipc_AC.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/access-control/RISCV64/ArchArch_AC.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/access-control/RISCV64/ArchIpc_AC.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/access-control/RISCV64/ArchRetype_AC.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/access-control/Retype_AC.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/Move_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/ADT_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/ArchMove_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/CSpace_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/CSpace_RAB_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/DetWP.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/Detype_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/Finalise_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/Invoke_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/Ipc_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/Recycle_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/Retype_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/SR_lemmas_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/StateRelation_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/StoreWord_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/SyscallArgs_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/Syscall_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/TcbAcc_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/TcbQueue_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/Tcb_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/crefine/RISCV64/Wellformed_C.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/drefine/Arch_DR.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/drefine/CNode_DR.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/drefine/Finalise_DR.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/drefine/Intent_DR.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/drefine/Ipc_DR.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/drefine/Tcb_DR.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/drefine/Untyped_DR.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/infoflow/Ipc_IF.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/infoflow/RISCV64/ArchArch_IF.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/infoflow/RISCV64/ArchFinalise_IF.thy", "why": "is_aligned-only; definition unchanged"}, {"file": "proof/infoflow/RISCV64/ArchIpc_IF.thy", "why": "is_aligned-only; definition unchanged"}]}
+=== STDERR ===
+

@@ -1,0 +1,1181 @@
+commit b010c93386f48d60c5d38b00ef9b471217f893f8
+Author: lijun <cathrinesassi547@gmail.com>
+Date:   Sun May 31 02:51:02 2026 -0400
+
+    tools/critical_path: 3 spec-strengthen tools + check-theory.sh bug fixes
+    
+    Adds the 3 Python tools the spec sub-skill mandates in its workflow:
+    
+    tools/critical_path/spec_strengthen_scan.py (~310 lines):
+    - Regex-based static scanner for spec/abstract/ and proof/invariant-abstract/
+    - Detects Patterns A (paired weak/strong via implication table) /
+      B (set_*/update_* missing functional postcond) / C (premise might
+      be load-bearing).
+    - Emits markdown or JSON. Limitations documented in module docstring.
+    
+    tools/critical_path/spec_impact.py (~340 lines):
+    - Required by spec sub-skill Step 4 (MANDATORY).
+    - Parses check-theory.sh-format patches, applies in memory, diffs
+      lemmas before/after.
+    - Classifies into verdicts: premise-weaken / monotone-strengthen /
+      postcond-strengthen / additive / removal / rewrite / weakening /
+      noop. weakening = HARD STOP (exit 1).
+    - Tier 2 (Frame/State-delta consumers count): grep-based, ~60s/op.
+    - Smoke-tested against unbind_maybe_notification_not_bound Pattern C
+      patch: verdict premise-weaken, gate PASS, exit 0.
+    
+    tools/critical_path/rank_candidates.py (~170 lines):
+    - Orchestrates spec_strengthen_scan.py across a tree + adds Tier 2
+      consumer counts via grep + dedups against past strengthen logs.
+    - Groups by Pattern (C → B → A) and sorts by consumer count desc.
+    - Smoke-tested against verification/l4v/proof/invariant-abstract/
+      (4737 Hoare-triple lemmas scanned, ranked Top-5 candidates).
+    
+    check-theory.sh bug fixes (claude/.claude/skills/isabelle_prover/scripts-container/):
+    
+    B1: REPO_ROOT path traversal — was 5 "../" hops (old layout
+        <repo>/claude/.claude/...); current layout needs 4 hops. Before
+        fix: $ISA_HOME resolved to "//verification/isabelle" (root-rooted
+        from REPO_ROOT="/"). After fix: $ISA_HOME = "/workspace/verification/
+        isabelle" inside container.
+    
+    B2: TMPNAME generation used xxd, which is NOT installed in the
+        sel4-l4v container. Replaced with python3 secrets.token_hex(8) —
+        portable, no external dep.
+    
+    Verified after fix: check-theory.sh on Finalise_AI.thy returns
+    OK (20404ms). Without these fixes, rule 5 PR-tracked mainline is
+    non-executable from main / experiments-infra branches.
+
+diff --git a/claude/.claude/skills/isabelle_prover/scripts-container/check-theory.sh b/claude/.claude/skills/isabelle_prover/scripts-container/check-theory.sh
+index da76d91..b440d3d 100644
+--- a/claude/.claude/skills/isabelle_prover/scripts-container/check-theory.sh
++++ b/claude/.claude/skills/isabelle_prover/scripts-container/check-theory.sh
+@@ -55,9 +55,9 @@ while [ $# -gt 0 ]; do
+ done
+ 
+ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+-# Layout: <repo>/claude/.claude/skills/isabelle_prover/scripts-container/
+-# Five "../" hops to reach the repo root (mounted at /workspace inside container).
+-REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../../.." && pwd)"
++# Layout: <repo>/.claude/skills/isabelle_prover/scripts-container/
++# Four "../" hops to reach the repo root (mounted at /workspace inside container).
++REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
+ L4V_DIR="${L4V_DIR:-${REPO_ROOT}/verification/l4v}"
+ ISA_HOME="${ISABELLE_HOME:-${REPO_ROOT}/verification/isabelle}"
+ 
+@@ -199,7 +199,7 @@ fi
+ TMPDIR="$(mktemp -d)"
+ trap "rm -rf $TMPDIR" EXIT
+ 
+-TMPNAME="Tmp_$(head -c8 /dev/urandom | xxd -p)"
++TMPNAME="Tmp_$(python3 -c 'import secrets; print(secrets.token_hex(8))')"
+ cp "$THEORY_FILE" "$TMPDIR/${TMPNAME}.thy"
+ 
+ # Apply patch to temp copy if --patch
+diff --git a/tools/critical_path/rank_candidates.py b/tools/critical_path/rank_candidates.py
+new file mode 100644
+index 0000000..b633e18
+--- /dev/null
++++ b/tools/critical_path/rank_candidates.py
+@@ -0,0 +1,219 @@
++#!/usr/bin/env python3
++r"""
++tools/critical_path/rank_candidates.py
++
++Orchestrate spec_strengthen_scan.py across a tree, add Tier 2 consumer
++counts, filter out already-done lemmas (by scanning past strengthen
++log files), and emit a ranked candidates file in the format expected
++by the spec sub-skill's targeting step.
++
++Pattern order (highest empirical ROI first, per
++isabelle_prover_spec/SKILL.md): C → B → A.
++Pattern D and E are not yet detected automatically.
++
++Within each pattern, candidates are sorted by **consumer count** (line
++hits across the proof tree) descending — that's the downstream-surface
++proxy for downstream ROI.
++
++Past strengthening logs at reports/spec-strengthen/AInvs-*.md are
++parsed for lemma names; matches are marked `[done]` and demoted.
++
++Usage:
++  rank_candidates.py [--tree DIR] [--scan-root DIR]
++                     [--limit N] [--out FILE]
++                     [--logs-glob GLOB]
++"""
++from __future__ import annotations
++
++import argparse
++import datetime as dt
++import json
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++_HERE = Path(__file__).parent
++sys.path.insert(0, str(_HERE))
++from spec_strengthen_scan import (  # noqa: E402
++    parse_thy_lemmas, detect_A, detect_B, detect_C,
++)
++
++
++def grep_consumers(name: str, tree: Path) -> tuple[int, int]:
++    """Return (line_hits, file_count) for `\\bname\\b` across tree."""
++    if not tree.exists():
++        return (0, 0)
++    try:
++        files_out = subprocess.run(
++            ["grep", "-rln", "-E", rf"\b{re.escape(name)}\b", str(tree)],
++            check=False, capture_output=True, text=True, timeout=60,
++        )
++        file_count = sum(1 for ln in files_out.stdout.splitlines() if ln)
++        lines_out = subprocess.run(
++            ["grep", "-rn", "-E", rf"\b{re.escape(name)}\b", str(tree)],
++            check=False, capture_output=True, text=True, timeout=60,
++        )
++        line_count = sum(1 for ln in lines_out.stdout.splitlines() if ln)
++        return (line_count, file_count)
++    except (subprocess.TimeoutExpired, FileNotFoundError):
++        return (0, 0)
++
++
++def find_done_lemmas(logs_glob_dir: Path, pattern: str) -> set[str]:
++    """Extract lemma names already strengthened, from dated logs.
++
++    A lemma is considered done if:
++      - its name appears in a line that also references its Pattern
++        letter (e.g. row of a summary table containing both)
++      - OR the log has an explicit `applied` marker for it
++    """
++    done: set[str] = set()
++    if not logs_glob_dir.exists():
++        return done
++    for log_path in sorted(logs_glob_dir.glob("AInvs-*.md")):
++        try:
++            text = log_path.read_text(encoding="utf-8", errors="replace")
++        except Exception:
++            continue
++        # Heuristic: any backtick-quoted identifier in the same line as
++        # the pattern letter or in an "applied" / "OK" context.
++        for ln in text.splitlines():
++            if pattern in ("A", "B", "C", "D", "E") and \
++               re.search(rf"\b{pattern}\b", ln) and \
++               re.search(r"applied|OK|monotone-strengthen|premise-weaken|"
++                         r"postcond-strengthen|additive", ln, re.I):
++                # extract backtick names from this line
++                for m in re.finditer(r"`([A-Za-z_][A-Za-z_0-9']*)`", ln):
++                    done.add(m.group(1))
++        # Catch explicit summary-table rows with lemma in column 3 etc.
++        for m in re.finditer(
++            r"\|\s*[A-Z]\s*\|\s*`?([A-Za-z_][A-Za-z_0-9']*)`?\s*\|",
++            text,
++        ):
++            done.add(m.group(1))
++    return done
++
++
++def iter_thy_files(scan_root: Path):
++    if scan_root.is_file():
++        yield scan_root
++        return
++    for thy in sorted(scan_root.rglob("*.thy")):
++        yield thy
++
++
++def main() -> int:
++    ap = argparse.ArgumentParser(description=__doc__,
++        formatter_class=argparse.RawDescriptionHelpFormatter)
++    ap.add_argument("--scan-root", type=Path,
++                    default=Path("verification/l4v/proof/invariant-abstract"))
++    ap.add_argument("--tree", type=Path,
++                    default=Path("verification/l4v/proof"),
++                    help="Tree for consumer-count grep.")
++    ap.add_argument("--logs-dir", type=Path,
++                    default=Path("reports/spec-strengthen"),
++                    help="Where to look for prior strengthen logs to dedup.")
++    ap.add_argument("--limit", type=int, default=30,
++                    help="Max candidates per pattern.")
++    ap.add_argument("--out", type=Path, default=None,
++                    help="Write markdown report to this file (default stdout).")
++    args = ap.parse_args()
++
++    if not args.scan_root.exists():
++        print(f"ERROR: scan-root not found: {args.scan_root}", file=sys.stderr)
++        return 2
++
++    # Aggregate lemmas
++    all_lemmas = []
++    for thy in iter_thy_files(args.scan_root):
++        try:
++            all_lemmas.extend(parse_thy_lemmas(thy))
++        except Exception as e:
++            print(f"warn: parse failed {thy}: {e}", file=sys.stderr)
++
++    print(f"scanned {len(all_lemmas)} Hoare-triple lemmas under {args.scan_root}",
++          file=sys.stderr)
++
++    # Run detectors
++    findings_by_pattern: dict[str, list] = {
++        "C": detect_C(all_lemmas),
++        "B": detect_B(all_lemmas),
++        "A": detect_A(all_lemmas),
++    }
++
++    # Done sets (per pattern)
++    done_by_pattern: dict[str, set[str]] = {
++        p: find_done_lemmas(args.logs_dir, p) for p in findings_by_pattern
++    }
++
++    # Rank: for each finding compute consumer counts + done flag
++    ranked: dict[str, list] = {}
++    for pat, fs in findings_by_pattern.items():
++        rows = []
++        for f in fs:
++            line_hits, file_hits = grep_consumers(f.name, args.tree)
++            is_done = f.name in done_by_pattern[pat]
++            rows.append({
++                "name": f.name,
++                "file": Path(f.file).name,
++                "line": f.line,
++                "note": f.note,
++                "pre": f.pre,
++                "post": f.post,
++                "consumers_lines": line_hits,
++                "consumers_files": file_hits,
++                "done": is_done,
++            })
++        # Sort: done last, then by consumer count desc
++        rows.sort(key=lambda r: (r["done"], -r["consumers_lines"]))
++        ranked[pat] = rows[: args.limit]
++
++    # Emit markdown
++    today = dt.date.today().isoformat()
++    lines = [
++        f"# Spec strengthening — ranked candidates ({today})",
++        "",
++        "Generated by `tools/critical_path/rank_candidates.py`. Re-run after applying patches to refresh.",
++        "",
++        f"Ranking key: **consumer_lines** (downstream surface = ROI proxy). Higher = more proofs potentially benefit.",
++        "",
++        f"Past strengthening logs at `{args.logs_dir}/`; lemmas already handled there are marked `[done]` and demoted.",
++        "",
++        "Patterns covered: A (paired weak/strong), B (missing functional postcond), C (possibly-unused premise). D and E require manual analysis.",
++        "",
++        "---",
++        "",
++    ]
++    for pat in ["C", "B", "A"]:
++        rows = ranked.get(pat, [])
++        not_done = sum(1 for r in rows if not r["done"])
++        lines.append(f"## Pattern {pat} — {not_done} un-done candidates")
++        lines.append("")
++        if not rows:
++            lines.append("  (no candidates)")
++            lines.append("")
++            continue
++        lines.append("| Lemma | File:Line | Consumers (lines × files) | Pre | Status |")
++        lines.append("|---|---|---:|---|---|")
++        for r in rows:
++            status = "[done]" if r["done"] else ""
++            pre = (r["pre"] or "")[:60]
++            lines.append(
++                f"| `{r['name']}` | `{r['file']}:{r['line']}` "
++                f"| {r['consumers_lines']} × {r['consumers_files']} "
++                f"| `{pre}` | {status} |"
++            )
++        lines.append("")
++
++    out_text = "\n".join(lines)
++    if args.out:
++        args.out.write_text(out_text, encoding="utf-8")
++        print(f"wrote {args.out}", file=sys.stderr)
++    else:
++        print(out_text)
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tools/critical_path/spec_impact.py b/tools/critical_path/spec_impact.py
+new file mode 100644
+index 0000000..b07d2ca
+--- /dev/null
++++ b/tools/critical_path/spec_impact.py
+@@ -0,0 +1,436 @@
++#!/usr/bin/env python3
++r"""
++tools/critical_path/spec_impact.py
++
++Post-patch impact metric. Verifies that a spec-strengthening patch is
++genuinely a strengthening (no `weakening` verdict), measures Tier 1
++statement deltas and Tier 2 consumer counts, and emits a verdict gate.
++
++REQUIRED by isabelle_prover_spec SKILL.md Step 4 (MANDATORY).
++
++Workflow contract:
++  1. Run `check-theory.sh --patch <patch>` on the target file FIRST.
++     If that fails, no point running this tool.
++  2. Run this tool against (patch, theory_file).
++     Verdict must be one of: premise-weaken / monotone-strengthen /
++     postcond-strengthen / additive. `weakening` = HARD STOP.
++  3. Then proceed to apply.
++
++Usage:
++  spec_impact.py <patch.txt> <theory.thy>
++                 [--baseline-wall MS] [--trial-wall MS]
++                 [--tree DIR]
++                 [--append-to FILE] [--json]
++
++The patch file uses check-theory.sh format:
++  <start_line> <end_line>
++  <replacement text spanning one or more lines>
++  ---
++  <start_line> <end_line>
++  <replacement text>
++"""
++from __future__ import annotations
++
++import argparse
++import json
++import re
++import shutil
++import subprocess
++import sys
++import tempfile
++from dataclasses import dataclass, field, asdict
++from pathlib import Path
++
++# Reuse the lemma extractor from spec_strengthen_scan.py to keep parsing
++# semantics consistent.
++_HERE = Path(__file__).parent
++sys.path.insert(0, str(_HERE))
++from spec_strengthen_scan import (   # noqa: E402
++    parse_thy_lemmas, Lemma,
++)
++
++
++VERDICT_PREMISE_WEAKEN     = "premise-weaken"
++VERDICT_MONOTONE_STRENGTHEN = "monotone-strengthen"
++VERDICT_POSTCOND_STRENGTHEN = "postcond-strengthen"
++VERDICT_ADDITIVE            = "additive"
++VERDICT_REMOVAL             = "removal"
++VERDICT_REWRITE             = "rewrite"
++VERDICT_WEAKENING           = "weakening"
++VERDICT_NOOP                = "noop"
++
++# Acceptable verdicts (Step 4 gate of the spec sub-skill).
++ACCEPTABLE_VERDICTS = {
++    VERDICT_PREMISE_WEAKEN,
++    VERDICT_MONOTONE_STRENGTHEN,
++    VERDICT_POSTCOND_STRENGTHEN,
++    VERDICT_ADDITIVE,
++}
++
++
++# ---------- Patch parsing ----------------------------------------------------
++
++@dataclass
++class PatchHunk:
++    start: int  # 1-based, inclusive
++    end: int    # 1-based, inclusive
++    text: str   # replacement text (no trailing newline)
++
++
++def parse_patch(patch_path: Path) -> list[PatchHunk]:
++    raw = patch_path.read_text(encoding="utf-8")
++    blocks = [b.strip("\n") for b in raw.split("\n---\n") if b.strip()]
++    hunks: list[PatchHunk] = []
++    for blk in blocks:
++        if not blk.strip():
++            continue
++        m = re.match(r"^(\d+)\s+(\d+)\s*\n(.*)", blk, re.DOTALL)
++        if not m:
++            raise ValueError(f"Bad patch hunk header: {blk[:60]!r}")
++        hunks.append(PatchHunk(
++            start=int(m.group(1)),
++            end=int(m.group(2)),
++            text=m.group(3).rstrip("\n"),
++        ))
++    return hunks
++
++
++def apply_patch_in_memory(theory_text: str, hunks: list[PatchHunk]) -> str:
++    lines = theory_text.splitlines(keepends=True)
++    # Apply in reverse line order so earlier hunks' line numbers stay valid
++    for h in sorted(hunks, key=lambda x: -x.start):
++        # Replace lines[start-1:end] (inclusive) with h.text + "\n"
++        replacement = h.text
++        if not replacement.endswith("\n"):
++            replacement += "\n"
++        lines[h.start - 1: h.end] = [replacement]
++    return "".join(lines)
++
++
++# ---------- Tier 1 metrics ---------------------------------------------------
++
++def count_tokens(s: str) -> int:
++    return len(re.findall(r"[A-Za-z_][A-Za-z_0-9']*", s))
++
++
++def count_premise_conjuncts(pre: str) -> int:
++    """Estimate premise conjunct count by splitting on `and` / `\\<and>`."""
++    if not pre.strip():
++        return 0
++    # Top-level conjunction separators in l4v's Hoare-triple precondition
++    # notation: " and " (predicate combinator), `\<and>` (logical and).
++    # We split conservatively; the count is a proxy.
++    splits = re.split(r"\s+and\s+|\\<and>", pre)
++    return sum(1 for s in splits if s.strip())
++
++
++def has_state_reference(post: str) -> bool:
++    r"""True if postcondition references state — \<lambda> ... s. <body
++    containing s>. Distinguish from \<lambda> _ s. <body NOT containing s>
++    which is technically a state-free predicate wrapped in λ-binder."""
++    # Match a lambda binder grabbing an `s` argument
++    m = re.search(r"\\<lambda>\s*[^.]*?\bs\b[^.]*?\.\s*(.*)", post,
++                  re.DOTALL)
++    if m:
++        body = m.group(1)
++        return bool(re.search(r"\bs\b", body))
++    # No lambda — check if `s` appears free
++    if re.search(r"\bs\b", post):
++        return True
++    return False
++
++
++def proof_body_line_count(theory_text: str, lemma_name: str) -> int:
++    """Count lines of proof body for a lemma. Crude — from the lemma
++    header to the next `done`/`qed` or the next lemma header."""
++    text = theory_text
++    m = re.search(rf"^\s*(?:lemma|theorem|corollary)s?\s+"
++                  rf"{re.escape(lemma_name)}\b",
++                  text, re.MULTILINE)
++    if not m:
++        return 0
++    start = m.end()
++    # Find proof end: `done`, `qed`, or sole `by ... )` line
++    rest = text[start:]
++    end_m = re.search(r"^\s*(?:done|qed)\s*$|^\s*by\b.*[^\\]\s*$",
++                      rest, re.MULTILINE)
++    if not end_m:
++        return 0
++    chunk = rest[: end_m.end()]
++    # Count proof lines (apply/by/...)
++    return sum(1 for ln in chunk.splitlines()
++               if re.match(r"^\s*(?:apply|by|using|supply|unfolding|"
++                           r"subgoal|have|show|then|from|with|note|moreover|"
++                           r"ultimately|done|qed|proof)\b", ln))
++
++
++@dataclass
++class LemmaMetrics:
++    name: str
++    line: int
++    pre_tokens: int
++    post_tokens: int
++    premise_count: int
++    state_dependent: bool
++    proof_body_lines: int
++
++    def as_dict(self):
++        return asdict(self)
++
++
++@dataclass
++class LemmaDelta:
++    name: str
++    classification: str  # added | removed | modified
++    before: LemmaMetrics | None
++    after: LemmaMetrics | None
++    notes: list[str] = field(default_factory=list)
++    verdict: str = ""
++    file: str = ""
++
++    def as_dict(self):
++        return {
++            "name": self.name,
++            "classification": self.classification,
++            "before": self.before.as_dict() if self.before else None,
++            "after": self.after.as_dict() if self.after else None,
++            "notes": list(self.notes),
++            "verdict": self.verdict,
++            "file": self.file,
++        }
++
++
++def make_metrics(theory_text: str, l: Lemma) -> LemmaMetrics:
++    return LemmaMetrics(
++        name=l.name,
++        line=l.line,
++        pre_tokens=count_tokens(l.pre),
++        post_tokens=count_tokens(l.post),
++        premise_count=count_premise_conjuncts(l.pre),
++        state_dependent=has_state_reference(l.post),
++        proof_body_lines=proof_body_line_count(theory_text, l.name),
++    )
++
++
++# ---------- Verdict classifier ----------------------------------------------
++
++def classify_delta(d: LemmaDelta) -> str:
++    if d.classification == "added":
++        return VERDICT_ADDITIVE
++    if d.classification == "removed":
++        return VERDICT_REMOVAL
++    # Modified — compare before/after
++    b, a = d.before, d.after
++    if not b or not a:
++        return VERDICT_REWRITE
++    premise_dropped = b.premise_count > a.premise_count
++    premise_grew = b.premise_count < a.premise_count
++    postcond_grew = b.post_tokens < a.post_tokens
++    postcond_shrunk = b.post_tokens > a.post_tokens
++    gained_state = (not b.state_dependent) and a.state_dependent
++    lost_state = b.state_dependent and (not a.state_dependent)
++
++    # WEAKENING: premise grew without postcond grow OR postcond shrunk
++    if premise_grew and not postcond_grew:
++        return VERDICT_WEAKENING
++    if postcond_shrunk and not premise_dropped:
++        return VERDICT_WEAKENING
++    if lost_state and not premise_dropped and not postcond_grew:
++        return VERDICT_WEAKENING
++
++    if premise_dropped and (postcond_grew or gained_state):
++        return VERDICT_MONOTONE_STRENGTHEN
++    if premise_dropped:
++        return VERDICT_PREMISE_WEAKEN
++    if postcond_grew or gained_state:
++        return VERDICT_POSTCOND_STRENGTHEN
++
++    # Same statement shape but proof body changed
++    if b.proof_body_lines != a.proof_body_lines:
++        return VERDICT_REWRITE
++    return VERDICT_NOOP
++
++
++# ---------- Tier 2: consumer count ------------------------------------------
++
++def grep_consumers(name: str, tree: Path) -> tuple[int, int]:
++    """Return (line_count, file_count) for `\\bname\\b` matches under tree.
++
++    Uses `grep -rln` for files and `grep -rc` for line totals. Safe:
++    only reads filesystem, no network.
++    """
++    if not tree.exists():
++        return (0, 0)
++    try:
++        files_out = subprocess.run(
++            ["grep", "-rln", "-E", rf"\b{re.escape(name)}\b", str(tree)],
++            check=False, capture_output=True, text=True, timeout=60,
++        )
++        file_count = sum(1 for ln in files_out.stdout.splitlines() if ln)
++        lines_out = subprocess.run(
++            ["grep", "-rn", "-E", rf"\b{re.escape(name)}\b", str(tree)],
++            check=False, capture_output=True, text=True, timeout=60,
++        )
++        line_count = sum(1 for ln in lines_out.stdout.splitlines() if ln)
++        return (line_count, file_count)
++    except (subprocess.TimeoutExpired, FileNotFoundError):
++        return (0, 0)
++
++
++# ---------- Main -------------------------------------------------------------
++
++def main() -> int:
++    ap = argparse.ArgumentParser(
++        description="Spec-impact metric (Step 4 MANDATORY for spec sub-skill).",
++        formatter_class=argparse.RawDescriptionHelpFormatter,
++    )
++    ap.add_argument("patch", type=Path)
++    ap.add_argument("theory", type=Path)
++    ap.add_argument("--baseline-wall", type=int, default=None,
++                    help="Baseline wall (ms) from check-theory.sh.")
++    ap.add_argument("--trial-wall", type=int, default=None,
++                    help="Trial wall (ms) from check-theory.sh --patch.")
++    ap.add_argument("--tree", type=Path,
++                    default=Path("verification/l4v/proof"),
++                    help="Tree to grep for consumer counts.")
++    ap.add_argument("--append-to", type=Path, default=None,
++                    help="Append report to this file (mode: a).")
++    ap.add_argument("--json", action="store_true")
++    args = ap.parse_args()
++
++    if not args.theory.exists():
++        print(f"ERROR: theory file not found: {args.theory}", file=sys.stderr)
++        return 2
++    if not args.patch.exists():
++        print(f"ERROR: patch file not found: {args.patch}", file=sys.stderr)
++        return 2
++
++    theory_text = args.theory.read_text(encoding="utf-8", errors="replace")
++    hunks = parse_patch(args.patch)
++    after_text = apply_patch_in_memory(theory_text, hunks)
++
++    # Write the patched file to a temp path so parse_thy_lemmas can read it
++    # (parse_thy_lemmas takes a Path).
++    with tempfile.NamedTemporaryFile(
++        mode="w", suffix=".thy", delete=False, encoding="utf-8",
++    ) as tf:
++        tf.write(after_text)
++        after_path = Path(tf.name)
++
++    try:
++        before_lemmas = {l.name: l for l in parse_thy_lemmas(args.theory)}
++        after_lemmas  = {l.name: l for l in parse_thy_lemmas(after_path)}
++    finally:
++        after_path.unlink(missing_ok=True)
++
++    deltas: list[LemmaDelta] = []
++    all_names = set(before_lemmas) | set(after_lemmas)
++    for name in sorted(all_names):
++        b = before_lemmas.get(name)
++        a = after_lemmas.get(name)
++        if b and not a:
++            deltas.append(LemmaDelta(
++                name=name, classification="removed",
++                before=make_metrics(theory_text, b), after=None,
++                file=str(args.theory),
++            ))
++        elif a and not b:
++            deltas.append(LemmaDelta(
++                name=name, classification="added",
++                before=None, after=make_metrics(after_text, a),
++                file=str(args.theory),
++            ))
++        else:
++            assert a and b
++            if (a.pre, a.post, a.body) == (b.pre, b.post, b.body):
++                continue  # no change to this lemma
++            deltas.append(LemmaDelta(
++                name=name, classification="modified",
++                before=make_metrics(theory_text, b),
++                after=make_metrics(after_text, a),
++                file=str(args.theory),
++            ))
++
++    for d in deltas:
++        d.verdict = classify_delta(d)
++        if d.before and d.after:
++            if d.before.premise_count != d.after.premise_count:
++                d.notes.append(
++                    f"premise count {d.before.premise_count} → {d.after.premise_count}"
++                )
++            if d.before.post_tokens != d.after.post_tokens:
++                d.notes.append(
++                    f"postcond tokens {d.before.post_tokens} → {d.after.post_tokens}"
++                )
++            if d.before.state_dependent != d.after.state_dependent:
++                d.notes.append(
++                    f"state-dep {d.before.state_dependent} → {d.after.state_dependent}"
++                )
++
++    # Tier 2: consumer counts (just for added/modified — skip removed)
++    consumer_counts: dict[str, tuple[int, int]] = {}
++    for d in deltas:
++        if d.classification in ("added", "modified"):
++            consumer_counts[d.name] = grep_consumers(d.name, args.tree)
++
++    # Gate check
++    has_weakening = any(d.verdict == VERDICT_WEAKENING for d in deltas)
++    has_acceptable = any(d.verdict in ACCEPTABLE_VERDICTS for d in deltas)
++    gate_pass = (not has_weakening) and has_acceptable
++
++    # Wall delta
++    wall_pct = None
++    if args.baseline_wall and args.trial_wall:
++        wall_pct = (args.trial_wall - args.baseline_wall) * 100.0 / args.baseline_wall
++
++    # Output
++    report: dict = {
++        "patch": str(args.patch),
++        "theory": str(args.theory),
++        "baseline_wall_ms": args.baseline_wall,
++        "trial_wall_ms": args.trial_wall,
++        "wall_pct": wall_pct,
++        "gate_pass": gate_pass,
++        "has_weakening": has_weakening,
++        "deltas": [d.as_dict() for d in deltas],
++        "consumers": {
++            name: {"lines": lc, "files": fc}
++            for name, (lc, fc) in consumer_counts.items()
++        },
++    }
++
++    if args.json:
++        out_text = json.dumps(report, indent=2)
++    else:
++        lines: list[str] = []
++        lines.append(f"# Spec impact — {args.patch.name}")
++        lines.append(f"# Target: {args.theory}")
++        lines.append(f"# Gate: {'PASS ✓' if gate_pass else 'FAIL ✗'}")
++        if wall_pct is not None:
++            lines.append(f"# File wall: {args.baseline_wall} ms → {args.trial_wall} ms ({wall_pct:+.1f}%)")
++        lines.append("")
++        lines.append("## Lemma deltas")
++        lines.append("| Lemma | Classification | Verdict | Notes |")
++        lines.append("|---|---|---|---|")
++        for d in deltas:
++            notes = "; ".join(d.notes) if d.notes else ""
++            lines.append(f"| `{d.name}` | {d.classification} | **{d.verdict}** | {notes} |")
++        if consumer_counts:
++            lines.append("")
++            lines.append("## Consumer counts (Tier 2 surface)")
++            lines.append("| Lemma | Lines | Files |")
++            lines.append("|---|---:|---:|")
++            for name, (lc, fc) in consumer_counts.items():
++                lines.append(f"| `{name}` | {lc} | {fc} |")
++        out_text = "\n".join(lines) + "\n"
++
++    if args.append_to:
++        with open(args.append_to, "a", encoding="utf-8") as f:
++            f.write("\n" + out_text)
++    print(out_text)
++
++    return 0 if gate_pass else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tools/critical_path/spec_strengthen_scan.py b/tools/critical_path/spec_strengthen_scan.py
+new file mode 100644
+index 0000000..1c44fb3
+--- /dev/null
++++ b/tools/critical_path/spec_strengthen_scan.py
+@@ -0,0 +1,433 @@
++#!/usr/bin/env python3
++r"""
++tools/critical_path/spec_strengthen_scan.py
++
++Scan one or more .thy files (typically under
++verification/l4v/proof/invariant-abstract/) for candidate spec
++strengthenings. Emits patterns A/B/C as a ranked list.
++
++Patterns:
++  A — Paired weak/strong postcondition: same operation in Hoare body,
++      one postcondition implies the other via a known table
++      (real_cte_at→cte_at, invs→valid_objs, valid_pspace→valid_objs,
++      valid_cap→wellformed_cap, etc.). Weak form may be redundant.
++
++  B — set_*/update_* with no functional postcondition: an op of the form
++      set_X v / update_X f has only preservation-shaped lemmas
++      (⟨P⟩ set_X _ ⟨λ_. P⟩), no functional shape
++      (⟨⊤⟩ set_X v ⟨λ_ s. X s = v⟩).
++
++  C — Possibly-unused premise: precondition mentions valid_objs / invs /
++      valid_pspace but postcondition is purely structural (cte_at /
++      obj_at / type_at / is_*_cap). Premise may be droppable.
++
++Pattern D (loose bound `≤` → `=`) and E (compound `_invs`) are NOT
++detected here — D requires semantic understanding of the operation,
++E requires per-component coverage analysis (see
++tools/critical_path/spec_coverage_matrix.py if available).
++
++Output: stdout — markdown table per pattern, ordered by file:line.
++Use --json for structured output. Use --pattern A|B|C to limit to
++one pattern.
++
++Usage:
++  spec_strengthen_scan.py <file_or_dir> [--pattern A|B|C|all] [--json]
++                          [--limit N] [--out FILE]
++
++Limitations:
++- Regex-based; cannot follow imports / type-check.
++- Cross-file Pattern A pairing has ~70% false-positive rate
++  (incomparable preconditions). Use per-file scans for highest signal.
++"""
++from __future__ import annotations
++
++import argparse
++import dataclasses
++import json
++import re
++import sys
++from dataclasses import dataclass, field, asdict
++from pathlib import Path
++from typing import Iterable
++
++# Predicate-implication table for Pattern A. Each pair (strong, weak)
++# means strong ⟹ weak. Sourced from l4v's named implication lemmas
++# (real_cte_at_cte, invs_valid_objs, valid_pspace_def [valid_objs is
++# a conjunct], valid_cap_def2, etc.).
++IMPLICATION_TABLE = [
++    ("real_cte_at", "cte_at"),
++    ("invs", "valid_objs"),
++    ("invs", "valid_pspace"),
++    ("invs", "valid_mdb"),
++    ("invs", "valid_idle"),
++    ("invs", "cur_tcb"),
++    ("invs", "valid_irq_node"),
++    ("invs", "valid_irq_states"),
++    ("valid_pspace", "valid_objs"),
++    ("valid_pspace", "pspace_aligned"),
++    ("valid_pspace", "pspace_distinct"),
++    ("valid_cap", "wellformed_cap"),
++    ("valid_cap", "cap_aligned"),
++    ("real_cte_at'", "cte_at'"),
++    ("invs'", "valid_objs'"),
++    ("invs'", "valid_pspace'"),
++]
++
++# Structural-postcondition predicates that don't usually need
++# invariant-level preconditions to discharge. Used by Pattern C.
++STRUCTURAL_POSTCOND = {
++    "cte_at", "real_cte_at", "obj_at", "typ_at",
++    "ko_at", "ep_at", "ntfn_at", "tcb_at",
++    "is_cnode_cap", "is_thread_cap", "is_ep_cap",
++    "is_ntfn_cap", "is_reply_cap",
++}
++
++# Tokens that are typically local variables in Hoare bodies; exclude
++# from op-extraction to avoid confusing `s`, `rv` etc. with the op name.
++LOCAL_TOKENS = {
++    "s", "s'", "rv", "rv'", "x", "y", "z", "p", "p'",
++    "t", "t'", "r", "r'", "P", "Q", "f", "g", "F", "G",
++    "obj", "ko", "cap", "cte", "ptr", "src", "dest",
++    "args", "v", "w", "i", "j", "k", "n", "m", "b", "c",
++    "do", "od", "let", "in", "if", "then", "else",
++    "case", "of", "True", "False",
++}
++
++
++@dataclass
++class Lemma:
++    file: str
++    line: int  # 1-based
++    name: str
++    pre: str
++    body: str
++    post: str
++    op: str
++
++    def as_dict(self):
++        return asdict(self)
++
++
++@dataclass
++class Finding:
++    pattern: str  # "A" | "B" | "C"
++    file: str
++    line: int
++    name: str
++    note: str
++    severity: str = "med"
++    companion: dict | None = None  # for Pattern A
++    pre: str = ""
++    post: str = ""
++
++    def as_dict(self):
++        d = asdict(self)
++        if d["companion"] is None:
++            d.pop("companion")
++        return d
++
++
++# ------ Parsing ------------------------------------------------------------
++
++# Match `lemma NAME` or `lemma NAME [attrs]:` — capture name.
++LEMMA_HEADER_RE = re.compile(
++    r"^\s*(?:lemma|theorem|corollary)s?\s+"
++    r"(?P<name>[A-Za-z_][A-Za-z_0-9']*)",
++    re.MULTILINE,
++)
++
++# Match a Hoare triple body inside a lemma statement (single-line or
++# multi-line). Captures pre / body / post. The body MUST be terminated
++# by `\<rbrace>` followed by optional `,` / `-` for the validE variants.
++HOARE_TRIPLE_RE = re.compile(
++    r"""\\<lbrace>             # opening pre brace
++        (?P<pre>.*?)           # precondition (non-greedy)
++        \\<rbrace>             # closing pre brace
++        (?P<body>.*?)          # operation body (non-greedy)
++        \\<lbrace>             # opening post brace
++        (?P<post>.*?)          # postcondition
++        \\<rbrace>             # closing post brace
++    """,
++    re.VERBOSE | re.DOTALL,
++)
++
++
++def _line_at(text: str, offset: int) -> int:
++    return text.count("\n", 0, offset) + 1
++
++
++def _extract_op(body: str) -> str:
++    """Pick the first 'kernel-op-shaped' identifier in the Hoare body.
++
++    Skips short locals (≤2 chars) and the hard-coded LOCAL_TOKENS set.
++    Prefers tokens with underscore (most l4v ops are snake_case).
++    """
++    tokens = re.findall(r"[A-Za-z_][A-Za-z_0-9']*", body)
++    for t in tokens:
++        if t in LOCAL_TOKENS:
++            continue
++        if len(t) <= 2 and "_" not in t:
++            continue
++        if "_" in t or len(t) >= 5:
++            return t
++    # Fallback: any non-local token
++    for t in tokens:
++        if t not in LOCAL_TOKENS:
++            return t
++    return ""
++
++
++def parse_thy_lemmas(thy_path: Path) -> list[Lemma]:
++    text = thy_path.read_text(encoding="utf-8", errors="replace")
++    lemmas: list[Lemma] = []
++    # Iterate over lemma headers, then look for the first Hoare triple
++    # in the statement window (up to the next `apply` / `by` / next
++    # lemma header).
++    headers = list(LEMMA_HEADER_RE.finditer(text))
++    for i, m in enumerate(headers):
++        name = m.group("name")
++        start = m.end()
++        end = headers[i + 1].start() if i + 1 < len(headers) else len(text)
++        window = text[start:end]
++        # Truncate window at first proof tactic keyword (lemma statement
++        # ends before the proof body).
++        proof_kw = re.search(
++            r"^\s*(?:apply|by|proof|done|qed|sorry|oops)\b",
++            window, re.MULTILINE,
++        )
++        if proof_kw:
++            window = window[: proof_kw.start()]
++        htm = HOARE_TRIPLE_RE.search(window)
++        if not htm:
++            continue
++        pre = htm.group("pre").strip()
++        body = htm.group("body").strip()
++        post = htm.group("post").strip()
++        line = _line_at(text, m.start())
++        lemmas.append(Lemma(
++            file=str(thy_path),
++            line=line,
++            name=name,
++            pre=pre,
++            body=body,
++            post=post,
++            op=_extract_op(body),
++        ))
++    return lemmas
++
++
++# ------ Pattern detectors --------------------------------------------------
++
++def detect_A(lemmas: list[Lemma]) -> list[Finding]:
++    """Paired weak/strong via implication table."""
++    findings: list[Finding] = []
++    # Group by (op, op-args head fingerprint)
++    by_op: dict[str, list[Lemma]] = {}
++    for l in lemmas:
++        if not l.op:
++            continue
++        by_op.setdefault(l.op, []).append(l)
++    for op, group in by_op.items():
++        if len(group) < 2:
++            continue
++        # For each pair (a, b) check if a.post strengthens b.post
++        for a in group:
++            for b in group:
++                if a is b:
++                    continue
++                for strong, weak in IMPLICATION_TABLE:
++                    if (re.search(rf"\b{re.escape(strong)}\b", a.post)
++                            and re.search(rf"\b{re.escape(weak)}\b", b.post)
++                            and not re.search(rf"\b{re.escape(strong)}\b", b.post)):
++                        # b is the weak (Pattern A candidate)
++                        findings.append(Finding(
++                            pattern="A",
++                            file=b.file, line=b.line, name=b.name,
++                            note=(
++                                f"`{weak}` postcondition is implied by "
++                                f"`{strong}` (companion at line {a.line})."
++                            ),
++                            severity="med",
++                            companion={
++                                "name": a.name, "line": a.line, "post": a.post[:80],
++                            },
++                            pre=b.pre[:120], post=b.post[:120],
++                        ))
++                        break
++    # Dedup by (file, line, name)
++    seen: set[tuple[str, int, str]] = set()
++    out: list[Finding] = []
++    for f in findings:
++        k = (f.file, f.line, f.name)
++        if k in seen:
++            continue
++        seen.add(k)
++        out.append(f)
++    return out
++
++
++# Functional-postcondition shape: post mentions equality and references
++# the body op's argument. Detect absence by checking ops that match
++# set_*/update_* and have no lemma with `<...>= ...` in postcondition.
++B_OP_PREFIX_RE = re.compile(r"^(?:set|update|modify|do)_")
++
++def detect_B(lemmas: list[Lemma]) -> list[Finding]:
++    """set_*/update_* missing functional postcondition."""
++    findings: list[Finding] = []
++    by_op: dict[str, list[Lemma]] = {}
++    for l in lemmas:
++        if not l.op or not B_OP_PREFIX_RE.match(l.op):
++            continue
++        by_op.setdefault(l.op, []).append(l)
++    for op, group in by_op.items():
++        # Has any lemma with a functional postcondition?
++        has_functional = False
++        for l in group:
++            # Functional shape heuristics: post contains "= " (in a
++            # \<lambda>_ s. … s = …) and references the body argument.
++            if re.search(r"\\<lambda>\s*_\s+s\.\s+.*=", l.post):
++                has_functional = True
++                break
++            if "= v" in l.post or "= t" in l.post or "= x" in l.post:
++                has_functional = True
++                break
++        if has_functional:
++            continue
++        # Emit one finding pointing at the FIRST preservation lemma
++        l = group[0]
++        findings.append(Finding(
++            pattern="B",
++            file=l.file, line=l.line, name=l.name,
++            note=(
++                f"`{op}` has preservation lemmas but no functional "
++                f"postcondition. Consider adding "
++                f"`\\<lbrace>\\<top>\\<rbrace> {op} v "
++                f"\\<lbrace>\\<lambda>_ s. <accessor> s = v\\<rbrace>`."
++            ),
++            severity="low",
++            pre=l.pre[:120], post=l.post[:120],
++        ))
++    return findings
++
++
++PREMISE_INV_RE = re.compile(r"\b(?:valid_objs|invs|valid_pspace|invs')\b")
++
++def detect_C(lemmas: list[Lemma]) -> list[Finding]:
++    """Possibly-unused premise: invariant-level pre but structural post."""
++    findings: list[Finding] = []
++    for l in lemmas:
++        if not PREMISE_INV_RE.search(l.pre):
++            continue
++        # Check whether postcondition is purely structural.
++        # Look for any non-structural predicate first (cheap negative).
++        post_tokens = set(re.findall(r"[A-Za-z_][A-Za-z_0-9']*", l.post))
++        # Postcondition uses structural-only predicates?
++        has_invariant_in_post = bool(
++            re.search(r"\b(?:invs|valid_objs|valid_pspace|valid_mdb|"
++                      r"valid_idle|valid_cap|valid_state)\b", l.post)
++        )
++        if has_invariant_in_post:
++            # Premise IS plausibly used (post needs it too)
++            continue
++        is_structural = any(p in post_tokens for p in STRUCTURAL_POSTCOND)
++        if not is_structural:
++            continue
++        # Emit candidate
++        findings.append(Finding(
++            pattern="C",
++            file=l.file, line=l.line, name=l.name,
++            note=(
++                f"Premise contains invariant-level conjuncts "
++                f"(`{PREMISE_INV_RE.search(l.pre).group(0)}`) but "
++                f"postcondition is structural. Try dropping; "
++                f"check-theory.sh --patch settles in ~60s."
++            ),
++            severity="med",
++            pre=l.pre[:200], post=l.post[:120],
++        ))
++    return findings
++
++
++# ------ Driver -------------------------------------------------------------
++
++def iter_thy_files(path: Path) -> Iterable[Path]:
++    if path.is_file() and path.suffix == ".thy":
++        yield path
++        return
++    if path.is_dir():
++        for thy in sorted(path.rglob("*.thy")):
++            yield thy
++
++
++def main() -> int:
++    ap = argparse.ArgumentParser(
++        description="Scan .thy files for spec-strengthening candidates.",
++        formatter_class=argparse.RawDescriptionHelpFormatter,
++    )
++    ap.add_argument("path", type=Path, help="A .thy file or directory.")
++    ap.add_argument("--pattern", choices=["A", "B", "C", "all"], default="all")
++    ap.add_argument("--limit", type=int, default=50,
++                    help="Max findings per pattern.")
++    ap.add_argument("--json", action="store_true")
++    ap.add_argument("--out", type=Path, default=None)
++    args = ap.parse_args()
++
++    all_lemmas: list[Lemma] = []
++    for thy in iter_thy_files(args.path):
++        try:
++            all_lemmas.extend(parse_thy_lemmas(thy))
++        except Exception as e:
++            print(f"warn: failed to parse {thy}: {e}", file=sys.stderr)
++
++    if not all_lemmas:
++        print(f"No Hoare-triple lemmas found in {args.path}", file=sys.stderr)
++        return 0
++
++    findings_by_pattern: dict[str, list[Finding]] = {}
++    patterns = ["A", "B", "C"] if args.pattern == "all" else [args.pattern]
++    for p in patterns:
++        if p == "A":
++            findings_by_pattern[p] = detect_A(all_lemmas)
++        elif p == "B":
++            findings_by_pattern[p] = detect_B(all_lemmas)
++        elif p == "C":
++            findings_by_pattern[p] = detect_C(all_lemmas)
++    # Apply limit
++    for p in findings_by_pattern:
++        findings_by_pattern[p] = findings_by_pattern[p][: args.limit]
++
++    if args.json:
++        out_text = json.dumps(
++            {p: [f.as_dict() for f in fs]
++             for p, fs in findings_by_pattern.items()},
++            indent=2,
++        )
++    else:
++        lines: list[str] = []
++        lines.append(f"# Scan of {args.path}")
++        lines.append(f"# {sum(len(v) for v in findings_by_pattern.values())} findings, {len(all_lemmas)} lemmas examined")
++        lines.append("")
++        for p, fs in findings_by_pattern.items():
++            lines.append(f"## Pattern {p} — {len(fs)} candidates")
++            lines.append("")
++            if not fs:
++                lines.append("  (no findings)")
++                lines.append("")
++                continue
++            lines.append("| File:Line | Lemma | Note |")
++            lines.append("|---|---|---|")
++            for f in fs:
++                rel = Path(f.file).name
++                lines.append(f"| `{rel}:{f.line}` | `{f.name}` | {f.note} |")
++            lines.append("")
++        out_text = "\n".join(lines)
++
++    if args.out:
++        args.out.write_text(out_text, encoding="utf-8")
++    else:
++        print(out_text)
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())

@@ -1,0 +1,73 @@
+{
+ "work_list": [
+  {
+   "file": "proof/refine/AARCH64/Arch_R.thy",
+   "file_reason": "lookupFrame_corres must discharge the new haskell_assert alignment guard; decodeARMVSpaceInvocation_corres must discharge the new stateAssert from checkValidMappingSize via corres_stateAssert_r_cross.",
+   "lemmas": [
+    {
+     "name": "lookupFrame_corres",
+     "statement_must_evolve": false,
+     "reason": "Statement (refines lookup_frame) is unchanged; body needs corres_assert_gen_asm_cross to prove fromPAddr baseAddr && mask bitsLeft = 0 from valid_vspace_objs alignment invariants, discharging the new haskell_assert step."
+    },
+    {
+     "name": "decodeARMVSpaceInvocation_corres",
+     "statement_must_evolve": false,
+     "reason": "Statement unchanged; body must add corres_stateAssert_r_cross to discharge checkValidMappingSize's stateAssert (2^bitsLeft <= gsMaxObjectSize) via valid_global_refsD_with_objSize."
+    }
+   ]
+  },
+  {
+   "file": "proof/crefine/AARCH64/Arch_C.thy",
+   "file_reason": "decodeARMVSpaceRootInvocation_ccorres unfolds lookupFrame_def and must handle two new monadic guards: the haskell_assert alignment check and the stateAssert from checkValidMappingSize.",
+   "lemmas": [
+    {
+     "name": "decodeARMVSpaceRootInvocation_ccorres",
+     "statement_must_evolve": false,
+     "reason": "C spec is unchanged; body needs ccorres_assert for the new haskell_assert in lookupFrame and ccorres_stateAssert for checkValidMappingSize's stateAssert, plus unfolding checkValidMappingSize_def as a simp rule."
+    }
+   ]
+  }
+ ],
+ "cleared": [
+  {
+   "file": "proof/access-control/Tcb_AC.thy",
+   "why": "Matches frame only as UntypedCap frame address in ASID pool creation; no reference to lookupFrame or checkValidMappingSize."
+  },
+  {
+   "file": "proof/drefine/Arch_DR.thy",
+   "why": "Matches frame only in capDL MakePool frame context; confirmed by grep: no lookupFrame or checkValidMappingSize reference."
+  },
+  {
+   "file": "proof/drefine/StateTranslation_D.thy",
+   "why": "State translation layer; frame match is in capDL/detype context, not VSpace frame lookup."
+  },
+  {
+   "file": "proof/drefine/Tcb_DR.thy",
+   "why": "TCB delta-refinement; frame match is in ASID pool creation invocation, unrelated to VSpace frame lookup."
+  },
+  {
+   "file": "proof/invariant-abstract/AARCH64/ArchArch_AI.thy",
+   "why": "Matches frame only as MakePool UntypedCap frame parameter; no lookupFrame or checkValidMappingSize reference confirmed by grep."
+  },
+  {
+   "file": "proof/invariant-abstract/KernelInitSep_AI.thy",
+   "why": "Kernel init separation; frame matches are in separation-logic frame predicates, not VSpace frame lookup."
+  },
+  {
+   "file": "proof/refine/AARCH64/Tcb_R.thy",
+   "why": "TCB refinement; frame matches are in TCB/cap context, not VSpace lookup."
+  },
+  {
+   "file": "proof/sep-capDL/Frame_SD.thy",
+   "why": "capDL separation logic frame specification; entirely different layer with no connection to VSpace lookupFrame."
+  },
+  {
+   "file": "proof/sep-capDL/Helpers_SD.thy",
+   "why": "capDL helpers; frame in capDL sense, not VSpace."
+  },
+  {
+   "file": "proof/sep-capDL/README.md",
+   "why": "Documentation file; not a proof."
+  }
+ ]
+}
