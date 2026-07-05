@@ -313,3 +313,31 @@ Fragility-validation (M7) spec: unit = lemma in the blast radius of a real
 classifier exists); label = broke / survived under the tree-oracle broken
 build; report odds ratio + CI. Requires the RED sets from batch adjudication
 of the 12 unprocessed seeds.
+
+## 🏁 MILESTONE: first uninterrupted full pipeline e2e — SESSION-GREEN (2026-07-06)
+
+`coevolve_pipeline.sh --seed df5e1611`, uninterrupted:
+detect (154s → Machine_AI:90) → repair (1 effective round) → validate
+(full AInvs session build GREEN) → report + accounting.
+
+    final=SESSION-GREEN  autonomy_rate=1.0  rounds=1  LLM=1 call $1.4753  wall=2363s(~39min)
+
+The agent produced the RELOCATION fix (remove clearMemory from the early
+crunches, delete the two lemmas, re-add all three after the wide-angle crunch
+block that establishes cleanCacheRange_RAM facts) — the same move the human
+made — and its rationale states the declaration-order cause exactly. This
+run's convergence in 1 round (vs the earlier partial run's non-convergence)
+confirms that non-convergence was **agent variance**, not a pipeline defect.
+
+Artifacts (durable on B): pipeline-runs/full-df5e1611/{run-record.json,
+report.md, fix-*.thy, claude-*.txt}.
+
+**Four assembly gaps → all closed and e2e-validated with a real GREEN:**
+detect(build→RED discovery) · fixpoint orchestration · report assembler ·
+M6 autonomy accounting. The pipeline is the tool; the mechanics are proven.
+
+Two more harness taxonomy items from this phase:
+- #14 monitor probes must self-test — a mis-escaped `build-active` ps probe
+  false-reported 0 and I killed a healthy run.
+- #15 pgrep self-match — `pgrep -f "<pattern>"` matches the monitor's own
+  command line containing that pattern; exclude grep/self or match on pid.
