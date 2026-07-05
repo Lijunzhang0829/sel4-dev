@@ -1,0 +1,656 @@
+=== META ===
+{
+ "wall_s": 2602,
+ "cost_usd": 1.3366967,
+ "usage": {
+  "input_tokens": 8,
+  "cache_creation_input_tokens": 17989,
+  "cache_read_input_tokens": 42249,
+  "output_tokens": 80433,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 17989,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 3,
+    "output_tokens": 16433,
+    "cache_read_input_tokens": 20079,
+    "cache_creation_input_tokens": 41,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 41
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "duration_api_ms": 1103343
+}
+=== PROMPT (full) ===
+You are repairing seL4/l4v proofs broken by an upstream artifact change (proof co-evolution). The artifact change is ALREADY applied to the spec; the proof file below no longer builds.
+
+## Upstream artifact change (already applied to the spec side)
+```diff
+diff --git a/spec/machine/AARCH64/MachineOps.thy b/spec/machine/AARCH64/MachineOps.thy
+index cdef617e..b5c8486a 100644
+--- a/spec/machine/AARCH64/MachineOps.thy
++++ b/spec/machine/AARCH64/MachineOps.thy
+@@ -132,33 +132,6 @@ definition setInterruptMode :: "irq \<Rightarrow> bool \<Rightarrow> bool \<Righ
+   "setInterruptMode \<equiv> \<lambda>irq levelTrigger polarityLow. return ()"
+ 
+ 
+-subsection "Clearing Memory"
+-
+-text \<open>Clear memory contents to recycle it as user memory\<close>
+-definition clearMemory :: "machine_word \<Rightarrow> nat \<Rightarrow> unit machine_monad" where
+-  "clearMemory ptr bytelength \<equiv>
+-     mapM_x (\<lambda>p. storeWord p 0) [ptr, ptr + word_size .e. ptr + (of_nat bytelength) - 1]"
+-
+-text \<open>Haskell simulator interface stub.\<close>
+-definition clearMemoryVM :: "machine_word \<Rightarrow> nat \<Rightarrow> unit machine_monad" where
+-  "clearMemoryVM ptr bits \<equiv> return ()"
+-
+-text \<open>
+-  Initialize memory to be used as user memory. Note that zeroing out the memory is redundant
+-  in the specifications. In any case, we cannot abstract from the call to cleanCacheRange, which
+-  appears in the implementation.\<close>
+-abbreviation (input) "initMemory == clearMemory"
+-
+-text \<open>
+-  Free memory that had been initialized as user memory. While freeing memory is a no-op in the
+-  implementation, we zero out the underlying memory in the specifications to avoid garbage. If we
+-  know that there is no garbage, we can compute from the implementation state what the exact memory
+-  content in the specifications is.\<close>
+-definition freeMemory :: "machine_word \<Rightarrow> nat \<Rightarrow> unit machine_monad" where
+-  "freeMemory ptr bits \<equiv>
+-     mapM_x (\<lambda>p. storeWord p 0) [ptr, ptr + word_size  .e.  ptr + 2 ^ bits - 1]"
+-
+-
+ subsection "User Monad and Registers"
+ 
+ type_synonym user_regs = "register \<Rightarrow> machine_word"
+@@ -430,6 +403,35 @@ lemmas cache_machine_op_defs =
+   branchFlushRange_def
+ 
+ 
++subsection "Clearing Memory"
++
++text \<open>Clear memory contents to recycle it as user memory\<close>
++definition clearMemory :: "machine_word \<Rightarrow> nat \<Rightarrow> unit machine_monad" where
++  "clearMemory ptr bytelength \<equiv> do
++     mapM_x (\<lambda>p. storeWord p 0) [ptr, ptr + word_size .e. ptr + (of_nat bytelength) - 1];
++     cleanCacheRange_RAM ptr (ptr + of_nat bytelength - 1) (addrFromPPtr ptr)
++   od"
++
++text \<open>Haskell simulator interface stub.\<close>
++definition clearMemoryVM :: "machine_word \<Rightarrow> nat \<Rightarrow> unit machine_monad" where
++  "clearMemoryVM ptr bits \<equiv> return ()"
++
++text \<open>
++  Initialize memory to be used as user memory. Note that zeroing out the memory is redundant
++  in the specifications. In any case, we cannot abstract from the call to cleanCacheRange, which
++  appears in the implementation.\<close>
++abbreviation (input) "initMemory == clearMemory"
++
++text \<open>
++  Free memory that had been initialized as user memory. While freeing memory is a no-op in the
++  implementation, we zero out the underlying memory in the specifications to avoid garbage. If we
++  know that there is no garbage, we can compute from the implementation state what the exact memory
++  content in the specifications is.\<close>
++definition freeMemory :: "machine_word \<Rightarrow> nat \<Rightarrow> unit machine_monad" where
++  "freeMemory ptr bits \<equiv>
++     mapM_x (\<lambda>p. storeWord p 0) [ptr, ptr + word_size  .e.  ptr + 2 ^ bits - 1]"
++
++
+ subsection "Virtual Memory"
+ 
+ consts' setVSpaceRoot_impl :: "paddr \<Rightarrow> machine_word \<Rightarrow> unit machine_rest_monad"
+
+```
+
+## Current Isabelle error (from a full AInvs session build — line numbers refer to the REAL file)
+```
+*** Failed to load theory "AInvs.ArchIpcCancel_AI" (unresolved "AInvs.IpcCancel_AI")
+*** Failed to load theory "AInvs.Untyped_AI" (unresolved "AInvs.ArchDetype_AI")
+*** Failed to load theory "AInvs.Finalise_AI" (unresolved "AInvs.ArchInterruptAcc_AI", "AInvs.ArchIpcCancel_AI", "AInvs.ArchRetype_AI")
+*** Failed to load theory "AInvs.ArchUntyped_AI" (unresolved "AInvs.Untyped_AI")
+*** Failed to load theory "AInvs.ArchFinalise_AI" (unresolved "AInvs.Finalise_AI")
+*** Failed to load theory "AInvs.Arch_AI" (unresolved "AInvs.ArchFinalise_AI", "AInvs.ArchUntyped_AI")
+*** Failed to load theory "AInvs.Ipc_AI" (unresolved "AInvs.ArchFinalise_AI")
+*** Failed to load theory "AInvs.ArchArch_AI" (unresolved "AInvs.Arch_AI")
+*** Failed to load theory "AInvs.ArchIpc_AI" (unresolved "AInvs.Ipc_AI")
+*** Failed to load theory "AInvs.CNodeInv_AI" (unresolved "AInvs.ArchIpc_AI")
+*** Failed to load theory "AInvs.ArchCNodeInv_AI" (unresolved "AInvs.CNodeInv_AI")
+*** Failed to load theory "AInvs.Interrupt_AI" (unresolved "AInvs.ArchIpc_AI")
+*** Failed to load theory "AInvs.Tcb_AI" (unresolved "AInvs.ArchCNodeInv_AI")
+*** Failed to load theory "AInvs.ArchTcb_AI" (unresolved "AInvs.Tcb_AI")
+*** Failed to load theory "AInvs.ArchInterrupt_AI" (unresolved "AInvs.Interrupt_AI")
+*** Failed to load theory "AInvs.EmptyFail_AI" (unresolved "AInvs.ArchTcb_AI")
+*** Failed to load theory "AInvs.ArchEmptyFail_AI" (unresolved "AInvs.EmptyFail_AI")
+*** Failed to load theory "AInvs.BCorres2_AI" (unresolved "AInvs.ArchEmptyFail_AI")
+*** Failed to load theory "AInvs.ArchBCorres2_AI" (unresolved "AInvs.BCorres2_AI")
+*** Failed to load theory "AInvs.Syscall_AI" (unresolved "AInvs.ArchArch_AI", "AInvs.ArchBCorres2_AI", "AInvs.ArchInterrupt_AI", "AInvs.ArchTcb_AI")
+*** Failed to load theory "AInvs.ArchSyscall_AI" (unresolved "AInvs.Syscall_AI")
+*** Failed to load theory "AInvs.VSpaceEntries_AI" (unresolved "AInvs.ArchSyscall_AI")
+*** Failed to load theory "AInvs.ArchVSpaceEntries_AI" (unresolved "AInvs.VSpaceEntries_AI")
+*** Failed to load theory "AInvs.ArchKernelInit_AI" (unresolved "AInvs.Arch_AI", "AInvs.Tcb_AI")
+*** Failed to load theory "AInvs.AInvsPre" (unresolved "AInvs.ArchVSpaceEntries_AI")
+*** Failed to load theory "AInvs.KernelInit_AI" (unresolved "AInvs.ArchKernelInit_AI")
+*** Failed to load theory "AInvs.ArchAInvsPre" (unresolved "AInvs.AInvsPre")
+*** Failed to load theory "AInvs.AInvs" (unresolved "AInvs.ArchAInvsPre")
+*** Failed to load theory "AInvs.ArchVCPU_AI" (unresolved "AInvs.AInvs")
+*** Failed to load theory "AInvs.Deterministic_AI" (unresolved "AInvs.AInvs")
+*** Failed to load theory "AInvs.ArchDeterministic_AI" (unresolved "AInvs.ArchVCPU_AI", "AInvs.Deterministic_AI")
+*** Failed to load theory "AInvs.DetSchedInvs_AI" (unresolved "AInvs.ArchDeterministic_AI")
+*** Failed to load theory "AInvs.DetSchedAux_AI" (unresolved "AInvs.DetSchedInvs_AI")
+*** Failed to load theory "AInvs.ArchDetSchedAux_AI" (unresolved "AInvs.DetSchedAux_AI")
+*** Failed to load theory "AInvs.DetSchedDomainTime_AI" (unresolved "AInvs.ArchDetSchedAux_AI")
+*** Failed to load theory "AInvs.ArchDetSchedDomainTime_AI" (unresolved "AInvs.DetSchedDomainTime_AI")
+*** Failed to load theory "AInvs.DetSchedSchedule_AI" (unresolved "AInvs.ArchDetSchedDomainTime_AI")
+*** Failed to load theory "AInvs.ArchDetSchedSchedule_AI" (unresolved "AInvs.DetSchedSchedule_AI")
+*** could not find crunch rule for MachineOps.AARCH64.cleanCacheRange_RAM_impl
+*** At command "crunches" (line 90 of "/sel4-project/verifi
+```
+
+## Proof file `proof/invariant-abstract/AARCH64/Machine_AI.thy` — the complete file
+```isabelle
+(*
+ * Copyright 2022, Proofcraft Pty Ltd
+ * Copyright 2020, Data61, CSIRO (ABN 41 687 119 230)
+ *
+ * SPDX-License-Identifier: GPL-2.0-only
+ *)
+
+(*
+Properties of machine operations.
+*)
+
+theory Machine_AI
+imports Bits_AI
+begin
+
+text \<open>Crunch setup\<close>
+
+definition
+  "no_irq f \<equiv> \<forall>P. \<lbrace>\<lambda>s. P (irq_masks s)\<rbrace> f \<lbrace>\<lambda>_ s. P (irq_masks s)\<rbrace>"
+
+lemma wpc_helper_no_irq:
+  "no_irq f \<Longrightarrow> wpc_helper (P, P', P'') (Q, Q', Q'') (no_irq f)"
+  by (simp add: wpc_helper_def)
+
+wpc_setup "\<lambda>m. no_irq m" wpc_helper_no_irq
+
+ML \<open>
+structure CrunchNoIrqInstance : CrunchInstance =
+struct
+  val name = "no_irq";
+  val prefix_name_scheme = true;
+  type extra = unit;
+  val eq_extra = op =;
+  fun parse_extra ctxt extra
+        = case extra of
+            "" => (Syntax.parse_term ctxt "%_. True", ())
+          | _ => error "no_irq does not need a precondition";
+  val has_preconds = false;
+  fun mk_term _ body _ =
+    (Syntax.parse_term @{context} "no_irq") $ body;
+  fun dest_term (Const (@{const_name no_irq}, _) $ body)
+    = SOME (Term.dummy, body, ())
+    | dest_term _ = NONE;
+  fun put_precond _ _ = error "crunch no_irq should not be calling put_precond";
+  val pre_thms = [];
+  val wpc_tactic = wp_cases_tactic_weak;
+  fun wps_tactic _ _ _ = no_tac;
+  val magic = Syntax.parse_term @{context}
+    "\<lambda>mapp_lambda_ignore. no_irq mapp_lambda_ignore";
+  val get_monad_state_type = get_nondet_monad_state_type;
+end;
+
+structure CrunchNoIrq : CRUNCH = Crunch(CrunchNoIrqInstance);
+\<close>
+
+setup \<open>
+  add_crunch_instance "no_irq" (CrunchNoIrq.crunch_x, CrunchNoIrq.crunch_ignore_add_dels)
+\<close>
+
+crunch_ignore (no_irq) (add:
+  Nondet_Monad.bind return "when" get gets fail
+  assert put modify unless select
+  alternative assert_opt gets_the
+  returnOk throwError lift bindE
+  liftE whenE unlessE throw_opt
+  assertE liftM liftME sequence_x
+  zipWithM_x mapM_x sequence mapM sequenceE_x
+  mapME_x catch select_f
+  handleE' handleE handle_elseE forM forM_x
+  zipWithM ignore_failure)
+
+context Arch begin
+
+text \<open>Deterministic\<close>
+
+lemma det_getRegister: "det (getRegister x)"
+  by (simp add: getRegister_def)
+
+lemma det_setRegister: "det (setRegister x w)"
+  by (simp add: setRegister_def det_def modify_def get_def put_def bind_def)
+
+lemma det_getRestartPC: "det getRestartPC"
+  by (simp add: getRestartPC_def det_getRegister)
+
+lemma det_setNextPC: "det (setNextPC p)"
+  by (simp add: setNextPC_def det_setRegister)
+
+text \<open>Failure on empty result\<close>
+
+crunches loadWord, storeWord, machine_op_lift, clearMemory
+  for (empty_fail) empty_fail[intro!, wp, simp]
+  (ignore: Nondet_Monad.bind mapM_x simp: machine_op_lift_def empty_fail_cond)
+
+lemmas ef_machine_op_lift = machine_op_lift_empty_fail \<comment> \<open>required for generic interface\<close>
+
+text \<open>Does not affect state\<close>
+
+definition "irq_state_independent P \<equiv> \<forall>f s. P s \<longrightarrow> P (irq_state_update f s)"
+
+lemma getActiveIRQ_inv[wp]:
+  "\<lbrakk>irq_state_independent P\<rbrakk> \<Longrightarrow> getActiveIRQ in_kernel \<lbrace>P\<rbrace>"
+  apply (simp add: getActiveIRQ_def)
+  apply wp
+  apply (simp add: irq_state_independent_def)
+  done
+
+lemma loadWord_inv[wp]: "loadWord x \<lbrace>P\<rbrace>"
+  by (wpsimp simp: loadWord_def)
+
+lemma getRestartPC_inv: "getRestartPC \<lbrace>P\<rbrace>"
+  by (simp add: getRestartPC_def getRegister_def)
+
+text \<open>Does not set failure flag\<close>
+
+lemma no_fail_loadWord[wp]: "no_fail (\<lambda>_. is_aligned p 3) (loadWord p)"
+  by (wpsimp simp: loadWord_def is_aligned_mask [symmetric])
+
+lemma no_fail_storeWord: "no_fail (\<lambda>_. is_aligned p 3) (storeWord p w)"
+  by (wpsimp simp: storeWord_def is_aligned_mask [symmetric])
+
+lemma no_fail_machine_op_lift [simp]:
+  "no_fail \<top> (machine_op_lift f)"
+  by (simp add: machine_op_lift_def)
+
+lemma no_fail_clearMemory[simp, wp]:
+  "no_fail (\<lambda>_. is_aligned p 3) (clearMemory p b)"
+  apply (simp add: clearMemory_def mapM_x_mapM)
+  apply (rule no_fail_pre)
+   apply (wp no_fail_mapM' no_fail_storeWord )
+  apply (clarsimp simp: upto_enum_step_def)
+  apply (erule aligned_add_aligned)
+   apply (simp add: word_size_def)
+   apply (rule is_aligned_mult_triv2 [where n = 3, simplified])
+  apply simp
+  done
+
+lemma no_fail_freeMemory[simp, wp]:
+  "no_fail (\<lambda>_. is_aligned p 3) (freeMemory p b)"
+  apply (simp add: freeMemory_def mapM_x_mapM)
+  apply (rule no_fail_pre)
+  apply (wp no_fail_mapM' no_fail_storeWord)
+  apply (clarsimp simp: upto_enum_step_def)
+  apply (erule aligned_add_aligned)
+   apply (simp add: word_size_def)
+   apply (rule is_aligned_mult_triv2 [where n = 3, simplified])
+  apply simp
+  done
+
+lemma no_fail_getActiveIRQ[wp]:
+  "no_fail \<top> (getActiveIRQ in_kernel)"
+  apply (simp add: getActiveIRQ_def)
+  apply (rule no_fail_pre)
+   apply wp
+  apply simp
+  done
+
+text \<open>Does not affect IRQ masks - low-level properties of @{term no_irq}\<close>
+
+lemma no_irq_bind[wp]:
+  "\<lbrakk> no_irq f; \<And>rv. no_irq (g rv) \<rbrakk> \<Longrightarrow> no_irq (f >>= g)"
+  unfolding no_irq_def
+  by (wpsimp, blast+)
+
+lemma no_irq_use:
+  "\<lbrakk> no_irq f; (rv,s') \<in> fst (f s) \<rbrakk> \<Longrightarrow> irq_masks s' = irq_masks s"
+  apply (simp add: no_irq_def valid_def)
+  apply (erule_tac x="\<lambda>x. x = irq_masks s" in allE)
+  apply fastforce
+  done
+
+lemma no_irq_machine_rest_lift[simp, wp]:
+  "no_irq (machine_rest_lift f)"
+  by (wpsimp simp: no_irq_def machine_rest_lift_def split_def)
+
+crunches machine_op_lift
+  for (no_irq) no_irq[wp, simp]
+
+lemma no_irq:
+  "no_irq f \<Longrightarrow> \<lbrace>\<lambda>s. P (irq_masks s)\<rbrace> f \<lbrace>\<lambda>_ s. P (irq_masks s)\<rbrace>"
+  by (simp add: no_irq_def)
+
+lemma no_irq_return[simp, wp]:
+  "no_irq (return v)"
+  unfolding no_irq_def
+  by simp
+
+lemma no_irq_gets[simp, wp]:
+  "no_irq (gets f)"
+  by (simp add: no_irq_def)
+
+lemma no_irq_mapM:
+  "(\<And>x. x \<in> set xs \<Longrightarrow> no_irq (f x)) \<Longrightarrow> no_irq (mapM f xs)"
+  apply (simp (no_asm) add: no_irq_def)
+  apply (clarsimp intro!: mapM_wp[OF _ order_refl])
+  apply (wpsimp wp: no_irq)
+  done
+
+lemma no_irq_mapM_x:
+  "(\<And>x. x \<in> set xs \<Longrightarrow> no_irq (f x)) \<Longrightarrow> no_irq (mapM_x f xs)"
+  apply (simp (no_asm) add: no_irq_def)
+  apply (clarsimp intro!: mapM_x_wp[OF _ order_refl])
+  apply (wpsimp wp: no_irq)
+  done
+
+lemma no_irq_swp:
+  "no_irq (f y x) \<Longrightarrow> no_irq (swp f x y)"
+  by (simp add: swp_def)
+
+lemma no_irq_fail [simp, wp]: "no_irq fail"
+  unfolding no_irq_def fail_def
+  by (rule allI, simp add: valid_def)
+
+lemma no_irq_assert [simp, wp]: "no_irq (assert P)"
+  unfolding assert_def by simp
+
+lemma no_irq_modify:
+  "(\<And>s. irq_masks (f s) = irq_masks s) \<Longrightarrow> no_irq (modify f)"
+  unfolding modify_def no_irq_def
+  apply (rule allI, simp add: valid_def put_def get_def)
+  apply (clarsimp simp: in_monad)
+  done
+
+lemma no_irq_when[simp, wp]:
+  "\<lbrakk>P \<Longrightarrow> no_irq f\<rbrakk> \<Longrightarrow> no_irq (when P f)"
+  by (simp add: when_def)
+
+text \<open>Architecture-specific @{term no_irq} preservations\<close>
+
+lemma no_irq_loadWord: "no_irq (loadWord x)"
+  by (wpsimp simp: no_irq_def wp: loadWord_inv)
+
+lemma no_irq_getActiveIRQ: "no_irq (getActiveIRQ in_kernel)"
+  by (wpsimp simp: no_irq_def irq_state_independent_def wp: getActiveIRQ_inv)
+
+lemma no_irq_storeWord: "no_irq (storeWord w p)"
+  by (wpsimp simp: storeWord_def wp: no_irq_modify)
+
+lemma no_irq_clearMemory: "no_irq (clearMemory a b)"
+  by (wpsimp simp: clearMemory_def no_irq_mapM_x no_irq_storeWord)
+
+crunches ackInterrupt
+  for (no_irq) no_irq[intro!, wp, simp]
+
+text \<open>Wide-angle crunch proofs over architecture-specific machine operations for
+  @{term no_fail}, @{term empty_fail} and @{term no_irq}}}\<close>
+
+(* Most of the basic machine ops in MachineOps.thy use abstract _impl constants which should never
+   be expanded.
+   Note: this was generated by running the following, and should likely be updated the same way:
+   grep -o "\w\+_impl" MachineOps.thy|sort|uniq|sed "s/^/    /"
+   *)
+crunch_ignore (valid, empty_fail, no_fail)
+  (add:
+    addressTranslateS1_impl
+    branchFlushRange_impl
+    check_export_arch_timer_impl
+    cleanByVA_PoU_impl
+    cleanCacheRange_PoU_impl
+    cleanCacheRange_RAM_impl
+    cleanInvalidateCacheRange_RAM_impl
+    configureTimer_impl
+    dsb_impl
+    enableFpuEL01_impl
+    fpuThreadDeleteOp_impl
+    get_gic_vcpu_ctrl_lr_impl
+    initL2Cache_impl
+    initTimer_impl
+    invalidateCacheRange_I_impl
+    invalidateCacheRange_RAM_impl
+    invalidateTranslationASID_impl
+    invalidateTranslationSingle_impl
+    isb_impl
+    nativeThreadUsingFPU_impl
+    plic_complete_claim_impl
+    resetTimer_impl
+    set_gic_vcpu_ctrl_apr_impl
+    set_gic_vcpu_ctrl_hcr_impl
+    set_gic_vcpu_ctrl_lr_impl
+    set_gic_vcpu_ctrl_vmcr_impl
+    set_gic_vcpu_ctrl_vtr_impl
+    setHCR_impl
+    setIRQTrigger_impl
+    setSCTLR_impl
+    setVSpaceRoot_impl
+    switchFpuOwner_impl
+    writeVCPUHardwareReg_impl
+    )
+
+(* Crunches for machine ops without concrete implementations (using _impl or _val).
+   List obtained using:
+   grep -oE "(\w+_impl)|(get\w+)" MachineOps.thy|sort|uniq|sed "s/_impl//;s/$/,/;s/^/  /"
+   with the following manual interventions:
+   - remove false positives: get_def, gets_def, getFPUState, getRegister, getRestartPC
+   - add read_cntpct
+   - remove final comma
+   - getActiveIRQ does not preserve no_irq *)
+crunches
+  addressTranslateS1,
+  branchFlushRange,
+  check_export_arch_timer,
+  cleanByVA_PoU,
+  cleanCacheRange_PoU,
+  cleanCacheRange_RAM,
+  cleanInvalidateCacheRange_RAM,
+  configureTimer,
+  dsb,
+  enableFpuEL01,
+  fpuThreadDeleteOp,
+  getESR,
+  getFAR,
+  get_gic_vcpu_ctrl_apr,
+  get_gic_vcpu_ctrl_eisr0,
+  get_gic_vcpu_ctrl_eisr1,
+  get_gic_vcpu_ctrl_hcr,
+  get_gic_vcpu_ctrl_lr,
+  get_gic_vcpu_ctrl_lr,
+  get_gic_vcpu_ctrl_misr,
+  get_gic_vcpu_ctrl_vmcr,
+  get_gic_vcpu_ctrl_vtr,
+  getHSR,
+  getMemoryRegions,
+  gets,
+  getSCTLR,
+  initL2Cache,
+  initTimer,
+  invalidateCacheRange_I,
+  invalidateCacheRange_RAM,
+  invalidateTranslationASID,
+  invalidateTranslationSingle,
+  isb,
+  nativeThreadUsingFPU,
+  plic_complete_claim,
+  resetTimer,
+  set_gic_vcpu_ctrl_apr,
+  set_gic_vcpu_ctrl_hcr,
+  set_gic_vcpu_ctrl_lr,
+  set_gic_vcpu_ctrl_vmcr,
+  set_gic_vcpu_ctrl_vtr,
+  setHCR,
+  setIRQTrigger,
+  setSCTLR,
+  setVSpaceRoot,
+  switchFpuOwner,
+  readVCPUHardwareReg,
+  writeVCPUHardwareReg,
+  read_cntpct
+  for (no_fail) no_fail[intro!, wp, simp]
+  and (empty_fail) empty_fail[intro!, wp, simp]
+  and (no_irq) no_irq[intro!, wp, simp]
+  and device_state_inv[wp]: "\<lambda>ms. P (device_state ms)"
+  and irq_masks[wp]: "\<lambda>s. P (irq_masks s)"
+  and underlying_memory_inv[wp]: "\<lambda>s. P (underlying_memory s)"
+  (wp: no_irq_bind ignore: empty_fail Nondet_Monad.bind)
+
+crunches getFPUState, getRegister, getRestartPC, setNextPC, ackInterrupt, maskInterrupt
+  for (no_fail) no_fail[intro!, wp, simp]
+  and (empty_fail) empty_fail[intro!, wp, simp]
+
+crunches ackInterrupt, maskInterrupt
+  for device_state_inv[wp]: "\<lambda>ms. P (device_state ms)"
+  and underlying_memory_inv[wp]: "\<lambda>s. P (underlying_memory s)"
+
+crunches ackInterrupt
+  for irq_masks[wp]: "\<lambda>s. P (irq_masks s)"
+
+text \<open>Lifting rules\<close>
+
+lemma dmo_machine_state_lift:
+  "\<lbrace>P\<rbrace> f \<lbrace>Q\<rbrace> \<Longrightarrow> \<lbrace>\<lambda>s. P (machine_state s)\<rbrace> do_machine_op f \<lbrace>\<lambda>rv s. Q rv (machine_state s)\<rbrace>"
+  unfolding do_machine_op_def by wpsimp (erule use_valid; assumption)
+
+crunches do_machine_op
+  for user_frame[wp]: "\<lambda>s. P (in_user_frame p s)"
+
+lemma dmo_valid_machine_state[wp]:
+  assumes "\<And>P. f \<lbrace>\<lambda>s. P (underlying_memory s)\<rbrace>"
+  shows "do_machine_op f \<lbrace>valid_machine_state\<rbrace>"
+  unfolding valid_machine_state_def
+  by (wpsimp wp: hoare_vcg_all_lift hoare_vcg_disj_lift dmo_machine_state_lift assms)
+
+lemma dmo_valid_irq_states[wp]:
+  "(\<And>P. f \<lbrace>\<lambda>s. P (irq_masks s)\<rbrace>) \<Longrightarrow> do_machine_op f \<lbrace>valid_irq_states\<rbrace>"
+  unfolding valid_irq_states_def do_machine_op_def
+  by (wpsimp, erule use_valid; assumption)
+
+text \<open>Misc WP rules\<close>
+
+lemma getActiveIRQ_le_maxIRQ':
+  "\<lbrace>\<lambda>s. \<forall>irq > maxIRQ. irq_masks s irq\<rbrace>
+    getActiveIRQ in_kernel
+   \<lbrace>\<lambda>rv s. \<forall>x. rv = Some x \<longrightarrow> x \<le> maxIRQ\<rbrace>"
+  apply (simp add: getActiveIRQ_def)
+  apply wpsimp
+  apply (rule ccontr)
+  apply (simp add: linorder_not_le)
+  done
+
+lemma getActiveIRQ_neq_non_kernel:
+  "\<lbrace>\<top>\<rbrace> getActiveIRQ True \<lbrace>\<lambda>rv s. rv \<notin> Some ` non_kernel_IRQs \<rbrace>"
+  by (wpsimp simp: getActiveIRQ_def)
+
+lemma dmo_getActiveIRQ_non_kernel[wp]:
+  "\<lbrace>\<top>\<rbrace> do_machine_op (getActiveIRQ True)
+   \<lbrace>\<lambda>rv s. \<forall>irq. rv = Some irq \<longrightarrow> irq \<in> non_kernel_IRQs \<longrightarrow> P irq s\<rbrace>"
+  unfolding do_machine_op_def
+  apply wpsimp
+  apply (drule use_valid, rule getActiveIRQ_neq_non_kernel, rule TrueI)
+  apply clarsimp
+  done
+
+lemma dmo_gets_inv[wp]:
+  "do_machine_op (gets f) \<lbrace>P\<rbrace>"
+  unfolding do_machine_op_def by (wpsimp simp: simpler_gets_def)
+
+end
+
+context begin interpretation Arch .
+
+requalify_facts
+  det_getRegister
+  det_setRegister
+  det_getRestartPC
+  det_setNextPC
+
+end
+
+end
+
+```
+
+## Task
+Produce MINIMAL edits that make this file build.
+Allowed: re-prove bodies; EVOLVE lemma statements to track the new semantics; add helper lemmas; MOVE a lemma later in the file when it needs facts declared below it; update crunches lists; delete a lemma ONLY if its statement refers to something that no longer exists AND nothing in this file uses it.
+Forbidden: sorry / oops / axiomatization; weakening a statement to triviality.
+
+Output ONLY edit blocks (nothing else). Each SEARCH must be an exact, contiguous, UNIQUE substring of the current file text — COPY it character-for-character from the file shown above; do NOT retype, reflow, or reconstruct it from memory (any mismatch aborts the edit):
+<<<<SEARCH
+(exact text)
+====
+(replacement; empty for deletion)
+>>>>
+
+=== REPLY (full) ===
+Looking at the error, three things need fixing:
+
+1. The early `empty_fail` crunch for `clearMemory` now encounters `cleanCacheRange_RAM_impl` (which is inside the new `clearMemory` body) before the `crunch_ignore` block that covers it is declared.
+2. `no_fail_clearMemory` needs to discharge the new `cleanCacheRange_RAM` step.
+3. `no_irq_clearMemory` needs to discharge the new `cleanCacheRange_RAM` step.
+
+<<<<SEARCH
+crunches loadWord, storeWord, machine_op_lift, clearMemory
+  for (empty_fail) empty_fail[intro!, wp, simp]
+  (ignore: Nondet_Monad.bind mapM_x simp: machine_op_lift_def empty_fail_cond)
+====
+crunches loadWord, storeWord, machine_op_lift, clearMemory
+  for (empty_fail) empty_fail[intro!, wp, simp]
+  (ignore: Nondet_Monad.bind mapM_x cleanCacheRange_RAM_impl simp: machine_op_lift_def empty_fail_cond)
+>>>>
+
+<<<<SEARCH
+lemma no_fail_clearMemory[simp, wp]:
+  "no_fail (\<lambda>_. is_aligned p 3) (clearMemory p b)"
+  apply (simp add: clearMemory_def mapM_x_mapM)
+  apply (rule no_fail_pre)
+   apply (wp no_fail_mapM' no_fail_storeWord )
+  apply (clarsimp simp: upto_enum_step_def)
+  apply (erule aligned_add_aligned)
+   apply (simp add: word_size_def)
+   apply (rule is_aligned_mult_triv2 [where n = 3, simplified])
+  apply simp
+  done
+====
+lemma no_fail_clearMemory[simp, wp]:
+  "no_fail (\<lambda>_. is_aligned p 3) (clearMemory p b)"
+  apply (simp add: clearMemory_def mapM_x_mapM)
+  apply (rule no_fail_pre)
+   apply (wp no_fail_mapM' no_fail_storeWord | simp add: cleanCacheRange_RAM_def)+
+  apply (clarsimp simp: upto_enum_step_def)
+  apply (erule aligned_add_aligned)
+   apply (simp add: word_size_def)
+   apply (rule is_aligned_mult_triv2 [where n = 3, simplified])
+  apply simp
+  done
+>>>>
+
+<<<<SEARCH
+lemma no_irq_clearMemory: "no_irq (clearMemory a b)"
+  by (wpsimp simp: clearMemory_def no_irq_mapM_x no_irq_storeWord)
+====
+lemma no_irq_clearMemory: "no_irq (clearMemory a b)"
+  by (wpsimp simp: clearMemory_def no_irq_mapM_x no_irq_storeWord cleanCacheRange_RAM_def)
+>>>>
