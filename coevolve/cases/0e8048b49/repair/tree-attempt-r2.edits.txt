@@ -1,43 +1,59 @@
-Now I have the exact picture. `aligned_add_mask_leD` and `user_vtop_canonical_user` (which takes `≤`) both exist. Let me see the exact lines in `ArchArch_AI.thy` around line 1443.
+Looking at the error: `aligned_add_mask_leD` is referenced at line 1422 but doesn't exist. The spec change from `\<ge>` to `>` means the no-throw path now requires `vtop \<le> user_vtop` (non-strict), so `r1` introduced a reference to this lemma for the `\<le>` case, but the lemma itself was never defined.
 
-<tool_call>
-{"name": "Bash", "input": {"command": "sed -n '1435,1455p' /sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy"}}
-</tool_call>
-<tool_response>
-    apply (clarsimp simp: if_distribR if_bool_simps disj_imp cong: if_cong split del: if_split)
-    apply (rule pull_out)
-    apply clarsimp
-    apply (prop_tac "\<not> user_vtop \<le> args ! 0 + mask (pageBitsForSize vmpage_size) \<longrightarrow> args!0 \<in> user_region")
-     apply (clarsimp simp: user_region_def not_le)
-     apply (rule user_vtop_canonical_user)
-     apply (erule aligned_add_mask_lessD)
-     apply (simp add: vmsz_aligned_def)
-    apply (rename_tac pte_ptr level)
-</thinking>
-
-The fix is clear. With the spec change from `≥` to `>`:
-- Old success condition: `¬(vtop ≥ user_vtop)` = `vtop < user_vtop` = `¬(user_vtop ≤ vtop)`
-- New success condition: `¬(vtop > user_vtop)` = `vtop ≤ user_vtop` = `¬(user_vtop < vtop)`
-
-The prop_tac and its sub-proof need to match. `user_vtop_canonical_user` takes `≤`, and `aligned_add_mask_leD` handles the `≤` case.
+I need to add `aligned_add_mask_leD` as a helper lemma before `decode_fr_inv_map_wf`:
 
 <<<<SEARCH
-    apply (prop_tac "\<not> user_vtop \<le> args ! 0 + mask (pageBitsForSize vmpage_size) \<longrightarrow> args!0 \<in> user_region")
-     apply (clarsimp simp: user_region_def not_le)
-     apply (rule user_vtop_canonical_user)
-     apply (erule aligned_add_mask_lessD)
-     apply (simp add: vmsz_aligned_def)
+lemma pageBitsForSize_level_0_eq:
+  "pt_bits_left level = pageBitsForSize vmpage_size \<Longrightarrow> (vmpage_size = ARMSmallPage) = (level = 0)"
+  using vm_level.size_inj[where x=level and y=max_page_level, unfolded level_defs, simplified]
+  by (simp add: pageBitsForSize_def pt_bits_left_def ptTranslationBits_def
+           split: vmpage_size.splits if_split_asm)
+
+lemma decode_fr_inv_map_wf[wp]:
 ====
-    apply (prop_tac "\<not> user_vtop < args ! 0 + mask (pageBitsForSize vmpage_size) \<longrightarrow> args!0 \<in> user_region")
-     apply (clarsimp simp: user_region_def not_less)
-     apply (rule user_vtop_canonical_user)
-     apply (erule aligned_add_mask_leD)
-     apply (simp add: vmsz_aligned_def)
+lemma pageBitsForSize_level_0_eq:
+  "pt_bits_left level = pageBitsForSize vmpage_size \<Longrightarrow> (vmpage_size = ARMSmallPage) = (level = 0)"
+  using vm_level.size_inj[where x=level and y=max_page_level, unfolded level_defs, simplified]
+  by (simp add: pageBitsForSize_def pt_bits_left_def ptTranslationBits_def
+           split: vmpage_size.splits if_split_asm)
+
+lemma aligned_add_mask_leD:
+  "\<lbrakk> x + mask n \<le> y; is_aligned x n \<rbrakk> \<Longrightarrow> x \<le> y"
+  by (meson is_aligned_no_overflow_mask order_trans)
+
+lemma decode_fr_inv_map_wf[wp]:
 >>>>
 
 
 === VERDICT: RED ===
-*** Undefined fact: "aligned_add_mask_leD" (line 1422 of "/sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy")
-*** At command "apply" (line 1422 of "/sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy")
+Cap (FrameCap p rights vmpage_size dev option);
+***         cte_wp_at
+***          ((=) (ArchObjectCap (FrameCap p rights vmpage_size dev option)))
+***          slot s;
+***         ?x?set excaps. cte_wp_at ((=) (fst x)) (snd x) s; 2 < length args;
+***         excaps ? [];
+***         fst (excaps ! 0) =
+***         ArchObjectCap (PageTableCap pt VSRootPT_T (Some (asid, vref)));
+***         vspace_for_asid asid s = Some pt;
+***         vmsz_aligned (args ! 0) vmpage_size;
+***         option = None ?
+***         ? user_vtop < args ! 0 + mask (pageBitsForSize vmpage_size) ?
+***         option = Some (asid, args ! 0);
+***         pt_lookup_slot pt (args ! 0) (ptes_of s) = Some (x, b);
+***         pt_bits_left x = pageBitsForSize vmpage_size;
+***         ? user_vtop < args ! 0 + mask (pageBitsForSize vmpage_size) ?
+***         args ! 0 ? user_region?
+***        ? valid_arch_inv
+***            (InvokePage
+***              (PageMap
+***                (FrameCap p rights vmpage_size dev (Some (asid, args ! 0)))
+***                slot
+***                (make_user_pte (addrFromPPtr p)
+***                  (attribs_from_word (args ! 2))
+***                  (mask_vm_rights rights (data_to_rights (args ! Suc 0)))
+***                  vmpage_size,
+***                 b, x)))
+***            s
+*** At command "apply" (line 1427 of "/sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy")
 Unfinished session(s): AInvs
-0:16:33 elapsed time, 1:26:01 cpu time, factor 5.19
+0:15:21 elapsed time, 1:18:21 cpu time, factor 5.10

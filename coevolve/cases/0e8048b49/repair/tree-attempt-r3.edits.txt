@@ -1,45 +1,21 @@
-Looking at the error, `aligned_add_mask_leD` is undefined. The proof uses it to derive `args!0 ≤ user_vtop` from `args!0 + mask n ≤ user_vtop` and alignment. I'll replace it with an equivalent two-step proof using `order_trans[rotated]` and `is_aligned_no_overflow'`.
+Looking at the error, the failing `apply` is `erule aligned_add_mask_leD` (line 1427). After `clarsimp` unfolds the config-dependent `user_vtop`/`canonical_user` definitions, the goal lands in a conjunction-of-implications form (one branch per PA-size config):
+
+```
+(config_ARM_PA_SIZE_BITS_40 → vtop ≤ mask 40 → args!0 ≤ mask 40) ∧
+(¬config_ARM_PA_SIZE_BITS_40 → vtop ≤ mask 44 → args!0 ≤ mask 44)
+```
+
+With the old `≥` spec, the non-throw condition was `vtop < user_vtop` (strict), which clarsimp could flatten into a plain hypothesis. With the new `>` spec, the condition is `vtop ≤ user_vtop`, and after unfolding it lands in the `∧ (→ →)` form. `erule` can't fire because the `≤` premise is inside the implications, not a hypothesis. Fix: split with `intro conjI impI` first.
 
 <<<<SEARCH
-     apply (rule user_vtop_canonical_user)
      apply (erule aligned_add_mask_leD)
      apply (simp add: vmsz_aligned_def)
 ====
-     apply (rule user_vtop_canonical_user)
-     apply (erule order_trans[rotated])
-     apply (simp add: vmsz_aligned_def is_aligned_no_overflow')
+     apply (intro conjI impI; erule aligned_add_mask_leD; simp add: vmsz_aligned_def)
 >>>>
 
 
-=== VERDICT: RED ===
-Cap (FrameCap p rights vmpage_size dev option);
-***         cte_wp_at
-***          ((=) (ArchObjectCap (FrameCap p rights vmpage_size dev option)))
-***          slot s;
-***         ?x?set excaps. cte_wp_at ((=) (fst x)) (snd x) s; 2 < length args;
-***         excaps ? [];
-***         fst (excaps ! 0) =
-***         ArchObjectCap (PageTableCap pt VSRootPT_T (Some (asid, vref)));
-***         vspace_for_asid asid s = Some pt;
-***         vmsz_aligned (args ! 0) vmpage_size;
-***         option = None ?
-***         ? user_vtop < args ! 0 + mask (pageBitsForSize vmpage_size) ?
-***         option = Some (asid, args ! 0);
-***         pt_lookup_slot pt (args ! 0) (ptes_of s) = Some (x, b);
-***         pt_bits_left x = pageBitsForSize vmpage_size;
-***         ? user_vtop < args ! 0 + mask (pageBitsForSize vmpage_size) ?
-***         args ! 0 ? user_region?
-***        ? valid_arch_inv
-***            (InvokePage
-***              (PageMap
-***                (FrameCap p rights vmpage_size dev (Some (asid, args ! 0)))
-***                slot
-***                (make_user_pte (addrFromPPtr p)
-***                  (attribs_from_word (args ! 2))
-***                  (mask_vm_rights rights (data_to_rights (args ! Suc 0)))
-***                  vmpage_size,
-***                 b, x)))
-***            s
-*** At command "apply" (line 1422 of "/sel4-project/verification/l4v/proof/invariant-abstract/AARCH64/ArchArch_AI.thy")
-Unfinished session(s): AInvs
-0:16:28 elapsed time, 1:25:46 cpu time, factor 5.21
+=== VERDICT: GREEN ===
+Skipping theories "KernelInit_AI", "$L4V_ARCH/ArchDetSchedSchedule_AI" (undefined AINVS_QUICK_AND_DIRTY)
+Finished AInvs (0:15:19 elapsed time, 1:18:55 cpu time, factor 5.15)
+0:15:30 elapsed time, 1:18:55 cpu time, factor 5.09

@@ -239,3 +239,30 @@ not an incapability**. The missing step is the human's ≤-helper addition;
 trajectory suggests 1-2 more rounds would likely close. Recorded as the
 seed's first capability-attributable data point. Optional next: one
 extended run (MAX_ROUNDS=5, ~3-4h) for the definitive close.
+
+## 🏁 0e8048b49 GREEN — campaign closes 3/3 (2026-07-05)
+
+Extended budget (5 effective rounds, transport blanks exempted) + sound
+tree-oracle: **GREEN at effective round 3** (total wall 2.8h, builds ~15.5min
+each). The winning cumulative repair:
+
+- r1: statement evolution (prop_tac `≤`→`<`, `not_le`→`not_less`) — the
+  human's first half, byte-equivalent — plus a constants-unfolding discharge
+  and a reference to a then-nonexistent `aligned_add_mask_leD`.
+- r2: **invented and ADDED the missing helper lemma itself** — at the SAME
+  insertion point the human chose for THEIR helper
+  (`user_vtop_leq_canonical_user`). Agent's helper is a general ≤-alignment
+  dest rule; human's is a specific ≤-canonical bound. Same move, different
+  mathematics — strong divergence-with-validity evidence.
+- r3: application plumbing (`intro conjI impI; erule ...; simp`) → GREEN.
+
+**Final capability scorecard: 3/3 repair shapes closed** —
+structural reorder (df5e1611, 1 round) · obsolete-fact repair (83ddb4def,
+2 rounds, kept a fact the human deleted) · boundary-flip statement evolution
++ new helper (0e8048b49, 3 effective rounds). All three DIVERGE from the
+human fix while restoring green. Zero capability failures across the
+campaign; 13-item harness taxonomy fully attributed.
+
+Queued: session-level downstream validation for 83ddb4def-replay and
+0e8048b49 final states; quality.json for 0e8048b49; fanin filter fix
+(count human-deleted-but-agent-kept lemmas).
