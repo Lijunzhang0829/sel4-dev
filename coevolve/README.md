@@ -266,3 +266,50 @@ campaign; 13-item harness taxonomy fully attributed.
 Queued: session-level downstream validation for 83ddb4def-replay and
 0e8048b49 final states; quality.json for 0e8048b49; fanin filter fix
 (count human-deleted-but-agent-kept lemmas).
+
+## Paper framing (operator-set, 2026-07-05): a SEMI-TOOLED pipeline paper
+
+> Upstream artifact changes → the tool DETECTS what downstream must update
+> → REPAIRS it → VALIDATES — and seL4's rich history is the validation
+> corpus. Capability/quality analyses are EVALUATION sections of the tool
+> paper, not the headline.
+
+Stage mapping of existing assets:
+| Stage | Asset | Status |
+|---|---|---|
+| Detect | build oracle (exact) + theory-DAG scoping/ordering (+ static hints as optional triage only — measured 0.22/0.38, never a gate) | pieces exist |
+| Repair | repair_driver_tree v4.1 (LLM closed loop, tree oracle, full accounting) | works, single-file |
+| Validate | session build + anti-cheat gate + quality vector | works |
+| Evaluate | commit-pair replay corpus + forced/chosen adjudication + vs-human comparison | works |
+
+**Structural gaps exposed by the tool framing (build order):**
+1. **One entrypoint missing**: `coevolve_pipeline.sh <artifact-diff>` chaining
+   detect→repair→validate→report. All stages exist; the chain does not.
+2. **Detect stage is benchmark-scaffolded**: deployment must discover the RED
+   file set from the build itself (parse failures, DAG topo-order them,
+   fixpoint loop for multi-file) — designed in the skill, NOT yet implemented
+   (all runs so far were single-known-file).
+3. **Report assembler**: PR-style human-review artifact (diff + rationale +
+   quality vector + transcripts + cost). Audit bundles exist; assembly missing.
+4. **"Semi" must be measured**: autonomy rate = fraction of repairs needing
+   zero human decisions; human-review queue = choice-set suggestions + gate
+   escalations. Add to accounting.
+
+## Metric registry (evaluation section of the tool paper)
+
+| # | Metric | Status |
+|---|---|---|
+| M1 | restore-green rate (per shape / per level) | live (3/3 pilot) |
+| M2 | end-to-end wall + LLM cost/tokens/rounds per repair | live (v4.1 accounting) |
+| M3 | quality-vs-human vector: minimality / strength(facts kept) / fragility profile / fan-in exposure | live (quality-comparison.json) |
+| M4 | downstream regression safety: session-green rate post-repair | partial (1/3 validated, 2 queued) |
+| M5 | detect efficiency: DAG upper bound vs actual RED (e.g. 67→1), oracle cost per check | data exists, not aggregated |
+| M6 | autonomy rate + human-review queue size (the "semi" measure) | to add |
+| M7 | **fragility-validation regression**: searchy-ratio of a lemma's proof vs did-it-break under real Δ — upgrades the fragility proxy from lore to validated (or refutes it) | spec'd; NEEDS batch adjudication of remaining seeds (blocked on scale-up, not on tooling) |
+| M8 | repair latency vs human commit-lag (C_a→C_p wall-time in history, noisy reference) | cheap, to add |
+
+Fragility-validation (M7) spec: unit = lemma in the blast radius of a real
+Δ; features = its proof's searchy/named profile (corpus-wide tactic
+classifier exists); label = broke / survived under the tree-oracle broken
+build; report odds ratio + CI. Requires the RED sets from batch adjudication
+of the 12 unprocessed seeds.
