@@ -16,7 +16,8 @@ import difflib, json, os, re, subprocess, sys, time
 SSH = ["ssh", "-o", "BatchMode=yes", "zljj@114.212.82.216"]
 B_REPO = "/data/zljj/sel4-dev"
 CLAUDE = os.environ.get("CLAUDE_BIN", "/home/lijun/.local/bin/claude")
-MAX_ROUNDS = 3
+MAX_ROUNDS = 5          # effective (build-reaching) rounds only
+MAX_ITERS = 12          # hard cap incl. transport blanks / anchor misses
 WINDOW = 260
 BIG = 900
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "repair-results")
@@ -138,9 +139,15 @@ or reconstruct it from memory (any mismatch aborts the edit):
 """
 
 
-def run_claude(prompt, log_path):
-    cmd = [CLAUDE, "-p", "--model", "sonnet", "--tools", ""]
+def run_claude(prompt, log_path, b_archive=None):
+    """Returns (reply_text, wall_s, meta). meta = token/cost usage from the
+    CLI's JSON envelope. EVERY interaction (full prompt + reply + usage) is
+    archived durably on B when b_archive is given."""
+    cmd = [CLAUDE, "-p", "--model", "sonnet", "--tools", "",
+           "--output-format", "json"]
     t0 = time.time()
+    meta = {}
+    raw_text = ""
     for attempt in (1, 2):
         try:
             r = subprocess.run(cmd, input=prompt, capture_output=True,
@@ -148,15 +155,30 @@ def run_claude(prompt, log_path):
             break
         except subprocess.TimeoutExpired:
             if attempt == 2:
-                with open(log_path, "w") as f:
-                    f.write(prompt[:3000] + "\n=== TIMEOUT x2 ===\n")
-                return "", int(time.time() - t0)
+                meta = {"timeout": True, "wall_s": int(time.time() - t0)}
+                if b_archive:
+                    b_write(b_archive + ".txt",
+                            "=== PROMPT ===\n%s\n=== TIMEOUT x2 ===\n" % prompt)
+                return "", meta["wall_s"], meta
     dt = int(time.time() - t0)
+    try:
+        env = json.loads(r.stdout)
+        raw_text = env.get("result", "")
+        meta = {"wall_s": dt, "cost_usd": env.get("total_cost_usd"),
+                "usage": env.get("usage", {}),
+                "duration_api_ms": env.get("duration_api_ms")}
+    except Exception:
+        raw_text = r.stdout
+        meta = {"wall_s": dt, "json_parse": "failed"}
     with open(log_path, "w") as f:
-        f.write("call_wall_s=%d prompt_chars=%d\n" % (dt, len(prompt))
-                + prompt[:3000] + "\n=== RAW ===\n" + r.stdout
-                + "\n=== ERR ===\n" + r.stderr[:1000])
-    return r.stdout, dt
+        f.write("meta=%s\n" % json.dumps(meta)
+                + prompt[:3000] + "\n=== RAW ===\n" + raw_text[:8000])
+    if b_archive:
+        b_write(b_archive + ".txt",
+                "=== META ===\n%s\n=== PROMPT (full) ===\n%s\n"
+                "=== REPLY (full) ===\n%s\n"
+                % (json.dumps(meta, indent=1), prompt, raw_text))
+    return raw_text, dt, meta
 
 
 def main():
@@ -196,17 +218,24 @@ def main():
 
     current = broken
     applied_log = []
+    llm_calls = []
     result = {"rounds": 0, "verdict": "RED"}
-    for k in range(1, MAX_ROUNDS + 1):
+    eff, it = 0, 0
+    while eff < MAX_ROUNDS and it < MAX_ITERS:
+        it += 1
+        k = it
         view, viewdesc = make_view(current, err)
         prior = ("\n## Edits already applied in earlier rounds (kept)\n%s\n"
                  % "\n".join(applied_log)) if applied_log else ""
         prompt = PROMPT.format(adiff=adiff[:20000], prior=prior, error=err,
                                path=gt_file, view=view, viewdesc=viewdesc)
-        raw, cdt = run_claude(prompt, os.path.join(OUT, "%s-tree-r%d.txt" % (c, k)))
+        raw, cdt, meta = run_claude(
+            prompt, os.path.join(OUT, "%s-tree-r%d.txt" % (c, k)),
+            b_archive=case + "/repair/claude-iter%02d" % it)
+        llm_calls.append(meta)
         blocks = BLOCK_RE.findall(raw)
-        print("[%s] round %d: claude %ds, %d blocks" % (c, k, cdt, len(blocks)),
-              flush=True)
+        print("[%s] round %d: claude %ds cost=%s, %d blocks"
+              % (c, k, cdt, meta.get("cost_usd"), len(blocks)), flush=True)
         if not blocks:
             err += "\n(previous round: no edit blocks parsed)"
             continue
@@ -227,18 +256,27 @@ def main():
             err += "\nREJECTED: introduces sorry/oops/axiomatization"
             continue
         v, e, dt = tree_check(gt_file, new_content, "r%d" % k)
+        eff += 1
         err = extract_err(e)
-        print("[%s] round %d: %s (%d edits, build %ds)" % (c, k, v, len(blocks), dt),
-              flush=True)
+        print("[%s] iter %d (effective %d/%d): %s (%d edits, build %ds)"
+              % (c, k, eff, MAX_ROUNDS, v, len(blocks), dt), flush=True)
         b_write(case + "/repair/tree-attempt-r%d.edits.txt" % k,
                 raw + "\n\n=== VERDICT: %s ===\n%s" % (v, e[-1500:]))
-        result = {"rounds": k, "verdict": v, "n_edits": len(blocks)}
+        result = {"rounds": eff, "iters": it, "verdict": v,
+                  "n_edits": len(blocks)}
         current = new_content
         applied_log += ["r%d: %d edits (build %s)" % (k, len(blocks), v)]
         if v == "GREEN":
             b_write(case + "/repair/tree-final-content.thy", new_content)
             break
     result["wall_s"] = int(time.time() - t0)
+    result["llm"] = {
+        "calls": len(llm_calls),
+        "total_cost_usd": sum(m.get("cost_usd") or 0 for m in llm_calls),
+        "total_wall_s": sum(m.get("wall_s") or 0 for m in llm_calls),
+        "timeouts": sum(1 for m in llm_calls if m.get("timeout")),
+        "per_call": llm_calls,
+    }
     b_write(case + "/repair/tree-summary.json", json.dumps(result, indent=1))
     print("[%s] DONE %s" % (c, json.dumps(result)))
 

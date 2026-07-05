@@ -1,0 +1,11 @@
+{
+ "fragility": {
+  "added_lines": 22,
+  "searchy": 3,
+  "named": 4
+ },
+ "fanin_exposure": {
+  "no_fail_clearMemory": 5,
+  "no_irq_clearMemory": 28
+ }
+}
