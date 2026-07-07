@@ -1,0 +1,21 @@
+FAILED (44694ms)
+*** Failed to finish proof:
+*** goal (1 subgoal):
+***  1. \<lbrakk>obj_at
+***               (\<lambda>ob.
+***                   (\<forall>x11 x12.
+***                       (well_formed_cnode_n x11 x12 \<longrightarrow>
+***                        ob \<noteq> CNode x11 x12) \<and>
+***                       (well_formed_cnode_n x11 x12 \<or>
+***                        ob \<noteq> CNode x11 x12)) \<and>
+***                   (\<forall>x2. ob \<noteq> TCB x2) \<and>
+***                   (\<forall>x3. ob \<noteq> Endpoint x3) \<and>
+***                   (\<forall>x4. ob \<noteq> Notification x4) \<and>
+***                   (\<forall>x5.
+***                       ((\<forall>x1. x5 \<noteq> ASIDPool x1) \<or>
+***                        ob \<noteq> ArchObj x5) \<and>
+***                       ((\<forall>x2. x5 \<noteq> PageTable x2) \<or>
+***                        ob \<noteq> ArchObj x5) \<and>
+***                       (ob = ArchObj x5 \<longrightarrow>
+***                        (\<forall>x41 x42.
+***                            (x41 \<longrightarrow>

@@ -1,0 +1,21 @@
+FAILED (39023ms)
+*** Failed to apply proof method (line 350 of "/tmp/tmp.H8I4TcW5YM/Tmp_ca258b4550144766.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>\<forall>p'\<in>descendants_of p (cdt s).
+***                 cte_wp_at
+***                  (\<lambda>c. cap_range c \<inter> cap_range cap = {}) p' s;
+***      \<forall>p p'.
+***         p \<in> descendants_of p' (cdt s) \<longrightarrow>
+***         cap_class (the (caps_of_state s p)) =
+***         cap_class (the (caps_of_state s p')) \<and>
+***         cap_range (the (caps_of_state s p))
+***         \<subseteq> cap_range (the (caps_of_state s p'));
+***      caps_of_state s p = Some cap; valid_objs s; valid_mdb s\<rbrakk>
+***     \<Longrightarrow> descendants_of p (cdt s) = {}
+*** At command "apply" (line 350 of "/tmp/tmp.H8I4TcW5YM/Tmp_ca258b4550144766.thy")
+*** Failed to apply proof method (line 350 of "/tmp/tmp.H8I4TcW5YM/Tmp_ca258b4550144766.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>\<forall>p'\<in>descendants_of p (cdt s).
+***                 cte_wp_at
+***                  (\<lambda>c. cap_range c \<inter> cap_range cap = {}) p' s;
+***      \<forall>p p'.

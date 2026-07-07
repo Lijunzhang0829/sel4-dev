@@ -1,0 +1,56 @@
+1130 1130
+  by (simp add: set_extra_badge_def) wp
+
+lemma do_machine_op_domain_index[wp]:
+  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> do_machine_op f \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
+  by (wpsimp simp: do_machine_op_def)
+
+lemma do_machine_op_domain_time[wp]:
+  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> do_machine_op f \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
+  by (wpsimp simp: do_machine_op_def)
+
+lemma do_machine_op_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> do_machine_op f \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  by (wpsimp simp: do_machine_op_def)
+
+lemma set_extra_badge_domain_index[wp]:
+  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_extra_badge buffer badge n \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
+  by (wpsimp simp: set_extra_badge_def store_word_offs_def)+
+
+lemma set_extra_badge_domain_time[wp]:
+  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_extra_badge buffer badge n \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
+  by (wpsimp simp: set_extra_badge_def store_word_offs_def)+
+
+lemma set_extra_badge_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_extra_badge buffer badge n \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  by (wpsimp simp: set_extra_badge_def store_word_offs_def)+
+---
+1850 1850
+  by (wp | simp add: as_user_def split_def)+
+
+lemma as_user_domain_index[wp]:
+  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> as_user r f \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
+  by (wp | simp add: as_user_def split_def)+
+
+lemma as_user_domain_time[wp]:
+  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> as_user r f \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
+  by (wp | simp add: as_user_def split_def)+
+
+lemma as_user_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> as_user r f \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  by (wp | simp add: as_user_def split_def)+
+---
+2798 2798
+  by (wpsimp simp: set_message_info_def)
+
+lemma set_message_info_domain_index[wp]:
+  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_message_info thread info \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
+  by (wpsimp simp: set_message_info_def)
+
+lemma set_message_info_domain_time[wp]:
+  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_message_info thread info \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
+  by (wpsimp simp: set_message_info_def)
+
+lemma set_message_info_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_message_info thread info \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  by (wpsimp simp: set_message_info_def)

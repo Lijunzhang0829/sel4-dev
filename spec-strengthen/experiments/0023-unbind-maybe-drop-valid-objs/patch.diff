@@ -1,0 +1,25 @@
+diff --git a/proof/invariant-abstract/Finalise_AI.thy b/proof/invariant-abstract/Finalise_AI.thy
+--- a/proof/invariant-abstract/Finalise_AI.thy
++++ b/proof/invariant-abstract/Finalise_AI.thy
+@@ -741,7 +741,7 @@
+   done
+ 
+  lemma unbind_maybe_notification_not_bound:
+-   "\<lbrace>\<lambda>s. ntfn_at ntfnptr s \<and> valid_objs s \<and> sym_refs (state_refs_of s)\<rbrace>
++   "\<lbrace>\<lambda>s. ntfn_at ntfnptr s \<and> sym_refs (state_refs_of s)\<rbrace>
+       unbind_maybe_notification ntfnptr
+     \<lbrace>\<lambda>_. obj_at (\<lambda>ko. \<exists>ntfn. ko = Notification ntfn \<and> ntfn_bound_tcb ntfn = None) ntfnptr\<rbrace>"
+   apply (simp add: unbind_maybe_notification_def)
+@@ -750,6 +750,12 @@
+   apply (clarsimp simp: obj_at_def)
+   done
+ 
++lemma unbind_maybe_notification_not_bound_old:
++  "\<lbrace>\<lambda>s. ntfn_at ntfnptr s \<and> valid_objs s \<and> sym_refs (state_refs_of s)\<rbrace>
++      unbind_maybe_notification ntfnptr
++    \<lbrace>\<lambda>_. obj_at (\<lambda>ko. \<exists>ntfn. ko = Notification ntfn \<and> ntfn_bound_tcb ntfn = None) ntfnptr\<rbrace>"
++  by (rule hoare_weaken_pre[OF unbind_maybe_notification_not_bound]) simp
++
+ lemma unbind_notification_bound_tcb_at[wp]:
+   "\<lbrace>\<top>\<rbrace> unbind_notification tcbptr \<lbrace>\<lambda>_. bound_tcb_at ((=) None) tcbptr\<rbrace>"
+   apply (simp add: unbind_notification_def)

@@ -1,0 +1,12 @@
+{
+ "slot": "F",
+ "delivery": "wp",
+ "delivery_substate": null,
+ "delivery_target": null,
+ "lemma_name": "set_cap_is_original_cap_wp",
+ "anchor_line": 882,
+ "new_lemma": "lemma set_cap_is_original_cap_wp[wp]:\n  \"\\<lbrace>\\<lambda>s. P (is_original_cap s)\\<rbrace> set_cap cap p \\<lbrace>\\<lambda>_ s. P (is_original_cap s)\\<rbrace>\"\n  by (wpsimp simp: set_cap_def split_def set_object_def wp: get_object_wp | clarsimp)+",
+ "rationale": "is_original_cap_set_cap at line 879 proves preservation as a monad equality. This converts it to a wp-registered Hoare triple, mirroring the pattern of set_cap_cdt_wp for the is_original_cap field.",
+ "strengthening_claim": "Strictly stronger delivery: converts the existing monad-equality fact into a wp-registered Hoare triple for is_original_cap over set_cap.",
+ "anchor_text": "               split: if_split_asm Structures_A.kernel_object.splits)"
+}

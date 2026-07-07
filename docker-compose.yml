@@ -1,17 +1,60 @@
+# sel4-l4v container — entry point for skill scripts and ad-hoc Isabelle work.
+#
+# Image: sel4-public:tuned
+#   29 pre-built session heaps under /root/.isabelle/heaps/polyml-5.9.1_x86_64_32-linux/
+#   ML_OPTIONS="-H 8000 --maxheap 16000 --stackspace 64"
+#   See baseline-restore.md for the difference vs sel4-public:baseline-clean.
+#
+# Mounts:
+#   ./:/workspace
+#       Project root mounted at /workspace. Skill scripts under
+#       .claude/skills/isabelle_prover/scripts-container/ resolve REPO_ROOT
+#       to /workspace; reports/ + logs/ written here are visible on host.
+#
+#   ./verification/l4v:/sel4-project/verification/l4v
+#       OVERLAYS host's verification/l4v on top of the image's pristine
+#       /sel4-project/verification/l4v. The 29 pre-built heaps were built
+#       with sources at /sel4-project/verification/l4v — their session_info
+#       fingerprints reference that path. When we run
+#       `isabelle build -d /sel4-project/verification/l4v ...`, Isabelle's
+#       freshness check matches the recorded fingerprints — heaps stay
+#       fresh, no chain rebuild.
+#
+#       Without this overlay, `-d /workspace/verification/l4v` makes
+#       Isabelle see "different" sources and triggers a full
+#       ASpec→AInvs→BaseRefine→Refine rebuild on every proof-timing call,
+#       which made scan-slow-proofs.sh effectively unusable.
+#
+#       Trade-off: host edits to verification/l4v are visible at BOTH
+#       /workspace/verification/l4v AND /sel4-project/verification/l4v
+#       (same files, two mount paths). Always build via the /sel4-project
+#       path to keep fingerprints consistent.
+#
+# Heaps live inside the container at /root/.isabelle/heaps (image-baked,
+# not bind-mounted). docker cp out / restart to revert.
+
 services:
   l4v:
-    image: sel4-test
+    image: sel4-public:tuned
     container_name: sel4-l4v
     network_mode: host
-    working_dir: /workspace/verification/l4v
+    working_dir: /sel4-project/verification/l4v
     volumes:
       - ./:/workspace
+      - ./verification/l4v:/sel4-project/verification/l4v
     environment:
       L4V_ARCH: ARM
-      # run.sh + skill scripts call `isabelle ...` bare; the Dockerfile doesn't
-      # add Isabelle's bin to PATH (it uses relative ./isabelle/bin/isabelle in
-      # the WORKDIR). Prepending the mounted Isabelle bin makes both work.
+      # Tell skill scripts (proof-timing.sh, check-theory.sh, etc.) to
+      # use the /sel4-project path for `isabelle build -d ...` so
+      # Isabelle's heap freshness check passes against the heap-log
+      # fingerprints (heaps were originally built at this path).
+      L4V_DIR: /sel4-project/verification/l4v
+      # PATH includes host-mounted Isabelle bin; bare `isabelle` works.
       PATH: /workspace/verification/isabelle/bin:/root/.local/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      # Match the threads=8 setting that Exp A confirmed (CBaseRefine -17%
+      # wall vs the original threads=4). The image already has -H 8000 in
+      # /root/.isabelle/etc/settings.
+      ISABELLE_BUILD_OPTIONS: "threads=8"
     stdin_open: true
     tty: true
     command: bash

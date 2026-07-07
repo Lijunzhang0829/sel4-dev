@@ -1,0 +1,8 @@
+191 191
+  done
+
+lemma tcb_arch_detype'[detype_invs_proofs]:
+  "valid_arch_tcb (tcb_arch t) s
+      \<Longrightarrow> valid_arch_tcb (tcb_arch t) (detype (untyped_range cap) s)"
+  apply (clarsimp simp: valid_arch_tcb_def)
+  done

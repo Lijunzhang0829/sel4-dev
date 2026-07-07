@@ -1,0 +1,12 @@
+310 310
+  done
+
+lemma valid_vspace_obj':
+  "\<And>ao p. \<lbrakk> valid_vspace_obj ao s; (\<exists>\<rhd>p) s \<rbrakk> \<Longrightarrow>
+       valid_vspace_obj ao (detype (untyped_range cap) s)"
+  apply (case_tac ao; simp; erule allEI ballEI; clarsimp simp: ran_def;
+         drule vs_lookup_pages_vs_lookupI)
+  subgoal for p t r ref i by (crush i)
+  subgoal for p t i ref by (cases "t i"; crush i)
+  subgoal for p t i ref by (cases "t i"; crush i)
+  done

@@ -1,0 +1,9 @@
+108 108
+  by blast
+
+lemma unique_table_refsD_no_left_lookup:
+  "\<lbrakk> unique_table_refs cps; cps p' = Some cap';
+     obj_refs cap = obj_refs cap'\<rbrakk>
+     \<Longrightarrow> table_cap_ref cap = table_cap_ref cap'"
+  unfolding unique_table_refs_def
+  by blast

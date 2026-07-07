@@ -1,0 +1,220 @@
+diff --git a/.claude/skills/isabelle_prover_spec/SKILL.md b/.claude/skills/isabelle_prover_spec/SKILL.md
+index 28b63d6..c02ab54 100644
+--- a/.claude/skills/isabelle_prover_spec/SKILL.md
++++ b/.claude/skills/isabelle_prover_spec/SKILL.md
+@@ -28,7 +28,7 @@ lemma <name>_old: "<verbatim old statement>"
+ 
+ where `<hoare-monotonicity>` is one of `hoare_pre`, `hoare_weaken_pre`,
+ `hoare_strengthen_post`, `hoare_strengthen_postE_R`, `hoare_post_imp`,
+-or `hoare_post_imp_R`. The witness stays in source as a permanent
++or `hoare_post_impE`. The witness stays in source as a permanent
+ soundness record — do not delete it later.
+ 
+ **Only purely additive companion lemmas skip the witness.** If the
+@@ -71,10 +71,11 @@ break, including the cleanup-style "delete the weak alias" move.
+ 
+ 6. **Record.** Create
+    `reports/experiments/<NNNN>-<short-name>/` with `patch.diff` +
+-   `command.sh` + `measurement.json` (and `derivability.thy` if the
+-   change isn't purely additive). Open a PR from a `spec-strengthen`
+-   topic branch targeting `main`. For meta-PRs (skill/tools/infra),
+-   the simplified two-file variant in parent SKILL rule 5 applies.
++   `command.sh` + `measurement.json`. The witness lemma is part of
++   `patch.diff` (Step 2) — no separate file. Open a PR from a
++   `spec-strengthen` topic branch targeting `main`. For meta-PRs
++   (skill/tools/infra), the simplified two-file variant in parent
++   SKILL rule 5 applies.
+ 
+ ## Acceptance
+ 
+diff --git a/reports/experiments/README.md b/reports/experiments/README.md
+index 2302d88..7ecde13 100644
+--- a/reports/experiments/README.md
++++ b/reports/experiments/README.md
+@@ -15,12 +15,10 @@ reports/experiments/
+ ├── README.md                            ← this file
+ ├── _template/                           ← skeleton, COPY when starting a new experiment
+ │   ├── patch.diff
+-│   ├── derivability.thy
+ │   ├── command.sh
+ │   └── measurement.json
+ └── <NNNN>-<short-name>/                 ← one directory per accepted strengthening
+-    ├── patch.diff                       ← re-applyable source change
+-    ├── derivability.thy                 ← A'⟹A witness lemma (skipped only for Pattern B)
++    ├── patch.diff                       ← re-applyable source change (includes the `_old` witness lemma inline)
+     ├── command.sh                       ← re-runnable measurement command
+     └── measurement.json                 ← raw numbers tied to golden-baseline
+ ```
+@@ -44,12 +42,11 @@ that matches your change:
+ ### Variant A — seL4-source PR (full record)
+ 
+ Triggered when the PR modifies `.thy` / `.hs` / `.c` / `.h` under
+-`verification/l4v/`. Full 4-file record required:
++`verification/l4v/`. Full 3-file record required:
+ 
+ ```
+ <NNNN>-<short-name>/
+-├── patch.diff
+-├── derivability.thy   (skipped only for Tier 2 additive patches)
++├── patch.diff       ← includes the `_old` witness lemma (per sub-skill Step 2)
+ ├── command.sh
+ └── measurement.json
+ ```
+@@ -93,15 +90,14 @@ cp reports/experiments/_template/* reports/experiments/$SHORT/
+ #    at .github/PULL_REQUEST_TEMPLATE/<type>-strengthen.md.
+ ```
+ 
+-## Why four files instead of one PR description
++## Why three files instead of one PR description
+ 
+-The four files and the PR description serve different roles:
++The three files and the PR description serve different roles:
+ 
+ | Role | Location | Lifetime |
+ |---|---|---|
+ | Re-runnable measurement | `command.sh` + `measurement.json` | Persistent in repo; CI / future audit can re-run |
+-| Re-applyable source change | `patch.diff` | Persistent in repo; can be replayed onto a fresh checkout |
+-| A'⟹A consumability proof | `derivability.thy` | Persistent in repo; the cryptographic-equivalent guarantee that nothing broke |
++| Re-applyable source change | `patch.diff` (includes `_old` witness inline) | Persistent in repo; replayable onto fresh checkout. Witness is mechanically checked by the same `check-theory.sh` pass that verifies the strengthened lemma |
+ | Human-readable "why" | PR description | Lives in PR; GitHub UI keeps it after merge but not in working tree |
+ 
+ PR description is the discovery-time review aid; experiments dir is the
+@@ -117,25 +113,31 @@ verification + measurement from scratch. The script must:
+ - Apply `patch.diff` to a clean checkout of `verification/l4v` at the
+   ref recorded in `measurement.json#baseline_ref`.
+ - Run `check-theory.sh --patch <patch>` (Step 3 of the spec sub-skill).
+-- Run the derivability check (Step 4.5) — verify `derivability.thy`.
++  This single pass verifies both the strengthened lemma and the inline
++  `_old` witness — no separate derivability step.
+ - Print baseline wall, trial wall, delta to stdout.
+ - Exit 0 iff all gates pass.
+ 
+-`measurement.json` schema (minimal — extend per type as needed):
++`measurement.json` schema (produced by `spec_impact.py
++--measurement-out`; extend per type as needed):
+ 
+ ```json
+ {
+   "session": "AInvs",
+-  "pattern": "C",
+   "baseline_wall_ms": 41055,
+   "trial_wall_ms": 38245,
+   "delta_pct": -6.8,
++  "wall_gate_pass": true,
+   "baseline_ref": "reports/golden-baseline/walls.json#AInvs",
+   "session_rebuild_done": false,
+   "consumers_lines": 21,
+   "consumers_files": 6,
+   "impact_verdict": "premise-weaken",
+-  "derivability_verdict": "ok"
++  "strength_score": 2.0,
++  "witness_present": true,
++  "witness_advisory_pass": true,
++  "gate_pass": true,
++  "has_weakening": false
+ }
+ ```
+ 
+diff --git a/reports/experiments/_template/derivability.thy b/reports/experiments/_template/derivability.thy
+deleted file mode 100644
+index 657b20e..0000000
+--- a/reports/experiments/_template/derivability.thy
++++ /dev/null
+@@ -1,30 +0,0 @@
+-(* TEMPLATE: derivability.thy — the A'⟹A witness lemma.
+-
+-   The _old aux lemma proves the OLD statement of the strengthened
+-   lemma, using the NEW strengthened lemma + a Hoare-monotonicity
+-   rule. Verifying this snippet via check-theory.sh confirms that
+-   anyone who previously consumed the OLD lemma can still get what
+-   they need from the NEW one — i.e. the change is a true
+-   strengthening, not just a different statement.
+-
+-   The aux lemma sits in the SAME .thy file as the strengthened
+-   lemma (so it shares the session import context). This file is
+-   a stand-alone snippet for CI replay; the same body appears in
+-   patch.diff.
+-
+-   Pattern → tactic template:
+-     C  by (rule hoare_pre[OF <new>]) simp
+-     A  by (rule hoare_strengthen_post[OF <new>]) <Q'→Q rule>
+-     A (E_R variant)
+-        by (rule hoare_strengthen_postE_R[OF <new>]) <rule>
+-     D  by (rule hoare_strengthen_post[OF <new>]) simp
+-     E  one aux per replaced component:
+-        by (rule hoare_post_imp[OF <op>_invs])
+-           (simp add: invs_def valid_state_def)
+-     B  SKIP — no old form exists for an additive lemma
+-
+-   Replace the placeholders below with the actual lemma. *)
+-
+-lemma <name>_old:
+-  "<verbatim old statement>"
+-  by <derivability tactic per pattern>
+diff --git a/reports/experiments/_template/measurement.json b/reports/experiments/_template/measurement.json
+index 5ce05e3..0bf9f88 100644
+--- a/reports/experiments/_template/measurement.json
++++ b/reports/experiments/_template/measurement.json
+@@ -1,14 +1,18 @@
+ {
+-  "_comment_": "TEMPLATE — fill in actual numbers from command.sh output. Schema in reports/experiments/README.md.",
++  "_comment_": "TEMPLATE — overwrite via `python3 tools/spec_strengthen/spec_impact.py ... --measurement-out measurement.json`. Schema in reports/experiments/README.md.",
+   "session": "AInvs",
+-  "pattern": "C",
+   "baseline_wall_ms": 0,
+   "trial_wall_ms": 0,
+   "delta_pct": 0.0,
++  "wall_gate_pass": true,
+   "baseline_ref": "reports/golden-baseline/walls.json#AInvs",
+   "session_rebuild_done": false,
+   "consumers_lines": 0,
+   "consumers_files": 0,
+   "impact_verdict": "premise-weaken",
+-  "derivability_verdict": "ok"
++  "strength_score": 0.0,
++  "witness_present": true,
++  "witness_advisory_pass": true,
++  "gate_pass": true,
++  "has_weakening": false
+ }
+diff --git a/reports/experiments/_template/patch.diff b/reports/experiments/_template/patch.diff
+index 71d80ad..2e1536d 100644
+--- a/reports/experiments/_template/patch.diff
++++ b/reports/experiments/_template/patch.diff
+@@ -7,8 +7,9 @@
+ --
+ -- The diff must include both:
+ --   (1) the strengthening (modified statement / new lemma)
+---   (2) the _old aux lemma from Step 4.5 (A'⟹A witness), placed
+---       immediately after the strengthened lemma in the .thy file.
++--   (2) the inline `<name>_old` witness lemma (A'⟹A; spec sub-skill
++--       Step 2), placed immediately after the strengthened lemma in
++--       the .thy file.
+ --
+--- Pattern B (additive) is the only case without an _old aux lemma:
+--- there's no old form to derive.
++-- Purely additive companion lemmas are the only case without an `_old`
++-- witness — there is no old form to derive.
+diff --git a/tools/spec_strengthen/spec_impact.py b/tools/spec_strengthen/spec_impact.py
+index 907089b..4ac9dce 100644
+--- a/tools/spec_strengthen/spec_impact.py
++++ b/tools/spec_strengthen/spec_impact.py
+@@ -429,7 +429,8 @@ def compute_strength_score(sd: StructuralDiff) -> tuple[float, dict]:
+ DERIVABILITY_RULES = (
+     "hoare_pre", "hoare_weaken_pre",
+     "hoare_strengthen_post", "hoare_strengthen_postE_R",
+-    "hoare_post_imp", "hoare_post_imp_R",
++    "hoare_strengthen_postE_E",
++    "hoare_post_imp", "hoare_post_impE",
+ )
+ 
+ 
+@@ -686,7 +687,7 @@ def main() -> int:
+             n_wit = len(deriv["witnesses"])
+             lines.append(
+                 f"# Derivability witness ({n_wit} found): {d_emoji} "
+-                f"{'present' if deriv['present'] else 'ABSENT — Step 4.5 incomplete'}"
++                f"{'present' if deriv['present'] else 'ABSENT — witness lemma missing from patch'}"
+             )
+         lines.append("")
+         lines.append("## Lemma deltas")

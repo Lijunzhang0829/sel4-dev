@@ -1,0 +1,50 @@
+[
+ {
+  "slot": "P",
+  "kind": "unused-premise",
+  "lemma": "some_get_page_info_kmapsD",
+  "line": 42,
+  "statement": "\\<lbrakk>get_page_info (\\<lambda>obj. get_arch_obj (kheap s obj)) pd_ref p = Some (b, a, attr, r);\n    p \\<in> kernel_mappings; valid_global_vspace_mappings s; equal_kernel_mappings s\\<rbrakk>\n   \\<Longrightarrow> (\\<exists>sz. pageBitsForSize sz = a) \\<and> r = {}",
+  "op": "",
+  "op_class": "unknown",
+  "form": "impl",
+  "evidence": "[implication lemma — assumption-weakening] conjunct `valid_global_vspace_mappings s` head `valid_global_vspace_mappings` never appears in the proof body (prefix match incl. _def/_E forms); 2 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `` is unknown; wp-chain implicit use is the trial's job",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": "valid_global_vspace_mappings s",
+  "position": null,
+  "priority": "high"
+ },
+ {
+  "slot": "P",
+  "kind": "unused-premise",
+  "lemma": "some_get_page_info_umapsD",
+  "line": 112,
+  "statement": "\\<lbrakk>get_page_info (\\<lambda>obj. get_arch_obj (kheap s obj)) pd_ref p = Some (b, a, attr, r);\n    (\\<exists>\\<rhd> pd_ref) s; p \\<notin> kernel_mappings; valid_vspace_objs s; pspace_aligned s;\n    valid_asid_table (arm_asid_table (arch_state s)) s; valid_objs s\\<rbrakk>\n   \\<Longrightarrow> (\\<",
+  "op": "",
+  "op_class": "unknown",
+  "form": "impl",
+  "evidence": "[implication lemma — assumption-weakening] conjunct `valid_asid_table (arm_asid_table (arch_state s)) s` head `valid_asid_table` never appears in the proof body (prefix match incl. _def/_E forms); 3 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `` is unknown; wp-chain implicit use is the trial's job",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": "valid_asid_table (arm_asid_table (arch_state s)) s",
+  "position": null,
+  "priority": "high"
+ },
+ {
+  "slot": "P",
+  "kind": "unused-premise",
+  "lemma": "some_get_page_info_umapsD",
+  "line": 112,
+  "statement": "\\<lbrakk>get_page_info (\\<lambda>obj. get_arch_obj (kheap s obj)) pd_ref p = Some (b, a, attr, r);\n    (\\<exists>\\<rhd> pd_ref) s; p \\<notin> kernel_mappings; valid_vspace_objs s; pspace_aligned s;\n    valid_asid_table (arm_asid_table (arch_state s)) s; valid_objs s\\<rbrakk>\n   \\<Longrightarrow> (\\<",
+  "op": "",
+  "op_class": "unknown",
+  "form": "impl",
+  "evidence": "[implication lemma — assumption-weakening] conjunct `valid_objs s` head `valid_objs` never appears in the proof body (prefix match incl. _def/_E forms); 3 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `` is unknown; wp-chain implicit use is the trial's job",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": "valid_objs s",
+  "position": null,
+  "priority": "high"
+ }
+]

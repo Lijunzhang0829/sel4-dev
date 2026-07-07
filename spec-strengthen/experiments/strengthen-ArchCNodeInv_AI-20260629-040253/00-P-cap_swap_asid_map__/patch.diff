@@ -1,0 +1,19 @@
+diff --git a/proof/invariant-abstract/ARM/ArchCNodeInv_AI.thy b/proof/invariant-abstract/ARM/ArchCNodeInv_AI.thy
+--- a/proof/invariant-abstract/ARM/ArchCNodeInv_AI.thy
++++ b/proof/invariant-abstract/ARM/ArchCNodeInv_AI.thy
+@@ -408,6 +408,15 @@
+           |rule hoare_lift_Pf [where f=arch_state])+
+   done
+ 
++lemma cap_swap_asid_map'[CNodeInv_AI_assms]:
++  "\<lbrace>valid_asid_map\<rbrace>
++     cap_swap c a c' b \<lbrace>\<lambda>rv. valid_asid_map\<rbrace>"
++  apply (simp add: cap_swap_def set_cdt_def valid_asid_map_def vspace_at_asid_def)
++  apply (rule hoare_pre)
++   apply (wp set_cap.vs_lookup|simp
++          |rule hoare_lift_Pf [where f=arch_state])+
++  done
++
+ 
+ lemma cap_swap_cap_refs_in_kernel_window[wp, CNodeInv_AI_assms]:
+   "\<lbrace>cap_refs_in_kernel_window and

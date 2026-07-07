@@ -1,0 +1,21 @@
+FAILED (33869ms)
+*** Failed to apply proof method (line 191 of "/tmp/tmp.iHOdjFWTbd/Tmp_4046b2ed7f7c03f3.thy"):
+*** goal (3 subgoals):
+***  1. \<And>rs pd pt_ref rights w.
+***        \<lbrakk>UCAST(32 \<rightarrow> 12) (p >> 20)
+***                 \<notin> kernel_mapping_slots;
+***         valid_vspace_objs s; pspace_aligned s;
+***         typ_at (AArch APageTable) (ptrFromPAddr pt_ref) s;
+***         (rs \<rhd> pd_ref) s;
+***         kheap s pd_ref = Some (ArchObj (PageDirectory pd));
+***         pd (UCAST(32 \<rightarrow> 12) (p >> 20)) =
+***         PageTablePDE pt_ref rights w;
+***         get_pt_info
+***          (\<lambda>obj.
+***              case kheap s obj of None \<Rightarrow> None
+***              | Some (ArchObj x) \<Rightarrow> Some x
+***              | Some _ \<Rightarrow> None)
+***          (ptrFromPAddr pt_ref) p =
+***         Some (b, a, attr, r);
+***         ((rs, pd_ref),
+***          VSRef

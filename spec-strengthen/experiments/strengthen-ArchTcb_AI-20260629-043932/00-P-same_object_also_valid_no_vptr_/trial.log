@@ -1,0 +1,21 @@
+FAILED (94094ms)
+*** Failed to finish proof:
+*** goal (4 subgoals):
+***  1. \<And>x31 x32 x33 x34 x33a aa ba.
+***        \<lbrakk>cap =
+***                 ArchObjectCap (PageCap x31 x32 x33 x34 (Some (aa, ba)));
+***         is_aligned x32 (pageBitsForSize x34);
+***         pageBitsForSize x34 < word_bits; x33 \<in> valid_vm_rights;
+***         wellformed_mapdata x34 (aa, ba);
+***         cap' = ArchObjectCap (PageCap x31 x32 x33a x34 None);
+***         x32 \<le> x32 + 2 ^ pageBitsForSize x34 - 1;
+***         if x31 then typ_at (AArch (ADeviceData x34)) x32 s
+***         else typ_at (AArch (AUserData x34)) x32 s;
+***         x33a \<in> valid_vm_rights; 0 < aa;
+***         aa < 2 ^ local.asid_bits\<rbrakk>
+***        \<Longrightarrow> vmsz_aligned ba x34 \<and> ba < kernel_base
+***  2. \<And>x31 x32 x33 x34 x33a aa ba ab bb.
+***        \<lbrakk>cap =
+***                 ArchObjectCap (PageCap x31 x32 x33 x34 (Some (ab, bb)));
+***         is_aligned x32 (pageBitsForSize x34);
+***         pageBitsForSize x34 < word_bits; x33 \<in> valid_vm_rights;

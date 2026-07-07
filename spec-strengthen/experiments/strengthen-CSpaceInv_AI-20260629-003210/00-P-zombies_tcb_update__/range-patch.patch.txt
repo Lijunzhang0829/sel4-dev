@@ -1,0 +1,9 @@
+253 253
+  done
+
+lemma zombies_tcb_update':
+    "\<lbrakk> zombies_final s \<rbrakk>
+     \<Longrightarrow> zombies_final (s\<lparr>kheap := (kheap s)(t \<mapsto> TCB tcb)\<rparr>)"
+    apply (simp add: zombies_final_def is_final_cap'_def2, elim allEI)
+    apply (clarsimp simp: cte_wp_at_after_update fun_upd_def)
+    done

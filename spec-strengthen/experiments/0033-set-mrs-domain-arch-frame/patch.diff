@@ -1,0 +1,34 @@
+diff --git a/proof/invariant-abstract/Ipc_AI.thy b/proof/invariant-abstract/Ipc_AI.thy
+--- a/proof/invariant-abstract/Ipc_AI.thy
++++ b/proof/invariant-abstract/Ipc_AI.thy
+@@ -1916,6 +1916,30 @@
+   by (wpsimp simp: zipWithM_x_mapM_x split_def
+                wp: mapM_x_wp_inv hoare_vcg_all_lift hoare_drop_imps)
+ 
++lemma thread_set_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> thread_set f t \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wpsimp simp: thread_set_def)
++
++lemma thread_set_domain_time[wp]:
++  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> thread_set f t \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
++  by (wpsimp simp: thread_set_def)
++
++lemma thread_set_arch_state[wp]:
++  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> thread_set f t \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
++  by (wpsimp simp: thread_set_def)
++
++lemma set_mrs_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_mrs t b m \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wp set_mrs_thread_set_dmo)
++
++lemma set_mrs_domain_time[wp]:
++  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_mrs t b m \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
++  by (wp set_mrs_thread_set_dmo)
++
++lemma set_mrs_arch_state[wp]:
++  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_mrs t b m \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
++  by (wp set_mrs_thread_set_dmo)
++
+ crunch vms[wp]: do_ipc_transfer "valid_machine_state :: 'state_ext state \<Rightarrow> bool"
+   (wp: mapM_UNIV_wp)
+ 

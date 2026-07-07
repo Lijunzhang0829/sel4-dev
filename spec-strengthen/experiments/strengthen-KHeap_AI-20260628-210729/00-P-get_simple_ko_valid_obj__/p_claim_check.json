@@ -1,0 +1,8 @@
+{
+ "ok": true,
+ "reason": "pure premise-weakening verified (strict pre-conjunct subset, identical post)",
+ "claim": "(valid_objs and obj_at (\\<lambda>ko. bound (partial_inv f ko)) ep) ==> (valid_objs) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `obj_at (\\<lambda>ko. bound (partial_inv f ko)) ep`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "dropped_conjuncts": [
+  "obj_at (\\<lambda>ko. bound (partial_inv f ko)) ep"
+ ]
+}

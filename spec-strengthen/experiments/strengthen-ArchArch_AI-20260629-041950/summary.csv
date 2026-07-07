@@ -1,0 +1,4 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-P-cap_insert_ap_invs_no_tcb_valid_,cap_insert_ap_invs_no_tcb_valid,P,named,TRIAL-FAILED,,
+01-P-retype_region_no_cap_to_obj_no_mdb_,retype_region_no_cap_to_obj_no_mdb,P,named,TRIAL-FAILED,,
+02-P-retype_region_no_cap_to_obj_no_pspace_,retype_region_no_cap_to_obj_no_pspace,P,named,TRIAL-FAILED,,

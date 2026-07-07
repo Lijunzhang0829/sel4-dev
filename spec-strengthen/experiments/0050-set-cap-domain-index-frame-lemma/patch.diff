@@ -1,0 +1,14 @@
+diff --git a/proof/invariant-abstract/CSpaceInv_AI.thy b/proof/invariant-abstract/CSpaceInv_AI.thy
+--- a/proof/invariant-abstract/CSpaceInv_AI.thy
++++ b/proof/invariant-abstract/CSpaceInv_AI.thy
+@@ -1644,6 +1644,10 @@
+   "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_cap cap a \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+   by (wpsimp simp: set_cap_def)
+ 
++lemma set_cap_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_cap cap a \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wpsimp wp: get_object_wp simp: set_cap_def | clarsimp)+
++
+ lemma descendants_inc_minor:
+   "\<lbrakk>descendants_inc m cs; mdb_cte_at (\<lambda>p. \<exists>c. cs p = Some c \<and> cap.NullCap \<noteq> c) m;
+    \<forall>x\<in> dom cs. cap_class (the (cs' x)) = cap_class (the (cs x)) \<and> cap_range (the (cs' x)) = cap_range (the (cs x))\<rbrakk>

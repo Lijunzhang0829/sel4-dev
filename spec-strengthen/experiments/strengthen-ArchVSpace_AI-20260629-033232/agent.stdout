@@ -1,0 +1,41 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future callers of pd_at_asid_unique that do not have valid_vspace_objs in scope can switch to this weaker-precondition variant.",
+  "hint_lemma": "pd_at_asid_unique",
+  "lemma_name": "pd_at_asid_unique_no_vspace_objs",
+  "anchor_line": 114,
+  "new_lemma": "lemma pd_at_asid_unique_no_vspace_objs:\n  \"\\<lbrakk> vspace_at_asid asid pd s; vspace_at_asid asid' pd s;\n     unique_table_refs (caps_of_state s);\n     valid_vs_lookup s; valid_global_objs s;\n     valid_arch_state s; asid < 2 ^ asid_bits; asid' < 2 ^ asid_bits \\<rbrakk>\n       \\<Longrightarrow> asid = asid'\"\n  apply (clarsimp simp: vspace_at_asid_def)\n  apply (drule(1) valid_vs_lookupD[OF vs_lookup_pages_vs_lookupI])+\n  apply (clarsimp simp: table_cap_ref_ap_eq[symmetric])\n  apply (clarsimp simp: table_cap_ref_def\n                 split: cap.split_asm arch_cap.split_asm option.split_asm)\n  apply (drule(2) unique_table_refsD,\n         simp+, clarsimp simp: table_cap_ref_def,\n         erule(1) asid_low_high_bits)\n   apply simp+\n  done",
+  "rationale": "The proof body of pd_at_asid_unique uses only valid_vs_lookupD, unique_table_refsD, and asid_low_high_bits. None of these rules require valid_vspace_objs. The scanner confirmed valid_vspace_objs never appears in the proof text despite 5 other conjuncts being visibly consumed, giving a strong differential signal.",
+  "strengthening_claim": "(vspace_at_asid asid pd s ∧ vspace_at_asid asid' pd s ∧ unique_table_refs (caps_of_state s) ∧ valid_vs_lookup s ∧ valid_global_objs s ∧ valid_arch_state s ∧ asid < 2^asid_bits ∧ asid' < 2^asid_bits) ⟹ (... ∧ valid_vspace_objs s ∧ ...)",
+  "grace_period_weeks": 8
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future callers of pd_at_asid_unique that do not have valid_global_objs in scope can switch to this weaker-precondition variant.",
+  "hint_lemma": "pd_at_asid_unique",
+  "lemma_name": "pd_at_asid_unique_no_global_objs",
+  "anchor_line": 114,
+  "new_lemma": "lemma pd_at_asid_unique_no_global_objs:\n  \"\\<lbrakk> vspace_at_asid asid pd s; vspace_at_asid asid' pd s;\n     unique_table_refs (caps_of_state s);\n     valid_vs_lookup s; valid_vspace_objs s;\n     valid_arch_state s; asid < 2 ^ asid_bits; asid' < 2 ^ asid_bits \\<rbrakk>\n       \\<Longrightarrow> asid = asid'\"\n  apply (clarsimp simp: vspace_at_asid_def)\n  apply (drule(1) valid_vs_lookupD[OF vs_lookup_pages_vs_lookupI])+\n  apply (clarsimp simp: table_cap_ref_ap_eq[symmetric])\n  apply (clarsimp simp: table_cap_ref_def\n                 split: cap.split_asm arch_cap.split_asm option.split_asm)\n  apply (drule(2) unique_table_refsD,\n         simp+, clarsimp simp: table_cap_ref_def,\n         erule(1) asid_low_high_bits)\n   apply simp+\n  done",
+  "rationale": "The proof body of pd_at_asid_unique never mentions valid_global_objs. The derivation goes through valid_vs_lookupD -> unique_table_refsD -> asid_low_high_bits, none of which require the global objects invariant. This is the same argument as for valid_vspace_objs and yields a parallel drop.",
+  "strengthening_claim": "(vspace_at_asid asid pd s ∧ vspace_at_asid asid' pd s ∧ unique_table_refs (caps_of_state s) ∧ valid_vs_lookup s ∧ valid_vspace_objs s ∧ valid_arch_state s ∧ asid < 2^asid_bits ∧ asid' < 2^asid_bits) ⟹ (... ∧ valid_global_objs s ∧ ...)",
+  "grace_period_weeks": 8
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Callers establishing lookup_pt_slot alignment without valid_global_objs available (e.g. after an unmap operation) can use this lighter precondition.",
+  "hint_lemma": "lookup_pt_slot_is_aligned",
+  "lemma_name": "lookup_pt_slot_is_aligned_no_global_objs",
+  "anchor_line": 1349,
+  "new_lemma": "lemma lookup_pt_slot_is_aligned_no_global_objs:\n  \"\\<lbrace>(\\<exists>\\<rhd> pd) and K (vmsz_aligned vptr sz) and K (is_aligned pd pd_bits)\n    and valid_arch_state and valid_vspace_objs and equal_kernel_mappings\n    and pspace_aligned\\<rbrace>\n     lookup_pt_slot pd vptr\n   \\<lbrace>\\<lambda>rv s. is_aligned rv (pg_entry_align sz)\\<rbrace>,-\"\n  apply (simp add: lookup_pt_slot_def)\n  apply (wp get_pde_wp | wpc)+\n  apply (clarsimp simp: lookup_pd_slot_pd)\n  apply (frule(2) valid_vspace_objsD[rotated])\n  apply simp\n  apply (rule is_aligned_add)\n   apply (case_tac \"ucast (lookup_pd_slot pd vptr && mask pd_bits >> 2) \\<in> kernel_mapping_slots\")\n    apply (frule kernel_mapping_slots_empty_pdeI)\n      apply (simp add: obj_at_def)+\n    apply clarsimp\n    apply (erule_tac x=\"ptrFromPAddr x\" in allE)\n    apply (simp add: pde_ref_def second_level_tables_def)\n    apply (erule is_aligned_weaken[OF is_aligned_global_pt])\n      apply ((simp add: invs_psp_aligned invs_vspace_objs invs_arch_state\n                        pg_entry_align_def pt_bits_def pageBits_def\n               split: vmpage_size.split)+)[3]\n   apply (drule_tac x=\"ucast (lookup_pd_slot pd vptr && mask pd_bits >> 2)\" in bspec, simp)\n   apply (clarsimp simp: obj_at_def a_type_def)\n   apply (simp split: Structures_A.kernel_object.split_asm if_split_asm\n                     arch_kernel_obj.split_asm)\n   apply (erule is_aligned_weaken[OF pspace_alignedD], simp)\n   apply (simp add: obj_bits_def pg_entry_align_def  split: vmpage_size.splits)\n  apply (rule is_aligned_shiftl)\n  apply (rule is_aligned_andI1)\n  apply (rule is_aligned_shiftr)\n  apply (case_tac sz)\n     apply (clarsimp simp: vmsz_aligned_def pg_entry_align_def\n                    elim!: is_aligned_weaken  split: vmpage_size.splits)+\n  done",
+  "rationale": "The scanner flagged valid_global_objs as never appearing in the proof body of lookup_pt_slot_is_aligned, a read-only decode operation. The proof proceeds through valid_vspace_objsD, pspace_alignedD, and is_aligned_global_pt; is_aligned_global_pt likely requires valid_arch_state but not valid_global_objs directly.",
+  "strengthening_claim": "((∃⊳ pd) ∧ vmsz_aligned vptr sz ∧ is_aligned pd pd_bits ∧ valid_arch_state ∧ valid_vspace_objs ∧ equal_kernel_mappings ∧ pspace_aligned) ⟹ (... ∧ valid_global_objs ∧ ...)",
+  "grace_period_weeks": 8
+ }
+]

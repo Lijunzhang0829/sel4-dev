@@ -1,0 +1,17 @@
+diff --git a/proof/invariant-abstract/ARM/ArchVSpaceEntries_AI.thy b/proof/invariant-abstract/ARM/ArchVSpaceEntries_AI.thy
+--- a/proof/invariant-abstract/ARM/ArchVSpaceEntries_AI.thy
++++ b/proof/invariant-abstract/ARM/ArchVSpaceEntries_AI.thy
+@@ -613,6 +613,13 @@
+    apply (wp get_cap_wp | wpc | simp split del: if_split)+
+   done
+ 
++lemma invoke_cnode_valid_pdpt_objs_no_invs:
++  "\<lbrace>valid_pdpt_objs and valid_cnode_inv i\<rbrace> invoke_cnode i \<lbrace>\<lambda>rv. valid_pdpt_objs\<rbrace>"
++  apply (simp add: invoke_cnode_def)
++  apply (rule hoare_pre)
++   apply (wp get_cap_wp | wpc | simp split del: if_split)+
++  done
++
+ crunch valid_pdpt_objs[wp]: invoke_tcb "valid_pdpt_objs"
+   (wp: check_cap_inv crunch_wps simp: crunch_simps
+        ignore: check_cap_at)

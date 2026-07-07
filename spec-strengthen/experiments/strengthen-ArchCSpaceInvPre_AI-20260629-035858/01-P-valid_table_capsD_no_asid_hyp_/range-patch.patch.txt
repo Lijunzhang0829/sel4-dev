@@ -1,0 +1,10 @@
+249 249
+  done
+
+lemma valid_table_capsD_no_asid_hyp:
+  "\<lbrakk> cte_wp_at ((=) cap) ptr s; valid_table_caps s;
+        is_pt_cap cap | is_pd_cap cap \<rbrakk>
+        \<Longrightarrow> \<forall>r \<in> obj_refs cap. obj_at (empty_table (set (second_level_tables (arch_state s)))) r s"
+  apply (clarsimp simp: cte_wp_at_caps_of_state valid_table_caps_def)
+  apply (cases ptr, fastforce)
+  done

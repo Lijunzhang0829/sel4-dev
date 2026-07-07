@@ -1,0 +1,13 @@
+FAILED (41263ms)
+*** Failed to apply initial proof method (line 317 of "/tmp/tmp.8j4q07yeEG/Tmp_e45e2c12066aa171.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>typ_at (AArch APageDirectory) r s; t i = Some r;
+***      r \<in> untyped_range cap; (ref \<unrhd> p) s\<rbrakk>
+***     \<Longrightarrow> False
+*** At command "by" (line 317 of "/tmp/tmp.8j4q07yeEG/Tmp_e45e2c12066aa171.thy")
+*** Failed to apply initial proof method (line 317 of "/tmp/tmp.8j4q07yeEG/Tmp_e45e2c12066aa171.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>typ_at (AArch APageDirectory) r s; t i = Some r;
+***      r \<in> untyped_range cap; (ref \<unrhd> p) s\<rbrakk>
+***     \<Longrightarrow> False
+*** At command "by" (line 317 of "/tmp/tmp.8j4q07yeEG/Tmp_e45e2c12066aa171.thy")

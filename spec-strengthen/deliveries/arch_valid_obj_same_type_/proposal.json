@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future callers of arch_valid_obj_same_type that do not have a_type equality available",
+ "grace_period_weeks": 8,
+ "lemma_name": "arch_valid_obj_same_type'",
+ "hint_lemma": "arch_valid_obj_same_type",
+ "anchor_line": 834,
+ "new_lemma": "lemma arch_valid_obj_same_type':\n  \"\\<lbrakk> arch_valid_obj ao s; kheap s p = Some ko \\<rbrakk>\n   \\<Longrightarrow> arch_valid_obj ao (s\\<lparr>kheap := (kheap s)(p \\<mapsto> k)\\<rparr>)\"\n  by (induction ao rule: arch_kernel_obj.induct;\n         clarsimp simp: typ_at_same_type)",
+ "rationale": "The scanner flags 'NO conjunct visibly consumed' — the strongest signal. The proof uses only `induction ao` and `clarsimp simp: typ_at_same_type`. For all ARM arch_kernel_obj constructors (ASIDPool, PageTable, PageDirectory, DataPage), arch_valid_obj unfolds to conditions on entries that are independent of the type of the replacement object k. If typ_at_same_type is used purely as a rewrite to equate typ_at before/after the kheap update, it may fire without needing a_type equality as a hypothesis (relying instead on the kheap membership fact). The trial will confirm.",
+ "strengthening_claim": "(arch_valid_obj ao s \\<and> kheap s p = Some ko) \\<Longrightarrow> (arch_valid_obj ao s \\<and> kheap s p = Some ko \\<and> a_type k = a_type ko)",
+ "anchor_text": "         clarsimp simp: typ_at_same_type)"
+}

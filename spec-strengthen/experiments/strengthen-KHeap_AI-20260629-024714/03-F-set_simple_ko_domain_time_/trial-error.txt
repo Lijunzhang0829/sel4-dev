@@ -1,0 +1,21 @@
+FAILED (43596ms)
+*** Failed to finish proof (line 1445 of "/tmp/tmp.jXgERWWQVK/Tmp_f414c0ff8ff34361.thy"):
+*** goal (2 subgoals):
+***  1. (\<forall>x xa.
+***         (well_formed_cnode_n x xa \<longrightarrow>
+***          f val = CNode x xa \<longrightarrow> \<lbrace>?Q1006\<rbrace>
+***          get_object ptr 
+***          \<lbrace>\<lambda>r s.
+***                      (\<forall>x3.
+***                          (\<exists>!y. f y = Endpoint x3) \<longrightarrow>
+***                          r = Endpoint x3 \<longrightarrow>
+***                          (\<forall>x12.
+***                              well_formed_cnode_n x x12 \<longrightarrow>
+***                              kheap s ptr =
+***                              Some (CNode x x12) \<longrightarrow>
+***                              P (domain_time s))) \<and>
+***                      (\<forall>x4.
+***                          (\<exists>!y.
+***                              f y = Notification x4) \<longrightarrow>
+***                          r = Notification x4 \<longrightarrow>
+***                          (\<forall>x12.

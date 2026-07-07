@@ -1,0 +1,16 @@
+diff --git a/proof/invariant-abstract/Ipc_AI.thy b/proof/invariant-abstract/Ipc_AI.thy
+--- a/proof/invariant-abstract/Ipc_AI.thy
++++ b/proof/invariant-abstract/Ipc_AI.thy
+@@ -53,6 +53,12 @@
+   \<lbrace>\<lambda>rv. cte_at rv\<rbrace>,-"
+   by (rule hoare_strengthen_postE_R, rule lookup_cnode_slot_real_cte, simp add: real_cte_at_cte)
+ 
++lemma lsfco_real_cte_at:
++  "\<lbrace>valid_objs and valid_cap cn\<rbrace>
++  lookup_slot_for_cnode_op f cn idx depth
++  \<lbrace>\<lambda>rv. real_cte_at rv\<rbrace>,-"
++  by (rule lookup_cnode_slot_real_cte)
++
+ declare do_machine_op_tcb[wp]
+ 
+ lemma load_ct_inv[wp]:

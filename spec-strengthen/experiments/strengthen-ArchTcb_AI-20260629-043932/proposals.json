@@ -1,0 +1,44 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future callers of same_object_also_valid that do not have cap_vptr cap = None in context",
+  "hint_lemma": "same_object_also_valid",
+  "lemma_name": "same_object_also_valid_no_vptr",
+  "anchor_line": 38,
+  "new_lemma": "lemma same_object_also_valid_no_vptr:  (* arch specific *)\n  \"\\<lbrakk> same_object_as cap cap'; s \\<turnstile> cap'; wellformed_cap cap;\n     cap_asid cap = None \\<or> (\\<exists>asid. cap_asid cap = Some asid \\<and> 0 < asid \\<and> asid \\<le> 2^asid_bits - 1);\n     cap_asid_base cap = None \\<rbrakk>\n     \\<Longrightarrow> s \\<turnstile> cap\"\n  apply (cases cap,\n         (clarsimp simp: same_object_as_def is_cap_simps cap_asid_def\n                         wellformed_cap_def wellformed_acap_def\n                         valid_cap_def bits_of_def cap_aligned_def\n                   split: cap.split_asm arch_cap.split_asm option.splits)+)\n  done",
+  "rationale": "The proof body of same_object_also_valid never mentions cap_vptr anywhere — not in any simp lemma name, frule, drule, or clarsimp hint. Dropping it yields a strictly stronger implication lemma. The proof body is copied verbatim.",
+  "strengthening_claim": "(same_object_as cap cap' \\<and> s \\<turnstile> cap' \\<and> wellformed_cap cap \\<and> cap_asid_cond \\<and> cap_asid_base cap = None) ==> (same_object_as cap cap' \\<and> s \\<turnstile> cap' \\<and> wellformed_cap cap \\<and> cap_asid_cond \\<and> cap_vptr cap = None \\<and> cap_asid_base cap = None)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  done"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future callers of same_object_also_valid that do not have cap_asid_base cap = None in context",
+  "hint_lemma": "same_object_also_valid",
+  "lemma_name": "same_object_also_valid_no_asid_base",
+  "anchor_line": 38,
+  "new_lemma": "lemma same_object_also_valid_no_asid_base:  (* arch specific *)\n  \"\\<lbrakk> same_object_as cap cap'; s \\<turnstile> cap'; wellformed_cap cap;\n     cap_asid cap = None \\<or> (\\<exists>asid. cap_asid cap = Some asid \\<and> 0 < asid \\<and> asid \\<le> 2^asid_bits - 1);\n     cap_vptr cap = None \\<rbrakk>\n     \\<Longrightarrow> s \\<turnstile> cap\"\n  apply (cases cap,\n         (clarsimp simp: same_object_as_def is_cap_simps cap_asid_def\n                         wellformed_cap_def wellformed_acap_def\n                         valid_cap_def bits_of_def cap_aligned_def\n                   split: cap.split_asm arch_cap.split_asm option.splits)+)\n  done",
+  "rationale": "The proof body of same_object_also_valid never mentions cap_asid_base anywhere — not in any simp lemma name, frule, drule, or clarsimp hint. Dropping it yields a strictly stronger implication lemma. The proof body is copied verbatim.",
+  "strengthening_claim": "(same_object_as cap cap' \\<and> s \\<turnstile> cap' \\<and> wellformed_cap cap \\<and> cap_asid_cond \\<and> cap_vptr cap = None) ==> (same_object_as cap cap' \\<and> s \\<turnstile> cap' \\<and> wellformed_cap cap \\<and> cap_asid_cond \\<and> cap_vptr cap = None \\<and> cap_asid_base cap = None)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  done"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future callers of checked_insert_tcb_invs that do not establish tcb_cap_valid in context",
+  "hint_lemma": "checked_insert_tcb_invs",
+  "lemma_name": "checked_insert_tcb_invs_no_tcb_cap_valid",
+  "anchor_line": 135,
+  "new_lemma": "lemma checked_insert_tcb_invs_no_tcb_cap_valid[wp]:  (* arch specific *)\n  \"\\<lbrace>invs and cte_wp_at (\\<lambda>c. c = cap.NullCap) (target, ref)\n        and K (is_cnode_or_valid_arch new_cap) and valid_cap new_cap\n        and K (is_pt_cap new_cap \\<or> is_pd_cap new_cap\n                         \\<longrightarrow> cap_asid new_cap \\<noteq> None)\n        and (cte_wp_at (\\<lambda>c. obj_refs c = obj_refs new_cap\n                              \\<longrightarrow> table_cap_ref c = table_cap_ref new_cap \\<and>\n                                 pt_pd_asid c = pt_pd_asid new_cap) src_slot)\\<rbrace>\n     check_cap_at new_cap src_slot\n      (check_cap_at (cap.ThreadCap target) slot\n       (cap_insert new_cap src_slot (target, ref))) \\<lbrace>\\<lambda>rv. invs\\<rbrace>\"\n  apply (simp add: check_cap_at_def)\n  apply (rule hoare_pre)\n   apply (wp get_cap_wp)\n  apply (clarsimp simp: cte_wp_at_caps_of_state)\n  apply (frule caps_of_state_valid_cap[where p=src_slot], fastforce)\n  apply (frule caps_of_state_valid_cap[where p=slot], fastforce)\n  apply (rule conjI, simp only: ex_cte_cap_wp_to_def)\n   apply (rule_tac x=slot in exI)\n   apply (clarsimp simp: cte_wp_at_caps_of_state same_object_as_cte_refs)\n   apply (clarsimp simp: same_object_as_def2 cap_master_cap_simps\n                  dest!: cap_master_cap_eqDs)\n   apply (clarsimp simp: valid_cap_def[where c=\"cap.ThreadCap x\" for x])\n   apply (erule cte_wp_atE[OF caps_of_state_cteD])\n    apply (fastforce simp: obj_at_def is_obj_defs)\n   apply clarsimp\n  apply (rule conjI)\n   apply clarsimp\n   apply (subgoal_tac \"\\<not> is_zombie new_cap\")\n    apply (simp add: same_object_zombies same_object_obj_refs)\n    apply (erule(2) zombies_final_helperE)\n      apply fastforce\n     apply (fastforce simp add: cte_wp_at_caps_of_state)\n    apply assumption\n   apply (clarsimp simp: is_cnode_or_valid_arch_def is_cap_simps\n                         is_valid_vtable_root_def)\n  apply (rule conjI)\n   apply (erule(1) checked_insert_is_derived, simp+)\n  apply (auto simp: is_cnode_or_valid_arch_def is_cap_simps)\n  done",
+  "rationale": "The proof body of checked_insert_tcb_invs never mentions tcb_cap_valid — it does not appear in any simp rule name, frule, drule, or clarsimp hint across lines 107-135. The proof body is copied verbatim with the conjunct removed from the precondition.",
+  "strengthening_claim": "(invs and cte_wp_at (\\<lambda>c. c = NullCap) (target,ref) and K is_cnode_or_valid_arch and valid_cap and K cap_asid_cond and cte_wp_at ref_cond src_slot) ==> (invs and cte_wp_at (\\<lambda>c. c = NullCap) (target,ref) and K is_cnode_or_valid_arch and valid_cap and tcb_cap_valid new_cap (target,ref) and K cap_asid_cond and cte_wp_at ref_cond src_slot)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  done"
+ }
+]

@@ -1,0 +1,6 @@
+3443 3443
+  by (wpsimp simp: set_scheduler_action_def)
+
+lemma set_scheduler_action_domain_index[wp]:
+  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_scheduler_action action \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
+  by (wpsimp simp: set_scheduler_action_def)

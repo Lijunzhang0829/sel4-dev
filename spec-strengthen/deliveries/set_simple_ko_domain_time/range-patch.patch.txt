@@ -1,0 +1,7 @@
+1441 1441
+  by (wpsimp wp: get_object_wp simp: set_object_def)
+
+lemma set_simple_ko_domain_time[wp]:
+  "set_simple_ko f ptr val \<lbrace>\<lambda>s. P (domain_time s)\<rbrace>"
+  unfolding set_simple_ko_def
+  by (wpsimp wp: set_object_domain_time get_object_wp)
