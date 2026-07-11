@@ -53,11 +53,23 @@ BODY_START = r'(apply|by|proof|using|unfolding|supply|including|subgoal|txt|have
 # context, not leakage of the deleted interior. The target theory itself is
 # excluded.
 def build_import_index(target_path):
-    """Index facts from the target's ANCESTOR theories only (BFS over imports).
-    Downstream theories (which import the target) must be excluded — their
-    facts do not exist yet at the target's position and citing them just burns
-    tries on Undefined-fact errors."""
+    """Index facts from the target's full ANCESTOR import closure — resolving
+    theory names to files ANYWHERE in l4v (lib/Monads, lib/, AInvs, ASpec...),
+    not just proof/refine/ARM. The old version only looked in the refine dir, so
+    the whole monad/Hoare library was invisible — the static pre-check then
+    false-rejected real lemmas like hoare_strengthen_post. Downstream theories
+    (which import the target) are excluded: their facts don't exist yet here."""
     from regen_extract import slice_decls
+    l4v = REPO / "verification/l4v"
+
+    # basename -> path map over the whole tree (first hit wins; skip test/spec dirs)
+    name2path = {}
+    for root, _, files in os.walk(l4v):
+        if any(seg in root for seg in ("/.git", "/autocorres/tests", "/tools")):
+            continue
+        for f in files:
+            if f.endswith(".thy"):
+                name2path.setdefault(f[:-4], os.path.join(root, f))
 
     def imports_of(path):
         try:
@@ -65,36 +77,39 @@ def build_import_index(target_path):
         except OSError:
             return []
         m = re.search(r'imports(.*?)begin', src, re.S)
-        return re.findall(r'[A-Za-z][A-Za-z0-9_.]*', m.group(1)) if m else []
+        return [t.split(".")[-1] for t in
+                re.findall(r'"?([A-Za-z][A-Za-z0-9_./]*)"?', m.group(1))] if m else []
 
-    refine = REPO / REFINE_DIR
-    seen, queue = set(), [Path(target_path).stem]
-    ancestors = set()
-    while queue:
+    seen, queue, reachable = set(), [Path(target_path).stem], []
+    while queue and len(reachable) < 2000:                 # bound the closure
         name = queue.pop()
         if name in seen:
             continue
         seen.add(name)
-        p = refine / f"{name.split('.')[-1]}.thy"
-        if not p.exists():
+        p = name2path.get(name.split("/")[-1])
+        if not p:
             continue
+        reachable.append(p)
         for imp in imports_of(p):
-            base = imp.split(".")[-1]
-            if base not in seen:
-                ancestors.add(base)
-                queue.append(base)
-    idx = {}
-    files = [refine / f"{n}.thy" for n in ancestors] + \
-            [REPO / "verification/l4v/lib/Corres_UL.thy",
-             REPO / "verification/l4v/lib/SubMonadLib.thy"]
-    for p in files:
-        if not p.exists() or os.path.abspath(p) == os.path.abspath(target_path):
+            if imp not in seen:
+                queue.append(imp)
+
+    idx, consts = {}, set()
+    for p in reachable:
+        if os.path.abspath(p) == os.path.abspath(target_path):
             continue
         src = open(p, encoding="utf-8", errors="ignore").read()
         for d in slice_decls(src):
-            if d["name"] and d["kind"] in ("lemma", "theorem", "corollary", "lemmas"):
+            if not d["name"]:
+                continue
+            if d["kind"] in ("lemma", "theorem", "corollary", "lemmas"):
                 idx.setdefault(d["name"], " ".join(d["stmt"].split())[:200])
-    return idx
+            elif d["kind"] in ("definition", "abbreviation", "fun", "primrec",
+                               "function", "record", "datatype", "type_synonym"):
+                consts.add(d["name"])
+        # cheap extra: constant names from `consts`/`definition NAME ::` heads
+        consts.update(re.findall(r'(?m)^\s*(?:definition|abbreviation)\s+([A-Za-z][A-Za-z0-9_\']+)', src))
+    return idx, consts
 
 
 def relevant_import_facts(index, stmt, err_txt=None, cap=24):
@@ -125,6 +140,47 @@ def relevant_import_facts(index, stmt, err_txt=None, cap=24):
                     if len([1 for h, _, _ in top if h == 999]) >= 6:
                         break
     return top[:cap + 6]
+
+
+def precheck_facts(body, known_facts, known_consts, known_local, own_stmt):
+    """Ultra-conservative static hallucination catch. Static parsing can't
+    reliably tell a cited fact from a constant/def/fragment/instantiation, and a
+    false reject SUPPRESSES A VALID PROOF (worse than the ~140s it saves). So we
+    only flag a token that is ALL of:
+      - in a clear FACT position (wp:/rule/intro:/dest:/elim:/OF/THEN) — NOT
+        unfolding:/simp: (those take defs & constants freely),
+      - a well-formed single fact identifier (letter start, no leading '_',
+        proper l4v prime shape), not a def (_def) / qualified name,
+      - absent from the lemma index, the constants/defs index, locals, own names,
+      - with NO reasonable prefix match in the index (a genuine invention, not a
+        near-miss the model can be nudged to).
+    This catches st_tcb_at_tcb_at' (invented composite) while passing
+    hoare_strengthen_post (indexed), valid_objs' (const), valid_objs'_maxDomain
+    (indexed), and unfolding targets."""
+    FACT_POS = re.compile(r'\b(?:wp|intro|dest|elim|rule|rule_tac|erule|drule|frule|'
+                          r'OF|THEN|induct)\b[: ]([^\n\]]*)')
+    cited = set()
+    for m in FACT_POS.finditer(body):
+        seg = m.group(1)
+        # split on separators; keep full l4v identifiers incl a single trailing prime
+        for tok in re.findall(r"[A-Za-z][A-Za-z0-9_]*'?(?:_[A-Za-z0-9_]+'?)*", seg):
+            cited.add(tok)
+    known = known_facts | known_consts | known_local \
+        | set(re.findall(r"[A-Za-z][A-Za-z0-9_']+", own_stmt))
+    SAFE = {"assms", "refl", "conjI", "impI", "allI", "exI", "ext", "TrueI",
+            "sym", "trans", "mp", "iffD1", "iffD2", "ballI", "bexI", "notI",
+            "ccontr", "disjE", "conjE", "subst", "cong", "arg_cong"}
+    missing = {}
+    for c in cited:
+        if (c in known or c in SAFE or c.endswith("_def") or c.endswith("_defs")
+                or '.' in c or c.startswith("_") or len(c) < 5):
+            continue
+        # near-match ⇒ not an invention, let the check surface it (cheap nudge)
+        base = c.rstrip("'")
+        if any(k.startswith(base[:12]) for k in known_facts):
+            continue
+        missing[c] = ""
+    return missing
 
 
 STRATEGY_HINTS = {
@@ -369,13 +425,35 @@ Rules:
 - No proofs, no prose outside the JSON fence."""
 
 
+def rank_prefix(proved, stmt, err_txt=None, cap=40):
+    """RepoCoder-style retrieval over the LOCKED prefix instead of dumping all of
+    it. Full-dump was O(N) prompt growth + 'lost in the middle' (relevant facts
+    buried among 100+). Rank by token overlap with the target statement (and the
+    current error), keep the most recent K unconditionally (locality), plus the
+    top relevance matches."""
+    if len(proved) <= cap:
+        return proved
+    toks = {t for t in re.findall(r"[A-Za-z_][A-Za-z0-9_']{4,}", stmt or "")}
+    if err_txt:
+        toks |= {t for t in re.findall(r"[A-Za-z_][A-Za-z0-9_']{5,}", err_txt)}
+    recent = proved[-8:]                       # locality: last few always in
+    pool = proved[:-8]
+    scored = sorted(pool, key=lambda ns: -(sum(1 for t in toks if t in ns[0]) * 3
+                                           + sum(1 for t in toks if t in ns[1])))
+    keep = scored[:cap - len(recent)]
+    # preserve original (dependency) order among the kept set
+    kept = set(id(x) for x in keep) | set(id(x) for x in recent)
+    return [x for x in proved if id(x) in kept]
+
+
 def item_prompt(spec, item, proved, body_hint=None, prev_body=None, errors=None,
                 human_hint=None, template_body=None, import_facts=None):
-    # FULL prefix context (was proved[-12:]): with 100+ locked facts the model
-    # was blind to 90% of what it may legitimately cite — measured to cause
-    # undefined-fact guesses and duplicate declarations. ~18KB at 106 facts.
-    ctx = "\n".join(f"  {n}: {s}" for n, s in proved) or "  (none yet)"
+    # RETRIEVED prefix context (was the full dump): relevant locked facts only.
     stmt = item["_canonical"]
+    sel = rank_prefix(proved, stmt, errors)
+    ctx = "\n".join(f"  {n}: {s}" for n, s in sel) or "  (none yet)"
+    if len(sel) < len(proved):
+        ctx += f"\n  (+{len(proved)-len(sel)} more locked facts not shown — ask by pattern if needed)"
     defs = "\n\n".join(k["text"] for k in spec.get("verbatim", []))
     defs_sec = (f"\nDefinitions present in this theory (you may unfold them, "
                 f"e.g. asUser_fetch_def):\n{defs}\n" if defs else "")
@@ -575,10 +653,41 @@ def main():
               open(exp / "snapshot.json", "w"), indent=2)
     log(f"[pre] clean, sha={sha0[:12]}")
 
-    # [0] baseline
-    ok, base_wall, _ = check_theory(tp)
-    assert ok, "baseline not green"
-    log(f"[0] baseline OK ({base_wall}ms)")
+    # STARTUP CLEANUP: a crashed/killed prior run (power outage, daily here)
+    # leaves an orphan polyml holding the Refine session flock — every check
+    # then dies "another Isabelle tool is already running". At driver startup no
+    # check of ours is running yet, so any container poly + Refine lock is stale.
+    sh(["docker", "exec", CONTAINER, "bash", "-c",
+        "pkill -9 -x poly 2>/dev/null; rm -f /tmp/isabelle-session-*.lock 2>/dev/null; true"])
+    log("[pre] cleared any stale Isabelle lock / orphan poly")
+
+    # [0] baseline — CACHED by (file sha, l4v HEAD). The original theory never
+    # changes across runs; re-checking it (~250s for Schedule_R) every resume
+    # was pure waste. Cache keyed on content+HEAD so it invalidates if either moves.
+    bcache = REPO / "reports" / "regen" / ".baseline-cache.json"
+    cache = json.load(open(bcache)) if bcache.exists() else {}
+    ckey = f"{tbase}:{sha0[:12]}:{cache.get('_head','')}"
+    cached = cache.get(tbase)
+    if cached and cached.get("sha") == sha0[:12]:
+        base_wall = cached["wall_ms"]
+        log(f"[0] baseline CACHED OK ({base_wall}ms; skipped re-check)")
+    else:
+        # baseline can transiently fail right after a container cold-start /
+        # power-restart (Isabelle not warm) — a one-shot assert killed the whole
+        # resume. Retry a few times before giving up (it's the fixed original
+        # theory; a real failure means a broken env, worth surfacing after retries).
+        base_wall = None
+        for bt in range(1, 4):
+            ok, base_wall, bout = check_theory(tp)
+            if ok:
+                break
+            log(f"[0] baseline not green (attempt {bt}/3) — container warming? retrying in 20s")
+            time.sleep(20)
+        assert ok, f"baseline not green after 3 attempts: {bout[-400:]}"
+        cache[tbase] = {"sha": sha0[:12], "wall_ms": base_wall}
+        bcache.parent.mkdir(parents=True, exist_ok=True)
+        json.dump(cache, open(bcache, "w"), indent=2)
+        log(f"[0] baseline OK ({base_wall}ms; cached)")
     orig_lines = len(tp.read_text().splitlines())
     orig_lemmas = len(re.findall(r'(?m)^(lemma|theorem|corollary)\b', tp.read_text()))
 
@@ -607,8 +716,9 @@ def main():
 
     header_comment = "(* Regenerated by regen_incr — machine proof corpus, statements are l4v ground truth *)"
 
-    import_index = build_import_index(tp)
-    log(f"[1] import-fact index: {len(import_index)} facts from imported theories")
+    import_index, import_consts = build_import_index(tp)
+    log(f"[1] import-fact index: {len(import_index)} facts, {len(import_consts)} consts "
+        f"from imported theories")
 
     # [2] PLAN (or reuse a prior run's plan on --resume-from)
     if args.resume_from:
@@ -881,6 +991,23 @@ def main():
                             "model resubmitted the IDENTICAL proof script")
                 parked = True
                 break
+            # STATIC FACT PRE-CHECK (repo symbol-table style): reject a body that
+            # cites a fact name existing NOWHERE (index + locked + own defs)
+            # BEFORE paying a ~140s check. Hallucinated names (measured:
+            # st_tcb_at_tcb_at') otherwise cost a full check to surface.
+            known_local = {n for n, _ in proved_stmts} \
+                | {x.get("name") for x in items if x.get("name")} \
+                | {k["name"] for k in spec.get("verbatim", [])}
+            missing = precheck_facts(body, set(import_index), import_consts,
+                                     known_local, it["_canonical"])
+            if missing and t < args.item_tries:
+                dym = "; ".join(f'"{b}"→ maybe {c}' if c else f'"{b}" (no match)'
+                                for b, c in missing.items())
+                err_txt = ("*** static pre-check: these cited facts do not exist "
+                           f"(skipped the prover): {dym}. Use existing names only.")
+                prev_body = body
+                log(f"  try {t}: PRE-CHECK reject — nonexistent facts: {list(missing)}")
+                continue
             locked.append((it, it["_canonical"] + "\n  " + body))
             ok, wall, out = verify_prefix()
             cluster_checks[cl] += 1

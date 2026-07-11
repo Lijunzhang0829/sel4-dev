@@ -121,3 +121,39 @@ local-only checks in between; or an intermediate compiled heap per K locks
 - All state persisted per lock (`locked.json`) → every power outage (≈daily
   here) costs only the in-flight item; `--resume-from` re-verifies the prefix
   once and continues.
+
+## Speed + robustness pass (before incremental-heap work)
+
+13. **Retrieval over full-dump prefix (RepoCoder-style).**
+    Defect: item_prompt dumped ALL locked facts (O(N) growth, lost-in-the-middle).
+    Fix: `rank_prefix` — token-overlap retrieval, top-K + recent-K, capped.
+
+14. **Import index followed imports into lib/ (was refine-dir only).**
+    Defect: index resolved theory files ONLY under proof/refine/ARM, so the
+    whole monad/Hoare library was invisible (2 hoare_ lemmas). Retrieval couldn't
+    surface combinators; the static pre-check false-rejected real lemmas
+    (hoare_strengthen_post, hoare_post_imp).
+    Fix: basename→path map over all of l4v; BFS the full ancestor import closure.
+    Index 2670 → 14274 facts (+ 2431 consts). Likely also a root cause of earlier
+    "missing combinator → raw-unfold explosion" failures.
+
+15. **Static fact pre-check, made ultra-conservative.**
+    Defect: rejecting cited facts absent from the index suppressed VALID proofs
+    (false positives on lib lemmas, on constants like valid_objs', and on
+    fragments like valid_objs'_maxDomain split by the prime).
+    Fix: only flag a token that is (a) in a clear FACT position (wp:/rule/OF/
+    elim, NOT unfolding:/simp:), (b) well-formed (no leading _, proper prime),
+    (c) absent from lemma index + consts index + locals + own names, (d) with NO
+    prefix match. Catches invented composites (st_tcb_at_tcb_at') only.
+
+16. **Baseline cache + retry + startup lock/orphan cleanup.**
+    Defect: (a) re-checking the fixed original theory (~148s Schedule_R) every
+    resume; (b) baseline transient-fail right after container cold-start assert-
+    killed the run; (c) a crashed prior run left an orphan poly holding the
+    Refine flock → every check died "another Isabelle tool is already running".
+    Fix: baseline cached by (sha, HEAD); 3× retry; driver-startup kills container
+    polys + removes stale session locks (no check of ours runs yet at startup).
+
+Still O(N²): each check re-verifies the whole prefix (prefix reverify 123s on
+resume; per-check 40→141s and growing). Next: incremental heap sealing (item 1
+in the scalability caveat) — the only fix for the dominant remaining cost.
