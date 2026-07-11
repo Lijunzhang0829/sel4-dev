@@ -351,6 +351,64 @@ def check_theory(host_path, timeout_s=None):
     return ok, (int(m.group(1)) if m else None), out
 
 
+# --------------------------------------------------------------------------- incremental heap sealing (opt-in --incremental)
+# Spike-confirmed: build prefix→heap once (~70s), then load-heap+check-new-lemma
+# ~12-20s vs ~141s reprocessing the whole prefix. Kills the O(N²) check wall.
+def _ctr_path(host_path):
+    return "/workspace/" + os.path.relpath(host_path, REPO)
+
+
+def seal_prefix(exp, header_comment, imports, sealed_items, seal_id):
+    """isabelle build the sealed portion into a heap. Returns a seal dict
+    {sess, thy, dir} or None. Sealed theory self-closes arch context."""
+    sess, thy = f"RegenSeal_{seal_id}", f"Sealed_{seal_id}"
+    sdir = exp / "seals" / str(seal_id)
+    sdir.mkdir(parents=True, exist_ok=True)
+    # qualify bare imports with the parent session (build won't auto-qualify like
+    # check-theory does): KHeap_R -> Refine.KHeap_R
+    qimports = " ".join(t if "." in t else f"{SESSION}.{t}" for t in imports.split())
+    (sdir / f"{thy}.thy").write_text(
+        render(header_comment, thy, qimports, sealed_items, close_open_arch=True))
+    (sdir / "ROOT").write_text(f"session {sess} = {SESSION} +\n  theories\n    {thy}\n")
+    t0 = time.time()
+    p = sh(["docker", "exec", "-e", "L4V_DIR=/sel4-project/verification/l4v",
+            "-e", "L4V_ARCH=ARM", CONTAINER,
+            "/workspace/verification/isabelle/bin/isabelle", "build",
+            "-d", _ctr_path(sdir), "-d", "/sel4-project/verification/l4v", "-b", sess])
+    (sdir / "build.log").write_text(p.stdout + p.stderr)
+    if p.returncode != 0:
+        return None
+    return {"sess": sess, "thy": thy, "cdir": _ctr_path(sdir),
+            "build_ms": int((time.time() - t0) * 1000)}
+
+
+def check_incremental(exp, tbase, seal, unsealed_items, cand, timeout_s=None):
+    """Load sealed prefix heap + process ONLY [unsealed tail + candidate].
+    cand = (item, text). Returns (ok, wall_ms, output)."""
+    wdir = exp / "work"
+    wdir.mkdir(parents=True, exist_ok=True)
+    wname = f"Work_{tbase}"
+    body = render("(* incremental working theory *)", wname,
+                  f"{seal['sess']}.{seal['thy']}",
+                  list(unsealed_items) + [cand], close_open_arch=True)
+    (wdir / f"{wname}.thy").write_text(body)
+    tcap = int(timeout_s or 600)
+    cmd = ["docker", "exec", "-e", "L4V_DIR=/sel4-project/verification/l4v",
+           "-e", "L4V_ARCH=ARM", CONTAINER,
+           "timeout", "--kill-after=10s", f"{tcap}s",
+           "/workspace/verification/isabelle/bin/isabelle", "process",
+           "-l", seal["sess"], "-d", seal["cdir"],
+           "-d", "/sel4-project/verification/l4v", "-T", _ctr_path(wdir / wname)]
+    t0 = time.time()
+    p = sh(cmd)
+    dt = int((time.time() - t0) * 1000)
+    out = p.stdout + p.stderr
+    if p.returncode in (124, 137):
+        out += f"\n*** killed after {tcap}s wall-time ceiling. Search-explosion guard."
+    ok = (p.returncode == 0) and not re.search(r'^\*\*\*', out, re.M)
+    return ok, dt, out
+
+
 # --------------------------------------------------------------------------- assembly
 def render(header_comment, theory_name, imports, rendered_items, close_open_arch=True):
     """Deterministic file from item list. Consecutive arch_context items are
@@ -614,6 +672,15 @@ def main():
                          "(a fixed item + its replan-descendant helpers). Over cap "
                          "-> park the whole cluster (a hard family shouldn't drain "
                          "the global budget). Measured: bitmap cluster hit 20+.")
+    ap.add_argument("--incremental", action="store_true",
+                    help="INCREMENTAL HEAP SEALING (spike-confirmed ~11x on late "
+                         "checks): build the locked prefix into a heap once, then "
+                         "each check loads it + processes only the unsealed tail + "
+                         "candidate (~13s vs ~141s). Re-seals every --seal-every "
+                         "locks. Falls back to whole-prefix check if a seal build fails.")
+    ap.add_argument("--seal-every", type=int,
+                    default=int(os.environ.get("REGEN_SEAL_EVERY", "15")),
+                    help="re-seal after this many new locks accumulate unsealed")
     ap.add_argument("--human-budget", type=int,
                     default=int(os.environ.get("REGEN_HUMAN_BUDGET", "2")),
                     help="max human-supplied BODIES per scope. Human intervention "
@@ -803,9 +870,35 @@ def main():
     checks = 0
     theory_progress = exp / f"{tbase}.thy"
 
+    seal = {"cur": None, "upto": 0, "id": 0}   # incremental heap state
+
+    def do_seal():
+        """(Re)build a heap of the whole current locked prefix. On success sets
+        seal['cur']/'upto'; on failure disables incremental (fall back)."""
+        if not args.incremental or not locked:
+            return
+        seal["id"] += 1
+        s = seal_prefix(exp, header_comment, spec["imports"], locked, seal["id"])
+        if s:
+            seal["cur"], seal["upto"] = s, len(locked)
+            log(f"  [sealed {len(locked)} locked into heap {s['sess']} "
+                f"({s['build_ms']}ms); checks now incremental]")
+        else:
+            seal["cur"] = None
+            log("  [seal build FAILED — falling back to whole-prefix checks]")
+
+    def maybe_reseal():
+        if args.incremental and seal["cur"] and len(locked) - seal["upto"] >= args.seal_every:
+            do_seal()
+
     def verify_prefix():
+        # verify_prefix is called AFTER locked.append(candidate). Incremental:
+        # load the sealed heap + process only [unsealed tail + the candidate].
         nonlocal checks
         checks += 1
+        if seal["cur"] is not None:
+            return check_incremental(exp, tbase, seal["cur"],
+                                     locked[seal["upto"]:-1], locked[-1])
         theory_progress.write_text(render(header_comment, tbase, spec["imports"], locked))
         return check_theory(theory_progress)
 
@@ -891,12 +984,20 @@ def main():
                 i = len(items)
             locked_keys |= {(l[0].get("name"), l[0]["kind"]) for l in locked}
             i = 0
-        # one check validates the whole reused prefix
-        ok, wall, out = verify_prefix()
-        assert ok, "resumed prefix does not check — resume aborted"
         save_locked()
-        log(f"[3] resume: {len(locked)} items locked from prior run "
-            f"[prefix re-verified, {wall}ms]; continuing at item {i+1}/{len(items)}")
+        if args.incremental:
+            # the seal BUILD is itself a full verification of the prefix — if it
+            # builds green, the prefix is green. Replaces the ~123s whole-prefix
+            # reverify with a one-time seal that also gives us the fast heap.
+            do_seal()
+            assert seal["cur"] is not None, "resumed prefix seal failed — resume aborted"
+            log(f"[3] resume: {len(locked)} items locked; sealed into heap "
+                f"(incremental checks active); continuing at item {i+1}/{len(items)}")
+        else:
+            ok, wall, out = verify_prefix()      # verify_prefix on full locked (no cand)
+            assert ok, "resumed prefix does not check — resume aborted"
+            log(f"[3] resume: {len(locked)} items locked from prior run "
+                f"[prefix re-verified, {wall}ms]; continuing at item {i+1}/{len(items)}")
     quota_halt = False
     from collections import defaultdict
     cluster_checks = defaultdict(int)
@@ -950,6 +1051,7 @@ def main():
                 i += 1
                 continue
             log(f"  locked (def) [{wall}ms]")
+            maybe_reseal()
             i += 1
             continue
 
@@ -1016,6 +1118,7 @@ def main():
                 log(f"  try {t}: GREEN — locked [{wall}ms] (checks={checks})")
                 proved_stmts.append((name, " ".join(it["_canonical"].split())[:160]))
                 save_locked()
+                maybe_reseal()
                 passed = True
                 break
             locked.pop()

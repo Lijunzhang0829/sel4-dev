@@ -157,3 +157,22 @@ local-only checks in between; or an intermediate compiled heap per K locks
 Still O(N²): each check re-verifies the whole prefix (prefix reverify 123s on
 resume; per-check 40→141s and growing). Next: incremental heap sealing (item 1
 in the scalability caveat) — the only fix for the dominant remaining cost.
+
+## Incremental heap sealing (the O(N²) fix) — opt-in `--incremental`
+
+17. **Whole-prefix re-verification → sealed heap + unsealed tail.**
+    Defect: every check re-processed the whole growing locked prefix against the
+    Refine heap → O(N²) (per-check 40s→141s→toward the 600s ceiling; resume paid
+    a ~123s full reverify). This was the dominant remaining wall.
+    Fix: `seal_prefix` runs `isabelle build` of the locked prefix into a child
+    session heap (parent = Refine); the build IS a full verification. Each
+    subsequent check (`check_incremental`) loads that heap and processes ONLY
+    [unsealed tail + candidate] via `isabelle process -l <seal>`. Re-seal every
+    `--seal-every` locks. Seal-build failure → auto-fallback to whole-prefix check.
+    Measured (Schedule_R, 117-lemma prefix): seal build 145s (once, replaces the
+    123s reverify); per-check 141s → **11.3s (12.5×)**; working theory 800→17
+    lines. Cross-heap fact citation verified (a new lemma cites a sealed lemma).
+    Bounds: imports qualified with the parent session for `build`; `timeout`
+    wall-ceiling on the incremental `process` (isabelle process ignores
+    check-theory.sh's env var). Default OFF — the stable whole-prefix path is
+    untouched.
