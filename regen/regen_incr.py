@@ -61,15 +61,30 @@ def build_import_index(target_path):
     (which import the target) are excluded: their facts don't exist yet here."""
     from regen_extract import slice_decls
     l4v = REPO / "verification/l4v"
+    # ARCH ISOLATION: theory basenames (Schedule_R, KHeap_R, ...) exist under
+    # ARM/, RISCV64/, X64/, AARCH64/ — a naive first-hit map silently pulled
+    # OTHER architectures' lemmas into the index (measured: bitmap_lookup_queue_
+    # is_max_non_empty exists only in RISCV64/X64, AARCH64_H.* cited on an ARM
+    # build → Undefined-fact stuck roots). Exclude non-target arch dirs entirely.
+    arch = os.environ.get("L4V_ARCH", "ARM")
+    OTHER_ARCH = {"ARM", "ARM_HYP", "RISCV64", "X64", "AARCH64"} - {arch}
 
-    # basename -> path map over the whole tree (first hit wins; skip test/spec dirs)
+    def wrong_arch(root):
+        return any(f"/{a}/" in root + "/" or root.endswith(f"/{a}") for a in OTHER_ARCH)
+
+    # basename -> path map over the tree, ARM-only; prefer /ARM/ paths on ties.
     name2path = {}
     for root, _, files in os.walk(l4v):
         if any(seg in root for seg in ("/.git", "/autocorres/tests", "/tools")):
             continue
+        if wrong_arch(root):
+            continue
         for f in files:
             if f.endswith(".thy"):
-                name2path.setdefault(f[:-4], os.path.join(root, f))
+                cur = name2path.get(f[:-4])
+                # prefer a path that explicitly carries the target arch
+                if cur is None or (f"/{arch}/" in os.path.join(root, f) and f"/{arch}/" not in cur):
+                    name2path[f[:-4]] = os.path.join(root, f)
 
     def imports_of(path):
         try:
@@ -219,9 +234,17 @@ class QuotaExhausted(Exception):
 
 
 def is_quota(raw):
-    low = (raw or "").lower()
-    return any(m in low for m in ("weekly limit", "usage limit", "hit your limit",
-                                  "quota", "resets ", "upgrade to increase"))
+    # FALSE-POSITIVE FIX: a proof body / reasoning text can legitimately contain
+    # "quota"/"resets"/"upgrade", which used to halt a run mid-way despite ample
+    # quota. Require the CLI's specific limit-exhaustion phrasing AND that the
+    # whole response is short (a real quota notice is a brief system line; a real
+    # generation is long and contains proof text).
+    low = (raw or "").strip().lower()
+    if len(low) > 400 or "lemma" in low or "apply" in low or "```" in low:
+        return False
+    strong = ("hit your weekly limit", "hit your usage limit", "usage limit reached",
+              "you've hit your limit", "reached your limit", "rate limit exceeded")
+    return any(m in low for m in strong)
 
 
 def is_transient(raw):
