@@ -249,6 +249,47 @@ corpus-level property and a paper-grade finding on machine-vs-human proof reuse:
 divergent interiors interoperate once neither side shadows the shared import
 closure.
 
+## Peeling a leaf wall — combinator-selection directive (entry 24)
+
+24. **stateAssert-combinator directive + strategy-aware guillotine (validated).**
+    Diagnosing why the leaf `setCurThread_corres` (a 14-line human proof, high tower
+    value — gates switchToThread/switchToIdleThread) stuck at 0 tries of progress.
+    Forensics on the prior run's item dir showed the failure was NOT what the leaf
+    taxonomy assumed: the machine HAD created both scaffolding helpers it needed
+    (`setCurThread_corres_helper` for modify↔modify, and its own `idle_thread_not_queued`
+    — in a weaker 2-hyp/union form than the human's 3-hyp/∃-neg). The proof was
+    structurally almost right; it died at step 2 on `rule corres_stateAssert_implied
+    [where P'=idleThreadNotQueued]` — a UNIFICATION failure, because `P'` in that
+    combinator is ABSTRACT-typed and `idleThreadNotQueued` is a concrete-state
+    predicate. The right combinator is `corres_stateAssert_add_assertion` (no P').
+    BOTH are in imports — so this is neither a retrieval nor a creation gap: it is
+    fine-grained discrimination inside a family of near-synonym combinators. The
+    generic `same_goals` hint (fires on 2 identical errors) only says "switch
+    strategy"; it never names the discriminator, and the old guillotine stuck the
+    item out at try 2 (try1≡try2). Fix: (a) a `stateassert` STRATEGY_HINT that names
+    the family and the discriminator ("add_assertion folds Q' into the concrete
+    guard, no P'; don't pass a concrete predicate to the abstract P' — that's why
+    your rule didn't unify"); fires generically on any stalled `stateAssert` corres,
+    so a close under it stays pure-machine. (b) strategy-aware guillotine: stuck-out
+    only when the SAME directive category fails twice, not on identical errors alone
+    (so a newly-triggered directive gets a fair try). RESULT (pure machine,
+    `--tools ""`, generic directive, zero per-lemma hint): the directive MOVED the
+    model off the wrong combinator — try1 `corres_stateAssert_implied` → try2
+    `corres_stateAssert_add_assertion` (sig changed; the original try1≡try2 deadlock
+    that killed it at try 2 was broken). Progress advanced 2 tries / 2 walls deeper
+    and EXPOSED the next wall precisely: the final concrete→abstract discharge —
+    `idleThreadNotQueued` (¬ in ksReadyQueues) ↔ abstract `idle_thread_not_queued`
+    (¬ in ready_queues) — where the model's `fastforce simp: ready_queues_relation_def
+    valid_queues_def …` SEARCH-EXPLODES. The model self-diagnosed it correctly ("drop
+    valid_queues_def, derive via the targeted lemma") but couldn't land the targeted
+    discharge: the human bridges it with `in_ready_q_tcbQueued_eq` (an import lemma)
+    used as `dest`, NOT by unfolding `_relation_def` under fastforce. LESSON: leaf
+    walls are LAYERED — a "leaf" that fails is often several thin walls stacked
+    (combinator-selection, then cross-relation-discharge), and a generic directive
+    peels one and reveals the next. Corollary next directive: on a discharge that
+    explodes while unfolding a `*_relation_def`, point at the specific cross/transfer
+    lemma (`*_cross`, `in_ready_q_tcbQueued_eq`) instead of the raw unfold.
+
 ## Ceiling reached (pure machine, zero human)
 
 Schedule_R contract arm, interface layer **73/97 (~75%)** pure machine. The

@@ -221,6 +221,21 @@ STRATEGY_HINTS = {
                 "the wrong direction (over-splitting/over-unfolding). The target is "
                 "usually provable in a FEW steps; retreat to a shorter, more targeted "
                 "script rather than expanding."),
+    "stateassert": ("The concrete side still has an UNDISCHARGED `stateAssert Q' []` with "
+                    "no abstract counterpart, and your `rule` FAILED TO UNIFY (the goal is "
+                    "untouched). This is a combinator-SELECTION error — pick the right one "
+                    "(all in scope):\n"
+                    "  - `corres_stateAssert_add_assertion` (USUAL CHOICE): folds Q' into the "
+                    "concrete guard; you then prove `Q' s'` from the ABSTRACT precondition via "
+                    "the state relation. No extra instantiation needed.\n"
+                    "  - `corres_stateAssert_ignore`: use when Q' is already implied by the "
+                    "concrete guard in scope.\n"
+                    "  - `corres_stateAssert_implied` takes an ABSTRACT-typed side condition "
+                    "P'; do NOT pass the concrete assert predicate to P' (type mismatch — that "
+                    "is exactly why your `rule ...[where P'=...]` did not unify).\n"
+                    "After stripping the assert, discharge Q' by crossing the state relation "
+                    "(e.g. `frule state_relation_ready_queues_relation` + the abstract fact "
+                    "that the asserted property holds)."),
 }
 
 
@@ -1147,6 +1162,7 @@ def main():
         # lemma item (fixed or helper): generate body, verify, retry
         prev_body, err_txt, passed, parked = None, None, False, False
         prev_sig, prev_nblocks, prev_ngoals = None, None, None
+        prev_strat_key = None
         for t in range(1, args.item_tries + 1):
             hint = None
             if err_txt:
@@ -1239,6 +1255,15 @@ def main():
                 loc = localize_timeout(it, body, locked, verify_prefix_of, idir)
                 if loc:
                     strat += f"\n{loc}"
+            elif 'stateAssert' in out and 'Failed to apply proof method' in out:
+                # a corres_stateAssert_* rule mis-selected/mis-instantiated leaves
+                # the whole goal untouched with the stateAssert still present. The
+                # generic same_goals hint doesn't name the discriminating combinator;
+                # this one does. Generic (fires for any stalled stateAssert corres),
+                # so a close under it stays pure-machine (measured: setCurThread_corres
+                # picked corres_stateAssert_implied[where P'=<concrete pred>], a type
+                # mismatch — the right rule is corres_stateAssert_add_assertion).
+                strat = STRATEGY_HINTS["stateassert"]
             elif re.search(r'\?[A-Z]', out) and ('No such variable' in out
                                                  or 'schematic' in out.lower()
                                                  or re.search(r'\?Q\d?\b', out)):
@@ -1247,6 +1272,8 @@ def main():
                 strat = STRATEGY_HINTS["growing"]
             elif sig == prev_sig:
                 strat = STRATEGY_HINTS["same_goals"]
+            strat_key = next((k for k, v in STRATEGY_HINTS.items()
+                              if strat and strat.startswith(v[:30])), None)
             err_txt = f"Error blocks this try: {nblocks}{trend}.\n{summary}"
             if strat:
                 err_txt += f"\n\nSTRATEGY DIRECTIVE: {strat}"
@@ -1283,13 +1310,19 @@ def main():
                 parked = True
                 break
             # NO-PROGRESS guard 2: two consecutive tries, identical error signature
-            if sig == prev_sig:
+            # AND the SAME strategy directive already shown. Guillotining on identical
+            # errors alone kills a run the moment a NEWLY-triggered directive appears
+            # (measured: setCurThread stuck at try2 before its stateassert directive —
+            # first issued from try1's error — got a fair shot). Require the model to
+            # have SEEN this directive category once and still not moved.
+            if sig == prev_sig and strat_key == prev_strat_key:
                 queue_stuck(exp, it, idir, t, err_txt,
-                            "two consecutive tries produced IDENTICAL errors "
-                            "(normalized signature) — feedback not moving the model")
+                            "two consecutive tries produced IDENTICAL errors under the "
+                            "SAME strategy directive — feedback not moving the model")
                 parked = True
                 break
             prev_sig, prev_nblocks, prev_body, prev_ngoals = sig, nblocks, body, n_goals
+            prev_strat_key = strat_key
         if passed or parked:
             i += 1
             continue
