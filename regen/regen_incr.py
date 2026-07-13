@@ -211,6 +211,12 @@ STRATEGY_HINTS = {
                    "a high-level combinator (corres_split / wp lemma) named in the "
                    "context; if you were combinator-driven, try unfolding one more "
                    "layer. Change the FIRST tactic."),
+    "schematic": ("A goal still has an UNRESOLVED SCHEMATIC (?Q, ?P …) — your wp/rule "
+                  "chain left a postcondition undetermined. Reorder so the schematic "
+                  "is fixed before it's used: apply the wp rule that DETERMINES the "
+                  "postcondition last, add `hoare_vcg_conj_lift`/`hoare_vcg_imp_lift` "
+                  "glue, or give the intermediate assertion explicitly with `rule_tac "
+                  "Q=... in ...`. Do not leave `?Q` for the final `clarsimp`."),
     "growing": ("Your subgoal count GREW versus the previous attempt — you are going "
                 "the wrong direction (over-splitting/over-unfolding). The target is "
                 "usually provable in a FEW steps; retreat to a shorter, more targeted "
@@ -527,8 +533,49 @@ def rank_prefix(proved, stmt, err_txt=None, cap=40):
     return [x for x in proved if id(x) in kept]
 
 
+def _name_tokens(name):
+    # split camelCase + underscores; drop generic filler
+    toks = re.findall(r'[A-Z]?[a-z0-9]+|[A-Z]+(?![a-z])', name or "")
+    return {t.lower() for t in toks} - {"tcb", "the", "of", "to", "in", "s", "wp"}
+
+
+def sibling_examples(item, locked, cap=2, max_lines=26):
+    """Reflexion-style few-shot: find already-LOCKED proofs in the same family as
+    the target (name/suffix overlap) and return their full text as patterns. A
+    proven sibling (e.g. tcbSchedEnqueue_corres locked → tcbSchedAppend_corres) is
+    the strongest zero-human seed for the deep orchestration walls. Pure machine:
+    the sibling was itself machine-proved."""
+    tgt = item.get("name") or ""
+    tt = _name_tokens(tgt)
+    if not tt:
+        return []
+    # suffix signal: same trailing family (_corres, _valid_bitmapQ, _invs', ...)
+    tsuf = re.search(r"(_[A-Za-z0-9']+'?)$", tgt)
+    tsuf = tsuf.group(1) if tsuf else None
+    scored = []
+    for it, text in locked:
+        n = it.get("name")
+        if not n or n == tgt or it["kind"] == "verbatim_def":
+            continue
+        st = _name_tokens(n)
+        score = len(tt & st) * 2
+        if tsuf and n.endswith(tsuf):
+            score += 4
+        if score >= 4:                     # need real family kinship
+            scored.append((score, len(text), n, text))
+    scored.sort(key=lambda x: (-x[0], x[1]))   # best kinship, then shortest proof
+    out = []
+    for _, _, n, text in scored[:cap]:
+        lines = text.splitlines()
+        if len(lines) > max_lines:
+            lines = lines[:max_lines] + ["  (* ... *)"]
+        out.append("\n".join(lines))
+    return out
+
+
 def item_prompt(spec, item, proved, body_hint=None, prev_body=None, errors=None,
-                human_hint=None, template_body=None, import_facts=None):
+                human_hint=None, template_body=None, import_facts=None,
+                siblings=None):
     # RETRIEVED prefix context (was the full dump): relevant locked facts only.
     stmt = item["_canonical"]
     sel = rank_prefix(proved, stmt, errors)
@@ -563,6 +610,11 @@ Previous proof script:
 {prev_body[:4000]}
 ```
 Fix it (or take a different route). Same output rules."""
+    if siblings:
+        ex = "\n\n".join(f"```isabelle\n{e}\n```" for e in siblings)
+        p += (f"\n\nSIMILAR LEMMAS ALREADY PROVED in this run (same family — reuse "
+              f"their PROOF STRUCTURE/tactics as a template; adapt names to the "
+              f"target):\n{ex}")
     if import_facts:
         fx = "\n".join(f"  {n}: {s}" for _, n, s in import_facts)
         p += (f"\n\nPossibly relevant facts from IMPORTED theories (fixed "
@@ -1093,11 +1145,14 @@ def main():
                 (idir / "human-hint.txt").write_text(hh)
                 log(f"  [human hint active for {name}]")
             imp = relevant_import_facts(import_index, it["_canonical"], err_txt)
+            sibs = sibling_examples(it, locked) if args.arm != "template" else None
+            if sibs and t == 1:
+                log(f"  [few-shot: {len(sibs)} sibling proof(s) from same family]")
             reply = claude_call(item_prompt(spec, it, proved_stmts,
                                             body_hint=hint, prev_body=prev_body,
                                             errors=err_txt, human_hint=hh,
                                             template_body=orig_bodies.get(name),
-                                            import_facts=imp),
+                                            import_facts=imp, siblings=sibs),
                                 args.model, args.timeout,
                                 str(idir / f"gen-{t}.ndjson"))
             body = fenced(reply, "isabelle")
@@ -1120,11 +1175,17 @@ def main():
             # cites a fact name existing NOWHERE (index + locked + own defs)
             # BEFORE paying a ~140s check. Hallucinated names (measured:
             # st_tcb_at_tcb_at') otherwise cost a full check to surface.
+            # STATIC PRE-CHECK is only worth its false-positive risk when a real
+            # check is EXPENSIVE (~140s). With --incremental the check is ~13s, so
+            # the check itself is the cheapest, most reliable oracle — skip the
+            # pre-check (it kept false-rejecting real base-HOL/lib lemmas: hoare_*,
+            # disj_cong, valid_objs'). Only run it in the slow non-incremental path.
             known_local = {n for n, _ in proved_stmts} \
                 | {x.get("name") for x in items if x.get("name")} \
                 | {k["name"] for k in spec.get("verbatim", [])}
-            missing = precheck_facts(body, set(import_index), import_consts,
-                                     known_local, it["_canonical"])
+            missing = ({} if args.incremental else
+                       precheck_facts(body, set(import_index), import_consts,
+                                      known_local, it["_canonical"]))
             if missing and t < args.item_tries:
                 dym = "; ".join(f'"{b}"→ maybe {c}' if c else f'"{b}" (no match)'
                                 for b, c in missing.items())
@@ -1164,6 +1225,10 @@ def main():
                 loc = localize_timeout(it, body, locked, verify_prefix_of, idir)
                 if loc:
                     strat += f"\n{loc}"
+            elif re.search(r'\?[A-Z]', out) and ('No such variable' in out
+                                                 or 'schematic' in out.lower()
+                                                 or re.search(r'\?Q\d?\b', out)):
+                strat = STRATEGY_HINTS["schematic"]
             elif prev_ngoals is not None and n_goals is not None and n_goals > prev_ngoals:
                 strat = STRATEGY_HINTS["growing"]
             elif sig == prev_sig:

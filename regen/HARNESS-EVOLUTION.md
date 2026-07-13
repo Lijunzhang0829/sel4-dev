@@ -176,3 +176,37 @@ in the scalability caveat) — the only fix for the dominant remaining cost.
     wall-ceiling on the incremental `process` (isabelle process ignores
     check-theory.sh's env var). Default OFF — the stable whole-prefix path is
     untouched.
+
+## Few-shot + retrieval-fix pass (harness optimization approaching its ceiling)
+
+18. **Arch contamination in the index (fixed).** build_import_index walked all
+    of l4v; per-arch theory basenames let RISCV64/X64/AARCH64 lemmas into an ARM
+    build's index → Undefined-fact stuck roots. Fixed: exclude non-L4V_ARCH dirs.
+19. **is_quota false-positive (fixed).** Bare "quota"/"resets" in a proof body
+    halted a run despite ample quota. Fixed: require CLI limit phrasing + short body.
+20. **Static pre-check RETIRED under --incremental.** ③'s whole value was saving
+    a ~140s check; with incremental heaps a check is ~13s, so the check itself is
+    the cheapest oracle. ③ kept false-rejecting real base-HOL/lib lemmas (hoare_*,
+    disj_cong, valid_objs'). Gated to the slow non-incremental path only. LESSON:
+    optimizations reconfigure each other — ① made ③ net-negative.
+21. **Few-shot from locked siblings (Reflexion memory).** On generation, inject
+    up to 2 already-locked proofs from the same name-family as templates. Measured:
+    STRUCTURE TRANSFER works (tcbSchedAppend_corres adopted tcbSchedEnqueue_corres's
+    cross-guard chain, reached 2 residual goals vs prior total failure) — but did
+    NOT crack the deep roots; the tcbSched*_corres family is gated by the
+    heap-list root tcbQueueAppend_corres, and bitmap roots have no proving sibling.
+22. **wp-schematic strategy hint.** On an unresolved ?Q schematic, direct the
+    model to reorder wp / add hoare_vcg glue / give the assertion explicitly.
+
+## Ceiling reached (pure machine, zero human)
+
+Schedule_R contract arm, interface layer **73/97 (~75%)** pure machine. The
+remaining ~24 stuck roots survive ALL harness levers (full-lib retrieval,
+few-shot structure transfer, 12x-faster iteration, strategy hints). They are a
+few genuine capability roots — heap-list corres (tcbQueueAppend_corres), bitmap
+L1/L2 word arithmetic (isHighestPrio_corres + family), wp-orchestration, and
+search-explosion timeouts — with the rest of each family few-shot-transferable
+but dependency-gated on those roots. Time is now 98% opus generation (median
+174s, tail 24min on hard cases); check is 1% (incremental). Further harness
+optimization has low expected yield; the walls are opus's deep-proof ceiling,
+addressable only by human root-unlock (budgeted) or a stronger prover model.
