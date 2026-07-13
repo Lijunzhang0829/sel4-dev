@@ -226,18 +226,28 @@ in the scalability caveat) — the only fix for the dominant remaining cost.
     not a no-op on an existing corpus — a real re-run forces that proof onto the
     imported form (or a renamed helper).
 
-**Composability finding (the real result of path 1).** The human root-unlock does
-not compose as a clean drop-in, and the reason is structural, not a one-off bug:
-the machine invents its OWN interior decomposition — its own helper names and
-signatures — and these diverge from the human's. A human top-level proof is
-entangled with the human's specific interior lemma *forms*; dropped onto the
-machine interior it fails at the first signature/namespace divergence (here, an
-import-shadow). Fixing the shadow removes THIS divergence point, but the walls
-are plural: each regenerated helper is a potential mismatch. So "crack a root →
-unlock the family via few-shot" is cheaper than "paste the human root," because
-few-shot regenerates the family *against the machine's own interior*, whereas a
-human proof must be *ported* to it. This is a corpus-level (not lemma-level)
-property and is itself a paper-grade finding about machine-vs-human proof reuse.
+**Composability finding (the real result of path 1) — EMPIRICALLY CLOSED.**
+Hypothesis going in: the machine invents its OWN interior decomposition (helper
+names + signatures), so a human top-level proof — entangled with the *human's*
+interior lemma forms — would fail at the first divergence when dropped onto the
+machine interior, and the divergences would be *plural* (one per regenerated
+helper). Test: rename the single import-shadowing helper out of the way (machine
+`tcbQueueHead_iff_tcbQueueEnd` → `_M`, so the human's citation resolves to the
+imported general form) and re-check the human `tcbSchedAppend_corres` body
+against the 138-locked prefix. RESULT: **OK (237547ms) — green end-to-end.** The
+plural-divergence fear was *falsified*: there was exactly ONE blocking
+divergence (the namespace shadow); once removed, the human root body composed
+cleanly all the way to `done` against the machine-regenerated interior. So:
+(a) the machine interior is compatible *enough* with a human proof that a single
+namespace fix suffices — the interiors agree on the imported-lemma substrate,
+they only clashed on a name the machine should never have redefined; (b) "crack
+a root (human-supplied), unlock the family" (root破族解) IS viable — the human
+root now locks, and few-shot can regenerate the rest of the family against it;
+(c) the guard (entry 23) is not just defensive hygiene — it is what makes
+human/machine proof interoperability possible at all on this corpus. This is a
+corpus-level property and a paper-grade finding on machine-vs-human proof reuse:
+divergent interiors interoperate once neither side shadows the shared import
+closure.
 
 ## Ceiling reached (pure machine, zero human)
 
