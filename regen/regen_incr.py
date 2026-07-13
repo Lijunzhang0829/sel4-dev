@@ -876,6 +876,20 @@ def main():
         plan = json.loads(fenced(reply, "json"))
         items = plan["items"]
     # validate + canonicalize
+    # drop plan helpers that shadow an IMPORT lemma: the import already provides
+    # the fact, and a same-named divergent helper silently shadows it, breaking
+    # composability (see replan filter below for the tcbQueueHead_iff_tcbQueueEnd
+    # case). Downstream items citing the name resolve to the imported version.
+    _shadow = [it for it in items
+               if it["kind"] == "helper"
+               and it.get("name") in import_index
+               and it.get("name") not in defs_by_name]
+    for it in _shadow:
+        log(f"[2] plan helper `{it['name']}` shadows an IMPORT lemma — dropped "
+            f"(use the imported one)")
+    if _shadow:
+        items = [it for it in items if it not in _shadow]
+
     seen_fixed, seen_defs = set(), set()
     for it in items:
         if it["kind"] == "fixed":
@@ -1298,15 +1312,24 @@ def main():
             continue
         it["_replanned"] = True
         # name-collision pre-check: a replan helper reusing an existing item/
-        # locked name causes "Duplicate fact declaration" at check time
-        # (measured on arch_switchToIdleThread_corres) — filter them out.
+        # locked name causes "Duplicate fact declaration"; reusing an IMPORT name
+        # is worse — it SHADOWS the imported lemma with a divergent (specialized)
+        # statement, silently breaking composability (measured: machine's
+        # tcbQueueHead_iff_tcbQueueEnd shadowed TcbAcc_R's general version, no `ts`
+        # → a human proof citing it failed "No such variable ?ts"). A helper that
+        # duplicates an import is redundant anyway — the import already provides it.
         taken = {x.get("name") for x in items} | {l[0].get("name") for l in locked}
 
         def _fresh(hs):
             out = []
             for h in hs:
-                if h.get("name") in taken:
-                    log(f"  replan helper `{h.get('name')}` collides with existing name — dropped")
+                nm = h.get("name")
+                if nm in taken:
+                    log(f"  replan helper `{nm}` collides with existing item — dropped")
+                    continue
+                if nm in import_index or nm in import_consts:
+                    log(f"  replan helper `{nm}` shadows an IMPORT lemma — dropped "
+                        f"(use the imported one; don't redefine it)")
                     continue
                 out.append(h)
             return out

@@ -198,6 +198,47 @@ in the scalability caveat) — the only fix for the dominant remaining cost.
 22. **wp-schematic strategy hint.** On an unresolved ?Q schematic, direct the
     model to reorder wp / add hoare_vcg glue / give the assertion explicitly.
 
+## Human root-unlock probe → the composability wall
+
+23. **Import-shadowing helpers (fixed).** Surfaced while testing the "crack a root,
+    unlock the family" hypothesis: injecting the *human* proof of the fixed root
+    `tcbSchedAppend_corres` over the 138-locked machine prefix. It checked ~85% of
+    its 194 lines, then failed `*** No such variable in theorem: "?ts"` on
+    `apply (cut_tac ts="..." in tcbQueueHead_iff_tcbQueueEnd)`. Root cause: the
+    machine had regenerated a helper **named `tcbQueueHead_iff_tcbQueueEnd`**
+    (origin=replan) with a *specialized* statement
+    (`ksReadyQueues_asrt s ⟹ (tcbQueueHead (ksReadyQueues s (d,p)) = None) = …`, no
+    `ts`), which **shadowed the imported general lemma** in TcbAcc_R.thy
+    (`list_queue_relation ts q nexts prevs ⟹ tcbQueueHead q ≠ None ⟷ …`, has `ts`).
+    The human proof cites the imported form by its `ts` variable; the shadow won
+    name resolution → the variable vanished. The prior name-collision check only
+    guarded against locked/plan item names — **not import names**. Fix: at both
+    plan-validate and replan-filter, drop any helper whose name is in
+    `import_index`/`import_consts` (`build_import_index(Schedule_R)` = 14274 facts;
+    the culprit and all three human-cited helpers — tcbQueueHead_iff_tcbQueueEnd,
+    list_queue_relation_nil, heap_ls_append — are all in it, so all get protected).
+    The import already provides the fact; a same-named divergent helper is both
+    redundant and a silent shadow. LESSON: a regenerated interior does not just
+    need to be *internally* green — its helper NAMESPACE must not collide with the
+    import closure, or proofs written against the imports (human proofs, or the
+    machine's own later imports) break invisibly. Caveat: the shadow helper was
+    cited by one other locked proof (`tcbSchedAppend_valid_mdb'`), so the fix is
+    not a no-op on an existing corpus — a real re-run forces that proof onto the
+    imported form (or a renamed helper).
+
+**Composability finding (the real result of path 1).** The human root-unlock does
+not compose as a clean drop-in, and the reason is structural, not a one-off bug:
+the machine invents its OWN interior decomposition — its own helper names and
+signatures — and these diverge from the human's. A human top-level proof is
+entangled with the human's specific interior lemma *forms*; dropped onto the
+machine interior it fails at the first signature/namespace divergence (here, an
+import-shadow). Fixing the shadow removes THIS divergence point, but the walls
+are plural: each regenerated helper is a potential mismatch. So "crack a root →
+unlock the family via few-shot" is cheaper than "paste the human root," because
+few-shot regenerates the family *against the machine's own interior*, whereas a
+human proof must be *ported* to it. This is a corpus-level (not lemma-level)
+property and is itself a paper-grade finding about machine-vs-human proof reuse.
+
 ## Ceiling reached (pure machine, zero human)
 
 Schedule_R contract arm, interface layer **73/97 (~75%)** pure machine. The
