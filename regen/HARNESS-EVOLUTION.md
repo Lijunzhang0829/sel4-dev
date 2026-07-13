@@ -290,6 +290,38 @@ closure.
     explodes while unfolding a `*_relation_def`, point at the specific cross/transfer
     lemma (`*_cross`, `in_ready_q_tcbQueued_eq`) instead of the raw unfold.
 
+## Wall B root: `defs` deleted by the keepset — first tower-leaf CLOSED (entry 25)
+
+25. **`defs`-style spec definitions must be kept (keepset bug) — setCurThread_corres
+    GREEN, pure machine.** Peeling entry-24's wall A exposed wall B: try2 hit
+    `*** Undefined fact: "idleThreadNotQueued_def"`, and try3/4 (after dropping that
+    unfold) `*** killed after 600s` — a fastforce search-explosion. Root cause is NOT
+    a tactic: `idleThreadNotQueued` is the concrete predicate `setCurThread` asserts,
+    and its body lives in `defs idleThreadNotQueued_def:` on Schedule_R line 676 —
+    the design-spec pattern (declare the constant `consts'` in KernelStateData_H,
+    give its body via `defs` in the proof theory). The extractor's `DECL_KW` matched
+    `definition` but NOT `defs`, so this declaration was invisible: never tracked,
+    never kept — mode-A stripped it as private interior. But a `defs` is a DEFINITION,
+    not a provable obligation: the machine cannot regenerate it (there is nothing to
+    prove), and a kept concrete op that mentions the constant is un-dischargeable
+    without it — the model either cites the missing fact (undefined) or brute-forces
+    an OPAQUE predicate until fastforce explodes. Fix (regen_extract.py): add `defs`
+    to DECL_KW/NAME_RE and classify every `defs` as KEPT_DEF unconditionally — keep
+    it verbatim, like the code it defines. RESULT: with `idleThreadNotQueued_def`
+    restored to the keepset AND the entry-24 stateassert directive active, the leaf
+    `setCurThread_corres` locks GREEN pure-machine (try4, 13.6s, `--tools ""`, zero
+    per-lemma hint). The green proof uses `corres_stateAssert_add_assertion` (wall A),
+    unfolds `idleThreadNotQueued_def` (wall B1), and discharges via the cross lemma
+    `not_queued_curThread_state_relation` — NOT the exploding fastforce (wall B2
+    vanished: B1 and B2 were the SAME root — an opaque predicate forces brute force;
+    restore its definition and the clean path opens). LESSON (mode-A methodology): the
+    contract/interior split MUST classify definitional commands (`defs`, giving bodies
+    to spec `consts'`) as KEEP — they are spec surface, not regenerable proof. A single
+    mis-bucketed `defs` silently made an entire leaf (and its tower above) unprovable.
+    Two GENERIC harness fixes (combinator directive + keepset defs-retention), no
+    per-lemma assistance, cracked the first tower-bottom leaf and its dependents
+    (switchToThread/switchToIdleThread lose their setCurThread blocker).
+
 ## Ceiling reached (pure machine, zero human)
 
 Schedule_R contract arm, interface layer **73/97 (~75%)** pure machine. The

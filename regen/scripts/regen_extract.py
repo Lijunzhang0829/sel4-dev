@@ -21,13 +21,14 @@ Usage:
 import argparse, glob, json, os, re, sys
 
 # Top-level Isabelle declaration keywords we care to slice on (column 0).
-DECL_KW = (r'lemma|theorem|corollary|lemmas|definition|abbreviation|primrec|'
+DECL_KW = (r'lemma|theorem|corollary|lemmas|definition|defs|abbreviation|primrec|'
            r'fun|function|interpretation|global_interpretation|sublocale|'
            r'instantiation|instance|schematic_goal|named_theorems|declare|'
            r'crunch|crunches|record|datatype|type_synonym|axiomatization')
 DECL_RE = re.compile(r'^(' + DECL_KW + r')\b(.*)$')
-# name capture for the named kinds
-NAME_RE = re.compile(r'^(lemma|theorem|corollary|lemmas|definition|abbreviation|'
+# name capture for the named kinds. `defs NAME_def:` writes the fact name on the
+# `defs` line before a colon — capture it so the def can be reference-closed/kept.
+NAME_RE = re.compile(r'^(lemma|theorem|corollary|lemmas|definition|defs|abbreviation|'
                      r'primrec|fun|function|schematic_goal)\s+'
                      r'([A-Za-z0-9_\']+)\s*(\[[^\]]*\])?')
 PROOF_RE = re.compile(r'^\s*(by|apply|using|unfolding|proof|supply|done|qed|\.\.|\.|sorry|oops)\b')
@@ -141,6 +142,16 @@ def main():
             if d["bucket"] == "PRIVATE" and d["name"] in all_scope_defs \
                and d["kind"] in ("definition", "abbreviation", "fun", "primrec", "function") \
                and re.search(r'\b' + re.escape(d["name"]) + r'\b', kept_stmt_text):
+                d["bucket"] = "KEPT_DEF"
+            # `defs NAME_def: "c s ≡ ..."` gives the DEFINITIONAL body of an
+            # already-declared (design-spec `consts'`) constant. It is a definition,
+            # not a provable obligation — the machine cannot regenerate it, and a
+            # kept concrete op that mentions the constant is un-dischargeable without
+            # it (measured: setCurThread asserts `idleThreadNotQueued`, whose
+            # `defs idleThreadNotQueued_def` was deleted → the proof hits "Undefined
+            # fact" / a fastforce search-explosion trying to reason about an opaque
+            # predicate). Keep every `defs` verbatim, like the code it defines.
+            elif d["kind"] == "defs":
                 d["bucket"] = "KEPT_DEF"
 
     # emit
