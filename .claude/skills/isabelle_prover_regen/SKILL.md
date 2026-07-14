@@ -1,6 +1,6 @@
 ---
 name: isabelle-prover-regen
-description: "Corpus-level regeneration of seL4 refinement proofs. Split the stack at the Haskell pivot into two halves (abstract+haskell, or haskell+C); fix the TWO adjacent CODE artifacts verbatim, keep only the op-level refinement CONTRACT SURFACE (the top-level corres/ccorres statements) as the verification oracle, delete everything beneath it, and have an LLM regenerate the WHOLE proof corpus that connects the two artifacts. Then benchmark the machine corpus against the human one at SYSTEM-LEVEL AGGREGATE (total build wall, proof LOC, lemma count, robustness) — not lemma-level diff, not pass-rate. Use when studying whether an LLM can rebuild a refinement layer's proof engineering and whether the machine corpus is better or worse than the ~20-person-year human one."
+description: "LLM proof engineering for large proof repositories, on seL4. Split the stack at the Haskell pivot; fix the TWO adjacent CODE artifacts verbatim, keep only the op-level refinement CONTRACT SURFACE (top-level corres/ccorres statements) as the oracle, delete everything beneath it, and have a tool-less LLM regenerate the WHOLE proof corpus that connects the two artifacts. The core question is NOT per-lemma pass-rate — it is how the machine ENGINEERS proofs in a large, mature, structurally-complex repo: does it reuse, organize compositionally, propose general lemmas, integrate with the existing code organization, and stay maintainable? Evaluate on FIVE repo-level metrics (integration / generality / compositionality / dedup / maintainability), machine vs the ~20-person-year human corpus. A rigorously-localized 'machine engineers worse, and here is the gap' is a first-class result."
 ---
 
 # Regen — regenerate the proof corpus between two code artifacts, benchmark LLM vs human
@@ -36,15 +36,67 @@ deliberately a level up on both axes:
   lemma statement, fill each body one at a time" — is explicitly **not** this
   skill: it collapses back into lemma-level infill, hands the LLM the human's
   proof decomposition, and forces the machine output to hug the original.
-- **Comparison = system-level aggregate, not lemma-level diff, not pass-rate.**
-  The endpoints pin correctness (contracts green = correct), so the result is a
-  macro comparison of the two corpora: **total build wall vs the golden
-  baseline, total proof LOC, lemma/def count, robustness to endpoint
-  perturbation.** The unit of result is "the machine rebuilt the abstract⊒haskell
-  proof; in aggregate it is X% larger / Y% slower / found Z fewer abstractions,"
-  not "lemma N passed." A rigorously localized "the machine corpus is **worse**,
-  and here is the aggregate gap and where it concentrates" is a **first-class
-  result**, exactly as valuable as "the machine corpus is better."
+- **Comparison = repo-level proof ENGINEERING, not lemma-level diff, not
+  pass-rate.** The endpoints pin correctness (contracts green = correct), so the
+  result is how the two corpora ENGINEER the proof — measured on the **five
+  repo-level metrics** below (integration / generality / compositionality / dedup
+  / maintainability), backed by system-level aggregates (total build wall, proof
+  LOC, lemma/def count). The unit of result is "the machine's proofs are
+  monolithic (fan-out 0.22 vs 2.16), its lemmas one-off (reuse ≤1 vs ≤7), it
+  re-invents more than it reuses," not "lemma N passed." A rigorously localized
+  "the machine engineers **worse**, and here is the gap and where it concentrates"
+  is a **first-class result**, exactly as valuable as "the machine engineers better."
+
+## Problem setting: LLM proof engineering for large proof repositories
+
+The sharpened framing (supersedes "is the machine as good as 20 person-years"):
+
+> **The core question is not whether an LLM can prove an isolated lemma. It is
+> whether, dropped into a large, mature, structurally-complex proof repository,
+> an LLM can REFACTOR, REUSE, ORGANIZE, and EXTEND the existing proofs.** All
+> questions are framed around the REPO, never a single lemma. The machine does
+> not have to WIN — it has to be CHARACTERIZED. "The machine engineers proofs
+> differently, and less compositionally, and here are the numbers" is the result.
+
+Evaluate on **five repo-level metrics** (each computable statically on the
+machine corpus + the human theory; each names a concrete measurement):
+
+| # | Metric | Question | Measurement |
+|---|---|---|---|
+| **1** | **Integration** | Does the machine proof fit the existing code organization? | # import-namespace collisions (shadow guard telemetry), respect for theory-DAG layering + the `[wp]`/`[simp]` attribute pool |
+| **2** | **Generality** | Are its proposed lemmas general enough? | downstream **reuse count** of each machine helper vs each human helper (higher = more general) |
+| **3** | **Compositionality** | Is the proof compositional or monolithic? | per-proof **local fan-out** (how many local lemmas each proof rests on) + support-lemmas-per-target |
+| **4** | **Dedup** | Does it reduce duplicate proofs, or re-invent existing facts? | # helpers that re-derive an existing import (name/semantic collision) vs # net-new-reusable helpers |
+| **5** | **Maintainability** | Is the proof script robust/maintainable? | ratio of targeted `rule`/projection tactics vs explosion-prone `fastforce`/`auto` over big defs; brittleness under endpoint perturbation |
+
+**First-version numbers (Schedule_R, machine 138-locked contract arm vs human
+theory, 2026-07 — the baseline that guides harness work; full record in
+`regen/HARNESS-EVOLUTION.md` entry 26):**
+
+- **Generality:** machine helper reuse mean **0.15, max 1**, 85% one-off; human
+  **0.65, max 7**, 64% one-off → machine lemmas ~**4× less reused**, never
+  reused more than once.
+- **Compositionality:** machine per-proof local fan-out median **0** (mean 0.22);
+  human median **2** (mean 2.16, max 13); support/target **0.89 vs 7.42** →
+  machine proofs are near-**monolithic** (~8–10× less decomposed). NOTE: the
+  earlier impression that the machine "over-factors" (e.g. `setCurThread_corres_helper`
+  abstracting `modify`) was ONE example; systematically the machine **under-factors**.
+- **Dedup:** of 65 machine helpers, **14 re-invent an existing import** (22%), only
+  **7 are net-new-reusable** (11%), 44 are one-off scaffolding → **re-invention >
+  net-new**; net reuse is NEGATIVE.
+
+**Unifying finding: the machine does LOCAL, MONOLITHIC proof engineering** — it
+closes each obligation in near-isolation, emits mostly throwaway scaffolding, and
+frequently re-derives facts that already exist; the human does LIBRARY-level
+engineering (deep decomposition into general, reused lemmas). **The LLM's deficit
+is not single-point proving ability — it is proof ORGANIZATION.** This directly
+sets harness direction (below): the harness must reward reuse of imports (shadow
+guard, done) and of already-locked helpers, and reward general lemma design — not
+just supply stronger tactics.
+
+Caveats to carry with every number: (a) human reuse is counted WITHIN one theory
+and is therefore UNDER-counted (human lemmas are reused downstream) → the true gap
+is larger; (b) numbers are the contract-arm cut; recompute per corpus.
 
 ## Split at the Haskell pivot — two halves, each regenerates only PROOF
 

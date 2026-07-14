@@ -322,6 +322,56 @@ closure.
     per-lemma assistance, cracked the first tower-bottom leaf and its dependents
     (switchToThread/switchToIdleThread lose their setCurThread blocker).
 
+## Repo-level proof-engineering metrics → harness direction (entry 26)
+
+26. **First repo-level proof-engineering measurement — the numbers that redirect
+    harness work.** Problem setting sharpened to "LLM proof engineering for large
+    proof repositories": the question is not per-lemma pass-rate but how the machine
+    REUSES / ORGANIZES / GENERALIZES proofs vs the human corpus. Five metrics
+    (integration / generality / compositionality / dedup / maintainability). First
+    numbers, Schedule_R machine 138-locked (contract arm, 20260712) vs the human
+    theory, computed statically:
+
+    - **Generality (helper downstream reuse):** machine mean **0.15, max 1**, 85%
+      one-off; human **0.65, max 7**, 64% one-off. Machine lemmas ~4× less reused,
+      NEVER reused more than once. (Human `sch_act_wf` reused 7×; no machine helper >1.)
+    - **Compositionality (per-proof local fan-out):** machine median **0** (mean
+      0.22, max 2); human median **2** (mean 2.16, max 13). support/target **0.89
+      vs 7.42**. Machine proofs are near-MONOLITHIC. Corrects an earlier qualitative
+      claim: the machine `setCurThread_corres_helper` (abstracting `modify`) was ONE
+      example of over-factoring; SYSTEMATICALLY the machine UNDER-factors (median
+      fan-out 0 = most machine proofs rest on zero local lemmas).
+    - **Dedup:** of 65 machine helpers, **14 re-invent an existing import** (22% —
+      e.g. `getIdleThread_corres`, `setSchedulerAction_corres`, both imported corres,
+      re-proved verbatim), only **7 net-new-reusable** (11%), 44 one-off. Re-invention
+      (14) > net-new-reusable (7): NET REUSE IS NEGATIVE.
+    - Caveat: human reuse counted WITHIN Schedule_R only → under-counts (human lemmas
+      reused downstream); true gap is larger.
+
+    **Unifying finding: the machine does LOCAL, MONOLITHIC proof engineering** — closes
+    each obligation in near-isolation, mostly throwaway scaffolding, frequently
+    re-derives existing facts. The human does LIBRARY-level engineering. The LLM's
+    deficit is proof ORGANIZATION, not single-point proving.
+
+    **Harness direction this sets (the standing to-do list, priority order):**
+    1. **Reuse-of-imports** — DONE (entry 23 shadow guard). Extend: warn/deprioritize
+       when a proposed helper's STATEMENT (not just name) duplicates an import.
+    2. **Reuse-of-locked-helpers** — surface already-locked helpers of adjacent
+       targets in the proposer context and reward citing them (few-shot does this for
+       structure; add explicit "prefer an existing lemma over a new one" pressure so
+       the 44 one-offs shrink).
+    3. **Reward general lemma design** — when the same fact is needed by ≥2 targets,
+       steer the machine to state it ONCE as a shared helper rather than inline it per
+       target (attacks the fan-out-0 monolith pattern + the max-reuse-1 ceiling).
+    4. **Maintainability** — the projection-over-unfold directive (relation_explosion,
+       entry-25-adjacent) is the tactic-brittleness lever; keep converting
+       fastforce-over-big-def into targeted projection.
+
+    The metrics are the SCOREBOARD for harness changes: a harness improvement is only
+    real if it moves fan-out / reuse / dedup toward the human distribution, not just
+    the green count. Recompute the five metrics after any harness change that touches
+    proposal/planning.
+
 ## Ceiling reached (pure machine, zero human)
 
 Schedule_R contract arm, interface layer **73/97 (~75%)** pure machine. The
