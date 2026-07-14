@@ -40,6 +40,11 @@ REFINE_DIR = os.environ.get("REGEN_REFINE_DIR", "verification/l4v/proof/refine/A
 L4V_TREE = "verification/l4v"
 SESSION = os.environ.get("REGEN_SESSION", "Refine")
 CONTAINER = os.environ.get("REGEN_CONTAINER", "sel4-l4v")
+
+# Premise library (proven-lemma DB with file/theory), populated in main(). Module
+# globals so item_prompt / the replan filter can use it without signature churn.
+PREMISE_RECORDS = []          # [{name, stmt, theory, file, kind}, ...] import closure
+FACT_THEORY = {}              # name -> theory (for [theory] tags + collision awareness)
 CTR_CHECK = "/workspace/.claude/skills/isabelle_prover/scripts-container/check-theory.sh"
 
 BODY_START = r'(apply|by|proof|using|unfolding|supply|including|subgoal|txt|have|show)\b'
@@ -221,7 +226,19 @@ STRATEGY_HINTS = {
                 "the wrong direction (over-splitting/over-unfolding). The target is "
                 "usually provable in a FEW steps; retreat to a shorter, more targeted "
                 "script rather than expanding."),
-    "stateassert": ("The concrete side still has an UNDISCHARGED `stateAssert Q' []` with "
+    "relation_explosion": ("Your proof DID NOT TERMINATE, and it unfolds a big relation "
+                    "definition (`state_relation_def` / a `*_relation_def`) under "
+                    "`simp`/`fastforce`/`clarsimp` — that relation is HUGE and blows up the "
+                    "search. Do NOT `simp add: state_relation_def`. Instead cross the "
+                    "relation with its TARGETED PROJECTION lemma and work from that: "
+                    "`frule state_relation_ready_queues_relation` (for ready-queue facts), "
+                    "`state_relation_pspace_relation`, `state_relation_sched_act_relation`, "
+                    "`...`; then unfold only the SMALL sub-relation you need "
+                    "(`ready_queues_relation_def`, `ready_queue_relation_def`) and instantiate "
+                    "with `drule_tac x=<dom> in spec` / `x=<prio>`. Discharge cross-guards via "
+                    "the specific `*_cross` lemma (e.g. `st_tcb_at_runnable_cross`), not a raw "
+                    "`fastforce` over the whole state relation."),
+    "stateassert": ("The concrete side still has an UNDISCHARGED `stateAssert Q' []` with"
                     "no abstract counterpart, and your `rule` FAILED TO UNIFY (the goal is "
                     "untouched). This is a combinator-SELECTION error — pick the right one "
                     "(all in scope):\n"
@@ -631,10 +648,12 @@ Fix it (or take a different route). Same output rules."""
               f"their PROOF STRUCTURE/tactics as a template; adapt names to the "
               f"target):\n{ex}")
     if import_facts:
-        fx = "\n".join(f"  {n}: {s}" for _, n, s in import_facts)
-        p += (f"\n\nPossibly relevant facts from IMPORTED theories (fixed "
-              f"environment, cite freely — prefer these over unfolding raw "
-              f"definitions):\n{fx}")
+        fx = "\n".join(
+            f"  [{FACT_THEORY.get(n, '?')}] {n}: {s}" for _, n, s in import_facts)
+        p += (f"\n\nPossibly relevant PREMISES from IMPORTED theories ([theory] "
+              f"disambiguates same-named lemmas across files — cite the qualified "
+              f"one on collision). Fixed environment, cite freely — prefer these "
+              f"over unfolding raw definitions:\n{fx}")
     if body_hint:
         p += f"\n\nHint: {body_hint}"
     if human_hint:
@@ -876,6 +895,21 @@ def main():
     import_index, import_consts = build_import_index(tp)
     log(f"[1] import-fact index: {len(import_index)} facts, {len(import_consts)} consts "
         f"from imported theories")
+    # premise library: same ancestor closure, but records file/theory and keeps
+    # same-name collisions (import_index setdefault drops them). Powers [theory]
+    # tags on retrieved premises + the replan reuse-gate. Best-effort; a failure
+    # here must not kill the run (the token index above already covers retrieval).
+    global PREMISE_RECORDS, FACT_THEORY
+    try:
+        sys.path.insert(0, str(REPO / "regen"))
+        from premise_db import build as _pdb_build
+        PREMISE_RECORDS, _pmeta, _ = _pdb_build(tp, write=False)
+        for r in PREMISE_RECORDS:
+            FACT_THEORY.setdefault(r["name"], r["theory"])
+        log(f"[1] premise library: {_pmeta['n_records']} records, "
+            f"{_pmeta['n_collision_names']} same-name collisions (file-disambiguated)")
+    except Exception as e:
+        log(f"[1] premise library unavailable ({e}); retrieval falls back to token index")
 
     # [2] PLAN (or reuse a prior run's plan on --resume-from)
     if args.resume_from:
@@ -1247,7 +1281,15 @@ def main():
                 n_goals = int(gm.group(1))
             strat = None
             if "killed after" in out and "wall-time ceiling" in out:
-                strat = STRATEGY_HINTS["timeout"]
+                # relation-unfold explosion (measured: ready_qs_runnable_cross,
+                # setCurThread B2) — `simp add: state_relation_def` unfolds the whole
+                # (huge) refinement relation. The generic timeout hint says "avoid
+                # fastforce"; this one names the PROJECTION lemmas + sub-relations to
+                # use instead. Fires when the exploding body touches a *_relation_def.
+                if re.search(r'\bstate_relation_def\b|\b\w*_relation_def\b', body or ""):
+                    strat = STRATEGY_HINTS["relation_explosion"]
+                else:
+                    strat = STRATEGY_HINTS["timeout"]
                 # IMPROVEMENT 1 — localize the exploding step (timeout was a
                 # black hole: agent couldn't see WHERE it hung). Bisect the
                 # apply-steps: a truncated prefix either fails FAST with residual
@@ -1364,6 +1406,29 @@ def main():
                     log(f"  replan helper `{nm}` shadows an IMPORT lemma — dropped "
                         f"(use the imported one; don't redefine it)")
                     continue
+                # premise reuse-gate: exact-name shadows are dropped above; here we
+                # catch NEAR-named library lemmas — a proposed helper that is likely a
+                # re-invention / misname / hallucination of an existing premise
+                # (measured: ready_qs_runnable_cross, tcbQueueAppend_corres). Don't
+                # drop (it may be genuinely new), but surface the neighbours in `why`
+                # so the model cites/specializes an existing lemma instead of proving
+                # a fresh one — the dedup lever.
+                if PREMISE_RECORDS:
+                    try:
+                        from premise_db import recall_name
+                        near = recall_name(PREMISE_RECORDS, nm, k=3)["fuzzy"]
+                        if near:
+                            hint = "; ".join(
+                                f"{r['name']} [{r['theory']}]: {r['stmt'][:80]}"
+                                for r in near)
+                            h["why"] = (h.get("why", "") +
+                                        f" [reuse-gate: existing library lemmas with "
+                                        f"similar names — cite/instantiate one of these "
+                                        f"if it serves, don't reprove: {hint}]")
+                            log(f"  replan helper `{nm}` near library premises: "
+                                f"{[r['name'] for r in near]}")
+                    except Exception:
+                        pass
                 out.append(h)
             return out
 
