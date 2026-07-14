@@ -69,6 +69,11 @@ reports/baseline/*
 !reports/repair/
 !reports/repair/**
 
+# coevolve-benchmark/ — change-induced 修复 benchmark 战役的本地档案:
+# 索引+快照(数据真相源=B 机 coevolve 分支,回溯用四元组)。Tracked.
+!reports/coevolve-benchmark/
+!reports/coevolve-benchmark/**
+
 test_output.log
 
 # Claude Code: per-user/per-machine permission overrides — gitignored
