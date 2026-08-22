@@ -1,9 +1,21 @@
 ---
 name: isabelle-prover-regen
-description: "LLM proof engineering for large proof repositories, on seL4. Split the stack at the Haskell pivot; fix the TWO adjacent CODE artifacts verbatim, keep only the op-level refinement CONTRACT SURFACE (top-level corres/ccorres statements) as the oracle, delete everything beneath it, and have a tool-less LLM regenerate the WHOLE proof corpus that connects the two artifacts. The core question is NOT per-lemma pass-rate — it is how the machine ENGINEERS proofs in a large, mature, structurally-complex repo: does it reuse, organize compositionally, propose general lemmas, integrate with the existing code organization, and stay maintainable? Evaluate on FIVE repo-level metrics (integration / generality / compositionality / dedup / maintainability), machine vs the ~20-person-year human corpus. A rigorously-localized 'machine engineers worse, and here is the gap' is a first-class result."
+description: "LLM proof engineering for large proof repositories, on seL4. Split the stack at the Haskell pivot; fix adjacent CODE artifacts and the op-level corres/ccorres CONTRACT SURFACE, delete everything beneath it, and regenerate Refine then CRefine with session-global planning, theory-DAG scheduling, generated lemma DAGs, and premise-provenance auditing. Treat theories as scheduling/sealing units, not isolated infill tasks. Evaluate integration / generality / compositionality / dedup / maintainability against the human corpus; a rigorously-localized negative is a first-class result."
 ---
 
 # Regen — regenerate the proof corpus between two code artifacts, benchmark LLM vs human
+
+## Current executable architecture
+
+Use `regen/proof_session_runner.py` for new Refine generation work. It
+orchestrates independent `File Planner`, `Lemma Prover`, `Graph Revision
+Agent`, and `Isabelle Checker` modules. File planning contains generated
+theorem nodes only; external premises are retrieved at node execution time.
+Only the revision agent may modify a certified graph, and Isabelle decides all
+GREEN/RED states. M0-M3 provide only the sanitized contracts, clean Isabelle
+environment, and legal premise service.
+
+Read `regen/MODULAR-PROOF-PIPELINE.md` before starting or resuming a run.
 
 seL4 is a stack of **three code artifacts** — **abstract spec** (top) ⊒
 **Haskell design spec** (middle) ⊒ **C** (bottom) — plus the **proof** that
@@ -31,11 +43,12 @@ Prior seL4 work (Selene 27% → AutoReal 51.67% → Stepwise 77.6%) does
 deliberately a level up on both axes:
 
 - **Granularity = the whole proof corpus between two fixed code artifacts, not
-  the lemma.** We delete and regenerate everything beneath the contract
-  surface in dependency order. Operating per-theory or per-lemma — "keep every
-  lemma statement, fill each body one at a time" — is explicitly **not** this
-  skill: it collapses back into lemma-level infill, hands the LLM the human's
-  proof decomposition, and forces the machine output to hug the original.
+  the lemma.** Delete and regenerate everything beneath the contract surface
+  in dependency order. A theory or lemma may be a scheduling/checkpoint unit,
+  but never an isolated benchmark boundary supplied with the original target-
+  session interior. "Keep every human lemma statement and fill each body" is
+  explicitly **not** this skill: it hands the machine the human decomposition
+  and forces the output to hug the original.
 - **Comparison = repo-level proof ENGINEERING, not lemma-level diff, not
   pass-rate.** The endpoints pin correctness (contracts green = correct), so the
   result is how the two corpora ENGINEER the proof — measured on the **five
@@ -114,17 +127,106 @@ Do **Part 1** first. CRefine is the build critical path and hits the heaviest
 init wall; prove the idea on the lighter Refine seam before paying CRefine's
 cost.
 
+## Session-staged repo-level architecture
+
+Keep the two settings distinct. Setting A hides the human target-session file
+architecture and asks the model to create files, contract ownership, imports,
+generated theorem statements, and proofs. It remains deferred.
+
+Current Setting B fixes only the Proof/Support classification, Proof-theory file
+slots, contract-to-file assignment, external endpoints, parents, and unchanged
+Support theories. It does **not** preserve human Proof-theory imports or any
+other human Proof command. The model generates each complete Proof theory,
+including its imports, theorem statements, attributes, declaration order, and
+proofs.
+
+Generate Refine first. A generated Proof theory may import frozen environment
+theories and already sealed generated Proof theories. Seal and publish each
+successful theory before another file can retrieve its declarations. Once all
+Refine contracts are green, clean-build and seal generated Refine; CRefine must
+then use that exact generated heap.
+
+The generated theorem DAG contains only nodes that must be proved by this
+campaign: fixed contract roots, generated obligation-theorem nodes that perform
+meaningful contract proof steps, and generated helper leaves that encapsulate
+independently reusable facts. Existing premises are not graph nodes. They are
+retrieved for each proof attempt and recorded as actual dependencies. A contract
+may be proved directly, and a helper may be shared; do not create cosmetic
+wrapper nodes.
+
+The Session Planner emits one evidence-grounded layered Proof-file generation
+list for each session, then tracks pending, sealed, failed, skipped, and retry
+status while the runner traverses it. It may use public contract statements and
+normalized frozen-Support unlock facts. It may record the M3 snapshot identity,
+but it never reads premise records or human Proof imports to choose the order,
+and it never proposes theorem statements. A single audited M4 model call may
+propose evidence-citing priority edges; deterministic code validates them and
+emits the final list. It still owns staging, Support unlock publication,
+generated import acyclicity, sealing, and Refine-to-CRefine handoff.
+
+The File Planner sees one file identity, all fixed contracts in that file, the
+legal environment needed to understand them, and optional premise search
+results. It outputs the initial complete generated-theorem DAG with exact
+generated statements and generated-node edges, but no proof bodies and no
+premise nodes.
+
+The Premise Database indexes checked declarations from frozen parents, frozen
+Support, sealed generated Proof theories, and green nodes in the current file.
+It supports retrieval and provenance; it does not invent theorems or authorize
+graph changes. Retrieval runs at node start and again from an Isabelle residual.
+A retrieved cross-file fact proposes an import of its owner, which must pass
+cycle/provenance checks before the fact becomes callable.
+
+The Lemma Prover proves one certified graph node and may repair only its proof
+body. The independent Graph Revision Agent reviews evidence-backed requests to
+add, split, replace, reuse, or change the role of generated theorem nodes. A hard
+helper does not recursively create helpers: normally split it into smaller
+sibling leaves, or promote it to an obligation theorem only after approval.
+
+**When designing, implementing, or evaluating the repo-level harness, read
+[references/SESSION_HARNESS.md](references/SESSION_HARNESS.md) completely.**
+It is the authoritative protocol for trust boundaries, role definitions,
+stage-by-stage inputs/outputs, Premise Database publication/retrieval, generated
+imports, graph revision, sealing, and the M0-M12 Refine-to-CRefine chain.
+
+### Fresh-conversation startup
+
+For a new conversation on the current Setting B campaign, read these files in
+order before changing code or resuming a generation:
+
+1. this `SKILL.md` for the research claim and contamination rules;
+2. `references/SESSION_HARNESS.md` for normative role and artifact contracts;
+3. `regen/REFINE-CREFINE-REPO-LEVEL-EXPERIMENT-PLAN.md` for current
+   implementation status, work packages, and the next executable milestone;
+4. `regen/STEPWISE-CODEX.md` only when working on the M7 node prover.
+
+Do not resume historical Schedule_R or ArchAcc_R generations as if they were a
+Setting B campaign. They are diagnostic evidence produced before the current
+M0-M12 protocol. Start from the plan's current milestone and create fresh,
+source-linked generation IDs for new evidence.
+
 ## What is kept, what is regenerated (the oracle contract)
 
-The defining move is **not** "keep statements, delete bodies" (that is
-lemma-level infill). It is: **keep the two code artifacts + the op-level
-refinement contract surface; regenerate the entire proof corpus beneath it.**
+Setting A keeps endpoints, external semantics, and all target contracts, but
+regenerates the target theory architecture as well as every proof. It is
+recorded for a later independent campaign.
 
-| Kept (ground truth — never regenerated, never weakened) | Regenerated (deleted → the LLM invents it) |
-|---|---|
-| **Both code endpoints**, verbatim (abstract op defs + Haskell op defs; or Haskell + C) | **All proof bodies** of the corpus |
-| **The refinement framework / definitions** — `state_relation`, `corres`/`corresK`/`ccorres` defs, the `submonad` locale, invariant definitions. This is the *definition of what "refines" means*, not proof work. | **All private machinery** — helper/`wp`/`crunch`/`simp`/`split` lemmas, proof-local defs and reformulations, locale interpretations that exist only to prove the contracts |
-| **The op-level refinement contract surface** — the top-level `corres`/`ccorres` statement per kernel operation. This is the deliberate verification interface **and** the human-comparison anchor. Statement kept; body regenerated. | (the LLM decides *whether it even needs* each helper and invents its own decomposition) |
+Current Setting B keeps fixed parents, mechanically classified Support theories,
+Proof-theory file slots, contract ownership, and exact target contracts. It does
+not keep human Proof-theory imports. It regenerates every classified Proof theory
+as a whole file and synthesizes imports from successful generated dependencies.
+
+| Model-visible fixed input | Frozen but exposed through premise retrieval | Deleted and forbidden |
+|---|---|---|
+| Proof-file identity and every local target contract | Parent-session and Support declarations | Human Proof imports and original body |
+| Current generation's Isabelle residuals | Sealed generated Proof declarations | Human helper names/statements/proofs/order |
+| Current-file green generated theorems | Names, statements, attributes, provenance, and defining equations of eligible premises | Human consumers, dependency graph, export design, or inferred helper requests |
+
+There is no target-session framework-declaration allowlist inside a Proof
+theory. If such a file owns a target contract, every non-contract command is
+deleted. If it owns no target contract, the entire file is frozen as Support.
+A contract that cannot elaborate under this binary rule causes a versioned
+scope failure; it never authorizes selective copying from the human body.
 
 The kept contract surface does double duty:
 
@@ -174,17 +276,19 @@ decomposition.** Inherited from the parent SKILL: no new
   of scope). So "cited outside the scope = interface" leaves only ~10–31% truly
   scope-private. **Enlarging a 2-theory subsystem barely internalizes the
   sharing** (interrupt path 11%→9%, Tcb 25%→22%); real thickening needs scope
-  approaching the whole Refine session. Consequence: two honest regen modes on
-  the oracle-thinness dial — **(A) thick oracle, single-theory**: keep the
+  approaching the whole Refine session. Consequence: two historical regen arms on
+  the oracle-thinness dial — **thick oracle, single-theory**: keep the
   shared interface, regenerate the ~25–31% private structure **plus all bodies
   of the kept lemmas** (engineering-freedom modest but real; cheap via
-  `isabelle process` against the stock heap); **(B) thin oracle, whole-Refine**:
+  `isabelle process` against the stock heap); **thin oracle, whole-Refine**:
   regenerate the shared library too (interior → most of Refine; needs a session-
   heap **rebuild**, hour-scale). The `interior%` measures *how much proof
   structure the machine invents from scratch* (engineering-freedom), not total
   regenerated LOC (all bodies are regenerated in both modes). **Schedule_R is
-  the thickest single-theory interior (31%, 58 private lemmas, 26 contracts)** →
-  the natural mode-A first cut. Infrastructure/library theories (SubMonad_R
+  the thickest single-theory interior (31%, 58 private lemmas, 26 declarations
+  under the historical broad `corres` classifier; 20 under the strict
+  operation-name-first contract policy)** →
+  the natural historical file-level first cut. Infrastructure/library theories (SubMonad_R
   ~90% exported, InterruptAcc_R 0% interior) are pure interface — bad targets.
 
 ## Memorization-gap discipline (mandatory — the reviewer defense)
@@ -210,30 +314,38 @@ result. A high pass-rate with an untested memorization gap is **not a result**.
 
 ## Workflow (reuses existing assets — little new infra)
 
-The inner loop is the `spec-strengthen` loop with a different payload:
-propose → `check-theory` trial → feedback → repair. Almost everything
-transfers.
+The outer loop freezes Setting B, extracts contracts and file ownership,
+classifies Proof/Support theories, removes every human Proof import/body, builds
+the Premise Database, creates one file-generation list, and then traverses it
+while sealing every successful Proof theory. Failed or skipped files are
+recorded without stopping later attempts. The resulting Proof-theory import graph
+is generated, not copied.
 
-1. **Scope + fix the contract surface.** Pick the target scope (a self-
-   contained kernel subsystem, or one Part in full). Fix the two code
-   artifacts verbatim. Enumerate the scope's **op-level `corres`/`ccorres`
-   contracts** (the kept oracle) and the **external interface** the scope
-   consumes from untouched theories (kept, so untouched downstream still links).
-2. **Strip beneath the contract surface.** Produce the input: two code
-   endpoints + framework + contract statements + external interface kept;
-   **everything private beneath — all bodies AND all private helper/def
-   statements — deleted.** (This is the body-stripper, re-scoped from
-   "delete bodies" to "delete the whole private interior.")
-3. **Regenerate the corpus in dependency order.** The proposer (`claude -p`,
-   the spec-strengthen streaming + archiving harness) gets: the two code
-   artifacts, the contract statements it must close, the external interface,
-   and (unless fact-ablating) surrounding hints. It emits **whole proof
-   machinery** (invented helpers + bodies), not one body at a time.
-4. **Verify against the contract checkpoints.** Batch `check-theory.sh
-   --patch` (~85 s/theory against the prebuilt heap) → green/red per contract.
-   On red, feed the Isabelle `***` diagnostic back (closed-loop repair). **Do
-   not** drive the loop through interactive REPL at Refine/CRefine (34-min
-   heap-init + OOM wall); batch `check-theory` is the working oracle.
+Reuse the current `spec-strengthen` / incremental propose -> `check-theory` ->
+feedback -> repair machinery as the node-proving inner loop. Execute it under
+the control plane in `references/SESSION_HARNESS.md`.
+
+1. **Freeze and sanitize.** Extract contracts and Proof/Support ownership in
+   a trusted workspace, copy Support sources, and expose to generation only each
+   Proof-file identity and its complete contract set.
+2. **Schedule and retrieve.** The Session Planner outputs the complete layered
+   file list from public contracts, normalized Support availability, and a
+   frozen scheduling policy. It may bind the M3 identity but does not use
+   premise records for ordering. Traverse the serial fallback even after a file
+   fails, and publish newly buildable frozen Support after each successful seal.
+   Search eligible Premise Database records only when planning/proving a theorem;
+   retrieved cross-file facts propose checked generated imports.
+3. **Plan and generate one whole Proof theory.** The File Planner creates only
+   the generated theorem DAG: contracts, obligation theorems, and helper leaves.
+   Prove one node at a time. Only the Graph Revision Agent can approve a theorem
+   graph mutation from this generation's Isabelle evidence.
+   The M7 prover may use the Codex whole-proof baseline or Stepwise-Codex,
+   but it cannot change a statement or append nodes. The current Stepwise relay
+   path is development-only until model file/tool access is mechanically
+   disabled or fully audited.
+4. **Audit, seal, and compose.** Synthesize/minimize imports from successful
+   dependencies, seal the complete file, publish its exports, clean-build
+   generated Refine, and then generate CRefine against that exact heap.
 5. **Measure SYSTEM-LEVEL aggregate.** Once the scope's contracts are green,
    run the **proof-track measurement apparatus** (per-file `check-theory` wall
    vs `reports/golden-baseline/walls.json`, proof LOC, lemma/def count) over
@@ -256,13 +368,19 @@ complete result iff all hold:
 1. **Correct** — every kept contract `check-theory` green, zero
    `sorry`/`oops`/`axiomatization`, **no contract statement weakened**, no
    private helper statement kept from the human to fake the decomposition.
-2. **Corpus-scoped** — the entire proof interior beneath the contract surface
-   of a clearly-scoped subsystem (or a full Part), regenerated — not a
-   cherry-picked lemma subset.
-3. **Aggregate-measured** — machine-vs-human on ≥1 **system-level** axis (total
+2. **Session-scoped** — for a repo-level headline, regenerate the complete
+   selected Refine or CRefine theory closure. A subsystem/theory is a harness
+   milestone, not the final repo-level result.
+3. **Integrated** — build the session from a clean generated mirror using only
+   frozen parents and generated ancestor theories. CRefine must consume the
+   sealed generated Refine heap.
+4. **Premise-audited** — every target-session fact dependency has legal
+   provenance; no original private target fact is reachable through a source,
+   stock heap, cache, alias, or automation pool.
+5. **Aggregate-measured** — machine-vs-human on ≥1 **system-level** axis (total
    proof LOC / total build wall / lemma count / robustness), against the golden
    baseline. Not a lemma-level diff.
-4. **Memorization-controlled** — a reported gap using ≥2 controls above.
+6. **Memorization-controlled** — a reported gap using ≥2 controls above.
 
 Both verdicts are publishable:
 - **Machine better** (smaller / faster / more robust corpus that still checks)
@@ -276,7 +394,8 @@ Both verdicts are publishable:
 | Anti-pattern | Why |
 |---|---|
 | Competing on **pass-rate** | You'd race Stepwise's fine-tuned model + tree search at 77.6% with `claude -p`. Your axis is corpus-granularity + system-level quality, not %. |
-| **Per-theory / per-lemma surgery** ("keep every statement, fill each body") | Collapses to lemma-level infill; hands the machine the human decomposition; output hugs the original. The unit is the whole interior beneath the contract surface. |
+| **Independent per-theory/per-lemma infill** ("keep every statement, fill each body") | Hands the machine the human decomposition and original target-session context. Theory/lemma units are legal only under one session-global strip, plan, registry, and premise firewall. |
+| Building CRefine against the **stock human Refine heap** | Breaks the generated chain and turns two claimed repo runs into unrelated file/session experiments. |
 | Keeping **only the single final theorem** | No oracle gradient — never converges, measures nothing. Keep the op-level contract surface. |
 | **Lemma-level diff / pass-rate** as the comparison | Wrong axis. Compare system-level aggregate (total wall / LOC / count / robustness). |
 | **Regenerating Haskell** (or any code artifact) | Haskell is human design, not proof; reinventing it isn't a proof task and destroys the comparison baseline. Only proof is regenerated. |
@@ -287,9 +406,13 @@ Both verdicts are publishable:
 | Shipping a result **without a memorization gap** | First thing a reviewer attacks; an untested gap is not a result. |
 | Starting at **CRefine**, or driving the loop through **interactive REPL** | Critical-path / hour-scale / 34-min init + OOM wall — prove on Refine, use batch `check-theory`. |
 
-## First cut
+## Migration path
 
-**Part 1, mode-A (thick oracle), `Schedule_R.thy`** — the thickest single-
+`Schedule_R.thy` remains a historical proving-backend shakedown, not a
+Setting B input, milestone, or repo-level result. Its human interface and stock
+Refine heap must never enter a production Setting B generation.
+
+**Historical thick-oracle file-level arm, `Schedule_R.thy`** — the thickest single-
 theory interior measured (31%, 58 private lemmas, 26 op-level `corres`
 contracts), and single-theory so `isabelle process` against the stock Refine
 heap suffices (no session rebuild). Fix abstract + Haskell; keep the 26
@@ -299,8 +422,8 @@ all bodies**; regenerate the whole corpus via the spec-strengthen loop; verify
 the contracts with batch `check-theory` (~85 s–minutes); measure the
 **aggregate** wall / LOC / lemma-count of the machine corpus vs the human one
 against the golden baseline. Report the memorization gap (temporal +
-perturbation + oracle-thinning). If a signal exists, widen scope toward whole-
-Refine (mode B, session-heap rebuild) and then Part 2 (CRefine). Never mutate
+perturbation + oracle-thinning). Treat this only as historical development
+evidence; the current production path is the M0-M12 Setting B protocol. Never mutate
 l4v source — stripped input + regenerated theory live under
 `reports/regen/<scope>/`; the pre/post `git status --porcelain` of the l4v tree
 must stay empty.
@@ -315,6 +438,12 @@ must stay empty.
 | proof-track measurement (per-file wall, `reports/golden-baseline/walls.json`, per-line timing) | The **system-level aggregate** LLM-vs-human instrument (total wall / LOC / count) | **exists** |
 | interior-stripper (fix code endpoints, keep contract surface + external interface, delete the whole private interior beneath) | Produce the regeneration input from a scope | **to build** |
 | contract-surface + interface extractor (op-level corres set; out-of-scope-cited / globally-attributed = kept interface; rest = private interior) | Compute keep-set vs regenerate-set from the theory-DAG + attribute scan | **to build** |
+| campaign/theory/lemma graph store + session/theory planners | Persist the planning control plane, exact helper statements, edges, state, budgets, and ownership | **to build** |
+| statement certifier + premise firewall | Type-check plans and reject illegal/original-target dependencies, including namespace and attribute-pool leakage | **to build** |
+| Setting B M0-M3 harness (`refine_campaign.py`, `refine_contracts.py`, `refine_m2_*.py`, `refine_m3_premises.py`) | Freeze campaigns, extract contracts plus minimal semantic contexts, enforce source/heap isolation, elaborate contract shells, and publish prover-native legal premises | **implemented; production replay required after frozen-input changes** |
+| theory assembler/sealer + generated heap handoff | Deterministic source integration, clean generated ancestor contexts, and Refine-to-CRefine chain gate | **to build** |
+| current `regen_incr.py` machinery as node-prover adapter | Prove certified graph nodes using existing triage, retrieval, hard-lemma, repair, and incremental-check experience | **exists, refactor/adapt** |
+| `regen/stepwise_codex.py` + setup/runner | Public Stepwise tree-search controller with Codex 5.5 replacing the paper model; exact prompt/response/IsaREPL logging | **smoke green; development-only, non-sealable relay audit** |
 | memorization-gap harness (temporal / perturbation / oracle-thinning / divergence-diff) | Mandatory reviewer-defense metric | **to build** |
 
 ## Inherited rules
@@ -331,8 +460,23 @@ report**.
 
 | When | File |
 |---|---|
+| **Required for repo-level harness design or implementation** | `references/SESSION_HARNESS.md` — read completely; roles, stage inputs/outputs, Premise Database, generated imports, graph revision, sealing, and the M0-M12 chain |
+| **Required to resume the current campaign** | `regen/REFINE-CREFINE-REPO-LEVEL-EXPERIMENT-PLAN.md` - implementation status, work packages, first milestone, stop conditions, and restart checklist |
+| M7 Stepwise-Codex backend | `regen/STEPWISE-CODEX.md` - statement-to-proof interface, setup/run commands, generation evidence, and current no-tool audit limitation |
 | Why corpus-granularity + system-level quality (not pass-rate) is the empty cell | `literature/README.md`, `literature/ABSTRACTS-SUMMARY.md` (seL4 ∩ layer-regen = empty; competitors are per-lemma synthesis) |
 | Proof-size as a quality axis | Matichuk et al. ICSE'15 (statement→proof quadratic law) — `literature/` |
 | Why the middle layer exists (constrained, not free, regeneration) | seL4 SOSP'09 / TOCS'14 — `literature/02-sel4-optimization-verification/` |
 | The inner loop this reuses | `.claude/skills/isabelle_prover_spec/SKILL.md` (strengthen.sh propose→trial→repair) |
 | The quality instrument this reuses | `.claude/skills/isabelle_prover_proof/SKILL.md` (per-file wall vs golden baseline; "verified negative is first-class") |
+## Setting B contamination rule
+
+Graph revision may use only residuals and artifacts produced by the current
+sanitized generation. A later consumer cannot backpatch a sealed ancestor for
+reuse; it proves a local helper. Correcting a defective generated ancestor
+requires a source-linked generation, transitive invalidation, and DAG-ordered
+resealing.
+
+Inspect human Proof theories only after the headline campaign is frozen and only
+in a separate evaluation workspace. Label every resulting artifact
+`human-comparison-contaminated`; it may support post-hoc analysis but cannot be
+fed back into generation or counted as independent regeneration evidence.

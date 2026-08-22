@@ -8,13 +8,13 @@ everything but no single round is green (see reports/regen/submonad_r-20260701-2
 
 Architecture (user-specified):
   [PLAN]   opus emits a STRUCTURE plan (ordered decls: fixed statements +
-           its own helpers + verbatim defs; no proofs yet)      - claude -p, recorded
-  [ITEMS]  per plan item: generate ONE proof body               - claude -p, recorded
+           its own helpers + verbatim defs; no proofs yet)      - LLM provider, recorded
+  [ITEMS]  per plan item: generate ONE proof body               - LLM provider, recorded
            -> append to the growing prefix -> check-theory the prefix
            -> pass: LOCK (never regenerated)  fail: feed *** back, retry
            -> retries exhausted: REPLAN the item (helper: may revise/split
               its own statement; fixed: statement immutable, may only insert
-              new helpers before it)                            - claude -p, recorded
+              new helpers before it)                            - LLM provider, recorded
   [FINAL]  all items green -> full-file check + anti-cheat gate
            (every fixed statement verbatim via the assembler, no sorry)
   [pre/post] recoverability: l4v source snapshot + byte-identity assert
@@ -114,19 +114,46 @@ def build_import_index(target_path):
             if imp not in seen:
                 queue.append(imp)
 
+    def theory_aliases(src, path):
+        aliases = {Path(path).stem}
+        tm = re.search(r'(?m)^\s*theory\s+([A-Za-z][A-Za-z0-9_\']*)\b', src)
+        if tm:
+            aliases.add(tm.group(1))
+        aliases.update(re.findall(r'\bglobal_naming\s+([A-Za-z][A-Za-z0-9_\']*)\b', src))
+        return aliases
+
+    def add_fact(name, stmt, aliases, expose_open=True):
+        text = " ".join(stmt.split())[:200]
+        if expose_open:
+            idx.setdefault(name, text)
+        for alias in aliases:
+            idx.setdefault(f"{alias}.{name}", text)
+
     idx, consts = {}, set()
     for p in reachable:
         if os.path.abspath(p) == os.path.abspath(target_path):
             continue
         src = open(p, encoding="utf-8", errors="ignore").read()
+        aliases = theory_aliases(src, p)
+        hidden_open = set(re.findall(r'(?m)^\s*hide_fact\s*\(open\)\s+([A-Za-z][A-Za-z0-9_\']*)', src))
         for d in slice_decls(src):
             if not d["name"]:
                 continue
             if d["kind"] in ("lemma", "theorem", "corollary", "lemmas"):
-                idx.setdefault(d["name"], " ".join(d["stmt"].split())[:200])
+                add_fact(d["name"], d["stmt"], aliases, d["name"] not in hidden_open)
+            elif d["kind"] == "defs":
+                add_fact(d["name"], d["stmt"], aliases, d["name"] not in hidden_open)
+                if d["name"].endswith("_def"):
+                    consts.add(d["name"][:-4])
             elif d["kind"] in ("definition", "abbreviation", "fun", "primrec",
                                "function", "record", "datatype", "type_synonym"):
                 consts.add(d["name"])
+                # Definitional facts are frequently cited via `unfolding foo_def`
+                # or their qualified form (`Kernel_Config.foo_def`). Expose the
+                # synthetic theorem name in the import-fact index so retrieval and
+                # undefined-fact fallback can surface it.
+                fact_name = f"{d['name']}_def"
+                add_fact(fact_name, d["stmt"], aliases, fact_name not in hidden_open)
         # cheap extra: constant names from `consts`/`definition NAME ::` heads
         consts.update(re.findall(r'(?m)^\s*(?:definition|abbreviation)\s+([A-Za-z][A-Za-z0-9_\']+)', src))
     return idx, consts
@@ -189,7 +216,11 @@ def precheck_facts(body, known_facts, known_consts, known_local, own_stmt):
         | set(re.findall(r"[A-Za-z][A-Za-z0-9_']+", own_stmt))
     SAFE = {"assms", "refl", "conjI", "impI", "allI", "exI", "ext", "TrueI",
             "sym", "trans", "mp", "iffD1", "iffD2", "ballI", "bexI", "notI",
-            "ccontr", "disjE", "conjE", "subst", "cong", "arg_cong"}
+            "ccontr", "disjE", "conjE", "subst", "cong", "arg_cong",
+            # Isabelle method modifiers / tactic keywords that can appear next
+            # to facts in wp/rule positions but are not facts themselves.
+            "erule", "drule", "frule", "rule", "assumption", "where",
+            "rotated", "OF", "THEN", "intro", "dest", "elim"}
     missing = {}
     for c in cited:
         if (c in known or c in SAFE or c.endswith("_def") or c.endswith("_defs")
@@ -253,6 +284,24 @@ STRATEGY_HINTS = {
                     "After stripping the assert, discharge Q' by crossing the state relation "
                     "(e.g. `frule state_relation_ready_queues_relation` + the abstract fact "
                     "that the asserted property holds)."),
+    "branch_subgoals": ("Your proof has entered an if/case split and leaked multiple branch "
+                        "subgoals. Do NOT continue with a flat linear apply suffix. Treat the "
+                        "proof as a branch tree: first align the discriminator with `corres_if` "
+                        "or `corres_if2`, then handle each generated branch separately. If you "
+                        "split `scheduler_action`, give the variable a concrete type such as "
+                        "`action :: scheduler_action`. Use structured bullets or a single "
+                        "bounded tactic block per branch; do not let later rules intended for "
+                        "one branch run on all branches. For each branch choose the matching "
+                        "corres rule/WP facts independently, e.g. set-scheduler-action branch "
+                        "versus reschedule-required branch. If the branch discriminator is "
+                        "`sched_act_relation act act'`, prefer the already-proved "
+                        "`corres_split_sched_act` over nested `corres_if2`; it aligns the "
+                        "three scheduler-action constructors in one rule and prevents leaked "
+                        "schematic branch guards. When a residual branch is a pure guard "
+                        "implication, use already-locked bridge lemmas as INTRO rules "
+                        "(`blast intro: ..._bridge`) rather than `clarsimp dest!: ..._bridge`, "
+                        "because the latter often fails to instantiate the abstract/concrete "
+                        "state pair in scheduler guards."),
 }
 
 
@@ -266,7 +315,7 @@ def log(msg):
 
 
 class QuotaExhausted(Exception):
-    """The claude account hit its weekly/usage limit — NOT a proof failure.
+    """The LLM account hit a quota/auth/availability limit — NOT a proof failure.
     Must halt the whole run cleanly (parked items are not real failures) rather
     than burning every remaining item as `unparseable`/`empty`."""
 
@@ -300,6 +349,8 @@ def is_transient(raw):
 def claude_call(prompt, model, timeout, raw_path, max_turns="3"):
     """One recorded claude -p call with transient-error backoff. tools=0.
     Raises QuotaExhausted if the account limit is hit (caller halts the run)."""
+    raw = Path(raw_path)
+    raw.with_suffix(raw.suffix + ".prompt.txt").write_text(prompt)
     claude = find_claude()
     argv = [claude, "-p", prompt, "--model", model, "--max-turns", max_turns,
             "--tools", "", "--output-format", "stream-json", "--verbose"]
@@ -320,10 +371,198 @@ def claude_call(prompt, model, timeout, raw_path, max_turns="3"):
     return ""
 
 
+def codex_call(prompt, model, timeout, raw_path, max_turns="3"):
+    """One recorded Codex exec call.
+
+    Codex is used as a replacement LLM generator for the old `claude -p`
+    surface. Run from /tmp with no repo attached so the model gets only the
+    prompt payload, matching the spirit of the tool-less regeneration arm.
+    """
+    codex = shutil.which("codex")
+    if not codex:
+        raise RuntimeError("codex CLI not found on PATH")
+    raw = Path(raw_path)
+    raw.with_suffix(raw.suffix + ".prompt.txt").write_text(prompt)
+    final_path = raw.with_suffix(raw.suffix + ".final.txt")
+    meta_path = raw.with_suffix(raw.suffix + ".meta.json")
+    argv = [
+        codex, "-m", model, "-C", "/tmp", "-s", "read-only",
+        "exec", "--skip-git-repo-check", "--json",
+        "-o", str(final_path), "-",
+    ]
+    meta_path.write_text(json.dumps({
+        "provider": "codex",
+        "model": model,
+        "argv": argv,
+        "max_turns_note": "codex exec has no direct max-turns analogue",
+    }, indent=2))
+    try:
+        proc = subprocess.run(
+            argv, input=prompt, text=True, capture_output=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        raw.write_text("")
+        log("    [agent:codex] timed out")
+        return ""
+    raw.write_text(proc.stdout)
+    if proc.stderr:
+        raw.with_suffix(raw.suffix + ".stderr.txt").write_text(proc.stderr)
+    combined = (proc.stdout or "") + "\n" + (proc.stderr or "")
+    if re.search(r"401 Unauthorized|Missing bearer|authentication", combined, re.I):
+        raise QuotaExhausted("codex authentication failed: missing/invalid API credentials")
+    if proc.returncode != 0 and not combined.strip():
+        raise QuotaExhausted(f"codex exec failed with exit code {proc.returncode}")
+    if final_path.exists():
+        final = final_path.read_text()
+        if final.strip():
+            return final
+    return proc.stdout
+
+
+def _read_codex_relay_token():
+    if os.environ.get("CODEX_RELAY_TOKEN"):
+        return os.environ["CODEX_RELAY_TOKEN"]
+    env_path = Path(os.environ.get("CODEX_RELAY_ENV", "/home/lijun/codex-relay/.env"))
+    if not env_path.exists():
+        return None
+    for line in env_path.read_text(errors="ignore").splitlines():
+        if line.startswith("CODEX_RELAY_TOKEN="):
+            return line.split("=", 1)[1].strip()
+    return None
+
+
+def codex_relay_call(prompt, model, timeout, raw_path, max_turns="3"):
+    """One recorded call through the local codex-relay service."""
+    import urllib.error
+    import urllib.request
+
+    token = _read_codex_relay_token()
+    if not token:
+        raise QuotaExhausted("codex-relay token missing; set CODEX_RELAY_TOKEN or CODEX_RELAY_ENV")
+    raw = Path(raw_path)
+    prompt_path = raw.with_suffix(raw.suffix + ".prompt.txt")
+    final_path = raw.with_suffix(raw.suffix + ".final.txt")
+    meta_path = raw.with_suffix(raw.suffix + ".meta.json")
+    prompt_path.write_text(prompt)
+    url = os.environ.get("REGEN_CODEX_RELAY_URL", "http://127.0.0.1:18080/v1/codex")
+    repo = os.environ.get("REGEN_CODEX_RELAY_REPO", "default")
+    payload = {"repo": repo, "prompt": prompt, "write": False}
+    meta_path.write_text(json.dumps({
+        "provider": "codex-relay",
+        "model": model,
+        "url": url,
+        "repo": repo,
+        "prompt_path": str(prompt_path),
+        "final_path": str(final_path),
+        "auth": "bearer token from CODEX_RELAY_TOKEN/CODEX_RELAY_ENV (redacted)",
+    }, indent=2))
+    req = urllib.request.Request(
+        url, data=json.dumps(payload).encode(), method="POST",
+        headers={"Authorization": "Bearer " + token,
+                 "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = resp.read().decode()
+    except urllib.error.HTTPError as e:
+        body = e.read().decode(errors="ignore")
+        raw.write_text(body)
+        raw.with_suffix(raw.suffix + ".stderr.txt").write_text(str(e))
+        if e.code in (401, 403):
+            raise QuotaExhausted(f"codex-relay authentication failed: HTTP {e.code}")
+        raise
+    except Exception as e:
+        raw.write_text("")
+        raw.with_suffix(raw.suffix + ".stderr.txt").write_text(repr(e))
+        raise QuotaExhausted(f"codex-relay unavailable: {e}")
+    raw.write_text(body)
+    try:
+        data = json.loads(body)
+    except ValueError:
+        final_path.write_text(body)
+        return body
+    answer = data.get("answer") or data.get("result") or data.get("message") or ""
+    if data.get("error") and not answer.strip():
+        raw.with_suffix(raw.suffix + ".stderr.txt").write_text(str(data.get("error")))
+        raise QuotaExhausted(f"codex-relay returned error: {data.get('error')}")
+    final_path.write_text(answer)
+    return answer
+
+
+def file_agent_call(prompt, model, timeout, raw_path, max_turns="3"):
+    """Recorded filesystem bridge for a human/current-session agent.
+
+    The harness writes the exact prompt and metadata, then waits for the agent
+    to write a non-empty `<raw>.final.txt`. This keeps the same audit shape as
+    CLI providers without requiring an external API credential.
+    """
+    raw = Path(raw_path)
+    final_path = raw.with_suffix(raw.suffix + ".final.txt")
+    meta_path = raw.with_suffix(raw.suffix + ".meta.json")
+    prompt_path = raw.with_suffix(raw.suffix + ".prompt.txt")
+    prompt_path.write_text(prompt)
+    meta_path.write_text(json.dumps({
+        "provider": "file-agent",
+        "model": model,
+        "prompt_path": str(prompt_path),
+        "final_path": str(final_path),
+        "instructions": "Write the agent response to final_path; raw transcript is optional.",
+    }, indent=2))
+    deadline = time.time() + timeout
+    log(f"    [agent:file] waiting for response in {final_path}")
+    while time.time() < deadline:
+        if final_path.exists():
+            text = final_path.read_text()
+            if text.strip():
+                raw.write_text(json.dumps({"type": "file-agent", "result": text}) + "\n")
+                return text
+        time.sleep(2)
+    raw.write_text("")
+    log("    [agent:file] timed out waiting for response")
+    return ""
+
+
+def llm_call(provider, prompt, model, timeout, raw_path, max_turns="3"):
+    if provider == "claude":
+        return claude_call(prompt, model, timeout, raw_path, max_turns=max_turns)
+    if provider == "codex":
+        return codex_call(prompt, model, timeout, raw_path, max_turns=max_turns)
+    if provider == "codex-relay":
+        return codex_relay_call(prompt, model, timeout, raw_path, max_turns=max_turns)
+    if provider == "file-agent":
+        return file_agent_call(prompt, model, timeout, raw_path, max_turns=max_turns)
+    raise ValueError(f"unknown LLM provider: {provider}")
+
+
 def fenced(text, kind_hint="json"):
     m = re.search(r'```(?:%s|isabelle|isar|thy)?\s*\n(.*?)```' % kind_hint, text, re.S)
     return (m.group(1) if m else text).strip()
 
+
+def json_loads_fenced(text, kind_hint="json"):
+    """Parse fenced JSON, tolerating Isabelle symbol escapes in strings."""
+    raw = fenced(text, kind_hint)
+    try:
+        return json.loads(raw)
+    except ValueError:
+        # LLMs often emit Isabelle syntax in JSON strings as `\<...>` instead
+        # of JSON's required `\\<...>`. Escape only backslashes that are not
+        # valid JSON escapes, preserving quotes/newlines handling.
+        repaired = re.sub(r'\\(?!["\\/bfnrtu])', r'\\\\', raw)
+        return json.loads(repaired)
+
+
+def normalize_statement_text(stmt):
+    """Normalize LLM-emitted lemma statements before rendering Isabelle.
+
+    Some relay/model responses double-escape newlines inside JSON strings, so
+    Isabelle receives `lemma foo:\n ...` as literal source and reports a
+    malformed command. Convert only line-structure escapes here; leave Isabelle
+    symbol escapes (`\\<...>`) intact.
+    """
+    if stmt is None:
+        return stmt
+    stmt = str(stmt).replace("\\r\\n", "\n").replace("\\n", "\n")
+    return stmt.strip()
 
 def summarize_errors(out):
     """Structured feedback instead of a raw dump. Returns (n_blocks, summary, sig).
@@ -355,6 +594,240 @@ def summarize_errors(out):
     return len(blocks), summary, sig
 
 
+
+# --------------------------------------------------------------------------- structural composition repair
+PROOF_STEP_RE = re.compile(r'(?m)^\s*(?:apply|by|unfolding|using|supply|proof|subgoal|prefer|defer|done|qed)\b.*'
+                           r'(?:\n(?!\s*(?:apply|by|unfolding|using|supply|proof|subgoal|prefer|defer|done|qed)\b).*)*')
+
+
+def split_proof_steps(body):
+    steps = [m.group(0).strip() for m in PROOF_STEP_RE.finditer(body or '')]
+    if steps and steps[-1] in {'done', 'qed'}:
+        steps = steps[:-1]
+    return steps
+
+
+def _extract_method_facts(step, key):
+    m = re.search(rf"\b{re.escape(key)}:\s*([^)]*)", step or '', re.S)
+    if not m:
+        return []
+    stop_words = {'intro', 'intro!', 'dest', 'dest!', 'elim', 'elim!', 'simp', 'where'}
+    facts = []
+    for x in m.group(1).split():
+        if x.rstrip(':') in stop_words:
+            break
+        if re.match(r"[A-Za-z_][A-Za-z0-9_'.]*$", x):
+            facts.append(x)
+    return facts
+
+
+def fastforce_to_blast_step(step):
+    if 'fastforce' not in (step or ''):
+        return None
+    intro = _extract_method_facts(step, 'intro') + _extract_method_facts(step, 'intro!')
+    dest = _extract_method_facts(step, 'dest') + _extract_method_facts(step, 'dest!')
+    if not intro and not dest:
+        return None
+    bits = []
+    if intro:
+        bits.append('intro: ' + ' '.join(intro))
+    if dest:
+        bits.append('dest: ' + ' '.join(dest))
+    return 'apply (blast ' + ' '.join(bits) + ')'
+
+
+def branch_subgoal_directive(checker_out, body):
+    hay = '\n'.join([checker_out or '', body or ''])
+    if ('Cannot determine type of "action"' in hay or
+            (re.search(r'goal \(([3-9]|[1-9][0-9]+) subgoals', hay) and
+             re.search(r'case_tac|cases |corres_if|corres_if2|scheduler_action|sched_act_relation', hay))):
+        return STRATEGY_HINTS['branch_subgoals']
+    if re.search(r'\?P\d+|\?Q\d+', hay) and re.search(r'corres_if|corres_if2|case_tac|scheduler_action', hay):
+        return STRATEGY_HINTS['branch_subgoals']
+    return None
+
+
+def structural_repair_probe(item, body, verify_of, idir, bad_step, budget_s=90, continue_steps=3):
+    """Try tiny local repairs around a localized structural timeout.
+
+    The probe is evidence only: it writes candidates/check logs and returns a
+    concise note for the next LLM turn. It never changes the lemma statement or
+    imports, and it does not use the original human proof.
+    """
+    steps = split_proof_steps(body)
+    if not bad_step or bad_step < 1 or bad_step > len(steps):
+        return None
+    stmt = item['_canonical']
+    bad = steps[bad_step - 1]
+    prefix = steps[:bad_step - 1]
+    candidates = []
+    blast = fastforce_to_blast_step(bad)
+    if blast:
+        candidates.append(('fastforce_to_blast', blast,
+                           'bounded blast over the same explicit intro/dest facts'))
+    if 'fastforce' in bad:
+        candidates += [
+            ('fastforce_to_clarsimp', 'apply clarsimp', 'diagnostic degradation exposing side conditions'),
+            ('fastforce_to_simp', 'apply simp', 'cheap simplification-only degradation'),
+        ]
+    if not candidates:
+        return None
+    out = []
+    probe_dir = idir / 'structural-repair-probes'
+    probe_dir.mkdir(exist_ok=True)
+    for name, repl, why in candidates:
+        cand_steps = prefix + [repl]
+        cand_text = stmt + '\n  ' + '\n  '.join(cand_steps) + '\n  oops'
+        try:
+            ok, wall, chk = verify_of((item, cand_text), budget_s)
+        except Exception as e:
+            chk, ok, wall = f'probe exception: {e}', False, None
+        (probe_dir / f'{name}.log').write_text(chk)
+        rec = {'name': name, 'replacement': repl, 'why': why, 'ok': ok,
+               'wall_ms': wall, 'kind': 'timeout' if 'killed after' in chk else ('error' if re.search(r'^\*\*\*', chk, re.M) else 'checked')}
+        if ok and continue_steps:
+            suffix = steps[bad_step:bad_step + continue_steps]
+            if suffix:
+                cont_text = stmt + '\n  ' + '\n  '.join(cand_steps + suffix) + '\n  oops'
+                try:
+                    cok, cwall, cchk = verify_of((item, cont_text), budget_s)
+                except Exception as e:
+                    cchk, cok, cwall = f'probe exception: {e}', False, None
+                (probe_dir / f'{name}-continue.log').write_text(cchk)
+                rec['continuation'] = {'suffix_steps': len(suffix), 'ok': cok,
+                                       'wall_ms': cwall,
+                                       'kind': 'timeout' if 'killed after' in cchk else ('error' if re.search(r'^\*\*\*', cchk, re.M) else 'checked')}
+        out.append(rec)
+    (probe_dir / 'results.json').write_text(json.dumps(out, indent=2))
+    lines = ['STRUCTURAL REPAIR PROBE results (generated-attempt local edits only; no original proof):']
+    for r in out:
+        msg = f"- {r['name']}: prefix ok={r['ok']} kind={r['kind']} wall={r['wall_ms']}ms; replacement `{r['replacement']}`"
+        if r.get('continuation'):
+            c = r['continuation']
+            msg += f"; +{c['suffix_steps']} continuation ok={c['ok']} kind={c['kind']} wall={c['wall_ms']}ms"
+        lines.append(msg)
+    lines.append('If a bounded `blast` candidate checks and continuation checks, prefer that repair over broad `fastforce`. If only `simp`/`clarsimp` checks, use it to expose branch/side-condition subgoals and solve those locally.')
+    return '\n'.join(lines)
+
+# --------------------------------------------------------------------------- hard lemma mode
+def classify_hard_failure(item, checker_out='', proof_body='', err_txt=''):
+    """Classify failures that need more than ordinary retry/replan.
+
+    The classifier is heuristic and audit-oriented. It routes repeated failures
+    into smaller lemma exploration loops inspired by verifier-feedback search,
+    auxiliary lemma pools, and syntax/semantic repair separation.
+    """
+    name = item.get('name', '?')
+    stmt = item.get('_canonical') or item.get('statement') or ''
+    hay = '\n'.join(str(x or '') for x in (name, stmt, checker_out, proof_body, err_txt))
+    cats, reasons, policies = [], [], []
+
+    def add(cat, reason, policy):
+        if cat not in cats:
+            cats.append(cat)
+            reasons.append(reason)
+            policies.append(policy)
+
+    if ('killed after' in hay and 'wall-time ceiling' in hay) or 'Search-explosion guard' in hay:
+        add('timeout_search_explosion',
+            'checker hit the wall-time ceiling, usually from broad simp/auto/fastforce or large definition unfolding',
+            'do not broaden search; use targeted rule/wp/corres steps and explicit intermediate assertions')
+    if re.search(r'No such variable in theorem: "?\?[A-Za-z]', hay) or re.search(r'\?[QP][0-9]?\b', hay):
+        add('syntax_schematic_repair',
+            'proof left schematic variables or used a malformed schematic instantiation',
+            'run APOLLO-style repair first: sanitize rule_tac/OF/where clauses before inventing semantic lemmas')
+    if re.search(r'word_log2|prioToL1Index|l1IndexToPrio|lookupBitmapPriority|bitmapQ|mask wordRadix|ksReadyQueuesL[12]Bitmap|word_of_nat|unat', hay):
+        add('word_bitmap_arithmetic',
+            'goal crosses bitmap membership, word_log2, casts, masks, and priority ordering',
+            'mine small bound/order/existence bridge lemmas; prove each independently before retrying the parent')
+    if re.search(r'Max \{|Max_eqI|isHighestPrio|is_highest_prio', hay):
+        add('max_set_reasoning',
+            'goal identifies a concrete bitmap lookup with a Max over non-empty queues',
+            'separate existence-in-set from upper-bound proof; make the upper-bound lemma explicit')
+    if re.search(r'heap_path|tcbQueue|tcbSchedNexts_of|tcbSchedPrevs_of|tcbQueueHead|tcbQueueEnd|ksReadyQueues_asrt', hay):
+        add('heap_list_queue',
+            'goal reasons about scheduler linked-list queue shape and head/tail/next/prev fields',
+            'prefer mid-level queue lemmas such as list_queue_relation_nil before unfolding heap_ls; mine heap_path append/remove rewrites only when no queue lemma applies')
+    if re.search(r'corres_split|corres_stateAssert|stateAssert|Arch\.switchToThread|tcbSchedDequeue|setCurThread|switchToThread_corres', hay):
+        add('corres_composition',
+            'proof composes several corres/WP steps and needs precise pre/postcondition threading',
+            'split by executable phase, keep stateAssert obligations explicit, avoid unfolding large relations')
+    if branch_subgoal_directive(checker_out, proof_body):
+        add('branch_subgoal_search',
+            'if/case/corres_if split produced multiple branch subgoals that a flat apply suffix cannot manage',
+            'treat proof as a branch tree; align the discriminator and solve each branch with its own local tactic/premise set')
+    if re.search(r"state_relation|ready_queues_relation|list_queue_relation|tcbSchedNexts_of s'|tcbSchedPrevs_of s'", hay):
+        add('state_relation_plumbing',
+            'residual goal has abstract/concrete state relation variables not connected by the right projection lemma',
+            'retrieve projection lemmas and introduce named intermediate facts before simplification')
+
+    hard = bool(cats)
+    severity = 'hard' if any(c in cats for c in (
+        'timeout_search_explosion', 'word_bitmap_arithmetic', 'heap_list_queue', 'corres_composition')) else ('repair' if cats else 'ordinary')
+    return {'name': name, 'hard_mode': hard, 'severity': severity,
+            'categories': cats, 'reasons': reasons, 'policies': policies}
+
+
+def hard_mode_prompt_section(profile):
+    if not profile or not profile.get('hard_mode'):
+        return ''
+    cats = ', '.join(profile.get('categories', []))
+    reasons = '\n'.join(f'- {r}' for r in profile.get('reasons', []))
+    policies = '\n'.join(f'- {p}' for p in profile.get('policies', []))
+    return f"""
+
+HARD LEMMA MODE is active for this item.
+Failure classes: {cats}
+Why this is hard:
+{reasons}
+Required strategy, adapted from recent prover-agent/lemma-pool workflows:
+{policies}
+Rules for hard mode:
+- Do not retry the same broad proof. Produce a smaller, checkable proof path.
+- Prefer 1-3 local bridge facts already present in context or generated as helper lemmas.
+- Keep helper statements minimal: one bound, one rewrite, one existence fact, or one ordering fact.
+- Generated helpers are not new contract-level obligations; do not invent new `*_corres` names unless the fixed item already has that exact name.
+- If the category is syntax_schematic_repair, fix the malformed tactic first; do not invent semantic lemmas for a syntax failure.
+"""
+
+
+def update_hard_lemma_pool(exp, item, attempt, profile, err_txt, body=None, proposed=None, outcome='failed'):
+    if not profile or not profile.get('hard_mode'):
+        return
+    pool_p = exp / 'hard_lemma_pool.json'
+    pool = json.load(open(pool_p)) if pool_p.exists() else {'items': {}}
+    name = item.get('name', '?')
+    rec = pool['items'].setdefault(name, {
+        'kind': item.get('kind'),
+        'statement': item.get('_canonical') or item.get('statement'),
+        'cluster': item.get('cluster') or item.get('serves') or name,
+        'categories': profile.get('categories', []),
+        'attempts': [],
+        'proposed_helpers': [],
+    })
+    for c in profile.get('categories', []):
+        if c not in rec['categories']:
+            rec['categories'].append(c)
+    entry = {
+        'attempt': attempt,
+        'outcome': outcome,
+        'severity': profile.get('severity'),
+        'categories': profile.get('categories', []),
+        'reasons': profile.get('reasons', []),
+        'policies': profile.get('policies', []),
+        'error_signature': hashlib.sha256((err_txt or '').encode()).hexdigest()[:12],
+        'error_excerpt': (err_txt or '')[:1600],
+    }
+    if body is not None:
+        entry['body_excerpt'] = body[:1200]
+    rec['attempts'].append(entry)
+    for h in proposed or []:
+        hrec = {k: h.get(k) for k in ('name', 'statement', 'why', 'origin', 'cluster') if h.get(k) is not None}
+        if hrec and hrec not in rec['proposed_helpers']:
+            rec['proposed_helpers'].append(hrec)
+    json.dump(pool, open(pool_p, 'w'), indent=2)
+
+
 # --------------------------------------------------------------------------- check-theory
 def localize_timeout(item, body, locked, verify_of, idir, budget_s=120, max_probes=4):
     """Bisect the apply-steps of a timed-out `body` to find the first step whose
@@ -362,9 +835,7 @@ def localize_timeout(item, body, locked, verify_of, idir, budget_s=120, max_prob
     naming the culprit step, or None. Each probe is a fast check (residual-goal
     errors return quickly; only a genuine explosion hits the short cap)."""
     stmt = item["_canonical"]
-    steps = re.findall(r'(?m)^\s*(?:apply|by|unfolding|using|supply|proof|subgoal)\b.*'
-                       r'(?:\n(?!\s*(?:apply|by|unfolding|using|supply|proof|subgoal|done|qed)\b).*)*',
-                       body)
+    steps = split_proof_steps(body)
     if len(steps) < 2:
         return None
     lo, hi, culprit = 1, len(steps), None
@@ -373,8 +844,7 @@ def localize_timeout(item, body, locked, verify_of, idir, budget_s=120, max_prob
         mid = (lo + hi) // 2
         probes += 1
         prefix_body = "\n  ".join(steps[:mid])
-        # close with `oops`? no — use a truncated script; residual goals -> fast fail
-        cand = (item, stmt + "\n  " + prefix_body)
+        cand = (item, stmt + "\n  " + prefix_body + "\n  oops")
         try:
             ok, wall, out = verify_of(cand, budget_s)
         except Exception:
@@ -384,6 +854,8 @@ def localize_timeout(item, body, locked, verify_of, idir, budget_s=120, max_prob
         else:                               # first `mid` steps are fast
             lo = mid + 1
     if culprit:
+        info = {'step': culprit, 'command': steps[culprit-1]}
+        (idir / "timeout-localized.json").write_text(json.dumps(info, indent=2))
         (idir / "timeout-localized.txt").write_text(f"step {culprit}: {steps[culprit-1][:200]}")
         return (f"LOCALIZED: the explosion is at proof step #{culprit}: "
                 f"`{steps[culprit-1].strip()[:120]}` — replace THIS step.")
@@ -528,7 +1000,7 @@ like atcbContextGet — decide whether they need an `interpretation Arch` contex
 
 Output a JSON object (in one ```json fence) with:
 {{"items": [
-   {{"kind": "verbatim_def"|"fixed"|"helper",
+   {{"kind": "verbatim_def"|"verbatim_decl"|"fixed"|"helper",
      "name": "<decl name; for the two defs: asUser_fetch / asUser_replace>",
      "statement": "<ONLY for kind=helper: the full lemma header incl name, attrs and statement>",
      "arch_context": true|false,
@@ -587,7 +1059,7 @@ def sibling_examples(item, locked, cap=2, max_lines=26):
     scored = []
     for it, text in locked:
         n = it.get("name")
-        if not n or n == tgt or it["kind"] == "verbatim_def":
+        if not n or n == tgt or it["kind"] in {"verbatim_def", "verbatim_decl"}:
             continue
         st = _name_tokens(n)
         score = len(tt & st) * 2
@@ -605,9 +1077,117 @@ def sibling_examples(item, locked, cap=2, max_lines=26):
     return out
 
 
+def historical_cases(item, theory_base, exp, cap=4, max_lines=50, errors=None):
+    """Mine prior regen runs as a small case library.
+
+    This is intentionally separate from sibling_examples(): siblings are facts
+    locked in the *current* prefix and therefore usable as Isabelle facts.
+    Historical cases are prompt-only guidance from previous Claude/Codex runs;
+    the model may copy proof shape, but must only cite facts available in the
+    current prefix/imports.
+    """
+    tgt = item.get("name") or ""
+    if not tgt:
+        return []
+    tt = _name_tokens(tgt)
+    err_toks = {t for t in re.findall(r"[A-Za-z_][A-Za-z0-9_']{5,}", errors or "")}
+    tsuf = re.search(r"(_[A-Za-z0-9']+'?)$", tgt)
+    tsuf = tsuf.group(1) if tsuf else None
+    root = REPO / "reports" / "regen"
+    if not root.exists():
+        return []
+
+    scored = []
+
+    def add_case(score, source, outcome, name, text, note=""):
+        if not text or len(text.strip()) < 20:
+            return
+        lines = text.strip().splitlines()
+        if len(lines) > max_lines:
+            lines = lines[:max_lines] + ["  (* ... truncated historical case ... *)"]
+        scored.append((score, source, outcome, name, "\n".join(lines), note))
+
+    for run in root.glob(f"{theory_base.lower()}-*"):
+        if run == exp or not run.is_dir():
+            continue
+        locked_p = run / "locked.json"
+        if locked_p.exists():
+            try:
+                entries = json.load(open(locked_p))
+            except Exception:
+                entries = []
+            for e in entries:
+                it = e.get("item", {})
+                name = it.get("name") or ""
+                if not name or it.get("kind") in {"verbatim_def", "verbatim_decl"}:
+                    continue
+                st = _name_tokens(name)
+                score = len(tt & st) * 6
+                if name == tgt:
+                    score += 80
+                if tsuf and name.endswith(tsuf):
+                    score += 8
+                text = e.get("text", "")
+                if tgt in text:
+                    score += 10
+                score += min(24, sum(3 for tok in err_toks if tok in text or tok in name))
+                if score >= 14:
+                    add_case(score, str(locked_p.relative_to(REPO)), "LOCKED", name, text)
+
+        # Exact-name attempts are useful even when they failed: they preserve
+        # Claude's exploration and expose anti-patterns such as timeout-heavy
+        # fastforce or pseudo-methods that do not exist in Isabelle.
+        for body in run.glob(f"items/*-{tgt}/body-*.thy"):
+            score = 70
+            check = body.with_name(body.name.replace("body-", "check-").replace(".thy", ".log"))
+            note = ""
+            outcome = "ATTEMPT"
+            if check.exists():
+                try:
+                    first = check.read_text(errors="ignore").splitlines()[:3]
+                except Exception:
+                    first = []
+                note = " ".join(first)[:240]
+                if "PASSED" in note:
+                    outcome = "PASSED ATTEMPT"
+                    score += 20
+                elif "killed after" in note or "timeout" in note.lower():
+                    outcome = "TIMEOUT ATTEMPT"
+                    score += 8
+                elif "Undefined method" in note or "Undefined fact" in note:
+                    outcome = "FAILED ATTEMPT"
+            text = body.read_text(errors="ignore")
+            score += min(24, sum(3 for tok in err_toks if tok in text))
+            add_case(score, str(body.relative_to(REPO)), outcome, tgt, text, note)
+
+    best = {}
+    for row in scored:
+        score, source, outcome, name, text, note = row
+        key = re.sub(r"\s+", " ", text)
+        if key not in best or score > best[key][0]:
+            best[key] = row
+    ranked_all = sorted(best.values(), key=lambda r: (-r[0], r[1]))
+    locked_ranked = [r for r in ranked_all if r[2] == "LOCKED"]
+    attempt_ranked = [r for r in ranked_all if r[2] != "LOCKED"]
+    # Keep both positive examples and negative exact-name archaeology. A pile of
+    # timeout attempts is less useful than one or two plus nearby locked proofs.
+    ranked = attempt_ranked[:min(2, cap)]
+    ranked += locked_ranked[:max(0, cap - len(ranked))]
+    if len(ranked) < cap:
+        ranked += attempt_ranked[len(ranked):cap]
+    out = []
+    for _, source, outcome, name, text, note in ranked:
+        hdr = f"(* {outcome}: {name} from {source}"
+        if note:
+            hdr += f"; checker note: {note}"
+        hdr += " *)"
+        out.append(f"{hdr}\n{text}")
+    return out
+
+
 def item_prompt(spec, item, proved, body_hint=None, prev_body=None, errors=None,
                 human_hint=None, template_body=None, import_facts=None,
-                siblings=None):
+                siblings=None, historical=None, hard_profile=None):
     # RETRIEVED prefix context (was the full dump): relevant locked facts only.
     stmt = item["_canonical"]
     sel = rank_prefix(proved, stmt, errors)
@@ -631,6 +1211,7 @@ Output ONLY the proof script that follows this statement — starting with
 `qed`, or a terminal `by`. No lemma header, no theory header, no prose,
 in one ```isabelle fence. No sorry/oops.
 Plan note for this item: {item.get('why','')}"""
+    p += hard_mode_prompt_section(hard_profile)
     if prev_body and errors:
         p += f"""
 
@@ -647,6 +1228,14 @@ Fix it (or take a different route). Same output rules."""
         p += (f"\n\nSIMILAR LEMMAS ALREADY PROVED in this run (same family — reuse "
               f"their PROOF STRUCTURE/tactics as a template; adapt names to the "
               f"target):\n{ex}")
+    if historical:
+        ex = "\n\n".join(f"```isabelle\n{e}\n```" for e in historical)
+        p += (f"\n\nHISTORICAL CLAUDE/CODEX CASES from previous regeneration runs "
+              f"(prompt-only guidance, NOT automatically available facts). Reuse "
+              f"proof shape and tactic sequencing, but cite only facts shown in "
+              f"the current locked/import context. Avoid repeating historical "
+              f"anti-patterns called out by checker notes, especially timeout-heavy "
+              f"fastforce chains and pseudo-methods that are not defined:\n{ex}")
     if import_facts:
         fx = "\n".join(
             f"  [{FACT_THEORY.get(n, '?')}] {n}: {s}" for _, n, s in import_facts)
@@ -693,8 +1282,17 @@ Only include fixed statements that genuinely need scaffolding — do NOT
 over-engineer the directly-provable ones. No sorry. No prose outside the fence."""
 
 
-def replan_prompt(spec, item, errors, is_fixed, template_body=None):
+def replan_prompt(spec, item, errors, is_fixed, template_body=None, hard_profile=None):
     stmt = item["_canonical"]
+    helper_naming = (
+        "Helper naming rule: do NOT name generated helpers as new contract-level "
+        "`*_corres` facts unless that exact name is already a fixed ground-truth "
+        "item. If the helper proves a local correspondence shape, name it with a "
+        "role suffix such as `_bridge`, `_fragment`, `_branch`, or `_case`. "
+        "For if/case failures, do not split a branch before the discriminator "
+        "correspondence has been established; prefer a helper for the discriminator "
+        "or the nearest enclosing correspondence that aligns the branches."
+    )
     if is_fixed:
         ask = ("The statement is IMMUTABLE ground truth. Propose 1-3 NEW helper "
                "lemmas to insert BEFORE it that would make it provable, as JSON: "
@@ -718,6 +1316,10 @@ repeatedly fails to prove:
 Last errors:
 {errors[:3000]}
 {tmpl}
+{helper_naming}
+{hard_mode_prompt_section(hard_profile)}
+For hard failures, follow lemma-pool style exploration: propose helpers that are independently checkable and map each helper to one residual obligation class. Do not use a helper as a dumping ground for the whole failed proof.
+
 {ask}
 One ```json fence, nothing else."""
 
@@ -747,9 +1349,10 @@ def write_needs_human(exp, items_total, locked_n):
     md = [f"# NEEDS HUMAN JUDGMENT — {len(stuck)} stuck item(s) "
           f"({locked_n}/{items_total} locked)\n"]
     for s in stuck:
-        md += [f"## [{s['kind']}] `{s['name']}`  ({s['reason']}, {s['tries']} tries)",
-               "```isabelle", s["statement"], "```",
-               f"artifacts: `{s['item_dir']}`", "```", s["errors"][:2000], "```", ""]
+        tries = s.get("tries", "?")
+        md += [f"## [{s.get('kind', '?')}] `{s.get('name', '?')}`  ({s.get('reason', '?')}, {tries} tries)",
+               "```isabelle", s.get("statement", "?"), "```",
+               f"artifacts: `{s.get('item_dir', '?')}`", "```", s.get("errors", "")[:2000], "```", ""]
     md += ["For each: provable in position? decompose/extra helpers? strategy hint or human body?",
            f"Resolve by injecting bodies into `{exp}/locked.json` (flag human_supplied_body, "
            f"mind --human-budget), then `--resume-from {exp}`."]
@@ -762,6 +1365,9 @@ def write_needs_human(exp, items_total, locked_n):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("theory")
+    ap.add_argument("--provider", choices=["claude", "codex", "codex-relay", "file-agent"],
+                    default=os.environ.get("REGEN_PROVIDER", "claude"),
+                    help="LLM generator backend: claude uses `claude -p`; codex uses `codex exec`; codex-relay uses the local HTTP relay; file-agent waits for a response file.")
     ap.add_argument("--model", default=os.environ.get("REGEN_MODEL", "opus"))
     ap.add_argument("--item-tries", type=int, default=int(os.environ.get("REGEN_ITEM_TRIES", "4")))
     ap.add_argument("--check-budget", type=int, default=int(os.environ.get("REGEN_CHECK_BUDGET", "80")))
@@ -775,6 +1381,22 @@ def main():
                     help="JSON file {item_name: human strategy hint}. Each use is "
                          "recorded per-item and counted in measurement.json "
                          "(human_assisted_items) — honesty accounting.")
+    ap.add_argument("--unpark", default="",
+                    help="comma-separated stuck item names to retry on --resume-from. "
+                         "Useful after improving retrieval/harness or adding hints.")
+    ap.add_argument("--unpark-roots", action="store_true",
+                    help="on --resume-from, retry stuck items that are dependency roots "
+                         "rather than carried dependents. This is a cluster-level "
+                         "recovery lever after fixing a root-cause harness issue.")
+    ap.add_argument("--focus", default="",
+                    help="regex for focused recovery runs: only matching item names, "
+                         "clusters, or serves targets are attempted; other unlocked "
+                         "items are skipped without adding stuck records.")
+    ap.add_argument("--historical-cases", type=int,
+                    default=int(os.environ.get("REGEN_HISTORICAL_CASES", "4")),
+                    help="number of prompt-only proof cases mined from previous "
+                         "reports/regen runs. These preserve prior Claude/Codex "
+                         "case context while keeping current-prefix fact hygiene.")
     ap.add_argument("--cluster-budget", type=int,
                     default=int(os.environ.get("REGEN_CLUSTER_BUDGET", "16")),
                     help="max cumulative check-theory calls charged to one cluster "
@@ -790,6 +1412,8 @@ def main():
     ap.add_argument("--seal-every", type=int,
                     default=int(os.environ.get("REGEN_SEAL_EVERY", "15")),
                     help="re-seal after this many new locks accumulate unsealed")
+    ap.add_argument("--no-hard-lemma-mode", action="store_true",
+                    help="disable hard-failure classification, hard-mode prompts, and hard_lemma_pool.json recording")
     ap.add_argument("--human-budget", type=int,
                     default=int(os.environ.get("REGEN_HUMAN_BUDGET", "2")),
                     help="max human-supplied BODIES per scope. Human intervention "
@@ -818,7 +1442,7 @@ def main():
     exp = Path(f"reports/regen/{tbase.lower()}-incr-{ts}")
     (exp / "items").mkdir(parents=True)
     log(f"== regen INCREMENTAL :: {tbase} :: {exp} ==")
-    log(f"model={args.model} item-tries={args.item_tries} check-budget={args.check_budget}")
+    log(f"provider={args.provider} model={args.model} item-tries={args.item_tries} check-budget={args.check_budget}")
 
     # [pre] recoverability
     dirty = sh(["git", "-C", L4V_TREE, "status", "--porcelain", "--", rel_l4v]).stdout.strip()
@@ -918,11 +1542,11 @@ def main():
         items = plan["items"]
         log(f"[2] plan REUSED from {old} ({len(items)} items)")
     else:
-        log("[2] PLAN (claude -p) ...")
-        reply = claude_call(plan_prompt(spec), args.model, args.plan_timeout,
+        log(f"[2] PLAN ({args.provider}) ...")
+        reply = llm_call(args.provider, plan_prompt(spec), args.model, args.plan_timeout,
                             str(exp / "plan-transcript.ndjson"), max_turns="3")
         (exp / "plan-raw.txt").write_text(reply)
-        plan = json.loads(fenced(reply, "json"))
+        plan = json_loads_fenced(reply, "json")
         items = plan["items"]
     # validate + canonicalize
     # drop plan helpers that shadow an IMPORT lemma: the import already provides
@@ -949,7 +1573,11 @@ def main():
             assert it["name"] in defs_by_name, f"unknown def {it['name']}"
             it["_canonical"] = defs_by_name[it["name"]]
             seen_defs.add(it["name"])
+        elif it["kind"] == "verbatim_decl":
+            assert it.get("_canonical"), f"verbatim_decl {it.get('name')} missing _canonical"
+            assert not re.search(r'\b(sorry|oops|axiomatization)\b', it["_canonical"])
         else:
+            it["statement"] = normalize_statement_text(it.get("statement"))
             assert it.get("statement"), f"helper {it.get('name')} missing statement"
             assert not re.search(r'\b(sorry|oops|axiomatization)\b', it["statement"])
             it["_canonical"] = it["statement"]
@@ -973,13 +1601,13 @@ def main():
     # replan still catches the residual. origin tags keep the planned /
     # critique / replan split measurable.
     if not args.resume_from:
-        log("[2b] PLAN CRITIQUE (claude -p) ...")
-        reply = claude_call(critique_prompt(spec, items), args.model,
+        log(f"[2b] PLAN CRITIQUE ({args.provider}) ...")
+        reply = llm_call(args.provider, critique_prompt(spec, items), args.model,
                             args.plan_timeout, str(exp / "critique-transcript.ndjson"))
         (exp / "critique-raw.txt").write_text(reply)
         added = 0
         try:
-            crit = json.loads(fenced(reply, "json"))
+            crit = json_loads_fenced(reply, "json")
             for entry in crit.get("scaffolding", []):
                 serves = entry.get("serves")
                 tgt = next((k for k, x in enumerate(items)
@@ -988,7 +1616,8 @@ def main():
                     continue
                 new = []
                 for h in entry.get("helpers", []):
-                    st = h.get("statement", "")
+                    st = normalize_statement_text(h.get("statement", ""))
+                    h["statement"] = st
                     if not st or re.search(r'\b(sorry|oops|axiomatization)\b', st) \
                        or any(x.get("name") == h.get("name") for x in items):
                         continue
@@ -1069,22 +1698,39 @@ def main():
             old_stuck = json.load(open(old / "stuck.json"))
             # AUTO-UN-PARK stale cascades: an item parked as "depends on stuck
             # `X`" stays parked forever even after X locks in a later round
-            # (measured: ≥2 zombie parks). If the blocker is now locked, free it.
+            # (measured: >=2 zombie parks). If the blocker is now locked, free it.
+            # Manual/root unpark handles the next case: the blocker was not locked,
+            # but the harness changed (retrieval/import aliases/hints), so the right
+            # move is to retry roots while continuing to carry their dependents.
             locked_names = {e["item"].get("name")
                             for e in json.load(open(old / "locked.json"))} \
                 if (old / "locked.json").exists() else set()
-            kept, freed = [], []
+            manual_unpark = {n.strip() for n in re.split(r"[,\s]+", args.unpark or "") if n.strip()}
+            dep_re = re.compile(r"depends on stuck item `([^`]+)`")
+            stuck_names_all = {s_.get("name") for s_ in old_stuck}
+            dependent_blockers = {m.group(1) for s_ in old_stuck
+                                  for m in [dep_re.match(s_.get("reason", ""))] if m}
+            root_unpark = (stuck_names_all - dependent_blockers) if args.unpark_roots else set()
+            requested_unpark = manual_unpark | root_unpark
+            kept, freed, stale = [], [], []
             for s_ in old_stuck:
-                m_dep = re.match(r'depends on stuck item `([^`]+)`', s_["reason"])
+                m_dep = dep_re.match(s_.get("reason", ""))
+                name_s = s_.get("name")
                 if m_dep and m_dep.group(1) in locked_names:
-                    freed.append(s_["name"])
+                    stale.append(name_s)
+                elif name_s in requested_unpark or (m_dep and m_dep.group(1) in requested_unpark):
+                    freed.append(name_s)
                 else:
                     kept.append(s_)
             old_stuck = kept
             json.dump(old_stuck, open(exp / "stuck.json", "w"), indent=2)
             carried_stuck = {s["name"] for s in old_stuck}
+            missing_unpark = manual_unpark - stuck_names_all
+            if missing_unpark:
+                log(f"[3] requested unpark name(s) not in carried stuck: {sorted(missing_unpark)}")
             log(f"[3] carried {len(carried_stuck)} stuck item(s); "
-                f"auto-un-parked {len(freed)} whose blocker is now locked: {freed}")
+                f"auto-un-parked stale={len(stale)} {stale}; "
+                f"requested/root-unparked={len(freed)} {freed}")
         if (old / "locked.json").exists():
             # preferred: exact locked state persisted by the prior run. Items are
             # matched BY NAME (not prefix count): with the stuck-queue, locked is
@@ -1094,7 +1740,7 @@ def main():
                 it_l, txt = e["item"], e["text"]
                 locked.append((it_l, txt))
                 locked_keys.add((it_l.get("name"), it_l["kind"]))
-                if it_l["kind"] != "verbatim_def":
+                if it_l["kind"] not in {"verbatim_def", "verbatim_decl"}:
                     proved_stmts.append((it_l.get("name", "?"),
                                          " ".join(it_l["_canonical"].split())[:160]))
             i = 0
@@ -1103,7 +1749,7 @@ def main():
             for idx, it in enumerate(items):
                 name = it.get("name") or f"item{idx}"
                 idir_old = old / "items" / f"{idx:02d}-{name}"
-                if it["kind"] == "verbatim_def":
+                if it["kind"] in {"verbatim_def", "verbatim_decl"}:
                     locked.append((it, it["_canonical"]))
                     continue
                 got = None
@@ -1124,13 +1770,20 @@ def main():
             i = 0
         save_locked()
         if args.incremental:
-            # the seal BUILD is itself a full verification of the prefix — if it
-            # builds green, the prefix is green. Replaces the ~123s whole-prefix
-            # reverify with a one-time seal that also gives us the fast heap.
+            # the seal BUILD is itself a full verification of the prefix. If it
+            # fails for infrastructure reasons (container cold start, stale lock),
+            # do not abort the whole focused recovery run; fall back to the stable
+            # whole-prefix verifier and keep the failure in seals/*/build.log.
             do_seal()
-            assert seal["cur"] is not None, "resumed prefix seal failed — resume aborted"
-            log(f"[3] resume: {len(locked)} items locked; sealed into heap "
-                f"(incremental checks active); continuing at item {i+1}/{len(items)}")
+            if seal["cur"] is not None:
+                log(f"[3] resume: {len(locked)} items locked; sealed into heap "
+                    f"(incremental checks active); continuing at item {i+1}/{len(items)}")
+            else:
+                log("[3] resume seal unavailable — falling back to whole-prefix check")
+                ok, wall, out = verify_prefix()
+                assert ok, "resumed prefix does not check — resume aborted"
+                log(f"[3] resume: {len(locked)} items locked from prior run "
+                    f"[prefix re-verified, {wall}ms]; continuing at item {i+1}/{len(items)}")
         else:
             ok, wall, out = verify_prefix()      # verify_prefix on full locked (no cand)
             assert ok, "resumed prefix does not check — resume aborted"
@@ -1146,6 +1799,12 @@ def main():
         if (it.get("name"), it["kind"]) in locked_keys:
             i += 1
             continue
+        if args.focus:
+            focus_haystack = " ".join(str(x or "") for x in
+                                      (name, it.get("cluster"), it.get("serves")))
+            if not re.search(args.focus, focus_haystack):
+                i += 1
+                continue
         if name in carried_stuck:
             log(f"--- item {i+1}/{len(items)}: [{it['kind']}] {name} — parked (carried) ---")
             i += 1
@@ -1168,7 +1827,7 @@ def main():
             i += 1
             continue
 
-        if it["kind"] == "verbatim_def":
+        if it["kind"] in {"verbatim_def", "verbatim_decl"}:
             locked.append((it, it["_canonical"]))
             ok, wall, out = verify_prefix()
             if not ok:
@@ -1189,12 +1848,15 @@ def main():
                 i += 1
                 continue
             log(f"  locked (def) [{wall}ms]")
+            locked_keys.add((it.get("name"), it["kind"]))
+            save_locked()
             maybe_reseal()
             i += 1
             continue
 
         # lemma item (fixed or helper): generate body, verify, retry
         prev_body, err_txt, passed, parked = None, None, False, False
+        current_hard_profile = None
         prev_sig, prev_nblocks, prev_ngoals = None, None, None
         prev_strat_key = None
         for t in range(1, args.item_tries + 1):
@@ -1210,13 +1872,18 @@ def main():
                 log(f"  [human hint active for {name}]")
             imp = relevant_import_facts(import_index, it["_canonical"], err_txt)
             sibs = sibling_examples(it, locked) if args.arm != "template" else None
+            hist = historical_cases(it, tbase, exp, cap=args.historical_cases, errors=err_txt) \
+                if args.historical_cases and args.arm != "template" else None
             if sibs and t == 1:
                 log(f"  [few-shot: {len(sibs)} sibling proof(s) from same family]")
-            reply = claude_call(item_prompt(spec, it, proved_stmts,
+            if hist and t == 1:
+                log(f"  [historical cases: {len(hist)} prior proof/attempt case(s)]")
+            reply = llm_call(args.provider, item_prompt(spec, it, proved_stmts,
                                             body_hint=hint, prev_body=prev_body,
                                             errors=err_txt, human_hint=hh,
                                             template_body=orig_bodies.get(name),
-                                            import_facts=imp, siblings=sibs),
+                                            import_facts=imp, siblings=sibs,
+                                            historical=hist, hard_profile=current_hard_profile),
                                 args.model, args.timeout,
                                 str(idir / f"gen-{t}.ndjson"))
             body = fenced(reply, "isabelle")
@@ -1297,6 +1964,16 @@ def main():
                 loc = localize_timeout(it, body, locked, verify_prefix_of, idir)
                 if loc:
                     strat += f"\n{loc}"
+                    bad_step = None
+                    loc_json = idir / "timeout-localized.json"
+                    if loc_json.exists():
+                        try:
+                            bad_step = json.load(open(loc_json)).get("step")
+                        except Exception:
+                            bad_step = None
+                    repair_note = structural_repair_probe(it, body, verify_prefix_of, idir, bad_step)
+                    if repair_note:
+                        strat += f"\n{repair_note}"
             elif 'stateAssert' in out and 'Failed to apply proof method' in out:
                 # a corres_stateAssert_* rule mis-selected/mis-instantiated leaves
                 # the whole goal untouched with the stateAssert still present. The
@@ -1314,11 +1991,24 @@ def main():
                 strat = STRATEGY_HINTS["growing"]
             elif sig == prev_sig:
                 strat = STRATEGY_HINTS["same_goals"]
+            extra_branch = branch_subgoal_directive(out, body)
+            if extra_branch and not strat:
+                strat = extra_branch
+            elif extra_branch and extra_branch not in strat:
+                strat += f"\n\nBRANCH-SUBGOAL DIRECTIVE: {extra_branch}"
             strat_key = next((k for k, v in STRATEGY_HINTS.items()
                               if strat and strat.startswith(v[:30])), None)
             err_txt = f"Error blocks this try: {nblocks}{trend}.\n{summary}"
             if strat:
                 err_txt += f"\n\nSTRATEGY DIRECTIVE: {strat}"
+            if not args.no_hard_lemma_mode:
+                current_hard_profile = classify_hard_failure(it, out, body, err_txt)
+                if current_hard_profile.get("hard_mode"):
+                    update_hard_lemma_pool(exp, it, t, current_hard_profile, err_txt, body=body)
+                    (idir / f"hard-profile-{t}.json").write_text(
+                        json.dumps(current_hard_profile, indent=2))
+                    log(f"  hard-mode: {current_hard_profile['severity']} "
+                        f"{current_hard_profile['categories']}")
             log(f"  try {t}: RED ({nblocks} error blocks{trend}, "
                 f"goals={n_goals}, sig={sig}{', +strategy' if strat else ''})")
             # STATEMENT-level failure fast-path: if the FIRST error line falls
@@ -1358,6 +2048,13 @@ def main():
             # first issued from try1's error — got a fair shot). Require the model to
             # have SEEN this directive category once and still not moved.
             if sig == prev_sig and strat_key == prev_strat_key:
+                if (not args.no_hard_lemma_mode and current_hard_profile
+                        and current_hard_profile.get("hard_mode")
+                        and it["kind"] == "fixed" and not it.get("_replanned")):
+                    log("  hard-mode no-progress: leaving retry loop for lemma-pool replan")
+                    prev_sig, prev_nblocks, prev_body, prev_ngoals = sig, nblocks, body, n_goals
+                    prev_strat_key = strat_key
+                    break
                 queue_stuck(exp, it, idir, t, err_txt,
                             "two consecutive tries produced IDENTICAL errors under the "
                             "SAME strategy directive — feedback not moving the model")
@@ -1375,12 +2072,15 @@ def main():
                         "tries exhausted after replan")
             i += 1
             continue
-        log(f"  REPLAN {name} (claude -p) ...")
-        reply = claude_call(replan_prompt(spec, it, err_txt or "", it["kind"] == "fixed",
-                                          template_body=orig_bodies.get(name)),
+        log(f"  REPLAN {name} ({args.provider}) ...")
+        if not args.no_hard_lemma_mode and current_hard_profile is None:
+            current_hard_profile = classify_hard_failure(it, '', prev_body or '', err_txt or '')
+        reply = llm_call(args.provider, replan_prompt(spec, it, err_txt or "", it["kind"] == "fixed",
+                                          template_body=orig_bodies.get(name),
+                                          hard_profile=None if args.no_hard_lemma_mode else current_hard_profile),
                             args.model, args.timeout, str(idir / "replan.ndjson"))
         try:
-            rp = json.loads(fenced(reply, "json"))
+            rp = json_loads_fenced(reply, "json")
         except ValueError:
             queue_stuck(exp, it, idir, args.item_tries, err_txt, "replan unparseable")
             i += 1
@@ -1398,6 +2098,7 @@ def main():
         def _fresh(hs):
             out = []
             for h in hs:
+                h["statement"] = normalize_statement_text(h.get("statement", ""))
                 nm = h.get("name")
                 if nm in taken:
                     log(f"  replan helper `{nm}` collides with existing item — dropped")
@@ -1437,14 +2138,24 @@ def main():
             for h in new:
                 h.update(kind="helper", _canonical=h["statement"], origin="replan",
                          cluster=it.get("cluster", name))   # inherit parent cluster
+            if not args.no_hard_lemma_mode and current_hard_profile:
+                update_hard_lemma_pool(exp, it, args.item_tries, current_hard_profile,
+                                       err_txt or '', proposed=new, outcome='replanned')
             items[i:i] = new       # insert before the fixed item; loop re-enters
+            plan["items"] = items
+            json.dump(plan, open(exp / "plan.json", "w"), indent=2)
             log(f"  inserted {len(new)} helper(s) before {name}")
         else:
             new = _fresh(rp.get("replace", []))
             for h in new:
                 h.update(kind="helper", _canonical=h["statement"], _replanned=True,
                          origin="replan", cluster=it.get("cluster", name))
+            if not args.no_hard_lemma_mode and current_hard_profile:
+                update_hard_lemma_pool(exp, it, args.item_tries, current_hard_profile,
+                                       err_txt or '', proposed=new, outcome='replanned')
             items[i:i+1] = new
+            plan["items"] = items
+            json.dump(plan, open(exp / "plan.json", "w"), indent=2)
             log(f"  replaced helper with {len(new)} item(s)")
       except QuotaExhausted as e:
         log("=" * 72)
@@ -1489,19 +2200,22 @@ def main():
     # are never silently mixed into the machine aggregate.
     human_bodies = sorted(it.get("name", "?") for it, _ in locked
                           if it.get("human_supplied_body"))
-    n_defs = sum(1 for it, _ in locked if it["kind"] == "verbatim_def")
+    n_defs = sum(1 for it, _ in locked if it["kind"] in {"verbatim_def", "verbatim_decl"})
     # structure-discovery split: how much scaffolding was planned upfront vs
     # predicted by the critique pass vs discovered reactively via replan
     from collections import Counter
     helper_origin = Counter(it.get("origin", "plan") for it, _ in locked
                             if it["kind"] == "helper")
     over_budget = len(human_bodies) > args.human_budget
+    hard_pool = json.load(open(exp / "hard_lemma_pool.json")) if (exp / "hard_lemma_pool.json").exists() else {"items": {}}
     meas = dict(final_green=final_ok and not over_budget,
                 green_but_over_human_budget=final_ok and over_budget,
                 arm=args.arm,
                 items_total=len(items), items_locked=n_locked, items_stuck=n_stuck,
                 machine_locked_lemmas=n_locked - n_defs - len(human_bodies),
                 helper_origin_split=dict(helper_origin),
+                hard_lemma_mode=not args.no_hard_lemma_mode,
+                hard_lemma_items=len(hard_pool.get("items", {})),
                 human_supplied_bodies=human_bodies,
                 human_body_budget=args.human_budget,
                 hint_assisted_items=used_hints,
