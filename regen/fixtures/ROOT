@@ -1,0 +1,3 @@
+session Stepwise_Codex_Smoke = HOL +
+  theories
+    Stepwise_Codex_Smoke

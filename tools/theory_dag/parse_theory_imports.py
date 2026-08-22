@@ -46,6 +46,7 @@ L4V = REPO / "verification" / "l4v"
 import os as _os
 ARCH = _os.environ.get("L4V_ARCH", "ARM")          # override: L4V_ARCH=AARCH64
 OUT_JSON = REPO / "reports" / f"theory-dag-{ARCH}.json"
+ARCH_DIRS = {"ARM", "ARM_HYP", "RISCV64", "X64", "AARCH64"}
 
 # theory NAME imports ...  <terminator>  where terminator = keywords|abbrevs|begin
 HEADER_RE = re.compile(
@@ -86,10 +87,11 @@ def build_theory_index(parsed_roots: dict) -> tuple[dict[str, dict], list[Path]]
     index: full canonical name 'Session.Theory' → {path, session, basename}.
     """
     index: dict[str, dict] = {}
-    paths: list[Path] = []
     seen_paths: set[Path] = set()
     for thy in sorted(L4V.rglob("*.thy")):
         if not thy.is_file():
+            continue
+        if any(part in ARCH_DIRS - {ARCH} for part in thy.relative_to(L4V).parts):
             continue
         # Skip hidden / generated dirs we know are not part of the regular session DAG
         rel = thy.resolve()
@@ -114,7 +116,10 @@ def build_theory_index(parsed_roots: dict) -> tuple[dict[str, dict], list[Path]]
             "session": sess,
             "basename": basename,
         }
-        paths.append(thy)
+    # A canonical theory may occur in multiple architecture directories. Parse
+    # only the winner selected above, otherwise their imports are silently
+    # merged into one node.
+    paths = [Path(info["path"]) for _, info in sorted(index.items())]
     return index, paths
 
 

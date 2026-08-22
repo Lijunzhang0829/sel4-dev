@@ -1,0 +1,52 @@
+{
+  "artifact_type": "m4-scheduling-policy",
+  "claim": "Evidence-grounded dependency-aware generation scheduling over fixed Refine Proof file slots and fixed contract ownership.",
+  "evidence_types": {
+    "contract-composition": {
+      "effect": "forms directed scheduling strata after deterministic validation",
+      "strength": 3
+    },
+    "operation-call": {
+      "effect": "forms a weak precedence constraint within one contract-composition stratum; cycles are collapsed and reported, and it is never treated as a proof dependency",
+      "strength": 1
+    },
+    "support-unlock": {
+      "effect": "orders files within a stratum using mechanically extracted frozen-Support availability",
+      "strength": 2
+    }
+  },
+  "forbidden_planner_inputs": [
+    "original imports or bodies of classified human Proof theories",
+    "human Proof helper names, statements, order, consumers, dependency graph, or export plan",
+    "individual records or retrieval statistics from the Premise Database",
+    "stock human Refine heap",
+    "human comparison results"
+  ],
+  "inputs": [
+    "M1 public Proof-file packages with exact selected contract statements",
+    "M2 normalized frozen-Support publication and unlock facts",
+    "M3 snapshot identity and publication counts only"
+  ],
+  "model": {
+    "calls": 1,
+    "max_candidate_edges": 128,
+    "minimum_confidence": 0.55,
+    "model": "gpt-5.5",
+    "role": "propose evidence-citing contract-composition and operation-call priority edges; never emit the final schedule"
+  },
+  "outputs": [
+    "immutable layered file-generation-list.json",
+    "mutable session-progress.json",
+    "dependency-evidence.json",
+    "complete audited model transcript",
+    "m4-audit.json and m4-gate.json"
+  ],
+  "scheduling": {
+    "composition_cycles": "collapse strongly connected components into one stratum and report them",
+    "layer_rule": "topological depth of the accepted contract-composition component graph",
+    "serial_fallback": "within each layer topologically respect acyclic operation-call edges; among currently ready operation components sort by support-unlock count descending, operation-call outgoing count descending, then file_slot ascending",
+    "same_layer_meaning": "no accepted contract-composition ordering separates the files; acyclic operation-call edges still constrain the serial fallback and do not assert proof dependency or independence"
+  },
+  "schema_version": 2,
+  "stage": "Refine"
+}

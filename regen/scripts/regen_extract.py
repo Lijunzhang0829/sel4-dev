@@ -22,14 +22,16 @@ import argparse, glob, json, os, re, sys
 
 # Top-level Isabelle declaration keywords we care to slice on (column 0).
 DECL_KW = (r'lemma|theorem|corollary|lemmas|definition|defs|abbreviation|primrec|'
-           r'fun|function|interpretation|global_interpretation|sublocale|'
+           r'fun|function|inductive|inductive_set|coinductive|coinductive_set|'
+           r'interpretation|global_interpretation|sublocale|'
            r'instantiation|instance|schematic_goal|named_theorems|declare|'
            r'crunch|crunches|record|datatype|type_synonym|axiomatization')
 DECL_RE = re.compile(r'^(' + DECL_KW + r')\b(.*)$')
 # name capture for the named kinds. `defs NAME_def:` writes the fact name on the
 # `defs` line before a colon — capture it so the def can be reference-closed/kept.
 NAME_RE = re.compile(r'^(lemma|theorem|corollary|lemmas|definition|defs|abbreviation|'
-                     r'primrec|fun|function|schematic_goal)\s+'
+                     r'primrec|fun|function|inductive|inductive_set|coinductive|'
+                     r'coinductive_set|schematic_goal|record|datatype|type_synonym)\s+'
                      r'([A-Za-z0-9_\']+)\s*(\[[^\]]*\])?')
 PROOF_RE = re.compile(r'^\s*(by|apply|using|unfolding|proof|supply|done|qed|\.\.|\.|sorry|oops)\b')
 ATTR_RE = re.compile(r'\b(wp|simp|corres|corresK|intro|dest|elim|cong|split|iff|code)\b')
@@ -37,6 +39,11 @@ ATTR_RE = re.compile(r'\b(wp|simp|corres|corresK|intro|dest|elim|cong|split|iff|
 # the corres_underlying/corres_inst plumbing predicates.
 CORRES_RE = re.compile(r'\b(corres|ccorres|corresK)\b')
 PLUMBING_RE = re.compile(r'\bcorres_(underlying|inst|rrel|cross|noop|split|rel_imp)\b')
+# Ground-truth contracts follow the operation-name-first convention. Generic
+# proof rules such as `corres_split` and `corres_cap_fault` are human proof
+# decomposition and must not leak into the fixed oracle merely because their
+# statements mention corres.
+OP_CONTRACT_NAME_RE = re.compile(r'_(?:corres|ccorres|corresK)\'?$')
 
 
 def slice_decls(src):
@@ -59,10 +66,19 @@ def slice_decls(src):
         # defs often write the name on a later line: `definition\n "NAME \<equiv> ..."`
         # or `definition NAME :: ty where`. Recover it so reference-closure works.
         if name is None and kind in ("definition", "abbreviation", "fun",
-                                     "primrec", "function"):
-            dm = (re.search(r'"\s*([A-Za-z][A-Za-z0-9_\']*)\s*(?:\\<equiv>|::|≡|==)', head)
-                  or re.search(r'\b(?:definition|abbreviation|fun|primrec|function)\s+'
-                               r'([A-Za-z][A-Za-z0-9_\']*)\b', head))
+                                     "primrec", "function", "inductive",
+                                     "inductive_set", "coinductive", "coinductive_set",
+                                     "record", "datatype", "type_synonym"):
+            dm = (re.search(r'\b(?:definition|abbreviation|fun|primrec|function|record|'
+                                r'datatype|type_synonym|inductive|inductive_set|'
+                                r'coinductive|coinductive_set)\s+'
+                                r'([A-Za-z][A-Za-z0-9_\']*)'
+                                r'(?=\s|::|=|\[)', head)
+                  or re.search(
+                      r'"\s*([A-Za-z][A-Za-z0-9_\']*)'
+                      r'(?=\s|::|=|\\<equiv>)',
+                      head,
+                  ))
             if dm:
                 name = dm.group(1)
         # statement text = decl start until first proof-command line
@@ -80,6 +96,9 @@ def is_contract(d):
     # only a real goal-bearing lemma/theorem can be a refinement obligation;
     # `lemmas`/`declare` aliases are plumbing, never contracts.
     if d["kind"] not in ("lemma", "theorem", "corollary"):
+        return False
+    name = d.get("name") or ""
+    if not OP_CONTRACT_NAME_RE.search(name) or name.startswith(("corres_", "ccorres_")):
         return False
     st = d["stmt"]
     if not CORRES_RE.search(st):
