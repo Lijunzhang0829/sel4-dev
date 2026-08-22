@@ -1,32 +1,22 @@
 {
-  "schema_version": 1,
-  "setting": "Semantic-Base",
-  "campaign_name": "sel4-refine-semantic-base",
   "architecture": "ARM",
-  "stage": "Refine",
-  "experimental_claim": "Keep only the fixed declarations required to give Refine contracts their Isabelle meaning, erase all human-written theorem implementations in the Refine target scope, and regenerate the selected contracts and every generated supporting theorem needed to build them.",
+  "budgets": {
+    "graph_nodes_per_file": 64,
+    "graph_revisions_per_generation": 16,
+    "model_call_timeout_seconds": 1800,
+    "model_calls_per_node": 10
+  },
+  "campaign_name": "sel4-refine-semantic-base",
+  "completion_criteria": {
+    "partial_campaign": "any unresolved framework command or unsealed generation root produces only a partial report",
+    "refine": "all selected contracts and required framework obligations are generated, sealed, and clean-built from parents plus the Semantic Base"
+  },
   "contract_selection_policy": {
     "id": "operation-corres-v1",
     "implementation": "regen/scripts/regen_extract.py:is_contract",
     "rule": "select the fixed operation-style corres/connect contracts used by the existing Refine experiment"
   },
   "declaration_policy": {
-    "fixed_semantic_commands": [
-      "datatype",
-      "record",
-      "type_synonym",
-      "definition",
-      "abbreviation",
-      "consts",
-      "constants",
-      "locale",
-      "syntax",
-      "no_syntax",
-      "notation",
-      "no_notation",
-      "translations"
-    ],
-    "generated_by_isabelle_facts": "Facts mechanically produced by an accepted fixed declaration, such as definition equations, datatype cases/induction rules, and record selectors, remain legal and carry fixed-declaration provenance.",
     "erase_human_proof_commands": [
       "lemma",
       "theorem",
@@ -40,6 +30,30 @@
       "including",
       "unfolding"
     ],
+    "fixed_semantic_commands": [
+      "datatype",
+      "record",
+      "type_synonym",
+      "definition",
+      "abbreviation",
+      "consts",
+      "constants",
+      "locale",
+      "syntax",
+      "no_syntax",
+      "notation",
+      "no_notation",
+      "translations",
+      "primrec",
+      "fun",
+      "inductive",
+      "inductive_set",
+      "coinductive",
+      "coinductive_set",
+      "unbundle",
+      "named_theorems"
+    ],
+    "generated_by_isabelle_facts": "Facts mechanically produced by an accepted fixed declaration, such as definition equations, datatype cases/induction rules, and record selectors, remain legal and carry fixed-declaration provenance.",
     "review_and_split_commands": [
       "interpretation",
       "interpret",
@@ -49,30 +63,47 @@
       "class",
       "typedef",
       "quotient_type",
-      "primrec",
-      "fun",
       "function",
-      "inductive",
-      "inductive_set",
       "setup",
       "local_setup",
       "ML",
-      "bundle",
-      "unbundle",
-      "named_theorems"
+      "bundle"
     ],
     "review_rule": "Keep only the declaration component that is necessary for contract elaboration or endpoint semantics. Any embedded proof obligation, theorem body, theorem registration, or proof-search hint must be regenerated or removed.",
     "stop_rule": "If a fixed contract can elaborate or build only after copying a removed human theorem or its proof-search configuration, stop and report the missing generated obligation; do not copy that theorem into the semantic base."
   },
-  "source_scope": {
-    "parents": [
-      "BaseRefine",
-      "AInvs",
-      "Lib",
-      "CorresK"
-    ],
-    "target_session": "Refine",
-    "erase_theorems_from": "all theories owned by the Refine target scope, regardless of the previous Proof/Support classification"
+  "experimental_claim": "Keep only the fixed declarations required to give Refine contracts their Isabelle meaning, erase all human-written theorem implementations in the Refine target scope, and regenerate the selected contracts and every generated supporting theorem needed to build them.",
+  "forbidden_path_policy": {
+    "id": "semantic-base-refine-theorem-and-heap-deny-v1",
+    "runtime_rule": "raw Refine sources are readable only by trusted M1; model and proof modules receive sanitized theory packages and the Semantic Base heap",
+    "static_forbidden_path_patterns": [
+      "verification/l4v/proof/refine/**/*.thy",
+      "/root/.isabelle*/heaps/*/Refine"
+    ]
+  },
+  "frozen_input_files": [
+    "regen/config/refine-semantic-base-campaign.json",
+    "regen/refine_campaign.py",
+    "regen/semantic_base_pipeline.py",
+    "regen/semantic_base_m1.py",
+    "regen/semantic_base_m2.py",
+    "regen/semantic_base_m3.py",
+    "regen/semantic_base_m4.py",
+    "regen/scripts/regen_extract.py",
+    "tools/lemma_inventory/parse_roots.py",
+    "verification/l4v/proof/ROOT"
+  ],
+  "harness": {
+    "architecture_document": "regen/SEMANTIC-BASE-HARNESS.md",
+    "data_contract_implementation": "regen/semantic_base_pipeline.py",
+    "generation_task_rule": "create a generation task exactly when contract_ids or framework_obligation_ids is non-empty",
+    "theory_record_fields": [
+      "theory",
+      "file_slot",
+      "fixed_declarations",
+      "contract_ids",
+      "framework_obligation_ids"
+    ]
   },
   "initial_premise_policy": {
     "allow": [
@@ -86,14 +117,75 @@
       "the stock human Refine heap"
     ]
   },
+  "model_backends": [
+    {
+      "model": "codex-5.6",
+      "role": "Session Planner, File Planner, Graph Revision Agent"
+    },
+    {
+      "model": "codex-5.5",
+      "role": "Lemma Prover and Stepwise-Codex"
+    }
+  ],
   "pilot": {
     "first_theory": "KHeap_R",
     "purpose": "re-run the existing generated KHeap_R workload without frozen Support theorem facts and measure which prior successes depended on them"
   },
+  "schema_version": 1,
+  "setting": "Semantic-Base",
+  "source_scope": {
+    "erase_theorems_from": "all theories owned by the Refine target scope",
+    "parents": [
+      "BaseRefine",
+      "AInvs",
+      "Lib",
+      "CorresK"
+    ],
+    "target_session": "Refine"
+  },
+  "stage": "Refine",
   "success_gate": [
     "every retained fixed declaration elaborates in the sanitized environment",
     "no human-written theorem fact from the Refine target scope is visible",
     "every selected KHeap_R contract is Isabelle-green",
     "the assembled KHeap_R clean-builds from parents, the Semantic Base, and generated declarations only"
+  ],
+  "target_stages": [
+    {
+      "order": 1,
+      "parent_sessions": [
+        "BaseRefine",
+        "AInvs",
+        "Lib",
+        "CorresK"
+      ],
+      "stage": "Refine",
+      "target_session": "Refine"
+    }
+  ],
+  "trust_boundary": {
+    "allowed_source_classes": [
+      "frozen parent-session declarations",
+      "fixed Semantic Base declarations",
+      "facts mechanically generated from fixed declarations",
+      "sealed generated theorem declarations"
+    ],
+    "forbidden_source_classes": [
+      "all human-written theorem facts owned by Refine",
+      "all human-written Refine automation registrations",
+      "stock human Refine heap",
+      "unsealed generated declarations"
+    ]
+  },
+  "trusted_source_repositories": [
+    {
+      "id": "l4v",
+      "path": "verification/l4v",
+      "require_clean": true,
+      "required_clean_paths": [
+        "proof/ROOT",
+        "proof/refine"
+      ]
+    }
   ]
 }

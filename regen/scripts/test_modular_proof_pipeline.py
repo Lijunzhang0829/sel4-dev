@@ -2525,13 +2525,21 @@ class CheckerAndRunnerTests(unittest.TestCase):
             (
                 environment / "M2" / "isolated-environment" / "run-heaps"
             ).mkdir(parents=True)
-            package_dir = environment / "M1" / "public" / "proof-file-packages"
+            package_dir = environment / "M1" / "public" / "theory-packages"
             package_dir.mkdir(parents=True)
-            (environment / "M2" / "m2-gate.json").write_text(
-                '{"verdict":"pass"}', encoding="utf-8"
+            (environment / "M2" / "environment-gate.json").write_text(
+                json.dumps({
+                    "verdict": "pass",
+                    "checker_manifest": {"base_session": "Semantic_Base"},
+                }),
+                encoding="utf-8",
             )
-            (environment / "M3" / "m3-gate.json").write_text(
-                '{"verdict":"pass"}', encoding="utf-8"
+            (environment / "M3" / "premise-snapshot.json").write_text(
+                json.dumps({
+                    "artifact_type": "semantic-base-premise-snapshot",
+                    "records": [],
+                }),
+                encoding="utf-8",
             )
             (environment / "M3" / "premises.sqlite3").touch()
             (package_dir / "Demo_R.thy.json").write_text(

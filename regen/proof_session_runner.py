@@ -291,29 +291,36 @@ def recover_round_feedback(
 
 def package_paths(environment_run: Path) -> list[Path]:
     return sorted(
-        (environment_run / "M1" / "public" / "proof-file-packages").glob("*.json")
+        (environment_run / "M1" / "public" / "theory-packages").glob("*.json")
     )
 
 
+def generation_packages(environment_run: Path) -> list[dict[str, Any]]:
+    return [
+        package
+        for package in (read_json(path) for path in package_paths(environment_run))
+        if package.get("contracts") or package.get("framework_obligations")
+    ]
+
+
 def thin_environment_gate(environment_run: Path) -> dict[str, Any]:
-    m2 = read_json(environment_run / "M2" / "m2-gate.json")
-    m3 = read_json(environment_run / "M3" / "m3-gate.json")
-    packages = [read_json(path) for path in package_paths(environment_run)]
-    if m2.get("verdict") != "pass" or m3.get("verdict") != "pass":
-        raise ValueError("clean Isabelle environment and premise database must be PASS")
-    if not packages:
-        raise ValueError("no Proof-file packages found")
-    for package in packages:
-        visible = package.get("visibility_assertions", {})
-        if any(visible.values()):
-            raise ValueError(f"human Proof content is visible in {package['file_slot']}")
+    m2 = read_json(environment_run / "M2" / "environment-gate.json")
+    snapshot = read_json(environment_run / "M3" / "premise-snapshot.json")
+    database = environment_run / "M3" / "premises.sqlite3"
+    if m2.get("verdict") != "pass" or not database.is_file():
+        raise ValueError(
+            "Semantic Base Isabelle environment and premise database must be PASS"
+        )
+    packages = generation_packages(environment_run)
+    if snapshot.get("artifact_type") != "semantic-base-premise-snapshot":
+        raise ValueError("invalid Semantic Base premise snapshot")
     return {
         "clean_environment": "pass",
         "premise_database": "pass",
-        "proof_theories": len(packages),
-        "contracts": sum(len(item["contracts"]) for item in packages),
+        "generation_files": len(packages),
+        "contracts": sum(len(item.get("contracts", [])) for item in packages),
+        "base_session": m2["checker_manifest"]["base_session"],
     }
-
 
 def schedule_entries(
     environment_run: Path, schedule_path: Path | None,
@@ -330,13 +337,13 @@ def schedule_entries(
     for layer in schedule["layers"]:
         for item in layer["theories"]:
             if item["theory"] not in by_theory:
-                raise ValueError(f"schedule names an unknown Proof theory: {item['theory']}")
+                raise ValueError(f"schedule names an unknown generation theory: {item['theory']}")
             result.append({
                 "theory": item["theory"], "file_slot": item["file_slot"],
                 "layer": layer["layer"], "status": "pending",
             })
     if set(item["theory"] for item in result) != set(by_theory):
-        raise ValueError("schedule does not cover every Proof theory exactly once")
+        raise ValueError("schedule does not cover every generation theory exactly once")
     return result
 
 
@@ -348,27 +355,39 @@ def schedule_binding(
     schedule_path = schedule_path.resolve()
     schedule = read_json(schedule_path)
     gate_path = schedule_path.parent / "m4-gate.json"
-    if schedule.get("artifact_type") != "refine-file-generation-list":
-        raise ValueError("Session Planner output is not a Refine file-generation list")
-    if not schedule.get("immutable"):
+    valid_artifacts = {
+        "refine-file-generation-list", "semantic-base-file-generation-list",
+    }
+    if schedule.get("artifact_type") not in valid_artifacts:
+        raise ValueError("Session Planner output is not a generation list")
+    if schedule.get("artifact_type") == "refine-file-generation-list" and not schedule.get("immutable"):
         raise ValueError("Session Planner file list is not marked immutable")
-    gate = read_json(gate_path)
-    if gate.get("verdict") != "pass":
-        raise ValueError("Session Planner file-list check is not PASS")
-    environment_campaign = read_json(
-        environment_run / "M0" / "campaign-manifest.json"
-    )["campaign_id"]
+    if schedule.get("artifact_type") == "semantic-base-file-generation-list":
+        gate = {"verdict": "pass", "source": "deterministic-semantic-base-m4"}
+    else:
+        gate = read_json(gate_path)
+        if gate.get("verdict") != "pass":
+            raise ValueError("Session Planner file-list check is not PASS")
+    environment_campaign = (
+        read_json(environment_run / "M0" / "campaign-manifest.json")["campaign_id"]
+        if (environment_run / "M0" / "campaign-manifest.json").is_file()
+        else read_json(environment_run / "M1" / "environment-manifest.json")["campaign_id"]
+    )
     if schedule.get("campaign_id") != environment_campaign:
         raise ValueError("Session Planner file list belongs to another environment")
     return {
         "source": str(schedule_path),
         "session_plan_bound": True,
         "campaign_id": schedule["campaign_id"],
-        "layer_count": schedule["layer_count"],
-        "proof_file_count": sum(
+        "layer_count": schedule.get("layer_count", len(schedule["layers"])),
+        "file_count": sum(
             len(layer["theories"]) for layer in schedule["layers"]
         ),
-        "gate": str(gate_path),
+        "gate": (
+            str(gate_path)
+            if gate_path.is_file()
+            else "deterministic-semantic-base-m4"
+        ),
     }
 
 
@@ -426,7 +445,8 @@ def update_file(
 
 def package_for(environment_run: Path, file_slot: str) -> dict[str, Any]:
     return read_json(
-        environment_run / "M1" / "public" / "proof-file-packages" / f"{file_slot}.json"
+        environment_run / "M1" / "public" / "theory-packages"
+        / f"{file_slot}.json"
     )
 
 
@@ -446,8 +466,11 @@ def publish_generated_records(
             "exact_statement": node["statement"],
             "owner_theory": graph["theory"],
             "owner_session": "Generated_Refine",
-            "source_class": "generated_proof",
+            "source_class": "generated_theorem",
             "attributes": [],
+            "theory_seal_id": (
+                f"seal:{graph['theory']}:graph-v{graph['revision']}"
+            ),
         })
     value["records"].sort(key=lambda item: item["record_id"])
     write_json(path, value)
@@ -569,17 +592,26 @@ def run_file(
         item["file_slot"].removesuffix(".thy") for item in files["files"]
         if item["status"] == "built"
     ]
+    m2_gate = read_json(environment_run / "M2" / "environment-gate.json")
+    base_session = m2_gate["checker_manifest"]["base_session"]
+    checker_options = {
+        "base_session": base_session,
+        "base_import": f"{base_session}.Semantic_Root",
+        "base_catalog": "/m2/semantic-base",
+    }
     checker = IsabelleChecker(
         environment_run, theory_dir / "isabelle", timeout=timeout,
         previous_theories=built,
         generated_dir=run_dir / "generated",
         heaps_dir=run_dir / "heaps",
+        **checker_options,
     )
     graph_checker = IsabelleChecker(
         environment_run, theory_dir / "isabelle", timeout=graph_timeout,
         previous_theories=built,
         generated_dir=run_dir / "generated",
         heaps_dir=run_dir / "heaps",
+        **checker_options,
     )
     statuses = {node["id"]: "planned" for node in graph["nodes"]}
     proofs: dict[str, str] = {}

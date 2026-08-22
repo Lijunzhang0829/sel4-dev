@@ -459,7 +459,7 @@ def prove_node_stepwise(
         _target_source(graph, node_id, proofs, checker.imports(), theory_name),
         encoding="utf-8",
     )
-    parent = "Generated_Refine" if checker.previous_theories else "M2_Frozen_Support"
+    parent = "Generated_Refine" if checker.previous_theories else checker.base_session
     (target_dir / "ROOT").write_text("\n".join([
         f"session {session_name} = {parent} +",
         "  theories",
@@ -498,7 +498,7 @@ def prove_node_stepwise(
         raise ValueError(f"Stepwise runtime is incomplete: {missing}")
 
     session_dirs = [
-        "/m2/frozen-support",
+        checker.base_catalog,
         *(f"/sel4-project/verification/l4v/{item}" for item in SESSION_CATALOGS),
     ]
     if checker.previous_theories:

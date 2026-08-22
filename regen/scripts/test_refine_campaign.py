@@ -60,6 +60,21 @@ class RefineCampaignTest(unittest.TestCase):
         self.assertNotIn("created_at", first)
         verify_manifest(first)
 
+    def test_semantic_base_campaign_has_refine_only(self):
+        config = json.loads(self.config.read_text(encoding="utf-8"))
+        config["setting"] = "Semantic-Base"
+        config["target_stages"] = [
+            {"stage": "Refine", "target_session": "Refine"},
+        ]
+        self.config.write_text(json.dumps(config, sort_keys=True), encoding="utf-8")
+        manifest = self.build()
+        self.assertEqual(manifest["setting"], "Semantic-Base")
+        self.assertEqual(
+            manifest["staging_rule"],
+            "This campaign generates and seals Refine only",
+        )
+        verify_manifest(manifest)
+
     def test_frozen_input_change_changes_campaign(self):
         first = self.build()
         (self.repo / "policy.py").write_text("POLICY = 2\n", encoding="utf-8")

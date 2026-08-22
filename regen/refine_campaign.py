@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Freeze a deterministic Setting B Refine/CRefine campaign (M0)."""
+"""Freeze a deterministic proof-regeneration campaign (M0)."""
 from __future__ import annotations
 
 import argparse
@@ -71,13 +71,18 @@ def validate_config(config: dict[str, Any]) -> None:
         raise ValueError(f"campaign config is missing fields: {missing}")
     if config["schema_version"] != SCHEMA_VERSION:
         raise ValueError(f"unsupported config schema: {config['schema_version']}")
-    if config["setting"] != "B":
-        raise ValueError("this constructor implements Setting B only")
+    if config["setting"] not in {"B", "Semantic-Base"}:
+        raise ValueError(f"unsupported setting: {config['setting']}")
     stages = config["target_stages"]
-    if not isinstance(stages, list) or [item.get("stage") for item in stages] != [
-        "Refine", "CRefine",
-    ]:
-        raise ValueError("target_stages must freeze Refine before CRefine")
+    stage_names = (
+        [item.get("stage") for item in stages]
+        if isinstance(stages, list) else []
+    )
+    expected = (
+        ["Refine", "CRefine"] if config["setting"] == "B" else ["Refine"]
+    )
+    if stage_names != expected:
+        raise ValueError(f"target_stages must be {expected} for {config['setting']}")
     files = config["frozen_input_files"]
     if not isinstance(files, list) or not files or not all(isinstance(p, str) for p in files):
         raise ValueError("frozen_input_files must be a non-empty string list")
@@ -202,6 +207,8 @@ def build_manifest(
         "staging_rule": (
             "Refine must be completely sealed before production CRefine starts; "
             "CRefine must consume the exact generated Refine heap"
+            if config["setting"] == "B"
+            else "This campaign generates and seals Refine only"
         ),
         "model_calls_performed": 0,
     }

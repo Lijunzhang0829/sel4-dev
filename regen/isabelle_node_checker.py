@@ -238,6 +238,9 @@ class IsabelleChecker:
         previous_theories: list[str] | None = None,
         generated_dir: Path | None = None,
         heaps_dir: Path | None = None,
+        base_session: str = "Semantic_Base",
+        base_import: str = "Semantic_Base.Semantic_Root",
+        base_catalog: str = "/m2/semantic-base",
     ) -> None:
         self.run_dir = run_dir.resolve()
         self.work_dir = work_dir.resolve()
@@ -246,6 +249,9 @@ class IsabelleChecker:
         self.timeout = timeout
         self.previous_theories = previous_theories or []
         self.generated_dir = (generated_dir or self.work_dir.parent / "generated").resolve()
+        self.base_session = base_session
+        self.base_import = base_import
+        self.base_catalog = base_catalog
         self.heaps_dir = (
             heaps_dir
             or self.run_dir / "M2" / "isolated-environment" / "run-heaps"
@@ -264,7 +270,7 @@ class IsabelleChecker:
     def imports(self) -> list[str]:
         if self.previous_theories:
             return [f"Generated_Refine.{self.previous_theories[-1]}"]
-        return ["M2_Frozen_Support.Corres"]
+        return [self.base_import]
 
     def _source(
         self, graph: dict[str, Any], proofs: dict[str, str], *,
@@ -339,7 +345,7 @@ class IsabelleChecker:
             command[insertion:insertion] = mount_args
         for item in SESSION_CATALOGS:
             command.extend(["-d", f"/sel4-project/verification/l4v/{item}"])
-        command.extend(["-d", "/m2/frozen-support"])
+        command.extend(["-d", self.base_catalog])
         if (self.generated_dir / "ROOT").is_file():
             command.extend(["-d", "/generated"])
         command.extend(["-T", f"/candidate/{source.stem}"])
@@ -351,7 +357,7 @@ class IsabelleChecker:
     ) -> dict[str, Any]:
         source = self.work_dir / f"{label}.thy"
         source.write_text(source_text, encoding="utf-8")
-        session = "Generated_Refine" if self.previous_theories else "M2_Frozen_Support"
+        session = "Generated_Refine" if self.previous_theories else self.base_session
         started = time.time()
         container_name = f"regen-isabelle-check-{os.getpid()}"
         command = self._command(
@@ -511,7 +517,7 @@ class IsabelleChecker:
     def build_generated_session(self, theories: list[str]) -> dict[str, Any]:
         root = self.generated_dir / "ROOT"
         root.write_text("\n".join([
-            "session Generated_Refine = M2_Frozen_Support +",
+            f"session Generated_Refine = {self.base_session} +",
             "  sessions",
             "    Lib",
             "    CorresK",
@@ -537,7 +543,7 @@ class IsabelleChecker:
         for item in SESSION_CATALOGS:
             command.extend(["-d", f"/sel4-project/verification/l4v/{item}"])
         command.extend([
-            "-d", "/m2/frozen-support", "-d", "/generated", "Generated_Refine",
+            "-d", self.base_catalog, "-d", "/generated", "Generated_Refine",
         ])
         started = time.time()
         container_name = f"regen-isabelle-build-{os.getpid()}"

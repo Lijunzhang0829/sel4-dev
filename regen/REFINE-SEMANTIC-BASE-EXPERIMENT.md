@@ -1,13 +1,12 @@
 # Refine Semantic-Base Experiment
 
-Status: branch setup; sanitizer and campaign not yet started
+Status: classification-free harness foundation implemented; M1 smoke PASS; M2 blocked on framework resolution
 
 ## Purpose
 
-The previous Setting B froze every Refine theory with no selected contract as a
-Support theory. That made the experiment manageable, but it also admitted human
-theorems from those files into the premise database. The new setting removes
-that distinction as a proof-preservation boundary.
+The earlier experiment admitted human theorems from Refine files outside its
+generation target set. That made the experiment manageable, but preserved a
+large amount of proof scaffolding. The new setting removes that boundary.
 
 This experiment keeps only the declarations required to determine what the
 fixed Refine endpoints and contracts mean in Isabelle. All other human-written
@@ -41,8 +40,8 @@ Across the complete Refine target scope, erase:
   automation pools;
 - the stock human Refine heap.
 
-The old Proof/Support classification may still be retained as descriptive
-metadata, but it no longer decides which theorem facts survive.
+No file classification is produced or consumed. Every Refine theory is scanned
+under the same declaration policy.
 
 ## Mixed Commands
 
@@ -76,7 +75,8 @@ Semantic Base Builder
   -> Isabelle assembly and clean build
 ```
 
-Only the legal input boundary changes. The initial Premise Database contains
+The legal input boundary and environment preparation change. The initial
+Premise Database contains
 parent-session facts, fixed Semantic Base declarations, and facts Isabelle
 mechanically derives from those declarations. It contains no human-written
 theorem from any Refine-owned theory.
@@ -86,7 +86,7 @@ theorem from any Refine-owned theory.
 The first pilot is `KHeap_R`, because the previous setting already provides a
 complete generation trace for comparison. The pilot will answer:
 
-- which generated KHeap proofs used frozen Support theorem facts;
+- which generated KHeap proofs previously depended on retained human Refine facts;
 - which facts can be replaced by generated theorems or definitional automation;
 - whether the File Planner must introduce new cross-contract nodes;
 - whether the existing graph-revision and lemma-proving modules remain adequate
@@ -102,8 +102,12 @@ under this setting and will not be copied into the new campaign.
 - This experiment starts on branch `regen-refine-semantic-base`.
 - The normative configuration is
   `regen/config/refine-semantic-base-campaign.json`.
-- No Semantic-Base campaign ID or generation result exists yet.
+- The complete harness is documented in regen/SEMANTIC-BASE-HARNESS.md.
+- No production Semantic-Base campaign ID or proof generation exists yet.
+- A disposable M1 smoke extracted 41 theories, 499 fixed declarations and all
+  287 contracts while deleting 4,886 human theorem commands.
+- M2 is blocked on 51 mixed framework commands that require explicit resolution.
 
-The next implementation step is a command-aware Semantic Base extractor plus an
-Isabelle elaboration audit. Generation must not begin until that audit confirms
-that the target context contains no Refine-owned human theorem facts.
+The next implementation step is the Framework Declaration Resolver, followed by
+an Isabelle elaboration and export audit. Generation must not begin until M2
+confirms that the target context contains no Refine-owned human theorem facts.

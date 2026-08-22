@@ -21,11 +21,14 @@ Usage:
 import argparse, glob, json, os, re, sys
 
 # Top-level Isabelle declaration keywords we care to slice on (column 0).
-DECL_KW = (r'lemma|theorem|corollary|lemmas|definition|defs|abbreviation|primrec|'
-           r'fun|function|inductive|inductive_set|coinductive|coinductive_set|'
-           r'interpretation|global_interpretation|sublocale|'
-           r'instantiation|instance|schematic_goal|named_theorems|declare|'
-           r'crunch|crunches|record|datatype|type_synonym|axiomatization')
+DECL_KW = (r'lemma|theorem|corollary|proposition|lemmas|definition|defs|'
+           r'abbreviation|consts|constants|locale|syntax|no_syntax|notation|'
+           r'no_notation|translations|primrec|fun|function|inductive|'
+           r'inductive_set|coinductive|coinductive_set|interpretation|'
+           r'global_interpretation|sublocale|instantiation|instance|class|'
+           r'typedef|quotient_type|schematic_goal|named_theorems|declare|'
+           r'crunch|crunches|record|datatype|type_synonym|axiomatization|'
+           r'setup|local_setup|ML|bundle|unbundle')
 DECL_RE = re.compile(r'^(' + DECL_KW + r')\b(.*)$')
 # name capture for the named kinds. `defs NAME_def:` writes the fact name on the
 # `defs` line before a colon — capture it so the def can be reference-closed/kept.
