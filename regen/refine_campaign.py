@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Freeze a deterministic proof-regeneration campaign (M0)."""
+"""Freeze a deterministic proof-regeneration campaign."""
 from __future__ import annotations
 
 import argparse
@@ -162,7 +162,7 @@ def build_manifest(
     revision: str | None = None,
     worktree_clean: bool | None = None,
 ) -> dict[str, Any]:
-    """Construct the M0 artifact without clocks, randomness, or model calls."""
+    """Construct the Environment Freeze artifact without clocks, randomness, or model calls."""
     repo = repo.resolve()
     config_path = config_path if config_path.is_absolute() else repo / config_path
     config = read_json(config_path)
@@ -184,8 +184,8 @@ def build_manifest(
                 repository_is_clean(repo) if worktree_clean is None else worktree_clean
             ),
             "dirty_worktree_policy": (
-                "allowed only with content hashes for every declared M0 input; "
-                "M1 must separately hash every trusted source it extracts"
+                "allowed only with content hashes for every declared frozen input; "
+                "Contract Inventory separately hashes every trusted source it extracts"
             ),
         },
         "campaign_config": {
@@ -244,13 +244,13 @@ def verify_manifest(manifest: dict[str, Any]) -> None:
     if manifest.get("campaign_id") != expected_id:
         raise ValueError("campaign ID does not match manifest payload")
     if manifest.get("model_calls_performed") != 0:
-        raise ValueError("M0 must not perform model calls")
+        raise ValueError("Environment Freeze must not perform model calls")
 
 
 def verify_frozen_inputs(
     repo: Path, manifest: dict[str, Any], *, revision: str | None = None,
 ) -> None:
-    """Prove that the current checkout still matches the frozen M0 inputs."""
+    """Prove that the current checkout still matches the frozen Environment Freeze inputs."""
     repo = repo.resolve()
     current_revision = revision or repository_revision(repo)
     if current_revision != manifest["repository"]["revision"]:
@@ -307,7 +307,7 @@ def main() -> int:
 
     manifest = build_manifest(repo, args.config)
     output_root = args.output_root if args.output_root.is_absolute() else repo / args.output_root
-    output = output_root / manifest["campaign_id"] / "M0" / "campaign-manifest.json"
+    output = output_root / manifest["campaign_id"] / "Environment-Freeze" / "campaign-manifest.json"
     disposition = write_immutable_json(output, manifest)
     print(f"{disposition} {manifest['campaign_id']}: {output}")
     return 0

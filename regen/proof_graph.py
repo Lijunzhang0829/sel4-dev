@@ -2,6 +2,7 @@
 """Data model and deterministic checks for generated theorem DAGs."""
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from collections import deque
@@ -30,6 +31,22 @@ FIXES_BLOCK = re.compile(
 )
 FIXES_TYPED_GROUP = re.compile(r"(.+?)\s*::\s*\"([^\"]+)\"", re.S)
 TERM_IDENTIFIER = re.compile(r"(?<![A-Za-z0-9_'])([a-z][A-Za-z0-9_]*')(?![A-Za-z0-9_'])")
+
+
+def graph_payload_sha256(graph: dict[str, Any]) -> str:
+    """Hash one immutable graph while excluding its self-authenticating field."""
+    payload = dict(graph)
+    payload.pop("graph_payload_sha256", None)
+    encoded = json.dumps(
+        payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def verify_graph_payload_sha256(graph: dict[str, Any]) -> None:
+    expected = graph.get("graph_payload_sha256")
+    if not isinstance(expected, str) or expected != graph_payload_sha256(graph):
+        raise ValueError("graph payload hash mismatch")
 
 
 def normalized_declaration_body(statement: str) -> str:

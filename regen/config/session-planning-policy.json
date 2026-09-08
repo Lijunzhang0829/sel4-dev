@@ -1,0 +1,27 @@
+{
+  "artifact_type": "session-planning-policy",
+  "claim": "Evidence-grounded generation scheduling over fixed Refine contract-owning theory slots.",
+  "forbidden_planner_inputs": [
+    "raw human Refine theory sources or imports",
+    "human helper names, statements, proof order, dependency graph, or export plan",
+    "individual Premise Catalog records or retrieval statistics",
+    "stock human Refine heap",
+    "human comparison results"
+  ],
+  "model": {
+    "calls": 1,
+    "max_candidate_edges": 128,
+    "minimum_confidence": 0.55,
+    "model": "gpt-5.6-sol",
+    "role": "Propose evidence-citing contract-composition and operation-call priority edges; never emit the final schedule."
+  },
+  "rules": {
+    "contract-composition": "Validated edges form scheduling layers. Cycles are collapsed and disclosed.",
+    "edge-grounding": "Every accepted edge cites current contracts from both endpoints and shares at least one non-generic identifier across those endpoint contracts.",
+    "operation-call": "Validated edges affect only serial order inside one composition layer. They never claim a proof dependency.",
+    "same-layer": "No accepted contract-composition evidence separates the theories; this does not assert semantic independence.",
+    "tie-break": "Among currently ready weak-edge components, sort by outgoing weak-edge count descending and then theory name ascending."
+  },
+  "schema_version": 1,
+  "stage": "Refine"
+}

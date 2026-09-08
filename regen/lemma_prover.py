@@ -9,9 +9,7 @@ from typing import Any
 
 from regen.llm_transcript import allocate_artifact_prefix, call_llm
 from regen.module_run_log import attach_module_outputs, write_llm_module_log
-from regen.premise_retrieval import (
-    retrieve_proof_premises, semantic_bridge_guidance,
-)
+from regen.premise_retrieval import retrieve_proof_premises
 from regen.proof_outline_salvage import plan_local_outline
 from regen.proof_graph import parse_json_response
 
@@ -35,193 +33,6 @@ intermediate facts, `simp only` with an explicit small rule set, or introduce
 the conjunction fields one at a time. A merely cosmetic tactic substitution is
 not a repair. Timed-out method lines from the previous candidate:
 """ + (repeated or "- unavailable")
-
-
-def retrieval_repair_guidance(retrieval_hint: str) -> str:
-    if "ps_clear_def" not in retrieval_hint.lower():
-        return ""
-    return """The focused retrieval request identified ps_clear_def2. Preserve
-the ps_clear fact obtained from obj_at' instead of unfolding it into a set
-difference. Instantiate ps_clear_def2 directly. First derive `ptr <= ptr + 1`
-from the local alignment fact with `Aligned.is_aligned_no_wrap'` at offset 1
-(the remaining `1 < 2 ^ cteSizeBits` side condition is numeric). Then use
-`iffD1 (Invariants_H.ps_clear_def2[OF that_bound])` to obtain exactly
-`{ptr + 1..ptr + 2 ^ cteSizeBits - 1} inter dom (ksPSpace s') = {}`.
-Do not prove the interval-set equality element by element."""
-
-
-
-def constructor_case_residual_guidance(residual: str) -> str:
-    """Translate a stuck constructor case into a local tactic-order repair."""
-    if (
-        'At command "apply"' not in residual
-        or "case " not in residual
-        or "ASIDPool" not in residual
-    ):
-        return ""
-    return """The latest residual is a constructor case left by the current
-failing apply, not a missing theorem. Add the abstract architecture datatype
-split to that same failing simp method; do not put the split in a later
-command, because Isabelle stops at an apply that makes no progress. For an
-arch_kernel_obj.ASIDPool residual use
-split: Arch_Structs_A.ARM_A.arch_kernel_obj.splits (or the unqualified
-ARM_A.arch_kernel_obj.splits if that is the visible name). Avoid inserting
-the concrete arch_kernel_object.case(3) rewrite before this split."""
-
-
-def projectko_type_erasure_guidance(node: dict[str, Any], residual: str) -> str:
-    """Keep the projectKO result type visible across fst/snd projections."""
-    if (
-        "updateObject_default_checks_no_fail" not in str(node.get("id", ""))
-        or "snd (projectKO ko s)" not in residual
-    ):
-        return ""
-    return r"""The current residual is a projectKO type-erasure failure, not a
-missing graph node. In every local no-fail fact, annotate the complete value as
-`(projectKO ko s :: (('a \<times> kernel_state) set \<times> bool))`; an
-untyped `snd (projectKO ko s)` may instantiate projectKO at an unrelated result
-type. Do not apply `regen_setObject_other_projectKO_typed_no_fail` with a bare
-`rule`, because that has repeatedly lost the intended type instantiation.
-Instead prove the explicitly typed local fact directly from `pko` with
-`simp add: PSpaceStorable_H.pre_storable_class.projectKO_def
-Nondet_Monad.return_def`. When simplifying updateObject_default, retain this
-typed fact. For an `unless (ptr && mask ... = 0)` residual, do not unfold
-`alignCheck_def` or `is_aligned_def`; rewrite with
-`LevityCatch.alignCheck_assert` so the existing `is_aligned` assumption removes
-the check. Likewise prefer `LevityCatch.magnitudeCheck_assert` for the optional
-successor bound. Use only narrow bind/no-fail composition rules, and do not
-drop the type annotation in a later intermediate fact."""
-
-
-def projectko_type_erasure_precheck(node: dict[str, Any], proof: str) -> str:
-    if "updateObject_default_checks_no_fail" not in str(node.get("id", "")):
-        return ""
-    if re.search(
-        r"using\s+pko\s+by\s+\(rule\s+"
-        r"regen_setObject_other_projectKO_typed_no_fail\)", proof,
-    ):
-        return (
-            "Candidate rejected before Isabelle: a bare rule application of "
-            "regen_setObject_other_projectKO_typed_no_fail repeats the known "
-            "snd/projectKO type-erasure failure. Prove an explicitly typed "
-            "pko_nf directly from pko with projectKO_def and return_def."
-        )
-    if (
-        "alignCheck_def" in proof
-        and "alignCheck_assert" not in proof
-    ):
-        return (
-            "Candidate rejected before Isabelle: unfolding alignCheck_def "
-            "repeats the known unless/mask residual. Rewrite with "
-            "LevityCatch.alignCheck_assert and preserve the is_aligned fact."
-        )
-    typed_pko_nf = re.search(
-        r"have\s+pko_nf\s*:\s*\"[^\"]*snd\s*\(projectKO\s+ko\s+s\s*::",
-        proof,
-    )
-    if "have pko_nf" in proof and not typed_pko_nf:
-        return (
-            "Candidate rejected before Isabelle: pko_nf dropped the explicit "
-            "projectKO result type. Annotate the value before applying snd."
-        )
-    if (
-        typed_pko_nf
-        and "pre_storable_class.projectKO_def" in proof
-        and "return_def" not in proof
-    ):
-        return (
-            "Candidate rejected before Isabelle: direct projectKO no-fail "
-            "simplification also requires Nondet_Monad.return_def."
-        )
-    return ""
-
-
-def explosive_state_relation_closer(node: dict[str, Any], proof: str) -> str:
-    if "regen_setObject_other_pspace_relation_update" in proof:
-        wrapped_goal = re.search(
-            r"pspace_relation\s+\(kheap\s+\?[A-Za-z0-9_']+\)"
-            r"\s+\(ksPSpace\s+\?[A-Za-z0-9_']+\)",
-            proof,
-        )
-        if wrapped_goal:
-            return (
-                "Candidate rejected before Isabelle: normalize the pspace "
-                "component goal before invoking the higher-order update rule. "
-                "State the goal directly over `(kheap s)(ptr \\<mapsto> ob)` and "
-                "`(ksPSpace s')(ptr \\<mapsto> injectKO ob')`; do not wrap those "
-                "maps as `kheap ?s` and `ksPSpace ?s'` behind local record lets."
-            )
-        unsafe_of = re.search(
-            r"regen_setObject_other_pspace_relation_update\s*\[[^\]]*\bOF\b",
-            proof,
-        )
-        unsafe_apply = (
-            "apply (rule regen_setObject_other_pspace_relation_update" in proof
-        )
-        if unsafe_of or unsafe_apply:
-            return (
-                "Candidate rejected before Isabelle: this higher-order helper "
-                "must not be invoked with OF or an apply-chain. Both forms have "
-                "already produced multiple-unifier or shifted-subgoal failures. "
-                "Use `proof (rule regen_setObject_other_pspace_relation_update"
-                "[where P=P and ptr=ptr and ob=ob and ob'=ob' and s=s and s'=s'])` "
-                "and discharge every certified premise with a separate `show` "
-                "block, including the higher-order z/b/e premises."
-            )
-    if "pspace_relation" in str(node.get("statement", "")):
-        broad = re.search(r"\b(?:fastforce|blast)\b", proof, flags=re.I)
-        if broad:
-            return (
-                "Candidate rejected before Isabelle: broad " + broad.group(0) +
-                " in pspace_relation assembly repeats a known timeout pattern. "
-                "Instantiate the two bounded universal premises explicitly with "
-                "drule or bspec for x and the relation cut, then simplify only "
-                "the resulting case expression."
-            )
-    if "state_relation" not in str(node.get("statement", "")):
-        return ""
-    if (
-        str(node.get("id", "")).endswith("regen_setObject_other_state_relation_update")
-        and "ready_queues_relation_def" in proof
-    ):
-        return (
-            "Candidate rejected before Isabelle: keep the exact "
-            "`ready_queues_relation_2` conclusion returned by "
-            "regen_setObject_other_ready_queues_update and submit that rq2 fact "
-            "directly during state_relation_def assembly; do not expand it into "
-            "ready_queues_relation with `simp add: ready_queues_relation_def`."
-        )
-    if re.search(
-        r"unfolding\s+(?:StateRelation\.)?state_relation_def[\s\S]*?(?:by|apply)\s+simp\b",
-        proof,
-        flags=re.I,
-    ):
-        return (
-            "Candidate rejected before Isabelle: a default `simp` closer after "
-            "unfolding state_relation_def is a known multi-minute search. "
-            "Assemble the relation with `rule CollectI`, "
-            "`simp only: split_conv`, repeated `rule conjI`, and one explicit "
-            "`rule` for each of all 17 already-proved relation components; "
-            "do not leave a trailing default `simp` or `apply simp`."
-        )
-    show_match = re.search(r"show\s+\?thesis([\s\S]*)", proof, flags=re.I)
-    if not show_match:
-        return ""
-    closer_block = show_match.group(1)
-    if "state_relation_def" not in closer_block:
-        return ""
-    broad = re.search(
-        r"\b(?:simp|clarsimp|auto|fastforce)\b(?!\s+only\b)",
-        closer_block, flags=re.I,
-    )
-    if not broad:
-        return ""
-    closer = " ".join(("show ?thesis" + closer_block).split())[:800]
-    return (
-        "Candidate rejected before Isabelle: known proof-search explosion "
-        "pattern in final state_relation assembly. Replace this closing block "
-        "with bounded simp only or explicit conjunction construction: " + closer
-    )
 
 
 def trim_redundant_proof_terminator(
@@ -572,6 +383,8 @@ def prove_node(
     )
     local_outline = None
     salvage_plans = []
+    provider_failures = []
+    provider_call_index = 0
     forbidden_facts: set[str] = set(re.findall(
         r'Undefined fact:\s*["`]?([A-Za-z][A-Za-z0-9_\'.]*)',
         "\n".join(filter(None, [
@@ -614,47 +427,12 @@ def prove_node(
             node, dependencies, premises, best_previous,
             guidance=(
                 retrieval_hint
-                + "\n" + retrieval_repair_guidance(retrieval_hint)
-                + ("\n" + "\n".join(semantic_bridge_guidance(
-                    "\n".join(filter(None, [
-                        node["statement"], prior_round_residual, residual,
-                    ]))
-                )) if semantic_bridge_guidance("\n".join(filter(None, [
-                    node["statement"], prior_round_residual, residual,
-                ]))) else "")
                 + "\nPrefer explicit Isar `have` steps when the proof requires "
                   "several semantic projections."
-                + "\nFor a state_relation update assembled from GREEN component "
-                  "facts, do not finish with broad simp, clarsimp, auto, or "
-                  "fastforce over state_relation_def. Use bounded simp only "
-                  "or introduce its conjunction fields explicitly."
-                + "\nFor pspace_relation, instantiate its nested bounded universals "
-                  "with explicit drule/bspec steps; do not use blast or "
-                  "fastforce to discover x and the relation cut."
                 + "\nWhen applying a generated dependency, match each supplied "
                   "fact against the dependency's certified premise type and "
-                  "order. In particular, "
-                  "regen_setObject_other_relation_cut_preserved_at_ptr requires "
-                  "the original obj_at fact (usually ao), not its weaker typ_at "
-                  "consequence (typ_fact). For this pspace_relation node, "
-                  "do not create a separately named rels fact. At theorem "
-                  "top level use apply-style: `unfolding pspace_relation_def; "
-                  "apply (rule conjI)`, close the first subgoal with dom_upd, "
-                  "then `apply (intro ballI); apply clarify` before the existing "
-                  "x = ptr / y = ptr case proof. This removes the ambiguous "
-                  "nested rels/qed scope entirely."
+                  "order."
                 + "\n" + timeout_repair_guidance(previous)
-                + "\n" + constructor_case_residual_guidance(
-                    "\n".join(filter(None, [
-                        prior_round_residual, residual,
-                    ]))
-                )
-                + "\n" + projectko_type_erasure_guidance(
-                    node,
-                    "\n".join(filter(None, [
-                        prior_round_residual, residual,
-                    ])),
-                )
             ),
             forbidden_facts=forbidden_facts,
             previous_round_feedback=previous_round_feedback,
@@ -664,87 +442,94 @@ def prove_node(
                 attempt_summary(item) for item in prior_candidates + attempts
             ],
         )
-        transcript_prefix = allocate_artifact_prefix(
-            node_dir / "llm" / f"attempt-{number:03d}"
-        )
-        provider_error: Exception | None = None
-        try:
-            response = call_llm(
-                provider, prompt, transcript_prefix,
-                model=model,
-                timeout=min(timeout, think_timeout or timeout),
-                theory=graph["theory"],
-                stage=f"lemma-prover:{node_id}",
+        while True:
+            provider_call_index += 1
+            transcript_prefix = allocate_artifact_prefix(
+                node_dir / "llm" / f"call-{provider_call_index:03d}"
             )
-        except Exception as error:
-            provider_error = error
-        finally:
-            if transcript_prefix.with_suffix(".meta.json").is_file():
-                write_llm_module_log(
-                    transcript_prefix, module_log_path, module="Lemma Prover",
-                    run_name=(
-                        f"{graph['file_slot'].removesuffix('.thy')}--{node_id}"
-                        f"--round-{round_id:02d}"
-                    ),
-                    context={
-                        "theory": graph["theory"], "node_id": node_id,
-                        "round_id": round_id, "attempt": number,
-                        "backend": "whole-proof",
-                    },
+            provider_error: Exception | None = None
+            try:
+                response = call_llm(
+                    provider, prompt, transcript_prefix,
+                    model=model,
+                    timeout=min(timeout, think_timeout or timeout),
+                    theory=graph["theory"],
+                    stage=f"lemma-prover:{node_id}",
+                    clean_runtime=True,
                 )
-        if provider_error is not None:
+                meta = json.loads(
+                    transcript_prefix.with_suffix(".meta.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                if not meta.get("sealable_generation"):
+                    raise RuntimeError(
+                        "Lemma Prover transport was not sealable"
+                    )
+            except Exception as error:
+                provider_error = error
+            finally:
+                if transcript_prefix.with_suffix(".meta.json").is_file():
+                    write_llm_module_log(
+                        transcript_prefix, module_log_path,
+                        module="Lemma Prover",
+                        run_name=(
+                            f"{graph['file_slot'].removesuffix('.thy')}--{node_id}"
+                            f"--round-{round_id:02d}"
+                        ),
+                        context={
+                            "theory": graph["theory"], "node_id": node_id,
+                            "round_id": round_id, "attempt": number,
+                            "provider_call": provider_call_index,
+                            "backend": "whole-proof",
+                        },
+                    )
+            if provider_error is None:
+                break
             diagnostic = (
                 "LLM provider failure; no proof candidate was checked by "
                 f"Isabelle: {type(provider_error).__name__}: {provider_error}"
             )
-            attempt = {
-                "attempt": number,
-                "proof_body": "",
-                "used_premise_ids": [],
-                "retrieved_premises": [
-                    item["record_id"] for item in premises
-                ],
-                "retrieved_premise_names": [
-                    item["canonical_name"] for item in premises
-                ],
-                "forbidden_facts": sorted(forbidden_facts),
-                "failure_class": "llm_provider_error",
-                "check": {
-                    "verdict": "red", "returncode": None,
-                    "diagnostic": diagnostic,
-                    "source": None, "log": None, "wall_ms": 0,
-                },
-            }
-            attempts.append(attempt)
-            (node_dir / "attempts.json").write_text(
-                json.dumps(attempts, ensure_ascii=False, indent=2) + "\n",
+            provider_failures.append({
+                "provider_call": provider_call_index,
+                "intended_attempt": number,
+                "diagnostic": diagnostic,
+                "transcript_prefix": str(transcript_prefix),
+            })
+            (node_dir / "provider-failures.json").write_text(
+                json.dumps(
+                    provider_failures, ensure_ascii=False, indent=2,
+                ) + "\n",
                 encoding="utf-8",
             )
-            previous = attempt
-            if (
-                best_previous is None
-                or proof_progress_line(attempt) > proof_progress_line(best_previous)
-            ):
-                best_previous = attempt
-            continue
+            if len(provider_failures) >= max_attempts:
+                result = {
+                    "status": "red", "node_id": node_id,
+                    "failure_scope": "infrastructure",
+                    "failure_class": "llm_provider_error",
+                    "attempts": attempts,
+                    "provider_failures": provider_failures,
+                    "salvage_plans": salvage_plans,
+                    "sealable_generation": False,
+                    "residual": diagnostic,
+                }
+                result_path = node_dir / "result.json"
+                result_path.write_text(
+                    json.dumps(result, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                if module_log_path.is_file():
+                    attach_module_outputs(
+                        module_log_path, {"proof_result": result_path},
+                    )
+                return result
         candidate = parse_json_response(response)
         proof = candidate.get("proof_body", "").strip()
         if not proof:
             raise ValueError("Lemma Prover returned an empty proof body")
         proof, syntax_normalizations = normalize_reserved_local_fact_names(proof)
         candidate_proofs = {**proofs, node_id: proof}
-        explosive = (
-            projectko_type_erasure_precheck(node, proof)
-            or explosive_state_relation_closer(node, proof)
-        )
-        if explosive:
-            check = {
-                "verdict": "red", "returncode": None,
-                "diagnostic": explosive, "source": None, "log": None,
-                "wall_ms": 0, "precheck": "explosive-state-relation-closer",
-            }
-        else:
-            check = checker.check_node(graph, candidate_proofs, node_id)
+        check = checker.check_node(graph, candidate_proofs, node_id)
         deterministic_repairs = []
         original_proof = proof
         original_check = check
@@ -816,7 +601,9 @@ def prove_node(
         if check["verdict"] == "green":
             result = {
                 "status": "green", "node_id": node_id, "proof_body": proof,
-                "attempts": attempts, "salvage_plans": salvage_plans,
+                "attempts": attempts,
+                "provider_failures": provider_failures,
+                "salvage_plans": salvage_plans,
                 "sealable_generation": all(
                     item["outline"].get("sealable_generation", False)
                     for item in salvage_plans
@@ -839,31 +626,31 @@ def prove_node(
             or proof_progress_line(attempt) > proof_progress_line(best_previous)
         ):
             best_previous = attempt
-        if number < max_attempts:
-            salvage_prefix = (
-                node_dir / "salvage" / f"after-attempt-{number:03d}"
+        salvage_prefix = (
+            node_dir / "salvage" / f"after-attempt-{number:03d}"
+        )
+        salvage_log = (
+            output_dir.parent.parent / "module-logs/proof-outline-salvage"
+            / (
+                f"{graph['file_slot'].removesuffix('.thy')}--"
+                f"{node_id.replace('/', '_').replace(':', '_')}"
+                f"--round-{round_id:02d}.json"
             )
-            salvage_log = (
-                output_dir.parent.parent / "module-logs/proof-outline-salvage"
-                / (
-                    f"{graph['file_slot'].removesuffix('.thy')}--"
-                    f"{node_id.replace('/', '_').replace(':', '_')}"
-                    f"--round-{round_id:02d}.json"
-                )
-            )
-            local_outline = plan_local_outline(
-                node, attempts, output_prefix=salvage_prefix,
-                provider=salvage_provider or provider,
-                model=model, timeout=min(timeout, think_timeout or timeout),
-                theory=graph["theory"], stepwise_residual=stepwise_residual,
-                previous_plan=local_outline, module_log_path=salvage_log,
-            )
-            salvage_plans.append({
-                "after_attempt": number, "outline": local_outline,
-            })
+        )
+        local_outline = plan_local_outline(
+            node, attempts, output_prefix=salvage_prefix,
+            provider=salvage_provider or provider,
+            model=model, timeout=min(timeout, think_timeout or timeout),
+            theory=graph["theory"], stepwise_residual=stepwise_residual,
+            previous_plan=local_outline, module_log_path=salvage_log,
+        )
+        salvage_plans.append({
+            "after_attempt": number, "outline": local_outline,
+        })
 
     result = {
         "status": "red", "node_id": node_id, "attempts": attempts,
+        "provider_failures": provider_failures,
         "salvage_plans": salvage_plans,
         "sealable_generation": all(
             item["outline"].get("sealable_generation", False)

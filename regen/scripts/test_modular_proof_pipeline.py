@@ -22,9 +22,7 @@ from regen.file_planner import (
     planner_prompt, planning_environment, validate_plan_quality,
 )
 from regen.lemma_prover import (
-    attempt_summary, constructor_case_residual_guidance,
-    projectko_type_erasure_guidance, projectko_type_erasure_precheck,
-    normalize_reserved_local_fact_names, proof_progress_line,
+    attempt_summary, normalize_reserved_local_fact_names, proof_progress_line,
     proof_prompt, prove_node, replace_redundant_by_with_fact,
     trim_redundant_local_apply,
     trim_redundant_proof_terminator,
@@ -39,7 +37,7 @@ from regen.graph_revision_agent import (
     prune_unconsumed_replacement_nodes,
     next_graph_revision, replacement_scope, revision_scope,
     assert_nodes_outside_scope_unchanged,
-    validate_decision,
+    retry_directive_sha256, revise_graph, validate_decision,
 )
 from regen.premise_retrieval import (
     _query_terms, retrieve_premises, retrieve_proof_premises,
@@ -50,11 +48,14 @@ from regen.proof_outline_salvage import (
     deterministic_fallback, plan_local_outline, salvage_prompt,
     validate_salvage_plan,
 )
+from regen.progress_events import (
+    close_event_monitor, configure_event_monitor, emit_event,
+)
 from regen.proof_graph import (
     assert_green_nodes_unchanged, assert_no_definitional_wrappers,
-    build_graph, parse_json_response, statement_interface_diagnostics,
-    executable_nodes,
-    write_immutable_graph,
+    build_graph, graph_payload_sha256, parse_json_response,
+    statement_interface_diagnostics, executable_nodes,
+    verify_graph_payload_sha256, write_immutable_graph,
 )
 from regen.stepwise_lemma_backend import (
     AuditedCodexStepGenerator, _target_source, extract_forbidden_facts,
@@ -63,13 +64,19 @@ from regen.stepwise_lemma_backend import (
 )
 from regen.stepwise_codex import encode_state_request
 from regen.proof_session_runner import (
-    active_graph_path, check_statement_delta,
+    _run_file_unlocked, acquire_run_mutation_lock, active_graph_path,
+    check_statement_delta, consume_gra_feedback,
     credit_structural_evidence_round, init_run,
     latest_graph_path, next_graph_decision_index, next_node_round_id, node_log_directory,
-    compact_round_feedback,
+    compact_round_feedback, create_theory_seal,
     drop_stale_proof_evidence, hydrate_feedback_candidates,
-    prior_certified_graph, recover_round_feedback, statement_delta_graph,
-    update_file,
+    latest_incomplete_graph_request, prior_certified_graph,
+    gra_feedback_consumption_path, pending_gra_feedback,
+    recover_gra_feedback, recover_latest_attempt_feedback,
+    recover_round_feedback, release_run_mutation_lock,
+    select_resume_feedback, statement_delta_graph,
+    generated_checkpoint_theory, publish_generated_records, run_file,
+    sealed_checkpoint_theories, update_file,
 )
 
 
@@ -109,6 +116,15 @@ def proposal() -> dict:
         "contract_dependencies": {"contract:demo": ["node:theorem"]},
         "contract_strategies": {"contract:demo": "compose"},
     }
+
+
+def test_checker(run_dir: Path, work_dir: Path) -> IsabelleChecker:
+    return IsabelleChecker(
+        run_dir, work_dir,
+        heaps_dir=run_dir / "heaps",
+        l4v_dir=run_dir / "l4v",
+        semantic_workspace=run_dir / "semantic-base",
+    )
 
 
 class GraphTests(unittest.TestCase):
@@ -202,51 +218,6 @@ class GraphTests(unittest.TestCase):
                     "    by blast",
                 ),
             )
-
-    def test_constructor_case_residual_guidance(self):
-        residual = (
-            'case x5 of arch_kernel_obj.ASIDPool pool => False\n'
-            'At command "apply" (line 60 of "Node.thy")'
-        )
-        guidance = constructor_case_residual_guidance(residual)
-        self.assertIn("same failing simp method", guidance)
-        self.assertIn("arch_kernel_obj.splits", guidance)
-        self.assertEqual(constructor_case_residual_guidance(
-            'At command "qed" (line 60 of "Node.thy")'
-        ), "")
-
-    def test_projectko_type_erasure_guidance_and_precheck(self):
-        node = {"id": "node:Refine.KHeap_R:regen_setObject_other_updateObject_default_checks_no_fail"}
-        residual = "goal: \\<not> snd (projectKO ko s)"
-        guidance = projectko_type_erasure_guidance(node, residual)
-        self.assertIn("explicitly typed local fact", guidance)
-        self.assertIn("Nondet_Monad.return_def", guidance)
-        bad_rule = (
-            "have pko_nf: \"\\<not> snd (projectKO ko s :: "
-            "((\'a \\<times> kernel_state) set \\<times> bool))\"\n"
-            "  using pko by (rule "
-            "regen_setObject_other_projectKO_typed_no_fail)"
-        )
-        self.assertIn(
-            "bare rule application",
-            projectko_type_erasure_precheck(node, bad_rule),
-        )
-        bad_align = (
-            "by (simp add: PSpaceStorable_H.alignCheck_def "
-            "PSpaceStorable_H.magnitudeCheck_def)"
-        )
-        self.assertIn(
-            "unless/mask residual",
-            projectko_type_erasure_precheck(node, bad_align),
-        )
-        good = (
-            "have pko_nf: \"\\<not> snd (projectKO ko s :: "
-            "((\'a \\<times> kernel_state) set \\<times> bool))\"\n"
-            "  using pko by (simp add: "
-            "PSpaceStorable_H.pre_storable_class.projectKO_def "
-            "Nondet_Monad.return_def)"
-        )
-        self.assertEqual(projectko_type_erasure_precheck(node, good), "")
 
     def test_trim_redundant_local_apply_uses_checker_line(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -584,6 +555,7 @@ class GraphTests(unittest.TestCase):
                 "residual_evidence": ["same goal"],
                 "alternatives_considered": [],
                 "confidence": 0.5,
+                "repair_guidance": "use the generated dependency explicitly",
             }
             validate_decision(decision, request)
 
@@ -614,6 +586,37 @@ class GraphTests(unittest.TestCase):
             self.assertTrue(context["full_round_retry_cap_reached"])
             self.assertFalse(context["retry_proof_allowed"])
 
+    def test_retry_requires_and_changes_material_directive(self):
+        decision = {
+            "decision": "RETRY_PROOF",
+            "failure_class": "PROOF_BODY_ERROR",
+            "reason": "change the proof search",
+            "residual_evidence": ["the same bridge goal remains"],
+            "alternatives_considered": ["the graph statement is unchanged"],
+            "confidence": 0.8,
+        }
+        with self.assertRaisesRegex(ValueError, "material retrieval"):
+            validate_decision(decision, {
+                "decision_context": {},
+                "decision_policy": {"retry_proof_allowed": True},
+            })
+        decision["repair_guidance"] = "apply bridge before simplification"
+        directive_hash = retry_directive_sha256(decision)
+        with self.assertRaisesRegex(ValueError, "previously consumed"):
+            validate_decision(decision, {
+                "decision_context": {
+                    "current_retry_directive_sha256": directive_hash,
+                },
+                "decision_policy": {"retry_proof_allowed": True},
+            })
+        decision["retrieval_query"] = "bridge elimination rule"
+        validate_decision(decision, {
+            "decision_context": {
+                "current_retry_directive_sha256": directive_hash,
+            },
+            "decision_policy": {"retry_proof_allowed": True},
+        })
+
     def test_deterministic_false_statement_evidence_forbids_retry(self):
         red = {"node_id": "node:bridge", "attempts": []}
         with tempfile.TemporaryDirectory() as directory:
@@ -643,63 +646,13 @@ class GraphTests(unittest.TestCase):
         self.assertIn("from typ_fact", proof)
         self.assertEqual(repairs[0]["kind"], "rename-reserved-local-fact")
 
-    def test_pspace_relation_precheck_rejects_broad_search(self):
-        node = {"statement": "lemma x: \"pspace_relation a c\""}
-        from regen.lemma_prover import explosive_state_relation_closer
-        diagnostic = explosive_state_relation_closer(
-            node, "proof -\n  have oldrel: P by fastforce\nqed",
-        )
-        self.assertIn("known timeout pattern", diagnostic)
-        self.assertIn("bspec", diagnostic)
-
-
-    def test_pspace_relation_precheck_allows_of_for_other_helpers(self):
-        from regen.lemma_prover import explosive_state_relation_closer
-        proof = """proof -
-  have ps: \"pspace_relation a b\"
-  proof (rule regen_setObject_other_pspace_relation_update[where P=P])
-    show P by simp
-  qed
-  have rq: R
-    by (rule regen_setObject_other_ready_queues_update[OF t rel sr ao])
-  show ?thesis using ps rq by simp
-qed"""
-        diagnostic = explosive_state_relation_closer(
-            {"statement": "lemma x: \"state_relation s s'\""}, proof,
-        )
-        self.assertEqual(diagnostic, "")
-
-    def test_state_relation_precheck_rejects_wrapped_pspace_goal(self):
-        from regen.lemma_prover import explosive_state_relation_closer
-        proof = ("have ps: \"pspace_relation (kheap ?s) (ksPSpace ?s')\" "
-                 "proof (rule regen_setObject_other_pspace_relation_update) qed")
-        diagnostic = explosive_state_relation_closer(
-            {"statement": "lemma x: \"state_relation s s'\""}, proof,
-        )
-        self.assertIn("normalize the pspace component goal", diagnostic)
-
-
-    def test_set_object_state_relation_precheck_keeps_rq2(self):
-        from regen.lemma_prover import explosive_state_relation_closer
-        proof = "by (simp add: ready_queues_relation_def)"
-        diagnostic = explosive_state_relation_closer(
-            {"id": "node:Refine.KHeap_R:regen_setObject_other_state_relation_update",
-             "statement": "lemma x: \"state_relation s s'\""}, proof,
-        )
-        self.assertIn("exact `ready_queues_relation_2`", diagnostic)
-    def test_state_relation_precheck_rejects_default_simp_closer(self):
-        from regen.lemma_prover import explosive_state_relation_closer
-        for closer in ("by simp", "apply simp"):
-            proof = ("show \"(s, s') \\<in> state_relation\" "
-                     f"unfolding state_relation_def {closer}")
-            diagnostic = explosive_state_relation_closer(
-                {"statement": "lemma x: \"state_relation s s'\""}, proof,
-            )
-            self.assertIn("all 17", diagnostic)
-
     def test_single_lemma_defaults_to_five_attempts(self):
         parameter = inspect.signature(prove_node).parameters["max_attempts"]
         self.assertEqual(parameter.default, 5)
+
+    def test_runner_caps_one_isabelle_candidate_at_five_minutes(self):
+        parameter = inspect.signature(run_file).parameters["node_timeout"]
+        self.assertEqual(parameter.default, 300)
 
     def test_previous_round_feedback_is_visible_to_lemma_prover(self):
         feedback = {
@@ -870,10 +823,20 @@ qed"""
         proposed.pop("source")
         with tempfile.TemporaryDirectory() as directory:
             prefix = Path(directory) / "after-attempt-004"
+            def fake_salvage_call(_provider, _prompt, artifact_prefix, **kwargs):
+                self.assertTrue(kwargs["clean_runtime"])
+                artifact_prefix.with_suffix(".meta.json").write_text(
+                    json.dumps({
+                        "provider": "codex-exec-audited",
+                        "sealable_generation": True,
+                    })
+                )
+                return json.dumps(proposed)
+
             with patch(
                 "regen.proof_outline_salvage.call_llm",
-                return_value=json.dumps(proposed),
-            ):
+                side_effect=fake_salvage_call,
+            ), patch("regen.proof_outline_salvage.write_llm_module_log"):
                 plan = plan_local_outline(
                     node, attempts, output_prefix=prefix,
                     provider="codex", model="gpt-5.5", timeout=1,
@@ -909,6 +872,34 @@ qed"""
         self.assertEqual(plan["provider"], "deterministic")
         self.assertTrue(plan["sealable_generation"])
         self.assertEqual(len(plan["local_steps"]), 4)
+
+    def test_salvage_provider_failure_uses_sealable_deterministic_fallback(self):
+        fixture = (
+            Path(__file__).parents[1]
+            / "fixtures/KHeap_R_lookupAround_salvage_request.json"
+        )
+        request = json.loads(fixture.read_text())
+        node = request["node"]
+        attempts = [{
+            "attempt": item["attempt"],
+            "proof_body": item["proof_body"],
+            "retrieved_premise_names": item["retrieved_premise_names"],
+            "check": {"diagnostic": item["diagnostic"]},
+        } for item in request["failed_attempts"]]
+        with tempfile.TemporaryDirectory() as directory, patch(
+            "regen.proof_outline_salvage.call_llm",
+            side_effect=TimeoutError("salvage provider timeout"),
+        ):
+            plan = plan_local_outline(
+                node, attempts,
+                output_prefix=Path(directory) / "provider-timeout",
+                provider="codex", model="gpt-5.5", timeout=1,
+                theory="Refine.KHeap_R",
+            )
+        self.assertEqual(plan["source"], "deterministic-fallback")
+        self.assertTrue(plan["sealable_generation"])
+        self.assertFalse(plan["provider_attempt_sealable"])
+        self.assertIn("TimeoutError", plan["provider_failure"])
 
     def test_salvage_prompt_forbids_graph_mutation(self):
         fixture = (
@@ -1052,7 +1043,7 @@ qed"""
 
     def test_statement_diagnostic_maps_to_exact_graph_node(self):
         graph = build_graph(package(), proposal(), run_id="r1", revision=1)
-        checker = IsabelleChecker(Path("/tmp"), Path("/tmp/checker-map-test"))
+        checker = test_checker(Path("/tmp"), Path("/tmp/checker-map-test"))
         source = checker._source(
             graph, {}, theory_name="Map", statements_only=True,
         )
@@ -1125,6 +1116,15 @@ qed"""
             write_immutable_graph(path, {"revision": 1})
             with self.assertRaises(FileExistsError):
                 write_immutable_graph(path, {"revision": 2})
+
+    def test_graph_payload_identity_detects_mutation(self):
+        graph = build_graph(package(), proposal(), run_id="r1", revision=1)
+        graph["upstream_bindings"] = {"environment_gate_id": "gate:1"}
+        graph["graph_payload_sha256"] = graph_payload_sha256(graph)
+        verify_graph_payload_sha256(graph)
+        graph["upstream_bindings"]["environment_gate_id"] = "gate:2"
+        with self.assertRaisesRegex(ValueError, "payload hash mismatch"):
+            verify_graph_payload_sha256(graph)
 
     def test_next_graph_revision_skips_existing_artifacts(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1531,7 +1531,7 @@ class RetrievalTests(unittest.TestCase):
                 "bridge", "Invariants_H.ps_clear_def2",
                 "p <= p + 1 implies ps_clear p n s equals "
                 "({p + 1..p + 2 ^ n - 1} intersect dom (ksPSpace s) = {})",
-                "Invariants_H", "M2_Frozen_Support", "frozen_support", "[]",
+                "Invariants_H", "Semantic_Base", "retained_semantic_export", "[]",
             ))
             connection.executemany(
                 "INSERT INTO premises VALUES (?, ?, ?, ?, ?, ?, ?)", rows,
@@ -1556,8 +1556,8 @@ class RetrievalTests(unittest.TestCase):
             connection.execute("CREATE TABLE premises (record_id TEXT, canonical_name TEXT, exact_statement TEXT, owner_theory TEXT, owner_session TEXT, source_class TEXT, attributes_json TEXT)")
             connection.executemany(
                 "INSERT INTO premises VALUES (?, ?, ?, ?, ?, ?, ?)", [
-                    ("setter", "KHeap_A.set_simple_ko_def", "set_simple_ko f ptr ep equals get_object then set_object", "KHeap_A", "M2_Frozen_Support", "frozen_support", "[]"),
-                    ("wrong-case", "Endpoint_H.setEndpoint_def", "setEndpoint ptr ep equals updateObject_default ep", "Endpoint_H", "M2_Frozen_Support", "frozen_support", "[]"),
+                    ("setter", "KHeap_A.set_simple_ko_def", "set_simple_ko f ptr ep equals get_object then set_object", "KHeap_A", "Semantic_Base", "retained_semantic_export", "[]"),
+                    ("wrong-case", "Endpoint_H.setEndpoint_def", "setEndpoint ptr ep equals updateObject_default ep", "Endpoint_H", "Semantic_Base", "retained_semantic_export", "[]"),
                 ],
             )
             connection.commit()
@@ -1570,30 +1570,15 @@ class RetrievalTests(unittest.TestCase):
             self.assertIn("abbreviation", guidance)
             self.assertIn("there is no set_endpoint_def", guidance)
 
-    def test_file_planning_environment_uses_legal_database_records(self):
-        with tempfile.TemporaryDirectory() as directory:
-            database = Path(directory) / "premises.sqlite3"
-            connection = sqlite3.connect(database)
-            connection.execute(
-                "CREATE TABLE premises (record_id TEXT, canonical_name TEXT, "
-                "exact_statement TEXT, owner_theory TEXT, owner_session TEXT, "
-                "source_class TEXT, attributes_json TEXT)"
-            )
-            connection.execute(
-                "INSERT INTO premises VALUES (?, ?, ?, ?, ?, ?, ?)",
-                ("p1", "Demo.direct_corres", "P implies corres P",
-                 "Demo", "Parent", "frozen_parent", "[]"),
-            )
-            connection.commit()
-            connection.close()
-            environment = planning_environment(package(), database)
-            self.assertEqual(
-                environment["policy"], "legal-declaration-context-v1",
-            )
-            self.assertEqual(
-                environment["legal_declarations"][0]["name"],
-                "Demo.direct_corres",
-            )
+    def test_file_planning_environment_exposes_no_premise_records(self):
+        environment = planning_environment(package())
+        self.assertEqual(environment["policy"], "fixed-contracts-only-v1")
+        self.assertEqual(environment["contract_count"], 1)
+        serialized = json.dumps(environment)
+        self.assertNotIn("canonical_name", serialized)
+        self.assertNotIn("exact_statement", serialized)
+        self.assertNotIn("legal_declarations", serialized)
+
 
     def test_whole_proof_prompt_blacklists_undefined_facts(self):
         prompt = proof_prompt(
@@ -1663,13 +1648,13 @@ class RetrievalTests(unittest.TestCase):
                 "INSERT INTO premises VALUES (?, ?, ?, ?, ?, ?, ?)",
                 [
                     ("p1", "corres_gets", "corres r P P' (gets f) g",
-                     "Corres", "M2_Frozen_Support", "frozen_support", "[]"),
+                     "Corres", "Semantic_Base", "retained_semantic_export", "[]"),
                     ("p2", "unrelated", "x = x", "HOL", "HOL",
                      "frozen_parent", "[]"),
                     ("p3", "private_corres", "??.Hidden.corres P",
-                     "Hidden", "M2_Frozen_Support", "frozen_support", "[]"),
+                     "Hidden", "Semantic_Base", "retained_semantic_export", "[]"),
                     ("p4", "Corres.gets_def__internal__", "corres gets internal",
-                     "Corres", "M2_Frozen_Support", "frozen_support", "[]"),
+                     "Corres", "Semantic_Base", "retained_semantic_export", "[]"),
                 ],
             )
             connection.commit()
@@ -1694,16 +1679,16 @@ class RetrievalTests(unittest.TestCase):
                     ("elim", "Invariants_H.obj_atE'",
                      "obj_at' P ptr s implies ksPSpace s ptr = Some ko "
                      "and ps_clear ptr (objBitsKO ko) s",
-                     "Invariants_H", "M2_Frozen_Support",
-                     "frozen_support", "[]"),
+                     "Invariants_H", "Semantic_Base",
+                     "retained_semantic_export", "[]"),
                     ("definition", "Invariants_H.obj_at'_def",
                      "obj_at' P ptr s equals existence of ko and obj",
-                     "Invariants_H", "M2_Frozen_Support",
-                     "frozen_support", "[]"),
+                     "Invariants_H", "Semantic_Base",
+                     "retained_semantic_export", "[]"),
                     ("noise", "Invariants_H.ps_clear_lookupAround2",
                      "ps_clear p n s implies lookupAround2 p map = result",
-                     "Invariants_H", "M2_Frozen_Support",
-                     "frozen_support", "[]"),
+                     "Invariants_H", "Semantic_Base",
+                     "retained_semantic_export", "[]"),
                 ],
             )
             connection.commit()
@@ -1740,7 +1725,7 @@ class RetrievalTests(unittest.TestCase):
             rows.append((
                 "elim", "Invariants_H.obj_atE'",
                 "obj_at' P ptr s implies ksPSpace s ptr = Some ko and ps_clear ptr n s",
-                "Invariants_H", "M2_Frozen_Support", "frozen_support", "[]",
+                "Invariants_H", "Semantic_Base", "retained_semantic_export", "[]",
             ))
             connection.executemany(
                 "INSERT INTO premises VALUES (?, ?, ?, ?, ?, ?, ?)", rows,
@@ -1772,16 +1757,16 @@ class RetrievalTests(unittest.TestCase):
                     ("bridge", "Invariants_H.projectKO_eq",
                      "fst (projectKO ko s) = {(obj, s)} = "
                      "(projectKO_opt ko = Some obj)",
-                     "Invariants_H", "M2_Frozen_Support",
-                     "frozen_support", "[]"),
+                     "Invariants_H", "Semantic_Base",
+                     "retained_semantic_export", "[]"),
                     ("constructor", "ObjectInstances_H.projectKO_opt_ep",
                      "projectKO_opt (KOEndpoint ep) = Some ep",
-                     "ObjectInstances_H", "M2_Frozen_Support",
-                     "frozen_support", "[]"),
+                     "ObjectInstances_H", "Semantic_Base",
+                     "retained_semantic_export", "[]"),
                     ("broad", "pspace_relation_absD",
                      "pspace_relation a c implies object relation",
-                     "StateRelation", "M2_Frozen_Support",
-                     "frozen_support", "[]"),
+                     "StateRelation", "Semantic_Base",
+                     "retained_semantic_export", "[]"),
                 ],
             )
             connection.commit()
@@ -2000,13 +1985,13 @@ class RetrievalTests(unittest.TestCase):
             rows = [
                 (f"noise-{index}", f"Structures_A.endpoint.case({index})",
                  "endpoint endpoint endpoint projectKO", "Structures_A",
-                 "M2_Frozen_Support", "frozen_support", "[]")
+                 "Semantic_Base", "retained_semantic_export", "[]")
                 for index in range(1, 41)
             ]
             rows.append((
                 "bridge", "Invariants_H.projectKO_eq",
                 "fst (projectKO ko s) = {(obj, s)}", "Invariants_H",
-                "M2_Frozen_Support", "frozen_support", "[]",
+                "Semantic_Base", "retained_semantic_export", "[]",
             ))
             connection.executemany(
                 "INSERT INTO premises VALUES (?, ?, ?, ?, ?, ?, ?)", rows,
@@ -2025,6 +2010,256 @@ class RetrievalTests(unittest.TestCase):
 
 
 class CheckerAndRunnerTests(unittest.TestCase):
+    def test_statement_certification_rejects_retry_even_if_policy_drifted(self):
+        request = {
+            "decision_context": {"phase": "statement-certification"},
+            "decision_policy": {"retry_proof_allowed": True},
+        }
+        decision = {
+            "decision": "RETRY_PROOF",
+            "failure_class": "PROOF_BODY_ERROR",
+            "reason": "retry a proof that does not exist",
+            "residual_evidence": ["statement shell has a lexical error"],
+            "alternatives_considered": [],
+            "confidence": 0.9,
+        }
+        with self.assertRaisesRegex(ValueError, "current graph-decision phase"):
+            validate_decision(decision, request)
+
+    def test_statement_certification_forbids_retry_and_counts_every_decision(self):
+        source = inspect.getsource(_run_file_unlocked)
+        start = source.index('"phase": "statement-certification"')
+        end = source.index("while not all(", start)
+        certification = source[start:end]
+        self.assertIn('"retry_proof_allowed": False', certification)
+        count = certification.index(
+            'node_revision_counts["__graph__"] = graph_revisions + 1'
+        )
+        retry = certification.index(
+            'if decision["decision"] == "RETRY_PROOF"'
+        )
+        self.assertLess(count, retry)
+
+    def test_run_file_configures_monitor_before_first_event(self):
+        source = inspect.getsource(_run_file_unlocked)
+        self.assertLess(
+            source.index("configure_event_monitor("),
+            source.index("emit_event("),
+        )
+
+    def test_runner_monitor_persists_events_and_terminal_status(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            configure_event_monitor(
+                run_dir, run_id="run:test", theory="Refine.Demo_R",
+                heartbeat_seconds=0,
+            )
+            emit_event(
+                "node_started", theory="Refine.Demo_R",
+                node="demo_corres", proof_round=2,
+            )
+            close_event_monitor("interrupted")
+            events = [json.loads(line) for line in (
+                run_dir / "runner-events.ndjson"
+            ).read_text().splitlines()]
+            status = json.loads((run_dir / "runner-status.json").read_text())
+        self.assertEqual(events[0]["event"], "node_started")
+        self.assertEqual(events[-1]["event"], "runner_monitor_stopped")
+        self.assertEqual(
+            status["active_event"]["event"], "runner_monitor_stopped",
+        )
+        self.assertFalse(status["running"])
+        self.assertEqual(status["stop_reason"], "interrupted")
+
+    def test_run_mutation_lock_serializes_different_theories(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            first = acquire_run_mutation_lock(
+                run_dir, operation="run-file", theory="Refine.ArchAcc_R",
+            )
+            try:
+                owner = json.loads((
+                    run_dir / ".runner-locks/session-mutation.lock"
+                ).read_text())
+                self.assertEqual(owner["theory"], "Refine.ArchAcc_R")
+                with self.assertRaisesRegex(
+                    RuntimeError, "another runner owns mutable run state",
+                ):
+                    acquire_run_mutation_lock(
+                        run_dir, operation="run-file",
+                        theory="Refine.CSpace1_R",
+                    )
+            finally:
+                release_run_mutation_lock(first)
+
+    def test_interrupted_attempt_recovery_requires_current_checker_source(self):
+        graph = build_graph(package(), proposal(), run_id="r1", revision=1)
+        graph["graph_payload_sha256"] = graph_payload_sha256(graph)
+        node = next(item for item in graph["nodes"] if item["id"] == "contract:demo")
+        with tempfile.TemporaryDirectory() as directory:
+            theory_dir = Path(directory)
+            round_dir = node_log_directory(
+                theory_dir, node["id"],
+            ) / "round-03"
+            round_dir.mkdir(parents=True)
+            source = theory_dir / "Node_Check.thy"
+            proof = "by simp"
+            source.write_text("\n".join(
+                item["statement"] for item in graph["nodes"]
+            ) + "\n" + proof)
+            (round_dir / "attempts.json").write_text(json.dumps([{
+                "attempt": 1,
+                "proof_body": proof,
+                "retrieved_premise_names": ["Demo.bridge"],
+                "check": {
+                    "verdict": "red", "returncode": 1,
+                    "diagnostic": "remaining goal P", "source": str(source),
+                },
+            }]))
+            feedback = recover_latest_attempt_feedback(
+                theory_dir, graph, node["id"],
+            )
+            self.assertEqual(feedback["round_id"], 3)
+            self.assertTrue(feedback["recovered_after_interruption"])
+            self.assertEqual(feedback["graph_payload_sha256"], graph[
+                "graph_payload_sha256"
+            ])
+            source.write_text("\n".join([
+                next(
+                    item for item in graph["nodes"]
+                    if item["id"] == "node:theorem"
+                )["statement"],
+                node["statement"], proof,
+            ]))
+            self.assertIsNone(recover_latest_attempt_feedback(
+                theory_dir, graph, node["id"],
+            ))
+            source.write_text("\n".join(
+                item["statement"] for item in graph["nodes"]
+            ) + "\n" + proof)
+            changed = dict(graph)
+            changed["nodes"] = [dict(item) for item in graph["nodes"]]
+            next(
+                item for item in changed["nodes"] if item["id"] == node["id"]
+            )["statement"] = 'lemma regen_helper: "B"'
+            self.assertIsNone(recover_latest_attempt_feedback(
+                theory_dir, changed, node["id"],
+            ))
+
+    def test_gra_feedback_is_recovered_and_consumed_exactly_once(self):
+        graph = build_graph(package(), proposal(), run_id="r1", revision=1)
+        graph["graph_payload_sha256"] = graph_payload_sha256(graph)
+        node = next(item for item in graph["nodes"] if item["id"] == "node:helper")
+        decision = {
+            "decision": "RETRY_PROOF",
+            "failure_class": "PROOF_BODY_ERROR",
+            "reason": "use the bridge explicitly",
+            "residual_evidence": ["simp leaves the bridge goal"],
+            "alternatives_considered": ["the statement shell is green"],
+            "confidence": 0.9,
+            "repair_guidance": "apply Demo.bridge before simp",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            theory_dir = Path(directory)
+            audit = theory_dir / "graph-revisions/decision-007"
+            audit.mkdir(parents=True)
+            (audit / "request.json").write_text(json.dumps({
+                "current_graph": graph,
+                "failed_node": {"node_id": node["id"], "attempts": []},
+                "decision_context": {"phase": "node-proof", "proof_round": 2},
+                "decision_policy": {"retry_proof_allowed": True},
+            }))
+            (audit / "decision.json").write_text(json.dumps(decision))
+            feedback = recover_gra_feedback(theory_dir, graph, node["id"])
+            self.assertIsNotNone(feedback)
+            consumed = consume_gra_feedback(
+                theory_dir, graph, node, feedback, proof_round=3,
+            )
+            self.assertEqual(
+                consumed,
+                gra_feedback_consumption_path(theory_dir, "decision-007"),
+            )
+            self.assertIsNone(recover_gra_feedback(
+                theory_dir, graph, node["id"],
+            ))
+            self.assertEqual(
+                consume_gra_feedback(
+                    theory_dir, graph, node, feedback, proof_round=3,
+                ),
+                consumed,
+            )
+            with self.assertRaisesRegex(ValueError, "another round"):
+                consume_gra_feedback(
+                    theory_dir, graph, node, feedback, proof_round=4,
+                )
+
+    def test_resume_feedback_keeps_richer_same_round_state(self):
+        current = {
+            "round_id": 3,
+            "local_proof_outline": {"steps": ["have P"]},
+        }
+        recovered = {
+            "round_id": 3,
+            "proof_candidates": [{"attempt": 4}],
+        }
+        merged = select_resume_feedback(current, recovered)
+        self.assertEqual(merged["local_proof_outline"], {"steps": ["have P"]})
+        self.assertEqual(merged["proof_candidates"], [{"attempt": 4}])
+
+    def test_generated_premise_publication_uses_isabelle_name_and_contract_attributes(self):
+        contract_package = package()
+        contract_package["contracts"][0]["contract_owned_attributes"] = ["corres"]
+        graph = build_graph(contract_package, {
+            "generated_nodes": [],
+            "contract_dependencies": {"contract:demo": []},
+        }, run_id="generation:demo", revision=1)
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            (run_dir / "generated-premises.json").write_text(json.dumps({
+                "records": [{
+                    "record_id": "generated:Refine.Demo_R:demo_corres",
+                    "canonical_name": "Refine.Demo_R.demo_corres",
+                    "exact_statement": "stale",
+                    "owner_theory": "Refine.Demo_R",
+                    "owner_session": "Generated_Refine",
+                    "source_class": "generated_theorem",
+                    "attributes": [],
+                    "theory_seal_id": "old-seal",
+                }],
+            }))
+            publish_generated_records(
+                run_dir, graph, "theory-seal:demo", contract_package,
+            )
+            first = json.loads(
+                (run_dir / "generated-premises.json").read_text()
+            )
+            publish_generated_records(
+                run_dir, graph, "theory-seal:demo", contract_package,
+            )
+            second = json.loads(
+                (run_dir / "generated-premises.json").read_text()
+            )
+        self.assertEqual(first, second)
+        self.assertEqual(len(first["records"]), 1)
+        record = first["records"][0]
+        self.assertEqual(record["canonical_name"], "Regen_Demo_R.demo_corres")
+        self.assertEqual(record["attributes"], ["corres"])
+        self.assertEqual(record["theory_seal_id"], "theory-seal:demo")
+
+    def test_generated_checkpoint_names_do_not_collide_with_semantic_theories(self):
+        self.assertEqual(
+            generated_checkpoint_theory("Bits_R.thy"), "Regen_Bits_R",
+        )
+        files = {"files": [{
+            "file_slot": "Bits_R.thy", "status": "sealed",
+            "checkpoint_theory": "Regen_Bits_R",
+        }, {
+            "file_slot": "CNodeInv_R.thy", "status": "pending",
+        }]}
+        self.assertEqual(
+            sealed_checkpoint_theories(files), ["Regen_Bits_R"],
+        )
+
     def test_codex_audit_allows_transport_errors_but_rejects_tools(self):
         with tempfile.TemporaryDirectory() as directory:
             raw = Path(directory) / "events.ndjson"
@@ -2078,17 +2313,15 @@ class CheckerAndRunnerTests(unittest.TestCase):
                 max_attempts=2, backend="whole-proof",
             )
         self.assertEqual(result["status"], "red")
-        self.assertEqual(len(result["attempts"]), 2)
-        self.assertTrue(all(
-            attempt["failure_class"] == "llm_provider_error"
-            for attempt in result["attempts"]
-        ))
+        self.assertEqual(result["failure_scope"], "infrastructure")
+        self.assertEqual(result["attempts"], [])
+        self.assertEqual(len(result["provider_failures"]), 2)
         self.assertIn("temporary transport failure", result["residual"])
 
     def test_checker_timeout_normalizes_mixed_output_types(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            checker = IsabelleChecker(root, root / "checks")
+            checker = test_checker(root, root / "checks")
             timeout = subprocess.TimeoutExpired(
                 ["isabelle"], 1, output=(
                     b"partial stdout\n"
@@ -2244,6 +2477,76 @@ class CheckerAndRunnerTests(unittest.TestCase):
             (root / "llm" / "graph-decision-005-from-v2.meta.json").touch()
             self.assertEqual(next_graph_decision_index(root), 6)
 
+    def test_latest_incomplete_graph_request_matches_active_revision(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for index, revision, complete in (
+                (2, 17, False), (4, 18, True), (5, 18, False),
+            ):
+                decision = root / "graph-revisions" / f"decision-{index:03d}"
+                decision.mkdir(parents=True)
+                (decision / "request.json").write_text(json.dumps({
+                    "current_graph": {"revision": revision},
+                    "failed_node": {"node_id": f"node:{index}"},
+                }))
+                if complete:
+                    (decision / "decision.json").write_text("{}")
+            request = latest_incomplete_graph_request(root, 18)
+        self.assertIsNotNone(request)
+        self.assertEqual(request["interrupted_decision_id"], "decision-005")
+        self.assertEqual(request["failed_node"]["node_id"], "node:5")
+
+    def test_graph_revision_retries_transport_failure_with_same_decision(self):
+        graph = build_graph(package(), proposal(), run_id="r1", revision=1)
+        calls = []
+
+        def fake_call(_provider, _prompt, prefix, **_kwargs):
+            calls.append(prefix)
+            paths = artifact_paths(prefix)
+            for name, path in paths.items():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if name == "meta":
+                    path.write_text(json.dumps({"sealable_generation": True}))
+                elif name == "audit":
+                    path.write_text("{}")
+                else:
+                    path.write_text("test")
+            if len(calls) == 1:
+                raise RuntimeError("provider timeout")
+            return json.dumps({
+                "decision": "RETRY_PROOF",
+                "failure_class": "TOOL_OR_TIMEOUT",
+                "reason": "retry after transport recovery",
+                "residual_evidence": ["first provider call timed out"],
+                "alternatives_considered": ["graph structure is unchanged"],
+                "confidence": 0.9,
+                "repair_guidance": "continue the existing proof round plan",
+            })
+
+        with tempfile.TemporaryDirectory() as directory, patch(
+            "regen.graph_revision_agent.call_llm", side_effect=fake_call,
+        ):
+            root = Path(directory) / "theories" / "Demo_R"
+            revised, decision = revise_graph(
+                package(), graph, {
+                    "status": "red", "node_id": "node:helper",
+                    "residual": "provider interrupted", "attempts": [],
+                }, set(), output_dir=root, decision_index=7,
+                decision_context={"phase": "node-proof"},
+            )
+            failures = json.loads((
+                root / "graph-revisions/decision-007/provider-failures.json"
+            ).read_text())
+            module_log = json.loads((
+                Path(directory) / "module-logs/graph-revision-agent"
+                / "Demo_R-decision-007.json"
+            ).read_text())
+        self.assertEqual(revised, graph)
+        self.assertEqual(decision["decision"], "RETRY_PROOF")
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(len(failures["failures"]), 1)
+        self.assertEqual(len(module_log["attempts"]), 2)
+
     def test_node_round_id_uses_highest_existing_directory(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -2382,7 +2685,7 @@ class CheckerAndRunnerTests(unittest.TestCase):
         }, run_id="r1", revision=1)
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            checker = IsabelleChecker(root, root / "checks")
+            checker = test_checker(root, root / "checks")
             source = checker.complete_source(graph, {"contract:demo": "by simp"})
             self.assertIn('lemma demo_corres [corres]: "P"\nby simp', source)
             self.assertNotIn("sorry", source)
@@ -2397,7 +2700,7 @@ class CheckerAndRunnerTests(unittest.TestCase):
         graph["execution_order"].insert(0, "node:unrelated")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            checker = IsabelleChecker(root, root / "checks")
+            checker = test_checker(root, root / "checks")
             source = checker._source(
                 graph, {
                     "node:helper": "by simp", "node:theorem": "by simp",
@@ -2415,7 +2718,7 @@ class CheckerAndRunnerTests(unittest.TestCase):
         }, run_id="r1", revision=1)
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            checker = IsabelleChecker(root, root / "checks")
+            checker = test_checker(root, root / "checks")
             source = checker._source(
                 graph, {}, theory_name="Statement_Shell", statements_only=True,
             )
@@ -2434,7 +2737,7 @@ class CheckerAndRunnerTests(unittest.TestCase):
             graph, "node:theorem", {
                 "node:helper": "by simp", "node:unrelated": "by simp",
             },
-            ["M2_Frozen_Support.Corres"], "Stepwise_Test",
+            ["Semantic_Base.Corres"], "Stepwise_Test",
         )
         self.assertIn('lemma regen_helper: "A"\nby simp', source)
         self.assertIn('lemma regen_theorem: "B"\n  oops', source)
@@ -2452,23 +2755,75 @@ class CheckerAndRunnerTests(unittest.TestCase):
         }, run_id="r1", revision=1)
         source = _target_source(
             graph, "contract:demo", {},
-            ["M2_Frozen_Support.Corres"], "Stepwise_Test",
+            ["Semantic_Base.Corres"], "Stepwise_Test",
         )
         self.assertIn('lemma demo_corres [corres]: "P"\n  oops', source)
         self.assertIn("context begin interpretation Arch .", source)
         self.assertIn("\nend\n\nend\n", source)
 
-    def test_update_file_clears_stale_failure_metadata_when_built(self):
+    def test_theory_seal_binds_green_build_source_and_impact(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            theory_dir = run_dir / "theories/Demo_R"
+            theory_dir.mkdir(parents=True)
+            graph = build_graph(package(), proposal(), run_id="generation:demo", revision=1)
+            (theory_dir / "graph-v1.json").write_text(json.dumps(graph))
+            for name, value in (
+                ("complete-check.json", {"verdict": "green"}),
+                ("session-build.json", {"verdict": "green"}),
+                ("retained-semantic-impact.json", {"verdict": "pass"}),
+            ):
+                (theory_dir / name).write_text(json.dumps(value))
+            generated = run_dir / "generated/Demo_R.thy"
+            generated.parent.mkdir()
+            generated.write_text("theory Demo_R imports Main begin end\n")
+            run = {
+                "run_id": "run-test",
+                "session_schedule": {
+                    "campaign_id": "campaign",
+                    "environment_gate_id": "environment:one",
+                },
+            }
+            entry = {"file_slot": "Demo_R.thy"}
+            seal = create_theory_seal(
+                run_dir, run, entry, "generation:demo", graph, generated,
+                theory_dir,
+            )
+            self.assertEqual(seal["verdict"], "pass")
+            self.assertEqual(seal["generation_id"], "generation:demo")
+            self.assertEqual(
+                create_theory_seal(
+                    run_dir, run, entry, "generation:demo", graph, generated,
+                    theory_dir,
+                ),
+                seal,
+            )
+            generated.write_text("changed")
+            with self.assertRaisesRegex(ValueError, "differs"):
+                create_theory_seal(
+                    run_dir, run, entry, "generation:demo", graph, generated,
+                    theory_dir,
+                )
+
+    def test_update_file_clears_stale_failure_metadata_when_sealed(self):
         files = {
+            "revision": 0,
+            "session_status": "running",
             "files": [{
                 "theory": "Refine.Demo_R", "status": "failed",
+                "generation_ids": ["generation:demo"], "seal_id": None,
                 "failed_node": "node:old", "reason": "old failure",
             }],
             "events": [],
         }
-        update_file(files, "Refine.Demo_R", "built", generated_source="Demo_R.thy")
+        update_file(
+            files, "Refine.Demo_R", "sealed",
+            generation_id="generation:demo", seal_id="theory-seal:demo",
+            generated_source="Demo_R.thy",
+        )
         entry = files["files"][0]
-        self.assertEqual(entry["status"], "built")
+        self.assertEqual(entry["status"], "sealed")
+        self.assertEqual(entry["seal_id"], "theory-seal:demo")
         self.assertNotIn("failed_node", entry)
         self.assertNotIn("reason", entry)
 
@@ -2508,48 +2863,13 @@ class CheckerAndRunnerTests(unittest.TestCase):
         proofs = {node_id: "by simp" for node_id in graph["execution_order"]}
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            checker = IsabelleChecker(root, root / "checks")
+            checker = test_checker(root, root / "checks")
             diagnostic = checker._source(
                 graph, proofs, theory_name="Diagnostic", diagnostic_markers=True,
             )
             generated = checker.complete_source(graph, proofs)
         self.assertIn("REGEN_NODE", diagnostic)
         self.assertNotIn("REGEN_NODE", generated)
-
-    def test_init_uses_thin_environment_gate(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            environment = root / "environment"
-            (environment / "M2").mkdir(parents=True)
-            (environment / "M3").mkdir(parents=True)
-            (
-                environment / "M2" / "isolated-environment" / "run-heaps"
-            ).mkdir(parents=True)
-            package_dir = environment / "M1" / "public" / "theory-packages"
-            package_dir.mkdir(parents=True)
-            (environment / "M2" / "environment-gate.json").write_text(
-                json.dumps({
-                    "verdict": "pass",
-                    "checker_manifest": {"base_session": "Semantic_Base"},
-                }),
-                encoding="utf-8",
-            )
-            (environment / "M3" / "premise-snapshot.json").write_text(
-                json.dumps({
-                    "artifact_type": "semantic-base-premise-snapshot",
-                    "records": [],
-                }),
-                encoding="utf-8",
-            )
-            (environment / "M3" / "premises.sqlite3").touch()
-            (package_dir / "Demo_R.thy.json").write_text(
-                json.dumps(package()), encoding="utf-8"
-            )
-            run = init_run(root / "run", environment, run_id="demo")
-            self.assertEqual(run["environment_gate"]["contracts"], 1)
-            files = json.loads((root / "run" / "files.json").read_text())
-            self.assertEqual(files["files"][0]["status"], "pending")
-            self.assertFalse(files["session_schedule"]["session_plan_bound"])
 
 
 if __name__ == "__main__":

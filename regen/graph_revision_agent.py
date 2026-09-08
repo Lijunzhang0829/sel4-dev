@@ -36,6 +36,44 @@ ABANDON_FAILURE_CLASSES = {
     "RESOURCE_BUDGET_EXHAUSTED",
     "UNSOUND_GENERATION",
 }
+RETRY_MATERIAL_FIELDS = (
+    "retrieval_query",
+    "repair_guidance",
+    "outline_directive",
+    "frontier_selection",
+    "automation_policy",
+    "proof_repair_diagnosis",
+)
+
+
+def normalized_retry_directive(decision: dict[str, Any]) -> dict[str, str]:
+    """Return the material, reviewable change proposed by RETRY_PROOF."""
+    directive: dict[str, str] = {}
+    for field in RETRY_MATERIAL_FIELDS:
+        value = decision.get(field)
+        if value in (None, "", [], {}):
+            continue
+        if isinstance(value, str):
+            rendered = " ".join(value.split())
+        else:
+            rendered = json.dumps(
+                value, ensure_ascii=False, sort_keys=True,
+                separators=(",", ":"),
+            )
+        if rendered:
+            directive[field] = rendered
+    return directive
+
+
+def retry_directive_sha256(decision: dict[str, Any]) -> str | None:
+    directive = normalized_retry_directive(decision)
+    if not directive:
+        return None
+    payload = json.dumps(
+        directive, ensure_ascii=False, sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _semantic_goal(diagnostic: str) -> str | None:
@@ -121,6 +159,8 @@ def prior_node_decisions(output_dir: Path, node_id: str) -> list[dict[str, Any]]
             "decision": decision.get("decision"),
             "failure_class": decision.get("failure_class"),
             "reason": decision.get("reason"),
+            "retry_directive": normalized_retry_directive(decision),
+            "retry_directive_sha256": retry_directive_sha256(decision),
             "transaction_applied": transaction.get("applied"),
             "transaction_action": transaction.get("action"),
             "transaction_reason": transaction.get("reason"),
@@ -159,6 +199,11 @@ def augment_decision_context(
         if item["decision"] != "RETRY_PROOF":
             break
         consecutive_retries += 1
+    latest_retry = next((
+        item for item in reversed(history)
+        if item.get("decision") == "RETRY_PROOF"
+        and item.get("retry_directive_sha256")
+    ), None)
     proof_rounds_used = int(context.get("proof_rounds_used") or 0)
     proof_retry_limit = int(context.get("proof_retry_limit") or 5)
     full_round_retry_cap_reached = proof_rounds_used >= proof_retry_limit
@@ -195,6 +240,13 @@ def augment_decision_context(
         "current_semantic_residual_fingerprints": sorted(current),
         "repeated_semantic_residual_rounds": repeated_rounds,
         "consecutive_retry_proof_decisions": consecutive_retries,
+        "current_retry_directive": (
+            latest_retry.get("retry_directive") if latest_retry else None
+        ),
+        "current_retry_directive_sha256": (
+            latest_retry.get("retry_directive_sha256")
+            if latest_retry else None
+        ),
         "proof_retry_limit": proof_retry_limit,
         "full_round_retry_cap_reached": full_round_retry_cap_reached,
         "stable_historical_residual": stable_historical_residual,
@@ -402,9 +454,14 @@ no helper can make an accidentally polymorphic generated proposition match its
 monomorphic consumer. Fixed contract statements remain immutable.
 
 For statement certification, decision_context may name
-failed_statement_node_id. In that case, change only that node and its transitive
-consumers. Preserve every unrelated branch exactly. Review
-previous_revision_rejections before proposing another transaction.
+failed_statement_node_id. There is no proof body to retry in this phase, so
+RETRY_PROOF is forbidden. A syntax, lexical, parse, or type error in an
+unproved generated statement requires REPLACE_STATEMENT (or the smallest
+equivalent structural revision). If the failed statement is a fixed contract,
+it cannot be changed: abandon and report the invalid frozen input instead.
+Change only the failed generated node and its transitive consumers. Preserve
+every unrelated branch exactly. Review previous_revision_rejections before
+proposing another transaction.
 
 Repeated search exhaustion can become structural evidence when attempts expose
 the same stable intermediate obligation and the retrieved legal premises do not
@@ -510,10 +567,16 @@ def validate_decision(
     if (
         action == "RETRY_PROOF"
         and request is not None
-        and not request.get("decision_policy", {}).get("retry_proof_allowed", True)
+        and (
+            request.get("decision_context", {}).get("phase")
+            == "statement-certification"
+            or not request.get("decision_policy", {}).get(
+                "retry_proof_allowed", True
+            )
+        )
     ):
         raise ValueError(
-            "RETRY_PROOF forbidden after repeated semantic non-progress"
+            "RETRY_PROOF forbidden by the current graph-decision phase"
         )
     if (
         action == "REVISE_GRAPH"
@@ -545,6 +608,24 @@ def validate_decision(
         or not 0 <= confidence <= 1
     ):
         raise ValueError("graph decision confidence must be between zero and one")
+    if action == "RETRY_PROOF":
+        directive = normalized_retry_directive(decision)
+        if not directive:
+            raise ValueError(
+                "RETRY_PROOF requires a material retrieval, outline, frontier, "
+                "automation, or repair change"
+            )
+        proposed_sha256 = retry_directive_sha256(decision)
+        current_sha256 = (
+            request.get("decision_context", {}).get(
+                "current_retry_directive_sha256"
+            )
+            if request is not None else None
+        )
+        if current_sha256 and proposed_sha256 == current_sha256:
+            raise ValueError(
+                "RETRY_PROOF repeats the previously consumed directive"
+            )
 
 
 def graph_diff(old: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
@@ -841,10 +922,8 @@ def revise_graph(
         package, graph, red_result, green_ids, decision_context,
         guard_semantic_premises,
     )
-    transcript_prefix = allocate_artifact_prefix(
-        output_dir / "llm" / (
-            f"graph-decision-{decision_index:03d}-from-v{graph['revision']}"
-        )
+    preferred_transcript_prefix = output_dir / "llm" / (
+        f"graph-decision-{decision_index:03d}-from-v{graph['revision']}"
     )
     module_log_path = (
         output_dir.parent.parent / "module-logs/graph-revision-agent"
@@ -853,29 +932,66 @@ def revise_graph(
             f"-decision-{decision_index:03d}.json"
         )
     )
-    try:
-        response = call_llm(
-            provider, prompt, transcript_prefix,
-            model=model, timeout=timeout, theory=graph["theory"],
-            stage="graph-revision-agent",
+    provider_failures: list[dict[str, Any]] = []
+    response = ""
+    transcript_prefix: Path | None = None
+    for provider_attempt in range(1, 4):
+        transcript_prefix = allocate_artifact_prefix(
+            preferred_transcript_prefix
         )
-    finally:
-        if transcript_prefix.with_suffix(".meta.json").is_file():
-            write_llm_module_log(
-                transcript_prefix, module_log_path,
-                module="Graph Revision Agent",
-                run_name=(
-                    f"{graph['file_slot'].removesuffix('.thy')}"
-                    f"-decision-{decision_index:03d}"
-                ),
-                context={
-                    "theory": graph["theory"],
-                    "graph_revision": graph["revision"],
-                    "decision_index": decision_index,
-                },
+        try:
+            response = call_llm(
+                provider, prompt, transcript_prefix,
+                model=model, timeout=timeout, theory=graph["theory"],
+                stage="graph-revision-agent",
+                clean_runtime=True,
             )
+        except RuntimeError as error:
+            provider_failures.append({
+                "attempt": provider_attempt,
+                "error_type": type(error).__name__,
+                "error": str(error),
+                "transcript_prefix": str(transcript_prefix),
+            })
+            (audit_dir / "provider-failures.json").write_text(
+                json.dumps(
+                    {"failures": provider_failures},
+                    ensure_ascii=False, indent=2,
+                ) + "\n",
+                encoding="utf-8",
+            )
+            if provider_attempt == 3:
+                raise
+        finally:
+            if transcript_prefix.with_suffix(".meta.json").is_file():
+                write_llm_module_log(
+                    transcript_prefix, module_log_path,
+                    module="Graph Revision Agent",
+                    run_name=(
+                        f"{graph['file_slot'].removesuffix('.thy')}"
+                        f"-decision-{decision_index:03d}"
+                    ),
+                    context={
+                        "theory": graph["theory"],
+                        "graph_revision": graph["revision"],
+                        "decision_index": decision_index,
+                        "provider_attempt": provider_attempt,
+                    },
+                )
+        if response:
+            break
+    assert transcript_prefix is not None
+    transcript_meta = json.loads(
+        transcript_prefix.with_suffix(".meta.json").read_text(encoding="utf-8")
+    )
+    if not transcript_meta.get("sealable_generation"):
+        raise RuntimeError("Graph Revision Agent transport was not sealable")
     decision = parse_json_response(response)
     validate_decision(decision, request)
+    decision["decision_id"] = f"decision-{decision_index:03d}"
+    if decision.get("decision") == "RETRY_PROOF":
+        decision["retry_directive"] = normalized_retry_directive(decision)
+        decision["retry_directive_sha256"] = retry_directive_sha256(decision)
     (audit_dir / "decision.json").write_text(
         json.dumps(decision, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
     )
@@ -974,6 +1090,7 @@ def revise_graph(
             **decision,
             "decision": "RETRY_PROOF",
             "failure_class": "PROOF_BODY_ERROR",
+            "internal_disposition": "REJECT_INVALID_REVISION",
             "retrieval_query": decision.get("retrieval_query", ""),
             "repair_guidance": (
                 "The proposed graph transaction was rejected by deterministic "
@@ -996,6 +1113,7 @@ def revise_graph(
             **decision,
             "decision": "RETRY_PROOF",
             "failure_class": "PROOF_BODY_ERROR",
+            "internal_disposition": "REJECT_INVALID_REVISION",
             "repair_guidance": str(error),
         }
         return graph, retry_decision

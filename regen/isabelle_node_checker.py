@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from regen.refine_m2_isolated import SESSION_CATALOGS
+from regen.semantic_base_builder import SESSION_CATALOGS
 from regen.progress_events import emit_event
 from regen.assembly_stabilizer import extract_last_node_marker
 
@@ -98,9 +98,13 @@ def parse_proof_dependencies(path: Path, *, node_id: str) -> dict[str, Any]:
     return result
 
 
-def automation_audit_ml(theorem_name: str) -> str:
+def automation_audit_ml(
+    theorem_name: str, *, dependency_filename: str = "proof-dependencies.tsv",
+) -> str:
     if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_'.]*", theorem_name):
         raise ValueError(f"unsupported theorem name for audit: {theorem_name}")
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", dependency_filename):
+        raise ValueError(f"unsupported dependency audit filename: {dependency_filename}")
     return rf'''ML \<open>
 local
   val thy = @{{theory}};
@@ -130,7 +134,7 @@ local
               (f (index, item); apply (index + 1) items)
     in apply 0 end;
   val context_stream = TextIO.openOut "/audit-output/automation-context.tsv";
-  val dependency_stream = TextIO.openOut "/audit-output/proof-dependencies.tsv";
+  val dependency_stream = TextIO.openOut "/audit-output/{dependency_filename}";
   val {{simps, procs, congs, weak_congs, loopers,
        unsafe_solvers, safe_solvers}} =
     Raw_Simplifier.dest_ss (simpset_of ctxt);
@@ -173,6 +177,41 @@ in
   val _ = row dependency_stream "HAS_SKIP_PROOF"
     [bool_text (Thm_Deps.has_skip_proof [target])];
   val _ = TextIO.closeOut dependency_stream;
+end
+\<close>'''
+
+
+def proof_dependency_audit_ml(
+    theorem_name: str, *, dependency_filename: str,
+) -> str:
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_'.]*", theorem_name):
+        raise ValueError(f"unsupported theorem name for audit: {theorem_name}")
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", dependency_filename):
+        raise ValueError(f"unsupported dependency audit filename: {dependency_filename}")
+    return rf'''ML \<open>
+local
+  val thy = @{{theory}};
+  val ctxt = Proof_Context.init_global thy;
+  val target = Proof_Context.get_thm ctxt "{theorem_name}";
+  val hex_digits = "0123456789abcdef";
+  fun hex_char char =
+    let val byte = Char.ord char
+    in String.implode
+      [String.sub (hex_digits, byte div 16), String.sub (hex_digits, byte mod 16)]
+    end;
+  fun enc value = String.translate hex_char value;
+  fun row stream tag fields =
+    TextIO.output (stream, space_implode "\t" (tag :: map enc fields) ^ "\n");
+  fun bool_text value = if value then "true" else "false";
+  val stream = TextIO.openOut "/audit-output/{dependency_filename}";
+  val dependencies = Thm_Deps.thm_deps thy [target];
+in
+  val _ = List.app
+    (fn (_, (name, index)) =>
+      row stream "THM_DEP" [name, string_of_int index]) dependencies;
+  val _ = row stream "HAS_SKIP_PROOF"
+    [bool_text (Thm_Deps.has_skip_proof [target])];
+  val _ = TextIO.closeOut stream;
 end
 \<close>'''
 
@@ -238,9 +277,11 @@ class IsabelleChecker:
         previous_theories: list[str] | None = None,
         generated_dir: Path | None = None,
         heaps_dir: Path | None = None,
+        l4v_dir: Path | None = None,
+        semantic_workspace: Path | None = None,
         base_session: str = "Semantic_Base",
         base_import: str = "Semantic_Base.Semantic_Root",
-        base_catalog: str = "/m2/semantic-base",
+        base_catalog: str = "/semantic-base",
     ) -> None:
         self.run_dir = run_dir.resolve()
         self.work_dir = work_dir.resolve()
@@ -252,20 +293,15 @@ class IsabelleChecker:
         self.base_session = base_session
         self.base_import = base_import
         self.base_catalog = base_catalog
-        self.heaps_dir = (
-            heaps_dir
-            or self.run_dir / "M2" / "isolated-environment" / "run-heaps"
-        ).resolve()
+        if heaps_dir is None or l4v_dir is None or semantic_workspace is None:
+            raise ValueError(
+                "checker requires gate-bound heaps, l4v and Semantic Base workspace"
+            )
+        self.heaps_dir = heaps_dir.resolve()
+        self.l4v_dir = l4v_dir.resolve()
+        self.semantic_workspace = semantic_workspace.resolve()
         self.work_dir.mkdir(parents=True, exist_ok=True)
         self.generated_dir.mkdir(parents=True, exist_ok=True)
-
-    def sanitized_workspace(self) -> Path:
-        matches = sorted(self.run_dir.glob("M2-preflight*/sanitized-workspace"))
-        if len(matches) != 1:
-            raise ValueError(
-                f"expected one M2 sanitized workspace, found {len(matches)}"
-            )
-        return matches[0]
 
     def imports(self) -> list[str]:
         if self.previous_theories:
@@ -319,15 +355,15 @@ class IsabelleChecker:
         self, source: Path, *, session: str,
         writable_mounts: list[tuple[Path, str]] | None = None,
     ) -> list[str]:
-        l4v = self.run_dir / "M2" / "isolated-environment" / "l4v"
+        l4v = self.l4v_dir
         isabelle = Path("/home/lijun/seL4-docker-main/verification/isabelle")
-        workspace = self.sanitized_workspace()
+        workspace = self.semantic_workspace
         heaps = self.heaps_dir
         command = [
             "docker", "run", "--rm", "--network", "none",
             "--mount", f"type=bind,src={l4v},dst=/sel4-project/verification/l4v,readonly",
             "--mount", f"type=bind,src={isabelle},dst=/workspace/verification/isabelle,readonly",
-            "--mount", f"type=bind,src={workspace},dst=/m2,readonly",
+            "--mount", f"type=bind,src={workspace},dst=/semantic-base,readonly",
             "--mount", f"type=bind,src={heaps},dst=/root/.isabelle/heaps",
             "--mount", f"type=bind,src={self.work_dir},dst=/candidate,readonly",
             "--mount", f"type=bind,src={self.generated_dir},dst=/generated,readonly",
@@ -498,8 +534,92 @@ class IsabelleChecker:
         }
         return result
 
-    def complete_source(self, graph: dict[str, Any], proofs: dict[str, str]) -> str:
+    def audit_complete_theory(
+        self, graph: dict[str, Any], proofs: dict[str, str],
+    ) -> dict[str, Any]:
+        ordered = [
+            next(node for node in graph["nodes"] if node["id"] == node_id)
+            for node_id in graph["execution_order"]
+        ]
+        if not ordered:
+            raise ValueError("complete-theory audit requires at least one node")
+        audit_dir = self.work_dir / "complete-theory-audit"
+        audit_dir.mkdir(parents=True, exist_ok=True)
+        for artifact in audit_dir.iterdir():
+            if artifact.is_file():
+                artifact.unlink()
+
+        filenames = {}
+        blocks = []
+        for index, node in enumerate(ordered):
+            token = re.sub(r"[^A-Za-z0-9_.-]", "_", node["id"])[-48:]
+            token += "-" + hashlib.sha256(node["id"].encode()).hexdigest()[:10]
+            filename = f"proof-dependencies-{token}.tsv"
+            filenames[node["id"]] = filename
+            if index == 0:
+                blocks.append(automation_audit_ml(
+                    node["name"], dependency_filename=filename,
+                ))
+            else:
+                blocks.append(proof_dependency_audit_ml(
+                    node["name"], dependency_filename=filename,
+                ))
+
         stem = graph["file_slot"].removesuffix(".thy")
+        label = f"Complete_Audit_{stem}"
+        source = append_before_theory_end(
+            self._source(graph, proofs, theory_name=label),
+            "\n\n".join(blocks),
+        )
+        result = self._check(
+            source, label, writable_mounts=[(audit_dir, "/audit-output")],
+        )
+        if result["verdict"] != "green":
+            return result
+
+        context_tsv = audit_dir / "automation-context.tsv"
+        if not context_tsv.is_file():
+            raise ValueError("complete-theory audit lacks automation context")
+        context = parse_automation_snapshot(
+            context_tsv, node_id=f"theory:{graph['theory']}",
+        )
+        context_json = audit_dir / "automation-context.json"
+        context_json.write_text(
+            json.dumps(context, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        dependencies = {}
+        dependency_paths = {}
+        for node in ordered:
+            raw_path = audit_dir / filenames[node["id"]]
+            if not raw_path.is_file():
+                raise ValueError(
+                    f"complete-theory audit lacks dependencies for {node['id']}"
+                )
+            parsed = parse_proof_dependencies(raw_path, node_id=node["id"])
+            json_path = raw_path.with_suffix(".json")
+            json_path.write_text(
+                json.dumps(parsed, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            dependencies[node["id"]] = parsed
+            dependency_paths[node["id"]] = {
+                "json": str(json_path), "raw": str(raw_path),
+            }
+        result["complete_theory_audit"] = {
+            "automation_context": context,
+            "proof_dependencies": dependencies,
+            "automation_context_path": str(context_json),
+            "raw_automation_context_path": str(context_tsv),
+            "proof_dependency_paths": dependency_paths,
+        }
+        return result
+
+    def complete_source(
+        self, graph: dict[str, Any], proofs: dict[str, str], *,
+        theory_name: str | None = None,
+    ) -> str:
+        stem = theory_name or graph["file_slot"].removesuffix(".thy")
         return self._source(graph, proofs, theory_name=stem)
 
     def check_complete(
@@ -526,15 +646,15 @@ class IsabelleChecker:
             *(f"    {name}" for name in theories),
             "",
         ]), encoding="utf-8")
-        l4v = self.run_dir / "M2" / "isolated-environment" / "l4v"
+        l4v = self.l4v_dir
         isabelle = Path("/home/lijun/seL4-docker-main/verification/isabelle")
-        workspace = self.sanitized_workspace()
+        workspace = self.semantic_workspace
         heaps = self.heaps_dir
         command = [
             "docker", "run", "--rm", "--network", "none",
             "--mount", f"type=bind,src={l4v},dst=/sel4-project/verification/l4v,readonly",
             "--mount", f"type=bind,src={isabelle},dst=/workspace/verification/isabelle,readonly",
-            "--mount", f"type=bind,src={workspace},dst=/m2,readonly",
+            "--mount", f"type=bind,src={workspace},dst=/semantic-base,readonly",
             "--mount", f"type=bind,src={heaps},dst=/root/.isabelle/heaps",
             "--mount", f"type=bind,src={self.generated_dir},dst=/generated,readonly",
             "-e", f"L4V_ARCH={self.architecture}", self.image,

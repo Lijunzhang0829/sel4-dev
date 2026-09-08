@@ -350,22 +350,28 @@ def plan_local_outline(
                 provider, salvage_prompt(request), output_prefix,
                 model=model, timeout=timeout, theory=theory,
                 stage=f"local-proof-outline:{node['id']}",
+                clean_runtime=True,
             )
-            plan = validate_salvage_plan(parse_json_response(response), request)
-            plan["source"] = "llm"
             meta_path = Path(str(output_prefix) + ".meta.json")
             transcript_meta = (
                 json.loads(meta_path.read_text(encoding="utf-8"))
                 if meta_path.is_file() else {}
             )
+            if not transcript_meta.get("sealable_generation"):
+                raise RuntimeError("Salvage transport was not sealable")
+            plan = validate_salvage_plan(parse_json_response(response), request)
+            plan["source"] = "llm"
             plan["provider"] = transcript_meta.get("provider")
-            plan["sealable_generation"] = bool(
-                transcript_meta.get("sealable_generation")
-            )
+            plan["sealable_generation"] = True
         except Exception as error:
             plan = deterministic_fallback(request, str(error))
             plan["provider"] = provider
-            plan["sealable_generation"] = False
+            # The failed provider call is retained as audit evidence, but its
+            # response is not used. The selected outline is the deterministic
+            # fallback and can therefore remain sealable.
+            plan["provider_attempt_sealable"] = False
+            plan["provider_failure"] = f"{type(error).__name__}: {error}"
+            plan["sealable_generation"] = True
     plan["request_path"] = str(request_path)
     plan_path.write_text(
         json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"

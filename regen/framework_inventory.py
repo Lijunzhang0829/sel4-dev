@@ -73,7 +73,7 @@ def extractors():
     sys.path.insert(0, str(REPO / "regen" / "scripts"))
     from regen_extract import slice_decls
     sys.path.insert(0, str(REPO / "regen"))
-    from session_harness import declaration_statement
+    from retrieval_utils import declaration_statement
     return slice_decls, declaration_statement
 
 

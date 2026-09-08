@@ -2,7 +2,6 @@
 """Aggregate one module run into one review-friendly JSON log."""
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -127,79 +126,3 @@ def attach_module_outputs(
         for name, path in outputs.items()
     }
     write_json(destination, value)
-
-
-def environment_preparation_log(
-    campaign_dir: Path, destination: Path,
-) -> dict[str, Any]:
-    selected = {
-        "M0_campaign_manifest": campaign_dir / "M0/campaign-manifest.json",
-        "M1_audit": campaign_dir / "M1/audit.json",
-        "M2_gate": campaign_dir / "M2/m2-gate.json",
-        "M3_audit": campaign_dir / "M3/audit.json",
-        "M3_gate": campaign_dir / "M3/m3-gate.json",
-    }
-    missing = [str(path) for path in selected.values() if not path.is_file()]
-    if missing:
-        raise ValueError(f"incomplete M0-M3 environment evidence: {missing}")
-    inventory = []
-    for stage in ("M0", "M1", "M2", "M3"):
-        for path in sorted((campaign_dir / stage).rglob("*")):
-            if path.is_file():
-                inventory.append({
-                    "stage": stage,
-                    "path": str(path.resolve()),
-                    "size_bytes": path.stat().st_size,
-                })
-    value = {
-        "schema_version": 1,
-        "module": "Environment Preparation",
-        "run_name": "Refine",
-        "campaign_dir": str(campaign_dir.resolve()),
-        "stage_scope": ["M0", "M1", "M2", "M3"],
-        "summary_artifacts": {
-            name: read_json(path) for name, path in selected.items()
-        },
-        "artifact_inventory": inventory,
-        "migration_note": (
-            "Original evidence remains in place because existing gates reference "
-            "those paths. This file is a review index and content aggregation."
-        ),
-    }
-    write_json(destination, value)
-    return value
-
-
-def bootstrap_existing_logs(campaign_dir: Path, run_dir: Path) -> None:
-    root = run_dir / "module-logs"
-    environment_preparation_log(
-        campaign_dir, root / "environment-preparation/Refine.json",
-    )
-    m4 = campaign_dir / "M4"
-    write_llm_module_log(
-        m4 / "transcript/session-planner",
-        root / "session-planner/Refine.json",
-        module="Session Planner",
-        run_name="Refine",
-        context={"campaign_id": campaign_dir.name, "stage": "M4"},
-        outputs={
-            "dependency_evidence": m4 / "dependency-evidence.json",
-            "file_generation_list": m4 / "file-generation-list.json",
-            "session_progress": m4 / "session-progress.json",
-            "audit": m4 / "m4-audit.json",
-            "gate": m4 / "m4-gate.json",
-        },
-    )
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--campaign-dir", type=Path, required=True)
-    parser.add_argument("--run-dir", type=Path, required=True)
-    args = parser.parse_args()
-    bootstrap_existing_logs(args.campaign_dir, args.run_dir)
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

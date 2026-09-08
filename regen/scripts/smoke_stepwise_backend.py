@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import sqlite3
 import tempfile
@@ -19,6 +20,7 @@ def main() -> int:
     args = parser.parse_args()
     environment = args.environment_run.resolve()
     proof_run = args.proof_run.resolve()
+    run = json.loads((proof_run / "run.json").read_text(encoding="utf-8"))
     output = proof_run / "backend-smoke"
     if output.exists():
         shutil.rmtree(output)
@@ -38,6 +40,8 @@ def main() -> int:
             environment, output / "checker", timeout=600,
             generated_dir=proof_run / "generated",
             heaps_dir=proof_run / "heaps",
+            l4v_dir=Path(run["l4v"]),
+            semantic_workspace=Path(run["semantic_workspace"]),
         )
         graph = {
             "run_id": "stepwise-safe-smoke",

@@ -14,6 +14,7 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
 from regen.graph_revision_agent import revise_graph
+from regen.proof_session_runner import load_progress, save_progress, update_file
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -50,18 +51,15 @@ def main() -> int:
     args = parser.parse_args()
 
     run = read_json(args.run_dir / "run.json")
-    files_path = args.run_dir / "files.json"
-    files = read_json(files_path)
+    files = load_progress(args.run_dir)
     entry = next(item for item in files["files"] if item["theory"] == args.theory)
     theory_dir = args.run_dir / "theories" / entry["file_slot"].removesuffix(".thy")
     progress_path = theory_dir / "progress.json"
     progress = read_json(progress_path)
     graph = read_json(theory_dir / f"graph-v{progress['graph_revision']}.json")
     node = next(item for item in graph["nodes"] if item["id"] == args.node_id)
-    environment_run = Path(run["environment_run"])
     package = read_json(
-        environment_run / "M1" / "public" / "proof-file-packages"
-        / f"{entry['file_slot']}.json"
+        Path(run["contract_package_dir"]) / f"{entry['file_slot']}.json"
     )
     green_ids = {
         node_id for node_id, status in progress["statuses"].items()
@@ -110,17 +108,13 @@ def main() -> int:
     progress.get("retrieval_hints", {}).pop(args.node_id, None)
     write_json(progress_path, progress)
 
-    entry.update({
-        "status": "generating",
-        "graph_revision": revised["revision"],
-        "graph_source": str(theory_dir / f"graph-v{revised['revision']}.json"),
-    })
-    files["events"].append({
-        "theory": args.theory,
-        "status": "generating",
-        "reason": "accepted dependency-closure graph revision",
-    })
-    write_json(files_path, files)
+    update_file(
+        files, args.theory, "generating",
+        graph_revision=revised["revision"],
+        graph_source=str(theory_dir / f"graph-v{revised['revision']}.json"),
+        reason="accepted dependency-closure graph revision",
+    )
+    save_progress(args.run_dir, files)
     print(json.dumps({
         "decision": decision,
         "graph_revision": revised["revision"],

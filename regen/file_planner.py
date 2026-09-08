@@ -7,72 +7,30 @@ import re
 from pathlib import Path
 from typing import Any
 
-from regen.llm_transcript import allocate_artifact_prefix, call_llm
+from regen.llm_transcript import (
+    allocate_artifact_prefix, call_llm, validate_call_artifact,
+)
 from regen.module_run_log import attach_module_outputs, write_llm_module_log
-from regen.premise_retrieval import retrieve_premises, tokens
 from regen.proof_graph import (
-    build_graph, parse_json_response, write_immutable_graph,
+    build_graph, graph_payload_sha256, parse_json_response, write_immutable_graph,
 )
 
 
 VAGUE_EXTERNAL_SUPPORT = re.compile(
     r"\b(?:existing|available|known|standard)\b", re.IGNORECASE,
 )
-PLANNING_STOP_TOKENS = {
-    "assumes", "contract", "corres", "dc", "fixes", "lemma", "longrightarrow",
-    "relation", "shows", "state", "theorem", "using",
-}
 
 
-def planning_query(statement: str) -> str:
-    """Keep operation/relation identifiers, avoiding broad proof vocabulary."""
-    terms = [
-        term for term in dict.fromkeys(tokens(statement))
-        if term not in PLANNING_STOP_TOKENS
-        and (
-            "_" in term
-            or term.endswith(("corres", "relation", "object", "endpoint"))
-            or any(character.isupper() for character in term)
-        )
-    ]
-    if not terms:
-        terms = [
-            term for term in dict.fromkeys(tokens(statement))
-            if term not in PLANNING_STOP_TOKENS
-        ]
-    return " ".join(terms[:16])
-
-
-def planning_environment(
-    package: dict[str, Any], premise_database: Path, *,
-    per_contract: int = 12, total_limit: int = 48,
-) -> dict[str, Any]:
-    """Retrieve legal context for understanding contracts, not DAG premises."""
-    records: dict[str, dict[str, Any]] = {}
-    for contract in package["contracts"]:
-        statement = contract["exact_statement"]
-        query = planning_query(statement)
-        for record in retrieve_premises(
-            premise_database, query, limit=per_contract,
-            focus_query=query,
-        ):
-            records.setdefault(record["record_id"], record)
-    ranked = sorted(
-        records.values(),
-        key=lambda item: (-item.get("score", 0.0), item["canonical_name"]),
-    )[:total_limit]
+def planning_environment(package: dict[str, Any]) -> dict[str, Any]:
+    """Expose only fixed-contract planning policy, never premise records."""
     return {
-        "policy": "legal-declaration-context-v1",
+        "policy": "fixed-contracts-only-v1",
         "use": (
-            "Context for semantic planning only. These declarations are not "
-            "DAG nodes or committed proof dependencies."
+            "The File Planner sees fixed contracts only. External premise "
+            "existence, names, statements, attributes, and retrieval results "
+            "belong exclusively to the Lemma Prover."
         ),
-        "legal_declarations": [{
-            "name": item["canonical_name"],
-            "statement": item["exact_statement"],
-            "owner_theory": item["owner_theory"],
-            "source_class": item["source_class"],
-        } for item in ranked],
+        "contract_count": len(package["contracts"]),
     }
 
 
@@ -156,9 +114,9 @@ payload below. Return the requested JSON directly.
 Design the complete generated-theorem DAG needed to prove every fixed contract.
 You must provide the exact Isabelle statement of every generated theorem.
 Do not write proof bodies. Do not list, predict, or create external premise
-nodes. The planning context contains legal declarations only so that you can
-understand definitions and likely semantic boundaries. It is not a commitment
-that any declaration will be used; the Lemma Prover retrieves premises later.
+nodes. The planning context contains policy metadata only. You do not receive
+external premise names or statements. The Lemma Prover retrieves premises later
+for one certified executable node.
 
 Roles:
 - theorem: an intermediate generated result; it may depend on generated nodes.
@@ -215,6 +173,8 @@ def plan_file(
     module_log_path: Path | None = None,
     call_index: int = 1,
     rejection_feedback: list[str] | None = None,
+    graph_bindings: dict[str, Any] | None = None,
+    persist_graph: bool = True,
 ) -> dict[str, Any]:
     prompt = planner_prompt(package, environment, rejection_feedback)
     transcript_prefix = allocate_artifact_prefix(
@@ -225,7 +185,7 @@ def plan_file(
         response = call_llm(
             provider, prompt, transcript_prefix,
             model=model, timeout=timeout, theory=package["theory"],
-            stage="file-planner",
+            stage="file-planner", clean_runtime=True,
         )
     finally:
         if (
@@ -251,15 +211,24 @@ def plan_file(
     graph = build_graph(
         package, proposal, run_id=run_id, revision=revision,
     )
+    transcript = validate_call_artifact(transcript_prefix, require_real=True)
     graph["planner_context"] = {
-        "policy": (environment or {}).get("policy", "contracts-only"),
-        "legal_declaration_count": len(
-            (environment or {}).get("legal_declarations", [])
-        ),
+        "policy": (environment or {}).get("policy", "fixed-contracts-only-v1"),
+        "external_premise_records_visible": False,
     }
+    graph["upstream_bindings"] = dict(graph_bindings or {})
+    graph["planner_call"] = {
+        "provider": provider,
+        "model": model,
+        "transcript_prefix": str(transcript_prefix.resolve()),
+        "prompt_sha256": transcript["prompt_sha256"],
+        "final_sha256": transcript["final_sha256"],
+    }
+    graph["graph_payload_sha256"] = graph_payload_sha256(graph)
     output_dir.mkdir(parents=True, exist_ok=True)
     path = output_dir / f"graph-v{revision}.json"
-    write_immutable_graph(path, graph)
-    if module_log_path is not None:
-        attach_module_outputs(module_log_path, {"generated_graph": path})
+    if persist_graph:
+        write_immutable_graph(path, graph)
+        if module_log_path is not None:
+            attach_module_outputs(module_log_path, {"generated_graph": path})
     return graph

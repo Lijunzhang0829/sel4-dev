@@ -236,7 +236,7 @@ def run(campaign_dir: Path, theory_name: str) -> dict:
     )
 
     sys.path.insert(0, str(REPO / "regen"))
-    from session_harness import bm25
+    from retrieval_utils import bm25
     selected = bm25(accessible, config["query"], RETRIEVAL_K)
     selected_payload = []
     for record in selected:

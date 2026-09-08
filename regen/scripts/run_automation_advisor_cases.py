@@ -45,23 +45,25 @@ def main() -> int:
     graph = read_json(source_dir / "graph-v77.json")
     progress = read_json(source_dir / "progress.json")
     run = read_json(run_dir / "run.json")
-    files = read_json(run_dir / "files.json")
+    files = read_json(Path(run["session_progress_ledger"]))
     by_name = {node["name"]: node for node in graph["nodes"]}
     cases = args.cases or DEFAULT_CASES
     unknown = [name for name in cases if name not in by_name]
     if unknown:
         raise SystemExit(f"unknown graph-v77 cases: {unknown}")
 
-    built = [
+    sealed_ancestors = [
         item["file_slot"].removesuffix(".thy") for item in files["files"]
-        if item["status"] == "built"
+        if item["status"] == "sealed"
     ]
     output_dir = run_dir / "automation-advisor" / "KHeap_R"
     output_dir.mkdir(parents=True, exist_ok=True)
     checker = IsabelleChecker(
         Path(run["environment_run"]), output_dir / "isabelle",
-        timeout=args.timeout, previous_theories=built,
+        timeout=args.timeout, previous_theories=sealed_ancestors,
         generated_dir=run_dir / "generated", heaps_dir=run_dir / "heaps",
+        l4v_dir=Path(run["l4v"]),
+        semantic_workspace=Path(run["semantic_workspace"]),
     )
     proofs = progress["proofs"]
     results = []

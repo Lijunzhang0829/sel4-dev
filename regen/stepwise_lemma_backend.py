@@ -480,8 +480,8 @@ def prove_node_stepwise(
     )
 
     repo = Path(__file__).resolve().parent.parent
-    l4v = checker.run_dir / "M2" / "isolated-environment" / "l4v"
-    workspace = checker.sanitized_workspace()
+    l4v = checker.l4v_dir
+    workspace = checker.semantic_workspace
     isabelle = repo / "verification" / "isabelle"
     stepwise_tools = repo / "tools" / "seL4-proof-search"
     site_packages = repo / ".stepwise-codex" / "container-site-packages"

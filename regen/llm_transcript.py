@@ -24,7 +24,10 @@ except ImportError:
     from audited_llm import sha256_text
 
 SCHEMA_VERSION = 2
-from regen.progress_events import emit_event
+try:
+    from .progress_events import emit_event
+except ImportError:
+    from progress_events import emit_event
 
 REAL_PROVIDERS = {"codex-exec-audited", "claude-print-audited"}
 

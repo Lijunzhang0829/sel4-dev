@@ -15,7 +15,7 @@ from pathlib import Path
 
 from audited_llm import sha256_text
 from llm_transcript import call_llm, record_replay
-from session_harness import bm25
+from retrieval_utils import bm25
 from theory_trace import TheoryAuditTrail
 
 
