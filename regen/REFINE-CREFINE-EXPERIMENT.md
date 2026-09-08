@@ -1,19 +1,24 @@
-# Refine/CRefine Repo-Level Regeneration Experiment
+# Refine Semantic Base — 历史实验记录
 
-## 实验设置
+状态：从 semantic-base 基础快照继承的运行记录，本次未重新读取或验证 campaign artifacts。
+其中 PASS、SEALED 和模型结果仅描述各自历史运行，不代表当前分支已验证可运行。
+当前研究边界见 [Architect Experiment](UNIFIED-PROOF-ARCHITECT-EXPERIMENT.md)。
+
+## 历史实现设置
 
 实验冻结代码与规格端点、父 sessions、目标 contracts 和 contract 所属 theory slots。
 普通的人类 Refine contract/helper proof layer 被删除，模型需要跨文件重新设计并生成
-该 proof-theory layer。CRefine 只有在完整 generated Refine 封存后才能开始。
+selected contracts 及其生成辅助证明。原记录设想 Refine→CRefine 联合运行，但下面的
+实际记录仅涉及 Refine；独立／联合 CRefine 不作为当前已确定的要求。
 
-干净环境是 contract-sufficient semantic substrate，不声称删除 Refine 中每一个 human
-certificate。对 contract elaboration 必需的 commands 可原样保留；它们产生的 facts
-和 automation effects 被披露，并在 generated proofs 完成后统计实际使用。
+环境使用固定 semantic-core baseline，不声称删除每一个 human certificate，也不声称
+保留 commands 已逐项证明必要。Baseline 支持目标 elaboration；facts 和 automation effects
+另行披露，实际使用需在生成 proofs 完成后统计。
 
-当前采用的生产原则：
+以下是历史运行所采用的输入政策，不是拟议仓库规划扩展的永久限制：
 
 - fixed contracts 与 contract-owned attributes 不可修改；
-- 模型不可读取原始 target Refine Proof source；
+- 模型不可读取原始目标 Refine 证明层；
 - Session Planner 只看 public contracts，不看 human imports 或 premise records；
 - File Planner 只读取 fixed contracts，生成 theorem DAG 和 statements；premise records 仅在 Lemma Prover 阶段召回；
 - Lemma Prover 只修改 proof body；
@@ -21,7 +26,17 @@ certificate。对 contract elaboration 必需的 commands 可原样保留；它�
 - Isabelle 是 statement、proof 和 complete theory 的最终检查器；
 - 只有 sealed theory 才能跨文件发布 facts。
 
-## 当前 production campaign
+## 前驱记录：d6c
+
+历史 campaign `sel4-refine-semantic-base-d6c26eb4fae33cab` 记录了 41 个 theories、287 个
+contracts、500 个 retained core commands，以及 84,219 条 premise records。其 disclosure
+为 pending，在后续 gate 收紧后不能作为合法的新运行输入。
+
+该 campaign 的 Session Planning 记录为 17 个候选、14 个 accepted、3 个 rejected，全部
+accepted edges 为 weak operation-call evidence，形成一层。它只是该次规划的结果，不能
+据此断言 contract-only 输入永远无法产生 strong scheduling edges。
+
+## 后继记录：e7f
 
 ```text
 campaign             sel4-refine-semantic-base-e7f7eaec83a2ff5f
@@ -31,7 +46,7 @@ Environment gate     environment:7b39a93ab33bc5363601
 Theory run           refine-e7f7eaec83a2ff5f-run-001
 ```
 
-环境结果：
+原记录的环境结果：
 
 - 41 个 Refine theory sources；
 - 7,102 个 declaration/structure owner spans；
@@ -49,7 +64,7 @@ Theory run           refine-e7f7eaec83a2ff5f-run-001
 `command_minimality_claimed=false`。Retained semantic effects 会在 generated theory
 封存时继续审计实际依赖。
 
-## Session Planning 结果
+## e7f Session Planning 记录
 
 正式 Session Planner 使用 audited `gpt-5.6-sol`，完整 prompt 和 provider stream 已
 保存且无 tool events。规划结果：
@@ -79,7 +94,7 @@ layer 1: CSpace_R, IpcCancel_R, Ipc_R, Tcb_R, VSpace_R
 
 同层不声明独立或安全并行；第一轮仍使用 list 中的 serial order。
 
-## Theory Planning vertical slice
+## e7f Theory Planning vertical slice 记录
 
 `Refine.ArchAcc_R` 已通过新的 File Planner 路径：
 
@@ -93,9 +108,9 @@ layer 1: CSpace_R, IpcCancel_R, Ipc_R, Tcb_R, VSpace_R
 - canonical ledger 只在 GREEN 后标记 `ArchAcc_R = planned`；
 - 重放 `plan-file` 没有再次调用模型。
 
-当前尚未开始 ArchAcc_R 的单 Node proof generation。
+该记录结束时尚未开始 ArchAcc_R 的单 Node proof generation；本次不推断之后的运行进展。
 
-## 当前状态
+## e7f 记录时的状态
 
 ```text
 环境准备与冻结                 PASS / SEALED
@@ -108,10 +123,17 @@ ArchAcc_R theorem DAG          PLANNED / ISABELLE-SHELL GREEN
 ArchAcc_R node proofs          NOT STARTED
 其他 20 theories               PENDING
 Refine session seal            NOT STARTED
-CRefine                        BLOCKED until full Refine seal
+CRefine                        NOT RUN (historical joint-run plan)
 ```
 
-## 评价方法
+## 记录位置与证据限制
+
+历史 campaign 数据的仓库相对位置为
+`reports/regen/refine-semantic-base/<campaign-id>/`。它们不是本分支迁移的代码文件，不能假定
+该目录在每个 checkout 中存在；因此不提供指向另一 worktree 或本机报告目录的“active”链接。
+运行数字、hash 和 PASS 状态保留为历史线索，正式复用须验证实际 artifacts 与当前 frozen inputs。
+
+## 历史评价计划
 
 环境层报告：
 
@@ -132,8 +154,9 @@ Theory 与 repo 层报告：
 - helper reuse、cross-contract fan-out 与 graph revisions；
 - cross-file imports 和 generated premise publication；
 - assembly stabilization 次数与原因；
-- 与 human proof corpus 的 proof structure、复用和维护性差异。
+- 原记录提出与 human proof corpus 比较；这不是本轮生成输入或已获准执行的步骤。
+  本次文档维护不访问被删除的人类证明，后续如需独立评估另定协议。
 
-完整 Refine 成功要求 21 个 theory slots 全部 sealed、287 contracts exact-once GREEN，
-并能从 frozen environment 与 generated predecessors clean-build。部分结果只能报告
-为 partial campaign，不能进入生产 CRefine。
+就上述历史 scope 而言，完整成功需要 21 个目标 theory slots 和 287 contracts 全部完成并
+通过整体构建。其他运行的目标数从自身冻结 inventory 决定。Ledger traversal complete 不替代
+最终验收；如以后执行联合 CRefine 任务，才要求它绑定相应完整 generated Refine。

@@ -10,6 +10,11 @@
 引用什么符号、对应哪些合法定义或事实、缺少的信息属于什么情况。它不决定证明路线、
 helper、contract 聚类或依赖边。
 
+当前 [session_planner.py](session_planner.py) 和
+[调度配置](config/session-planning-policy.json) 禁止 individual premise records；
+[file_planner.py](file_planner.py) 也仅接收 fixed contracts。本计划是对现有输入政策的扩展，
+尚未实现，不能将当前行为描述为已消费语义视图。
+
 首个接入点是仓库规划输入；同时生成并验证文件投影，后续 File Planner 是否消费这些投影
 另行接线。实现可以复用现有有效环境产物，不为数据投影重复构建 Isabelle，前提是输入身份
 和有效性已验证。不能通过放宽源隔离来简化开发。

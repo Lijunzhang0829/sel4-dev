@@ -53,8 +53,7 @@ Prover 自行选择是否使用提供的事实，实际采用以 prover 的依�
 自动检查保留目标身份、图结构、合法上下文和最终证明。修改后的 helper 即使更容易证明，
 consumer 仍须独立完成原目标，不能把待证结论或未证额外前提混入 trusted environment。
 
-撤销是待实现方向；估计最小局部版本需约 3–5 个工程日，涉及 graph/lineage、GRA、Runner、
-报告及测试，不包含补齐整个旧分支的事务、seal 基础设施或跨文件回修。
+撤销是待实现方向，范围与工作量估计只在 [模块地图](UNIFIED-PROOF-MODULE-IMPLEMENTATION.md) 维护。
 
 ## 观察与评价
 

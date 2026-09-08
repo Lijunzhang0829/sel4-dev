@@ -1,277 +1,92 @@
-# Repo / Session 级规划：实现说明
+# Repo / Session 级规划：现有实现与扩展边界
 
-本文档对应总 harness 的第 2 个模块。它说明 Session Planner 的需求、输入边界、
-规划规则、artifact bundle、runner 绑定和当前生产结果。总体流程见
-`REPO-LEVEL-PROOF-HARNESS.md`。
+状态：静态核对本分支代码；历史模型运行结果见 [实验记录](REFINE-CREFINE-EXPERIMENT.md)。
+本文件描述现有调度器，[Architect Experiment](UNIFIED-PROOF-ARCHITECT-EXPERIMENT.md)
+描述待扩展的仓库证明规划，两者不能混作同一已实现能力。
 
-## 1. 实现目标
+## 1. 当前做什么
 
-Session Planner 只解决一个问题：
+[session_planner.py](session_planner.py) 从固定 Refine contracts 推断 theory 生成优先级，
+输出分层、串行 fallback 和 session ledger。它不产生全局 helper、精确 theorem statement、
+imports 或完整 repository proof architecture。
 
-> 在固定 Refine contract-owning theory slots 的条件下，给出完整、可执行、可审计的
-> theory 生成顺序和 session 进度表。
+当前模型输入包含 public contracts、owner slots、environment gate 和 catalog 身份／规模，
+不包含 individual premise records、retrieval results、人类 helpers 或 import graph。
+规则来自 [session-planning-policy.json](config/session-planning-policy.json)，当前配置的模型为
+`gpt-5.6-sol`；这里仅记录仓库配置，不对外部 provider 的实时可用性作判断。
 
-它不设计 theorem statements、helpers、proof bodies、imports 或 automation
-attributes，也不根据 Premise Catalog 的具体 records 猜测 theorem 依赖。文件槽和
-contract ownership 已固定，所以该模块是 dependency-aware generation scheduling，
-不是 session architecture synthesis。
+拟议的 Planning Substrate 会让仓库规划读取合法语义记录，这是对当前输入政策的明确扩展。
+本次只更新文档，没有更改配置、prompt 或接线。File Planner 的 `planning_environment()`
+目前也仍为 fixed-contracts-only，未开始消费 substrate 投影。
 
-## 2. 输入边界
+## 2. 候选、验证与顺序
 
-Session Planner 的合法输入：
+模型提出两类候选：`contract-composition` 和 `operation-call`。每项包含 provider、consumer、
+contract citations、shared symbols、confidence 和 reason。确定性代码检查当前 endpoints、
+两端 citations、完整符号 token、重复边及 policy 限制，再形成最终 schedule。
 
-- verified environment gate；
-- 21 个 public contract packages；
-- 287 个 exact contract statements；
-- theory/file slot 与 contract IDs；
-- Premise Catalog snapshot identity 和 record count；
-- frozen scheduling policy 与 budget。
+- `contract-composition` 是用于分层的 strong scheduling edge。
+- `operation-call` 是同层排序的 weak scheduling edge。
+- 两者都是从目标表面获得的调度证据，不是已证明的 theorem dependency。
 
-禁止输入：
+SCC 折叠用于生成顺序，不代表环形证明依赖合法。没有分层证据时可能只有一层，但这不能证明
+文件独立或可安全并行。当前 Runner 使用 serial fallback，并在单 theory 失败后继续遍历。
+未来仓库规划的 hard proof dependencies 必须单独约束可用性，不能直接沿用 SCC 折叠来消除它们。
 
-- raw human Refine theory source；
-- human imports 或 theory DAG；
-- human helper names、statements、roles、order 或 proof decomposition；
-- individual premise records、retrieval results 或 statistics；
-- stock human Refine heap；
-- human comparison result 或旧 campaign schedule。
+## 3. 代码定位
 
-Premise Catalog 在这里仅用于确认生成阶段将拥有一个合法 fact service。具体事实在
-单 node proof 时检索，不用于安排文件顺序。
+| 责任 | 当前文件与入口 |
+|---|---|
+| Policy binding | [session_planner.py](session_planner.py) `verify_policy_frozen()` |
+| 目标与 payload | [session_planner.py](session_planner.py) `generation_tasks()`、`planner_payload()`、`planner_prompt()` |
+| JSON 与候选验证 | [session_planner.py](session_planner.py) `parse_model_json()`、`symbol_is_grounded()`、`validate_candidate_edges()` |
+| 分层与顺序 | [session_planner.py](session_planner.py) `strongly_connected_components()`、`component_depths()`、`weak_order()`、`build_layers()` |
+| Bundle 生成 | [session_planner.py](session_planner.py) `build_artifacts()`、`write_artifacts()` |
+| 验证与重放 | [session_planner.py](session_planner.py) `validate_file_list()`、`validate_planning_bundle()`、`verify_existing()` |
+| Ledger | [session_planner.py](session_planner.py) `initial_progress_ledger()`、`validate_progress_ledger()` |
+| Transcript prefix | [llm_transcript.py](llm_transcript.py) `allocate_artifact_prefix()`、`reconcile_transcript_family()` |
+| Transcript 接受 | [session_planner.py](session_planner.py) `select_completed_transcript()`；[llm_transcript.py](llm_transcript.py) `validate_call_artifact()` |
+| Runner schedule 绑定 | [proof_session_runner.py](proof_session_runner.py) `schedule_entries()`、`schedule_binding()`、`init_run()` |
+| Runner session 遍历 | [proof_session_runner.py](proof_session_runner.py) `_run_session_unlocked()`、`run_session()` |
+| File Planner 输入政策 | [file_planner.py](file_planner.py) `planning_environment()` |
 
-代码定位：
+## 4. Transcript 与产物
 
-- [gate and policy validation](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:48)
-- [generation task extraction](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:90)
-- [planner payload](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:139)
-- [prompt construction](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:164)
-- [frozen policy](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/config/session-planning-policy.json)
+一个逻辑规划调用可能包含多个 provider attempts，每次使用独立 prefix。已完成 transcript 的
+复用需匹配实际 prompt、model 和审计条件；失败记录不覆盖。实际是否允许新外部调用，由入口
+参数和冻结政策决定。
 
-## 3. LLM 与确定性代码分工
+Session Planning bundle 包含：
 
-### 3.1 LLM 只提出 candidate edges
+| 产物 | 用途 |
+|---|---|
+| `dependency-evidence.json` | accepted/rejected candidates、调度边与 SCC |
+| `file-generation-list.json` | 完整目标文件集合、层次和 serial fallback |
+| `session-planning-audit.json` | 输入、coverage、policy 和 transcript binding |
+| `session-progress-ledger.json` | Runner 绑定并更新的 canonical session 状态 |
+| `transcript/session-planner.*` | 实际模型输入输出与审计证据 |
 
-生产调用使用 audited `gpt-5.6-sol`。这是官方 GPT-5.6 flagship model ID；
-`codex-5.6` 不是可用模型 ID，曾导致一次 400 provider failure。模型调用在只读、
-无工具、无插件、无 repo source 的 clean runtime 中运行。
+Runner 不能只接收孤立 schedule；它核对 bundle、environment gate、contracts 和 policy。
+文件／contract 数量从本次 packages 重建，不把历史的 21/287 当成通用常量。
 
-模型输出只包含两类候选：
+## 5. 完成状态的限制
 
-- `contract-composition`：较小 correspondence 可以组合进较大 correspondence；
-- `operation-call`：contracts 表面显示 callee 应优先于 caller。
+`_run_session_unlocked()` 根据 ledger 中所有文件是否为 `sealed` 设置
+`session_status=complete|partial`，输出的是 `session-traversal-result`。
+它没有在这个末尾另外执行完整 session clean build 或产生新的统一 Session Seal。
+因此不能把 traversal complete 直接称为满足目标设计的最终 session 验收。
 
-每条候选必须列出 provider、consumer、edge type、confidence、contract IDs、
-shared symbols 和 reason。
+仓库根部的 [session_seal.py](session_seal.py) 面向旧 `refine-arm-session` root-plan 流程，
+不是当前 Semantic Base Runner 的最终验收入口。后续需要新验收接线，不能凭同名文件认为已完成。
 
-### 3.2 Validator 决定候选是否合法
+## 6. 验证与历史证据
 
-Validator 检查：
+相关测试为 [test_session_planner.py](scripts/test_session_planner.py) 和
+[test_environment_gate.py](scripts/test_environment_gate.py)；本次未运行。
 
-- endpoint 必须是当前 21 个 theory slots；
-- provider 与 consumer 不能相同；
-- citations 必须覆盖两端且不能引用第三个 theory；
-- shared symbol 必须作为完整 token 出现在两端 cited contracts；
-- symbol 不能只是 `corres`、`lemma` 等 generic token；
-- confidence、edge type、schema 和总数必须满足 frozen policy；
-- 重复边只能保留一条。
+历史 `d6c...` 与 `e7f...` 规划采用不同 environment identities，不能混称一个当前运行。
+旧 d6c 的一层结果不能推出 contract-only 输入永远无法产生 strong scheduling edges；
+e7f 的历史记录已有两层。历史记录均未在本次重新验证，也不证明完整 proof DAG 已找到。
 
-模型不能决定最终 schedule。无证据或低质量边被记录为 rejected evidence。
-
-代码定位：
-
-- [model JSON parser](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:204)
-- [symbol grounding](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:218)
-- [candidate validator](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:229)
-
-## 4. 分层与顺序规则
-
-两种 edge 的语义刻意不同：
-
-- accepted `contract-composition` 是 strong edge，决定 layer depth；
-- accepted `operation-call` 是 weak edge，只决定同层 serial priority。
-
-strong graph 或 weak graph 出现 cycle 时，deterministic code 计算 strongly connected
-components，将 cycle 折叠并在 evidence 中披露。没有 strong edge 时，所有 theories
-处于同一层；这表示 contract 表面没有给出足够强的 composition evidence，不表示
-theories 独立。
-
-每一层内部先遵守 weak edges，再用确定性 tie-break 形成 serial fallback。同层可以
-在未来并行，但 runner 首先按 serial fallback 运行，以验证资源和跨文件发布行为。
-
-代码定位：
-
-- [SCC computation](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:339)
-- [layer depth](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:382)
-- [weak ordering](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:408)
-- [layer construction](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:439)
-
-## 5. Transcript 生命周期
-
-一次逻辑 Session Planner 调用可以有多个物理 provider attempts，例如 model name
-错误、网络失败或 timeout。每个物理 attempt 使用独立 prefix：
-
-```text
-session-planner
-session-planner--call-001
-session-planner--call-002
-```
-
-失败 transcript 永不覆盖。Planner 只复用最新一个满足以下条件的 attempt：
-
-- provider call 完成；
-- transcript 可封存且没有 tool events；
-- exact prompt 匹配；
-- model 与 frozen policy 匹配。
-
-如果没有合格 attempt，`--allow-external-call` 才会分配新的 prefix。这样一个逻辑
-decision 不会被计成多个成功 decisions，但所有失败原因仍保留用于审计。
-
-代码定位：
-
-- [prefix allocation](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/llm_transcript.py:47)
-- [transcript reconciliation](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/llm_transcript.py:87)
-- [completed transcript selection](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:68)
-- [audited artifact validation](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/llm_transcript.py:465)
-- [planner entry point](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:736)
-
-## 6. 输出 bundle
-
-Session Planning 生成五类证据：
-
-1. `dependency-evidence.json`
-   保存 accepted/rejected candidates、strong/weak edges、SCC 与解释。
-2. `refine-file-generation-list.json`
-   保存 immutable layers、21 个 exact slots、contract IDs 和 serial fallback。
-3. `session-planning-audit.json`
-   检查 gate、policy、coverage、model、provider 与 transcript sealability。
-4. `session-progress-ledger.json`
-   初始化每个 theory 的 `pending` 状态，并作为 runner 唯一可更新的 canonical
-   session ledger；记录 generation IDs、状态和真实 theory seal ID。
-5. `transcript/session-planner.*`
-   保存 exact prompt、raw provider stream、final JSON、stderr、metadata 与 tool audit。
-
-整个 bundle 绑定 campaign、environment gate、contract package payload、policy、
-planner input、proposal、dependency evidence 和 final file list。
-
-代码定位：
-
-- [progress ledger](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:485)
-- [artifact construction](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:516)
-- [file-list validation](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:608)
-- [bundle validation](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:653)
-- [immutable artifact writing](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/session_planner.py:693)
-
-## 7. Runner 绑定
-
-Runner 不接受一个孤立的 schedule 文件。初始化时它：
-
-- 验证 environment gate；
-- 验证 file list 的 sibling dependency evidence 与 planning audit；
-- 检查 campaign、gate、package payload、policy 和 artifact identities；
-- 逐个比对 21 个 file slots 与 287 个 contract IDs；
-- 绑定 Semantic Base、Premise Catalog、sanitized runtime 与 contract package path；
-- 原子更新 Session Planner 创建的 canonical progress ledger，不创建 `files.json`；
-- 只把真实 theory seal 存在的 theory 标为 `sealed`，之后才发布 generated premises；
-- `run-session` 按 immutable serial fallback 遍历，单 theory 失败后继续，最终产生
-  `partial` 或 `complete` session 状态。
-
-任何来自旧 campaign 或另一 package set 的 list 都会被拒绝。Planner 缺失时 runner
-也不会按文件名自行猜顺序。
-
-代码定位：
-
-- [schedule entries](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/proof_session_runner.py:351)
-- [schedule binding](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/proof_session_runner.py:385)
-- [run initialization](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/proof_session_runner.py:412)
-
-## 8. 当前证据状态
-
-下面的 `d6c...` planning bundle 是旧 environment gate 下得到的历史规划结果。
-其 contract-only edge 分析仍可评价，但由于上游 disclosure 是 pending，它不能继续
-作为新 runner 的 canonical production input。Successor environment gate 发布后必须
-重新运行 Session Planner，并由 runner 绑定新的 canonical ledger。
-
-历史结果：
-
-```text
-campaign             sel4-refine-semantic-base-d6c26eb4fae33cab
-environment gate     environment:adf1ce7e8f207b0d5cdc
-model                gpt-5.6-sol
-theory slots         21
-contracts            287
-candidate edges      17
-accepted edges       14
-rejected edges       3
-strong edges         0
-weak edges           14
-layers               1
-composition SCCs     0
-operation SCCs       0
-audit                PASS
-replay               reconstructed-and-unchanged
-downstream smoke     ready
-```
-
-14 条 accepted edges 都是 weak `operation-call` evidence。3 条 rejection 分别是两条
-duplicate edge 和一条缺少两端 shared endpoint symbol 的 edge。模型明确说明未发现
-足以声明 proof composition dependency 的 contract-only evidence，所以结果只有一层。
-
-这是一份合法且保守的 schedule，但不是完整 theory dependency DAG。当前结论是：
-仅凭 fixed contract surfaces 能稳定找到一部分 callee-before-caller priority，却不足以
-恢复强分层关系。后续 theory generation 可使用 serial fallback；是否增强 Session
-Planner 的输入或强边推断，应根据多个 theory 的实际 premise availability 和失败数据
-再评估，不能回读 human import graph 来补答案。
-
-当前 serial fallback：
-
-```text
-CSpace1_R
-TcbAcc_R
-ArchAcc_R
-Interrupt_R
-KHeap_R
-Schedule_R
-Syscall_R
-Tcb_R
-Arch_R
-Bits_R
-CNodeInv_R
-CSpace_R
-Detype_R
-Finalise_R
-InterruptAcc_R
-IpcCancel_R
-Ipc_R
-Refine
-Retype_R
-Untyped_R
-VSpace_R
-```
-
-生产 artifacts：
-
-[active Session Planning bundle](/home/lijun/seL4-docker-main/reports/regen/refine-semantic-base/sel4-refine-semantic-base-d6c26eb4fae33cab/Session-Planning)
-
-## 9. 验证与测试
-
-主要测试：
-
-- [Session Planner rules](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/scripts/test_session_planner.py)
-- [environment and runner binding](/home/lijun/seL4-docker-main/.worktrees/regen-refine-semantic-base/regen/scripts/test_environment_gate.py)
-
-已验证：
-
-- planner rule、ledger binding 与 continue-after-failure 回归测试通过；
-- 历史 prompt/model/provider transcript 可封存，14/3 edge decision 可重放；
-- 新 runner 已拒绝第二份 `files.json` 生命周期并绑定 canonical ledger；
-- expanded environment gate 的 successor production replay 尚未完成；
-- 旧 schedule/package/gate mismatch 会被拒绝。
-
-## 10. 当前边界
-
-- contract-only input 没有产生 strong composition edges；
-- 同层不代表可立即安全并行；
-- Session Planner 不管理 helper reuse 或 imports；
-- session progress ledger 由 Session Planner 创建，runner `init` 绑定 run ID，之后
-  `plan-file/run-file/run-session` 持续原子更新同一 artifact；
-- 当前生产结果只覆盖 Refine，CRefine 必须等待完整 generated Refine seal。
+当前代码范围为 Refine。独立 CRefine 和联合任务尚未选择；只有选择联合任务后，才施加
+“下游绑定本次完整 generated Refine”的交接条件。

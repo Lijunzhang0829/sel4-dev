@@ -1,10 +1,10 @@
 # Unified Proof Pipeline — 模块地图与迁移边界
 
-状态：基于 `4de882f` semantic-base 工作区快照的静态文件地图；未运行新的生产验收。
+状态：基于 `4de882f` semantic-base 快照及本次静态调用链核对；未运行新的生产验收。
 来源：`session-planner-global-proof-plan@bacfdb5` 的同名文档，保留职责与证据结构，不继承
 来源分支的实现 PASS/FAIL、测试数量或运行结果。
 
-本次只迁移五份文档。以下“已有文件”表示入口存在，并不表示满足全部
+以下“已有文件”表示入口存在，并不表示满足全部
 [目标设计](UNIFIED-PROOF-HARNESS-DESIGN.md)。不要求复制来源分支的目录布局。
 
 ## 1. Semantic Base 的实际输入链
@@ -28,16 +28,21 @@
 | 责任 | 当前入口／迁移方向 | 验证重点 |
 |---|---|---|
 | Planning Substrate | 待实现或适配；不直接复制旧 preparation 输入 schema | 合法 source classes、contract coverage、符号解析和投影身份 |
-| Repository planning | [session_planner.py](session_planner.py) | 使用新语义视图；目标、owner、路线与依赖合法 |
-| File refinement | [file_planner.py](file_planner.py)、[proof_graph.py](proof_graph.py) | 精确目标不变、statement elaboration、来源可追踪 |
+| Repository planning | [session_planner.py](session_planner.py) 当前仅 contract-based scheduling；架构规划待扩展 | 新语义视图接入前需修改现有输入政策 |
+| File refinement | [file_planner.py](file_planner.py)、[proof_graph.py](proof_graph.py) 当前为 fixed-contracts-only | 接入 architecture projection 属于待实现改动 |
 | 执行和检查 | [proof_session_runner.py](proof_session_runner.py)、[lemma_prover.py](lemma_prover.py)、[isabelle_node_checker.py](isabelle_node_checker.py) | 实际 context、proof、依赖证据一致 |
 | Local revision | [graph_revision_agent.py](graph_revision_agent.py)、[proof_graph.py](proof_graph.py) | 仅修改未证范围；helper 撤销需另行实现 |
-| 组装与发布 | [assembly_stabilizer.py](assembly_stabilizer.py)、Runner 和 [session_seal.py](session_seal.py) | 完整构建、导出与 publication 身份、partial 报告 |
+| 组装诊断 | [assembly_stabilizer.py](assembly_stabilizer.py) `prepare_assembly_stabilization()` | 当前只定位，不自动修 proof body |
+| Theory seal / publication | [proof_session_runner.py](proof_session_runner.py) `create_theory_seal()`、`publish_generated_records()` | 完整 theory check、accumulated build 和 retained impact；完整目标合同仍需验证 |
+| Session 汇总 | [proof_session_runner.py](proof_session_runner.py) `_run_session_unlocked()` | 只按 ledger 汇总 complete/partial，不新建最终 Session Seal |
 | 审计 | [llm_transcript.py](llm_transcript.py)、[module_run_log.py](module_run_log.py)、[progress_events.py](progress_events.py) | 实际输入输出、失败、成本与恢复依据 |
 
-来源分支的 `planning/proof_architect.py`、`proof_lineage.py`、`verified_fact_input.py`、
-`execution/observed_dependencies.py`、`publication/*` 与 `analysis/dependency_graph_report.py`
-只作为后续代码评估候选；本次没有移植它们，也不声称本分支已有相同 schema 或独立模块。
+旧 planning 开发线已删除，不把其中的 `planning/`、`execution/`、`publication/` 等路径
+列为本分支代码入口。若实现独立 architecture、lineage、fact input 或图报告模块，需按本分支
+需求设计；本次没有恢复旧代码。
+
+[session_seal.py](session_seal.py) 属于旧 `refine-arm-session` root-plan 流程，不能替代当前
+Runner 所缺的最终验收接线。有关现有调度限制见 [Session 实现说明](SESSION-PLANNING-IMPLEMENTATION.md)。
 
 ## 3. 最小增量与工作量
 
@@ -69,4 +74,4 @@ helper 撤销最小版本约 3–5 个工程日，是静态范围估计：
 交接。三类证据不互相替代。Codex 对话监视可评估 helper intent，不代替证明正确性判断。
 旧文档中的 324 tests、PASS/FAIL、旧 `plan_run_file` 缺陷和绝对产物路径不在本分支复用。
 
-本次仅检查文档链接、迁移范围和 Git 差异，不执行模型生成、Isabelle build 或 Python 回归。
+本次仅检查文档逻辑、相对链接、函数入口和 Git 差异，不执行模型生成、Isabelle build 或 Python 回归。

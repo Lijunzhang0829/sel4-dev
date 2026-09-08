@@ -80,6 +80,8 @@ consumer applicability witness；最终原始目标的真实证明不得省略�
 
 保留 active scope 中的 helper 仍需真实证明；合法撤销的 helper 不再阻断最终目标完成。
 该 disposition 尚需代码实现，不能直接沿用旧“supersede 必须有非空 replacement”的 gate。
+来源 lineage 可保留已撤销节点的历史记录；active graph 不再把它作为待完成证明。这里约束的是
+行为，不提前决定尚未讨论完的图表示。
 
 ## 5. 关系、身份和证据
 
@@ -98,6 +100,9 @@ Exact Graph 的对应方式尚未决定，本次不固定图数量、合并方�
 
 分别报告证明目标覆盖与正确性、实验协议合规性、证据完整性。任一必需目标未完成时不得
 宣称任务完整成功；模型自建 helper 的数量不是稳定完成度分母。
+
+当前 Runner 的 `session_status=complete` 仅表示 ledger 遍历结果，不是本节目标验收已经实现；
+实际入口和缺口见 [模块地图](UNIFIED-PROOF-MODULE-IMPLEMENTATION.md)。
 
 初版可针对 Refine 独立验收，不强制 Final Seal 包含两个 session。CRefine 独立／联合运行、
 图对应关系、输入 imports 边界以及统一预算与停止规则仍需讨论。

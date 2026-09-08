@@ -1,8 +1,8 @@
 # Semantic Base 上的仓库级证明生成
 
 本分支在 command 级 Refine Semantic Base 上探索仓库规划与文件内证明生成。
-当前任务是选择性迁移设计文档；没有移植 `session-planner-global-proof-plan` 的生产代码，
-也没有因文档迁移而改变运行配置或声明新的证明结果。
+文档区分现有调度／证明实现与拟议仓库规划扩展。没有移植旧 planning 开发线的生产代码，
+也没有因文档更新改变运行配置或声明新的证明结果。
 
 ## 分支与迁移来源
 
@@ -11,7 +11,8 @@
 - 工作区基础：`4de882fe2cd6d6f23c058d10d079beb0abeb11c6`，保存 semantic-base 工作区的
   tracked changes 与非 ignored 新文件；不包含 ignored 数据、构建产物或嵌套仓库工作区。
 - 文档来源：`session-planner-global-proof-plan` 的 `bacfdb56ff8af51cc4b6363b90db32a971910271`。
-  来源仅限下列五个文件的已提交版本，不包括该分支未提交的 `UNIFIED-PROOF-HARNESS.md`。
+  来源仅限下列五个文件的已提交版本，不包括当时未提交的 `UNIFIED-PROOF-HARNESS.md`。
+  旧 planning 与 runtime-audit 分支已删除；此处分支名仅记录来源，不能作为 checkout 指令。
 - 原 semantic-base 分支、暂存区和工作区保持原状；基础快照将其 staged/unstaged 内容合并为
   新分支的文件版本，原暂存状态仍保留在原 worktree。
 
@@ -25,12 +26,17 @@
 | [Module Implementation](UNIFIED-PROOF-MODULE-IMPLEMENTATION.md) | 模块职责、证据与后续验证清单 | 来源分支的 PASS/FAIL、测试计数、失效代码路径与旧目录布局 |
 | 本 README | 分支来源、文档入口、未决项 | 不适用于当前平铺模块布局的运行命令 |
 
-这些迁移文档是本分支的仓库规划设计草案。现有
-[环境实现说明](ENVIRONMENT-PREPARATION-IMPLEMENTATION.md) 和
-[session planning 实现说明](SESSION-PLANNING-IMPLEMENTATION.md) 用于理解基础快照，
-其中历史运行结果、绝对路径和实现状态没有在本次重新验证。
-旧 [总体说明](REPO-LEVEL-PROOF-HARNESS.md) 的强制 Refine→CRefine 流程不自动成为本草案的要求。
-文档中的拟议行为不会自动覆盖代码：代码现状、已讨论方向和未决项分别标记。
+文档职责分开：
+
+- 上表中的 Experiment、Design、Substrate 是拟议扩展，不声明已经接线。
+- [环境实现说明](ENVIRONMENT-PREPARATION-IMPLEMENTATION.md)、
+  [Session 调度实现](SESSION-PLANNING-IMPLEMENTATION.md) 与 Module Implementation 描述静态代码入口。
+- [总体导航](REPO-LEVEL-PROOF-HARNESS.md) 只索引流程，不另设一套冲突合同。
+- [实验记录](REFINE-CREFINE-EXPERIMENT.md) 集中保留历史 campaign 结果，不是当前生产 PASS。
+- `HARNESS-EVOLUTION.md` 是历史日志，旧路径／决策不作为当前代码或规范入口。
+
+代码链接均使用相对当前文档的路径；定位使用函数名，不沿用旧 worktree 绝对路径或旧行号。
+文档中的拟议行为不会自动覆盖代码；历史证据需要重验后才能支持当前运行。
 
 ## 当前边界
 
@@ -46,4 +52,8 @@
 Semantic Base 保留原 imports 与模型不获得人类 import graph 的准确边界；统一预算和停止规则。
 本次不预先决定这些问题，也不迁入来源文档与之冲突的规则。
 
-本分支没有因迁移文档而获得新的 Isabelle build、模型生成或完整 seal 证据。
+当前 `session_planner.py` 仍只做 contract-based scheduling；File Planner 仍使用
+fixed-contracts-only 输入。Planning Substrate、全局 obligation/helper 规划与 helper 撤销待接线。
+当前 `run-session` 的 traversal complete 也不等于新的完整 Session Seal。
+
+本分支没有因文档更新而获得新的 Isabelle build、模型生成或完整 seal 证据。
