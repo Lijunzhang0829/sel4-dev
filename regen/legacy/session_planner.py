@@ -25,7 +25,7 @@ from regen.preparation.refine_campaign import sha256_json, write_immutable_json
 
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_POLICY = Path("regen/config/session-planning-policy.json")
+DEFAULT_POLICY = Path("regen/fixtures/session-planning-policy-v2.json")
 SYMBOL_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'.]*")
 GENERIC_EDGE_SYMBOLS = {
     "lemma", "theorem", "corollary", "corres", "ccorres", "connect",

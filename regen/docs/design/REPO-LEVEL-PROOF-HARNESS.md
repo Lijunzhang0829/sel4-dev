@@ -2,7 +2,7 @@
 
 本文统一维护任务 setting、拟议仓库规划和正确性边界；具体代码现状分别见
 [环境实现](../implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md)、
-[规划实现与扩展](../implementation/SESSION-PLANNING-IMPLEMENTATION.md) 和
+[规划实现与扩展](../implementation/REPOSITORY-PLANNING-IMPLEMENTATION.md) 和
 [证明生成实现](../implementation/PROOF-GENERATION-IMPLEMENTATION.md)。设计要求不代表已经实现，历史结果见
 [实验记录](../history/REFINE-CREFINE-EXPERIMENT.md)。
 

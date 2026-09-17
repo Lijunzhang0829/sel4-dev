@@ -3,7 +3,7 @@
   "budgets": {
     "graph_revisions_per_generation": 16,
     "model_call_timeout_seconds": 1800,
-    "session_planner_context_chars": 500000,
+    "repository_planner_context_chars": 500000,
     "whole_proof_attempts_per_logical_round": 5
   },
   "campaign_name": "sel4-refine-semantic-base",
@@ -118,11 +118,11 @@
     "regen/preparation/environment_gate.py",
     "regen/preparation/premise_export.py",
     "regen/preparation/premise_catalog.py",
-    "regen/planning/session_planner.py",
     "regen/planning/repository_planner.py",
+    "regen/planning/planner_io.py",
     "regen/infrastructure/llm_transcript.py",
     "regen/infrastructure/audited_llm.py",
-    "regen/config/session-planning-policy.json",
+    "regen/config/repository-planning-policy.json",
     "regen/planning/file_planner.py",
     "regen/planning/proof_graph.py",
     "regen/infrastructure/module_run_log.py",
@@ -153,7 +153,6 @@
     "premise_catalog": "regen/preparation/premise_catalog.py",
     "premise_exporter": "regen/preparation/premise_export.py",
     "semantic_base_builder": "regen/preparation/semantic_base_builder.py",
-    "session_planner": "regen/planning/session_planner.py",
     "environment_pipeline": "regen/preparation/environment_pipeline.py",
     "upstream_heaps": "regen/preparation/upstream_heaps.py",
     "downstream_dataflow": "regen/preparation/environment_dataflow.py",
@@ -173,7 +172,7 @@
   "model_backends": [
     {
       "model": "gpt-5.6-sol",
-      "role": "Session Planner, File Planner, Graph Revision Agent"
+      "role": "Repository Planner, File Planner, Graph Revision Agent"
     },
     {
       "model": "gpt-5.5",
@@ -192,7 +191,7 @@
   },
   "runner_state_policy": {
     "interrupted_red_recovery": "Recover only checker-bound RED attempts whose source contains the active graph statement, dependency statements, and candidate proof.",
-    "mutation_lock": "Serialize init, plan-file, run-file, and full run-session traversal with one non-blocking run-level lock because all theories share the canonical Session Planner ledger.",
+    "mutation_lock": "Serialize init, plan-file, run-file, and full run-session traversal with one non-blocking run-level lock because all theories share the canonical repository execution ledger.",
     "retry_feedback_recovery": "Revalidate an unconsumed RETRY_PROOF against the active graph and consume it in exactly one subsequent logical round."
   },
   "pilot": {

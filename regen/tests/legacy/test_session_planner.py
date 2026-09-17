@@ -6,7 +6,7 @@ from pathlib import Path
 
 from regen.preparation.refine_campaign import sha256_json
 from regen.execution.proof_session_runner import run_session, save_progress, update_file
-from regen.planning.session_planner import (
+from regen.legacy.session_planner import (
     build_artifacts,
     build_layers,
     select_completed_transcript,
@@ -164,7 +164,7 @@ class SessionPlannerRulesTest(unittest.TestCase):
                 }), encoding="utf-8")
             from unittest.mock import patch
             with patch(
-                "regen.planning.session_planner.validate_call_artifact",
+                "regen.legacy.session_planner.validate_call_artifact",
                 return_value={"model": "gpt-5.6-sol"},
             ):
                 selected = select_completed_transcript(

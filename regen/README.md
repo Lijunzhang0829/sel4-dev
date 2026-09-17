@@ -11,7 +11,7 @@ File Planner / Runner 已接通投影消费、局部图及辅助节点失败撤�
 |---|---|---|
 | [总体设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md) | 研究目标、输入边界、生成合同、helper 政策与未决问题 | 目标设计，不声称全部实现 |
 | [环境实现](docs/implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md) | command 选择、环境／catalog 构建与 gate | [environment_preparation.py](preparation/environment_preparation.py)、[semantic_base_builder.py](preparation/semantic_base_builder.py) |
-| [规划实现与扩展](docs/implementation/SESSION-PLANNING-IMPLEMENTATION.md) | 环境数据流到仓库方案、文件投影、重放与执行边界 | [session_planner.py](planning/session_planner.py)、[repository_planner.py](planning/repository_planner.py) |
+| [规划实现与扩展](docs/implementation/REPOSITORY-PLANNING-IMPLEMENTATION.md) | 环境数据流到仓库方案、文件投影、重放与执行边界 | [repository_planner.py](planning/repository_planner.py) |
 | [证明生成实现](docs/implementation/PROOF-GENERATION-IMPLEMENTATION.md) | node、GRA、组装、发布、日志与缺口 | [proof_session_runner.py](execution/proof_session_runner.py)、[isabelle_node_checker.py](execution/isabelle_node_checker.py) |
 | [实验记录](docs/history/REFINE-CREFINE-EXPERIMENT.md) | 历史 campaign 结果，不作为当前 PASS | 运行数据需另行核对 |
 
@@ -29,7 +29,7 @@ File Planner / Runner 已接通投影消费、局部图及辅助节点失败撤�
 | 目录 | 内容与边界 |
 |---|---|
 | `preparation/` | campaign 冻结、contract 提取、command 选择、Semantic Base 构建、premise 导出与环境 gate |
-| `planning/` | Session / File Planner、proof graph、premise 检索、automation 建议与局部 outline |
+| `planning/` | Repository / File Planner、proof graph、premise 检索、automation 建议与局部 outline |
 | `execution/` | Runner、Lemma Prover、Isabelle 检查、graph revision、组装诊断与可选 stepwise backend；当前 seal / publication 仍由 Runner 实现 |
 | `analysis/` | retained semantic facts 的依赖与 automation 影响分析 |
 | `infrastructure/` | 模型调用、transcript、模块日志、进度事件与共享文本处理 |
@@ -53,7 +53,7 @@ File Planner / Runner 已接通投影消费、局部图及辅助节点失败撤�
 ```bash
 python3 -m regen.preparation.environment_freeze --help
 python3 -m regen.preparation.environment_preparation --help
-python3 -m regen.planning.session_planner --help
+python3 -m regen.planning.repository_planner --help
 python3 -m regen.execution.proof_session_runner --help
 python3 -m unittest discover -s regen/tests -t . -p 'test_*.py'
 ```

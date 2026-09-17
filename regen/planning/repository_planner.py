@@ -3,6 +3,7 @@
 This module produces proposals and file projections, never certified proof nodes.
 """
 from __future__ import annotations
+import argparse
 
 from collections import Counter
 from contextlib import contextmanager
@@ -14,6 +15,13 @@ import re
 from regen.preparation.environment_dataflow import validate_dataflow
 from regen.preparation.environment_gate import read_json, resolve_ref, sha256_path
 from regen.preparation.refine_campaign import sha256_json, verify_manifest, write_immutable_json
+from regen.planning.planner_io import parse_model_json, select_completed_transcript
+from regen.legacy.repository_planning_compat import (
+    audit_path as compatible_audit_path,
+    context_budget,
+    policy_artifact_supported,
+    transcript_stage_supported,
+)
 from regen.infrastructure.llm_transcript import (
     allocate_artifact_prefix, artifact_paths, call_codex, validate_call_artifact,
 )
@@ -21,6 +29,13 @@ from regen.infrastructure.llm_transcript import (
 NAME = re.compile(r'[A-Za-z][A-Za-z0-9_]*\Z')
 TOKENS = re.compile(r'[A-Za-z][A-Za-z0-9_\'.]*')
 GENERIC = {'lemma', 'theorem', 'corres', 'True', 'False', 'shows', 'assumes', 'fixes'}
+REPO = Path(__file__).resolve().parents[2]
+DEFAULT_POLICY = Path('regen/config/repository-planning-policy.json')
+OUTPUT_DIRECTORY = 'Repository-Planning'
+AUDIT_FILENAME = 'repository-planning-audit.json'
+PLANNER_STAGE = 'Repository-Planning'
+POLICY_ARTIFACT = 'repository-planning-policy'
+BUDGET_KEY = 'repository_planner_context_chars'
 
 
 def read_stream(root: Path, reference: dict) -> list[dict]:
@@ -30,7 +45,7 @@ def read_stream(root: Path, reference: dict) -> list[dict]:
 def validate_policy(policy: dict):
     if policy.get('schema_version') not in {2, 3} or policy.get('mode') != 'repository-proof-planning':
         raise ValueError('repository planning requires policy schema 2 or 3')
-    if policy.get('artifact_type') != 'session-planning-policy' or policy.get('stage') != 'Refine':
+    if not policy_artifact_supported(policy.get('artifact_type'), POLICY_ARTIFACT) or policy.get('stage') != 'Refine':
         raise ValueError('invalid repository planning policy')
     if not isinstance(policy.get('model', {}).get('model'), str):
         raise ValueError('planning policy must specify a model')
@@ -302,7 +317,7 @@ def output_lock(output: Path):
 
 
 def verify_bundle(output: Path, payload: dict, *, restore_missing: bool = False) -> dict:
-    audit = read_json(output / 'session-planning-audit.json')
+    audit = read_json(compatible_audit_path(output, AUDIT_FILENAME))
     core = {key: value for key, value in audit.items() if key != 'audit_sha256'}
     if audit.get('audit_sha256') != sha256_json(core):
         raise ValueError('planning audit identity mismatch')
@@ -313,7 +328,6 @@ def verify_bundle(output: Path, payload: dict, *, restore_missing: bool = False)
         raise ValueError('transcript reference escapes planning output') from error
     meta = validate_call_artifact(prefix, require_real=True)
     paths = artifact_paths(prefix)
-    from regen.planning.session_planner import parse_model_json
     proposal = parse_model_json(paths['final'].read_text())
     if paths['prompt'].read_text() != prompt(payload, audit['feedback']):
         raise ValueError('transcript differs from legal planning prompt')
@@ -341,7 +355,7 @@ def verify_bundle(output: Path, payload: dict, *, restore_missing: bool = False)
 
 def validate_meta(meta: dict, payload: dict):
     if (meta.get('model') != payload['policy']['model']['model'] or
-        meta.get('stage') != 'Session-Planning' or not meta.get('sealable_generation') or
+        not transcript_stage_supported(meta.get('stage'), payload['policy'].get('artifact_type'), PLANNER_STAGE) or not meta.get('sealable_generation') or
         meta.get('provider') not in {'codex-exec-audited', 'claude-print-audited'}):
         raise ValueError('repository planner transcript is not sealable for this policy')
 
@@ -370,7 +384,7 @@ def load_file_projection(root: Path, output: Path, theory: str, *,
     payload = make_input(root, gate_path or root / 'Environment-Preparation/environment-gate.json',
                          index_path or root / 'Environment-Dataflow/environment-index.json',
                          stored['policy'], stored['policy_sha256'],
-                         int(manifest['budgets']['session_planner_context_chars']))
+                         context_budget(manifest, BUDGET_KEY))
     if independent:
         from regen.planning.planning_freeze import bind
         payload = bind(output, payload, manifest)
@@ -393,18 +407,17 @@ def run(root: Path, gate_path: Path, index_path: Path, policy: dict, policy_hash
         raise ValueError('independent planning freeze requires policy v3')
     if not independent:
         verify_frozen_policy_snapshot(root, manifest, policy, policy_hash)
-    budget = int(manifest['budgets']['session_planner_context_chars'])
+    budget = context_budget(manifest, BUDGET_KEY)
     timeout = int(manifest['budgets']['model_call_timeout_seconds'])
     payload = make_input(root, gate_path, index_path, policy, policy_hash, budget)
     if payload['campaign_id'] != manifest['campaign_id']:
         raise ValueError('environment dataflow differs from frozen campaign')
-    from regen.planning.session_planner import parse_model_json, select_completed_transcript
     with output_lock(output):
         if independent:
             from regen.planning.planning_freeze import bind
             payload = bind(output, payload, manifest, create=freeze_planning and not verify_only,
                            check_live=not verify_only)
-        if (output / 'session-planning-audit.json').is_file():
+        if compatible_audit_path(output, AUDIT_FILENAME).is_file():
             plan = verify_bundle(output, payload, restore_missing=not verify_only)
             return summary(plan, 'verified')
         if verify_only:
@@ -430,7 +443,7 @@ def run(root: Path, gate_path: Path, index_path: Path, policy: dict, policy_hash
                     raise ValueError('fresh repository planning requires --allow-external-call')
                 prefix = allocate_artifact_prefix(preferred)
                 final = call_codex(text, prefix, model=policy['model']['model'], timeout=timeout,
-                                   theory='Refine', stage='Session-Planning', clean_runtime=True)
+                                   theory='Refine', stage=PLANNER_STAGE, clean_runtime=True)
                 meta = validate_call_artifact(prefix, require_real=True)
             validate_meta(meta, payload)
             paths = artifact_paths(prefix)
@@ -460,7 +473,7 @@ def run(root: Path, gate_path: Path, index_path: Path, policy: dict, policy_hash
                                'preserved-contract-payloads', 'deterministic-file-projections'],
                     'statement_elaboration_performed': False}
             # Publish audit last: an interrupted partial bundle is not complete.
-            write_immutable_json(output / 'session-planning-audit.json', {**core, 'audit_sha256': sha256_json(core)})
+            write_immutable_json(output / AUDIT_FILENAME, {**core, 'audit_sha256': sha256_json(core)})
             plan = verify_bundle(output, payload)
             return summary(plan, 'created-or-recovered')
         raise ValueError('repository planning validation attempts exhausted; see rejection diagnostics')
@@ -471,3 +484,66 @@ def summary(plan: dict, disposition: str) -> dict:
             'files': len(plan['theories']), 'contracts': (sum(len(t['contracts']) for t in plan['theories']) if plan['schema_version']==3 else sum(n['role'] == 'contract' for n in plan['nodes'])),
             ('auxiliary_intents' if plan['schema_version'] == 3 else 'auxiliary_nodes'): (sum(len(t['auxiliary_intents']) for t in plan['theories']) if plan['schema_version']==3 else sum(n['role'] == 'auxiliary' for n in plan['nodes'])),
             'next_module': 'file-planning', 'execution_ready': False}
+
+
+def resolve_policy(environment_root: Path, repo: Path, policy_argument: Path | None,
+                   output: Path, freeze_planning: bool) -> tuple[dict, str]:
+    policy_path = policy_argument or DEFAULT_POLICY
+    policy_path = policy_path if policy_path.is_absolute() else repo / policy_path
+    freeze_manifest = output / 'Planning-Freeze/manifest.json'
+    if freeze_planning or freeze_manifest.is_file():
+        if policy_argument is None and freeze_manifest.is_file():
+            frozen = read_json(freeze_manifest)
+            return frozen['policy'], frozen['policy_sha256']
+        policy = read_json(policy_path)
+        return policy, sha256_path(policy_path)
+    manifest = read_json(environment_root / 'Environment-Freeze/campaign-manifest.json')
+    verify_manifest(manifest)
+    policy = read_json(policy_path)
+    digest = sha256_path(policy_path)
+    verify_frozen_policy_snapshot(environment_root, manifest, policy, digest)
+    return policy, digest
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--repo', type=Path, default=REPO)
+    parser.add_argument('--environment-root', type=Path, required=True)
+    parser.add_argument('--environment-gate', type=Path)
+    parser.add_argument('--dataflow', type=Path)
+    parser.add_argument('--verify-only', action='store_true')
+    parser.add_argument('--policy', type=Path)
+    parser.add_argument('--output', type=Path)
+    parser.add_argument('--allow-external-call', action='store_true')
+    parser.add_argument('--prepare-only', action='store_true')
+    parser.add_argument('--freeze-planning', action='store_true')
+    args = parser.parse_args()
+    if args.prepare_only and (args.verify_only or args.allow_external_call):
+        parser.error('--prepare-only cannot be combined with --verify-only or --allow-external-call')
+
+    repo = args.repo.resolve()
+    environment_root = args.environment_root.resolve()
+    gate_path = args.environment_gate or environment_root / 'Environment-Preparation/environment-gate.json'
+    gate = read_json(gate_path)
+    if not gate.get('proof_generation_allowed'):
+        raise ValueError('environment gate does not allow proof generation')
+    output = (args.output or environment_root / OUTPUT_DIRECTORY).resolve()
+    policy, policy_hash = resolve_policy(
+        environment_root, repo, args.policy, output, args.freeze_planning,
+    )
+    validate_policy(policy)
+    result = run(
+        environment_root, gate_path,
+        args.dataflow or environment_root / 'Environment-Dataflow/environment-index.json',
+        policy, policy_hash, output,
+        allow_external_call=args.allow_external_call,
+        verify_only=args.verify_only,
+        freeze_planning=args.freeze_planning,
+        prepare_only=args.prepare_only,
+    )
+    print(json.dumps(result, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

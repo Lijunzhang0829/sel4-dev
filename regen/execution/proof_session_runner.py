@@ -37,7 +37,6 @@ from regen.planning.proof_graph import (
     verify_graph_payload_sha256, write_immutable_graph,
 )
 from regen.analysis.retained_semantic_impact import audit_theory
-from regen.planning.session_planner import validate_planning_bundle, validate_progress_ledger
 
 
 _MUTATION_LOCK_STATE = threading.local()
@@ -695,14 +694,20 @@ def thin_environment_gate(environment_run: Path) -> dict[str, Any]:
     }
 
 
+def legacy_schedule_api():
+    """Load schema-1 schedule support only for an explicitly legacy run."""
+    from regen.legacy import session_planner
+    return session_planner
+
+
 def schedule_entries(
     environment_run: Path, schedule_path: Path | None,
 ) -> list[dict[str, Any]]:
     if schedule_path is None:
-        raise ValueError("Session Planner file list is required")
+        raise ValueError("planning file list is required")
     packages = [read_json(path) for path in package_paths(environment_run)]
     by_theory = {item["theory"]: item for item in packages}
-    schedule = validate_planning_bundle(
+    schedule = legacy_schedule_api().validate_planning_bundle(
         schedule_path.resolve(), environment_context(environment_run)["gate"],
     )
     result = []
@@ -733,10 +738,10 @@ def schedule_binding(
     environment_run: Path, schedule_path: Path | None,
 ) -> dict[str, Any]:
     if schedule_path is None:
-        raise ValueError("Session Planner file list is required")
+        raise ValueError("planning file list is required")
     schedule_path = schedule_path.resolve()
     gate = environment_context(environment_run)["gate"]
-    schedule = validate_planning_bundle(schedule_path, gate)
+    schedule = legacy_schedule_api().validate_planning_bundle(schedule_path, gate)
     return {
         "source": str(schedule_path),
         "session_plan_bound": True,
@@ -759,7 +764,7 @@ def schedule_binding(
 def canonical_progress_path(schedule_path: Path) -> Path:
     path = schedule_path.resolve().parent / "session-progress-ledger.json"
     if not path.is_file():
-        raise ValueError(f"Session Planner progress ledger is missing: {path}")
+        raise ValueError(f"planning progress ledger is missing: {path}")
     return path
 
 
@@ -775,7 +780,7 @@ def load_progress(run_dir: Path) -> dict[str, Any]:
         "campaign_id": binding["campaign_id"],
         "gate_id": binding["environment_gate_id"],
     }
-    validate_progress_ledger(ledger, file_list, gate)
+    legacy_schedule_api().validate_progress_ledger(ledger, file_list, gate)
     if ledger.get("active_run_id") != run["run_id"]:
         raise ValueError("canonical progress ledger is bound to another proof run")
     return ledger
@@ -790,7 +795,7 @@ def save_progress(run_dir: Path, ledger: dict[str, Any]) -> None:
         "campaign_id": binding["campaign_id"],
         "gate_id": binding["environment_gate_id"],
     }
-    validate_progress_ledger(ledger, file_list, gate)
+    legacy_schedule_api().validate_progress_ledger(ledger, file_list, gate)
     temporary = ledger_path.with_suffix(ledger_path.suffix + ".tmp")
     temporary.write_text(
         json.dumps(ledger, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
@@ -819,7 +824,7 @@ def _init_run_unlocked(
     progress_path = canonical_progress_path(schedule_path)
     progress = read_json(progress_path)
     file_list = read_json(schedule_path)
-    validate_progress_ledger(progress, file_list, context["gate"])
+    legacy_schedule_api().validate_progress_ledger(progress, file_list, context["gate"])
     active_run = progress.get("active_run_id")
     if active_run not in {None, run_id}:
         raise ValueError(

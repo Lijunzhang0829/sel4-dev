@@ -15,7 +15,6 @@ from regen.preparation import environment_pipeline
 from regen.preparation.environment_gate import read_json, sha256_path
 from regen.preparation.refine_campaign import sha256_json
 from regen.planning import repository_planner as planner
-from regen.planning.session_planner import validate_file_list
 
 
 class RepositoryPlannerTest(unittest.TestCase):
@@ -25,14 +24,14 @@ class RepositoryPlannerTest(unittest.TestCase):
         self.addCleanup(self.fixture.doCleanups)
         self.repo, self.root = self.fixture.repo, self.fixture.root
         shutil.rmtree(self.root)
-        self.policy = read_json(getattr(self, 'policy_file', Path(__file__).parents[2] / 'fixtures/session-planning-policy-v2.json'))
-        policy_path = self.repo / 'regen/config/session-planning-policy.json'
+        self.policy = read_json(getattr(self, 'policy_file', Path(__file__).parents[2] / 'fixtures/repository-planning-policy-v2.json'))
+        policy_path = self.repo / 'regen/config/repository-planning-policy.json'
         policy_path.parent.mkdir(parents=True)
         policy_path.write_text(json.dumps(self.policy))
         self.policy_hash = sha256_path(policy_path)
         config = read_json(self.fixture.config)
-        config['frozen_input_files'].append('regen/config/session-planning-policy.json')
-        config['budgets'] = {'session_planner_context_chars': 20000, 'model_call_timeout_seconds': 5}
+        config['frozen_input_files'].append('regen/config/repository-planning-policy.json')
+        config['budgets'] = {'repository_planner_context_chars': 20000, 'model_call_timeout_seconds': 5}
         self.fixture.config.write_text(json.dumps(config))
         theory = self.fixture.l4v / 'proof/refine/ARM/Demo_R.thy'
         theory.write_text(theory.read_text().replace('\nend\n', '''
@@ -46,7 +45,7 @@ end
         self.fixture.execute()
         self.gate = self.root / environment_pipeline.GATE
         self.index = self.root / environment_pipeline.INDEX
-        self.output = self.root / 'Session-Planning'
+        self.output = self.root / 'Repository-Planning'
         self.payload = planner.make_input(self.root, self.gate, self.index, self.policy, self.policy_hash, 20000)
         first, second = [item['contract_id'] for item in self.payload['contracts']]
         premise = self.payload['legal_premises'][0]['record_id']
@@ -98,6 +97,7 @@ end
         self.assertEqual(fixed, self.payload['contracts'][0])
         self.assertEqual(self.call(verify_only=True)[1], 0)
         with self.assertRaisesRegex(ValueError, 'file-projection consumer'):
+            from regen.legacy.session_planner import validate_file_list
             validate_file_list(read_json(self.output / 'file-generation-list.json'), read_json(self.gate))
 
     def test_downstream_loader_verifies_both_preparation_and_plan(self):
@@ -147,7 +147,7 @@ end
         self.assertEqual(calls, 2)
         self.assertEqual(result['contracts'], 2)
         self.assertIn('exactly once', read_json(self.output / 'attempt-001-rejection.json')['diagnostic'])
-        (self.output / 'session-planning-audit.json').unlink()
+        (self.output / 'repository-planning-audit.json').unlink()
         (self.output / 'files/Generated_Write.json').unlink()
         self.assertEqual(self.call()[1], 0)
 
@@ -220,7 +220,7 @@ end
 
     def test_audit_identity_is_checked_before_recovery(self):
         self.call([self.proposal], allow=True)
-        audit = self.output / 'session-planning-audit.json'
+        audit = self.output / 'repository-planning-audit.json'
         value = read_json(audit)
         value['plan_id'] = 'forged'
         audit.write_text(json.dumps(value))

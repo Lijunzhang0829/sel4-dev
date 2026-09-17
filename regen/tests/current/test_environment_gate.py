@@ -16,7 +16,7 @@ from regen.preparation.premise_catalog import build_snapshot, verify_catalog, wr
 from regen.execution.proof_session_runner import init_run
 from regen.preparation.refine_campaign import write_immutable_json
 from regen.preparation.semantic_base_builder import sha256_path
-from regen.planning.session_planner import (
+from regen.legacy.session_planner import (
     build_artifacts,
     generation_tasks,
     write_artifacts,

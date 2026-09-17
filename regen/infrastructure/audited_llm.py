@@ -109,7 +109,7 @@ def call_codex(
     if effort not in {"low", "medium", "high", "xhigh", "max"}:
         raise ValueError(f"unsupported explicit reasoning effort: {effort}")
 
-    sandbox = Path("/tmp/regen-session-planner-sanitized")
+    sandbox = Path("/tmp/regen-repository-planner-sanitized")
     sandbox.mkdir(parents=True, exist_ok=True)
     runtime_args = []
     if clean_runtime:

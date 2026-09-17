@@ -1,7 +1,7 @@
-# 仓库 / Session 规划：输入、产物与实现边界
+# 仓库规划：输入、产物与实现边界
 
-当前默认是 repository-proof-planning（policy schema 3），入口仍为
-[session_planner.py](../../planning/session_planner.py)，实现位于
+当前默认入口为
+
 [repository_planner.py](../../planning/repository_planner.py) 和
 [theory_plan.py](../../planning/theory_plan.py)。它消费上一个模块完成并验证的
 环境数据流，生成仓库证明方案和文件投影。目标 setting 见
@@ -26,7 +26,7 @@ catalog，不读取 private inventory、原始 Refine sources、原 imports 或�
 | 上游产物 | 当前用途 |
 |---|---|
 | `Environment-Freeze/campaign-manifest.json` | 验证 campaign 身份，取得 prompt/time budgets |
-| `Environment-Freeze/frozen-inputs/…session-planning-policy.json` | 验证实际使用的 policy 内容与冻结文件哈希一致 |
+| `Environment-Freeze/frozen-inputs/…repository-planning-policy.json` | 验证实际使用的 policy 内容与冻结文件哈希一致 |
 | `Environment-Preparation/environment-gate.json` | 验证真实环境、catalog、packages 和 runtime 身份 |
 | `Environment-Dataflow/environment-index.json` | 验证 dataflow 身份及逐条公开数据的一致性 |
 | `contracts.jsonl` | 全部固定目标，保留 exact statement、context、attributes 与原 owner |
@@ -81,7 +81,7 @@ catalog，不读取 private inventory、原始 Refine sources、原 imports 或�
 
 ## 4. 输出交接
 
-默认输出目录为环境目录下的 `Session-Planning/`。所有规划产物不覆盖已有不同内容。
+默认输出目录为环境目录下的 `Repository-Planning/`。所有规划产物不覆盖已有不同内容。
 
 | 文件 | 内容与消费者 |
 |---|---|
@@ -90,7 +90,7 @@ catalog，不读取 private inventory、原始 Refine sources、原 imports 或�
 | `repository-plan.json` | schema 3：theory DAG、理由、优先级、固定目标原文及 plan ID |
 | `file-generation-list.json` | schema 4 的生成文件列表，包含每个 projection 路径和 payload hash |
 | `files/<GeneratedTheory>.json` | 后续 File Planner 的输入投影：schema 3：完整 contracts、辅助 intents、直接 theory 前驱及理由、优先级和合法 premises；无局部 DAG |
-| `session-planning-audit.json` | 输入／plan／prompt／final 身份、检查范围与 transcript 引用，最后写入 |
+| `repository-planning-audit.json` | 输入／plan／prompt／final 身份、检查范围与 transcript 引用，最后写入 |
 | `transcript/repository-planner-*` | 每次调用实际 prompt、response、raw events 和审计 metadata |
 | `attempt-*-rejection.json` | 无效方案的具体诊断和 transcript 引用 |
 
@@ -115,7 +115,7 @@ Runner 已通过 `repository_execution.py` 消费此投影格式，创建自己�
 普通运行仍要求政策匹配原环境冻结；独立规划使用新输出目录和 `--freeze-planning`：
 
 ```bash
-python3 -m regen.planning.session_planner \
+python3 -m regen.planning.repository_planner \
   --environment-root reports/regen/live-environment-002 \
   --output reports/regen/repository-planning-v3-001 \
   --freeze-planning --allow-external-call
@@ -123,7 +123,7 @@ python3 -m regen.planning.session_planner \
 
 gate 和 dataflow 默认使用上一模块的标准路径，也可分别通过 `--environment-gate`、
 `--dataflow` 显式指定。`--output` 可改变规划输出目录。默认模型、结构校验重试次数由
-[session-planning-policy.json](../../config/session-planning-policy.json) 冻结；当前最多三次逻辑尝试。
+[repository-planning-policy.json](../../config/repository-planning-policy.json) 冻结；当前最多三次逻辑尝试。
 提供 schema 2 或 3 时，即使直接调用 Python API，也必须验证 policy 对应冻结文件快照。
 
 结构无效的方案反馈给同一仓库规划器，不交给 GRA；GRA 属于后续证明执行阶段。每次逻辑
@@ -133,11 +133,11 @@ gate 和 dataflow 默认使用上一模块的标准路径，也可分别通过 `
 
 ```bash
 # 已有日志时重建缺失的规划产物；不允许新外部调用
-python3 -m regen.planning.session_planner \
+python3 -m regen.planning.repository_planner \
   --environment-root reports/regen/environment-run-001
 
 # 纯验证：缺失或漂移均报错，不补写投影、不调用模型
-python3 -m regen.planning.session_planner \
+python3 -m regen.planning.repository_planner \
   --environment-root reports/regen/environment-run-001 --verify-only
 ```
 
@@ -148,12 +148,12 @@ python3 -m regen.planning.session_planner \
 本身丢失时先使用上一个模块的恢复机制。
 
 恢复后的 frozen policy 可显式使用
-`--policy <环境目录>/Environment-Freeze/frozen-inputs/regen/config/session-planning-policy.json`，
+`--policy <环境目录>/Environment-Freeze/frozen-inputs/regen/config/repository-planning-policy.json`，
 不要求去原始证明 source 查找输入。
 
 ## 6. 兼容与验证范围
 
-`session_planner.py` 中旧 schema 1 的 candidate-edge、SCC、原 owner 排序与 ledger 函数仍用于
+`legacy/session_planner.py` 中旧 schema 1 的 candidate-edge、SCC、原 owner 排序与 ledger 函数仍用于
 已有实验和测试；只有显式使用相应冻结旧 policy 才进入旧 CLI 流程。旧 schema 不声称具备
 上述新能力。新旧文件列表的 artifact type 与文件名不同，不隐式转换。
 
@@ -180,7 +180,7 @@ transcript 生成、hash/no-tool 审计及 bundle 重建均执行。测试不是
 
 ```bash
 # 只验证并保存合法输入，不调用模型
-python3 -m regen.planning.session_planner \
+python3 -m regen.planning.repository_planner \
   --environment-root reports/regen/live-environment-002 \
   --output reports/regen/repository-planning-v3-001 \
   --freeze-planning --prepare-only

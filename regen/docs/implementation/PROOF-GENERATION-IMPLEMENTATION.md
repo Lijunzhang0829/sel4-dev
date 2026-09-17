@@ -5,7 +5,7 @@
 单 theory DAG、GRA、Lemma Prover、whole-proof/stepwise backend 和 Isabelle checker；没有新增
 Architecture/Observed/Lineage 运行图。旧 schema 1 schedule 保留原执行路径用于历史实验。
 政策见 [总体设计](../design/REPO-LEVEL-PROOF-HARNESS.md)，上游见
-[仓库规划](SESSION-PLANNING-IMPLEMENTATION.md)。
+[仓库规划](REPOSITORY-PLANNING-IMPLEMENTATION.md)。
 
 ## 输入与启动
 
@@ -13,7 +13,7 @@ Architecture/Observed/Lineage 运行图。旧 schema 1 schedule 保留原执行�
 python3 -m regen.execution.proof_session_runner init \
   --run-dir reports/regen/proof-run-001 --run-id proof-run-001 \
   --environment-run reports/regen/live-environment-002 \
-  --schedule reports/regen/live-environment-002/Session-Planning/file-generation-list.json
+  --schedule reports/regen/live-environment-002/Repository-Planning/file-generation-list.json
 python3 -m regen.execution.proof_session_runner plan-file \
   --run-dir reports/regen/proof-run-001 --theory Generated_Arch_Access
 python3 -m regen.execution.proof_session_runner run-session \

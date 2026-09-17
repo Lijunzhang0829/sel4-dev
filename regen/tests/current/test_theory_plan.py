@@ -8,7 +8,7 @@ from regen.planning.file_planner import planning_environment, planner_prompt
 
 class TheoryPlanTest(unittest.TestCase):
     def setUp(self):
-        f=fixtures.RepositoryPlannerTest();f.policy_file=Path(__file__).parents[2]/'config/session-planning-policy.json';f.setUp()
+        f=fixtures.RepositoryPlannerTest();f.policy_file=Path(__file__).parents[2]/'config/repository-planning-policy.json';f.setUp()
         self.addCleanup(f.doCleanups);self.f=f
         a,b=[c['contract_id'] for c in f.payload['contracts']]
         def theory(name,contracts,predecessors=(),intents=()):
