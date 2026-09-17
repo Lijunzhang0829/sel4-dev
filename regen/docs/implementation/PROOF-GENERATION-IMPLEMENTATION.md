@@ -12,26 +12,37 @@ Architecture/Observed/Lineage 运行图。旧 schema 1 schedule 保留原执行�
 ```bash
 python3 -m regen.execution.proof_session_runner init \
   --run-dir reports/regen/proof-run-001 --run-id proof-run-001 \
-  --environment-run reports/regen/live-environment-002 \
-  --schedule reports/regen/live-environment-002/Repository-Planning/file-generation-list.json
+  --dataset-root reports/regen/refine-planning-input-current \
+  --schedule reports/regen/repository-plan-001/file-generation-list.json
 python3 -m regen.execution.proof_session_runner plan-file \
   --run-dir reports/regen/proof-run-001 --theory Generated_Arch_Access
 python3 -m regen.execution.proof_session_runner run-session \
-  --run-dir reports/regen/proof-run-001
+  --run-dir reports/regen/proof-run-001 --max-parallel-theories 2
 ```
 
-`init` 验证完整 planning bundle/transcript、dataflow、gate 和冻结 policy，再生成 run-local
+新的 schema 5 运行从数据集根目录读取 `checker-context.json`，其中 `checker-assets/` 统一绑定
+已清理的 l4v、Semantic Base workspace、heaps 和 Isabelle 安装；运行身份不再包含 environment ID。
+大型只读资产允许用符号链接绑定，run-local heap 仍按 worker 隔离。已有旧资产可一次性迁移：
+
+```bash
+python3 -m regen.preparation.checker_context \
+  --dataset-root reports/regen/refine-planning-input-current \
+  --migrate-legacy-environment reports/regen/live-environment-002
+```
+
+`init` 验证完整 planning revision、file projections 和 checker context，再生成 run-local
 packages 与 execution-input。外层 generated theory 决定执行文件，contract 内的原 owner、
 statement、attributes、context 和 provenance 原样保留。辅助专用文件可有空 contracts；
 其辅助 intents 关联的 support contracts 只提供目标上下文，不作为已证 premise。
-默认消费 v3 plan/projection 和 v4 file list，同时保留历史 v2 投影适配。Runner 按列表中的
-theory 拓扑顺序处理文件；直接前驱的描述只作规划提示，未证明结果不能作为 premise。
+直接 Refine 链路消费 v4 plan/projection 和 v5 file list，同时保留历史 v2/v3 投影适配。
+Runner 只在显式 provider theories 全部 sealed 后把 theory 放入 ready frontier；provider 集合
+同时决定 checker imports，不会因为无关 theory 提前完成而扩大上下文。多个 ready theories
+可并行执行，每个 worker 使用独立 checker 目录和 heap 副本。
 仓库投影不携带局部 contract/helper DAG，由 File Planner 首次构造。
 Repository suggestions 不自动成为局部 dependencies；File Planner 接受的精确图仍校验本地
-引用、无环及 contract 完整性。停止的辅助专用 theory 从后续候选 provider 建议中排除，
-原始不可变仓库方案不改写。没有 required cuts 或跨文件 helper 承诺。
+引用、无环及 contract 完整性。失败 theory 不会作为 provider 发布，原始不可变仓库方案不改写。
 
-已完成的 preparation manifest 不改写。新 proof run 单独记录执行模块字节哈希，绑定旧环境
+已完成的数据集 manifest 不改写。新 proof run 单独记录执行模块字节哈希，绑定 checker context
 和规划的身份；执行代码改变后应创建新 proof run。checker 使用记录的镜像 ID 和 Isabelle
 安装，拒绝安装漂移。init 可重入但不能更换已有 run 身份或重置证明状态。
 
@@ -42,11 +53,10 @@ Repository suggestions 不自动成为局部 dependencies；File Planner 接受�
 SPLIT 保留原 parent 的命题及上下文，并增加 children 前置条件；children GREEN 不能替代
 parent GREEN。REPLACE_STATEMENT 是辅助命题修订，不声明它蕴含旧命题。
 
-每轮失败反馈 GRA；终止或耗尽预算后，辅助节点通过显式撤销候选清理计划边，重新做 graph
-和 Isabelle statement 检查，再提交。固定 contracts 和 GREEN 内容不得撤销或削弱；旧命题、
-原因、尝试结果、累计 rounds/revisions 留在提交历史。contract 继续尝试；contract 本身耗尽
-预算则文件 failed。辅助专用文件所有节点撤销后记为 `retired`，不记 proved/sealed、不发布事实。
-全部固定 contracts 所在文件 sealed，且其他活动文件 sealed/retired 时，运行汇总 complete。
+每轮失败反馈 GRA；GRA 可给出重试指导，或提交新增 helper、未提交依赖边变化及保留 parent 的
+split。新版图不允许删除节点。辅助节点终止或耗尽预算后保留其 statement、失败证据和累计
+rounds/revisions，文件明确记为 `failed`；固定 contracts 和 GREEN 内容同样不得撤销或削弱。
+只有所有活动 theory 完整 sealed（空的辅助计划才可 retired）时，运行汇总 complete。
 
 ## 提交和恢复
 
@@ -57,7 +67,7 @@ parent GREEN。REPLACE_STATEMENT 是辅助命题修订，不声明它蕴含旧�
 ```
 
 每 theory 的 `acceptance/commits/000001.json` 起构成有序哈希链，绑定 run、projection package、
-环境、规划、执行代码和 imports。覆盖初始 graph、GRA revision、撤销、节点 GREEN，以及
+数据集、plan revision、执行代码和 imports。覆盖初始 graph、GRA revision、节点 GREEN，以及
 尝试预算、失败和最终 seal。commit 保存状态快照和校验证据，来源从前后状态与 decision
 重建；没有独立 lineage graph。
 
@@ -68,7 +78,8 @@ checker source/log 内容在提交前嵌入，避免后续同名检查文件覆�
 
 `active-graph.json`、`progress.json`、session-progress-ledger、生成源码及 generated-premises
 是可重建视图。发布事实仅从 seal commits 重建，旧目录中的任意记录不能自动继承。
-运行修改锁仍由 Runner 持有；正常使用应从 Runner CLI/API 进入，不并发调用内部 adapter。
+外层 session mutation lock 仍由 Runner 持有；repository adapter 在其内部调度 theory workers，
+并以进程内锁串行更新共享 progress/publication 投影。正常使用不并发调用内部 adapter。
 恢复现有有效提交不等于重建丢失的外部 Docker 镜像或任意 heap。
 
 ## 事实可见性与完整检查
@@ -89,12 +100,12 @@ Generated_Refine build；失败保存诊断，不自动修复组装，也不发�
 
 冻结 campaign 中的 attempts/model timeout/generation revision 上限仍生效。未在 campaign
 定义的每节点 rounds、timeouts 等使用 CLI 设置，并在文件首次执行时固定为 runtime-policy；
-同一运行不能通过恢复更换预算。尝试开始先提交计数，中断的尝试也保留计费，不因撤销或改名
+同一运行不能通过恢复更换预算。尝试开始先提交计数，中断的尝试也保留计费，不因修订或改名
 抹去历史成本。没有新增 4h/24h 的统一时钟政策。
 
 测试见 [test_proof_commits.py](../../tests/current/test_proof_commits.py) 和
 [test_repository_execution.py](../../tests/current/test_repository_execution.py)：覆盖未提交候选、
-commit/pointer 间中断、缺失证据、GREEN/prefix 不变、撤销成本、辅助文件 retired、自由分组、
+commit/pointer 间中断、缺失证据、GREEN/prefix 不变、失败 helper 保留、自由分组、
 发布恢复和 optional fact 上下文。原模块测试继续运行，旧路径不声称获得新提交协议。
 真实 Isabelle smoke 使用冻结 Semantic_Base，检查无调度边的 helper 引用、完整 theory
 和 dependency audit；这些小例子不等于完成 287 个 seL4 contracts 的证明实验。
@@ -106,6 +117,12 @@ commit/pointer 间中断、缺失证据、GREEN/prefix 不变、撤销成本、�
 `regen/execution/persistent_checker.py` 与 `.ML`，由 `isabelle_node_checker.py` 调用。
 worker 的 GREEN 只作初筛，必须由原冷 checker 复核；audit/完整 theory/build 不变。
 故障退回冷检查。旧运行没有此政策字段时保持冷检查，新 ML 实现纳入执行哈希。
+
+因此一个 theory 内的检查粒度是：File Planner/GRA 提交图前，对图中所有 statement shell
+一次性冷检查；同一节点的多份 proof candidate 在固定已提交前缀上增量重试；节点切换时重建
+worker，并不延续上一个节点的进程状态；候选 GREEN 后再对“已提交前缀 + 当前节点”冷复核。
+全部节点完成后，完整 theory、依赖审计和 Generated_Refine session build 都重新全量检查。
+checker 结果显式记录 `check_scope` 与 `incremental`，日志消费者无需根据文件名猜测范围。
 
 普通失败默认直接把诊断交给下一次 Prover，不再独立调用 salvage；
 `--salvage-provider deterministic|codex|codex-relay|claude` 可显式启用。

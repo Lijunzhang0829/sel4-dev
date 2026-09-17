@@ -46,6 +46,50 @@ def validate_plan_quality(
     strategies = proposal.get("contract_strategies", {})
     routes = proposal.get("contract_routes", {})
     dependencies = proposal.get("contract_dependencies", {})
+    if package.get("repository_projection"):
+        allowed_premises = {
+            item["record_id"] for item in (environment or {}).get("legal_premises", [])
+        }
+        generated = proposal.get("generated_nodes", [])
+        consumers = {item.get("id"): [] for item in generated}
+        for item in generated:
+            required = {
+                "semantic_role", "reasoning_gap", "intended_consumers",
+                "premise_evidence_ids", "premise_query",
+            }
+            if not required <= item.keys():
+                raise ValueError(
+                    f"generated node lacks evidence-driven interface fields: {item.get('id')}"
+                )
+            if not all(
+                isinstance(item[field], str) and item[field].strip()
+                for field in ("semantic_role", "reasoning_gap")
+            ):
+                raise ValueError(f"generated node has no semantic gap: {item.get('id')}")
+            evidence = item["premise_evidence_ids"]
+            if (
+                not isinstance(evidence, list) or len(evidence) != len(set(evidence))
+                or not set(evidence) <= allowed_premises
+            ):
+                raise ValueError(f"generated node cites illegal premise evidence: {item.get('id')}")
+            if not isinstance(item["premise_query"], str):
+                raise ValueError(f"generated node premise_query must be text: {item.get('id')}")
+            if not evidence and not item["premise_query"].strip():
+                raise ValueError(f"generated node has neither premise evidence nor query: {item.get('id')}")
+            for dependency in item.get("dependencies", []):
+                if dependency in consumers:
+                    consumers[dependency].append(item["id"])
+        for contract_id, node_dependencies in dependencies.items():
+            for dependency in node_dependencies:
+                if dependency in consumers:
+                    consumers[dependency].append(contract_id)
+        for item in generated:
+            intended = item["intended_consumers"]
+            if (
+                not isinstance(intended, list) or len(intended) != len(set(intended))
+                or sorted(intended) != sorted(consumers[item["id"]])
+            ):
+                raise ValueError(f"generated node consumer intent mismatches DAG: {item['id']}")
     for contract in package["contracts"]:
         contract_id = contract["contract_id"]
         strategy = strategies.get(contract_id, "").strip()
@@ -144,7 +188,12 @@ Return only JSON:
     "statement": "lemma regen_name: \"...\"",
     "context": [],
     "dependencies": ["node:..."],
-    "strategy": "short proof idea"
+    "strategy": "short proof idea",
+    "semantic_role": "normalization|semantic_bridge|invariant_preservation|other",
+    "reasoning_gap": "the precise missing link between visible premises and consumers",
+    "intended_consumers": ["contract or generated node ID"],
+    "premise_evidence_ids": ["visible legal premise ID"],
+    "premise_query": "bounded query to use when no visible premise has been selected"
   }],
   "contract_dependencies": {"<contract-id>": ["node:..."]},
   "contract_strategies": {"<contract-id>": "short proof idea"},
@@ -241,6 +290,8 @@ def plan_file(
     )
     if package.get("repository_projection"):
         graph["planning_notes"] = proposal.get("planning_notes", "")
+        graph["initial_graph_owner"] = "File Planner"
+        graph["runtime_graph_owner"] = "Graph Revision Agent"
     transcript = validate_call_artifact(transcript_prefix, require_real=True)
     graph["planner_context"] = {
         "policy": (environment or {}).get("policy", "fixed-contracts-only-v1"),

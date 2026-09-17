@@ -480,10 +480,34 @@ def run(root: Path, gate_path: Path, index_path: Path, policy: dict, policy_hash
 
 
 def summary(plan: dict, disposition: str) -> dict:
-    return {'verdict': 'pass', 'disposition': disposition, 'plan_id': plan['plan_id'],
-            'files': len(plan['theories']), 'contracts': (sum(len(t['contracts']) for t in plan['theories']) if plan['schema_version']==3 else sum(n['role'] == 'contract' for n in plan['nodes'])),
-            ('auxiliary_intents' if plan['schema_version'] == 3 else 'auxiliary_nodes'): (sum(len(t['auxiliary_intents']) for t in plan['theories']) if plan['schema_version']==3 else sum(n['role'] == 'auxiliary' for n in plan['nodes'])),
-            'next_module': 'file-planning', 'execution_ready': False}
+    if plan['schema_version'] < 3:
+        contract_count = sum(node['role'] == 'contract' for node in plan['nodes'])
+        auxiliary_field = 'auxiliary_nodes'
+        auxiliary_count = sum(node['role'] == 'auxiliary' for node in plan['nodes'])
+    else:
+        contract_count = sum(len(theory['contracts']) for theory in plan['theories'])
+        auxiliary_field = 'auxiliary_intents'
+        if plan['schema_version'] == 3:
+            auxiliary_count = sum(
+                len(theory.get('auxiliary_intents', []))
+                for theory in plan['theories']
+            )
+        else:
+            auxiliary_count = sum(
+                decision['kind'] == 'propose_auxiliary_intent'
+                for theory in plan['theories']
+                for decision in theory.get('helper_decisions', [])
+            )
+    return {
+        'verdict': 'pass',
+        'disposition': disposition,
+        'plan_id': plan['plan_id'],
+        'files': len(plan['theories']),
+        'contracts': contract_count,
+        auxiliary_field: auxiliary_count,
+        'next_module': 'file-planning',
+        'execution_ready': False,
+    }
 
 
 def resolve_policy(environment_root: Path, repo: Path, policy_argument: Path | None,
@@ -505,10 +529,253 @@ def resolve_policy(environment_root: Path, repo: Path, policy_argument: Path | N
     return policy, digest
 
 
+def inspection_prompt(payload: dict) -> str:
+    schema = {
+        'schema_version': 1,
+        'contract_batches': [['contract ID']],
+        'premise_searches': [{
+            'query': 'semantic search query',
+            'contract_ids': ['contract ID'],
+            'context_profile_ids': ['allowed context profile ID'],
+            'attributes': [],
+            'limit': 20,
+        }],
+    }
+    compact = {
+        key: payload[key] for key in (
+            'benchmark', 'contract_cards', 'owner_groups', 'session_graph',
+            'theory_import_graph', 'context_profiles',
+            'contract_relation_candidates', 'parent_premises',
+            'planner_interfaces',
+        )
+    }
+    return (
+        'Select bounded evidence for a seL4 Refine repository plan. This is an '
+        'independent Refine experiment; never request CRefine data. Inspect every '
+        'contract exactly once in batches no larger than the advertised limit. '
+        'Request at most 20 parent-premise searches. Do not propose a plan, helper '
+        'statement, proof, tactic, command, path, or unrestricted read. Return JSON '
+        'only matching:\n' + json.dumps(schema, sort_keys=True)
+        + '\nCOMPACT INPUT:\n'
+        + json.dumps(compact, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    )
+
+
+def execute_inspection(payload: dict, request: dict, planning_input_path: Path) -> dict:
+    from regen.preparation.planning_input import PlanningInputQueries
+    if not isinstance(request, dict) or set(request) != {
+        'schema_version', 'contract_batches', 'premise_searches',
+    } or request['schema_version'] != 1:
+        raise ValueError('invalid repository-planner inspection request')
+    queries = PlanningInputQueries(planning_input_path)
+    batches = request['contract_batches']
+    if not isinstance(batches, list):
+        raise ValueError('contract_batches must be a list')
+    inspected_contracts = []
+    requested_ids = []
+    for batch in batches:
+        if not isinstance(batch, list):
+            raise ValueError('contract batch must be a list')
+        requested_ids.extend(batch)
+        inspected_contracts.extend(queries.inspect_contracts(batch))
+    expected = sorted(item['contract_id'] for item in payload['contracts'])
+    if sorted(requested_ids) != expected or len(requested_ids) != len(set(requested_ids)):
+        raise ValueError('inspection must cover every contract exactly once')
+    searches = request['premise_searches']
+    if not isinstance(searches, list) or len(searches) > 20:
+        raise ValueError('invalid premise search request count')
+    search_results = []
+    premise_ids = []
+    contract_ids = set(expected)
+    for search in searches:
+        if not isinstance(search, dict) or set(search) != {
+            'query', 'contract_ids', 'context_profile_ids', 'attributes', 'limit',
+        }:
+            raise ValueError('invalid premise search request')
+        if not search['contract_ids'] or not set(search['contract_ids']) <= contract_ids:
+            raise ValueError('premise search references unknown contracts')
+        hits = queries.search_parent_premises(
+            search['query'],
+            context_profile_ids=search['context_profile_ids'],
+            attributes=search['attributes'],
+            limit=search['limit'],
+        )
+        premise_ids.extend(item['record_id'] for item in hits)
+        search_results.append({'request': search, 'results': hits})
+    unique_ids = sorted(set(premise_ids))
+    inspected_premises = (
+        queries.inspect_parent_premises(unique_ids) if unique_ids else []
+    )
+    return {
+        'inspected_contracts': inspected_contracts,
+        'premise_searches': search_results,
+        'inspected_parent_premises': inspected_premises,
+    }
+
+
+def _direct_meta(meta: dict, model: str, stage: str) -> None:
+    if (
+        meta.get('model') != model or meta.get('stage') != stage
+        or not meta.get('sealable_generation')
+        or meta.get('provider') not in {'codex-exec-audited', 'claude-print-audited'}
+    ):
+        raise ValueError(f'unsealable direct repository-planner transcript: {stage}')
+
+
+def _direct_call(
+    text: str, prefix: Path, *, model: str, timeout: int,
+    allow_external_call: bool, stage: str,
+) -> tuple[str, dict, Path]:
+    completed = select_completed_transcript(prefix, prompt=text, model=model)
+    if completed:
+        actual_prefix, meta = completed
+        final = artifact_paths(actual_prefix)['final'].read_text()
+    else:
+        if not allow_external_call:
+            raise ValueError('fresh repository planning requires --allow-external-call')
+        actual_prefix = allocate_artifact_prefix(prefix)
+        final = call_codex(
+            text, actual_prefix, model=model, timeout=timeout,
+            theory='Refine', stage=stage, clean_runtime=True,
+        )
+        meta = validate_call_artifact(actual_prefix, require_real=True)
+    _direct_meta(meta, model, stage)
+    return final, meta, actual_prefix
+
+
+def _bind_direct_artifacts(
+    artifacts: dict[str, dict], current_plan: dict, output: Path,
+) -> dict[str, dict]:
+    result = dict(artifacts)
+    result['repository-plan.json'] = current_plan
+    files = []
+    for entry in artifacts['file-generation-list.json']['files']:
+        projection = {
+            **artifacts[entry['projection']],
+            'plan_id': current_plan['plan_id'],
+            'plan_revision': current_plan['revision'],
+            'plan_revision_id': current_plan['revision_id'],
+        }
+        result[entry['projection']] = projection
+        files.append({
+            **entry,
+            'plan_id': current_plan['plan_id'],
+            'plan_revision_id': current_plan['revision_id'],
+            'projection_sha256': sha256_json(projection),
+        })
+    result['file-generation-list.json'] = {
+        **artifacts['file-generation-list.json'],
+        'plan_id': current_plan['plan_id'],
+        'plan_revision': current_plan['revision'],
+        'plan_revision_id': current_plan['revision_id'],
+        'files': files,
+    }
+    return result
+
+
+def run_prepared(
+    planning_input_path: Path, policy: dict, output: Path, *,
+    allow_external_call: bool = False, prepare_only: bool = False,
+) -> dict:
+    """Run Repository Planner directly over the prepared Refine dataset."""
+    from regen.planning.plan_revisions import append_revision, start_plan
+    from regen.planning.theory_plan import build_bundle as build_theory_bundle
+    from regen.planning.theory_plan import prompt as theory_prompt
+    planning_input_path = planning_input_path.resolve()
+    payload = read_json(planning_input_path)
+    if (
+        payload.get('artifact_type') != 'repository-planning-input'
+        or payload.get('benchmark', {}).get('target_session') != 'Refine'
+        or payload.get('benchmark', {}).get('cross_experiment_inputs') != []
+    ):
+        raise ValueError('direct planning requires an independent Refine input')
+    validate_policy(policy)
+    output = output.resolve()
+    with output_lock(output):
+        write_immutable_json(output / 'planner-input.json', payload)
+        if prepare_only:
+            return {
+                'verdict': 'prepared', 'contracts': len(payload['contracts']),
+                'external_call_performed': False, 'execution_ready': False,
+            }
+        model = policy['model']['model']
+        timeout = int(policy['model'].get('timeout_seconds', 1800))
+        inspection_text = inspection_prompt(payload)
+        final, _meta, inspection_prefix = _direct_call(
+            inspection_text, output / 'transcript/repository-inspection-001',
+            model=model, timeout=timeout, allow_external_call=allow_external_call,
+            stage='Repository-Planning-Inspection',
+        )
+        request = parse_model_json(final)
+        evidence = execute_inspection(payload, request, planning_input_path)
+        enriched = {**payload, 'planner_evidence': evidence}
+        write_immutable_json(output / 'planner-inspection.json', request)
+        write_immutable_json(output / 'planner-evidence.json', evidence)
+        feedback = []
+        proposal = None
+        artifacts = None
+        plan_prefix = None
+        for attempt in range(1, policy['model']['max_attempts'] + 1):
+            text = theory_prompt(enriched, feedback)
+            final, _meta, plan_prefix = _direct_call(
+                text, output / 'transcript' / f'repository-plan-{attempt:03d}',
+                model=model, timeout=timeout,
+                allow_external_call=allow_external_call,
+                stage='Repository-Planning',
+            )
+            try:
+                proposal = parse_model_json(final)
+                artifacts = build_theory_bundle(enriched, proposal)
+                break
+            except (ValueError, KeyError, TypeError) as error:
+                diagnostic = str(error)[:1000]
+                write_immutable_json(
+                    output / f'attempt-{attempt:03d}-rejection.json',
+                    {'attempt': attempt, 'diagnostic': diagnostic},
+                )
+                feedback = [diagnostic]
+        if proposal is None or artifacts is None or plan_prefix is None:
+            raise ValueError('repository planning validation attempts exhausted')
+        identity = start_plan(
+            output / 'planning', payload['benchmark']['id'],
+        )
+        current = append_revision(
+            output / 'planning',
+            {**artifacts['repository-plan.json'], 'plan_id': identity['plan_id']},
+        )
+        artifacts = _bind_direct_artifacts(artifacts, current, output)
+        write_immutable_json(output / 'planner-proposal.json', proposal)
+        for filename, artifact in artifacts.items():
+            if filename == 'repository-plan.json':
+                continue
+            write_immutable_json(output / filename, artifact)
+        audit_core = {
+            'schema_version': 3,
+            'artifact_type': 'repository-planning-audit',
+            'verdict': 'pass',
+            'plan_id': current['plan_id'],
+            'plan_revision_id': current['revision_id'],
+            'planning_input_id': payload['planning_input_id'],
+            'inspection_transcript_prefix': str(inspection_prefix.relative_to(output)),
+            'planning_transcript_prefix': str(plan_prefix.relative_to(output)),
+            'checks': [
+                'independent-refine-input', 'exact-once-contracts',
+                'inspected-parent-premise-reuse', 'context-profile-ids',
+                'theory-dag-and-explicit-priority', 'stable-plan-revision',
+            ],
+        }
+        write_immutable_json(
+            output / AUDIT_FILENAME,
+            {**audit_core, 'audit_sha256': sha256_json(audit_core)},
+        )
+        return summary(current, 'created')
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repo', type=Path, default=REPO)
-    parser.add_argument('--environment-root', type=Path, required=True)
+    parser.add_argument('--environment-root', type=Path)
+    parser.add_argument('--planning-input', type=Path)
     parser.add_argument('--environment-gate', type=Path)
     parser.add_argument('--dataflow', type=Path)
     parser.add_argument('--verify-only', action='store_true')
@@ -522,6 +789,26 @@ def main() -> int:
         parser.error('--prepare-only cannot be combined with --verify-only or --allow-external-call')
 
     repo = args.repo.resolve()
+    if args.planning_input:
+        if args.environment_root or args.environment_gate or args.dataflow or args.freeze_planning:
+            parser.error('--planning-input cannot be combined with legacy environment arguments')
+        if args.verify_only:
+            parser.error('direct planning verification is not yet exposed through this CLI')
+        policy_path = args.policy or DEFAULT_POLICY
+        policy_path = policy_path if policy_path.is_absolute() else repo / policy_path
+        policy = read_json(policy_path)
+        output = (
+            args.output or args.planning_input.resolve().parent / OUTPUT_DIRECTORY
+        ).resolve()
+        result = run_prepared(
+            args.planning_input, policy, output,
+            allow_external_call=args.allow_external_call,
+            prepare_only=args.prepare_only,
+        )
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.environment_root is None:
+        parser.error('provide --planning-input or --environment-root')
     environment_root = args.environment_root.resolve()
     gate_path = args.environment_gate or environment_root / 'Environment-Preparation/environment-gate.json'
     gate = read_json(gate_path)

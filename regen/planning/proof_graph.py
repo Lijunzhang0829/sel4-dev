@@ -294,7 +294,7 @@ def build_graph(
             ),
         })
     for node in proposal.get("generated_nodes", []):
-        nodes.append({
+        generated = {
             "id": node["id"],
             "name": node["name"],
             "role": node["role"],
@@ -302,7 +302,14 @@ def build_graph(
             "context": list(node.get("context", [])),
             "dependencies": list(node.get("dependencies", [])),
             "strategy": node.get("strategy", ""),
-        })
+        }
+        for field in (
+            "semantic_role", "reasoning_gap", "intended_consumers",
+            "premise_evidence_ids", "premise_query",
+        ):
+            if field in node:
+                generated[field] = node[field]
+        nodes.append(generated)
 
     consumers = {node["id"]: [] for node in nodes}
     for node in nodes:

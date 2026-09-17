@@ -4,9 +4,11 @@ Legacy schedule replay remains in proof_session_runner; no second proof graph is
 """
 from __future__ import annotations
 from copy import deepcopy
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 from pathlib import Path
 import shutil
+import threading
 
 from regen.execution.proof_commits import ProofCommits, digest, durable, freeze_evidence
 from regen.execution.fact_context import manifest as fact_manifest
@@ -15,6 +17,9 @@ from regen.planning.proof_graph import (build_graph, validate_graph, assert_gree
 
 
 from regen.execution.retry_policy import required_context, extra_round_available
+
+
+_PROJECTION_LOCK = threading.RLock()
 
 
 def node_retry_guidance(state, node):
@@ -46,7 +51,7 @@ def is_repository(run_dir):
 
 
 def projection_package(projection, plan):
-    if projection['schema_version']==3:
+    if projection['schema_version']>=3:
         targets={c['contract_id']:c for t in plan['theories'] for c in t['contracts']}
         intents=projection['auxiliary_intents']
         providers=projection['suggested_providers']
@@ -64,23 +69,58 @@ def projection_package(projection, plan):
     return {**body, 'package_payload_sha256':digest(body)}
 
 
-def init_run(run_dir, environment, run_id, schedule):
+def init_run(run_dir, input_root, run_id, schedule):
     from regen.planning.repository_planner import load_file_projection
-    from regen.execution.proof_session_runner import environment_context
-    environment, schedule = environment.resolve(), schedule.resolve()
+    input_root, schedule = input_root.resolve(), schedule.resolve()
     listing = read(schedule)
     if not listing.get('files'): raise ValueError('empty repository file list')
-    # This verifies the complete bundle, not just the selected first projection.
-    load_file_projection(environment, schedule.parent, listing['files'][0]['theory'])
-    plan = read(schedule.parent/'repository-plan.json')
-    context = environment_context(environment)
+    direct = listing.get('schema_version') == 5
+    if direct:
+        from regen.planning.plan_revisions import verify_revisions
+        revision = verify_revisions(schedule.parent/'planning')
+        plan = read(schedule.parent/'repository-plan.json')
+        if (
+            revision['revision_id'] != plan.get('revision_id')
+            or listing.get('plan_revision_id') != plan.get('revision_id')
+        ):
+            raise ValueError('file list is not bound to the current plan revision')
+        for item in listing['files']:
+            projection = read(schedule.parent/item['projection'])
+            if digest(projection) != item['projection_sha256']:
+                raise ValueError('repository file projection drift')
+    else:
+        # Compatibility path for sealed environment/dataflow plans.
+        load_file_projection(input_root, schedule.parent, listing['files'][0]['theory'])
+        plan = read(schedule.parent/'repository-plan.json')
+    if direct:
+        from regen.preparation.checker_context import load_context
+        checker_context = load_context(input_root)
+        context = {
+            'premise_database':checker_context['premise_database_path'],
+            'premise_snapshot':checker_context['premise_audit_context_path'],
+            'semantic_workspace':checker_context['semantic_workspace'],
+            'heaps':checker_context['heaps'], 'l4v':checker_context['l4v'],
+        }
+        runtime = checker_context
+    else:
+        from regen.execution.proof_session_runner import environment_context
+        context = environment_context(input_root)
+        runtime = context['gate']['runtime']
     run_dir.mkdir(parents=True, exist_ok=True)
     packages = [projection_package(read(schedule.parent/f['projection']), plan) for f in listing['files']]
     files = [{'theory':p['theory'], 'file_slot':p['file_slot'], 'order':i, 'layer':i,
               'contract_ids':[c['contract_id'] for c in p['contracts']], 'status':'pending',
               'generation_ids':[], 'seal_id':None} for i,p in enumerate(packages)]
-    recipe = read(environment/'.preparation/recipe.json')
-    toolchain = read(environment/'Toolchain/identity.json')
+    if direct:
+        isabelle_dir=checker_context['isabelle']; image=checker_context['image']
+        isabelle_sha256=checker_context['isabelle_sha256']
+        budgets=checker_context['budgets']
+    else:
+        recipe = read(input_root/'.preparation/recipe.json')
+        toolchain = read(input_root/'Toolchain/identity.json')
+        isabelle_dir=Path(recipe['repo'])/'verification/isabelle'
+        image=toolchain['image']['image_id'];isabelle_sha256=toolchain['isabelle_sha256']
+        budgets=read(input_root/'Environment-Freeze/campaign-manifest.json')['budgets']
     implementation = {str(p.relative_to(Path(__file__).resolve().parents[2])):
                       __import__('hashlib').sha256(p.read_bytes()).hexdigest()
                       for folder in ('execution','planning','infrastructure','analysis')
@@ -88,20 +128,30 @@ def init_run(run_dir, environment, run_id, schedule):
     from regen.infrastructure.audited_llm import model_settings, MODEL_CONFIG
     implementation[str(MODEL_CONFIG.relative_to(Path(__file__).resolve().parents[2]))] = __import__('hashlib').sha256(MODEL_CONFIG.read_bytes()).hexdigest()
     run = {'schema_version':2, 'execution_mode':'repository-projection-v1', 'run_id':run_id,
-        'environment_run':str(environment), 'target':'Refine', 'state':'ready',
+        'execution_input_kind':'refine-dataset' if direct else 'legacy-environment',
+        **({'checker_context_root':str(input_root),
+            'checker_context_id':checker_context['checker_context_id']} if direct
+           else {'environment_run':str(input_root)}),
+        'target':'Refine', 'state':'ready',
         'execution_models':model_settings()['role_models'],
         'checker_policy':'fixed-prefix-cold-green-v1',
         'premise_database':str(context['premise_database']), 'premise_snapshot':str(context['premise_snapshot']),
         'semantic_workspace':str(context['semantic_workspace']), 'l4v':str(context['l4v']),
-        'base_session':context['gate']['runtime']['base_session'], 'base_import':context['gate']['runtime']['base_import'],
-        'base_catalog':context['gate']['runtime']['base_catalog'],
-        'isabelle_dir':str(Path(recipe['repo'])/'verification/isabelle'), 'image':toolchain['image']['image_id'],
-        'isabelle_sha256':toolchain['isabelle_sha256'], 'implementation':implementation,
+        'base_session':runtime['base_session'], 'base_import':runtime['base_import'],
+        'base_catalog':runtime['base_catalog'],
+        'isabelle_dir':str(isabelle_dir), 'image':image,
+        'isabelle_sha256':isabelle_sha256, 'budgets':budgets,
+        'implementation':implementation,
         'contract_package_dir':str((run_dir/'packages').resolve()),
         'session_progress_ledger':str((run_dir/'session-progress-ledger.json').resolve()),
-        'session_schedule':{'source':str(schedule), 'campaign_id':plan['campaign_id'],
-            'environment_gate_id':plan['environment_gate_id'], 'file_list_sha256':digest(listing),
-            'plan_id':plan['plan_id'], 'environment_dataflow_id':plan['environment_dataflow_id']}}
+        'session_schedule':{
+            'source':str(schedule), 'file_list_sha256':digest(listing),
+            'plan_id':plan['plan_id'], 'plan_revision_id':plan.get('revision_id'),
+            **({} if direct else {
+                'campaign_id':plan['campaign_id'],
+                'environment_gate_id':plan['environment_gate_id'],
+                'environment_dataflow_id':plan['environment_dataflow_id'],
+            })}}
     # Immutable run identity; re-init cannot reset accepted proofs or change code.
     durable(run_dir/'run.json', run, immutable=True)
     durable(run_dir/'execution-input.json', {'file_list':listing, 'files':files,
@@ -151,6 +201,11 @@ def validator(package, runtime=None):
                 raise ValueError('accepted checker evidence is incomplete')
         graph = new['graph']; validate_graph(graph, package)
         if graph['context_policy'] != 'committed-prefix-v1': raise ValueError('context policy drift')
+        governed = package['repository_projection'].get('schema_version',0)>=4
+        if governed and graph.get('initial_graph_owner')!='File Planner':
+            raise ValueError('initial graph must be owned by File Planner')
+        if governed and graph.get('runtime_graph_owner')!='Graph Revision Agent':
+            raise ValueError('runtime graph revisions must be owned by Graph Revision Agent')
         nodes = {n['id']:n for n in graph['nodes']}
         proofs = new['proofs']; order = new['accepted_order']
         if len(set(order))!=len(order) or set(order)!=set(proofs) or not set(proofs)<=nodes.keys():
@@ -173,6 +228,8 @@ def validator(package, runtime=None):
             if evidence.get('check',{}).get('verdict')!='green': raise ValueError('graph lacks validation')
             if old and (proofs!=old['proofs'] or order!=old['accepted_order']): raise ValueError('revision changes proof state')
             removed = set(n['id'] for n in old['graph']['nodes'])-nodes.keys() if old else set()
+            if governed and removed:
+                raise ValueError('schema-4 graph nodes are retained; record failure instead of deleting helpers')
             if removed and event!='revoke' and evidence.get('decision',{}).get('operation')!='DELETE':
                 raise ValueError('node removal requires explicit revocation')
             if removed and not evidence.get('reason'): raise ValueError('revocation reason missing')
@@ -227,7 +284,7 @@ def journal(run_dir, run, package):
     return ProofCommits(run_dir/'theories'/Path(package['file_slot']).stem/'acceptance', binding, validator(package, run))
 
 
-def progress(run_dir):
+def _progress_unlocked(run_dir):
     run=read(run_dir/'run.json'); data=read(run_dir/'execution-input.json'); files=deepcopy(data['files'])
     # Published facts are a projection of accepted seals; never trust old catalog rows.
     durable(run_dir/'generated-premises.json',{'records':[]})
@@ -257,13 +314,19 @@ def progress(run_dir):
     return value
 
 
-def checker_for(run_dir, run, directory, timeout, ancestors):
+def progress(run_dir):
+    with _PROJECTION_LOCK:
+        return _progress_unlocked(run_dir)
+
+
+def checker_for(run_dir, run, directory, timeout, ancestors, *, heaps_dir=None):
     from regen.execution.isabelle_node_checker import IsabelleChecker
-    from regen.preparation.environment_pipeline import source_identity
+    from regen.infrastructure.path_identity import source_identity
     if source_identity(Path(run['isabelle_dir']),allow_links=True)!=run['isabelle_sha256']:
         raise ValueError('execution Isabelle installation differs from frozen toolchain')
-    return IsabelleChecker(Path(run['environment_run']),directory,timeout=timeout,
-        previous_theories=ancestors,generated_dir=run_dir/'generated',heaps_dir=run_dir/'heaps',
+    context_root=Path(run.get('checker_context_root',run.get('environment_run',run_dir)))
+    return IsabelleChecker(context_root,directory,timeout=timeout,
+        previous_theories=ancestors,generated_dir=run_dir/'generated',heaps_dir=heaps_dir or run_dir/'heaps',
         l4v_dir=Path(run['l4v']),semantic_workspace=Path(run['semantic_workspace']),
         base_session=run['base_session'],base_import=run['base_import'],base_catalog=run['base_catalog'],
         image=run['image'],isabelle_dir=Path(run['isabelle_dir']),import_all_previous=True)
@@ -281,14 +344,40 @@ def setup(run_dir, theory, timeout):
     package=package_for(run,entry['file_slot']); directory=run_dir/'theories'/Path(entry['file_slot']).stem
     directory.mkdir(parents=True,exist_ok=True)
     states=progress(run_dir)['files']
-    # All previously sealed theories remain frozen inputs for this file's lifetime.
     ancestry_path=directory/'imports.json'
-    ancestors=read(ancestry_path) if ancestry_path.exists() else [generated_checkpoint_theory(f['file_slot']) for f in states if f['status']=='sealed' and f['theory']!=theory]
+    if ancestry_path.exists():
+        ancestors=read(ancestry_path)
+    elif package['repository_projection'].get('schema_version',0)>=4:
+        providers=[
+            item['theory']
+            for item in package['repository_projection'].get('suggested_predecessors',[])
+        ]
+        by_theory={item['theory']:item for item in states}
+        unavailable=[
+            provider for provider in providers
+            if provider not in by_theory or by_theory[provider]['status']!='sealed'
+        ]
+        if unavailable:
+            raise ValueError(
+                'theory is not ready; explicit providers are not sealed: '
+                + ', '.join(sorted(unavailable))
+            )
+        ancestors=[
+            generated_checkpoint_theory(by_theory[provider]['file_slot'])
+            for provider in providers
+        ]
+    else:
+        # Compatibility for pre-schema-4 runs.
+        ancestors=[generated_checkpoint_theory(f['file_slot']) for f in states if f['status']=='sealed' and f['theory']!=theory]
     durable(ancestry_path,ancestors,immutable=True)
     catalog=read(run_dir/'generated-premises.json')['records']
     visible=[record for record in catalog if any(record['canonical_name'].startswith(name+'.') for name in ancestors)]
     durable(directory/'sealed-premises.json',{'records':visible})
-    checker=checker_for(run_dir,run,directory/'isabelle',timeout,ancestors)
+    heaps=run_dir/'heaps'
+    if package['repository_projection'].get('schema_version',0)>=4:
+        heaps=directory/'heaps'
+        if not heaps.exists(): shutil.copytree(run_dir/'heaps',heaps)
+    checker=checker_for(run_dir,run,directory/'isabelle',timeout,ancestors,heaps_dir=heaps)
     return run,package,directory,journal(run_dir,run,package),checker,ancestors
 
 
@@ -313,7 +402,20 @@ def plan(run_dir,theory,*,provider,planner_model,timeout):
         try:
             graph=plan_file(p,run_id=run['run_id']+'--'+Path(p['file_slot']).stem,output_dir=d,
                 provider=provider,model=planner_model,timeout=timeout,environment=environment,
-                graph_bindings={'plan_id':p['plan_id'],'projection_sha256':p['projection_sha256']},
+                graph_bindings={
+                    'plan_id':p['plan_id'],
+                    'plan_revision_id':p['repository_projection'].get('plan_revision_id'),
+                    'projection_sha256':p['projection_sha256'],
+                    'context_profile_ids':p['repository_projection'].get('context_profile_ids',[]),
+                    'sealed_provider_theories':[
+                        item['theory'] for item in p['repository_projection'].get(
+                            'suggested_predecessors', []
+                        )
+                    ],
+                    'parent_premise_ids':sorted(
+                        item['record_id'] for item in environment.get('legal_premises',[])
+                    ),
+                },
                 call_index=call_index,persist_graph=False,rejection_feedback=feedback)
         except (ValueError,KeyError) as error:
             feedback.append(str(error));durable(d/f'initial-rejection-{call_index:03d}.json',{'reason':str(error)},immutable=True);continue
@@ -330,6 +432,9 @@ def plan(run_dir,theory,*,provider,planner_model,timeout):
 
 
 def revoke_graph(package,graph,key):
+    """Legacy schema compatibility; schema-4 commit validation rejects removals."""
+    if package['repository_projection'].get('schema_version',0)>=4:
+        raise ValueError('schema-4 graph nodes are retained; revocation is forbidden')
     node=next(n for n in graph['nodes'] if n['id']==key)
     if node['role']=='contract' or key in graph['accepted_order']: raise ValueError('cannot revoke fixed/GREEN node')
     proposal={'generated_nodes':[{**n,'dependencies':[dep for dep in n['dependencies'] if dep!=key]} for n in graph['nodes'] if n['role']!='contract' and n['id']!=key],
@@ -343,9 +448,9 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
              lemma_backend,timeout,max_attempts,max_node_rounds,max_node_revisions,
              graph_timeout=900,think_timeout=180,node_timeout=300,salvage_provider=None,context_retry_rounds=1):
     from regen.execution.lemma_prover import prove_node
-    from regen.execution.graph_revision_agent import revise_graph, next_graph_revision, ProposalRejected
-    from regen.execution.proof_session_runner import (next_graph_decision_index, generated_checkpoint_theory,
-                                                    publish_generated_records, frozen_role_model)
+    from regen.execution.graph_revision_agent import revise_graph, ProposalRejected
+    from regen.execution.proof_session_runner import (next_graph_decision_index,
+                                                    generated_checkpoint_theory, frozen_role_model)
     from regen.analysis.retained_semantic_impact import audit_theory
     run,p,d,j,checker,ancestors=setup(run_dir,theory,node_timeout)
     for role,model in [('File Planner',planner_model),('Graph Revision Agent',revision_model),('Lemma Prover',prover_model)]:
@@ -355,7 +460,9 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
     if state is None:
         plan(run_dir,theory,provider=provider,planner_model=planner_model,timeout=timeout)
         state=j.replay()
-    budgets=read(Path(run['environment_run'])/'Environment-Freeze/campaign-manifest.json')['budgets']
+    budgets=run.get('budgets')
+    if budgets is None:
+        budgets=read(Path(run['environment_run'])/'Environment-Freeze/campaign-manifest.json')['budgets']
     if max_attempts>budgets.get('whole_proof_attempts_per_logical_round',max_attempts):
         raise ValueError('requested attempts exceed frozen campaign budget')
     if timeout>budgets.get('model_call_timeout_seconds',timeout):
@@ -417,7 +524,7 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
                     decision_context={'phase':'node-proof', 'proof_round':state['rounds'].get(key,0),
                                       'accepted_decision_history':accepted_decision_history(),
                                       'previous_revision_rejections':[rejection] if rejection else [],
-                                      'auxiliary_failure_policy':'explicit-revoke-and-continue-contracts',
+                                      'auxiliary_failure_policy':'retain-and-stop',
                                       'split_policy':'preserve-parent', 'proof_rounds_used':state['rounds'].get(key,0),
                                       'proof_retry_limit':max_node_rounds,
                                       'context_retry_rounds_remaining':min(context_retry_rounds,max(0,max_node_rounds+context_retry_rounds-state['rounds'].get(key,0)))})
@@ -434,6 +541,20 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
                 # An explicit non-revision decision abandons the rejected proposal.
                 rejection=None
                 break
+            if p['repository_projection'].get('schema_version',0)>=4:
+                removed={item['id'] for item in graph['nodes']}-{item['id'] for item in revised['nodes']}
+                if removed:
+                    rejection={'node_id':key,'base_revision':graph['revision'],
+                               'candidate_revision':revised['revision'],'proposal':decision,
+                               'check':{'verdict':'red','diagnostic':
+                               'node deletion is forbidden; retain failed helpers: '+', '.join(sorted(removed)),
+                               'isabelle_called':False,'failure_scope':'proposal'}}
+                    durable(d/f'rejected-decision-{decision_index:03d}.json',freeze_evidence(rejection),immutable=True)
+                    new=deepcopy(state);new['revision_rejection']=rejection
+                    accept('red',new,{'node_id':key,'proposal_rejection':rejection})
+                    continue
+            revised['initial_graph_owner']=graph.get('initial_graph_owner','File Planner')
+            revised['runtime_graph_owner']='Graph Revision Agent'
             revised=context_graph(revised,state['accepted_order'])
             check=graph_checker.check_graph(revised)
             if check['verdict']=='green':
@@ -462,21 +583,17 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
                  {'node_id':key,'gra_decision':decision,'proof_rounds_used':state['rounds'].get(key,0),
                   'proof_round_limit':max_node_rounds,'gra_calls_used':state['revisions'].get(key,0),
                   'gra_call_limit':max_node_revisions});return False
-        revised=revoke_graph(p,graph,key)
-        # Candidate filenames from rejected revisions must never collide with accepted revisions.
-        revised['revision']=next_graph_revision(d,graph['revision'])
-        revised=context_graph(revised,state['accepted_order'])
-        check=graph_checker.check_graph(revised)
-        if check['verdict']!='green':
-            stop('auxiliary revocation failed statement validation');return False
-        new=deepcopy(state);new['graph']=revised
-        new.pop('revision_rejection',None)
-        new['status']='retired' if not revised['nodes'] else 'generating'
-        accept('revoke',new,{'check':check,'preceding_gra_decision':decision,
-            'decision':{'decision':'ABANDON_GENERATION','operation':'DELETE','reason':'validated auxiliary revocation'},'node_id':key,
-            'reason':'auxiliary terminal failure; not a proved result','failure':result,
-            'old_statement':node['statement'],'cumulative_rounds':state['rounds'].get(key,0)})
-        return True
+        stop(
+            'generated helper stopped and was retained: '
+            + str(decision.get('failure_class') or decision.get('reason')),
+            {'node_id':key,'gra_decision':decision,
+             'proof_rounds_used':state['rounds'].get(key,0),
+             'proof_round_limit':max_node_rounds,
+             'gra_calls_used':state['revisions'].get(key,0),
+             'gra_call_limit':max_node_revisions,
+             'failed_helper_retained':True},
+        )
+        return False
     if state['status']=='failed':
         new=deepcopy(state);new['status']='generating'
         accept('resume',new,{'reason':'explicit retry preserves cumulative budgets'})
@@ -512,7 +629,6 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
                       'source':str(path),'source_text':source,'source_hash':digest(source)}
             new=deepcopy(state);new['status']='sealed';new['seal_id']='theory-seal:'+digest(freeze_evidence(evidence))[:20]
             accept('seal',new,evidence)
-            publish_generated_records(run_dir,graph,new['seal_id'],p)
             break
         key=ready[0]
         supplemental=extra_round_available(state,key,max_node_rounds,context_retry_rounds)
@@ -549,16 +665,50 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
     return next(f for f in progress(run_dir)['files'] if f['theory']==theory)
 
 
-def run_session(run_dir,*,retry_failed=False,**options):
-    results=[]
-    for entry in progress(run_dir)['files']:
-        if entry['status'] in {'sealed','retired'} or (entry['status']=='failed' and not retry_failed):
-            results.append(entry);continue
-        results.append(run_file(run_dir,entry['theory'],**options))
-    return {**progress(run_dir),'results':results}
+def run_session(run_dir,*,retry_failed=False,max_parallel_theories=1,**options):
+    if max_parallel_theories < 1:
+        raise ValueError('max_parallel_theories must be positive')
+    run=read(run_dir/'run.json')
+    listing=read(Path(run['session_schedule']['source']))
+    direct=listing.get('schema_version')==5
+    if not direct or max_parallel_theories==1:
+        results=[]
+        for entry in progress(run_dir)['files']:
+            if entry['status'] in {'sealed','retired'} or (entry['status']=='failed' and not retry_failed):
+                results.append(entry);continue
+            results.append(run_file(run_dir,entry['theory'],**options))
+        return {**progress(run_dir),'results':results}
+
+    data=read(run_dir/'execution-input.json'); results=[]; attempted=set()
+    while True:
+        state={item['theory']:item for item in progress(run_dir)['files']}
+        terminal={name for name,item in state.items() if item['status'] in {'sealed','retired'}}
+        ready=[]
+        for entry in data['files']:
+            item=state[entry['theory']]
+            if entry['theory'] in attempted:
+                continue
+            if item['status'] in {'sealed','retired'} or (item['status']=='failed' and not retry_failed):
+                continue
+            package=package_for(run,entry['file_slot'])
+            providers={p['theory'] for p in package['repository_projection'].get('suggested_predecessors',[])}
+            if providers <= terminal:
+                ready.append((entry['order'],entry['theory']))
+        if not ready: break
+        batch=[name for _,name in sorted(ready)[:max_parallel_theories]]
+        attempted.update(batch)
+        with ThreadPoolExecutor(max_workers=len(batch),thread_name_prefix='theory') as pool:
+            futures={pool.submit(run_file,run_dir,name,**options):name for name in batch}
+            for future in as_completed(futures):
+                results.append(future.result())
+    final=progress(run_dir)
+    blocked=[item['theory'] for item in final['files'] if item['status']=='pending']
+    return {**final,'results':results,'blocked_theories':blocked,
+            'max_parallel_theories':max_parallel_theories}
 
 
-CONTINUATION_ENV_FIELDS = ('environment_run','premise_database','premise_snapshot',
+CONTINUATION_ENV_FIELDS = ('execution_input_kind','environment_run',
+    'checker_context_root','checker_context_id','premise_database','premise_snapshot',
     'semantic_workspace','l4v','base_session','base_import','base_catalog',
     'isabelle_dir','image','isabelle_sha256')
 
@@ -589,7 +739,7 @@ def continuation_state(package, origin):
 
 def validate_continuation(package, runtime, state, origin):
     if runtime is None: raise ValueError('continuation requires frozen environment binding')
-    if any(runtime[k]!=origin['run'][k] for k in CONTINUATION_ENV_FIELDS):
+    if any(runtime.get(k)!=origin['run'].get(k) for k in CONTINUATION_ENV_FIELDS):
         raise ValueError('continuation changed proof environment')
     if state!=continuation_state(package,origin):
         raise ValueError('continuation changed proofs, graph, or cumulative costs')
@@ -606,9 +756,10 @@ def fork_continuation(source_dir, destination, theory):
     origin={'run':source,'imports':read(old_dir/'imports.json'),
             'commits':[read(p) for p in sorted((old_dir/'acceptance/commits').glob('*.json'))]}
     state=continuation_state(package,origin)
-    run=init_run(destination,Path(source['environment_run']),destination.name,
+    input_root=Path(source.get('checker_context_root') or source['environment_run'])
+    run=init_run(destination,input_root,destination.name,
                  Path(source['session_schedule']['source']))
-    if any(run[k]!=source[k] for k in CONTINUATION_ENV_FIELDS):
+    if any(run.get(k)!=source.get(k) for k in CONTINUATION_ENV_FIELDS):
         raise ValueError('continuation environment mismatch')
     new_dir=destination/'theories'/theory
     shutil.copytree(old_dir,new_dir,ignore=shutil.ignore_patterns(

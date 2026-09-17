@@ -304,7 +304,7 @@ class IsabelleChecker:
         self.base_catalog = base_catalog
         if heaps_dir is None or l4v_dir is None or semantic_workspace is None:
             raise ValueError(
-                "checker requires gate-bound heaps, l4v and Semantic Base workspace"
+                "checker requires dataset-bound heaps, l4v and Semantic Base workspace"
             )
         self.heaps_dir = heaps_dir.resolve()
         self.l4v_dir = l4v_dir.resolve()
@@ -514,6 +514,9 @@ class IsabelleChecker:
             graph, {}, theory_name=name, statements_only=True,
         )
         result = self._check(source, name)
+        result["check_scope"] = "all-graph-statements"
+        result["incremental"] = False
+        result["proofs_checked"] = False
         result["failed_node_id"] = failed_statement_node(
             graph, source, result["diagnostic"],
         )
@@ -564,7 +567,9 @@ class IsabelleChecker:
             except OSError:
                 intact = False
             if intact:
-                return {**prior, 'reused_check': True, 'execution_wall_ms': 0}
+                return {**prior, 'reused_check': True, 'execution_wall_ms': 0,
+                        'check_scope':'target-with-committed-prefix',
+                        'incremental':'cached-cold-certification'}
         acceleration = None
         if self.persistent and not audit and not self._persistent_disabled:
             from regen.execution.persistent_checker import PrefixWorker
@@ -598,6 +603,8 @@ class IsabelleChecker:
                         trial['candidate_source'] = trial['source']
                         trial['source'] = str(full)
                         trial['persistent_log'] = str(self._prefix_worker.root/'worker.log')
+                        trial['check_scope'] = 'target-with-committed-prefix'
+                        trial['incremental'] = 'fixed-prefix-worker'
                         return trial
                 except Exception as error:
                     acceleration = {'fallback': str(error), 'execution_wall_ms':round((clock.monotonic()-started)*1000)}
@@ -610,6 +617,12 @@ class IsabelleChecker:
         if acceleration is not None:
             result['prefix_check'] = acceleration
             result['execution_wall_ms'] = result['wall_ms'] + acceleration['execution_wall_ms']
+        result['check_scope'] = 'target-with-committed-prefix'
+        result['incremental'] = (
+            'fixed-prefix-worker-plus-cold-certification'
+            if acceleration is not None and acceleration.get('verdict') == 'green'
+            else False
+        )
 
         if not audit and result['verdict'] == 'green':
             self._last_node_check = (identity, dict(result),
@@ -737,13 +750,16 @@ class IsabelleChecker:
     ) -> dict[str, Any]:
         self._last_node_check = None
         stem = graph["file_slot"].removesuffix(".thy")
-        return self._check(
+        result = self._check(
             self._source(
                 graph, proofs, theory_name=f"Complete_{stem}",
                 diagnostic_markers=True,
             ),
             f"Complete_{stem}",
         )
+        result["check_scope"] = "complete-theory"
+        result["incremental"] = False
+        return result
 
     def build_generated_session(self, theories: list[str]) -> dict[str, Any]:
         self._last_node_check = None
@@ -832,6 +848,9 @@ class IsabelleChecker:
             "diagnostic": diagnostic,
             "log": str(log),
             "wall_ms": int((time.time() - started) * 1000),
+            "check_scope": "accumulated-generated-session",
+            "incremental": False,
+            "theories": list(theories),
         }
         emit_event(
             "isabelle_build_finished", session="Generated_Refine",

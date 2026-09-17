@@ -1,8 +1,9 @@
 # Semantic Base 上的仓库级证明生成
 
 当前实现针对 Refine：删除普通人类证明层，在 command 级 Semantic Base 上生成固定 contracts。
-环境数据流和仓库规划已接入，可输出生成 theory DAG、固定目标分配、共享辅助意图和文件投影。
-File Planner / Runner 已接通投影消费、局部图及辅助节点失败撤销；完整仓库实验仍待执行。详细 setting、正确性与未决项
+独立 Refine 数据准备和仓库规划已接入，可输出生成 theory DAG、固定目标分配、premise 复用、
+共享辅助意图和 revision-bound 文件投影。File Planner / Runner 已接通局部图、GRA 修订、失败
+helper 保留及 ready-theory 并行；完整仓库实验仍待执行。详细 setting、正确性与未决项
 统一见 [总体设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md)，本页只负责导航。
 
 ## 文档与代码入口
@@ -53,6 +54,8 @@ File Planner / Runner 已接通投影消费、局部图及辅助节点失败撤�
 ```bash
 python3 -m regen.preparation.environment_freeze --help
 python3 -m regen.preparation.environment_preparation --help
+python3 -m regen.preparation.planning_input --help
+python3 -m regen.preparation.checker_context --help
 python3 -m regen.planning.repository_planner --help
 python3 -m regen.execution.proof_session_runner --help
 python3 -m unittest discover -s regen/tests -t . -p 'test_*.py'

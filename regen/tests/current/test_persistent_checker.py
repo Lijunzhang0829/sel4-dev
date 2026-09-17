@@ -33,12 +33,21 @@ class PersistentCheckerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td, patch('regen.execution.persistent_checker.PrefixWorker',Worker):
             root=Path(td);c=Cold(root,root/'c',heaps_dir=root,l4v_dir=root,semantic_workspace=root);c.persistent=True
             for proof in ('by simp','by blast'):
-                self.assertEqual(c.check_node(graph,{'helper':proof},'helper')['verdict'],'red')
+                result = c.check_node(graph,{'helper':proof},'helper')
+                self.assertEqual(result['verdict'],'red')
+                self.assertEqual(result['incremental'],'fixed-prefix-worker')
+                self.assertEqual(result['check_scope'],'target-with-committed-prefix')
             self.assertEqual((Worker.starts,c.count),(1,0))
             Worker.verdict='green'
             result=c.check_node(graph,{'helper':'by auto'},'helper')
             self.assertEqual(c.count,1);self.assertIn('prefix_check',result)
-            self.assertTrue(c.check_node(graph,{'helper':'by auto'},'helper')['reused_check'])
+            self.assertEqual(
+                result['incremental'],
+                'fixed-prefix-worker-plus-cold-certification',
+            )
+            reused=c.check_node(graph,{'helper':'by auto'},'helper')
+            self.assertTrue(reused['reused_check'])
+            self.assertEqual(reused['incremental'],'cached-cold-certification')
             self.assertEqual(c.count,1)
             Worker.verdict='error'
             result=c.check_node(graph,{'helper':'by force'},'helper')
@@ -52,3 +61,27 @@ class PersistentCheckerTests(unittest.TestCase):
             with patch.object(c,'_check',return_value={'verdict':'red'}) as cold:
                 c.check_node(graph,{'helper':'by (tactic \\<open>all_tac\\<close>)'},'helper')
                 cold.assert_called_once();worker.assert_not_called()
+
+    def test_graph_and_complete_checks_are_full_cold_checks(self):
+        _, state=fixture();graph=context_graph(state['graph'],[])
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            c=IsabelleChecker(
+                root,root/'c',heaps_dir=root,l4v_dir=root,
+                semantic_workspace=root,
+            )
+            cold={
+                'verdict':'green','returncode':0,'diagnostic':'',
+                'source':'unused','log':'unused','wall_ms':1,
+            }
+            with patch.object(c,'_check',return_value=dict(cold)) as check:
+                graph_result=c.check_graph(graph)
+                self.assertEqual(graph_result['check_scope'],'all-graph-statements')
+                self.assertFalse(graph_result['incremental'])
+                self.assertFalse(graph_result['proofs_checked'])
+                complete=c.check_complete(
+                    graph,{'helper':'by simp','contract':'by simp'},
+                )
+                self.assertEqual(complete['check_scope'],'complete-theory')
+                self.assertFalse(complete['incremental'])
+                self.assertEqual(check.call_count,2)

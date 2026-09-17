@@ -1,7 +1,6 @@
 """Resumable environment preparation using existing producers and gates."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import shutil
 
@@ -10,8 +9,9 @@ from regen.preparation.command_necessity import accept_green_baseline
 from regen.preparation.contract_command_inventory import build_inventory, write_inventory
 from regen.preparation.environment_dataflow import publish_dataflow, validate_dataflow
 from regen.preparation.environment_gate import (
-    build_environment_gate, build_semantic_base_seal, sha256_path, validate_environment_gate,
+    build_environment_gate, build_semantic_base_seal, validate_environment_gate,
 )
+from regen.infrastructure.path_identity import source_identity
 from regen.preparation.environment_journal import EnvironmentJournal, safe_path
 from regen.preparation.premise_catalog import build_snapshot, write_database
 from regen.preparation.refine_campaign import (
@@ -35,27 +35,6 @@ SNAPSHOT = 'Premise-Catalog/premise-snapshot.json'
 DATABASE = 'Premise-Catalog/premises.sqlite3'
 GATE = 'Environment-Preparation/environment-gate.json'
 INDEX = 'Environment-Dataflow/environment-index.json'
-
-
-def source_identity(directory: Path, *, allow_links: bool = False) -> str:
-    """Bind actual input bytes, including untracked generated specs, not just Git HEAD."""
-    if not directory.is_dir():
-        raise ValueError(f'missing source directory: {directory}')
-    records = []
-    for base, dirs, files in os.walk(directory):
-        dirs[:] = sorted(name for name in dirs if name not in {'.git', 'heaps', 'browser_info', 'build', '__pycache__'})
-        for name in sorted([*dirs, *files]):
-            path = Path(base) / name
-            if path.is_symlink():
-                if not allow_links:
-                    raise ValueError(f'source must be materialized, found symlink: {path}')
-                target = path.resolve(strict=True)
-                if target.is_dir():
-                    raise ValueError(f'toolchain directory symlink must be materialized: {path}')
-                records.append((str(path.relative_to(directory)), 'symlink', os.readlink(path), sha256_path(target)))
-            if path.is_file():
-                records.append((str(path.relative_to(directory)), sha256_path(path), path.stat().st_mode & 0o777))
-    return sha256_json(sorted(records))
 
 
 def initialize(root: Path, repo: Path, config: Path, *, overlay: Path | None = None,

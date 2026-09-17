@@ -46,12 +46,12 @@ public package 不包含原 proof import graph。两者的完整可见性边界�
 目标流程：
 
 ```text
-command 级环境与合法 catalog
-  -> Planning Substrate -> 一次 repository planning + 文件顺序
-  -> 按 AI 规划的划分和可用顺序处理生成 theory:
-       绑定合法环境及已 seal 的上游
+准备后的 Refine contracts + 严格父 session premise 库
+  -> bounded inspect/retrieve -> repository plan + theory DAG
+  -> 按 DAG ready frontier 处理生成 theory:
+       冻结 plan revision、合法父上下文及显式已 seal providers
        -> file refinement + statement elaboration
-       -> 优先证明辅助节点；多轮失败反馈 GRA，最终失败则从活动图删除
+       -> whole-proof 多轮尝试；结构失败反馈 GRA，失败 helper 保留在图和日志中
        -> 证明 contracts，自主选择合法已证 premises，失败可继续局部修订
        -> complete theory + accumulated build + export 验收
        -> publication
@@ -70,7 +70,7 @@ command 级环境与合法 catalog
 不自动转成局部证明边、imports 或强制引用；同时可执行时按模型数组给出的优先级选择。
 仓库层不建立 contract/helper 全局 DAG；精确辅助命题和局部图交给 File Planner。
 共享辅助意图可为空，但需要解释分组与排序选择，不设置 helper 数量配额。
-当前仓库规划已能消费合法数据流并输出上述 theory 方案和文件投影。
+当前仓库规划默认消费不含 environment ID 的独立 Refine planning input，并输出上述 theory 方案和文件投影。
 File Planner / Runner 已接通该投影，并以单 theory 提交日志管理接受、修订和恢复。
 规划产物仍是待细化方案，不代表 proof 已通过；实现和验证范围见证明执行文档。
 
@@ -92,17 +92,17 @@ worker 对候选的每条命令默认设置 60 秒超时，失败时仍记录命
 不承诺成功率提高；首候选成功可能增加检查成本。实现见
 [证明生成实现](../implementation/PROOF-GENERATION-IMPLEMENTATION.md)。
 
-## 4. 普通辅助节点、失败删除与事实复用
+## 4. 普通辅助节点、失败保留与事实复用
 
 helper 和自建 obligation 统一作为普通辅助证明节点，不再设置 helper 叶节点、专用生命周期、
 跨文件承诺或 intended-consumer 特权。节点可以继续拆分和依赖其他合法已证节点；原始
 contract 是不能删除、不能改变命题的固定目标。Lemma Prover 生成 proof body，GRA 修订计划。
 
-处理一个 theory 时，按可执行顺序优先尝试辅助节点。失败在多轮中反馈给 GRA，用于修改证明
-尝试或普通节点图；最终仍失败的辅助节点从活动图中删除，同时清理其计划引用，保留失败日志
-和累计成本。不能仅因辅助节点删除而删除 contract、削弱其命题，或把未证明结论当作假设。
-删除后的 contract 仍由 agent 尝试证明，可能直接完成，也可能需要新的拆分。已验证 proof
-仍须保持有效，不能用图编辑伪造通过。具体 round/budget 取冻结配置，统一预算仍待确定。
+处理一个 theory 时，按 accepted DAG 的 ready frontier 尝试节点。失败在多轮中反馈给 GRA，
+用于修改证明指导或追加图 revision。最终仍失败的辅助节点不会自动删除：节点、失败证据与累计
+成本都保留，theory 明确停止为 failed。GRA 可以追加缺失 helper、调整未提交节点的调度边，
+或以保留父节点的方式 split；不能删除 fixed contract、失败 helper 或 GREEN 内容，也不能把未证明
+结论当作假设。已验证 proof 必须保持有效，不能用图编辑伪造通过。
 
 证明节点时，agent 自主决定是否引用以及引用哪些合法 premises：
 
@@ -132,20 +132,20 @@ automation 发布审批。显式引用、模型自报与 prover 能导出的依�
 6. 任务完整成功要求全部冻结 contracts 在最终生成产物中得到证明，承载这些证明及其依赖的
    生成 theories 完整构建通过；不要求为每个无 contract 的原 theory 单独生成证明。
 
-至少保存环境和目标身份、规划来源、精确 graph、attempt 输入输出、checker 结果、可获得的依赖记录、
-接受的 proof、publication 和失败／节点删除历史。恢复不能凭 live summary 自报成功。
+至少保存数据集和目标身份、plan revision、精确 graph、attempt 输入输出、checker 结果、可获得的
+依赖记录、接受的 proof、publication 和失败 helper 历史。恢复不能凭 live summary 自报成功。
 
 计划边、显式引用、模型自报和 prover 导出的依赖不能混用；无法完整恢复的 tactic 依赖
 不作为独立验收阻断项。初始规划与运行图之间的存储关系不预先固定。
 
 分别报告原始目标覆盖与正确性、实验协议合规、证据完整性；helper 数不是稳定完成度分母。
-同时记录生成与失败删除成本，以及能确认的同／跨文件采用和 premise 来源。
+同时记录生成与失败保留成本，以及能确认的同／跨文件采用和 premise 来源。
 仅在 automation pool 中出现不算实际使用；依赖与 automation 的关联也不等于 tactic 内部因果。
 
 ## 6. 尚未确定的政策
 
 - 初始规划与动态节点图的实现映射，以及自由 theory 拆分的运行接线；
-- 独立 Refine、独立 CRefine 或联合任务的最终实验范围；
+- CRefine 独立数据集的后续准备实现；Refine 与 CRefine 不构成联合任务；
 - 语义构建保留 imports 与模型输入边界；
 - 统一预算、停止规则，以及失败后是否继续无依赖文件。
 

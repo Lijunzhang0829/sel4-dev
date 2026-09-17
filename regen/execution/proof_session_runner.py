@@ -809,13 +809,14 @@ def theory_generation_id(run: dict[str, Any], file_slot: str) -> str:
 
 
 def _init_run_unlocked(
-    run_dir: Path, environment_run: Path, *, run_id: str,
+    run_dir: Path, input_root: Path, *, run_id: str,
     schedule_path: Path | None = None,
 ) -> dict[str, Any]:
     if schedule_path and read_json(schedule_path).get('artifact_type') == 'repository-file-generation-list':
         from regen.execution.repository_execution import init_run as init_repository
-        return init_repository(run_dir, environment_run, run_id, schedule_path)
-    environment_run = environment_run.resolve()
+        return init_repository(run_dir, input_root, run_id, schedule_path)
+    # Everything below is the compatibility path for pre-schema-5 runs.
+    environment_run = input_root.resolve()
     context = environment_context(environment_run)
     source_heaps = context["heaps"]
     gate = thin_environment_gate(environment_run)
@@ -871,13 +872,13 @@ def _init_run_unlocked(
 
 
 def init_run(
-    run_dir: Path, environment_run: Path, *, run_id: str,
+    run_dir: Path, input_root: Path, *, run_id: str,
     schedule_path: Path | None = None,
 ) -> dict[str, Any]:
     lock = acquire_run_mutation_lock(run_dir, operation="init")
     try:
         return _init_run_unlocked(
-            run_dir, environment_run, run_id=run_id,
+            run_dir, input_root, run_id=run_id,
             schedule_path=schedule_path,
         )
     finally:
@@ -989,6 +990,18 @@ def publish_generated_records(
         item["contract_id"]: list(item.get("contract_owned_attributes", []))
         for item in package["contracts"]
     }
+    commit_ids: dict[str, str] = {}
+    commit_dir = (
+        run_dir / "theories" / Path(graph["file_slot"]).stem
+        / "acceptance" / "commits"
+    )
+    if commit_dir.is_dir():
+        for commit_path in sorted(commit_dir.glob("*.json")):
+            commit = read_json(commit_path)
+            if commit.get("event") == "green":
+                node_id = commit.get("evidence", {}).get("node_id")
+                if node_id:
+                    commit_ids[node_id] = commit_path.stem
     isabelle_theory = generated_checkpoint_theory(graph["file_slot"])
     for node in graph["nodes"]:
         record_id = f"generated:{graph['theory']}:{node['name']}"
@@ -1006,6 +1019,13 @@ def publish_generated_records(
             "source_class": "generated_theorem",
             "attributes": attributes,
             "theory_seal_id": theory_seal_id,
+            "status": "sealed",
+            "graph_revision": graph["revision"],
+            "statement_sha256": hashlib.sha256(
+                node["statement"].encode("utf-8")
+            ).hexdigest(),
+            "proof_commit_id": commit_ids.get(node["id"]),
+            "publication_scope": "sealed-downstream-theories",
         }
     value["records"] = sorted(records.values(), key=lambda item: item["record_id"])
     write_json(path, value)
@@ -2164,7 +2184,11 @@ def main() -> int:
     init = sub.add_parser("init")
     init.add_argument("--run-dir", type=Path, required=True)
     init.add_argument("--run-id", required=True)
-    init.add_argument("--environment-run", type=Path, required=True)
+    init.add_argument("--dataset-root", type=Path)
+    init.add_argument(
+        "--environment-run", type=Path,
+        help="Legacy schema only; new repository runs use --dataset-root.",
+    )
     init.add_argument("--schedule", type=Path)
 
     plan = sub.add_parser("plan-file")
@@ -2219,12 +2243,19 @@ def main() -> int:
         "--retry-failed", action="store_true",
         help="Retry entries already marked failed instead of preserving them.",
     )
+    session.add_argument(
+        "--max-parallel-theories", type=int, default=1,
+        help="Run this many dependency-ready theories concurrently (direct repository plans only).",
+    )
     args = parser.parse_args()
+    if args.command == "init" and bool(args.dataset_root) == bool(args.environment_run):
+        parser.error("init requires exactly one of --dataset-root or --environment-run")
 
     try:
         if args.command == "init":
             result = init_run(
-                args.run_dir, args.environment_run, run_id=args.run_id,
+                args.run_dir, args.dataset_root or args.environment_run,
+                run_id=args.run_id,
                 schedule_path=args.schedule,
             )
         elif args.command == "plan-file":
@@ -2252,7 +2283,8 @@ def main() -> int:
                 result = run_file(args.run_dir, args.theory, **options)
             else:
                 result = run_session(
-                    args.run_dir, retry_failed=args.retry_failed, **options,
+                    args.run_dir, retry_failed=args.retry_failed,
+                    max_parallel_theories=args.max_parallel_theories, **options,
                 )
     except BaseException as error:
         emit_event(

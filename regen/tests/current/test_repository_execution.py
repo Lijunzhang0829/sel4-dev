@@ -52,7 +52,7 @@ class RepositoryExecutionTest(unittest.TestCase):
         merged=gra.merge_generated_metadata(s['graph'],decision,'helper')
         self.assertEqual({n['id'] for n in merged['generated_nodes']},{'helper','child'})
 
-    def test_runner_revokes_failed_auxiliary_and_recovers_retirement(self):
+    def test_runner_retains_failed_auxiliary_with_failure_evidence(self):
         from regen.execution.proof_commits import freeze_evidence
         from regen.planning.proof_graph import build_graph
         f=fixtures.RepositoryPlannerTest();f.setUp();self.addCleanup(f.doCleanups);f.call([f.proposal],allow=True)
@@ -82,14 +82,16 @@ class RepositoryExecutionTest(unittest.TestCase):
              patch('regen.execution.lemma_prover.prove_node',return_value={'status':'red','node_id':'helper','residual':'failed','attempts':[],'sealable_generation':True}), \
              patch('regen.execution.graph_revision_agent.revise_graph',side_effect=revise):
             result=execution.run_file(root,'Generated_Bridges',provider='codex',planner_model='model',revision_model='model',prover_model='model',lemma_backend='whole-proof',timeout=5,max_attempts=1,max_node_rounds=1,max_node_revisions=1)
-        self.assertEqual(result['status'],'retired')
+        self.assertEqual(result['status'],'failed')
         state=execution.journal(root,run,p).replay()
         self.assertEqual(state['rounds'],{'helper':1})
+        self.assertEqual([node['id'] for node in state['graph']['nodes']],['helper'])
+        self.assertTrue(state['failure_detail']['failed_helper_retained'])
         self.assertEqual(json.loads((root/'generated-premises.json').read_text())['records'],[])
         self.assertEqual(execution.progress(root)['proved_contracts'],0)
         (root/'session-progress-ledger.json').unlink()
         (root/'theories/Generated_Bridges/progress.json').unlink()
-        self.assertEqual(execution.progress(root)['files'][0]['status'],'retired')
+        self.assertEqual(execution.progress(root)['files'][0]['status'],'failed')
 
     def test_green_and_seal_commits_restore_publication(self):
         from regen.planning.proof_graph import build_graph
