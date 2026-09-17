@@ -1,0 +1,473 @@
+"""Contract-driven repository plans over verified preparation data streams.
+
+This module produces proposals and file projections, never certified proof nodes.
+"""
+from __future__ import annotations
+
+from collections import Counter
+from contextlib import contextmanager
+import fcntl
+import json
+from pathlib import Path
+import re
+
+from regen.preparation.environment_dataflow import validate_dataflow
+from regen.preparation.environment_gate import read_json, resolve_ref, sha256_path
+from regen.preparation.refine_campaign import sha256_json, verify_manifest, write_immutable_json
+from regen.infrastructure.llm_transcript import (
+    allocate_artifact_prefix, artifact_paths, call_codex, validate_call_artifact,
+)
+
+NAME = re.compile(r'[A-Za-z][A-Za-z0-9_]*\Z')
+TOKENS = re.compile(r'[A-Za-z][A-Za-z0-9_\'.]*')
+GENERIC = {'lemma', 'theorem', 'corres', 'True', 'False', 'shows', 'assumes', 'fixes'}
+
+
+def read_stream(root: Path, reference: dict) -> list[dict]:
+    return [json.loads(line) for line in resolve_ref(root, reference).read_text().splitlines()]
+
+
+def validate_policy(policy: dict):
+    if policy.get('schema_version') not in {2, 3} or policy.get('mode') != 'repository-proof-planning':
+        raise ValueError('repository planning requires policy schema 2 or 3')
+    if policy.get('artifact_type') != 'session-planning-policy' or policy.get('stage') != 'Refine':
+        raise ValueError('invalid repository planning policy')
+    if not isinstance(policy.get('model', {}).get('model'), str):
+        raise ValueError('planning policy must specify a model')
+    attempts = policy['model'].get('max_attempts')
+    if not isinstance(attempts, int) or attempts <= 0:
+        raise ValueError('planning policy must specify positive max_attempts')
+
+
+def prompt(payload: dict, feedback: list[str] | None = None) -> str:
+    if payload['policy']['schema_version'] == 3:
+        from regen.planning.theory_plan import prompt as theory_prompt
+        return theory_prompt(payload, feedback)
+    schema = {
+        'schema_version': 2,
+        'theories': [{'name': 'Generated_Operations', 'purpose': 'route towards the fixed contracts',
+            'nodes': [
+                {'id': 'operation_contract', 'contract_id': 'one exact input contract ID',
+                 'suggested_dependencies': ['bridge'], 'premise_ids': []},
+                {'id': 'bridge', 'intent': 'describe the auxiliary proposition to establish',
+                 'for_contracts': ['one exact input contract ID'],
+                 'suggested_dependencies': [], 'premise_ids': ['one visible legal premise ID']},
+            ]}],
+    }
+    return (
+        'Plan a repository of Isabelle proofs for the fixed seL4 Refine contracts. '
+        'Use only the legal input below. Do not consult or reconstruct deleted human proofs.\n'
+        'Choose generated theory names and distribute ALL contracts exactly once. Original owner '
+        'groups identify input provenance; they do not constrain your generated files. You may '
+        'introduce auxiliary-only theories and split auxiliaries into other ordinary nodes.\n'
+        'For a contract provide only its ID, never rewrite its statement/context/attributes. '
+        'For an auxiliary provide an intent and the contract IDs it serves. Precise auxiliary '
+        'statements will be elaborated by the file proof stage. Do not output proofs, tactics, '
+        'imports, assumptions, or GREEN/sealed claims.\n'
+        'suggested_dependencies are revisable ordering hints, NOT facts, mandatory premise use, '
+        'or cross-file commitments. Use node IDs, reject cycles; keep the proposed theory order '
+        'acyclic as a whole. Auxiliary nodes need not be leaves. Failed auxiliary nodes may be '
+        'removed later; contracts may not be removed or weakened. Actual premise use is decided '
+        'during proof in the legal checked context. Only same-theory proved lemmas, sealed '
+        'generated upstream facts, and legal base premises may then be used.\n'
+        'premise_ids may be empty or cite only visible legal premise records. Prefer explicit '
+        'premise references; simp/wp are allowed later without exhaustive tactic dependency tracing. '
+        'The premise selection is lexical, not a semantic symbol-resolution certificate. '
+        'Missing retrieval evidence does not establish that a legal fact does not exist.\n'
+        'Use unique simple Isabelle identifiers for theory names and node IDs. Return JSON only:\n'
+        + json.dumps(schema, ensure_ascii=False, sort_keys=True)
+        + '\nPREVIOUS VALIDATION ERRORS:\n' + json.dumps(feedback or [], ensure_ascii=False)
+        + '\nLEGAL INPUT:\n' + json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    )
+
+
+def make_input(root: Path, gate_path: Path, index_path: Path, policy: dict,
+               policy_hash: str, context_budget: int) -> dict:
+    validate_policy(policy)
+    index = validate_dataflow(root, gate_path, index_path)
+    contracts = read_stream(root, index['streams']['contracts'])
+    premises = read_stream(root, index['streams']['premises'])
+    if not contracts:
+        raise ValueError('repository planning requires at least one fixed contract')
+    query = Counter(token for item in contracts for token in TOKENS.findall(
+        item['exact_statement'] + ' ' + '\n'.join(item.get('contract_owned_context', [])))
+        if token not in GENERIC and len(token) > 1)
+    def rank(item):
+        tokens = set(TOKENS.findall(item['canonical_name'] + ' ' + item['exact_statement']))
+        score = sum(query[token] for token in tokens)
+        return (-score, item['record_id'])
+    ranked = sorted(premises, key=rank)
+    payload = {
+        'schema_version': 2, 'artifact_type': 'repository-planner-input',
+        'campaign_id': index['campaign_id'], 'environment_gate_id': index['environment_gate_id'],
+        'environment_dataflow_id': index['dataflow_id'], 'policy_sha256': policy_hash,
+        'contracts': contracts,
+        'original_owner_groups': read_json(resolve_ref(root, index['streams']['owners']))['groups'],
+        'legal_premises': [],
+        'premise_selection': {'method': 'contract-token-overlap-then-stable-id',
+                              'catalog_count': len(premises), 'included_count': 0,
+                              'omitted_count': len(premises), 'complete': not premises,
+                              'semantic_resolution_performed': False},
+        'policy': policy,
+    }
+    # Reserve bounded space for later validation feedback. Never truncate contracts.
+    reserve = min(8000, max(0, context_budget // 10))
+    limit = context_budget - reserve
+    if len(prompt(payload)) > limit:
+        raise ValueError('all fixed contracts exceed frozen planning context budget; targets were not truncated')
+    remaining = limit - len(prompt(payload)) - 128  # room for updated count metadata
+    for item in ranked:
+        cost = len(json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(',', ':')))
+        cost += bool(payload['legal_premises'])
+        if cost <= remaining:
+            payload['legal_premises'].append(item)
+            remaining -= cost
+    count = len(payload['legal_premises'])
+    payload['premise_selection'].update(included_count=count, omitted_count=len(premises)-count,
+                                       complete=count == len(premises))
+    payload['legal_premises'].sort(key=lambda item: item['record_id'])
+    # Verify after counts and presentation order are final as well.
+    if len(prompt(payload)) > limit:
+        raise ValueError('planning input metadata exceeds frozen context budget')
+    return payload
+
+
+def topological(nodes: list[str], edges: list[tuple[str, str]], priority=None) -> tuple[list[str], dict[str, int]]:
+    remaining = {name: set() for name in nodes}
+    for provider, consumer in edges:
+        remaining[consumer].add(provider)
+    order, depths = [], {}
+    while remaining:
+        ready = sorted((name for name, providers in remaining.items() if not providers), key=priority)
+        if not ready:
+            raise ValueError('cyclic suggested dependencies; revise node/theory grouping')
+        name = ready[0]
+        depths[name] = max((depths[a] + 1 for a, b in edges if b == name), default=0)
+        order.append(name)
+        del remaining[name]
+        for providers in remaining.values():
+            providers.discard(name)
+    return order, depths
+
+
+def id_list(value, label: str) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError(f'{label} must be a string list')
+    if len(value) != len(set(value)):
+        raise ValueError(f'{label} contains duplicates')
+    return value
+
+
+def normalize_proposal(payload: dict, proposal: dict) -> dict:
+    if payload['policy']['schema_version'] == 3:
+        from regen.planning.theory_plan import normalize
+        return normalize(payload, proposal)
+    if set(proposal) != {'schema_version', 'theories'} or proposal['schema_version'] != 2:
+        raise ValueError('expected repository proposal schema 2 with theories only')
+    theories = proposal['theories']
+    if not isinstance(theories, list) or not theories:
+        raise ValueError('proposal must contain generated theories')
+    contracts = {item['contract_id']: item for item in payload['contracts']}
+    premises = {item['record_id'] for item in payload['legal_premises']}
+    names, all_nodes, targets, normalized = set(), {}, [], []
+    for theory in theories:
+        if not isinstance(theory, dict) or set(theory) != {'name', 'purpose', 'nodes'}:
+            raise ValueError('theory must contain only name, purpose and nodes')
+        name = theory['name']
+        if not isinstance(name, str) or not NAME.fullmatch(name) or name in names:
+            raise ValueError(f'invalid or duplicate generated theory name: {name}')
+        names.add(name)
+        if not isinstance(theory['purpose'], str) or not theory['purpose'].strip():
+            raise ValueError(f'theory {name} has no purpose')
+        if not isinstance(theory['nodes'], list) or not theory['nodes']:
+            raise ValueError(f'generated theory {name} must have planned nodes')
+        declarations = set()
+        nodes = []
+        for raw in theory['nodes']:
+            if not isinstance(raw, dict):
+                raise ValueError('node must be an object')
+            fixed = 'contract_id' in raw
+            keys = {'id', 'contract_id', 'suggested_dependencies', 'premise_ids'} if fixed else {
+                'id', 'intent', 'for_contracts', 'suggested_dependencies', 'premise_ids'}
+            if set(raw) != keys:
+                raise ValueError('node fields must match contract/auxiliary schema; no proof or statement overrides')
+            node_id = raw['id']
+            if not isinstance(node_id, str) or not NAME.fullmatch(node_id) or node_id in all_nodes:
+                raise ValueError(f'invalid or duplicate node ID: {node_id}')
+            dependencies = id_list(raw['suggested_dependencies'], f'{node_id} dependencies')
+            cited = id_list(raw['premise_ids'], f'{node_id} premise_ids')
+            if not set(cited) <= premises:
+                raise ValueError(f'{node_id} cites premises absent from the legal planner input')
+            node = {'id': node_id, 'theory': name, 'role': 'contract' if fixed else 'auxiliary',
+                    'suggested_dependencies': sorted(dependencies), 'premise_ids': sorted(cited),
+                    'proof_status': 'unproved', 'usable_as_premise': False}
+            if fixed:
+                contract_id = raw['contract_id']
+                if not isinstance(contract_id, str) or contract_id not in contracts:
+                    raise ValueError(f'unknown fixed contract: {contract_id}')
+                contract = contracts[contract_id]
+                if contract['name'] in declarations:
+                    raise ValueError(f'contract declaration name collision in {name}: {contract["name"]}')
+                declarations.add(contract['name'])
+                targets.append(contract_id)
+                node.update(contract_id=contract_id, contract=contract)
+            else:
+                served = id_list(raw['for_contracts'], f'{node_id} for_contracts')
+                if not served or not set(served) <= contracts.keys():
+                    raise ValueError(f'auxiliary {node_id} must serve known contracts')
+                if not isinstance(raw['intent'], str) or not raw['intent'].strip():
+                    raise ValueError(f'auxiliary {node_id} has no intent')
+                node.update(intent=raw['intent'], for_contracts=sorted(served))
+            all_nodes[node_id] = node
+            nodes.append(node)
+        normalized.append({'name': name, 'file_slot': name + '.thy', 'purpose': theory['purpose'],
+                           'node_ids': sorted(item['id'] for item in nodes)})
+    if sorted(targets) != sorted(contracts):
+        raise ValueError('every fixed contract must occur exactly once')
+    edges = []
+    for node in all_nodes.values():
+        for dep in node['suggested_dependencies']:
+            if dep not in all_nodes:
+                raise ValueError(f'dangling suggested dependency {dep} on {node["id"]}')
+            edges.append((dep, node['id']))
+    node_order, _ = topological(list(all_nodes), edges,
+                                priority=lambda name: (all_nodes[name]['role'] == 'contract', name))
+    theory_edges = sorted({(all_nodes[a]['theory'], all_nodes[b]['theory']) for a, b in edges
+                           if all_nodes[a]['theory'] != all_nodes[b]['theory']})
+    theory_order, depths = topological(sorted(names), theory_edges)
+    return {'theories': sorted(normalized, key=lambda x: theory_order.index(x['name'])),
+            'nodes': [all_nodes[name] for name in node_order], 'node_order': node_order,
+            'theory_order': theory_order, 'theory_depths': depths,
+            'suggested_theory_edges': [{'provider': a, 'consumer': b} for a, b in theory_edges]}
+
+
+def build_bundle(payload: dict, proposal: dict) -> dict[str, dict]:
+    if payload['policy']['schema_version'] == 3:
+        from regen.planning.theory_plan import build_bundle as theory_bundle
+        return theory_bundle(payload, proposal)
+    normalized = normalize_proposal(payload, proposal)
+    body = {'schema_version': 2, 'artifact_type': 'repository-proof-plan',
+            'campaign_id': payload['campaign_id'], 'environment_gate_id': payload['environment_gate_id'],
+            'environment_dataflow_id': payload['environment_dataflow_id'],
+            'planner_input_sha256': sha256_json(payload), 'proposal_sha256': sha256_json(proposal),
+            'policy_sha256': payload['policy_sha256'], 'status': 'proposed', **normalized,
+            'semantics': {'suggested_edges_are_proof_dependencies': False,
+                          'auxiliaries_must_be_leaves': False, 'node_statements_certified': False,
+                          'generated_facts_published': False}}
+    plan = {**body, 'plan_id': 'repository-plan:' + sha256_json(body)[:20]}
+    artifacts = {'repository-plan.json': plan}
+    by_id = {node['id']: node for node in plan['nodes']}
+    premises = {item['record_id']: item for item in payload['legal_premises']}
+    files = []
+    for theory in plan['theories']:
+        nodes = [by_id[key] for key in plan['node_order'] if key in theory['node_ids']]
+        projection = {'schema_version': 2, 'artifact_type': 'repository-file-projection',
+                      'plan_id': plan['plan_id'], 'environment_gate_id': payload['environment_gate_id'],
+                      'environment_dataflow_id': payload['environment_dataflow_id'],
+                      'theory': theory['name'], 'file_slot': theory['file_slot'], 'purpose': theory['purpose'],
+                      'contracts': [node['contract'] for node in nodes if node['role'] == 'contract'],
+                      'nodes': nodes,
+                      'suggested_node_order': [node['id'] for node in nodes],
+                      'legal_premises': [premises[key] for key in sorted({key for node in nodes for key in node['premise_ids']})],
+                      'status': 'requires-file-planning-and-Isabelle-checks'}
+        filename = f"files/{theory['name']}.json"
+        artifacts[filename] = projection
+        files.append({'theory': theory['name'], 'file_slot': theory['file_slot'],
+                      'contract_ids': [node['contract_id'] for node in nodes if node['role'] == 'contract'],
+                      'node_ids': [node['id'] for node in nodes], 'projection': filename,
+                      'projection_sha256': sha256_json(projection)})
+    artifacts['file-generation-list.json'] = {
+        'schema_version': 3, 'artifact_type': 'repository-file-generation-list',
+        'plan_id': plan['plan_id'], 'environment_gate_id': payload['environment_gate_id'],
+        'environment_dataflow_id': payload['environment_dataflow_id'],
+        'files': files, 'serial_fallback': plan['theory_order'],
+        'contract_count': len(payload['contracts']), 'file_count': len(files),
+        'next_module': 'file-planning', 'execution_ready': False,
+    }
+    return artifacts
+
+
+@contextmanager
+def output_lock(output: Path):
+    output.mkdir(parents=True, exist_ok=True)
+    with (output / '.planning.lock').open('a') as stream:
+        try:
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise ValueError('another repository planner holds this output lock') from error
+        try:
+            yield
+        finally:
+            fcntl.flock(stream, fcntl.LOCK_UN)
+
+
+def verify_bundle(output: Path, payload: dict, *, restore_missing: bool = False) -> dict:
+    audit = read_json(output / 'session-planning-audit.json')
+    core = {key: value for key, value in audit.items() if key != 'audit_sha256'}
+    if audit.get('audit_sha256') != sha256_json(core):
+        raise ValueError('planning audit identity mismatch')
+    prefix = output / audit['transcript_prefix']
+    try:
+        prefix.resolve().relative_to(output.resolve())
+    except ValueError as error:
+        raise ValueError('transcript reference escapes planning output') from error
+    meta = validate_call_artifact(prefix, require_real=True)
+    paths = artifact_paths(prefix)
+    from regen.planning.session_planner import parse_model_json
+    proposal = parse_model_json(paths['final'].read_text())
+    if paths['prompt'].read_text() != prompt(payload, audit['feedback']):
+        raise ValueError('transcript differs from legal planning prompt')
+    validate_meta(meta, payload)
+    expected = build_bundle(payload, proposal)
+    if (audit.get('plan_id') != expected['repository-plan.json']['plan_id'] or
+        audit.get('planner_input_sha256') != sha256_json(payload) or
+        audit.get('prompt_sha256') != sha256_path(paths['prompt']) or
+        audit.get('final_sha256') != sha256_path(paths['final']) or audit.get('verdict') != 'pass'):
+        raise ValueError('planning audit binding mismatch')
+    expected = {'planner-input.json': payload, 'planner-proposal.json': proposal, **expected}
+    # Check all existing artifacts before restoring any missing projection.
+    for name, artifact in expected.items():
+        path = output / name
+        if path.is_file():
+            if read_json(path) != artifact:
+                raise ValueError(f'planning artifact does not reconstruct: {name}')
+        elif not restore_missing:
+            raise ValueError(f'missing planning artifact: {name}')
+    if restore_missing:
+        for name, artifact in expected.items():
+            write_immutable_json(output / name, artifact)
+    return expected['repository-plan.json']
+
+
+def validate_meta(meta: dict, payload: dict):
+    if (meta.get('model') != payload['policy']['model']['model'] or
+        meta.get('stage') != 'Session-Planning' or not meta.get('sealable_generation') or
+        meta.get('provider') not in {'codex-exec-audited', 'claude-print-audited'}):
+        raise ValueError('repository planner transcript is not sealable for this policy')
+
+
+def verify_frozen_policy_snapshot(root: Path, manifest: dict, policy: dict, policy_hash: str):
+    frozen_policies = [root / 'Environment-Freeze/frozen-inputs' / item['path']
+                       for item in manifest['frozen_inputs'] if item['sha256'] == policy_hash]
+    if not any(path.is_file() and sha256_path(path) == policy_hash and read_json(path) == policy
+               for path in frozen_policies):
+        raise ValueError('repository planning policy does not match a frozen input snapshot')
+
+
+def load_file_projection(root: Path, output: Path, theory: str, *,
+                         gate_path: Path | None = None, index_path: Path | None = None) -> dict:
+    """Trusted downstream handoff: validate preparation and plan before returning one file.
+
+    This reads no raw source and performs no new model or prover calls.
+    """
+    root, output = root.resolve(), output.resolve()
+    manifest = read_json(root / 'Environment-Freeze/campaign-manifest.json')
+    verify_manifest(manifest)
+    stored = read_json(output / 'planner-input.json')
+    independent = (output / 'Planning-Freeze/manifest.json').is_file()
+    if not independent:
+        verify_frozen_policy_snapshot(root, manifest, stored['policy'], stored['policy_sha256'])
+    payload = make_input(root, gate_path or root / 'Environment-Preparation/environment-gate.json',
+                         index_path or root / 'Environment-Dataflow/environment-index.json',
+                         stored['policy'], stored['policy_sha256'],
+                         int(manifest['budgets']['session_planner_context_chars']))
+    if independent:
+        from regen.planning.planning_freeze import bind
+        payload = bind(output, payload, manifest)
+    if payload['campaign_id'] != manifest['campaign_id']:
+        raise ValueError('projection environment differs from frozen campaign')
+    plan = verify_bundle(output, payload)
+    if theory not in plan['theory_order']:
+        raise ValueError(f'unknown generated theory: {theory}')
+    return read_json(output / 'files' / f'{theory}.json')
+
+
+def run(root: Path, gate_path: Path, index_path: Path, policy: dict, policy_hash: str,
+        output: Path, *, allow_external_call: bool = False, verify_only: bool = False,
+        freeze_planning: bool = False, prepare_only: bool = False) -> dict:
+    root, output = root.resolve(), output.resolve()
+    manifest = read_json(root / 'Environment-Freeze/campaign-manifest.json')
+    verify_manifest(manifest)
+    independent = freeze_planning or (output / 'Planning-Freeze/manifest.json').is_file()
+    if independent and policy.get('schema_version') != 3:
+        raise ValueError('independent planning freeze requires policy v3')
+    if not independent:
+        verify_frozen_policy_snapshot(root, manifest, policy, policy_hash)
+    budget = int(manifest['budgets']['session_planner_context_chars'])
+    timeout = int(manifest['budgets']['model_call_timeout_seconds'])
+    payload = make_input(root, gate_path, index_path, policy, policy_hash, budget)
+    if payload['campaign_id'] != manifest['campaign_id']:
+        raise ValueError('environment dataflow differs from frozen campaign')
+    from regen.planning.session_planner import parse_model_json, select_completed_transcript
+    with output_lock(output):
+        if independent:
+            from regen.planning.planning_freeze import bind
+            payload = bind(output, payload, manifest, create=freeze_planning and not verify_only,
+                           check_live=not verify_only)
+        if (output / 'session-planning-audit.json').is_file():
+            plan = verify_bundle(output, payload, restore_missing=not verify_only)
+            return summary(plan, 'verified')
+        if verify_only:
+            raise ValueError('no completed repository planning bundle to verify')
+        write_immutable_json(output / 'planner-input.json', payload)
+        if prepare_only:
+            return {'verdict': 'prepared', 'contracts': len(payload['contracts']),
+                    'legal_premises': len(payload['legal_premises']),
+                    'planning_freeze_id': payload.get('planning_freeze_id'),
+                    'external_call_performed': False, 'execution_ready': False}
+        feedback = []
+        for attempt in range(1, policy['model']['max_attempts'] + 1):
+            text = prompt(payload, feedback)
+            if len(text) > budget:
+                raise ValueError('planning prompt including feedback exceeds frozen context budget')
+            preferred = output / 'transcript' / f'repository-planner-{attempt:03d}'
+            completed = select_completed_transcript(preferred, prompt=text, model=policy['model']['model'])
+            if completed:
+                prefix, meta = completed
+                final = artifact_paths(prefix)['final'].read_text()
+            else:
+                if not allow_external_call:
+                    raise ValueError('fresh repository planning requires --allow-external-call')
+                prefix = allocate_artifact_prefix(preferred)
+                final = call_codex(text, prefix, model=policy['model']['model'], timeout=timeout,
+                                   theory='Refine', stage='Session-Planning', clean_runtime=True)
+                meta = validate_call_artifact(prefix, require_real=True)
+            validate_meta(meta, payload)
+            paths = artifact_paths(prefix)
+            if paths['prompt'].read_text() != text or paths['final'].read_text() != final:
+                raise ValueError('planner call output differs from audited transcript')
+            try:
+                proposal = parse_model_json(final)
+                artifacts = build_bundle(payload, proposal)
+            except (ValueError, KeyError, TypeError) as error:
+                diagnostic = str(error)[:1000]
+                write_immutable_json(output / f'attempt-{attempt:03d}-rejection.json', {
+                    'attempt': attempt, 'diagnostic': diagnostic,
+                    'transcript_prefix': str(prefix.relative_to(output)),
+                })
+                # Keep feedback bounded, preserving full rejected artifacts on disk.
+                feedback = [diagnostic[:max(0, min(1000, budget // 20))]]
+                continue
+            write_immutable_json(output / 'planner-proposal.json', proposal)
+            for filename, artifact in artifacts.items():
+                write_immutable_json(output / filename, artifact)
+            core = {'schema_version': 2, 'artifact_type': 'repository-planning-audit', 'verdict': 'pass',
+                    'plan_id': artifacts['repository-plan.json']['plan_id'],
+                    'planner_input_sha256': sha256_json(payload),
+                    'transcript_prefix': str(prefix.relative_to(output)), 'feedback': feedback,
+                    'prompt_sha256': sha256_path(paths['prompt']), 'final_sha256': sha256_path(paths['final']),
+                    'checks': ['exact-once-contracts', 'legal-visible-premise-ids', ('theory-dag-and-explicit-priority' if policy['schema_version'] == 3 else 'node-and-theory-dag'),
+                               'preserved-contract-payloads', 'deterministic-file-projections'],
+                    'statement_elaboration_performed': False}
+            # Publish audit last: an interrupted partial bundle is not complete.
+            write_immutable_json(output / 'session-planning-audit.json', {**core, 'audit_sha256': sha256_json(core)})
+            plan = verify_bundle(output, payload)
+            return summary(plan, 'created-or-recovered')
+        raise ValueError('repository planning validation attempts exhausted; see rejection diagnostics')
+
+
+def summary(plan: dict, disposition: str) -> dict:
+    return {'verdict': 'pass', 'disposition': disposition, 'plan_id': plan['plan_id'],
+            'files': len(plan['theories']), 'contracts': (sum(len(t['contracts']) for t in plan['theories']) if plan['schema_version']==3 else sum(n['role'] == 'contract' for n in plan['nodes'])),
+            ('auxiliary_intents' if plan['schema_version'] == 3 else 'auxiliary_nodes'): (sum(len(t['auxiliary_intents']) for t in plan['theories']) if plan['schema_version']==3 else sum(n['role'] == 'auxiliary' for n in plan['nodes'])),
+            'next_module': 'file-planning', 'execution_ready': False}

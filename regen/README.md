@@ -1,59 +1,98 @@
 # Semantic Base 上的仓库级证明生成
 
-本分支在 command 级 Refine Semantic Base 上探索仓库规划与文件内证明生成。
-文档区分现有调度／证明实现与拟议仓库规划扩展。没有移植旧 planning 开发线的生产代码，
-也没有因文档更新改变运行配置或声明新的证明结果。
+当前实现针对 Refine：删除普通人类证明层，在 command 级 Semantic Base 上生成固定 contracts。
+环境数据流和仓库规划已接入，可输出生成 theory DAG、固定目标分配、共享辅助意图和文件投影。
+File Planner / Runner 已接通投影消费、局部图及辅助节点失败撤销；完整仓库实验仍待执行。详细 setting、正确性与未决项
+统一见 [总体设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md)，本页只负责导航。
 
-## 分支与迁移来源
+## 文档与代码入口
 
-- 分支：`semantic-base-repository-planning`。
-- 已提交祖先：`regen-refine-semantic-base` 的 `1621408828ed81f419ceedb0dc4fe5ee16939ff3`。
-- 工作区基础：`4de882fe2cd6d6f23c058d10d079beb0abeb11c6`，保存 semantic-base 工作区的
-  tracked changes 与非 ignored 新文件；不包含 ignored 数据、构建产物或嵌套仓库工作区。
-- 文档来源：`session-planner-global-proof-plan` 的 `bacfdb56ff8af51cc4b6363b90db32a971910271`。
-  来源仅限下列五个文件的已提交版本，不包括当时未提交的 `UNIFIED-PROOF-HARNESS.md`。
-  旧 planning 与 runtime-audit 分支已删除；此处分支名仅记录来源，不能作为 checkout 指令。
-- 原 semantic-base 分支、暂存区和工作区保持原状；基础快照将其 staged/unstaged 内容合并为
-  新分支的文件版本，原暂存状态仍保留在原 worktree。
-
-## 文档导航与筛选结果
-
-| 文档 | 保留内容 | 本次不迁入的内容 |
+| 文档 | 唯一职责 | 主要代码 |
 |---|---|---|
-| [Environment Planning Substrate](ENVIRONMENT-PLANNING-SUBSTRATE-PLAN.md) | contract 中心的语义视图、符号解析、可用性、文件投影 | frozen Support 输入、放宽源隔离的 planning-first profile、旧运行数量与效果断言 |
-| [Proof Architect Experiment](UNIFIED-PROOF-ARCHITECT-EXPERIMENT.md) | 全局规划与局部细化、helper 复用、基于原始 contracts 的评价 | helper 必须有 replacement 才能退出、固定 top-k、强制双 session、未经验证的外部项目类比 |
-| [Harness Design](UNIFIED-PROOF-HARNESS-DESIGN.md) | 目标身份、合法事实、局部迭代、完整构建与发布 | theory 级 Support/Proof 分类、全仓库回修系统、复杂 intent witness、未经讨论的固定预算 |
-| [Module Implementation](UNIFIED-PROOF-MODULE-IMPLEMENTATION.md) | 模块职责、证据与后续验证清单 | 来源分支的 PASS/FAIL、测试计数、失效代码路径与旧目录布局 |
-| 本 README | 分支来源、文档入口、未决项 | 不适用于当前平铺模块布局的运行命令 |
+| [总体设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md) | 研究目标、输入边界、生成合同、helper 政策与未决问题 | 目标设计，不声称全部实现 |
+| [环境实现](docs/implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md) | command 选择、环境／catalog 构建与 gate | [environment_preparation.py](preparation/environment_preparation.py)、[semantic_base_builder.py](preparation/semantic_base_builder.py) |
+| [规划实现与扩展](docs/implementation/SESSION-PLANNING-IMPLEMENTATION.md) | 环境数据流到仓库方案、文件投影、重放与执行边界 | [session_planner.py](planning/session_planner.py)、[repository_planner.py](planning/repository_planner.py) |
+| [证明生成实现](docs/implementation/PROOF-GENERATION-IMPLEMENTATION.md) | node、GRA、组装、发布、日志与缺口 | [proof_session_runner.py](execution/proof_session_runner.py)、[isabelle_node_checker.py](execution/isabelle_node_checker.py) |
+| [实验记录](docs/history/REFINE-CREFINE-EXPERIMENT.md) | 历史 campaign 结果，不作为当前 PASS | 运行数据需另行核对 |
 
-文档职责分开：
+[Kernel_Object_Access 单 theory 实验](docs/experiments/KERNEL-OBJECT-ACCESS-LAB.md) 仅完成交互式诊断及证明正确性检查，包含外层 Codex 直接编写 helper/证明，不满足无干预生成 setting。
 
-- 上表中的 Experiment、Design、Substrate 是拟议扩展，不声明已经接线。
-- [环境实现说明](ENVIRONMENT-PREPARATION-IMPLEMENTATION.md)、
-  [Session 调度实现](SESSION-PLANNING-IMPLEMENTATION.md) 与 Module Implementation 描述静态代码入口。
-- [总体导航](REPO-LEVEL-PROOF-HARNESS.md) 只索引流程，不另设一套冲突合同。
-- [实验记录](REFINE-CREFINE-EXPERIMENT.md) 集中保留历史 campaign 结果，不是当前生产 PASS。
-- `HARNESS-EVOLUTION.md` 是历史日志，旧路径／决策不作为当前代码或规范入口。
+[HARNESS-EVOLUTION.md](docs/history/HARNESS-EVOLUTION.md) 仅作历史追溯，旧路径与政策不作为现行入口。
+代码链接相对当前文档；函数名用于定位。配置为
+[refine-semantic-base-campaign.json](config/refine-semantic-base-campaign.json)。
 
-代码链接均使用相对当前文档的路径；定位使用函数名，不沿用旧 worktree 绝对路径或旧行号。
-文档中的拟议行为不会自动覆盖代码；历史证据需要重验后才能支持当前运行。
+新运行默认采用直接错误反馈及固定 GREEN 前缀复用；GREEN 仍须冷复核，最终 theory
+验收不变。参见[单节点执行设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md#单节点直接反馈与固定前缀检查)。
 
-## 当前边界
+## 目录划分
 
-使用整个 Refine scope 的 command 级筛选；目标是 selected contracts，普通人类辅助 lemma
-及其证明和独立自动化注册移除。保留语义 command 的附带事实与自动化效果必须披露。
-生成模块不得通过源码、历史、缓存、其他副本或检索接触被删除的证明层。
+| 目录 | 内容与边界 |
+|---|---|
+| `preparation/` | campaign 冻结、contract 提取、command 选择、Semantic Base 构建、premise 导出与环境 gate |
+| `planning/` | Session / File Planner、proof graph、premise 检索、automation 建议与局部 outline |
+| `execution/` | Runner、Lemma Prover、Isabelle 检查、graph revision、组装诊断与可选 stepwise backend；当前 seal / publication 仍由 Runner 实现 |
+| `analysis/` | retained semantic facts 的依赖与 automation 影响分析 |
+| `infrastructure/` | 模型调用、transcript、模块日志、进度事件与共享文本处理 |
+| `tools/` | 运行辅助入口、smoke / case 工具、stepwise 启动与依赖安装 |
+| `config/` | campaign 与规划政策配置 |
+| `fixtures/` | 测试 theory、ROOT 与请求样例 |
+| `tests/current/` | 当前 Semantic Base 链路的回归测试 |
+| `tests/legacy/` | 保留的旧实验链路测试 |
+| `legacy/` | 旧 Refine ARM 分层实验、Mode R 增量生成、whole-theory 生成；详见 [说明](legacy/README.md) |
+| `docs/design/` | 当前研究 setting 与目标设计 |
+| `docs/implementation/` | 环境、规划、证明生成的实际实现与待实现扩展 |
+| `docs/history/` | 历史实验、演进与延期决策记录 |
 
-初版采用一次仓库规划、文件内迭代、完整 theory 验收后跨文件复用。允许撤销不再需要的
-未证明 helper 是拟议改动，尚不宣称已实现。当前实现范围是 Refine；独立 CRefine 和联合
-任务是否纳入首版，留待确定。
+这是现有实现的职责整理，没有恢复已删除开发分支的代码。公共提取逻辑由
+`preparation/regen_extract.py` 提供，旧链路也通过同一包导入，不另存副本。
 
-尚待讨论：冻结 Architecture 与动态 Exact Graph 的关系；最终实验 session 范围；
-Semantic Base 保留原 imports 与模型不获得人类 import graph 的准确边界；统一预算和停止规则。
-本次不预先决定这些问题，也不迁入来源文档与之冲突的规则。
+## 运行与检查
 
-当前 `session_planner.py` 仍只做 contract-based scheduling；File Planner 仍使用
-fixed-contracts-only 输入。Planning Substrate、全局 obligation/helper 规划与 helper 撤销待接线。
-当前 `run-session` 的 traversal complete 也不等于新的完整 Session Seal。
+从本工作区的仓库根目录运行，使用新的模块路径：
 
-本分支没有因文档更新而获得新的 Isabelle build、模型生成或完整 seal 证据。
+```bash
+python3 -m regen.preparation.environment_freeze --help
+python3 -m regen.preparation.environment_preparation --help
+python3 -m regen.planning.session_planner --help
+python3 -m regen.execution.proof_session_runner --help
+python3 -m unittest discover -s regen/tests -t . -p 'test_*.py'
+```
+
+证明执行的模型配置见 [proof-models.json](config/proof-models.json)：新 projection run
+默认 Lemma Prover 为 `gpt-6-astra medium`，并冻结配置及 Codex 二进制哈希。
+旧运行仍遵循原绑定；更换 CLI 或模型需要显式创建新的执行绑定。
+配对诊断入口为 `python3 -m regen.tools.compare_proof_models --help`，
+[本次结果](../reports/regen/model-comparison-001/REPORT.md) 不属于 campaign 验收。
+
+辅助脚本位于 `regen/tools/`。不再需要把 `regen` 或旧 `regen/scripts` 加入
+`PYTHONPATH`；原平铺 Python 路径已迁移，外部调用方应更新为上述包路径。
+既有实验产物保持原样；源码路径和内容变化会改变冻结输入哈希，不能将旧 seal
+当成对新布局的验证，后续真实运行需重新冻结环境。
+
+环境准备现在有统一的 `prepare / resume / restore / verify-dataflow` 入口，运行步骤和
+恢复边界见 [环境流水线说明](docs/implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md#5-统一准备入口下游数据流与恢复)。
+完成后下游读取 `Environment-Dataflow/environment-index.json` 及 contracts/premises JSONL；
+私有恢复日志和检查点不作为模型输入。
+
+## 来源与合并记录
+
+本分支 `semantic-base-repository-planning` 基于 `1621408`，`4de882f` 保存了 semantic-base
+工作区快照；`f981a4b` 迁入设计文档，`c116eae` 核对了本地实现路径。来源提交是
+`bacfdb56ff8af51cc4b6363b90db32a971910271`，来源分支已删除，不作为 checkout 指令。
+迁移没有恢复旧 planning 开发线代码。
+
+本次按内容职责合并，旧文件不再保留平行说明：
+
+| 原迁入文件 | 合并去向 |
+|---|---|
+| `UNIFIED-PROOF-ARCHITECT-EXPERIMENT.md` | 总体设计：研究问题、两级规划、helper 与评价 |
+| `UNIFIED-PROOF-HARNESS-DESIGN.md` | 总体设计：正确性、迭代和完成合同 |
+| `ENVIRONMENT-PLANNING-SUBSTRATE-PLAN.md` | 规划实现文档：Planning Substrate 扩展章节 |
+| `UNIFIED-PROOF-MODULE-IMPLEMENTATION.md` | 按环境、规划、证明生成三份实现文档分工；重复模块表删除 |
+| `README.md` | 保留为本导航页 |
+
+共享声明裁剪函数已合并到 [retrieval_utils.py](infrastructure/retrieval_utils.py)，提取器和旧分析入口复用它。
+这次整理不新增 proof-generation 能力，不把文档、单测或历史结果当作新的 Isabelle seal 证据。
+
+当前 repository file projections 的执行、提交恢复与 optional GREEN facts 接线见
+[证明执行实现](docs/implementation/PROOF-GENERATION-IMPLEMENTATION.md)。
