@@ -90,3 +90,5 @@ spec-strengthen/logs/
 
 .stepwise-codex/
 .venv-stepwise-codex/
+# Local upstream/reference checkout; maintained as its own Git repository.
+vero-isabelle/
