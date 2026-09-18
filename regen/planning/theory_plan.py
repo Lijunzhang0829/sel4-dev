@@ -123,11 +123,59 @@ def build_bundle(payload,proposal):
     return artifacts
 
 
+def compact_input(payload):
+    """Losslessly tabulate repeated planner metadata; retain every candidate."""
+    cards = payload['contract_cards']
+    indexes = {card['contract_id']: index for index, card in enumerate(cards)}
+    symbols = sorted({symbol for card in cards for symbol in card['principal_symbols']}
+                     | {symbol for item in payload['contract_relation_candidates']
+                        for symbol in item['evidence']['shared_symbols']})
+    symbol_indexes = {symbol: index for index, symbol in enumerate(symbols)}
+    blind = payload.get('contract_visibility') == 'owner-blind-v1'
+    card_columns = ['contract_id', 'name'] + ([] if blind else ['owner_theory']) + [
+        'principal_symbol_indexes', 'logical_shape']
+    metadata = ('benchmark', 'context_profiles', 'parent_premises') if blind else (
+        'benchmark', 'owner_groups', 'session_graph', 'theory_import_graph',
+        'context_profiles', 'parent_premises')
+    compact = {key: payload[key] for key in metadata}
+    if blind:
+        compact['contract_visibility'] = 'owner-blind-v1'
+    compact['symbols'] = symbols
+    compact['symbol_encoding'] = 'zero-based indexes in symbols; exact inspected statements are unchanged'
+    compact['contract_cards'] = {
+        'columns': card_columns,
+        'rows': [[card['contract_id'], card['name']] + ([] if blind else [card['owner_theory']]) + [
+                  [symbol_indexes[symbol] for symbol in card['principal_symbols']],
+                  card['logical_shape']] for card in cards],
+    }
+    compact['contract_relation_candidates'] = {
+        'endpoint_encoding': 'zero-based row indexes in contract_cards.rows',
+        'columns': ['relation_id', 'left_contract_index', 'right_contract_index',
+                    'candidate_relation', 'shared_symbol_indexes'] + ([] if blind else ['same_owner_theory']),
+        'rows': [[item['relation_id'], indexes[item['left_contract_id']],
+                  indexes[item['right_contract_id']], item['candidate_relation'],
+                  [symbol_indexes[symbol] for symbol in item['evidence']['shared_symbols']]] +
+                  ([] if blind else [item['evidence']['same_owner_theory']])
+                 for item in payload['contract_relation_candidates']],
+    }
+    return compact
+
+
+def compact_evidence(evidence):
+    result = dict(evidence)
+    # Integrity hashes stay in the frozen files; the model needs exact syntax.
+    result['inspected_contracts'] = [
+        {key: value for key, value in contract.items() if not key.endswith('_sha256')}
+        for contract in evidence.get('inspected_contracts', [])
+    ]
+    return result
+
+
 def prompt_v4(payload, feedback):
     """Compact Refine prompt; exact records arrive only through bounded inspection."""
     schema = {
         'schema_version': 4,
-        'ordering_rationale': 'Explain grouping, DAG order, and ready priority.',
+        'ordering_rationale': 'Explain the repository decomposition, major alternatives, shared-result strategy, DAG order, ready priority, and remaining uncertainties.',
         'contract_relations': [{
             'left_contract_id': 'contract ID',
             'right_contract_id': 'contract ID',
@@ -135,9 +183,9 @@ def prompt_v4(payload, feedback):
             'evidence_ids': ['returned relation or parent-premise ID'],
         }],
         'theories': [{
-            'name': 'Generated_Operations',
-            'purpose': 'results this theory establishes',
-            'grouping_reason': 'why these contracts belong together',
+            'name': 'Generated_SemanticRole',
+            'purpose': 'semantic responsibility and results this theory will provide to its consumers',
+            'grouping_reason': 'why these contracts belong together and are separate from neighboring theories; cite inspected semantics and context requirements',
             'contract_ids': ['contract ID'],
             'context_profile_ids': ['allowed context profile ID'],
             'helper_decisions': [{
@@ -154,19 +202,54 @@ def prompt_v4(payload, feedback):
         }],
         'unresolved_retrieval_questions': ['bounded unresolved question'],
     }
-    compact = {
-        key: payload[key] for key in (
-            'benchmark', 'contract_cards', 'owner_groups', 'session_graph',
-            'theory_import_graph', 'context_profiles',
-            'contract_relation_candidates', 'parent_premises',
-        )
-    }
-    compact['planner_evidence'] = payload.get('planner_evidence', {})
+    compact = compact_input(payload)
+    compact['planner_evidence'] = compact_evidence(payload.get('planner_evidence', {}))
     return (
-        'Plan the prepared seL4 Refine benchmark at THEORY level. Refine and '
+        'You are responsible for designing the complete repository architecture '
+        'for the prepared seL4 Refine benchmark at THEORY level. '
+        'Explicitly allocate the supplied contracts to DIFFERENT generated theories: '
+        'design a coherent multi-theory decomposition, choosing the number, names, '
+        'boundaries, and allocation yourself. A single catch-all theory for this '
+        'repository does not fulfill the planning task. Do not split arbitrarily '
+        'or add empty theories merely to make the result plural. A singleton '
+        'contract input naturally needs only one contract-bearing theory. '
+        'Review the entire contract catalog, including contracts outside your '
+        'current working group, and inspect full statements and owned contexts '
+        'before relying on their meaning or context compatibility. Shared context '
+        'or a common correspondence predicate alone does not justify merging '
+        'different semantic responsibilities. '
+        'For each theory, explain its responsibility, the cohesion of its assigned '
+        'contracts, its boundary with neighboring theories, and the results it '
+        'could provide to consumers. Evaluate alternative splits and merges, '
+        'shared invariant/result opportunities, manageable local proof-planning '
+        'scope, and avoidable coupling. Record these decisions in purpose, '
+        'grouping_reason, and the global ordering_rationale. '
+        'Plan cross-theory collaboration: identify useful existing helpers through '
+        'explicit retrieval where needed, and describe new shared-result intentions '
+        'with their intended consumers in helper_decisions. Explain the shared-result '
+        'strategy even when no helpers are proposed. Use suggested_predecessors '
+        'only for justified provider/consumer or scheduling relationships, describe '
+        'the expected assistance, and explain both the DAG and ready-theory '
+        'tie-break order. Absence of known dependencies is not a reason to collapse '
+        'all contracts into one theory; independent theories can remain separate. '
+        'Before submitting, review global coverage, boundaries, context requirements, '
+        'shared results, ordering, and unresolved questions as a handoff to File '
+        'Planner. Structural validation checks format and consistency, not the '
+        'quality or completeness of your architectural reasoning. Continue revising '
+        'when the architecture is inadequate even if validation passes. '
+        'Refine and '
         'CRefine are independent experiments; introduce no CRefine or '
         'cross-experiment inputs. Assign every fixed contract exactly once. '
-        'Cite an inspected parent premise for reuse_existing_fact; otherwise '
+        'Use only the supplied legal input and any explicit harness operations '
+        'offered by the enclosing interaction. Do not read files, history, '
+        'removed proofs, or external sources. Choose theory grouping and scheduling '
+        'from contract semantics and inspected legal facts. No original contract '
+        'theory grouping is supplied in owner-blind mode. Consider shared results without '
+        'inventing dependencies or auxiliaries to fill a quota. An unproved '
+        'contract or intent is never an available premise. Inspected premises '
+        'come from registered static frozen-parent or retained-semantic sources; '
+        'retrieval similarity does not certify applicability. Cite an inspected '
+        'premise for reuse_existing_fact; otherwise '
         'emit only an auxiliary intent. Do not output exact new helper '
         'statements, tactics, proofs, local proof edges, imports, commands, or '
         'source paths. Theory edges are provider/scheduling intent, not proof '

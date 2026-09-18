@@ -118,13 +118,11 @@ The output contains no proof, tactic, exact new helper statement, or contract-le
 One repository-generation run owns one stable `plan_id`. Repository-level replanning within that run appends immutable revisions; it does not create a replacement plan ID:
 
 - `plan_id`: stable identity of the logical repository plan for the run;
-- `revision`: monotonically increasing sequence number;
-- `revision_id`: content identity of one immutable plan snapshot;
-- `parent_revision_id`: previous accepted revision in the same plan lineage.
+- `revision`: monotonically increasing plan-log sequence; entries retain checksums without a separate revision ID.
 
 The authoritative layout is `planning/<plan_id>/revisions/<sequence>.json` plus a rebuildable `HEAD.json`. `repository-plan.json` is the current projection, not a second authority.
 
-When a theory starts, its file projection and external context are frozen against one `revision_id`. Later plan revisions may change priority, edges, grouping, or helper intents only for theories that have not started. Running, GREEN, and sealed theories are immutable constraints on every later revision.
+When a theory starts, its file projection and external context are frozen against one plan-log sequence. Later plan revisions may change priority, edges, grouping, or helper intents only for theories that have not started. Running, GREEN, and sealed theories are immutable constraints on every later revision.
 
 Resume and recovery retain the same `plan_id` and revision chain. A fresh independent generation receives a new `plan_id`; explicit warm-start or experiment forks may record `derived_from_plan_id`, but do not inherit the old identity. Ordinary revision does not use `supersedes_plan_id`.
 
@@ -159,7 +157,7 @@ Within a theory, the harness derives the ready frontier from the accepted File P
 - Build `parent-premises.sqlite` from the target-relative upstream session/import closure.
 - Change `regen/planning/repository_planner.py` to consume the single validated planning input instead of environment gate/dataflow IDs.
 - Extend `regen/planning/theory_plan.py` with contract relations, allowed context profiles, and explicit helper reuse/intent decisions while retaining theory-level granularity.
-- Add an append-only repository-plan revision journal and freeze each started theory projection to its accepted `revision_id`.
+- Add an append-only repository-plan revision journal and freeze each started theory projection to its accepted plan-log sequence.
 - Change File Planner to run at theory start against the frozen legal-premise snapshot, construct an exact evidence-backed local DAG, and repair only its pre-execution draft until validation and statement elaboration succeed.
 - Make the accepted initial graph immutable and route every later graph change through the theory-local Graph Revision Agent and append-only graph revision protocol.
 - Add ready-frontier scheduling with isolated theory workers; keep each theory's checker commits and Graph Revision Agent decisions serialized, and serialize shared progress/publication projections.

@@ -569,6 +569,7 @@ def prove_node(
                             response_page=select_round_facts(premise_database,request,
                                 generated_records=generated_records,local_facts=dependencies,
                                 audit_path=node_dir/'fact-selection.json',
+                                proof_state='\n'.join([*node.get('context',[]), node['statement']]),
                                 symbol_resolver=(lambda names: checker.resolve_symbols(names,node.get('context',[])))
                                 if hasattr(type(checker),'resolve_symbols') else None)
                             observation_facts=response_page['records']

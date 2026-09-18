@@ -209,9 +209,7 @@ def select_parent_premises(
             owner_theory.rsplit(".", 1)[-1], set()
         )
         legal = sorted(candidates & upstream)
-        if not candidates and raw.get("owner_session") in upstream:
-            legal = [str(raw["owner_session"])]
-        if legal:
+        if len(candidates) == 1 and len(legal) == 1:
             selected.append({**raw, "owner_session": legal[0],
                              "export_owner_label": raw.get("owner_session")})
             audit["selected_records"] += 1
@@ -529,6 +527,12 @@ class PlanningInputQueries:
             raise ValueError("invalid repository planning input")
         self.contracts = {item["contract_id"]: item for item in self.input["contracts"]}
         self.database = self.root / self.input["parent_premises"]["database"]
+        from regen.preparation.premise_database import verify_database
+        self.database_version = verify_database(self.database)
+        if self.database_version == 2:
+            from regen.preparation.premise_database import digest
+            if self.input["parent_premises"].get("database_sha256") != digest(self.database):
+                raise ValueError("planning input premise binding mismatch")
 
     def inspect_contracts(self, contract_ids: list[str]) -> list[dict[str, Any]]:
         limit = self.input["planner_interfaces"]["inspect_contracts"]["max_ids"]
@@ -549,6 +553,12 @@ class PlanningInputQueries:
         allowed = {item["context_profile_id"] for item in self.input["context_profiles"]}
         if not context_profile_ids or not set(context_profile_ids) <= allowed:
             raise ValueError("unknown context profile")
+        if self.database_version == 2:
+            from regen.execution.proof_state_recall import recall_for_proof_state
+            records = recall_for_proof_state(self.database, query, limit=limit, attributes=attributes or ())['records']
+            return [{key: record[key] for key in (
+                'record_id', 'canonical_name', 'owner_theory', 'owner_session', 'score'
+            )} for record in records]
         terms = [item.lower() for item in symbols(query)]
         connection = sqlite3.connect(f"file:{self.database}?mode=ro", uri=True)
         connection.row_factory = sqlite3.Row
@@ -604,9 +614,9 @@ class PlanningInputQueries:
         result = []
         for record_id in record_ids:
             record = by_id[record_id]
-            for key in json_fields:
+            for key in json_fields.intersection(record):
                 record[key.removesuffix("_json")] = json.loads(record.pop(key))
-            record.pop("search_text")
+            record.pop("search_text", None)
             result.append(record)
         return result
 
@@ -620,7 +630,8 @@ class PlanningInputQueries:
         connection = sqlite3.connect(f"file:{self.database}?mode=ro", uri=True)
         try:
             rows = connection.execute(
-                "SELECT record_id, canonical_name, aliases_json FROM premises"
+                ("SELECT record_id, canonical_name, '[]' FROM premises" if self.database_version == 2 else
+                 "SELECT record_id, canonical_name, aliases_json FROM premises")
             ).fetchall()
         finally:
             connection.close()

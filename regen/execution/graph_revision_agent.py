@@ -419,7 +419,9 @@ If previous_revision_rejection is present, its proposal was NOT committed. Corre
 its generated declarations using the statement checker feedback and resubmit a complete
 revision against the active graph. Never alter fixed contracts or GREEN statements.
 A rejected declaration is not a failed proof of that proposition.
-Before deciding you may return {"observation_request":{"premise_query":"name or terms",
+Before deciding you may request goal/context retrieval from a v2 catalog using
+{"observation_request":{"proof_state_query":true}} (optional "use_vectors":true).
+Alternatively return {"observation_request":{"premise_query":"name or terms",
 "scope":"all","offset":0}} for complete facts from upstream/sealed/local GREEN sources;
 or {"observation_request":{"graph_query":{"node_ids":[],"query":"terms","offset":0}}}
 for other graph nodes (empty query lists nodes); or
@@ -900,7 +902,9 @@ def _revise_graph(
                             'context':n.get('context',[])} for n in graph['nodes'] if n['id'] in green_ids]
                     page=select_round_facts(premise_database,observation,
                         generated_records=(generated_records if generated_records is not None else output_dir.parent.parent/'generated-premises.json'),
-                        local_facts=local,audit_path=audit_dir/'fact-selection.json',symbol_resolver=symbol_resolver)
+                        local_facts=local,audit_path=audit_dir/'fact-selection.json',symbol_resolver=symbol_resolver,
+                        proof_state=next(('\n'.join([*n.get('context',[]),n['statement']]) for n in graph['nodes']
+                            if n['id']==red_result.get('node_id')),None))
                     facts_locked=True
             elif 'graph_query' in observation:
                 from regen.execution.gra_input import graph_page

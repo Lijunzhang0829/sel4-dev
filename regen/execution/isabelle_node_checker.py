@@ -9,6 +9,7 @@ import re
 import subprocess
 import threading
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -418,7 +419,7 @@ class IsabelleChecker:
         source.write_text(source_text, encoding="utf-8")
         session = "Generated_Refine" if self.previous_theories else self.base_session
         started = time.time()
-        container_name = f"regen-isabelle-check-{os.getpid()}"
+        container_name = f"regen-isabelle-check-{os.getpid()}-{uuid.uuid4().hex}"
         command = self._command(
             source, session=session, writable_mounts=writable_mounts,
         )
@@ -794,7 +795,7 @@ class IsabelleChecker:
             "-d", self.base_catalog, "-d", "/generated", "Generated_Refine",
         ])
         started = time.time()
-        container_name = f"regen-isabelle-build-{os.getpid()}"
+        container_name = f"regen-isabelle-build-{os.getpid()}-{uuid.uuid4().hex}"
         command[2:2] = ["--name", container_name]
         emit_event(
             "isabelle_build_started", session="Generated_Refine",

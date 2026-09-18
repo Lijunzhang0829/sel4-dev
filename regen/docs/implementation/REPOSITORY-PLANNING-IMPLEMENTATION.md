@@ -39,9 +39,35 @@ Planner 不能读取任意文件，只能通过以下只读接口取得证据：
 - `resolve_symbols`：在父 premise 索引中报告唯一、歧义或未找到；
 - `validate_repository_plan`：由结构 validator 实现，不交给模型自报。
 
-模型分两次工作。第一阶段只看紧凑 cards、关系候选和 session/import 摘要，必须把每个 contract
-恰好放入一个 inspection batch，并提出最多 20 个 premise 查询。第二阶段只接收展开后的证据，
-输出 theory 级方案。验证失败时只反馈短错误，不累积检索 transcript。
+新规划使用 `interaction: agent-iterative`。Agent 从紧凑契约 cards、关系候选和上下文摘要开始，
+自主选择检查、检索、验证、修改、提交或停止；不限制检索轮数或提案修改次数，也不要求先完成
+固定的两阶段 inspection 流程。单次请求仍有分页上限，避免一次注入整个数据库。
+
+Agent 通过 JSON 操作接口调用 harness：
+
+- `inspect_contracts`：读取完整契约；
+- `search_premises` / `inspect_premises`：按名称、定义、概念检索并展开已有引理；
+- `resolve_premise_names`：解析已有公开事实名称，不声称完成 Isabelle 常量 elaboration；
+- `validate_plan`：检查当前提案，返回具体错误及遗漏、重复、未知契约 ID；验证通过也不发布；
+- `submit_plan`：再次验证并提交提案，可省略 proposal 使用当前草稿；
+- `read_turn`：读取某一历史轮次的完整请求与结果；
+- `save_notes`：保存 agent 自己的工作笔记，在后续轮次持续提供；
+- `stop`：说明原因并停止，不发布未完成的规划。
+
+操作格式为 `{"action":"validate_plan","arguments":{"proposal":{...}}}`。
+Theory 名称与 helper decision ID 必须匹配 `[A-Za-z][A-Za-z0-9_]*`，不允许连字符；
+helper ID 在整份提案中唯一。修正草稿必须通过 `arguments.proposal` 提交完整修订对象；
+空参数 `submit_plan` 只重新验证当前草稿，`read_turn` 只读历史，且 turn 必须为整数。
+仓库规划不提供 proof state 查询；proof state 召回仍属于后续证明阶段。
+Agent 可以在验证失败后补充检索，也可以在验证通过后继续改进分组和调度。
+传输超时仍按原请求重试一次，两次连续超时暂停；这不属于提案修改计数。
+
+每轮 transcript 与 `turns/NNNNNN.json` 保留请求、完整结果、草稿和响应摘要。模型上下文携带
+当前草稿、工作笔记、累计已检查的完整契约和引理、最新结果及紧凑固定输入；历史请求和失败响应
+不重复累积，需要时通过 read_turn 读取。中断恢复沿用已提交轮次的原始 prompt，避免基础设施修复
+导致已完成的模型调用被重复执行。
+中断恢复重放已审计的完成调用并继续下一轮；只有最终 `submit_plan` 通过后才发布 plan 和 projections。
+旧的有限次数双阶段路径仅用于已有冻结策略的兼容重放，新默认策略不含 `max_attempts`。
 
 ## 3. Repository plan
 
@@ -53,7 +79,7 @@ Planner 不能读取任意文件，只能通过以下只读接口取得证据：
 - 显式 theory provider 边、ready tie-break priority 和简短理由。
 
 Repository Planner 不得生成精确 helper statement、proof、tactic 或 contract-level DAG。
-复用结论必须引用本轮已 inspect 的合法 premise ID；新的 helper 在本阶段仅为 intent。
+复用结论必须引用本次规划过程中已 inspect 的合法 premise ID；新的 helper 在本阶段仅为 intent。
 [theory_plan.py](../../planning/theory_plan.py) 检查 contract exact-once、证据 ID、context profile、
 theory DAG 和 priority，并生成 `repository-plan.json`、`file-generation-list.json` 与
 `files/<theory>.json`。
@@ -69,7 +95,7 @@ planning/<plan_id>/HEAD.json
 repository-plan.json                 # 当前投影
 ```
 
-同一运行的 revision 递增并以 `parent_revision_id` 串联；`revision_id` 是不可变内容身份。
+同一运行用递增的日志序号 `revision` 记录计划快照，不再生成 `revision_id` 或 `parent_revision_id`。日志保存内容校验值；投影通过稳定 `plan_id`、日志序号和已有内容摘要绑定。相同计划重放复用原日志，发布中断后可补齐投影，不追加 revision。
 已经启动的 theory 绑定其 revision，后续 revision 不能改变或删除该 theory 及其 incident edges。
 恢复沿用同一个 plan；新的独立运行取得新的 plan ID。普通更新不使用 `supersedes_plan_id`。
 
@@ -104,3 +130,56 @@ python3 -m regen.planning.repository_planner \
 
 主要测试为 `test_planning_input.py`、`test_plan_revisions.py`、`test_theory_plan.py`、
 `test_repository_planner.py` 和 `test_repository_execution.py`。
+
+并行 theory 使用独立的容器名称、generated 构建目录、ROOT、日志和 heaps；启动前复制冻结 provider 的传递导入源文件，并在本地构建 provider session。仅 sealed 源文件发布到运行级 generated 目录。
+
+首次运行使用 `python3 -m regen.tools.repository_planning_retry --planning-input … --policy … --output … --allow-external-call`。直接入口也使用同一传输重试逻辑：每个逻辑请求超时后按原请求重试一次，两次连续超时暂停；成功重试丢弃前次部分响应并保留时间与用量摘要。重复元数据以表格和符号索引编码，完整契约陈述保持不变。`planner-policy.json` 与输入一起冻结。
+
+New preparations finalize their premise catalog through the native-verified
+[schema v2 builder](PREMISE-DATABASE-V2.md). Planner inspection supports the
+minimal schema and verifies the catalog hash; proof/GRA rounds can explicitly
+retrieve candidates from their goal/context via `proof_state_query`.
+
+迭代控制器及回归测试分别位于 `regen/planning/iterative_planner.py` 和 `regen/tests/current/test_iterative_repository_planner.py`。
+
+
+## 7. 无原始归属的契约视图
+
+新规划默认 `contract_visibility: owner-blind-v1`。`owner_blind.py` 在 agent 边界构造白名单视图：
+保留契约名称、完整陈述、必要上下文和属性；去掉 owner_theory、owner_file_slot、原始带归属 ID、
+owner_groups、原 theory import graph 和 same-owner 特征。契约使用语义内容派生的不透明 ID，
+按该 ID 排列。关系候选重新由共享语义符号生成，不复用受旧分组影响的候选集合或顺序。
+
+`agent-input.json`、逐轮 prompt 和查询结果是实际模型输入。`planner-input.json` 保留原始冻结输入，
+`private-contract-map.json` 与 `planner-validation-input.json` 仅供 harness 验证和输出回映射，
+不提供给模型，也不授予模型文件读取能力。公开提案保存在 `agent-proposal.json`，规范契约 ID
+回映射后的交接提案保存在 `planner-proposal.json`。后续文件投影中的契约与原冻结契约逐项一致。
+
+这是去除输入中的原始归属，不抹除数学陈述本身需要的语义名称，也不禁止 agent 独立提出某个
+分组名称。已有合法引理的来源信息仍用于可信检索，但不携带目标契约的原始归属映射。
+旧的已冻结规划策略可重放；新实验不复用先前含原始归属的 prompt、笔记或模型输出。
+
+
+## 8. 全局架构规划职责
+
+`theory_plan.prompt_v4` 明确要求 agent 把全部契约重新分配到多个有语义边界的生成 theory，
+自行决定数量、名称和分组。单一大 theory 不满足这份仓库规划任务；也不能靠空 theory 或任意
+切分凑数。单契约输入允许一个 theory。共同上下文或共同 correspondence 谓词不足以支持
+把所有语义职责合并；尚无已知依赖时，各 theory 可以保持独立。
+
+Agent 应审视全量契约目录，在依赖具体语义或上下文兼容性时检查完整陈述；通过既有字段交接：
+
+- `purpose` / `grouping_reason`：职责、内部关联、与邻近 theory 的边界及拆分/合并取舍。
+- `helper_decisions`：已有 helper 的可信复用，或新共享结果的粗粒度意图与受益契约。
+- `suggested_predecessors`：有理由的跨 theory 协作与预期帮助。
+- `ordering_rationale`：全局分解、共享结果策略、DAG、ready 优先级和剩余不确定性。
+
+参考本机 VERO 的 `.claude/skills/vero-plan/SKILL.md`（模块职责、全局覆盖和供下游执行的
+机器可读计划）、`src/vero/curation/orchestrator/prompt.py`（模块/层次分解与整体审查），以及
+`templates/instruction/base.md.j2`（审视全部规格、迭代直至完成）。这些是设计参考，不是运行
+VERO 流程；VERO 的 generation 模板本身使用固定模块，不能据此声称它允许任意重分组。
+本项目不复制其原始源码访问、Lean 证明生成职责或人审步骤，也不向 agent 提供 VERO 源码。
+
+本次修改是规划目标和 prompt 的强化。结构 validator 仍检查覆盖、合法前提、上下文 profile
+及无环性，不把 theory 数量或文本长度当作架构质量认证；也不引入固定分组数、helper/边
+配额或提案修改次数上限。已冻结实验及逐轮 prompt 保持原样，新调用才使用更新后的 prompt。

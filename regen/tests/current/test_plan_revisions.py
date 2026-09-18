@@ -34,12 +34,12 @@ class PlanRevisionTest(unittest.TestCase):
         changed = deepcopy(self.plan)
         changed["theories"][1]["priority_rank"] = 0
         second = append_revision(
-            self.root, changed, started_theories={"A": first["revision_id"]},
+            self.root, changed, started_theories={"A": first["revision"]},
         )
         self.assertEqual(first["plan_id"], second["plan_id"])
         self.assertEqual(second["revision"], 2)
-        self.assertEqual(second["parent_revision_id"], first["revision_id"])
-        self.assertEqual(verify_revisions(self.root)["revision_id"], second["revision_id"])
+        self.assertNotIn("revision_id", second)
+        self.assertEqual(verify_revisions(self.root)["revision"], second["revision"])
 
     def test_started_theory_cannot_change_or_disappear(self):
         start_plan(self.root, "sel4-refine-arm", identity_token="one")
@@ -55,8 +55,32 @@ class PlanRevisionTest(unittest.TestCase):
             ):
                 append_revision(
                     self.root, changed,
-                    started_theories={"A": first["revision_id"]},
+                    started_theories={"A": first["revision"]},
                 )
+
+    def test_branched_started_theory_and_reordered_edges(self):
+        start_plan(self.root, "sel4-refine-arm")
+        self.plan["suggested_theory_edges"] = [
+            {"provider": "A", "consumer": "B", "reason": "first"},
+            {"provider": "A", "consumer": "C", "reason": "second"},
+        ]
+        first = append_revision(self.root, self.plan)
+        changed = deepcopy(self.plan)
+        changed["suggested_theory_edges"].reverse()
+        second = append_revision(self.root, changed,
+                                 started_theories={"A": first["revision"]})
+        self.assertEqual(second["revision"], 2)
+        changed["suggested_theory_edges"][0]["reason"] = "changed"
+        with self.assertRaisesRegex(ValueError, "changes started theory"):
+            append_revision(self.root, changed, started_theories={"A": 1})
+
+    def test_replay_repairs_missing_head_without_appending(self):
+        identity = start_plan(self.root, "sel4-refine-arm")
+        first = append_revision(self.root, self.plan)
+        (self.root / identity["plan_id"] / "HEAD.json").unlink()
+        (self.output / "repository-plan.json").unlink()
+        self.assertEqual(append_revision(self.root, self.plan), first)
+        self.assertEqual(verify_revisions(self.root)["revision"], 1)
 
     def test_fresh_output_gets_new_identity(self):
         first = start_plan(self.root, "sel4-refine-arm", identity_token="one")

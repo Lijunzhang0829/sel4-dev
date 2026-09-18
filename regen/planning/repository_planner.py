@@ -49,9 +49,15 @@ def validate_policy(policy: dict):
         raise ValueError('invalid repository planning policy')
     if not isinstance(policy.get('model', {}).get('model'), str):
         raise ValueError('planning policy must specify a model')
-    attempts = policy['model'].get('max_attempts')
-    if not isinstance(attempts, int) or attempts <= 0:
-        raise ValueError('planning policy must specify positive max_attempts')
+    if policy.get('interaction') == 'agent-iterative':
+        if 'max_attempts' in policy['model']:
+            raise ValueError('iterative planning has no proposal-attempt limit')
+    else:
+        attempts = policy['model'].get('max_attempts')
+        if not isinstance(attempts, int) or attempts <= 0:
+            raise ValueError('legacy planning policy must specify positive max_attempts')
+    if policy['model'].get('reasoning_effort', 'medium') not in {'low','medium','high','xhigh','max'}:
+        raise ValueError('invalid planning reasoning effort')
 
 
 def prompt(payload: dict, feedback: list[str] | None = None) -> str:
@@ -399,6 +405,8 @@ def load_file_projection(root: Path, output: Path, theory: str, *,
 def run(root: Path, gate_path: Path, index_path: Path, policy: dict, policy_hash: str,
         output: Path, *, allow_external_call: bool = False, verify_only: bool = False,
         freeze_planning: bool = False, prepare_only: bool = False) -> dict:
+    if policy.get('interaction') == 'agent-iterative':
+        raise ValueError('iterative repository planning requires --planning-input')
     root, output = root.resolve(), output.resolve()
     manifest = read_json(root / 'Environment-Freeze/campaign-manifest.json')
     verify_manifest(manifest)
@@ -423,6 +431,7 @@ def run(root: Path, gate_path: Path, index_path: Path, policy: dict, policy_hash
         if verify_only:
             raise ValueError('no completed repository planning bundle to verify')
         write_immutable_json(output / 'planner-input.json', payload)
+        write_immutable_json(output / 'planner-policy.json', policy)
         if prepare_only:
             return {'verdict': 'prepared', 'contracts': len(payload['contracts']),
                     'legal_premises': len(payload['legal_premises']),
@@ -534,26 +543,27 @@ def inspection_prompt(payload: dict) -> str:
         'schema_version': 1,
         'contract_batches': [['contract ID']],
         'premise_searches': [{
-            'query': 'semantic search query',
+            'query': 'existing lemma names, definitions, or relevant concepts',
             'contract_ids': ['contract ID'],
             'context_profile_ids': ['allowed context profile ID'],
             'attributes': [],
             'limit': 20,
         }],
     }
-    compact = {
-        key: payload[key] for key in (
-            'benchmark', 'contract_cards', 'owner_groups', 'session_graph',
-            'theory_import_graph', 'context_profiles',
-            'contract_relation_candidates', 'parent_premises',
-            'planner_interfaces',
-        )
-    }
+    from regen.planning.theory_plan import compact_input
+    compact = compact_input(payload)
+    compact['planner_interfaces'] = payload['planner_interfaces']
     return (
         'Select bounded evidence for a seL4 Refine repository plan. This is an '
         'independent Refine experiment; never request CRefine data. Inspect every '
         'contract exactly once in batches no larger than the advertised limit. '
-        'Request at most 20 parent-premise searches. Do not propose a plan, helper '
+        'Request at most 20 premise searches over native-verified frozen parents and '
+        'retained semantic exports. Repository planning has no proof-state query. '
+        'Search by names, definitions and shared concepts. Source registry '
+        'checks exclude unresolved origins and dynamic collections. Candidates are '
+        'not applicability certificates. No tools, filesystem, shell, network, or '
+        'external agents may be used; the harness executes this JSON request. '
+        'Do not propose a plan, helper '
         'statement, proof, tactic, command, path, or unrestricted read. Return JSON '
         'only matching:\n' + json.dumps(schema, sort_keys=True)
         + '\nCOMPACT INPUT:\n'
@@ -588,24 +598,26 @@ def execute_inspection(payload: dict, request: dict, planning_input_path: Path) 
     premise_ids = []
     contract_ids = set(expected)
     for search in searches:
-        if not isinstance(search, dict) or set(search) != {
-            'query', 'contract_ids', 'context_profile_ids', 'attributes', 'limit',
-        }:
+        required = {'query', 'contract_ids', 'context_profile_ids', 'attributes', 'limit'}
+        if (not isinstance(search, dict) or not required <= set(search)
+                or set(search) - required - {'mode', 'use_vectors'}):
             raise ValueError('invalid premise search request')
         if not search['contract_ids'] or not set(search['contract_ids']) <= contract_ids:
             raise ValueError('premise search references unknown contracts')
+        if search.get('mode', 'search') != 'search' or search.get('use_vectors', False):
+            raise ValueError('repository planning uses lemma search, not proof-state queries')
         hits = queries.search_parent_premises(
-            search['query'],
-            context_profile_ids=search['context_profile_ids'],
-            attributes=search['attributes'],
-            limit=search['limit'],
-        )
+            search['query'], context_profile_ids=search['context_profile_ids'],
+            attributes=search['attributes'], limit=search['limit'])
         premise_ids.extend(item['record_id'] for item in hits)
         search_results.append({'request': search, 'results': hits})
     unique_ids = sorted(set(premise_ids))
-    inspected_premises = (
-        queries.inspect_parent_premises(unique_ids) if unique_ids else []
-    )
+    batch_size = payload['planner_interfaces']['inspect_parent_premises']['max_ids']
+    inspected_premises = []
+    for offset in range(0, len(unique_ids), batch_size):
+        inspected_premises.extend(
+            queries.inspect_parent_premises(unique_ids[offset:offset + batch_size])
+        )
     return {
         'inspected_contracts': inspected_contracts,
         'premise_searches': search_results,
@@ -624,7 +636,7 @@ def _direct_meta(meta: dict, model: str, stage: str) -> None:
 
 def _direct_call(
     text: str, prefix: Path, *, model: str, timeout: int,
-    allow_external_call: bool, stage: str,
+    allow_external_call: bool, stage: str, reasoning_effort: str | None = None,
 ) -> tuple[str, dict, Path]:
     completed = select_completed_transcript(prefix, prompt=text, model=model)
     if completed:
@@ -633,10 +645,10 @@ def _direct_call(
     else:
         if not allow_external_call:
             raise ValueError('fresh repository planning requires --allow-external-call')
-        actual_prefix = allocate_artifact_prefix(prefix)
-        final = call_codex(
-            text, actual_prefix, model=model, timeout=timeout,
-            theory='Refine', stage=stage, clean_runtime=True,
+        from regen.tools.repository_planning_retry import call_with_retry
+        final, actual_prefix = call_with_retry(
+            call_codex, text, prefix, model=model, timeout=timeout,
+            theory='Refine', stage=stage, clean_runtime=True, reasoning_effort=reasoning_effort,
         )
         meta = validate_call_artifact(actual_prefix, require_real=True)
     _direct_meta(meta, model, stage)
@@ -654,20 +666,18 @@ def _bind_direct_artifacts(
             **artifacts[entry['projection']],
             'plan_id': current_plan['plan_id'],
             'plan_revision': current_plan['revision'],
-            'plan_revision_id': current_plan['revision_id'],
         }
         result[entry['projection']] = projection
         files.append({
             **entry,
             'plan_id': current_plan['plan_id'],
-            'plan_revision_id': current_plan['revision_id'],
+            'plan_revision': current_plan['revision'],
             'projection_sha256': sha256_json(projection),
         })
     result['file-generation-list.json'] = {
         **artifacts['file-generation-list.json'],
         'plan_id': current_plan['plan_id'],
         'plan_revision': current_plan['revision'],
-        'plan_revision_id': current_plan['revision_id'],
         'files': files,
     }
     return result
@@ -693,6 +703,7 @@ def run_prepared(
     output = output.resolve()
     with output_lock(output):
         write_immutable_json(output / 'planner-input.json', payload)
+        write_immutable_json(output / 'planner-policy.json', policy)
         if prepare_only:
             return {
                 'verdict': 'prepared', 'contracts': len(payload['contracts']),
@@ -700,42 +711,54 @@ def run_prepared(
             }
         model = policy['model']['model']
         timeout = int(policy['model'].get('timeout_seconds', 1800))
-        inspection_text = inspection_prompt(payload)
-        final, _meta, inspection_prefix = _direct_call(
-            inspection_text, output / 'transcript/repository-inspection-001',
-            model=model, timeout=timeout, allow_external_call=allow_external_call,
-            stage='Repository-Planning-Inspection',
-        )
-        request = parse_model_json(final)
-        evidence = execute_inspection(payload, request, planning_input_path)
-        enriched = {**payload, 'planner_evidence': evidence}
-        write_immutable_json(output / 'planner-inspection.json', request)
-        write_immutable_json(output / 'planner-evidence.json', evidence)
-        feedback = []
-        proposal = None
-        artifacts = None
-        plan_prefix = None
-        for attempt in range(1, policy['model']['max_attempts'] + 1):
-            text = theory_prompt(enriched, feedback)
-            final, _meta, plan_prefix = _direct_call(
-                text, output / 'transcript' / f'repository-plan-{attempt:03d}',
-                model=model, timeout=timeout,
-                allow_external_call=allow_external_call,
-                stage='Repository-Planning',
+        if policy.get('interaction') == 'agent-iterative':
+            from regen.planning.iterative_planner import run_agent
+            result = run_agent(payload, planning_input_path,
+                {**policy, '_allow_external_call': allow_external_call}, output, _direct_call)
+            if result['status'] == 'stopped':
+                return {'verdict': 'stopped', 'reason': result['reason'],
+                        'turns': result['turns'], 'execution_ready': False}
+            proposal, artifacts = result['proposal'], result['artifacts']
+            plan_prefix = result['plan_prefix']
+            inspection_prefix = None
+        else:
+            inspection_text = inspection_prompt(payload)
+            final, _meta, inspection_prefix = _direct_call(
+                inspection_text, output / 'transcript/repository-inspection-001',
+                model=model, timeout=timeout, allow_external_call=allow_external_call,
+                stage='Repository-Planning-Inspection', reasoning_effort=policy['model'].get('reasoning_effort'),
             )
-            try:
-                proposal = parse_model_json(final)
-                artifacts = build_theory_bundle(enriched, proposal)
-                break
-            except (ValueError, KeyError, TypeError) as error:
-                diagnostic = str(error)[:1000]
-                write_immutable_json(
-                    output / f'attempt-{attempt:03d}-rejection.json',
-                    {'attempt': attempt, 'diagnostic': diagnostic},
+            request = parse_model_json(final)
+            evidence = execute_inspection(payload, request, planning_input_path)
+            enriched = {**payload, 'planner_evidence': evidence}
+            write_immutable_json(output / 'planner-inspection.json', request)
+            write_immutable_json(output / 'planner-evidence.json', evidence)
+            feedback = []
+            proposal = None
+            artifacts = None
+            plan_prefix = None
+            for attempt in range(1, policy['model']['max_attempts'] + 1):
+                text = theory_prompt(enriched, feedback)
+                final, _meta, plan_prefix = _direct_call(
+                    text, output / 'transcript' / f'repository-plan-{attempt:03d}',
+                    model=model, timeout=timeout,
+                    allow_external_call=allow_external_call,
+                    stage='Repository-Planning', reasoning_effort=policy['model'].get('reasoning_effort'),
                 )
-                feedback = [diagnostic]
-        if proposal is None or artifacts is None or plan_prefix is None:
-            raise ValueError('repository planning validation attempts exhausted')
+                try:
+                    proposal = parse_model_json(final)
+                    artifacts = build_theory_bundle(enriched, proposal)
+                    break
+                except (ValueError, KeyError, TypeError) as error:
+                    diagnostic = str(error)[:1000]
+                    write_immutable_json(
+                        output / f'attempt-{attempt:03d}-rejection.json',
+                        {'attempt': attempt, 'diagnostic': diagnostic},
+                    )
+                    feedback = [diagnostic]
+            if proposal is None or artifacts is None or plan_prefix is None:
+                raise ValueError('repository planning validation attempts exhausted')
+        write_immutable_json(output / 'planner-proposal.json', proposal)
         identity = start_plan(
             output / 'planning', payload['benchmark']['id'],
         )
@@ -744,7 +767,6 @@ def run_prepared(
             {**artifacts['repository-plan.json'], 'plan_id': identity['plan_id']},
         )
         artifacts = _bind_direct_artifacts(artifacts, current, output)
-        write_immutable_json(output / 'planner-proposal.json', proposal)
         for filename, artifact in artifacts.items():
             if filename == 'repository-plan.json':
                 continue
@@ -754,9 +776,9 @@ def run_prepared(
             'artifact_type': 'repository-planning-audit',
             'verdict': 'pass',
             'plan_id': current['plan_id'],
-            'plan_revision_id': current['revision_id'],
+            'plan_revision': current['revision'],
             'planning_input_id': payload['planning_input_id'],
-            'inspection_transcript_prefix': str(inspection_prefix.relative_to(output)),
+            'inspection_transcript_prefix': str(inspection_prefix.relative_to(output)) if inspection_prefix else None,
             'planning_transcript_prefix': str(plan_prefix.relative_to(output)),
             'checks': [
                 'independent-refine-input', 'exact-once-contracts',

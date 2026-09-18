@@ -64,15 +64,16 @@ def _theory_projection(plan: dict[str, Any], theory: str) -> dict[str, Any]:
     if record is None:
         raise ValueError(f"started theory disappeared from plan: {theory}")
     edges = sorted(
-        item for item in plan.get("suggested_theory_edges", [])
-        if item["provider"] == theory or item["consumer"] == theory
+        (item for item in plan.get("suggested_theory_edges", [])
+         if item["provider"] == theory or item["consumer"] == theory),
+        key=lambda item: (item["provider"], item["consumer"], item.get("reason", "")),
     )
     return {"theory": record, "incident_edges": edges}
 
 
 def append_revision(
     planning_root: Path, plan: dict[str, Any], *,
-    started_theories: dict[str, str] | None = None,
+    started_theories: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     identity = read_json(planning_root / "identity.json")
     lineage = lineage_root(planning_root, identity)
@@ -83,69 +84,73 @@ def append_revision(
     sequence = len(existing) + 1
     if previous and previous["revision"] != sequence - 1:
         raise ValueError("repository-plan revision sequence is not contiguous")
+    if history:
+        verify_revisions(planning_root, check_head=False)
     started_theories = started_theories or {}
     if previous:
-        by_revision = {item["revision_id"]: item for item in history}
-        for theory, frozen_revision_id in started_theories.items():
-            frozen = by_revision.get(frozen_revision_id)
+        by_revision = {item["revision"]: item for item in history}
+        for theory, frozen_sequence in started_theories.items():
+            frozen = by_revision.get(frozen_sequence)
             if frozen is None:
                 raise ValueError(f"started theory {theory} has an unknown frozen revision")
             if _theory_projection(frozen["plan"], theory) != _theory_projection(plan, theory):
                 raise ValueError(f"repository-plan revision changes started theory: {theory}")
     content = deepcopy(plan)
-    content.pop("plan_id", None)
-    content.pop("revision", None)
-    content.pop("revision_id", None)
-    content.pop("parent_revision_id", None)
-    revision_core = {
-        "schema_version": 1,
-        "artifact_type": "repository-plan-revision",
-        "plan_id": identity["plan_id"],
-        "revision": sequence,
-        "parent_revision_id": previous["revision_id"] if previous else None,
-        "plan": content,
-    }
-    revision = {
-        **revision_core,
-        "revision_id": "repository-plan-revision:" + sha256_json(revision_core)[:20],
-    }
-    write_immutable_json(revisions / f"{sequence:04d}.json", revision)
-    head = {
-        "plan_id": revision["plan_id"],
-        "revision": sequence,
-        "revision_id": revision["revision_id"],
+    for key in ("plan_id", "revision", "revision_id", "parent_revision_id"):
+        content.pop(key, None)
+    # Replaying a completed or interrupted publication must not create history.
+    if previous and previous["plan"] == content:
+        revision = previous
+    else:
+        core = {
+            "schema_version": 2,
+            "artifact_type": "repository-plan-revision",
+            "plan_id": identity["plan_id"],
+            "revision": sequence,
+            "plan": content,
+        }
+        revision = {**core, "sha256": sha256_json(core)}
+        write_immutable_json(revisions / f"{sequence:04d}.json", revision)
+    sequence = revision["revision"]
+    write_projection(lineage / "HEAD.json", {
+        "plan_id": identity["plan_id"], "revision": sequence,
         "path": f"revisions/{sequence:04d}.json",
-    }
-    write_projection(lineage / "HEAD.json", head)
+    })
     current = {
-        **content,
-        "plan_id": revision["plan_id"],
-        "revision": sequence,
-        "revision_id": revision["revision_id"],
-        "parent_revision_id": revision["parent_revision_id"],
+        **content, "plan_id": identity["plan_id"], "revision": sequence,
     }
     write_projection(planning_root.parent / "repository-plan.json", current)
     return current
 
 
-def verify_revisions(planning_root: Path) -> dict[str, Any]:
+def verify_revisions(planning_root: Path, *, check_head: bool = True) -> dict[str, Any]:
     identity = read_json(planning_root / "identity.json")
     lineage = lineage_root(planning_root, identity)
     paths = sorted((lineage / "revisions").glob("*.json"))
+    if not paths:
+        raise ValueError("repository-plan history is empty")
     parent = None
     for sequence, path in enumerate(paths, 1):
         revision = read_json(path)
-        core = {key: value for key, value in revision.items() if key != "revision_id"}
-        expected = "repository-plan-revision:" + sha256_json(core)[:20]
-        if (
-            revision["plan_id"] != identity["plan_id"]
-            or revision["revision"] != sequence
-            or revision["parent_revision_id"] != parent
-            or revision["revision_id"] != expected
-        ):
+        if revision.get("schema_version") == 1:
+            # Read old logs without rewriting accepted evidence.
+            core = {k: v for k, v in revision.items() if k != "revision_id"}
+            valid = (revision.get("revision_id") ==
+                     "repository-plan-revision:" + sha256_json(core)[:20]
+                     and revision.get("parent_revision_id") == parent)
+            parent = revision.get("revision_id")
+        else:
+            core = {k: v for k, v in revision.items() if k != "sha256"}
+            valid = (revision.get("schema_version") == 2
+                     and revision.get("sha256") == sha256_json(core))
+        if (not valid or revision["plan_id"] != identity["plan_id"]
+                or revision["revision"] != sequence
+                or path.name != f"{sequence:04d}.json"):
             raise ValueError(f"invalid repository-plan revision: {path.name}")
-        parent = revision["revision_id"]
-    head = read_json(lineage / "HEAD.json")
-    if not paths or head["revision_id"] != parent or head["revision"] != len(paths):
-        raise ValueError("repository-plan HEAD does not identify the latest revision")
-    return read_json(paths[-1])
+    if check_head:
+        head = read_json(lineage / "HEAD.json")
+        if (head.get("plan_id") != identity["plan_id"]
+                or head.get("revision") != len(paths)
+                or head.get("path") != f"revisions/{len(paths):04d}.json"):
+            raise ValueError("repository-plan HEAD does not identify the latest revision")
+    return revision

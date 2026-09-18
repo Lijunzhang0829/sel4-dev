@@ -103,6 +103,9 @@ def create_context(
             "whole_proof_attempts_per_logical_round": 5,
         },
     }
+    from regen.preparation.premise_database import verify_database, digest
+    if verify_database(database) == 2:
+        core["premise_database_sha256"] = digest(database)
     context = {
         **core,
         "checker_context_id": "checker-context:" + sha256_json(core)[:20],
@@ -135,6 +138,9 @@ def load_context(dataset_root: Path) -> dict[str, Any]:
     audit = (dataset_root / context["premise_audit_context"]).resolve()
     if not database.is_file() or not audit.is_file():
         raise ValueError("checker premise assets are missing")
+    from regen.preparation.premise_database import verify_database, digest
+    if verify_database(database) == 2 and context.get("premise_database_sha256") != digest(database):
+        raise ValueError("checker premise database binding mismatch")
     if source_identity(resolved["isabelle"], allow_links=True) != context["isabelle_sha256"]:
         raise ValueError("checker Isabelle installation changed")
     return {

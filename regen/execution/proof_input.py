@@ -273,7 +273,7 @@ Excerpts marked complete=false are incomplete; never infer omitted goals are pro
 same_as/statement_ref refers to an existing field/node; context_ref indexes contexts.
 GRA fixed_contracts IDs refer to complete current_graph statements. node_ids maps
 short @ IDs to original IDs; use short IDs in output, Runner expands them exactly. Omitted facts may exist.
-Prover may return {"observation_request":{"premise_query":"specific fact or definition"}}
+Prover may return {"observation_request":{"proof_state_query":true}} for goal/context retrieval from a v2 catalog, or {"observation_request":{"premise_query":"specific fact or definition"}}
 or {"observation_request":{"diagnostic_id":"hash","offset":0}} instead of proof.
 Provider assumptions may be read from its complete statement along consumer_path;
 the conclusion is never an assumption. Requests consume an attempt; no arbitrary

@@ -80,13 +80,19 @@ def init_run(run_dir, input_root, run_id, schedule):
         revision = verify_revisions(schedule.parent/'planning')
         plan = read(schedule.parent/'repository-plan.json')
         if (
-            revision['revision_id'] != plan.get('revision_id')
-            or listing.get('plan_revision_id') != plan.get('revision_id')
+            revision['plan_id'] != plan.get('plan_id')
+            or revision['revision'] != plan.get('revision')
+            or revision['plan'] != {k:v for k,v in plan.items()
+                if k not in {'plan_id','revision','revision_id','parent_revision_id'}}
+            or listing.get('plan_id') != plan.get('plan_id')
+            or listing.get('plan_revision') != plan.get('revision')
         ):
             raise ValueError('file list is not bound to the current plan revision')
         for item in listing['files']:
             projection = read(schedule.parent/item['projection'])
-            if digest(projection) != item['projection_sha256']:
+            if (projection.get('plan_id') != plan['plan_id']
+                or projection.get('plan_revision') != plan['revision']
+                or digest(projection) != item['projection_sha256']):
                 raise ValueError('repository file projection drift')
     else:
         # Compatibility path for sealed environment/dataflow plans.
@@ -146,7 +152,8 @@ def init_run(run_dir, input_root, run_id, schedule):
         'session_progress_ledger':str((run_dir/'session-progress-ledger.json').resolve()),
         'session_schedule':{
             'source':str(schedule), 'file_list_sha256':digest(listing),
-            'plan_id':plan['plan_id'], 'plan_revision_id':plan.get('revision_id'),
+            'plan_id':plan['plan_id'],
+            **({'plan_revision':plan['revision']} if direct else {}),
             **({} if direct else {
                 'campaign_id':plan['campaign_id'],
                 'environment_gate_id':plan['environment_gate_id'],
@@ -325,8 +332,11 @@ def checker_for(run_dir, run, directory, timeout, ancestors, *, heaps_dir=None):
     if source_identity(Path(run['isabelle_dir']),allow_links=True)!=run['isabelle_sha256']:
         raise ValueError('execution Isabelle installation differs from frozen toolchain')
     context_root=Path(run.get('checker_context_root',run.get('environment_run',run_dir)))
+    direct=run.get('execution_input_kind')=='refine-dataset'
+    generated=directory.parent/'generated' if direct else run_dir/'generated'
+    heaps=heaps_dir or (directory.parent/'heaps' if direct else run_dir/'heaps')
     return IsabelleChecker(context_root,directory,timeout=timeout,
-        previous_theories=ancestors,generated_dir=run_dir/'generated',heaps_dir=heaps_dir or run_dir/'heaps',
+        previous_theories=ancestors,generated_dir=generated,heaps_dir=heaps,
         l4v_dir=Path(run['l4v']),semantic_workspace=Path(run['semantic_workspace']),
         base_session=run['base_session'],base_import=run['base_import'],base_catalog=run['base_catalog'],
         image=run['image'],isabelle_dir=Path(run['isabelle_dir']),import_all_previous=True)
@@ -343,7 +353,9 @@ def setup(run_dir, theory, timeout):
     entry=next(f for f in data['files'] if f['theory']==theory)
     package=package_for(run,entry['file_slot']); directory=run_dir/'theories'/Path(entry['file_slot']).stem
     directory.mkdir(parents=True,exist_ok=True)
-    states=progress(run_dir)['files']
+    with _PROJECTION_LOCK:
+        states=progress(run_dir)['files']
+        catalog=read(run_dir/'generated-premises.json')['records']
     ancestry_path=directory/'imports.json'
     if ancestry_path.exists():
         ancestors=read(ancestry_path)
@@ -370,7 +382,6 @@ def setup(run_dir, theory, timeout):
         # Compatibility for pre-schema-4 runs.
         ancestors=[generated_checkpoint_theory(f['file_slot']) for f in states if f['status']=='sealed' and f['theory']!=theory]
     durable(ancestry_path,ancestors,immutable=True)
-    catalog=read(run_dir/'generated-premises.json')['records']
     visible=[record for record in catalog if any(record['canonical_name'].startswith(name+'.') for name in ancestors)]
     durable(directory/'sealed-premises.json',{'records':visible})
     heaps=run_dir/'heaps'
@@ -378,6 +389,31 @@ def setup(run_dir, theory, timeout):
         heaps=directory/'heaps'
         if not heaps.exists(): shutil.copytree(run_dir/'heaps',heaps)
     checker=checker_for(run_dir,run,directory/'isabelle',timeout,ancestors,heaps_dir=heaps)
+    if run.get('execution_input_kind')=='refine-dataset':
+        # Freeze only the providers and their transitive imports. ROOT, logs and
+        # Generated_Refine heaps belong to this theory, never to other workers.
+        pending=list(ancestors); copied=set()
+        by_checkpoint={generated_checkpoint_theory(f['file_slot']):f for f in states}
+        while pending:
+            name=pending.pop()
+            if name in copied: continue
+            copied.add(name)
+            provider=by_checkpoint[name]
+            provider_dir=run_dir/'theories'/Path(provider['file_slot']).stem
+            pending.extend(read(provider_dir/'imports.json'))
+            source=run_dir/'generated'/(name+'.thy')
+            target=checker.generated_dir/source.name
+            if target.exists() and target.read_bytes()!=source.read_bytes():
+                raise ValueError('frozen provider source drift')
+            if not target.exists(): shutil.copy2(source,target)
+        ready=directory/'provider-session.json'
+        if ready.exists() and read(ready)!={'imports':ancestors}:
+            raise ValueError('frozen provider session drift')
+        if ancestors and not ready.exists():
+            build=checker.build_generated_session(ancestors)
+            if build['verdict']!='green':
+                raise RuntimeError('provider session build failed: '+build.get('diagnostic',''))
+            durable(ready,{'imports':ancestors},immutable=True)
     return run,package,directory,journal(run_dir,run,package),checker,ancestors
 
 
@@ -404,7 +440,7 @@ def plan(run_dir,theory,*,provider,planner_model,timeout):
                 provider=provider,model=planner_model,timeout=timeout,environment=environment,
                 graph_bindings={
                     'plan_id':p['plan_id'],
-                    'plan_revision_id':p['repository_projection'].get('plan_revision_id'),
+                    'plan_revision':p['repository_projection'].get('plan_revision'),
                     'projection_sha256':p['projection_sha256'],
                     'context_profile_ids':p['repository_projection'].get('context_profile_ids',[]),
                     'sealed_provider_theories':[
@@ -619,7 +655,7 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
                 premise_snapshot_path=Path(run['premise_snapshot']),output_path=d/'retained-semantic-impact.json')
             name=generated_checkpoint_theory(p['file_slot'])
             source=checker.complete_source(graph,proofs,theory_name=name)
-            path=run_dir/'generated'/(name+'.thy');path.write_text(source)
+            path=checker.generated_dir/(name+'.thy');path.write_text(source)
             build=checker.build_generated_session([*ancestors,name])
             if build['verdict']!='green':
                 stop('generated session assembly failed');durable(d/'assembly-failure.json',freeze_evidence(build));break

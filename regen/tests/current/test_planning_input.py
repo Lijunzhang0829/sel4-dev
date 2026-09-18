@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 from regen.preparation.planning_input import (
-    PlanningInputQueries, build_refine_input, prepare,
+    PlanningInputQueries, build_refine_input, prepare, write_parent_database,
 )
 from regen.preparation.checker_context import create_context, load_context
 from regen.planning import theory_plan
@@ -36,6 +36,8 @@ session CRefine in "crefine/$L4V_ARCH" = Refine +
 ''',
             encoding="utf-8",
         )
+        (proof / "base").mkdir()
+        (proof / "base/Base.thy").write_text("theory Base imports Main begin end\n")
         refine = proof / "refine/ARM"
         refine.mkdir(parents=True)
         (refine / "Demo_R.thy").write_text(
@@ -91,6 +93,45 @@ session CRefine in "crefine/$L4V_ARCH" = Refine +
         self.assertEqual(exact[0]["attributes"], ["intro"])
         resolved = query.resolve_symbols(["Base.base_rule"], "context:Refine:parents")
         self.assertEqual(resolved[0]["status"], "resolved")
+
+    def test_compact_metadata_keeps_all_relations_and_exact_statements(self):
+        second = {**self.contract, "contract_id": "second", "name": "second"}
+        payload, _ = build_refine_input(self.l4v, [self.contract, second], [self.premise])
+        compact = theory_plan.compact_input(payload)
+        cards = compact['contract_cards']['rows']
+        for old, row in zip(payload['contract_relation_candidates'],
+                            compact['contract_relation_candidates']['rows']):
+            self.assertEqual(old['relation_id'], row[0])
+            self.assertEqual(old['left_contract_id'], cards[row[1]][0])
+            self.assertEqual(old['right_contract_id'], cards[row[2]][0])
+            self.assertEqual(old['evidence']['shared_symbols'],
+                             [compact['symbols'][index] for index in row[4]])
+        self.assertEqual(len(payload['contract_relation_candidates']),
+                         len(compact['contract_relation_candidates']['rows']))
+        evidence = theory_plan.compact_evidence({'inspected_contracts': payload['contracts']})
+        for old, new in zip(payload['contracts'], evidence['inspected_contracts']):
+            self.assertEqual(old['exact_statement'], new['exact_statement'])
+            self.assertEqual(old['contract_owned_context'], new['contract_owned_context'])
+
+    def test_inspection_batches_combined_search_results(self):
+        premises = [{
+            **self.premise, "record_id": f"premise:{index}",
+            "exact_statement": '"GroupAlpha x"' if index < 30 else '"GroupBeta x"',
+        } for index in range(60)]
+        payload, rows = build_refine_input(self.l4v, [self.contract], premises)
+        path = self.root / "repository-planning-input.json"
+        path.write_text(json.dumps(payload))
+        write_parent_database(self.root / "parent-premises.sqlite", rows)
+        evidence = repository_planner.execute_inspection(payload, {
+            "schema_version": 1,
+            "contract_batches": [[self.contract["contract_id"]]],
+            "premise_searches": [{
+                "query": query, "contract_ids": [self.contract["contract_id"]],
+                "context_profile_ids": ["context:Refine:parents"],
+                "attributes": [], "limit": 30,
+            } for query in ("GroupAlpha", "GroupBeta")],
+        }, path)
+        self.assertEqual(len(evidence["inspected_parent_premises"]), 60)
 
     def test_target_and_cross_experiment_facts_are_rejected(self):
         for session, theory in [
@@ -221,9 +262,29 @@ session CRefine in "crefine/$L4V_ARCH" = Refine +
         self.assertEqual(result["contracts"], 1)
         self.assertTrue((lineage / "revisions/0001.json").is_file())
         self.assertTrue((lineage / "HEAD.json").is_file())
-        self.assertEqual(listing["plan_revision_id"], plan["revision_id"])
-        self.assertEqual(projection["plan_revision_id"], plan["revision_id"])
+        self.assertEqual(listing["plan_revision"], plan["revision"])
+        self.assertEqual(projection["plan_revision"], plan["revision"])
         self.assertNotIn("environment_gate_id", json.dumps(plan))
+
+        self.assertNotIn("revision_id", json.dumps(plan))
+        before = {p.relative_to(output): p.read_bytes()
+                  for p in output.rglob("*.json")}
+        with patch.object(repository_planner, "_direct_call", side_effect=fake_call):
+            repository_planner.run_prepared(
+                prepared / "repository-planning-input.json", policy, output,
+            )
+        self.assertEqual(before, {p.relative_to(output): p.read_bytes()
+                                 for p in output.rglob("*.json")})
+        # Recover publication interrupted after writing just the plan log.
+        for name in ("file-generation-list.json", "files/Generated_Demo.json",
+                     repository_planner.AUDIT_FILENAME):
+            (output / name).unlink()
+        with patch.object(repository_planner, "_direct_call", side_effect=fake_call):
+            repository_planner.run_prepared(
+                prepared / "repository-planning-input.json", policy, output,
+            )
+        self.assertEqual(before, {p.relative_to(output): p.read_bytes()
+                                 for p in output.rglob("*.json")})
 
         assets = self.root / "checker-source"
         sanitized_l4v = assets / "l4v/proof/refine/base"

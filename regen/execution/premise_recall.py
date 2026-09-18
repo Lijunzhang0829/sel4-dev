@@ -25,6 +25,8 @@ def _like(value):
 
 def _upstream(database, terms):
     path = Path(database).resolve()
+    from regen.preparation.premise_database import verify_database
+    verify_database(path)
     if not path.is_file():
         raise FileNotFoundError(f'premise catalog unavailable: {path}')
     conditions, parameters = [], []
