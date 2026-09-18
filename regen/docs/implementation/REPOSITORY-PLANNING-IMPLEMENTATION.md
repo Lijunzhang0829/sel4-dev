@@ -183,3 +183,22 @@ VERO 流程；VERO 的 generation 模板本身使用固定模块，不能据此�
 本次修改是规划目标和 prompt 的强化。结构 validator 仍检查覆盖、合法前提、上下文 profile
 及无环性，不把 theory 数量或文本长度当作架构质量认证；也不引入固定分组数、helper/边
 配额或提案修改次数上限。已冻结实验及逐轮 prompt 保持原样，新调用才使用更新后的 prompt。
+
+
+## 9. 文件型规划 agent（新对照运行）
+
+使用 `--policy regen/config/repository-planning-policy-workspace.json` 选择 `agent-workspace`；旧迭代策略保持可重放。模型仍为 gpt-5.6-sol / medium。
+
+`workspace_planner.py` 启动独立的非 root Docker worker，只挂载只读去归属输入、工具客户端、RPC socket、固定 Codex runtime，以及可写工作区。原仓库、契约私有映射、checker 资产和 Docker socket 不进入 worker。Codex 使用临时独立认证目录，结束时删除；认证不属于模型任务输入。外层容器提供隔离，内层 CLI 可执行脚本和修改工作区文件。审计允许这些工具事件，但该审计类型仅用于仓库规划，不替代 proof-generation 的 no-tool 审计。
+
+全量简洁目录与精确契约是只读文件，不逐轮注入大量共享符号候选。契约按语义 hash 排序映射为 C0001 等短 ID；私有 harness 映射回冻结原 ID。模型通过 `/tool.py` 查询 contracts、definitions、search、inspect、related，增量编辑 plan.json，并运行 validate/preflight/submit。定义查询复用经 native 来源认证的 v2 premise 库，按公开名字查找定义/方程候选；命名匹配不是证明依赖认证。Premise 完整记录必须经过可信查询回执才能在提案中复用。服务在模型容器外运行，查询与提交记录不受 agent 工作区修改影响。
+
+validate 一次返回可定位的格式/覆盖错误，原权威 validator 继续检查 schema、上下文 profile、合法已检查前提和 DAG。preflight 根据冻结契约和模型 provider 边渲染 theory，以 oops 检查原生声明及 imports；不证明任何目标。相邻完全相同的 owned context 共用一个作用域，避免重复 interpretation；声明以 oops 结束，不建立新事实。900 秒原生检查超时独立于模型调用超时。submit 必须同时通过结构检查与原生预检查，最终自然语言回复不能发布计划。
+
+这里的 suggested_predecessors 明确表示后续要等待 seal 并冻结导入的 provider；数组顺序仅用于 ready theory 优先级。Agent 应根据查询到的定义、契约和可复用事实分析潜在循环及跨模块协作，并记录不确定关系。没有 theory 数量、helper 数量或修正轮数配额。
+
+模型调用仍有单次超时，并按相同请求重试一次；重试前恢复调用前的工作区与查询证据状态，保留已发生请求日志供审计，不消费部分最终响应。计划文件每两秒保存变化快照（不保证捕获每次写入）；快照读取拒绝 symlink。原生预检查失败可重试，同一提案成功的原生检查可复用。发布仍使用原有 plan_id/revision 日志和文件投影。
+
+相关回归测试：`test_workspace_planning.py`。不将本轮生成的规划视为已完成证明或完整仓库构建。
+
+文件型 worker 显式设置 `web_search="disabled"`，不依赖 prompt 禁止网页工具。审计仍拒绝所有 web_search 事件；出现此事件的运行不予发布，新运行不继承它的模型工作区。

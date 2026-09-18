@@ -49,7 +49,7 @@ def validate_policy(policy: dict):
         raise ValueError('invalid repository planning policy')
     if not isinstance(policy.get('model', {}).get('model'), str):
         raise ValueError('planning policy must specify a model')
-    if policy.get('interaction') == 'agent-iterative':
+    if policy.get('interaction') in {'agent-iterative', 'agent-workspace'}:
         if 'max_attempts' in policy['model']:
             raise ValueError('iterative planning has no proposal-attempt limit')
     else:
@@ -711,7 +711,14 @@ def run_prepared(
             }
         model = policy['model']['model']
         timeout = int(policy['model'].get('timeout_seconds', 1800))
-        if policy.get('interaction') == 'agent-iterative':
+        if policy.get('interaction') == 'agent-workspace':
+            from regen.planning.workspace_planner import run_agent
+            result = run_agent(payload, planning_input_path,
+                {**policy, '_allow_external_call': allow_external_call}, output)
+            proposal, artifacts = result['proposal'], result['artifacts']
+            plan_prefix = result['plan_prefix']
+            inspection_prefix = None
+        elif policy.get('interaction') == 'agent-iterative':
             from regen.planning.iterative_planner import run_agent
             result = run_agent(payload, planning_input_path,
                 {**policy, '_allow_external_call': allow_external_call}, output, _direct_call)
@@ -778,6 +785,8 @@ def run_prepared(
             'plan_id': current['plan_id'],
             'plan_revision': current['revision'],
             'planning_input_id': payload['planning_input_id'],
+            'interaction': policy.get('interaction'),
+            'native_declaration_preflight': policy.get('interaction') == 'agent-workspace',
             'inspection_transcript_prefix': str(inspection_prefix.relative_to(output)) if inspection_prefix else None,
             'planning_transcript_prefix': str(plan_prefix.relative_to(output)),
             'checks': [
