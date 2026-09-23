@@ -36,7 +36,7 @@ point to an included canonical object. observation_inventory identifies visible
 diagnostic ranges; target_memory and recent_actions provide navigation. Incomplete
 excerpts are not full proof states. Historical evidence remains available on demand.
 Any action may include "notes":"current approach, observations and next step" and
-"workspace":{"focus_node_ids":["current or previously attempted node ID"],
+"workspace":{"focus_node_ids":["current, attempted, or same-batch new helper ID"],
 "record_ids":["previously recalled IDs"],"summary":"route, obstacle and next check"}.
 Selections persist until replaced. Query/route/cost signals and batch opportunities
 are advisory. No iteration quota applies. After helper success, use consumer_feedback
@@ -247,11 +247,6 @@ def apply_feedback(state, proposal, feedback, number):
         if facts and number >= state.get('batch_requested_fact_ids_request_number', 0):
             new['batch_requested_fact_ids'] = list(dict.fromkeys(facts))
             new['batch_requested_fact_ids_request_number'] = number
-    if isinstance(proposal.get('workspace'), dict) and feedback.get('status') not in {'rejected_request','tool_failed'}:
-        from regen.planning.planner_workspace import validate_workspace
-        if number >= new.get('batch_workspace_request', 0):
-            new['batch_workspace'] = validate_workspace(new, proposal['workspace'])
-            new['batch_workspace_request'] = number
     if proposal.get('action') == 'read_proof_state' and feedback.get('status') == 'available':
         if number >= new.get('batch_proof_state_request', 0):
             new['batch_requested_proof_state'] = deepcopy(feedback['proof_state'])
@@ -286,6 +281,12 @@ def apply_feedback(state, proposal, feedback, number):
         for node_id in proposal['proofs']:
             if number >= targets.get(node_id, {}).get('request_number', 0):
                 targets[node_id] = deepcopy(attempt)
+    if isinstance(proposal.get('workspace'), dict) and feedback.get('status') not in {'rejected_request','tool_failed'}:
+        from regen.planning.planner_workspace import validate_workspace
+        if number >= new.get('batch_workspace_request', 0):
+            candidates = proposal.get('graph', {}).get('generated_nodes', []) if proposal.get('action') == 'submit_batch' else ()
+            new['batch_workspace'] = validate_workspace(new, proposal['workspace'], candidate_nodes=candidates)
+            new['batch_workspace_request'] = number
     if feedback.get('kind') == 'fact_selection' and feedback.get('status') == 'available':
         facts = {f['record_id']:f for f in new.get('batch_facts', [])}
         facts.update({f['record_id']:deepcopy(f) for f in feedback.get('records', [])})
@@ -846,7 +847,8 @@ def _record_termination(run_dir, theory, directory, journal, state, error):
 
 
 def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
-                    call_timeout=600, check_timeout=900, candidate_timeout=120, max_requests=0):
+                    call_timeout=600, check_timeout=900, candidate_timeout=120, max_requests=0,
+                    decision_source=None, runtime_cache=None):
     from regen.execution.repository_execution import setup, context_graph, progress
     from regen.execution.proof_session_runner import frozen_role_model
     from regen.execution.proof_batches import prepare_batch, check_batch
@@ -858,18 +860,26 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
     try:
         with _PhaseTimer(None, ('setup', 'initial_state', 'restore_and_resume', 'progress'),
                          theory=theory, scope='initialization_latest_invocation') as initialization:
-            run, package, directory, journal, checker, ancestors = setup(run_dir, theory, check_timeout)
+            cache_key = (str(Path(run_dir).resolve()), theory, check_timeout)
+            cached = runtime_cache.get(cache_key) if runtime_cache is not None else None
+            cached_runtime = cached is not None
+            if cached is None:
+                cached = setup(run_dir, theory, check_timeout)
+                if runtime_cache is not None:
+                    runtime_cache[cache_key] = cached
+            run, package, directory, journal, checker, ancestors = cached
             from regen.infrastructure.progress_events import configure_event_monitor, emit_event
             configure_event_monitor(Path(run_dir), run_id=run['run_id'], theory=theory)
             monitor_started = True
-            emit_event('file_planner_started', theory=theory, stage='initialization', mode='file-planner-batch-v1')
+            emit_event('file_planner_started', theory=theory, stage='initialization',
+                       mode='file-planner-workspace-v1' if decision_source else 'file-planner-batch-v1')
             checker.batch_candidate_timeout = candidate_timeout
             initialization.path = directory/'batch-initialization-timing.json'
             initialization.mark('initial_state')
             model = model or frozen_role_model(run, 'File Planner')
             if model != frozen_role_model(run, 'File Planner'):
                 raise ValueError('File Planner model differs from frozen identity')
-            policy = {'mode':'file-planner-batch-v1', 'provider':provider, 'model':model,
+            policy = {'mode':'file-planner-workspace-v1' if decision_source else 'file-planner-batch-v1', 'provider':provider, 'model':model,
                       'call_timeout':call_timeout, 'check_timeout':check_timeout,
                       'candidate_timeout':candidate_timeout, 'workers':1}
             durable(directory/'batch-policy.json', policy, immutable=True)
@@ -891,15 +901,17 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
             if state.get('runtime_policy') and state['runtime_policy'].get('mode') != policy['mode']:
                 raise ValueError('use an explicit continuation to change frozen execution policy')
             initialization.mark('restore_and_resume')
-            new = restore_batch_memory(directory, state)
-            new.update(status='generating', reason='', runtime_policy=policy)
-            new.pop('termination', None)
-            state = journal.append('resume', new, {'reason':'authorized batch controller; preserve graph, proofs and historical costs'})
+            if not cached_runtime or state.get('status') != 'generating':
+                new = restore_batch_memory(directory, state)
+                new.update(status='generating', reason='', runtime_policy=policy)
+                new.pop('termination', None)
+                state = journal.append('resume', new, {'reason':'authorized batch controller; preserve graph, proofs and historical costs'})
             initialization.mark('progress')
             progress(run_dir)
         executed = 0
+        source_phase = 'tool_source_audit' if decision_source else 'model'
         while not max_requests or executed < max_requests:
-            with _PhaseTimer(None, ('charge', 'input_and_prompt', 'model', 'action', 'commit', 'progress'),
+            with _PhaseTimer(None, ('charge', 'input_and_prompt', source_phase, 'action', 'commit', 'progress'),
                              theory=theory, scope='request') as timing:
                 count = state.get('batch_requests', 0)+1
                 request_dir = directory/'batch-requests'/f'{count:06d}'
@@ -910,30 +922,44 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 state = journal.append('planner-request', new, {'request_number':count})
                 timing.mark('input_and_prompt')
                 timing.metadata['model_attempts'] = 0
-                payload, prompt = prepare_prompt(planner_input(package, state))
+                if decision_source is None:
+                    payload, prompt = prepare_prompt(planner_input(package, state))
+                else:
+                    from regen.planning.planner_context import project_context
+                    payload = project_context(planner_input(package, state))
+                    prompt = json.dumps({'kind':'workspace-action-context-reference',
+                        'theory':theory,'request_number':count,'input_sha256':digest(payload)}, sort_keys=True)
                 durable(request_dir/'input.json', payload, immutable=True)
                 durable(request_dir/'input-preflight.json', {
-                    'status':'ready', 'prompt_chars':len(prompt), 'limit_chars':PROMPT_CHARS,
+                    'status':'ready', 'prompt_chars':len(prompt), 'limit_chars':PROMPT_CHARS if decision_source is None else None,
                     'prompt_sha256':digest(prompt)}, immutable=True)
-                timing.mark('model')
+                timing.mark(source_phase)
                 timing.metadata['model_attempts'] = 0
                 response = None
                 timing.metadata['calls'] = []
-                for attempt in range(2):
-                    timing.metadata['model_attempts'] += 1
+                for attempt in range(1 if decision_source else 2):
+                    timing.metadata['model_attempts'] += int(decision_source is None)
+                    timing.metadata['dispatch_kind'] = 'dynamic_tool_call' if decision_source else 'model_request'
                     prefix = allocate_artifact_prefix(request_dir/'call')
                     call_record = {'artifact_prefix':str(prefix), 'state':'backend_attempted',
                                    'audited_turn_completed':False, 'provider_called':None}
                     timing.metadata['calls'].append(call_record)
                     timing.publish_lifecycle('running')
                     try:
-                        response = call_llm(provider, prompt, prefix, model=model,
-                            timeout=call_timeout, theory=theory, stage='file-planner-batch', clean_runtime=True)
+                        if decision_source is None:
+                            response = call_llm(provider, prompt, prefix, model=model,
+                                timeout=call_timeout, theory=theory, stage='file-planner-batch', clean_runtime=True)
+                        else:
+                            response = decision_source(prompt, payload, prefix, theory=theory, model=model)
                         call_record['state'] = 'backend_returned'
                         meta = validate_call_artifact(prefix, require_real=True)
-                        call_record.update(state='audited', audited_turn_completed=True, provider_called=True)
+                        call_record.update(state='audited', audited_turn_completed=decision_source is None,
+                                           provider_called=decision_source is None,
+                                           audited_tool_call=decision_source is not None)
                         break
                     except RuntimeError as error:
+                        if decision_source is not None:
+                            raise  # A received tool action must never be dispatched twice.
                         from regen.infrastructure.provider_recovery import transient_failure, ProviderUnavailable
                         transient = transient_failure(prefix)
                         if attempt:
@@ -955,20 +981,24 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     if not isinstance(proposal, dict):
                         proposal = None
                         raise ValueError('expected one JSON action object')
+                    if proposal.get('action') == 'submit_batch' and any(
+                            key in proposal for key in ('proof_edits','reuse_proofs','reuse_helpers')):
+                        durable(request_dir/'model-proposal.json', proposal, immutable=True)
                     if proposal.get('action') == 'submit_batch' and 'proof_edits' in proposal:
                         from regen.planning.planner_efficiency import expand_edits
-                        durable(request_dir/'model-proposal.json', proposal, immutable=True)
                         proposal = expand_edits(directory, state, proposal)
                     if proposal.get('action') == 'submit_batch' and 'reuse_proofs' in proposal:
                         from regen.planning.batch_routes import expand_reuse
-                        durable(request_dir/'model-proposal.json',proposal,immutable=True)
                         proposal = expand_reuse(directory,state,proposal)
+                    if proposal.get('action') == 'submit_batch' and 'reuse_helpers' in proposal:
+                        from regen.execution.shared_proof_workspace import SharedProofWorkspace, expand_reuse_helpers
+                        proposal = expand_reuse_helpers(proposal, state, SharedProofWorkspace(Path(run_dir)))
                     durable(request_dir/'proposal.json', proposal, immutable=True)
                     if 'notes' in proposal and not isinstance(proposal['notes'], str):
                         raise ValueError('notes must be a string')
                     action = proposal.get('action')
                     timing.metadata['action'] = action
-                    if 'workspace' in proposal:
+                    if 'workspace' in proposal and action != 'submit_batch':
                         from regen.planning.planner_workspace import validate_workspace
                         validate_workspace(state, proposal['workspace'])
                     if action == 'observe':
@@ -1025,7 +1055,10 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         feedback = {'status':'available', 'proofs':[
                             {**nodes[k], 'proof_body':state['proofs'][k], 'proof_sha256':digest(state['proofs'][k])} for k in ids]}
                     elif action == 'submit_batch':
-                        candidate = prepare_batch(package, state, {k: v for k, v in proposal.items() if k not in {'action', 'notes', 'workspace', 'reuse_origin', 'edit_origin', 'retry_check'}})
+                        candidate = prepare_batch(package, state, {k: v for k, v in proposal.items() if k not in {'action', 'notes', 'workspace', 'reuse_origin', 'edit_origin', 'retry_check', 'workspace_reuse_origin'}})
+                        if 'workspace' in proposal:
+                            from regen.planning.planner_workspace import validate_workspace
+                            validate_workspace(candidate, proposal['workspace'])
                         durable(request_dir/'candidate.json', candidate, immutable=True)
                         from regen.planning.planner_efficiency import failure_identity, reused_failure
                         identity = failure_identity(run, checker, state, candidate)
@@ -1036,6 +1069,8 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                                     check_batch(checker, state, candidate))
                         evidence.update(sealable_generation=bool(meta.get('sealable_generation')),
                                         transcript_prefix=str(prefix), reason=proposal.get('reason',''))
+                        if 'workspace_reuse_origin' in proposal:
+                            evidence['workspace_reuse_origin'] = deepcopy(proposal['workspace_reuse_origin'])
                         durable(request_dir/'check.json', evidence, immutable=True)
                         if evidence['check']['verdict'] == 'green':
                             timing.mark('commit')
@@ -1043,7 +1078,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                                 'new_green':sorted(set(candidate['proofs'])-set(state['proofs'])),
                                 'graph_revision':candidate['graph']['revision'],
                                 'node_results':evidence.get('node_results',[]),
-                                'cost_seconds':{k:timing.seconds[k] for k in ('model','action')}}, batch_candidate=None)
+                                'cost_seconds':{k:timing.seconds[k] for k in (source_phase,'action')}}, batch_candidate=None)
                             candidate.pop('revision_rejection', None)
                             candidate = apply_feedback(candidate, proposal, candidate['batch_feedback'], count)
                             state = journal.append('batch', candidate, evidence)
@@ -1085,7 +1120,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 timing.metadata['check_verdict'] = feedback.get('check', {}).get('verdict')
                 timing.mark('commit')
                 if proposal and proposal.get('action') == 'submit_batch':
-                    feedback['cost_seconds'] = {k:timing.seconds[k] for k in ('model','action')}
+                    feedback['cost_seconds'] = {k:timing.seconds[k] for k in (source_phase,'action')}
                 timing.metadata['status'] = feedback['status']
                 durable(request_dir/'feedback.json', feedback, immutable=True)
                 new = apply_feedback(state, proposal, feedback, count)
@@ -1109,7 +1144,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
         active_error = sys.exc_info()[0] is not None
         monitor_reason = 'failed' if active_error else 'controller-returned'
         try:
-            if checker is not None:
+            if checker is not None and runtime_cache is None:
                 checker.close_prefix()
         except Exception as cleanup_error:
             monitor_reason = 'failed'
@@ -1118,7 +1153,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 raise
             logging.getLogger(__name__).exception('Worker cleanup failed after controller failure')
         finally:
-            if monitor_started:
+            if monitor_started and runtime_cache is None:
                 from regen.infrastructure.progress_events import close_event_monitor
                 try:
                     close_event_monitor(monitor_reason)

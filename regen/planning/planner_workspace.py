@@ -105,10 +105,11 @@ def intermediate_target(directory, state, request):
         'origin':origin,'goal_sha256':goal['sha256'],'diagnostic_sha256':observed['diagnostic']['diagnostic_sha256']}
 
 
-def validate_workspace(state, value):
+def validate_workspace(state, value, *, candidate_nodes=()):
     if not isinstance(value,dict) or set(value)-{'focus_node_ids','record_ids','summary'}:
         raise ValueError('workspace supports focus_node_ids, record_ids and summary')
-    known={n['id'] for n in state['graph']['nodes']} | set(state.get('batch_target_memory',{}))
+    known=({n['id'] for n in state['graph']['nodes']} | set(state.get('batch_target_memory',{}))
+           | {n['id'] for n in candidate_nodes})
     for field,available,limit in [('focus_node_ids',known,4),
         ('record_ids',{f['record_id'] for f in state.get('batch_facts',[])},24)]:
         ids=value.get(field,[])

@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 
 from regen.planning.workspace_harness import WorkspaceHarness, save
 from regen.planning.workspace_preflight import native_checker
-from regen.planning.import_contract import prompt_v5
+from regen.planning.import_contract import prompt_v5, prompt_v6
 from regen.planning.planning_freeze import code_files
 from regen.infrastructure.audited_llm import model_settings
 from regen.preparation.refine_campaign import write_immutable_json
@@ -24,11 +24,11 @@ from regen.preparation.refine_campaign import write_immutable_json
 ALLOWED_EVENTS={'reasoning','agent_message','error','command_execution','file_change','todo_list'}
 
 
-def instruction(payload):
+def instruction(payload, schema_version=6):
     # Reuse the proposal schema/goals, but put data in read-only files instead of
     # injecting the entire contract and shared-symbol catalog on every model call.
     minimal={**payload,'contract_cards':[],'contract_relation_candidates':[]}
-    template=prompt_v5(minimal,[]).split('\nPREVIOUS VALIDATION ERRORS:')[0]
+    template=({5: prompt_v5, 6: prompt_v6}[schema_version])(minimal,[]).split('\nPREVIOUS VALIDATION ERRORS:')[0]
     template=template.replace('Use only the supplied legal input and any explicit harness operations offered by the enclosing interaction. Do not read files, history, removed proofs, or external sources.',
         'Use only /input, your own /workspace files, and the trusted /tool.py service. Never seek removed proofs, source owners, host files, credentials, or external sources.')
     template=template.replace('Return JSON only matching this schema (all fields required):',
@@ -57,7 +57,7 @@ Distinguish a restricted-case contract from a more general contract for the same
 Query order and theory count are yours to choose. Do not manufacture helper intents or provider edges to fill quotas.
 Theories have unique names and helper IDs matching [A-Za-z][A-Za-z0-9_]* (no hyphens).
 IMPORTANT: required_imports are the planned PROVIDERS used by downstream execution to freeze imports after those theories seal. Once accepted, these are mandatory imports, not optional scheduling suggestions. All providers must seal before this theory starts, then imports are frozen. Individual fact citations are not mandatory. Do not add edges merely to prioritize work. The theories array separately breaks ties among ready theories.
-Review whether every claimed cross-theory reuse is supported by a provider path and whether priority agrees with your rationale. Keep uncertain relations explicit as unresolved questions. The fields name, purpose, grouping_reason, helper_decisions and required_imports describe a handoff to File Planner, not a local proof graph. The native-checker entry name Planner_Preflight_All is reserved.
+For schema 6, collaboration_groups and reuse_suggestions express opportunities without freezing imports, readiness dependencies or proof routes. A collaboration group can span physical theories; only sealed imported results become legal cross-theory premises. Keep uncertain relations explicit, and promote a suggestion to required_imports only when committing to that context. Review whether hard imports and ready priority agree with your rationale. The fields name, purpose, grouping_reason, helper_decisions and required_imports describe a handoff to File Planner, not a local proof graph. The native-checker entry name Planner_Preflight_All is reserved.
 Exact new helpers and local proof DAGs belong to File Planner. This stage generates no proofs and uses no proof-state retrieval.
 Validate and repair incrementally; validation returns errors without changing your file. Native preflight renders exact declarations with oops and real planned imports; it proves nothing. A successful final response alone does not submit anything: finish by calling submit on the complete plan, which also requires native preflight to pass. Only then give a brief final status.
 Do not use the network, install packages, access /codex-home, change /input, or modify /tool.py. They are not task inputs.
@@ -227,7 +227,7 @@ def run_agent(payload, planning_input_path, policy, output):
     workspace=output/'workspace'; workspace.mkdir(exist_ok=True)
     save(public/'contracts.json',harness.view.payload['contracts'])
     save(public/'catalog.json',{'contracts':harness.view.payload['contract_cards'],'context_profiles':harness.view.payload['context_profiles']})
-    text=instruction(harness.view.payload); harness.view.assert_no_owner_disclosure(text)
+    text=instruction(harness.view.payload,policy.get('proposal_schema_version',5)); harness.view.assert_no_owner_disclosure(text)
     api=Path(tempfile.mkdtemp(prefix='regen-planner-api-')); server,thread=start_service(harness,api)
     stop=threading.Event()
     def watch():

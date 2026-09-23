@@ -67,6 +67,10 @@ def projection_package(projection, plan):
         'repository_projection':{**projection,
             ('required_providers' if projection['schema_version']>=5 else 'suggested_providers'):providers},
         'plan_id':plan['plan_id'], 'projection_sha256':digest(projection)}
+    # New advice is carried only when present; legacy package bytes stay stable.
+    for field in ('collaboration_groups', 'reuse_suggestions', 'context_profiles'):
+        if field in projection:
+            body[field] = deepcopy(projection[field])
     return {**body, 'package_payload_sha256':digest(body)}
 
 
@@ -75,7 +79,7 @@ def init_run(run_dir, input_root, run_id, schedule):
     input_root, schedule = input_root.resolve(), schedule.resolve()
     listing = read(schedule)
     if not listing.get('files'): raise ValueError('empty repository file list')
-    direct = listing.get('schema_version') in {5,6}
+    direct = listing.get('schema_version') in {5,6,7}
     if direct:
         from regen.planning.plan_revisions import verify_revisions
         revision = verify_revisions(schedule.parent/'planning')
@@ -376,6 +380,47 @@ def checker_for(run_dir, run, directory, timeout, ancestors, *, heaps_dir=None):
     return checker
 
 
+def sealed_import_closure(run_dir, states, ancestors):
+    """Resolve actual frozen imports, using only journal-verified sealed providers.
+
+    Neither suggested reuse nor current same-session GREEN facts add visibility.
+    `states` must come from progress(), which replays the accepted seal journals.
+    Direct imports are not rewritten: they remain the consumer's frozen binding.
+    """
+    from regen.execution.proof_session_runner import generated_checkpoint_theory
+    by_checkpoint = {generated_checkpoint_theory(item['file_slot']): item for item in states}
+    active, visited, ordered = set(), set(), []
+
+    def visit(name):
+        if name in active:
+            raise ValueError('cyclic frozen provider imports: ' + name)
+        if name in visited:
+            return
+        provider = by_checkpoint.get(name)
+        if provider is None or provider['status'] != 'sealed':
+            raise ValueError('frozen import provider is not sealed: ' + name)
+        path = run_dir/'theories'/Path(provider['file_slot']).stem/'imports.json'
+        if not path.is_file():
+            raise ValueError('sealed provider is missing frozen imports: ' + name)
+        imports = read(path)
+        if (not isinstance(imports, list) or not all(isinstance(item, str) for item in imports)
+                or len(set(imports)) != len(imports)):
+            raise ValueError('invalid frozen provider imports: ' + name)
+        active.add(name)
+        for imported in imports:
+            visit(imported)
+        active.remove(name)
+        visited.add(name)
+        ordered.append(name)
+
+    if (not isinstance(ancestors, list) or not all(isinstance(name, str) for name in ancestors)
+            or len(set(ancestors)) != len(ancestors)):
+        raise ValueError('invalid frozen theory imports')
+    for name in ancestors:
+        visit(name)
+    return ordered
+
+
 def setup(run_dir, theory, timeout):
     from regen.execution.proof_session_runner import generated_checkpoint_theory
     run=read(run_dir/'run.json'); data=read(run_dir/'execution-input.json')
@@ -415,8 +460,10 @@ def setup(run_dir, theory, timeout):
     else:
         # Compatibility for pre-schema-4 runs.
         ancestors=[generated_checkpoint_theory(f['file_slot']) for f in states if f['status']=='sealed' and f['theory']!=theory]
+    governed = package['repository_projection'].get('schema_version',0)>=4
+    visible_imports = sealed_import_closure(run_dir, states, ancestors) if governed else ancestors
     durable(ancestry_path,ancestors,immutable=True)
-    visible=[record for record in catalog if any(record['canonical_name'].startswith(name+'.') for name in ancestors)]
+    visible=[record for record in catalog if any(record['canonical_name'].startswith(name+'.') for name in visible_imports)]
     durable(directory/'sealed-premises.json',{'records':visible})
     heaps=run_dir/'heaps'
     if package['repository_projection'].get('schema_version',0)>=4:
@@ -426,15 +473,8 @@ def setup(run_dir, theory, timeout):
     if run.get('execution_input_kind')=='refine-dataset':
         # Freeze only the providers and their transitive imports. ROOT, logs and
         # Generated_Refine heaps belong to this theory, never to other workers.
-        pending=list(ancestors); copied=set()
-        by_checkpoint={generated_checkpoint_theory(f['file_slot']):f for f in states}
-        while pending:
-            name=pending.pop()
-            if name in copied: continue
-            copied.add(name)
-            provider=by_checkpoint[name]
-            provider_dir=run_dir/'theories'/Path(provider['file_slot']).stem
-            pending.extend(read(provider_dir/'imports.json'))
+        provider_closure = visible_imports if governed else sealed_import_closure(run_dir, states, ancestors)
+        for name in provider_closure:
             source=run_dir/'generated'/(name+'.thy')
             target=checker.generated_dir/source.name
             if target.exists() and target.read_bytes()!=source.read_bytes():
@@ -749,7 +789,7 @@ def run_session(run_dir,*,retry_failed=False,max_parallel_theories=1,**options):
         raise ValueError('max_parallel_theories must be positive')
     run=read(run_dir/'run.json')
     listing=read(Path(run['session_schedule']['source']))
-    direct=listing.get('schema_version') in {5,6}
+    direct=listing.get('schema_version') in {5,6,7}
     if not direct:
         results=[]
         for entry in progress(run_dir)['files']:

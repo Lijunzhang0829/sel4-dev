@@ -473,6 +473,9 @@ def inspect_call_artifact(artifact_prefix: Path, *, require_real: bool = True,
         raise ValueError(f"incomplete LLM transcript {artifact_prefix}: missing {missing}")
     meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
     audit = json.loads(paths["audit"].read_text(encoding="utf-8"))
+    if meta.get("provider") == "codex-workspace-audited":
+        from regen.infrastructure.workspace_transcript import verify_workspace_action
+        return verify_workspace_action(artifact_prefix, require_real=require_real, require_success=require_success)
     if require_real and meta.get("provider") not in REAL_PROVIDERS:
         raise ValueError(f"non-network/replay transcript cannot seal: {artifact_prefix}")
     for field, actual in _hashes(paths).items():

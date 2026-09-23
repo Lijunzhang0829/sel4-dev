@@ -35,6 +35,9 @@ def prompt(payload, feedback):
 
 
 def normalize(payload, proposal):
+    if proposal.get("schema_version") == 6:
+        from regen.planning.import_contract import normalize_v6
+        return normalize_v6(payload, proposal)
     if proposal.get("schema_version") == 5:
         from regen.planning.import_contract import legacy_proposal
         result = normalize_v4(payload, legacy_proposal(proposal))
@@ -99,6 +102,9 @@ def normalize(payload, proposal):
 
 
 def build_bundle(payload,proposal):
+    if proposal.get("schema_version") == 6:
+        from regen.planning.import_contract import build_bundle_v6
+        return build_bundle_v6(payload, proposal)
     if proposal.get("schema_version") == 5:
         from regen.planning.import_contract import build_bundle_v5
         return build_bundle_v5(payload, proposal)

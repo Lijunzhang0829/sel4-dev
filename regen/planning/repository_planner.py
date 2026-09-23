@@ -56,6 +56,10 @@ def validate_policy(policy: dict):
         attempts = policy['model'].get('max_attempts')
         if not isinstance(attempts, int) or attempts <= 0:
             raise ValueError('legacy planning policy must specify positive max_attempts')
+    proposal_version = policy.get('proposal_schema_version')
+    if proposal_version is not None and (type(proposal_version) is not int
+            or proposal_version not in {5, 6} or policy.get('interaction') != 'agent-workspace'):
+        raise ValueError('proposal_schema_version 5 or 6 requires agent-workspace planning')
     if policy['model'].get('reasoning_effort', 'medium') not in {'low','medium','high','xhigh','max'}:
         raise ValueError('invalid planning reasoning effort')
 

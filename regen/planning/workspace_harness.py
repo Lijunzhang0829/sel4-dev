@@ -7,10 +7,23 @@ import threading
 from regen.planning.owner_blind import OwnerBlindView
 from regen.planning.iterative_planner import validate_draft
 from regen.planning.theory_plan import build_bundle
-from regen.planning.workspace_validation import diagnostics
+from regen.planning.workspace_validation import diagnostics as legacy_diagnostics
 from regen.preparation.planning_input import PlanningInputQueries
 from regen.preparation.refine_campaign import write_immutable_json
 from regen.planning.definition_queries import definition_ids, mentioned_identifiers
+
+
+def diagnostics(payload, proposal, evidence=None):
+    """Preserve aggregated legacy diagnostics and validate v6 advisory metadata."""
+    from regen.planning.import_contract import proposal_v5
+    try:
+        errors = legacy_diagnostics(payload, proposal_v5(proposal), evidence)
+    except (ValueError, KeyError, TypeError) as error:
+        return [{'path': '', 'message': str(error)}]
+    if not errors and isinstance(proposal, dict) and proposal.get('schema_version') == 6:
+        result, _ = validate_draft(payload, proposal, evidence or {})
+        errors.extend({'path': '', 'message': message} for message in result['errors'])
+    return errors
 
 
 def save(path, value):
@@ -66,7 +79,7 @@ class WorkspaceHarness:
         if errors: return {'valid':False,'errors':errors}
         result,_=validate_draft(self.view.payload,proposal,self.evidence())
         if result['valid']:
-            result['notice']='Structure checked, not architectural quality or proof validity. Providers determine later import availability; array order only prioritizes ready theories.'
+            result['notice']='Structure checked, not architectural quality or proof validity. Only required imports determine later availability. Collaboration and reuse suggestions grant no premise visibility or readiness dependencies; array order prioritizes ready theories.'
             if len(proposal['theories'])==1 and len(self.view.payload['contracts'])>1:
                 result['warnings']=['A catch-all theory does not fulfill the requested multi-theory design.']
         return result

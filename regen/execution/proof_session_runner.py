@@ -2272,6 +2272,15 @@ def main() -> int:
                        help="Seconds per candidate proof batch; separate from graph and final seal checks")
     batch.add_argument("--max-requests", type=int, default=0,
                        help="Checkpoint after this many requests; 0 means no count limit")
+    workspace = sub.add_parser("workspace", help="Run one persistent workspace agent across selected theories")
+    workspace.add_argument("--run-dir", type=Path, required=True)
+    workspace.add_argument("--theory", action="append", dest="theories", help="Repeat to select theories; omit for all")
+    workspace.add_argument("--planner-model", default=None, help="Must match the run-frozen File Planner model")
+    workspace.add_argument("--call-timeout", type=int, default=600, help="Provider event inactivity timeout; excludes native checks")
+    workspace.add_argument("--check-timeout", type=int, default=900)
+    workspace.add_argument("--candidate-timeout", type=int, default=120)
+    workspace.add_argument("--allow-external-call", action="store_true", help="Enable the audited dynamic-tool provider session")
+    workspace.add_argument("--codex-home", type=Path, help="Authentication source; only auth.json is copied")
     args = parser.parse_args()
     if args.command == "init" and bool(args.dataset_root) == bool(args.environment_run):
         parser.error("init requires exactly one of --dataset-root or --environment-run")
@@ -2283,6 +2292,12 @@ def main() -> int:
                 run_id=args.run_id,
                 schedule_path=args.schedule,
             )
+        elif args.command == "workspace":
+            from regen.planning.proof_workspace_agent import run_workspace
+            result = run_workspace(args.run_dir, theories=args.theories, model=args.planner_model,
+                call_timeout=args.call_timeout, check_timeout=args.check_timeout,
+                candidate_timeout=args.candidate_timeout, allow_external_call=args.allow_external_call,
+                codex_home=args.codex_home)
         elif args.command == "batch-file":
             from regen.planning.batch_file_planner import run_batch_file
             result = run_batch_file(args.run_dir, args.theory, provider=args.provider,
