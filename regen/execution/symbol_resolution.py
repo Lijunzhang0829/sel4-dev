@@ -4,12 +4,16 @@ import re
 from regen.execution.proof_commits import digest, durable, freeze_evidence
 
 IDENTIFIER=re.compile(r"[A-Za-z][A-Za-z0-9_'.]*")
+MAX_SYMBOLS = 16
+TERM_LOOKUP_NOTICE = ('Term namespace only; this does not query facts or establish that a fact is absent. '
+                      'For a lemma use query with mode=exact, then read_facts for recalled records.')
 
 
 def resolve_symbols(checker, names, context):
     from regen.execution.isabelle_node_checker import wrap_context, parse_hex_tsv
-    if len(names)>4 or any(not isinstance(n,str) or not IDENTIFIER.fullmatch(n) for n in names):
-        raise ValueError('symbol lookup accepts at most four plain Isabelle identifiers')
+    if (not isinstance(names,(list,tuple)) or not 1 <= len(names) <= MAX_SYMBOLS
+            or any(not isinstance(n,str) or len(n)>256 or not IDENTIFIER.fullmatch(n) for n in names)):
+        raise ValueError('symbol lookup requires 1-16 plain Isabelle term identifiers (constants or abbreviations)')
     identity={'imports':checker.imports(),'context':context,'names':list(names)}
     key=digest(identity)
     cache=getattr(checker,'_symbol_cache',None)
@@ -31,17 +35,26 @@ local
   fun row tag fields = TextIO.output (stream,
     space_implode "\t" (tag :: map (String.translate hex) fields) ^ "\n");
   fun inspect name =
-    ((let
-        val term = Syntax.read_term ctxt name;
-        val constants = Term.add_const_names term [];
-        val _ = if null constants then error "Identifier resolved only as a free variable" else ();
-        val printed = Print_Mode.setmp [] (Syntax.string_of_term ctxt) term;
-        val typ = Print_Mode.setmp [] (Syntax.string_of_typ ctxt) (fastype_of term);
-      in
-        row "RESOLVED" [name, printed, typ, space_implode "\n" constants];
-        List.app (fn (n,T) => row "CONSTANT" [name,n,Print_Mode.setmp [] (Syntax.string_of_typ ctxt) T]) (Term.add_consts term [])
-      end)
-      handle ERROR message => row "UNRESOLVED" [name, message]);
+    let
+      val parsed = Exn.capture (fn () =>
+        let
+          val term = Syntax.read_term ctxt name;
+          val constants = Term.add_const_names term [];
+          val _ = if null constants then error "Identifier resolved only as a free variable" else ();
+          val printed = Print_Mode.setmp [] (Syntax.string_of_term ctxt) term;
+          val typ = Print_Mode.setmp [] (Syntax.string_of_typ ctxt) (fastype_of term);
+        in
+          ("RESOLVED", [name, printed, typ, space_implode "\n" constants]) ::
+          map (fn (n,T) => ("CONSTANT", [name,n,Print_Mode.setmp [] (Syntax.string_of_typ ctxt) T])) (Term.add_consts term [])
+        end) ();
+    in
+      (* Keep output I/O outside capture: infrastructure errors must fail the check. *)
+      case parsed of
+        Exn.Res rows => List.app (fn (tag, fields) => row tag fields) rows
+      | Exn.Exn exn =>
+          if Exn.is_interrupt exn then Exn.reraise exn
+          else row "UNRESOLVED" [name, Runtime.exn_message exn]
+    end;
 in
   val _ = List.app inspect NAMES;
   val _ = TextIO.closeOut stream;
@@ -77,5 +90,7 @@ end
             result[name]={'query':name,'status':'unresolved','diagnostic':diagnostic,'evidence_id':evidence_id,'is_fact':False}
         else:raise RuntimeError('Unexpected symbol-resolution record')
     if set(result)!=set(names):raise RuntimeError('Incomplete symbol-resolution evidence')
+    for resolution in result.values():
+        resolution.update(lookup_kind='term', fact_lookup_performed=False, notice=TERM_LOOKUP_NOTICE)
     cache[key]=result
     return result

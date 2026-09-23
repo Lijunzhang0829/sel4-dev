@@ -68,12 +68,14 @@ end
                 raise AssertionError('unexpected external provider call')
             final = json.dumps(responses.pop(0))
             Path(argv[argv.index('-o') + 1]).write_text(final)
-            return subprocess.CompletedProcess(argv, 0, json.dumps({
-                'type': 'item.completed', 'item': {'type': 'agent_message', 'text': final}}) + '\n', '')
+            kwargs['raw_path'].write_text(json.dumps({
+                'type': 'item.completed', 'item': {'type': 'agent_message', 'text': final}}) + '\n')
+            kwargs['stderr_path'].write_text('')
+            return {'returncode':0}
         # Only substitute the process invocation; keep actual transcript creation,
         # hash checks, no-tool audit, selection and reconstruction code.
         with patch.dict('os.environ', {'REGEN_CODEX_BIN': sys.executable}), \
-             patch('regen.infrastructure.audited_llm.subprocess.run', side_effect=provider) as external:
+             patch('regen.infrastructure.audited_llm._run_provider', side_effect=provider) as external:
             result = planner.run(self.root, self.gate, self.index, self.policy, self.policy_hash,
                                  self.output, allow_external_call=allow, verify_only=verify_only)
             return result, external.call_count

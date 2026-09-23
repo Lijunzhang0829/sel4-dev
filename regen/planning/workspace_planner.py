@@ -15,7 +15,8 @@ from datetime import datetime, timezone
 
 from regen.planning.workspace_harness import WorkspaceHarness, save
 from regen.planning.workspace_preflight import native_checker
-from regen.planning.theory_plan import prompt_v4
+from regen.planning.import_contract import prompt_v5
+from regen.planning.planning_freeze import code_files
 from regen.infrastructure.audited_llm import model_settings
 from regen.preparation.refine_campaign import write_immutable_json
 
@@ -27,7 +28,7 @@ def instruction(payload):
     # Reuse the proposal schema/goals, but put data in read-only files instead of
     # injecting the entire contract and shared-symbol catalog on every model call.
     minimal={**payload,'contract_cards':[],'contract_relation_candidates':[]}
-    template=prompt_v4(minimal,[]).split('\nPREVIOUS VALIDATION ERRORS:')[0]
+    template=prompt_v5(minimal,[]).split('\nPREVIOUS VALIDATION ERRORS:')[0]
     template=template.replace('Use only the supplied legal input and any explicit harness operations offered by the enclosing interaction. Do not read files, history, removed proofs, or external sources.',
         'Use only /input, your own /workspace files, and the trusted /tool.py service. Never seek removed proofs, source owners, host files, credentials, or external sources.')
     template=template.replace('Return JSON only matching this schema (all fields required):',
@@ -42,6 +43,7 @@ Use /tool.py to query the trusted harness. For example:
   python /tool.py contracts
   python /tool.py contracts C0001 C0002
   python /tool.py definitions FUNCTION_NAME
+  python /tool.py definitions FUNCTION_NAME --offset 20
   python /tool.py search 'PUBLIC_FACT_NAME or concept'
   python /tool.py inspect PREMISE_ID
   python /tool.py related C0001
@@ -49,11 +51,13 @@ Use /tool.py to query the trusted harness. For example:
   python /tool.py preflight plan.json
   python /tool.py submit plan.json
 The service is outside your editable filesystem and records every request/result. Query results have full propositions; inspect search hits before reusing them.
+Definitions returns complete verified candidate equations and next_offset for pagination. mentioned_identifiers is a lexical navigation aid, possibly including variables, not a certified call graph. Query promising identifiers yourself.
 Read actual definitions when boundaries depend on operation composition. Examine potential cycles, primitive versus protocol layers, and which established results a consumer could reuse. Reference inspected definitions/facts and specific contract names in your rationales when they support a decision. Do not invent a theorem-dependency graph from lexical similarity or a function call graph.
+Distinguish a restricted-case contract from a more general contract for the same operation: the restricted result may be provable first and remove an apparent circular waiting dependency. Decide this from the actual assumptions and definitions; do not assume every implementation call requires the general correspondence theorem. Do not hard-code any existing repository decomposition.
 Query order and theory count are yours to choose. Do not manufacture helper intents or provider edges to fill quotas.
 Theories have unique names and helper IDs matching [A-Za-z][A-Za-z0-9_]* (no hyphens).
-IMPORTANT: suggested_predecessors are the planned PROVIDERS used by downstream execution to freeze imports after those theories seal. They are not proof citations, but they do constrain availability. Do not add edges merely to prioritize work. The theories array separately breaks ties among ready theories.
-Review whether every claimed cross-theory reuse is supported by a provider path and whether priority agrees with your rationale. Keep uncertain relations explicit as unresolved questions.
+IMPORTANT: required_imports are the planned PROVIDERS used by downstream execution to freeze imports after those theories seal. Once accepted, these are mandatory imports, not optional scheduling suggestions. All providers must seal before this theory starts, then imports are frozen. Individual fact citations are not mandatory. Do not add edges merely to prioritize work. The theories array separately breaks ties among ready theories.
+Review whether every claimed cross-theory reuse is supported by a provider path and whether priority agrees with your rationale. Keep uncertain relations explicit as unresolved questions. The fields name, purpose, grouping_reason, helper_decisions and required_imports describe a handoff to File Planner, not a local proof graph. The native-checker entry name Planner_Preflight_All is reserved.
 Exact new helpers and local proof DAGs belong to File Planner. This stage generates no proofs and uses no proof-state retrieval.
 Validate and repair incrementally; validation returns errors without changing your file. Native preflight renders exact declarations with oops and real planned imports; it proves nothing. A successful final response alone does not submit anything: finish by calling submit on the complete plan, which also requires native preflight to pass. Only then give a brief final status.
 Do not use the network, install packages, access /codex-home, change /input, or modify /tool.py. They are not task inputs.
@@ -84,7 +88,7 @@ def start_service(harness, api):
 def snapshot_file(path):
     """Never follow an agent-controlled symlink into the supervisor filesystem."""
     try:
-        fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
+        fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
         with os.fdopen(fd,'rb') as stream:
             st=os.fstat(stream.fileno())
             if not stat.S_ISREG(st.st_mode) or st.st_size>2_000_000: return None
@@ -162,20 +166,68 @@ def call_worker(settings, policy, output, public, workspace, api, text, number):
     return meta,prefix
 
 
+def verify_worker_call(prefix, policy, codex_sha256):
+    prefix=Path(prefix)
+    def path(suffix): return Path(str(prefix)+suffix)
+    meta=json.loads(path('.meta.json').read_text())
+    expected={'state':'complete','returncode':0,'timed_out':False,
+              'provider':'codex-workspace-audited','scope':'repository-planning-only',
+              'model':policy['model']['model'],
+              'reasoning_effort':policy['model'].get('reasoning_effort','medium'),
+              'codex_sha256':codex_sha256}
+    if any(meta.get(k)!=v for k,v in expected.items()):
+        raise ValueError('Submission lacks a completed matching workspace model call.')
+    for key,suffix in [('prompt','.prompt.txt'),('raw','.ndjson'),('final','.final.txt'),
+                       ('stderr','.stderr.txt'),('audit','.audit.json')]:
+        if hashlib.sha256(path(suffix).read_bytes()).hexdigest()!=meta.get(key+'_sha256'):
+            raise ValueError('Workspace transcript integrity mismatch: '+key)
+    audit=json.loads(path('.audit.json').read_text())
+    observed=set()
+    for line in path('.ndjson').read_text().splitlines():
+        event=json.loads(line)
+        item=event.get('item')
+        if isinstance(item,dict) and 'type' in item: observed.add(item['type'])
+    if (observed-ALLOWED_EVENTS or audit.get('forbidden_item_types')
+            or audit.get('invalid_json_lines')!=0
+            or sorted(observed)!=audit.get('observed_item_types')):
+        raise ValueError('Workspace submission failed tool audit.')
+    return meta
+
+
+def completed_submission(harness, output, policy, settings):
+    if harness.submitted is None:
+        return None
+    number=harness.submitted.get('call_number')
+    if isinstance(number,bool) or not isinstance(number,int) or number<1:
+        raise ValueError('Submission is not bound to its model call.')
+    prefix=output/f'transcript/workspace-agent-{number:06d}'
+    verify_worker_call(prefix,policy,settings['codex_sha256'])
+    proposal,artifacts=harness.artifacts()
+    return {'status':'submitted','proposal':proposal,'artifacts':artifacts,'plan_prefix':prefix}
+
+
 def run_agent(payload, planning_input_path, policy, output):
-    if not policy.get('_allow_external_call'): raise ValueError('Workspace planning requires authorized external calls.')
     output=Path(output).resolve(); settings=model_settings()
     if hashlib.sha256(Path(settings['codex_bin']).read_bytes()).hexdigest()!=settings['codex_sha256']:
         raise ValueError('Pinned Codex executable changed.')
-    harness=WorkspaceHarness(planning_input_path,output,native_checker(Path(planning_input_path).parent,policy.get('preflight_seconds',300)))
+    sources=code_files()
+    repo=Path(__file__).resolve().parents[2]
+    sources.update({str(p.relative_to(repo)):p for p in (repo/'regen/execution').glob('*.py')})
+    write_immutable_json(output/'workspace-binding.json',{
+        'model':policy['model'],'codex_sha256':settings['codex_sha256'],
+        'policy':{k:v for k,v in policy.items() if not k.startswith('_')},
+        'implementation':{name:hashlib.sha256(p.read_bytes()).hexdigest() for name,p in sorted(sources.items())}})
+    harness=WorkspaceHarness(planning_input_path,output,native_checker(Path(planning_input_path).parent,policy.get('preflight_seconds',900)))
+    completed=completed_submission(harness,output,policy,settings)
+    if completed is not None:
+        return completed
+    if not policy.get('_allow_external_call'):
+        raise ValueError('Workspace planning requires authorized external calls.')
     public=output/'public'; public.mkdir(exist_ok=True)
     workspace=output/'workspace'; workspace.mkdir(exist_ok=True)
     save(public/'contracts.json',harness.view.payload['contracts'])
     save(public/'catalog.json',{'contracts':harness.view.payload['contract_cards'],'context_profiles':harness.view.payload['context_profiles']})
     text=instruction(harness.view.payload); harness.view.assert_no_owner_disclosure(text)
-    write_immutable_json(output/'workspace-binding.json',{'model':policy['model'],'codex_sha256':settings['codex_sha256'],
-        'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
-        'implementation':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in Path(__file__).parent.glob('workspace_*.py')}})
     api=Path(tempfile.mkdtemp(prefix='regen-planner-api-')); server,thread=start_service(harness,api)
     stop=threading.Event()
     def watch():
@@ -193,6 +245,7 @@ def run_agent(payload, planning_input_path, policy, output):
             checkpoint=output/f'control/checkpoint-{number:06d}'
             shutil.copytree(workspace,checkpoint,symlinks=True)
             before_state=json.loads(json.dumps(harness.state))
+            harness.active_call=number
             meta,prefix=call_worker(settings,policy,output,public,workspace,api,text,number)
             if meta['timed_out']:
                 # Completed query logs remain charged/auditable. The retry sees
@@ -210,9 +263,10 @@ def run_agent(payload, planning_input_path, policy, output):
                 time.sleep(10); continue
             timeouts=0
             if meta['returncode']!=0: raise RuntimeError('Workspace model call failed; inspect '+str(prefix)+'.stderr.txt')
-            if harness.submitted is not None:
-                proposal,artifacts=harness.artifacts()
-                return {'status':'submitted','proposal':proposal,'artifacts':artifacts,'plan_prefix':prefix}
+            verify_worker_call(prefix,policy,settings['codex_sha256'])
+            completed=completed_submission(harness,output,policy,settings)
+            if completed is not None:
+                return completed
             # Agent ended without explicit submission. Keep the same artifacts
             # and ask it to continue; no proposal retry ceiling is introduced.
             text=instruction(harness.view.payload)+'\nContinue your existing plan and notes. No successful submit was recorded; inspect, validate, repair, and explicitly submit.\n'

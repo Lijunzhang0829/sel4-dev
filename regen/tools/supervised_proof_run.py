@@ -37,7 +37,7 @@ def worker(root, source, theory):
         raise ValueError('public runner currently supports one context reserve')
     models = json.loads((root/'run.json').read_text())['execution_models']
     outcome = {'run_id': root.name, 'source_run': source.name, 'started_at': now(), 'pid': os.getpid()}
-    configure_event_monitor(root, run_id=root.name, theory=theory, heartbeat_seconds=30)
+    configure_event_monitor(root, run_id=root.name, theory=theory, heartbeat_seconds=0)
     def interrupted(signum, frame):
         outcome['signal'] = signum
         raise InterruptedError(f'runner received signal {signum}')
@@ -107,12 +107,10 @@ def supervise(root, command, *, cleanup=True, interval=30):
                 if heartbeat.exists():
                     try:
                         h=json.loads(heartbeat.read_text())
-                        stamp=h.get('last_heartbeat_at') or h.get('started_at')
-                        status['last_runner_heartbeat_at']=stamp
-                        age=(datetime.now(timezone.utc)-datetime.fromisoformat(stamp)).total_seconds()
-                        status['heartbeat_stale']=age>120
+                        status['last_runner_transition_at']=h.get('last_transition_at')
+                        status['runner_stage']=h.get('active_event')
                     except (ValueError,TypeError):
-                        status['heartbeat_stale']=True
+                        status['runner_status_unreadable']=True
                 save(root/'supervisor-status.json',status)
                 try:
                     code=proc.wait(timeout=interval)

@@ -34,13 +34,20 @@ def gra_view(payload):
         'phase','failed_statement_node_id','proof_round','proof_rounds_used',
         'proof_retry_limit','context_retry_rounds_remaining','retry_proof_allowed',
         'delete_only_forbidden','auxiliary_failure_policy','split_policy',
-        'trusted_framework_semantic_evidence'}}
+        'trusted_framework_semantic_evidence','stable_historical_residual',
+        'repeated_semantic_residual_rounds','consecutive_retry_proof_decisions',
+        'full_round_retry_cap_reached'}}
     view={'failed_node_id':target,'local_graph':[node_view(n,green) for n in graph['nodes'] if n['id'] in visible],
           'graph_revision':graph.get('revision'),'other_node_count':len(by_id)-len(visible),
           'recent_attempts':attempts[-1:],
           'previous_rounds':round_summaries(red.get('previous_round_summaries',[])),
           'failure_feedback':{'residual':failure_observation(red.get('residual',''))},
           'constraints':rules,'decision_policy':payload.get('decision_policy',{})}
+    view['accepted_auxiliary_index']=[{'id':n['id'],'name':n['name'],'context':n.get('context',[])}
+        for n in graph['nodes'] if n['id'] in green]
+    view['assumption_provenance']=payload.get('assumption_provenance',[])
+    view['structural_evidence']={k:context[k] for k in
+        ('historical_isabelle_semantic_residuals','prior_branch_decisions') if k in context}
     from regen.execution.observation_context import attempt_brief
     view['attempt_summaries']=[attempt_brief(x) for x in red.get('attempts',[])[:-1]]
     if not attempts and red.get('checked_history'):

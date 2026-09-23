@@ -5,8 +5,8 @@
   "codex_version": "0.153.0",
   "reasoning_effort": "medium",
   "role_models": {
-    "File Planner": "gpt-5.6-sol",
-    "Graph Revision Agent": "gpt-5.6-sol",
+    "File Planner": "gpt-6-astra",
+    "Graph Revision Agent": "gpt-6-astra",
     "Lemma Prover": "gpt-6-astra"
   },
   "comparison_models": [

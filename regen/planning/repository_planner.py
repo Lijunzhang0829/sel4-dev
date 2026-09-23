@@ -795,6 +795,16 @@ def run_prepared(
                 'theory-dag-and-explicit-priority', 'stable-plan-revision',
             ],
         }
+        if policy.get('interaction') == 'agent-workspace':
+            submitted=read_json(output/'control/submitted.json')
+            preflight=output/'preflight'/submitted['preflight_sha256']/'result.json'
+            audit_core['native_preflight_evidence']={
+                'path':str(preflight.relative_to(output)),
+                'sha256':sha256_path(preflight),
+                'statements_only':True,
+                'proved_contracts':0,
+            }
+            audit_core['checks'].extend(['native-declaration-import-preflight','workspace-call-integrity'])
         write_immutable_json(
             output / AUDIT_FILENAME,
             {**audit_core, 'audit_sha256': sha256_json(audit_core)},

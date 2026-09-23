@@ -30,19 +30,21 @@
     "theory_grouping": "Agent must design a coherent multi-theory decomposition of the repository, choosing the number, names, boundaries and allocation. A single catch-all theory does not fulfill the task; arbitrary splits and empty placeholder theories do not either. Inspect semantics and required contexts; common context alone does not justify merging all contracts. Singleton contract inputs may use one theory. Original attribution is private to the harness.",
     "premises": "Retrieve established lemmas by name, definition or concept; inspect full statements before reuse. No proof-state query at repository planning time. Pending contracts and new helpers are never premises.",
     "failure": "The later proof stage retains failed auxiliaries and their evidence, then stops that theory; fixed contracts and GREEN nodes remain immutable.",
-    "validation": "Agent may call validate_plan repeatedly and revise valid or invalid drafts. Only submit_plan publishes after exact contract coverage, legal inspected premise IDs, context profile and acyclic theory DAG checks.",
-    "context_budget": "Agent chooses queries and inspections with per-call pagination. No query-turn or proposal-correction cap. Read earlier results through read_turn; full statements remain available.",
+    "validation": "Agent incrementally edits plan.json and calls trusted validate/preflight/submit tools. Exact coverage, legal inspected facts, acyclic providers and native declaration/import preflight are required before publication.",
+    "context_budget": "Whole public contract catalog and exact records are read-only files. Definitions and premises are explicit queries. Related-symbol candidates are on demand. No query-turn or proposal-correction cap.",
     "auxiliary_intents": "Optional shared-result intentions; precise statements and local dependencies belong to File Planner.",
-    "theory_dependencies": "Explicit revisable predecessor theories with reasons; no mandatory proof references or helper commitments.",
+    "theory_dependencies": "required_imports are mandatory provider imports once the plan is accepted: downstream execution waits for their seals and freezes those imports. They are not mandatory proof citations. Array priority separately orders ready theories.",
     "priority": "Theory array order is the explicit tie-break among ready theories; predecessor edges take precedence.",
-    "iteration": "Agent controls inspection, retrieval, validation, revision and submission; stop records a reason without publishing. Transport timeouts are distinct from proposal validation.",
-    "architecture_review": "Before submission, review the entire contract catalog and explain responsibilities, alternative splits/merges, shared-result strategy, consumer relationships, local planning scope, DAG/ready priority and uncertainties in the existing proposal fields. Structural validation does not certify architectural quality."
+    "iteration": "Agent edits its durable plan and notes, chooses inspection, retrieval, validation, native preflight and explicit submission. No query or correction limit. Transport timeouts are separate from validation failures.",
+    "architecture_review": "Review semantic provider/consumer boundaries using inspected definitions and fixed contracts, including restricted versus general cases and potential cycles. Explain shared-result opportunities, justified provider paths, independent ready priority and uncertainties. Do not infer proof dependencies solely from function calls or shared symbols."
   },
-  "interaction": "agent-iterative",
+  "interaction": "agent-workspace",
   "timeout_retry": {
     "retries": 1,
     "gap_seconds": 10,
     "pause_after_consecutive_timeouts": 2
   },
-  "contract_visibility": "owner-blind-v1"
+  "contract_visibility": "owner-blind-v1",
+  "worker_image": "sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834",
+  "preflight_seconds": 900
 }

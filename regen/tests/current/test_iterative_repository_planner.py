@@ -23,7 +23,7 @@ class IterativeRepositoryPlannerTest(unittest.TestCase):
         dataset = self.root/'dataset'
         prepare(self.fixture.l4v, contracts, premises, dataset)
         self.input = dataset/'repository-planning-input.json'
-        self.policy = json.loads(Path('regen/config/repository-planning-policy.json').read_text())
+        self.policy = json.loads(Path('regen/fixtures/repository-planning-policy-iterative.json').read_text())
         self.policy['model']['model'] = 'test-model'
         self.policy.pop('contract_visibility', None)
         self.cid = self.fixture.contract['contract_id']

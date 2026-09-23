@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from regen.planning.import_contract import import_edges
 import json
 from pathlib import Path
 import secrets
@@ -64,7 +65,7 @@ def _theory_projection(plan: dict[str, Any], theory: str) -> dict[str, Any]:
     if record is None:
         raise ValueError(f"started theory disappeared from plan: {theory}")
     edges = sorted(
-        (item for item in plan.get("suggested_theory_edges", [])
+        (item for item in import_edges(plan)
          if item["provider"] == theory or item["consumer"] == theory),
         key=lambda item: (item["provider"], item["consumer"], item.get("reason", "")),
     )

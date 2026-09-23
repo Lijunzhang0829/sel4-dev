@@ -395,7 +395,11 @@ Observation budgets are separate from proof attempts. observation_budget_exhaust
 means a query-control failure, not an empty proof or Isabelle rejection. Inspect
 observation_requests and the persistent recalled_facts before selecting a retry plan.
 Fixed contracts and GREEN nodes are immutable. Syntax/tactic/search/timeout failures
-normally require RETRY_PROOF; structural revisions need concrete residual evidence.
+may justify RETRY_PROOF; repeated failures must also be assessed for structural gaps.
+Use historical residuals and prior decisions to distinguish tactic repair from a node
+that combines several unresolved obligations. SPLIT can isolate these obligations;
+CHANGE_EDGE can reuse an accepted result. Explain why another retry can make progress.
+Structural revisions need concrete residual evidence, not merely exhausted attempts.
 Never add a generated helper that merely renames or wraps an existing legal premise.
 Unknown facts are not evidence of absence. Inspect consumer guards and shared types
 before abandonment. New assumptions need an existing provider and consumer_path;
@@ -406,7 +410,8 @@ Respect decision_policy, phase, retry/deletion restrictions, rejections and budg
 Statement certification has no proof to retry. Stable residuals may justify splitting;
 revisions never reset costs. Replace definitional wrappers with genuine obligations.
 Required response fields: decision, failure_class (from decision_policy), reason,
-residual_evidence (nonempty list), alternatives_considered (list), confidence (0..1).
+residual_evidence (nonempty list of nonempty strings describing actual checker evidence),
+alternatives_considered (list of strings, not objects), confidence (0..1).
 RETRY_PROOF: include a concrete retrieval_query or repair_guidance.
 ABANDON_GENERATION: explain why no sound continuation remains.
 REVISE_GRAPH: operation (ADD|DELETE|SPLIT|CHANGE_ROLE|REPLACE_STATEMENT|CHANGE_EDGE),
@@ -423,6 +428,8 @@ Before deciding you may request goal/context retrieval from a v2 catalog using
 {"observation_request":{"proof_state_query":true}} (optional "use_vectors":true).
 Alternatively return {"observation_request":{"premise_query":"name or terms",
 "scope":"all","offset":0}} for complete facts from upstream/sealed/local GREEN sources;
+or {"observation_request":{"auxiliary_query":{"node_ids":["accepted-node-id"]}}}
+for full checked same-theory proofs and contexts (at most 4, accepted visible prefix only);
 or {"observation_request":{"graph_query":{"node_ids":[],"query":"terms","offset":0}}}
 for other graph nodes (empty query lists nodes); or
 {"observation_request":{"diagnostic_id":"hash","offset":0}} for checker pages.
@@ -788,6 +795,7 @@ def _revise_graph(
     premise_database: Path | None = None,
     generated_records: Path | None = None,
     symbol_resolver=None,
+    accepted_proofs: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     revision = next_graph_revision(output_dir, graph["revision"])
     decision_context = augment_decision_context(
@@ -906,6 +914,9 @@ def _revise_graph(
                         proof_state=next(('\n'.join([*n.get('context',[]),n['statement']]) for n in graph['nodes']
                             if n['id']==red_result.get('node_id')),None))
                     facts_locked=True
+            elif 'auxiliary_query' in observation:
+                from regen.execution.auxiliary_reuse import auxiliary_page
+                page=auxiliary_page(graph, accepted_proofs or {}, red_result.get('node_id'), observation['auxiliary_query'])
             elif 'graph_query' in observation:
                 from regen.execution.gra_input import graph_page
                 page=graph_page(graph,green_ids,observation['graph_query'])

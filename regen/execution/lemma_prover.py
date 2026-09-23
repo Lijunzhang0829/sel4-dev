@@ -259,6 +259,10 @@ def proof_prompt(
     instructions = """Prove the fixed Isabelle target without changing its statement/context.
 Use the recent attempts and checker feedback. Return JSON:
 {"proof_body":"complete proof body","used_premise_ids":["..."]}.
+For reusable accepted proof examples, request
+{"observation_request":{"auxiliary_query":{"node_ids":["accepted-node-id"]}}}.
+At most 4 per query, from accepted_auxiliary_index only. Respect each original context;
+examples do not prove the current goal and must not be re-declared as duplicate helpers.
 Before the first proof, select facts once for this round. Return:
 {"observation_request":{"premise_query":"name or relevant terms","scope":"all","offset":0}}.
 scope must be exactly upstream, sealed, local, or all.
@@ -575,6 +579,9 @@ def prove_node(
                             observation_facts=response_page['records']
                             facts_locked=True
                         observations.append(response_page)
+                    elif 'auxiliary_query' in request:
+                        from regen.execution.auxiliary_reuse import auxiliary_page
+                        observations.append(auxiliary_page(graph, proofs, node_id, request['auxiliary_query']))
                     else:
                         from regen.execution.proof_input import diagnostic_page
                         observations.append(diagnostic_page([attempts, previous_round_feedback],

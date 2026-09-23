@@ -3,6 +3,7 @@
 Legacy schedule replay remains in proof_session_runner; no second proof graph is used.
 """
 from __future__ import annotations
+from regen.planning.import_contract import required_imports
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
@@ -54,7 +55,7 @@ def projection_package(projection, plan):
     if projection['schema_version']>=3:
         targets={c['contract_id']:c for t in plan['theories'] for c in t['contracts']}
         intents=projection['auxiliary_intents']
-        providers=projection['suggested_providers']
+        providers=projection['required_providers' if projection['schema_version']>=5 else 'suggested_providers']
     else:
         targets={n['contract_id']:n['contract'] for n in plan['nodes'] if n['role']=='contract'}
         intents=[n for n in projection['nodes'] if n['role']=='auxiliary']
@@ -64,7 +65,7 @@ def projection_package(projection, plan):
     body = {'theory':projection['theory'], 'file_slot':projection['file_slot'],
         'contracts':projection['contracts'], 'support_contracts':[targets[c] for c in support],
         'repository_projection':{**projection,
-            'suggested_providers':providers},
+            ('required_providers' if projection['schema_version']>=5 else 'suggested_providers'):providers},
         'plan_id':plan['plan_id'], 'projection_sha256':digest(projection)}
     return {**body, 'package_payload_sha256':digest(body)}
 
@@ -74,7 +75,7 @@ def init_run(run_dir, input_root, run_id, schedule):
     input_root, schedule = input_root.resolve(), schedule.resolve()
     listing = read(schedule)
     if not listing.get('files'): raise ValueError('empty repository file list')
-    direct = listing.get('schema_version') == 5
+    direct = listing.get('schema_version') in {5,6}
     if direct:
         from regen.planning.plan_revisions import verify_revisions
         revision = verify_revisions(schedule.parent/'planning')
@@ -201,7 +202,9 @@ def validator(package, runtime=None):
         verify_embedded(evidence)
         if event=='initial' and 'continuation' in evidence:
             validate_continuation(package, runtime, new, evidence['continuation'])
-        if event in {'initial','revision','revoke','green'}:
+        if event=='initial' and 'sealed_reuse' in evidence:
+            validate_continuation(package, runtime, new, evidence['sealed_reuse'], sealed_reuse=True)
+        if event in {'initial','revision','revoke','green','batch'}:
             check=evidence.get('check',{})
             if (check.get('returncode')!=0 or not check.get('source_content')
                     or 'log_content' not in check):
@@ -211,8 +214,9 @@ def validator(package, runtime=None):
         governed = package['repository_projection'].get('schema_version',0)>=4
         if governed and graph.get('initial_graph_owner')!='File Planner':
             raise ValueError('initial graph must be owned by File Planner')
-        if governed and graph.get('runtime_graph_owner')!='Graph Revision Agent':
-            raise ValueError('runtime graph revisions must be owned by Graph Revision Agent')
+        expected_owner = 'File Planner' if graph.get('execution_mode') == 'file-planner-batch-v1' else 'Graph Revision Agent'
+        if governed and graph.get('runtime_graph_owner') != expected_owner:
+            raise ValueError('runtime graph owner differs from execution mode')
         nodes = {n['id']:n for n in graph['nodes']}
         proofs = new['proofs']; order = new['accepted_order']
         if len(set(order))!=len(order) or set(order)!=set(proofs) or not set(proofs)<=nodes.keys():
@@ -225,12 +229,23 @@ def validator(package, runtime=None):
                 raise ValueError('GREEN proof/prefix changed')
             if old.get('runtime_policy') and new.get('runtime_policy')!=old['runtime_policy']:
                 raise ValueError('committed runtime budget changed')
+            if new.get('batch_requests',0) < old.get('batch_requests',0):
+                raise ValueError('batch request counter decreased')
+            if event == 'planner-request' and new.get('batch_requests') != old.get('batch_requests',0)+1:
+                raise ValueError('invalid batch request charge')
             for field in ('rounds','revisions'):
                 if any(new[field].get(k,0)<v for k,v in old[field].items()):
                     raise ValueError('cumulative cost counters decreased')
         elif event!='initial': raise ValueError('first accepted event must be initial graph')
         if event in {'initial','revision','revoke'}:
-            if any(n['statement'] not in evidence['check']['source_content'] for n in graph['nodes']):
+            inherited_declarations = evidence.get('declaration_coverage')
+            if inherited_declarations is not None:
+                if (event != 'initial' or 'continuation' not in evidence
+                        or inherited_declarations != continuation_declaration_coverage(evidence['continuation'], new)):
+                    raise ValueError('invalid continuation declaration coverage')
+                # validate_continuation above has replayed every source acceptance:
+                # unchanged declarations are inherited, changed ones need native proof/check.
+            elif any(n['statement'] not in evidence['check']['source_content'] for n in graph['nodes']):
                 raise ValueError('graph evidence does not cover accepted declarations')
             if evidence.get('check',{}).get('verdict')!='green': raise ValueError('graph lacks validation')
             if old and (proofs!=old['proofs'] or order!=old['accepted_order']): raise ValueError('revision changes proof state')
@@ -257,9 +272,14 @@ def validator(package, runtime=None):
             if nodes[key]['statement'] not in source or proofs[key] not in source:
                 raise ValueError('GREEN evidence does not bind statement and proof')
             if evidence['visibility']!=fact_manifest(old['graph'],old['proofs'],key): raise ValueError('GREEN context mismatch')
-        elif event not in {'attempt','revision-attempt','red','failed','seal','resume'}:
+        elif event == 'batch':
+            if not evidence.get('sealable_generation'):
+                raise ValueError('batch lacks audited provider evidence')
+            from regen.execution.proof_batches import validate_batch_commit
+            validate_batch_commit(old, new, evidence)
+        elif event not in {'attempt','revision-attempt','red','failed','seal','resume','planner-request','planner-feedback'}:
             raise ValueError('unknown commit event')
-        if event in {'attempt','revision-attempt','red','failed','seal','resume'} and old:
+        if event in {'attempt','revision-attempt','red','failed','seal','resume','planner-request','planner-feedback'} and old:
             if graph!=old['graph'] or proofs!=old['proofs']: raise ValueError('non-proof event changed graph/proofs')
         if old and new.get('runtime_policy',{}).get('retry_policy')=='residual-context-v1':
             before=old.get('attempt_contexts',{})
@@ -288,7 +308,14 @@ def journal(run_dir, run, package):
                'package_sha256':package['package_payload_sha256'],
                'imports':read(run_dir/'theories'/Path(package['file_slot']).stem/'imports.json')
                    if (run_dir/'theories'/Path(package['file_slot']).stem/'imports.json').exists() else []}
-    return ProofCommits(run_dir/'theories'/Path(package['file_slot']).stem/'acceptance', binding, validator(package, run))
+    # Explicit shared-cache namespace: semantic inputs plus the currently loaded
+    # validation implementation. Frozen run implementation remains in binding.
+    from regen.execution.proof_batches import validate_batch_commit
+    namespace = digest({'runtime':run, 'package':package,
+        'validator_version':'repository-validated-prefix-v1',
+        'callables':[id(validator), id(validate_graph), id(validate_batch_commit), id(continuation_state)]})
+    return ProofCommits(run_dir/'theories'/Path(package['file_slot']).stem/'acceptance',
+                        binding, validator(package, run), cache_namespace=namespace)
 
 
 def _progress_unlocked(run_dir):
@@ -298,6 +325,9 @@ def _progress_unlocked(run_dir):
     for entry in files:
         p=package_for(run,entry['file_slot']); state=journal(run_dir,run,p).replay()
         if state:
+            nodes={n['id']:n for n in state['graph']['nodes']}
+            entry['checked_contracts']=sum(nodes[k]['role']=='contract' for k in state['proofs'])
+            entry['checked_generated_nodes']=sum(nodes[k]['role']!='contract' for k in state['proofs'])
             directory=run_dir/'theories'/Path(p['file_slot']).stem
             durable(directory/'active-graph.json',state['graph'])
             durable(directory/'progress.json',state)
@@ -316,7 +346,9 @@ def _progress_unlocked(run_dir):
     complete=all(f['status'] in {'sealed','retired'} for f in files)
     value={'schema_version':2,'artifact_type':'repository-proof-progress','files':files,
         'session_status':'complete' if complete else 'partial', 'contracts':sum(len(f['contract_ids']) for f in files),
-        'proved_contracts':sum(len(f['contract_ids']) for f in files if f['status']=='sealed')}
+        'proved_contracts':sum(len(f['contract_ids']) for f in files if f['status']=='sealed'),
+        'checked_contracts':sum(f.get('checked_contracts',0) for f in files),
+        'sealed_contracts':sum(len(f['contract_ids']) for f in files if f['status']=='sealed')}
     durable(Path(run['session_progress_ledger']),value)
     return value
 
@@ -335,11 +367,13 @@ def checker_for(run_dir, run, directory, timeout, ancestors, *, heaps_dir=None):
     direct=run.get('execution_input_kind')=='refine-dataset'
     generated=directory.parent/'generated' if direct else run_dir/'generated'
     heaps=heaps_dir or (directory.parent/'heaps' if direct else run_dir/'heaps')
-    return IsabelleChecker(context_root,directory,timeout=timeout,
+    checker = IsabelleChecker(context_root,directory,timeout=timeout,
         previous_theories=ancestors,generated_dir=generated,heaps_dir=heaps,
         l4v_dir=Path(run['l4v']),semantic_workspace=Path(run['semantic_workspace']),
         base_session=run['base_session'],base_import=run['base_import'],base_catalog=run['base_catalog'],
         image=run['image'],isabelle_dir=Path(run['isabelle_dir']),import_all_previous=True)
+    checker.declaration_environment = digest(run)
+    return checker
 
 
 def setup(run_dir, theory, timeout):
@@ -362,7 +396,7 @@ def setup(run_dir, theory, timeout):
     elif package['repository_projection'].get('schema_version',0)>=4:
         providers=[
             item['theory']
-            for item in package['repository_projection'].get('suggested_predecessors',[])
+            for item in required_imports(package['repository_projection'])
         ]
         by_theory={item['theory']:item for item in states}
         unavailable=[
@@ -428,7 +462,8 @@ def plan(run_dir,theory,*,provider,planner_model,timeout):
     outcomes=progress(run_dir)['files']
     retired={f['theory'] for f in outcomes if f['status']=='retired'}
     environment['upstream_outcomes']=outcomes
-    environment['suggested_providers']=[n for n in environment.get('suggested_providers',[]) if n['theory'] not in retired]
+    if p['repository_projection'].get('schema_version',0)<5:
+        environment['suggested_providers']=[n for n in environment.get('suggested_providers',[]) if n['theory'] not in retired]
     generated=d/'sealed-premises.json'
     if generated.exists():
         environment['legal_premises']=[*environment['legal_premises'],*read(generated)['records']]
@@ -444,15 +479,15 @@ def plan(run_dir,theory,*,provider,planner_model,timeout):
                     'projection_sha256':p['projection_sha256'],
                     'context_profile_ids':p['repository_projection'].get('context_profile_ids',[]),
                     'sealed_provider_theories':[
-                        item['theory'] for item in p['repository_projection'].get(
-                            'suggested_predecessors', []
-                        )
+                        item['theory'] for item in required_imports(p['repository_projection'])
                     ],
                     'parent_premise_ids':sorted(
                         item['record_id'] for item in environment.get('legal_premises',[])
                     ),
                 },
-                call_index=call_index,persist_graph=False,rejection_feedback=feedback)
+                call_index=call_index,persist_graph=False,rejection_feedback=feedback,
+                premise_database=Path(run['premise_database']), generated_records=generated,
+                symbol_resolver=lambda names, context: c.resolve_symbols(names, context))
         except (ValueError,KeyError) as error:
             feedback.append(str(error));durable(d/f'initial-rejection-{call_index:03d}.json',{'reason':str(error)},immutable=True);continue
         graph=context_graph(graph,[])
@@ -478,6 +513,13 @@ def revoke_graph(package,graph,key):
         'contract_strategies':{n['id']:n.get('strategy','') for n in graph['nodes'] if n['role']=='contract'}}
     revised=build_graph(package,proposal,run_id=graph['run_id'],revision=graph['revision']+1)
     return context_graph(revised,graph['accepted_order'])
+
+
+def gra_revision_allowed(revisions, key, node_limit, generation_limit):
+    """None explicitly disables both GRA count limits; counters remain cumulative."""
+    if node_limit is None:
+        return True
+    return revisions.get(key, 0) < node_limit and sum(revisions.values()) < generation_limit
 
 
 def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model,
@@ -509,7 +551,7 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
         'provider':provider,'salvage_provider':salvage_provider,
         'checker_policy':run.get('checker_policy','cold'),
         'context_retry_rounds':context_retry_rounds,'retry_policy':'residual-context-v1'}
-    if any(runtime_policy[k]<=0 for k in ('max_attempts','max_node_rounds','timeout','graph_timeout','node_timeout','think_timeout')) or max_node_revisions<0 or context_retry_rounds not in (0,1):
+    if any(runtime_policy[k]<=0 for k in ('max_attempts','max_node_rounds','timeout','graph_timeout','node_timeout','think_timeout')) or (max_node_revisions is not None and max_node_revisions<0) or context_retry_rounds not in (0,1):
         raise ValueError('invalid runtime budget')
     durable(d/'runtime-policy.json',runtime_policy,immutable=True)
     graph_checker=checker_for(run_dir,run,d/'isabelle',graph_timeout,ancestors)
@@ -545,8 +587,8 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
             rejection=None
         if rejection:
             decision={'decision':'REVISE_GRAPH','reason':'pending statement correction'}
-        while (state['revisions'].get(key,0)<max_node_revisions
-               and sum(state['revisions'].values())<budgets.get('graph_revisions_per_generation',16)):
+        while gra_revision_allowed(state['revisions'], key, max_node_revisions,
+                                   budgets.get('graph_revisions_per_generation',16)):
             new=deepcopy(state);new['revisions'][key]=state['revisions'].get(key,0)+1
             accept('revision-attempt',new,{'node_id':key,'result':result})
             decision_index=next_graph_decision_index(d)
@@ -557,6 +599,7 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
                     generated_records=d/'sealed-premises.json',
                     symbol_resolver=lambda names: graph_checker.resolve_symbols(names,node.get('context',[])),
                     decision_index=decision_index,allow_structural_revision=True,
+                    accepted_proofs=state['proofs'],
                     decision_context={'phase':'node-proof', 'proof_round':state['rounds'].get(key,0),
                                       'accepted_decision_history':accepted_decision_history(),
                                       'previous_revision_rejections':[rejection] if rejection else [],
@@ -706,8 +749,8 @@ def run_session(run_dir,*,retry_failed=False,max_parallel_theories=1,**options):
         raise ValueError('max_parallel_theories must be positive')
     run=read(run_dir/'run.json')
     listing=read(Path(run['session_schedule']['source']))
-    direct=listing.get('schema_version')==5
-    if not direct or max_parallel_theories==1:
+    direct=listing.get('schema_version') in {5,6}
+    if not direct:
         results=[]
         for entry in progress(run_dir)['files']:
             if entry['status'] in {'sealed','retired'} or (entry['status']=='failed' and not retry_failed):
@@ -718,7 +761,7 @@ def run_session(run_dir,*,retry_failed=False,max_parallel_theories=1,**options):
     data=read(run_dir/'execution-input.json'); results=[]; attempted=set()
     while True:
         state={item['theory']:item for item in progress(run_dir)['files']}
-        terminal={name for name,item in state.items() if item['status'] in {'sealed','retired'}}
+        terminal={name for name,item in state.items() if item['status']=='sealed'}
         ready=[]
         for entry in data['files']:
             item=state[entry['theory']]
@@ -727,7 +770,7 @@ def run_session(run_dir,*,retry_failed=False,max_parallel_theories=1,**options):
             if item['status'] in {'sealed','retired'} or (item['status']=='failed' and not retry_failed):
                 continue
             package=package_for(run,entry['file_slot'])
-            providers={p['theory'] for p in package['repository_projection'].get('suggested_predecessors',[])}
+            providers={p['theory'] for p in required_imports(package['repository_projection'])}
             if providers <= terminal:
                 ready.append((entry['order'],entry['theory']))
         if not ready: break
@@ -749,7 +792,7 @@ CONTINUATION_ENV_FIELDS = ('execution_input_kind','environment_run',
     'isabelle_dir','image','isabelle_sha256')
 
 
-def continuation_state(package, origin):
+def continuation_state(package, origin, *, sealed_reuse=False):
     """Verify every source commit before carrying proof state and charged costs."""
     source_run=origin['run']; records=origin['commits']
     if not records: raise ValueError('continuation has no source commits')
@@ -766,19 +809,84 @@ def continuation_state(package, origin):
         if record['event']=='attempt':
             contexts[record['evidence']['node_id']]=required_context(old,record['evidence']['node_id'])
         old=record['state'];parent=record['commit_id']
-    if old['status'] in {'sealed','retired'}: raise ValueError('cannot resume terminal theory')
+    if sealed_reuse:
+        if old['status'] != 'sealed' or records[-1]['event'] != 'seal':
+            raise ValueError('sealed reuse requires a verified terminal seal')
+    elif old['status'] in {'sealed','retired'}:
+        raise ValueError('cannot resume terminal theory')
     state=deepcopy(old);state.pop('runtime_policy',None)
     state['attempt_contexts']=contexts
     state['status']='generating'
+    if sealed_reuse:
+        state['seal_id'] = None
     return state
 
 
-def validate_continuation(package, runtime, state, origin):
+def validate_continuation(package, runtime, state, origin, *, sealed_reuse=False):
     if runtime is None: raise ValueError('continuation requires frozen environment binding')
     if any(runtime.get(k)!=origin['run'].get(k) for k in CONTINUATION_ENV_FIELDS):
         raise ValueError('continuation changed proof environment')
-    if state!=continuation_state(package,origin):
+    if state!=continuation_state(package,origin,sealed_reuse=sealed_reuse):
         raise ValueError('continuation changed proofs, graph, or cumulative costs')
+
+
+def _sealed_provider_inputs(source_dir, source, imports):
+    """Resolve the frozen transitive imports from verified terminal journals."""
+    from regen.execution.proof_session_runner import generated_checkpoint_theory
+    entries = {generated_checkpoint_theory(e['file_slot']):e
+               for e in read(source_dir/'execution-input.json')['files']}
+    prepared = []; visited = set(); active = set()
+    def visit(name):
+        if name in active:
+            raise ValueError('cyclic sealed provider imports')
+        if name in visited:
+            return
+        if name not in entries:
+            raise ValueError('missing sealed provider: '+name)
+        active.add(name)
+        entry = entries[name]
+        package = package_for(source, entry['file_slot'])
+        directory = source_dir/'theories'/Path(entry['file_slot']).stem
+        origin = {'run':source, 'imports':read(directory/'imports.json'),
+                  'commits':[read(p) for p in sorted((directory/'acceptance/commits').glob('*.json'))]}
+        state = continuation_state(package, origin, sealed_reuse=True)
+        for dependency in origin['imports']:
+            visit(dependency)
+        active.remove(name); visited.add(name)
+        prepared.append((package, origin, state))
+    for name in imports:
+        visit(name)
+    return prepared
+
+
+def _reuse_sealed_theories(destination, run, source_dir, prepared):
+    reused = []
+    for package, origin, state in prepared:
+        directory = destination/'theories'/Path(package['file_slot']).stem
+        durable(directory/'imports.json', origin['imports'], immutable=True)
+        evidence = origin['commits'][-1]['evidence']
+        log = journal(destination, run, package)
+        log.append('initial', state, {'check':evidence['complete'], 'sealed_reuse':origin})
+        sealed = deepcopy(state)
+        sealed.update(status='sealed', reason='', seal_id=origin['commits'][-1]['state']['seal_id'])
+        log.append('seal', sealed, evidence)
+        reused.append({'theory':package['theory'], 'source_commit':origin['commits'][-1]['commit_id'],
+                       'seal_id':sealed['seal_id']})
+    if reused:
+        durable(destination/'sealed-reuse.json', {'source_run':str(source_dir), 'theories':reused,
+            'policy':'verify embedded source chains and seals; preserve accepted proofs and cumulative costs'}, immutable=True)
+
+
+def continuation_declaration_coverage(origin, state):
+    """Bind combined declaration authority to an independently replayed origin chain.
+
+    This descriptor is not a substitute for validate_continuation. Its caller
+    must verify the origin chain and exact copied state before trusting coverage.
+    """
+    from regen.execution.proof_batches import _declarations
+    return {'scheme':'validated-continuation-declarations-v1',
+            'source_commit_id':origin['commits'][-1]['commit_id'],
+            'declarations_sha256':digest(_declarations(state))}
 
 
 def fork_continuation(source_dir, destination, theory):
@@ -792,24 +900,57 @@ def fork_continuation(source_dir, destination, theory):
     origin={'run':source,'imports':read(old_dir/'imports.json'),
             'commits':[read(p) for p in sorted((old_dir/'acceptance/commits').glob('*.json'))]}
     state=continuation_state(package,origin)
+    providers=_sealed_provider_inputs(source_dir,source,origin['imports'])
     input_root=Path(source.get('checker_context_root') or source['environment_run'])
     run=init_run(destination,input_root,destination.name,
                  Path(source['session_schedule']['source']))
     if any(run.get(k)!=source.get(k) for k in CONTINUATION_ENV_FIELDS):
         raise ValueError('continuation environment mismatch')
+    _reuse_sealed_theories(destination,run,source_dir,providers)
     new_dir=destination/'theories'/theory
     shutil.copytree(old_dir,new_dir,ignore=shutil.ignore_patterns(
-        'acceptance','isabelle','progress.json','active-graph.json','runtime-policy.json',
+        'acceptance','isabelle','progress.json','active-graph.json','runtime-policy.json','batch-policy.json',
         'execution-stop.json','PROOF-RUN-REPORT.md'))
-    graph_check=next(r['evidence']['check'] for r in reversed(origin['commits'])
-                     if r['event'] in {'initial','revision','revoke'})
+    graph_check=next((r['evidence']['graph_check'] if r['event']=='batch' else r['evidence']['check'])
+                     for r in reversed(origin['commits'])
+                     if r['event'] in {'initial','revision','revoke'}
+                     or r['event']=='batch' and r['evidence'].get('graph_check') is not None)
     # Embedded bytes are already immutable evidence; do not re-read mutable paths.
-    journal(destination,run,package).append('initial',state,
-        {'check':graph_check,'continuation':origin})
+    initial_evidence = {'check':graph_check,'continuation':origin}
+    if any(n['statement'] not in graph_check['source_content'] for n in state['graph']['nodes']):
+        initial_evidence['declaration_coverage'] = continuation_declaration_coverage(origin, state)
+    journal(destination,run,package).append('initial',state,initial_evidence)
     durable(destination/'continuation.json',{'source_run':str(source_dir),
         'source_commit':origin['commits'][-1]['commit_id'],'theory':theory,
         'reason':'explicitly authorised continuation after harness optimisation',
         'cost_policy':'preserve charged rounds and revisions; one certified-context reserve',
         'developer_assisted_probe_imported':False},immutable=True)
+    progress(destination)
+    return run
+
+
+def fork_with_sealed_theories(source_dir, destination):
+    """Start a fresh execution identity, importing only verified terminal theories."""
+    source_dir, destination = Path(source_dir).resolve(), Path(destination).resolve()
+    if destination.exists():
+        raise ValueError('destination already exists')
+    source = read(source_dir/'run.json')
+    prepared = []
+    for entry in read(source_dir/'execution-input.json')['files']:
+        package = package_for(source, entry['file_slot'])
+        old_dir = source_dir/'theories'/Path(entry['file_slot']).stem
+        records = [read(p) for p in sorted((old_dir/'acceptance/commits').glob('*.json'))]
+        if not records or records[-1]['state']['status'] != 'sealed':
+            continue
+        origin = {'run':source, 'imports':read(old_dir/'imports.json'), 'commits':records}
+        state = continuation_state(package, origin, sealed_reuse=True)
+        prepared.append((package, origin, state))
+    if not prepared:
+        raise ValueError('source contains no verified sealed theories')
+    run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
+                   destination.name, Path(source['session_schedule']['source']))
+    if any(run.get(k) != source.get(k) for k in CONTINUATION_ENV_FIELDS):
+        raise ValueError('sealed reuse environment mismatch')
+    _reuse_sealed_theories(destination,run,source_dir,prepared)
     progress(destination)
     return run

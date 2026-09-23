@@ -1,0 +1,48 @@
+{
+  "schema_version": 3,
+  "artifact_type": "repository-planning-policy",
+  "stage": "Refine",
+  "mode": "repository-proof-planning",
+  "claim": "Design the complete independent Refine repository architecture: allocate all fixed contracts across coherent generated theories, plan shared results and justified theory collaboration, and explain scheduling and design tradeoffs; local proof DAGs belong to File Planner.",
+  "model": {
+    "model": "gpt-5.6-sol",
+    "role": "Design contract-to-theory allocation, semantic boundaries, shared-result strategy, justified theory predecessors and ready-theory priority across the entire repository.",
+    "reasoning_effort": "medium",
+    "timeout_seconds": 1800
+  },
+  "allowed_planner_inputs": [
+    "compact cards for every verified Refine contract",
+    "exact contract records returned by bounded inspect_contracts requests",
+    "Native-verified static frozen-parent and retained-semantic premise records returned by explicit searches and inspection",
+    "Owner-independent contract semantic summaries, legal context profiles and shared-symbol relation candidates",
+    "previous structural validation diagnostics"
+  ],
+  "forbidden_planner_inputs": [
+    "raw human Refine proof bodies or unrestricted repository reads",
+    "deleted human helper names, statements, proof order or proof graph",
+    "stock human Refine heap",
+    "CRefine data or results from another experiment",
+    "environment IDs, private preparation inventories, recovery journals and checkpoints",
+    "Original contract theory owners, owner-bearing IDs, source file slots, owner groups, original theory import graph, or same-owner relation features"
+  ],
+  "rules": {
+    "fixed_contracts": "Every fixed contract occurs exactly once. Copy frozen statements/context/attributes; never accept model replacements.",
+    "theory_grouping": "Agent must design a coherent multi-theory decomposition of the repository, choosing the number, names, boundaries and allocation. A single catch-all theory does not fulfill the task; arbitrary splits and empty placeholder theories do not either. Inspect semantics and required contexts; common context alone does not justify merging all contracts. Singleton contract inputs may use one theory. Original attribution is private to the harness.",
+    "premises": "Retrieve established lemmas by name, definition or concept; inspect full statements before reuse. No proof-state query at repository planning time. Pending contracts and new helpers are never premises.",
+    "failure": "The later proof stage retains failed auxiliaries and their evidence, then stops that theory; fixed contracts and GREEN nodes remain immutable.",
+    "validation": "Agent may call validate_plan repeatedly and revise valid or invalid drafts. Only submit_plan publishes after exact contract coverage, legal inspected premise IDs, context profile and acyclic theory DAG checks.",
+    "context_budget": "Agent chooses queries and inspections with per-call pagination. No query-turn or proposal-correction cap. Read earlier results through read_turn; full statements remain available.",
+    "auxiliary_intents": "Optional shared-result intentions; precise statements and local dependencies belong to File Planner.",
+    "theory_dependencies": "Explicit revisable predecessor theories with reasons; no mandatory proof references or helper commitments.",
+    "priority": "Theory array order is the explicit tie-break among ready theories; predecessor edges take precedence.",
+    "iteration": "Agent controls inspection, retrieval, validation, revision and submission; stop records a reason without publishing. Transport timeouts are distinct from proposal validation.",
+    "architecture_review": "Before submission, review the entire contract catalog and explain responsibilities, alternative splits/merges, shared-result strategy, consumer relationships, local planning scope, DAG/ready priority and uncertainties in the existing proposal fields. Structural validation does not certify architectural quality."
+  },
+  "interaction": "agent-iterative",
+  "timeout_retry": {
+    "retries": 1,
+    "gap_seconds": 10,
+    "pause_after_consecutive_timeouts": 2
+  },
+  "contract_visibility": "owner-blind-v1"
+}

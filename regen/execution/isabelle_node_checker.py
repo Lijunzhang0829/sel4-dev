@@ -7,7 +7,6 @@ import json
 import os
 import re
 import subprocess
-import threading
 import time
 import uuid
 from pathlib import Path
@@ -111,7 +110,7 @@ local
   val thy = @{{theory}};
   val ctxt = Proof_Context.init_global thy;
   val plain_ctxt = Config.put show_markup false ctxt;
-  val target = Proof_Context.get_thm ctxt "{theorem_name}";
+  val targets = Proof_Context.get_thms ctxt "{theorem_name}";
   val hex_digits = "0123456789abcdef";
   fun hex_char char =
     let val byte = Char.ord char
@@ -143,7 +142,9 @@ local
   val wp_rules = WeakestPre.dest_rules (#rules wp);
   val wp_trips = fst (#trips wp);
   val wp_pre = Named_Theorems.get ctxt @{{named_theorems wp_pre}};
-  val dependencies = Thm_Deps.thm_deps thy [target];
+  val _ = if null targets then error "Audit target has no theorems" else ();
+  val _ = Thm.consolidate targets;
+  val dependencies = Thm_Deps.thm_deps thy targets;
 in
   val _ = List.app
     (fn (name, thm) => thm_row context_stream "SIMP_RULE" [name] thm) simps;
@@ -176,7 +177,7 @@ in
     (fn (_, (name, index)) =>
       row dependency_stream "THM_DEP" [name, string_of_int index]) dependencies;
   val _ = row dependency_stream "HAS_SKIP_PROOF"
-    [bool_text (Thm_Deps.has_skip_proof [target])];
+    [bool_text (Thm_Deps.has_skip_proof targets)];
   val _ = TextIO.closeOut dependency_stream;
 end
 \<close>'''
@@ -193,7 +194,7 @@ def proof_dependency_audit_ml(
 local
   val thy = @{{theory}};
   val ctxt = Proof_Context.init_global thy;
-  val target = Proof_Context.get_thm ctxt "{theorem_name}";
+  val targets = Proof_Context.get_thms ctxt "{theorem_name}";
   val hex_digits = "0123456789abcdef";
   fun hex_char char =
     let val byte = Char.ord char
@@ -205,13 +206,15 @@ local
     TextIO.output (stream, space_implode "\t" (tag :: map enc fields) ^ "\n");
   fun bool_text value = if value then "true" else "false";
   val stream = TextIO.openOut "/audit-output/{dependency_filename}";
-  val dependencies = Thm_Deps.thm_deps thy [target];
+  val _ = if null targets then error "Audit target has no theorems" else ();
+  val _ = Thm.consolidate targets;
+  val dependencies = Thm_Deps.thm_deps thy targets;
 in
   val _ = List.app
     (fn (_, (name, index)) =>
       row stream "THM_DEP" [name, string_of_int index]) dependencies;
   val _ = row stream "HAS_SKIP_PROOF"
-    [bool_text (Thm_Deps.has_skip_proof [target])];
+    [bool_text (Thm_Deps.has_skip_proof targets)];
   val _ = TextIO.closeOut stream;
 end
 \<close>'''
@@ -288,6 +291,8 @@ class IsabelleChecker:
     ) -> None:
         self._last_node_check = None
         self.persistent = False
+        self.batch_incremental = True
+        self._batch_worker = None
         self._prefix_worker = None
         self._prefix_key = None
         self._persistent_disabled = False
@@ -428,18 +433,6 @@ class IsabelleChecker:
             "isabelle_started", label=label, session=session,
             timeout_seconds=self.timeout, container=container_name,
         )
-        finished = threading.Event()
-
-        def heartbeat() -> None:
-            while not finished.wait(30):
-                emit_event(
-                    "isabelle_heartbeat", label=label, session=session,
-                    elapsed_seconds=int(time.time() - started),
-                    container=container_name,
-                )
-
-        heartbeat_thread = threading.Thread(target=heartbeat, daemon=True)
-        heartbeat_thread.start()
         try:
             result = subprocess.run(
                 command, text=True, capture_output=True, timeout=self.timeout,
@@ -464,9 +457,6 @@ class IsabelleChecker:
                 )
             except (OSError, subprocess.SubprocessError):
                 pass
-        finally:
-            finished.set()
-            heartbeat_thread.join(timeout=1)
         diagnostic = full_diagnostic[-12000:]
         last_marker, marker_count = extract_last_node_marker(full_diagnostic)
         log = self.work_dir / f"{label}.log"
@@ -499,6 +489,10 @@ class IsabelleChecker:
         return check
 
     def close_prefix(self):
+        worker = getattr(self, "_batch_worker", None)
+        if worker is not None:
+            worker.close()
+        self._batch_worker = None
         if self._prefix_worker is not None:
             self._prefix_worker.close()
         self._prefix_worker = None
@@ -514,7 +508,8 @@ class IsabelleChecker:
         source = self._source(
             graph, {}, theory_name=name, statements_only=True,
         )
-        result = self._check(source, name)
+        from regen.execution.declaration_cache import checked_declarations
+        result = checked_declarations(self, source, name)
         result["check_scope"] = "all-graph-statements"
         result["incremental"] = False
         result["proofs_checked"] = False
@@ -801,18 +796,6 @@ class IsabelleChecker:
             "isabelle_build_started", session="Generated_Refine",
             timeout_seconds=self.timeout, container=container_name,
         )
-        finished = threading.Event()
-
-        def heartbeat() -> None:
-            while not finished.wait(30):
-                emit_event(
-                    "isabelle_build_heartbeat", session="Generated_Refine",
-                    elapsed_seconds=int(time.time() - started),
-                    container=container_name,
-                )
-
-        heartbeat_thread = threading.Thread(target=heartbeat, daemon=True)
-        heartbeat_thread.start()
         try:
             result = subprocess.run(
                 command, text=True, capture_output=True, timeout=self.timeout,
@@ -838,9 +821,6 @@ class IsabelleChecker:
                 )
             except (OSError, subprocess.SubprocessError):
                 pass
-        finally:
-            finished.set()
-            heartbeat_thread.join(timeout=1)
         log = self.generated_dir / "build.log"
         log.write_text(diagnostic, encoding="utf-8")
         check = {

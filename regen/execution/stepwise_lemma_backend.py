@@ -567,7 +567,6 @@ def prove_node_stepwise(
         ])
 
     stepwise_started = time.time()
-    stepwise_finished = threading.Event()
     emit_event(
         "stepwise_started", theory=graph["theory"], node_id=node_id,
         node=node["name"], round_id=round_id, timeout_seconds=timeout,
@@ -575,19 +574,6 @@ def prove_node_stepwise(
         isa_port=isa_port,
     )
 
-    def stepwise_heartbeat() -> None:
-        while not stepwise_finished.wait(30):
-            emit_event(
-                "stepwise_heartbeat", theory=graph["theory"],
-                node_id=node_id, node=node["name"], round_id=round_id,
-                elapsed_seconds=int(time.time() - stepwise_started),
-                container=container_name,
-            )
-
-    heartbeat_thread = threading.Thread(
-        target=stepwise_heartbeat, daemon=True,
-    )
-    heartbeat_thread.start()
     process = None
     try:
         with StepwiseModelServer(generator) as server:
@@ -618,8 +604,6 @@ def prove_node_stepwise(
                 )
                 raise
     finally:
-        stepwise_finished.set()
-        heartbeat_thread.join(timeout=1)
         emit_event(
             "stepwise_finished", theory=graph["theory"], node_id=node_id,
             node=node["name"], round_id=round_id,

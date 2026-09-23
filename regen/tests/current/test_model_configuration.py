@@ -15,8 +15,10 @@ class ModelConfigurationTest(unittest.TestCase):
     def test_explicit_medium_overrides_configuration_and_is_audited(self):
         def complete(argv, **kwargs):
             Path(argv[argv.index('-o')+1]).write_text('READY')
-            return subprocess.CompletedProcess(argv,0,'{"type":"turn.completed"}\n','')
-        with tempfile.TemporaryDirectory() as tmp, patch('regen.infrastructure.audited_llm.model_settings',return_value=self.settings()), patch('regen.infrastructure.audited_llm.subprocess.run',side_effect=complete) as run:
+            kwargs['raw_path'].write_text('{"type":"turn.completed"}\n')
+            kwargs['stderr_path'].write_text('')
+            return {'returncode':0}
+        with tempfile.TemporaryDirectory() as tmp, patch('regen.infrastructure.audited_llm.model_settings',return_value=self.settings()), patch('regen.infrastructure.audited_llm._run_provider',side_effect=complete) as run:
             prefix=Path(tmp)/'call';call_codex('test',prefix,model='gpt-6-astra',clean_runtime=True,reasoning_effort='medium')
             meta=json.loads(prefix.with_suffix('.meta.json').read_text())
             self.assertEqual(meta['reasoning_effort'],'medium')
@@ -25,7 +27,7 @@ class ModelConfigurationTest(unittest.TestCase):
 
     def test_changed_default_binary_is_rejected_before_model_call(self):
         settings={**self.settings(),'codex_sha256':'wrong'}
-        with tempfile.TemporaryDirectory() as tmp, patch('regen.infrastructure.audited_llm.model_settings',return_value=settings), patch('regen.infrastructure.audited_llm.subprocess.run') as run:
+        with tempfile.TemporaryDirectory() as tmp, patch('regen.infrastructure.audited_llm.model_settings',return_value=settings), patch('regen.infrastructure.audited_llm._run_provider') as run:
             with self.assertRaisesRegex(RuntimeError,'CLI changed'):call_codex('test',Path(tmp)/'call',clean_runtime=True)
             run.assert_not_called()
 

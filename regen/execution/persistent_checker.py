@@ -70,13 +70,25 @@ class PrefixWorker:
                 'command_log':str(self.root/(stem+'.commands.log'))}
 
     def close(self):
-        if self.closed: return
-        self.closed = True
-        (self.root/'stop').touch()
+        if self.closed:
+            return
+        # Disk failure must not prevent owned-process cleanup. Keep the atexit
+        # hook and allow retry until the process has actually stopped.
         try:
-            self.process.wait(timeout=2)
-        except subprocess.TimeoutExpired:
-            subprocess.run(['docker','rm','-f',self.name],capture_output=True,timeout=30)
-            self.process.wait(timeout=5)
-        self.log.close()
-        atexit.unregister(self.close)
+            if self.process.poll() is None:
+                try:
+                    (self.root/'stop').touch()
+                except OSError:
+                    pass  # The bounded wait below falls back to container removal.
+                try:
+                    self.process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    subprocess.run(['docker','rm','-f',self.name],capture_output=True,timeout=30)
+                    self.process.wait(timeout=5)
+        finally:
+            if self.process.poll() is not None:
+                try:
+                    self.log.close()
+                finally:
+                    self.closed = True
+                    atexit.unregister(self.close)

@@ -6,7 +6,6 @@ import json
 import os
 import shutil
 import subprocess
-import threading
 import time
 import urllib.error
 import urllib.request
@@ -79,6 +78,8 @@ def transcript_health(prefix: Path, *, orphaned: bool = False) -> dict[str, Any]
             mismatches.append(field)
     if mismatches:
         return {"state": "corrupt", "hash_mismatches": mismatches}
+    if meta.get("state") == "interrupted" or meta.get("interrupted"):
+        return {"state": "interrupted"}
     if meta.get("returncode") == 0 and not meta.get("timed_out"):
         return {"state": "complete"}
     return {"state": "failed"}
@@ -416,18 +417,6 @@ def call_llm(provider: str, prompt: str, artifact_prefix: Path, *, model: str,
         artifact_prefix=str(artifact_prefix), clean_runtime=clean_runtime,
     )
     started = time.time()
-    finished = threading.Event()
-
-    def heartbeat() -> None:
-        while not finished.wait(30):
-            emit_event(
-                "llm_heartbeat", provider=provider, model=model, stage=stage,
-                theory=theory, elapsed_seconds=int(time.time() - started),
-                artifact_prefix=str(artifact_prefix),
-            )
-
-    heartbeat_thread = threading.Thread(target=heartbeat, daemon=True)
-    heartbeat_thread.start()
     try:
         kwargs = {
             "model": model, "timeout": timeout,
@@ -438,8 +427,6 @@ def call_llm(provider: str, prompt: str, artifact_prefix: Path, *, model: str,
             kwargs["reasoning_effort"] = reasoning_effort
         return backend(prompt, artifact_prefix, **kwargs)
     finally:
-        finished.set()
-        heartbeat_thread.join(timeout=1)
         paths = artifact_paths(artifact_prefix)
         meta = {}
         if paths["meta"].is_file():
@@ -452,6 +439,8 @@ def call_llm(provider: str, prompt: str, artifact_prefix: Path, *, model: str,
             theory=theory,
             wall_ms=meta.get("wall_ms", int((time.time() - started) * 1000)),
             returncode=meta.get("returncode"), timed_out=meta.get("timed_out"),
+            interrupted=meta.get("interrupted"), raw_bytes=meta.get("raw_bytes"),
+            stderr_bytes=meta.get("stderr_bytes"),
             turn_completed=(meta.get("returncode") == 0 and not meta.get("timed_out")),
             artifact_prefix=str(artifact_prefix),
         )

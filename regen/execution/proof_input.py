@@ -193,6 +193,9 @@ def project(payload, *, budget=MAX_INPUT_CHARS, excerpt_limit=DIAGNOSTIC_CHARS,
         view['recent_attempts'] = unique[-1:]
         source_attempts = history
         view['attempt_summaries'] = [attempt_brief(x) for x in source_attempts[:-1]]
+        if payload.get('green_generated_dependencies'):
+            view['accepted_auxiliary_index']=[{k:f[k] for k in ('id','name','context','proof_sha256') if k in f}
+                for f in payload['green_generated_dependencies']]
         from regen.execution.observation_context import working_context, prior_round_summary
         view.update(working_context(payload.get('observations',[]),payload.get('recalled_facts',[])))
         if payload.get('interaction_state') is not None:

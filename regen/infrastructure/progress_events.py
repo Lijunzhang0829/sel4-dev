@@ -33,7 +33,7 @@ def _write_status_locked() -> None:
 
 def configure_event_monitor(
     run_dir: Path, *, run_id: str, theory: str | None = None,
-    heartbeat_seconds: float = 30.0,
+    heartbeat_seconds: float = 0.0,
 ) -> None:
     """Persist progress independently of the controlling terminal."""
     global _EVENT_PATH, _STATUS_PATH, _STATUS, _MONITOR_THREAD
@@ -65,25 +65,7 @@ def configure_event_monitor(
             "active_event": None,
         }
         _write_status_locked()
-    if heartbeat_seconds > 0:
-        def heartbeat() -> None:
-            while not _MONITOR_STOP.wait(heartbeat_seconds):
-                with _LOCK:
-                    active = dict(_STATUS.get("active_event") or {})
-                    current_theory = _STATUS.get("theory")
-                emit_event(
-                    "runner_heartbeat", run_id=run_id,
-                    theory=active.get("theory") or current_theory,
-                    active_event=active.get("event"),
-                    active_stage=active.get("stage") or active.get("label"),
-                    active_node=active.get("node") or active.get("node_id"),
-                    active_round=active.get("proof_round"),
-                )
-
-        _MONITOR_THREAD = threading.Thread(
-            target=heartbeat, name="regen-runner-monitor", daemon=True,
-        )
-        _MONITOR_THREAD.start()
+    # heartbeat_seconds remains accepted for older callers; no periodic writer.
 
 
 def close_event_monitor(reason: str = "completed") -> None:
@@ -109,6 +91,9 @@ def close_event_monitor(reason: str = "completed") -> None:
 
 
 def emit_event(event: str, **fields: Any) -> None:
+    # Periodic liveness is not work progress; retain only transitions.
+    if event.endswith("_heartbeat"):
+        return
     payload = {
         "time": datetime.now(timezone.utc).isoformat(),
         "event": event,
@@ -117,22 +102,26 @@ def emit_event(event: str, **fields: Any) -> None:
     serialized = json.dumps(
         payload, ensure_ascii=False, separators=(",", ":"), default=str,
     )
-    print("[regen-event] " + serialized, file=sys.stdout, flush=True)
+    # The terminal is a secondary sink: losing it must not erase durable status
+    # or turn successful proof work into a BrokenPipe infrastructure failure.
     with _LOCK:
-        if _EVENT_PATH is None:
-            return
-        with _EVENT_PATH.open("a", encoding="utf-8") as stream:
-            stream.write(serialized + "\n")
-        _STATUS["last_event"] = payload
-        _STATUS["last_event_at"] = payload["time"]
-        if event != "runner_heartbeat":
-            _STATUS["active_event"] = payload
-            _STATUS["last_transition_at"] = payload["time"]
-            if event == "runner_failed":
-                _STATUS["failure"] = payload
-        else:
-            _STATUS["last_heartbeat_at"] = payload["time"]
-        _write_status_locked()
+        if _EVENT_PATH is not None:
+            with _EVENT_PATH.open("a", encoding="utf-8") as stream:
+                stream.write(serialized + "\n")
+            _STATUS["last_event"] = payload
+            _STATUS["last_event_at"] = payload["time"]
+            if event != "runner_heartbeat":
+                _STATUS["active_event"] = payload
+                _STATUS["last_transition_at"] = payload["time"]
+                if event == "runner_failed":
+                    _STATUS["failure"] = payload
+            else:
+                _STATUS["last_heartbeat_at"] = payload["time"]
+            _write_status_locked()
+    try:
+        print("[regen-event] " + serialized, file=sys.stdout, flush=True)
+    except OSError:
+        pass
 
 
 def short_node(node_id: str) -> str:

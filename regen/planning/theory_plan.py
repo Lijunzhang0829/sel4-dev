@@ -35,6 +35,13 @@ def prompt(payload, feedback):
 
 
 def normalize(payload, proposal):
+    if proposal.get("schema_version") == 5:
+        from regen.planning.import_contract import legacy_proposal
+        result = normalize_v4(payload, legacy_proposal(proposal))
+        result["required_import_edges"] = result.pop("suggested_theory_edges")
+        for theory in result["theories"]:
+            theory["required_imports"] = theory.pop("suggested_predecessors")
+        return result
     if proposal.get('schema_version') == 4:
         return normalize_v4(payload, proposal)
     from regen.planning.repository_planner import NAME, id_list, topological
@@ -92,6 +99,9 @@ def normalize(payload, proposal):
 
 
 def build_bundle(payload,proposal):
+    if proposal.get("schema_version") == 5:
+        from regen.planning.import_contract import build_bundle_v5
+        return build_bundle_v5(payload, proposal)
     if proposal.get('schema_version') == 4:
         return build_bundle_v4(payload, proposal)
     normalized=normalize(payload,proposal)
@@ -252,8 +262,11 @@ def prompt_v4(payload, feedback):
         'premise for reuse_existing_fact; otherwise '
         'emit only an auxiliary intent. Do not output exact new helper '
         'statements, tactics, proofs, local proof edges, imports, commands, or '
-        'source paths. Theory edges are provider/scheduling intent, not proof '
-        'citations. The theories array is the ready-theory tie-break priority. '
+        'source paths. suggested_predecessors select planned providers: downstream '
+        'execution waits for their seals and freezes their imports. These edges '
+        'constrain availability but are not mandatory proof citations. Do not add '
+        'provider edges merely to prioritize work. The theories array separately '
+        'defines the ready-theory tie-break priority. '
         'Return JSON only matching this schema (all fields required):\n'
         + json.dumps(schema, ensure_ascii=False, sort_keys=True)
         + '\nPREVIOUS VALIDATION ERRORS:\n'

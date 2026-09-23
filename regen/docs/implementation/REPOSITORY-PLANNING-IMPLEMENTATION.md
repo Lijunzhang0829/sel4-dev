@@ -28,10 +28,15 @@ ROOT 搜索路径将 `owner_theory` 重新归属到 session。只保留 Refine �
 Refine/CRefine 来源以及无法确认归属的记录均排除，并在 `selection_audit` 中计数。
 输入校验同时拒绝重复 contract、非 Refine contract、proof/source 字段和过大文本。
 
-## 2. Planner 的受限接口
+## 2. Planner 入口与旧迭代接口
 
 [repository_planner.py](../../planning/repository_planner.py) 的直接入口是 `--planning-input`。
-Planner 不能读取任意文件，只能通过以下只读接口取得证据：
+默认策略使用 `interaction: agent-workspace`：agent 在隔离工作区编辑计划文件，通过可信
+harness 查询证据、验证和提交，详见第 9 节。模型配置仍为 gpt-5.6-sol / medium。
+仓库规划不提供 proof state 查询；该召回接口属于后续证明阶段。
+
+下面的 JSON 逐轮接口保留供冻结实验重放，策略样本位于
+`regen/fixtures/repository-planning-policy-iterative.json`。这个旧模式通过以下只读接口取得证据：
 
 - `inspect_contracts`：按最多 32 个 ID 返回完整 statement/context；
 - `search_parent_premises`：按合法 context profile 检索，单次最多 50 条；
@@ -39,7 +44,7 @@ Planner 不能读取任意文件，只能通过以下只读接口取得证据：
 - `resolve_symbols`：在父 premise 索引中报告唯一、歧义或未找到；
 - `validate_repository_plan`：由结构 validator 实现，不交给模型自报。
 
-新规划使用 `interaction: agent-iterative`。Agent 从紧凑契约 cards、关系候选和上下文摘要开始，
+旧模式使用 `interaction: agent-iterative`。Agent 从紧凑契约 cards、关系候选和上下文摘要开始，
 自主选择检查、检索、验证、修改、提交或停止；不限制检索轮数或提案修改次数，也不要求先完成
 固定的两阶段 inspection 流程。单次请求仍有分页上限，避免一次注入整个数据库。
 
@@ -71,7 +76,7 @@ Agent 可以在验证失败后补充检索，也可以在验证通过后继续�
 
 ## 3. Repository plan
 
-当前 proposal schema 为 4。它包含：
+当前文件型 planner 的 proposal、plan 与 projection 使用 schema 5，file-generation-list 使用 schema 6。旧 schema 4 提案和投影仍可兼容读取。它包含：
 
 - evidence-backed `contract_relations`；
 - 每个生成 theory 的完整 contract 分配和 context profile；
@@ -185,9 +190,9 @@ VERO 流程；VERO 的 generation 模板本身使用固定模块，不能据此�
 配额或提案修改次数上限。已冻结实验及逐轮 prompt 保持原样，新调用才使用更新后的 prompt。
 
 
-## 9. 文件型规划 agent（新对照运行）
+## 9. 文件型规划 agent（默认入口）
 
-使用 `--policy regen/config/repository-planning-policy-workspace.json` 选择 `agent-workspace`；旧迭代策略保持可重放。模型仍为 gpt-5.6-sol / medium。
+`regen/config/repository-planning-policy.json` 默认选择 `agent-workspace`，显式 workspace 策略也保留；旧迭代策略保持可重放。模型仍为 gpt-5.6-sol / medium。
 
 `workspace_planner.py` 启动独立的非 root Docker worker，只挂载只读去归属输入、工具客户端、RPC socket、固定 Codex runtime，以及可写工作区。原仓库、契约私有映射、checker 资产和 Docker socket 不进入 worker。Codex 使用临时独立认证目录，结束时删除；认证不属于模型任务输入。外层容器提供隔离，内层 CLI 可执行脚本和修改工作区文件。审计允许这些工具事件，但该审计类型仅用于仓库规划，不替代 proof-generation 的 no-tool 审计。
 
@@ -195,10 +200,25 @@ VERO 流程；VERO 的 generation 模板本身使用固定模块，不能据此�
 
 validate 一次返回可定位的格式/覆盖错误，原权威 validator 继续检查 schema、上下文 profile、合法已检查前提和 DAG。preflight 根据冻结契约和模型 provider 边渲染 theory，以 oops 检查原生声明及 imports；不证明任何目标。相邻完全相同的 owned context 共用一个作用域，避免重复 interpretation；声明以 oops 结束，不建立新事实。900 秒原生检查超时独立于模型调用超时。submit 必须同时通过结构检查与原生预检查，最终自然语言回复不能发布计划。
 
-这里的 suggested_predecessors 明确表示后续要等待 seal 并冻结导入的 provider；数组顺序仅用于 ready theory 优先级。Agent 应根据查询到的定义、契约和可复用事实分析潜在循环及跨模块协作，并记录不确定关系。没有 theory 数量、helper 数量或修正轮数配额。
+当前字段 required_imports（旧格式名 suggested_predecessors）明确表示后续要等待 seal 并冻结导入的 provider；数组顺序仅用于 ready theory 优先级。Agent 应根据查询到的定义、契约和可复用事实分析潜在循环及跨模块协作，并记录不确定关系。没有 theory 数量、helper 数量或修正轮数配额。
 
 模型调用仍有单次超时，并按相同请求重试一次；重试前恢复调用前的工作区与查询证据状态，保留已发生请求日志供审计，不消费部分最终响应。计划文件每两秒保存变化快照（不保证捕获每次写入）；快照读取拒绝 symlink。原生预检查失败可重试，同一提案成功的原生检查可复用。发布仍使用原有 plan_id/revision 日志和文件投影。
 
-相关回归测试：`test_workspace_planning.py`。不将本轮生成的规划视为已完成证明或完整仓库构建。
+定义查询支持 `--offset` 分页并返回 `next_offset`。`mentioned_identifiers` 只是词法导航线索，可能包含变量，不代表已认证的调用或证明依赖。涉及原始 contract theory 标签的候选逐条过滤，返回过滤数量；不会因为一个候选越界就拒绝整批合法定义。分页位置仍按原始候选计算。
+
+结构反馈提供 JSON 路径、契约覆盖错误、未检查的 premise、关系证据端点不匹配和具体 provider 环路。调整 ready 优先级不能消除 provider 环；agent 应依据真实定义和契约假设判断能否把受限情况放到一般情况之前，不预设固定模块划分。`Planner_Preflight_All` 是预检保留名称，不能作为生成 theory 名称。
+
+恢复时校验输入、premise 库、checker、策略及实现摘要。已提交的计划绑定成功的模型调用、工具审计及原生预检证据；渲染源文件、检查日志和调用产物均校验摘要。完成提交后再次进入相同运行会复用结果，不重复调用模型。修改这些绑定内容需要新的运行目录，不能混用旧回执。快照读取还拒绝非普通文件，避免 FIFO 阻塞监控。
+
+相关回归测试：`test_workspace_planning.py`、`test_workspace_protocol.py`。原生预检不代表已完成证明或完整仓库构建。
 
 文件型 worker 显式设置 `web_search="disabled"`，不依赖 prompt 禁止网页工具。审计仍拒绝所有 web_search 事件；出现此事件的运行不予发布，新运行不继承它的模型工作区。
+
+
+## 10. 明确的 import 契约
+
+新规划以 `required_imports: [{"theory": "Provider", "reason": "..."}]` 表达强制导入；没有 provider 时填空数组。计划输出使用 `required_import_edges`，文件投影使用 `required_providers` 描述 provider 的目的和理由。旧 `suggested_*` 字段只用于旧 schema 的兼容读取，不出现在新规划的接口中。
+
+Agent 在提交前可以修改 import 方案。计划接受后，每个 provider 都必须 sealed，消费者才能开始；实际导入列表在 theory 启动时冻结。串行和并行调度采用相同规则，retired 或 failed provider 均不能满足依赖。READY 优先级不产生 import，也不能绕过依赖。强制导入不要求证明引用其中每个事实；validator 不认证导入最小性或证明充分性。
+
+原生规划预检显式导入基础语义环境和各 provider；实际证明时有 provider 则导入其 `Generated_Refine.Regen_*` checkpoint，基础语义环境通过 provider 传递继承，无 provider 则直接导入基础环境。预检用 oops 不产生事实，后续证明只能使用已 seal 的真实结果。

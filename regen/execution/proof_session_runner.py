@@ -991,6 +991,7 @@ def publish_generated_records(
         for item in package["contracts"]
     }
     commit_ids: dict[str, str] = {}
+    accepted_proofs: dict[str, str] = {}
     commit_dir = (
         run_dir / "theories" / Path(graph["file_slot"]).stem
         / "acceptance" / "commits"
@@ -998,10 +999,15 @@ def publish_generated_records(
     if commit_dir.is_dir():
         for commit_path in sorted(commit_dir.glob("*.json")):
             commit = read_json(commit_path)
+            accepted_proofs.update(commit.get("state", {}).get("proofs", {}))
             if commit.get("event") == "green":
                 node_id = commit.get("evidence", {}).get("node_id")
                 if node_id:
                     commit_ids[node_id] = commit_path.stem
+            elif commit.get('event') == 'batch' or (commit.get('event') == 'initial'
+                    and any(k in commit.get('evidence', {}) for k in ('continuation', 'sealed_reuse'))):
+                for node_id in commit.get('state', {}).get('proofs', {}):
+                    commit_ids.setdefault(node_id, commit_path.stem)
     isabelle_theory = generated_checkpoint_theory(graph["file_slot"])
     for node in graph["nodes"]:
         record_id = f"generated:{graph['theory']}:{node['name']}"
@@ -1010,7 +1016,13 @@ def publish_generated_records(
             if node["role"] == "contract"
             else list(node.get("attributes", []))
         )
+        from regen.execution.proof_commits import digest
+        body = accepted_proofs.get(node["id"])
+        example = ({"proof_body":body, "proof_sha256":digest(body)}
+                   if body and commit_ids.get(node["id"]) else {})
         records[record_id] = {
+            **example,
+            "context": list(node.get("context", [])),
             "record_id": record_id,
             "canonical_name": f"{isabelle_theory}.{node['name']}",
             "exact_statement": node["statement"],
@@ -2232,6 +2244,8 @@ def main() -> int:
         command.add_argument("--max-attempts", type=int, default=5)
         command.add_argument("--max-node-rounds", type=int, default=5)
         command.add_argument("--max-node-revisions", type=int, default=8)
+        command.add_argument("--unlimited-gra-revisions", action="store_true",
+            help="Disable per-node and generation-wide GRA proposal count limits for repository runs; preserve counters and timeouts.")
 
     execute = sub.add_parser("run-file")
     add_execution_arguments(execute)
@@ -2247,6 +2261,17 @@ def main() -> int:
         "--max-parallel-theories", type=int, default=1,
         help="Run this many dependency-ready theories concurrently (direct repository plans only).",
     )
+    batch = sub.add_parser("batch-file", help="Run one continuing File Planner with atomic proof batches")
+    batch.add_argument("--run-dir", type=Path, required=True)
+    batch.add_argument("--theory", required=True)
+    batch.add_argument("--provider", default="codex")
+    batch.add_argument("--planner-model", default=None)
+    batch.add_argument("--call-timeout", type=int, default=600)
+    batch.add_argument("--check-timeout", type=int, default=900)
+    batch.add_argument("--candidate-timeout", type=int, default=120,
+                       help="Seconds per candidate proof batch; separate from graph and final seal checks")
+    batch.add_argument("--max-requests", type=int, default=0,
+                       help="Checkpoint after this many requests; 0 means no count limit")
     args = parser.parse_args()
     if args.command == "init" and bool(args.dataset_root) == bool(args.environment_run):
         parser.error("init requires exactly one of --dataset-root or --environment-run")
@@ -2258,12 +2283,22 @@ def main() -> int:
                 run_id=args.run_id,
                 schedule_path=args.schedule,
             )
+        elif args.command == "batch-file":
+            from regen.planning.batch_file_planner import run_batch_file
+            result = run_batch_file(args.run_dir, args.theory, provider=args.provider,
+                model=args.planner_model, call_timeout=args.call_timeout,
+                check_timeout=args.check_timeout, candidate_timeout=args.candidate_timeout,
+                max_requests=args.max_requests)
         elif args.command == "plan-file":
             result = plan_run_file(
                 args.run_dir, args.theory, provider=args.provider,
                 planner_model=args.planner_model, timeout=args.timeout,
             )
         else:
+            if args.unlimited_gra_revisions:
+                from regen.execution.repository_execution import is_repository
+                if not is_repository(args.run_dir):
+                    parser.error('--unlimited-gra-revisions requires a repository projection run')
             options = {
                 "provider": args.provider,
                 "planner_model": args.planner_model,
@@ -2273,7 +2308,7 @@ def main() -> int:
                 "timeout": args.timeout,
                 "max_attempts": args.max_attempts,
                 "max_node_rounds": args.max_node_rounds,
-                "max_node_revisions": args.max_node_revisions,
+                "max_node_revisions": None if args.unlimited_gra_revisions else args.max_node_revisions,
                 "graph_timeout": args.graph_timeout,
                 "think_timeout": args.think_timeout,
                 "node_timeout": args.node_timeout,

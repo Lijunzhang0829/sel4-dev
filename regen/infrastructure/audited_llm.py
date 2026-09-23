@@ -6,6 +6,8 @@ import hashlib
 import json
 import os
 import shutil
+import signal
+import threading
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -58,6 +60,69 @@ def audit_events(raw_path: Path) -> dict:
         "no_tool_events": not forbidden,
         "transport_diagnostic_count": transport_diagnostics,
     }
+
+
+class ProviderCallInterrupted(KeyboardInterrupt):
+    """Cancellation signal recorded before propagating to the runner."""
+    def __init__(self, signum):
+        self.signal_number = signum
+        super().__init__(f'provider call interrupted by signal {signum}')
+
+
+def _stop_provider_group(process):
+    """Stop only the private process group allocated for this provider call."""
+    def send(sig):
+        try:
+            os.killpg(process.pid, sig)
+        except ProcessLookupError:
+            pass
+    send(signal.SIGTERM)
+    try:
+        process.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        pass
+    # Parent exit does not prove that descendants released their resources.
+    send(signal.SIGKILL)
+    process.wait(timeout=5)
+
+
+def _run_provider(argv, *, prompt_path, raw_path, stderr_path, timeout, on_started=None):
+    """Persist live output, enforce one deadline, and own the provider process group."""
+    process = None
+    group_stopped = False
+    handlers = {}
+    started = time.monotonic()
+    def interrupted(signum, frame):
+        raise ProviderCallInterrupted(signum)
+    try:
+        if threading.current_thread() is threading.main_thread():
+            for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+                handlers[sig] = signal.signal(sig, interrupted)
+        with prompt_path.open('rb') as source, raw_path.open('wb') as raw, stderr_path.open('wb') as errors:
+            process = subprocess.Popen(argv, stdin=source, stdout=raw, stderr=errors,
+                                       start_new_session=True)
+            if on_started is not None:
+                on_started({'pid':process.pid, 'process_group_id':process.pid})
+            try:
+                process.wait(timeout=max(0.001, timeout-(time.monotonic()-started)))
+            except BaseException as error:
+                # Repeated cancellation must not interrupt owned-child cleanup.
+                for sig in handlers:
+                    signal.signal(sig, signal.SIG_IGN)
+                _stop_provider_group(process)
+                group_stopped = True
+                raise
+            return {'returncode':process.returncode, 'pid':process.pid,
+                    'process_group_id':process.pid}
+    except BaseException:
+        if process is not None and not group_stopped:
+            for sig in handlers:
+                signal.signal(sig, signal.SIG_IGN)
+            _stop_provider_group(process)
+        raise
+    finally:
+        for sig, previous in handlers.items():
+            signal.signal(sig, previous)
 
 
 def call_codex(
@@ -146,25 +211,25 @@ def call_codex(
         "audit_path": str(audit_path),
         "prompt_sha256": sha256_text(prompt),
     }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    interrupted = False
+    pending_error = None
+    process_info = {}
+    def started_process(info):
+        process_info.update(info)
+        running = json.loads(meta_path.read_text(encoding='utf-8'))
+        running.update(info)
+        meta_path.write_text(json.dumps(running, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     try:
-        proc = subprocess.run(
-            argv, input=prompt, text=True, capture_output=True, timeout=timeout,
-        )
-        stdout, stderr, returncode = proc.stdout, proc.stderr, proc.returncode
-    except subprocess.TimeoutExpired as exc:
-        def output_text(value: str | bytes | None) -> str:
-            if isinstance(value, bytes):
-                return value.decode("utf-8", errors="replace")
-            return value or ""
-
-        # TimeoutExpired may carry bytes even when subprocess.run used
-        # text=True. Normalize before persisting the partial provider stream.
-        stdout = output_text(exc.stdout)
-        stderr = output_text(exc.stderr)
-        returncode = 124
-        timed_out = True
-    raw_path.write_text(stdout, encoding="utf-8")
-    stderr_path.write_text(stderr, encoding="utf-8")
+        process_info = _run_provider(argv, prompt_path=prompt_path, raw_path=raw_path,
+            stderr_path=stderr_path, timeout=timeout, on_started=started_process)
+        returncode = process_info['returncode']
+    except subprocess.TimeoutExpired:
+        returncode, timed_out = 124, True
+    except BaseException as error:
+        pending_error = error
+        interrupted = isinstance(error, (KeyboardInterrupt, SystemExit))
+        returncode = (128 + getattr(error, 'signal_number', signal.SIGINT)) if interrupted else 1
+    # Partial output already exists on disk, including after cancellation.
     audit = audit_events(raw_path)
     audit_path.write_text(json.dumps(audit, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     final = final_path.read_text(
@@ -172,7 +237,7 @@ def call_codex(
     ) if final_path.exists() else ""
     final_path.write_text(final, encoding="utf-8")
     meta = {
-        "state": "complete" if returncode == 0 else "failed",
+        "state": "interrupted" if interrupted else ("complete" if returncode == 0 else "failed"),
         "provider": "codex-exec-audited",
         "model": model,
         "reasoning_effort": effort if clean_runtime else None,
@@ -183,6 +248,12 @@ def call_codex(
         "wall_ms": int((time.time() - t0) * 1000),
         "returncode": returncode,
         "timed_out": timed_out,
+        "interrupted": interrupted,
+        "signal_number": getattr(pending_error, "signal_number", None),
+        "error_type": type(pending_error).__name__ if pending_error else None,
+        "raw_bytes": raw_path.stat().st_size,
+        "stderr_bytes": stderr_path.stat().st_size,
+        **process_info,
         "clean_runtime": clean_runtime,
         "cwd": str(sandbox),
         "sandbox": "read-only",
@@ -198,11 +269,13 @@ def call_codex(
         "audit_path": str(audit_path),
         "no_tool_events": audit["no_tool_events"],
         "sealable_generation": bool(
-            returncode == 0 and not timed_out and audit["no_tool_events"]
+            returncode == 0 and not timed_out and not interrupted and audit["no_tool_events"]
         ),
     }
     meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+    if pending_error is not None:
+        raise pending_error
     if returncode != 0 and 'input_too_large' in stderr_path.read_text(encoding='utf-8', errors='replace'):
         raise ValueError('input_too_large: provider rejected the input; do not retry unchanged')
     if returncode != 0:

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import re
+import time
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -239,6 +241,27 @@ INPUT:
         text = text.replace("exact reductions or semantic bridge; do not name a premise", "precise route; legal_premise also requires premise_ids from visible records")
         text = text.replace("Do not select or name\nan external premise; premise choice belongs to runtime retrieval.",
                             "You may cite visible legal premises; actual premise use is decided during proof generation.")
+    if (environment or {}).get("retrieval_enabled"):
+        text = text.replace(
+            "This is a closed-payload planning call. Do not invoke tools, skills, shell\ncommands, file reads, repository search, or network search. Use only the INPUT\npayload below. Return the requested JSON directly.",
+            "Return JSON: either an observation_request or the final plan. No shell, "
+            "arbitrary file reads or network access. The harness executes legal queries.")
+        text = text.replace("Design the complete generated-theorem DAG needed to prove every fixed contract.",
+            "Design an initial executable DAG for every fixed contract. Query relevant definitions "
+            "and existing facts before choosing helpers. Prefer a direct attempt when retrieved "
+            "facts or precise semantic reductions justify it. Add helpers only for identified gaps; "
+            "do not force a complete speculative decomposition. GRA can refine it after feedback.")
+        text = text.replace("If a\ncontract crosses several semantic operations or relations, expose the\nintermediate generated theorem obligations in the DAG.",
+            "Multiple semantic operations alone do not require generated helpers.")
+        text = ("Available harness: {\"observation_request\":{\"premise_queries\":["
+                "{\"query\":\"constant_or_fact\",\"mode\":\"definition\",\"scope\":\"all\",\"offset\":0}],"
+                "\"context_contract_id\":\"fixed-or-support-contract-id\"}}. "
+                "Use 1-4 queries per request; modes auto/exact/definition/search; scopes "
+                "upstream/sealed/all. Omit context_contract_id for global context. "
+                "You may query again, including paging, within the shared planning timeout. "
+                "Returned facts are catalog candidates, not proof certificates. Symbol resolution "
+                "is syntax/type evidence, not a proved fact. Cite returned record_id values only. "
+                "Unproved contracts and suggested auxiliaries are never premises.\n\n" + text)
     return text
 
 
@@ -252,38 +275,79 @@ def plan_file(
     rejection_feedback: list[str] | None = None,
     graph_bindings: dict[str, Any] | None = None,
     persist_graph: bool = True,
+    premise_database: Path | None = None,
+    generated_records: Path | None = None,
+    symbol_resolver=None,
 ) -> dict[str, Any]:
-    prompt = planner_prompt(package, environment, rejection_feedback)
-    transcript_prefix = allocate_artifact_prefix(
-        output_dir / "llm"
-        / f"file-plan-v{revision}-attempt-{call_index:03d}"
-    )
-    try:
-        response = call_llm(
-            provider, prompt, transcript_prefix,
-            model=model, timeout=timeout, theory=package["theory"],
-            stage="file-planner", clean_runtime=True,
+    environment = deepcopy(environment or {})
+    environment['retrieval_enabled'] = premise_database is not None
+    deadline = time.monotonic() + timeout
+    query_index = 0
+    while True:
+        if time.monotonic() >= deadline:
+            raise RuntimeError('File Planner shared retrieval/planning deadline exhausted')
+        prompt = planner_prompt(package, environment, rejection_feedback)
+        transcript_prefix = allocate_artifact_prefix(
+            output_dir / "llm"
+            / f"file-plan-v{revision}-attempt-{call_index:03d}"
         )
-    finally:
-        if (
-            module_log_path is not None
-            and transcript_prefix.with_suffix(".meta.json").is_file()
-        ):
-            write_llm_module_log(
-                transcript_prefix, module_log_path, module="File Planner",
-                run_name=package["file_slot"].removesuffix(".thy"),
-                context={
-                    "run_id": run_id,
-                    "theory": package["theory"],
-                    "file_slot": package["file_slot"],
-                    "contract_ids": [
-                        item["contract_id"] for item in package["contracts"]
-                    ],
-                    "revision": revision,
-                    "call_index": call_index,
-                },
+        try:
+            response = call_llm(
+                provider, prompt, transcript_prefix,
+                model=model, timeout=max(1, int(deadline - time.monotonic())), theory=package["theory"],
+                stage="file-planner", clean_runtime=True,
             )
-    proposal = parse_json_response(response)
+        finally:
+            if (
+                module_log_path is not None
+                and transcript_prefix.with_suffix(".meta.json").is_file()
+            ):
+                write_llm_module_log(
+                    transcript_prefix, module_log_path, module="File Planner",
+                    run_name=package["file_slot"].removesuffix(".thy"),
+                    context={
+                        "run_id": run_id,
+                        "theory": package["theory"],
+                        "file_slot": package["file_slot"],
+                        "contract_ids": [
+                            item["contract_id"] for item in package["contracts"]
+                        ],
+                        "revision": revision,
+                        "call_index": call_index,
+                    },
+                )
+        validate_call_artifact(transcript_prefix, require_real=True)
+        proposal = parse_json_response(response)
+        if not isinstance(proposal, dict):
+            raise ValueError('File Planner response must be a JSON object')
+        if 'observation_request' not in proposal:
+            break
+        if premise_database is None:
+            raise ValueError('File Planner retrieval unavailable in this run')
+        query_index += 1
+        request = proposal['observation_request']
+        audit = output_dir / 'planner-recall' / f'attempt-{call_index:03d}-query-{query_index:03d}.json'
+        try:
+            from regen.execution.round_recall import select_round_facts, is_fact_request
+            if not isinstance(request, dict) or not is_fact_request(request) or 'proof_state_query' in request:
+                raise ValueError('File Planner requires explicit premise queries, not proof state')
+            contracts = {c['contract_id']: c for c in package['contracts'] + package.get('support_contracts', [])}
+            context_id = request.get('context_contract_id')
+            if context_id is not None and context_id not in contracts:
+                raise ValueError('unknown context_contract_id')
+            context = contracts[context_id].get('contract_owned_context', []) if context_id else []
+            page = select_round_facts(premise_database, request,
+                generated_records=generated_records, audit_path=audit,
+                symbol_resolver=(lambda names: symbol_resolver(names, context)) if symbol_resolver else None)
+            page = {**page, 'status': 'available', 'notice': 'Candidates only; further explicit queries are allowed.'}
+            records = {f['record_id']: f for f in environment.get('legal_premises', [])}
+            records.update({f['record_id']: f for f in page['records']})
+            environment['legal_premises'] = list(records.values())
+        except (ValueError, TypeError) as error:
+            page = {'status': 'rejected_request', 'diagnostic': str(error)}
+        environment.setdefault('retrieval_observations', []).append({'request': request, 'result': page})
+        audit.parent.mkdir(parents=True, exist_ok=True)
+        audit.with_suffix('.response.json').write_text(json.dumps({'request': request, 'result': page}, ensure_ascii=False, indent=2) + '\n')
     validate_plan_quality(package, proposal, environment)
     graph = build_graph(
         package, proposal, run_id=run_id, revision=revision,
@@ -295,7 +359,10 @@ def plan_file(
     transcript = validate_call_artifact(transcript_prefix, require_real=True)
     graph["planner_context"] = {
         "policy": (environment or {}).get("policy", "fixed-contracts-only-v1"),
-        "external_premise_records_visible": bool(package.get("repository_projection")),
+        "external_premise_records_visible": bool(environment.get("legal_premises")),
+        "retrieval_queries": query_index,
+        "retrieval_enabled": premise_database is not None,
+        "retrieved_record_ids": sorted(f["record_id"] for f in environment.get("legal_premises", [])),
     }
     graph["upstream_bindings"] = dict(graph_bindings or {})
     graph["planner_call"] = {

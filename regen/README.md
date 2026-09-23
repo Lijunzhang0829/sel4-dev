@@ -14,6 +14,7 @@ helper 保留及 ready-theory 并行；完整仓库实验仍待执行。详细 s
 | [环境实现](docs/implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md) | command 选择、环境／catalog 构建与 gate | [environment_preparation.py](preparation/environment_preparation.py)、[semantic_base_builder.py](preparation/semantic_base_builder.py) |
 | [规划实现与扩展](docs/implementation/REPOSITORY-PLANNING-IMPLEMENTATION.md) | 环境数据流到仓库方案、文件投影、重放与执行边界 | [repository_planner.py](planning/repository_planner.py) |
 | [证明生成实现](docs/implementation/PROOF-GENERATION-IMPLEMENTATION.md) | node、GRA、组装、发布、日志与缺口 | [proof_session_runner.py](execution/proof_session_runner.py)、[isabelle_node_checker.py](execution/isabelle_node_checker.py) |
+| [Harness 改进 TODO](docs/implementation/HARNESS-IMPROVEMENT-TODO.md) | 决策开销、检索记忆、上下文管理、增量检查与恢复问题的优先级和验收标准 | 基于 StatePrimitives 与 Capability 实验证据 |
 | [实验记录](docs/history/REFINE-CREFINE-EXPERIMENT.md) | 历史 campaign 结果，不作为当前 PASS | 运行数据需另行核对 |
 
 [Kernel_Object_Access 单 theory 实验](docs/experiments/KERNEL-OBJECT-ACCESS-LAB.md) 仅完成交互式诊断及证明正确性检查，包含外层 Codex 直接编写 helper/证明，不满足无干预生成 setting。

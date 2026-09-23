@@ -43,7 +43,7 @@ class CheckerIsolationTest(unittest.TestCase):
                 (root / 'generated' / ('Regen_' + name + '.thy')).write_text(name)
             (root / 'generated' / 'Regen_Unrelated.thy').write_text('unrelated')
             package = {'file_slot': 'C.thy', 'repository_projection': {
-                'schema_version': 4, 'suggested_predecessors': [{'theory': 'B'}],
+                'schema_version': 5, 'required_imports': [{'theory': 'B'}],
             }}
             with patch('regen.execution.repository_execution.progress',
                        return_value={'files': states}), \
@@ -51,13 +51,37 @@ class CheckerIsolationTest(unittest.TestCase):
                  patch('regen.execution.repository_execution.journal'), \
                  patch('regen.execution.isabelle_node_checker.IsabelleChecker.build_generated_session',
                        return_value={'verdict': 'green'}) as build:
+                states[1]['status'] = 'retired'
+                with self.assertRaisesRegex(ValueError, 'providers are not sealed'):
+                    setup(root, 'C', 10)
+                states[1]['status'] = 'sealed'
                 checker = setup(root, 'C', 10)[4]
+                self.assertEqual(checker.imports(), ['Generated_Refine.Regen_B'])
                 self.assertEqual(sorted(p.name for p in checker.generated_dir.glob('*.thy')),
                                  ['Regen_A.thy', 'Regen_B.thy'])
                 build.assert_called_once_with(['Regen_B'])
                 again = setup(root, 'C', 10)[4]
                 self.assertEqual(again.heaps_dir, checker.heaps_dir)
                 build.assert_called_once()
+
+    def test_retired_required_provider_blocks_serial_and_parallel_scheduling(self):
+        from regen.execution.repository_execution import run_session
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root/'run.json').write_text(json.dumps({'session_schedule':{'source':str(root/'schedule.json')}}))
+            (root/'schedule.json').write_text(json.dumps({'schema_version':6}))
+            states = [{'theory':'Provider','file_slot':'Provider.thy','status':'retired','order':0},
+                      {'theory':'Consumer','file_slot':'Consumer.thy','status':'pending','order':1}]
+            (root/'execution-input.json').write_text(json.dumps({'files':states}))
+            package = {'repository_projection':{'schema_version':5,
+                       'required_imports':[{'theory':'Provider','reason':'Needed'}]}}
+            with patch('regen.execution.repository_execution.progress', return_value={'files':states}), \
+                 patch('regen.execution.repository_execution.package_for', return_value=package), \
+                 patch('regen.execution.repository_execution.run_file') as run_file:
+                for workers in (1, 2):
+                    result = run_session(root, max_parallel_theories=workers)
+                    self.assertEqual(result['blocked_theories'], ['Consumer'])
+                run_file.assert_not_called()
 
     def test_concurrent_builds_and_checks_use_distinct_resources(self):
         with tempfile.TemporaryDirectory() as temporary:

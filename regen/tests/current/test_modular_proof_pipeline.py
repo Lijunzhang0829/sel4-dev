@@ -2394,8 +2394,12 @@ class CheckerAndRunnerTests(unittest.TestCase):
                 output=b'{"type":"thread.started"}\n',
                 stderr=b"partial stderr\n",
             )
+            def partial_timeout(argv, **kwargs):
+                kwargs['raw_path'].write_bytes(timeout.stdout)
+                kwargs['stderr_path'].write_bytes(timeout.stderr)
+                raise timeout
             with patch(
-                "regen.infrastructure.audited_llm.subprocess.run", side_effect=timeout,
+                "regen.infrastructure.audited_llm._run_provider", side_effect=partial_timeout,
             ):
                 with self.assertRaisesRegex(RuntimeError, "exit code 124"):
                     call_codex(
@@ -2680,8 +2684,8 @@ class CheckerAndRunnerTests(unittest.TestCase):
         source = automation_audit_ml("regen_helper")
         self.assertIn("Raw_Simplifier.dest_ss (simpset_of ctxt)", source)
         self.assertIn("WeakestPre.debug_get ctxt", source)
-        self.assertIn("Thm_Deps.thm_deps thy [target]", source)
-        self.assertIn("Thm_Deps.has_skip_proof [target]", source)
+        self.assertIn("Thm_Deps.thm_deps thy targets", source)
+        self.assertIn("Thm_Deps.has_skip_proof targets", source)
         self.assertIn("/audit-output/automation-context.tsv", source)
 
     def test_automation_audit_parsers_are_stable_and_structured(self):

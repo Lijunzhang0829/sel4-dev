@@ -1,18 +1,16 @@
 """Trusted planning authority; never mounted into the model worker."""
-from collections import Counter
 from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
-import re
-import sqlite3
 import threading
 from regen.planning.owner_blind import OwnerBlindView
 from regen.planning.iterative_planner import validate_draft
 from regen.planning.theory_plan import build_bundle
+from regen.planning.workspace_validation import diagnostics
 from regen.preparation.planning_input import PlanningInputQueries
-
-NAME = re.compile(r'[A-Za-z][A-Za-z0-9_]*\Z')
+from regen.preparation.refine_campaign import write_immutable_json
+from regen.planning.definition_queries import definition_ids, mentioned_identifiers
 
 
 def save(path, value):
@@ -36,39 +34,6 @@ def short_view(source):
     return view
 
 
-def diagnostics(payload, proposal):
-    errors=[]
-    if not isinstance(proposal,dict) or not isinstance(proposal.get('theories'),list):
-        return [{'path':'/theories','message':'Expected a proposal object with a theories array.'}]
-    assigned,names,helpers=[],[],[]
-    for i,t in enumerate(proposal['theories']):
-        path=f'/theories/{i}'
-        if not isinstance(t,dict):
-            errors.append({'path':path,'message':'Expected an object.'}); continue
-        name=t.get('name')
-        if not isinstance(name,str) or not NAME.fullmatch(name):
-            errors.append({'path':path+'/name','value':name,'message':'Use [A-Za-z][A-Za-z0-9_]*.'})
-        else: names.append(name)
-        ids=t.get('contract_ids')
-        if not isinstance(ids,list) or not all(isinstance(x,str) for x in ids):
-            errors.append({'path':path+'/contract_ids','message':'Expected an array of public contract IDs.'})
-        else: assigned.extend(ids)
-        decisions=t.get('helper_decisions',[])
-        if not isinstance(decisions,list):
-            errors.append({'path':path+'/helper_decisions','message':'Expected an array.'}); continue
-        for j,d in enumerate(decisions):
-            key=d.get('id') if isinstance(d,dict) else None
-            if not isinstance(key,str) or not NAME.fullmatch(key):
-                errors.append({'path':path+f'/helper_decisions/{j}/id','value':key,'message':'Use [A-Za-z][A-Za-z0-9_]*; no hyphens or spaces.'})
-            else: helpers.append(key)
-    for label,values in [('theory names',names),('helper IDs',helpers),('contract IDs',assigned)]:
-        dup=sorted(k for k,n in Counter(values).items() if n>1)
-        if dup: errors.append({'path':'/theories','message':f'Duplicate {label}.','values':dup})
-    expected={c['contract_id'] for c in payload['contracts']}
-    missing,unknown=sorted(expected-set(assigned)),sorted(set(assigned)-expected)
-    if missing or unknown:
-        errors.append({'path':'/theories','message':'Each contract must occur exactly once.','missing':missing,'unknown':unknown})
-    return errors
 
 
 class WorkspaceHarness:
@@ -78,6 +43,13 @@ class WorkspaceHarness:
         self.queries=PlanningInputQueries(self.path)
         if self.queries.database_version != 2: raise ValueError("Workspace planning requires the verified v2 premise database.")
         self.output=Path(output); self.native_check=native_check; self.lock=threading.RLock()
+        identity=getattr(native_check,'identity',None)
+        write_immutable_json(self.output/'control/input-binding.json',{
+            'input_sha256':hashlib.sha256(self.path.read_bytes()).hexdigest(),
+            'premise_database_sha256':self.queries.input['parent_premises']['database_sha256'],
+            'checker':identity if isinstance(identity,dict) else None,
+        })
+        self.active_call=None
         self.state_path=self.output/'control/state.json'
         self.state=json.loads(self.state_path.read_text()) if self.state_path.exists() else {'inspected_contracts':{},'inspected_premises':{},'sequence':0}
         submitted=self.output/'control/submitted.json'
@@ -90,7 +62,7 @@ class WorkspaceHarness:
         return {'inspected_contracts':list(self.state['inspected_contracts'].values()),'inspected_parent_premises':list(self.state['inspected_premises'].values()),'premise_searches':[]}
 
     def validate(self, proposal):
-        errors=diagnostics(self.view.payload,proposal)
+        errors=diagnostics(self.view.payload,proposal,self.evidence())
         if errors: return {'valid':False,'errors':errors}
         result,_=validate_draft(self.view.payload,proposal,self.evidence())
         if result['valid']:
@@ -110,21 +82,32 @@ class WorkspaceHarness:
                 try: self.view.assert_no_owner_disclosure(message)
                 except ValueError: message='Private source-context diagnostic withheld; inspect the public contracts and exact contexts.'
                 result={'valid':False,'error':message}
-            save(self.output/f'queries/{number:06d}.json',{'request':request,'response':result})
+            save(self.output/f'queries/{number:06d}.json',{'request':request,'response':result,'call_number':self.active_call})
             save(self.state_path,self.state)
             return result
 
+    def public_records(self, records):
+        visible=[]
+        for record in records:
+            try:
+                self.view.assert_no_owner_disclosure(json.dumps(record,ensure_ascii=False))
+            except ValueError:
+                continue
+            visible.append(record)
+        return visible
+
     def inspect(self, ids):
-        records=self.queries.inspect_parent_premises(ids)
-        self.view.assert_no_owner_disclosure(json.dumps(records,ensure_ascii=False))
+        records=self.public_records(self.queries.inspect_parent_premises(ids))
         self.state['inspected_premises'].update({r['record_id']:r for r in records})
         return records
 
     def _dispatch(self, request):
         if not isinstance(request,dict): raise ValueError('Expected a request object.')
-        action=request.get('action'); values=request.get('values',[]); limit=request.get('limit',20)
+        action=request.get('action'); values=request.get('values',[]); limit=request.get('limit',20); offset=request.get('offset',0)
         if not isinstance(values,list) or not all(isinstance(x,str) for x in values): raise ValueError('values must be strings')
         if isinstance(limit,bool) or not isinstance(limit,int) or not 1<=limit<=50: raise ValueError('limit must be 1 to 50')
+        if isinstance(offset,bool) or not isinstance(offset,int) or not 0<=offset<=2**63-1: raise ValueError('offset must be a nonnegative integer')
+        if offset and action not in {'related','definitions'}: raise ValueError('offset is supported by definitions and related only')
         if action=='contracts':
             if not values: return {'records':self.view.payload['contract_cards']}
             if not set(values)<=self.view.public_contracts.keys(): raise ValueError('Unknown public contract ID; use contracts with no arguments for the catalog.')
@@ -133,22 +116,25 @@ class WorkspaceHarness:
             return {'records':records}
         if action=='related':
             if not values or not set(values)<=self.view.public_contracts.keys(): raise ValueError('related requires public contract IDs')
-            return {'records':[r for r in self.view.payload['contract_relation_candidates'] if r['left_contract_id'] in values or r['right_contract_id'] in values][:limit], 'notice':'Shared symbols are clues, not proven dependencies.'}
+            rows=[r for r in self.view.payload['contract_relation_candidates'] if r['left_contract_id'] in values or r['right_contract_id'] in values]
+            return {'records':rows[offset:offset+limit], 'next_offset':offset+limit if offset+limit<len(rows) else None, 'notice':'Shared symbols are clues, not proven dependencies.'}
         if action in {'search','definitions'}:
             query=' '.join(values).strip()
             if not query: raise ValueError('Provide a fact name, definition name, or concept.')
             if action=='search':
                 profiles=[p['context_profile_id'] for p in self.view.payload['context_profiles']]
-                return {'records':self.queries.search_parent_premises(query,context_profile_ids=profiles,limit=limit),'notice':'Inspect complete statements before reuse.'}
-            terms=query.split(); clauses=['(canonical_name LIKE ? OR declaration_name LIKE ?)']*len(terms)
-            params=[v for term in terms for v in (f'%{term}%',f'%{term}%')]
-            with sqlite3.connect(f'file:{self.queries.database}?mode=ro',uri=True) as db:
-                rows=db.execute('SELECT record_id FROM premises WHERE ('+' OR '.join(clauses)+") AND (canonical_name LIKE '%\\_def%' ESCAPE '\\' OR canonical_name LIKE '%.simps%' OR canonical_name LIKE '%.equations%') ORDER BY canonical_name LIMIT ?",[*params,limit]).fetchall()
-            records=self.inspect([r[0] for r in rows]) if rows else []
-            return {'records':records,'notice':'Name-matched definition/equation candidates from verified sources. Check their statements; mentioned constants are not mandatory proof edges.'}
+                hits=self.queries.search_parent_premises(query,context_profile_ids=profiles,limit=limit)
+                visible=self.public_records(hits)
+                return {'records':visible,'withheld_records':len(hits)-len(visible), 'notice':'Inspect complete statements before reuse. Candidates exposing private target attribution are withheld.'}
+            ids,next_offset=definition_ids(self.queries.database,query.split(),limit,offset)
+            records=self.inspect(ids) if ids else []
+            return {'records':records,'next_offset':next_offset,'withheld_records':len(ids)-len(records),
+                    'mentioned_identifiers':{r['record_id']:mentioned_identifiers(r) for r in records},
+                    'notice':'Name-matched definition/equation candidates from verified sources. Complete propositions are unchanged. mentioned_identifiers may include variables and syntax; use them to query more definitions, not as certified calls or proof edges.'}
         if action=='inspect':
             if not values or len(values)>50: raise ValueError('Inspect 1 to 50 premise IDs.')
-            return {'records':self.inspect(values)}
+            records=self.inspect(values)
+            return {'records':records,'withheld_records':len(values)-len(records),'notice':'Only records respecting the public input boundary are returned and eligible for reuse.'}
         if action in {'validate','preflight','submit'}:
             proposal=request.get('proposal'); result=self.validate(proposal)
             if not result['valid'] or action=='validate': return result
@@ -162,14 +148,34 @@ class WorkspaceHarness:
             if not native['valid']: return {'valid':False,'stage':'native-declaration-preflight',**native}
             if action=='submit':
                 if self.submitted is not None and self.submitted['proposal']!=proposal: raise ValueError('A plan was already submitted; end this call.')
-                self.submitted={'proposal':deepcopy(proposal),'preflight_sha256':identity}
+                self.submitted={'proposal':deepcopy(proposal),'preflight_sha256':identity,
+                                'preflight_result_sha256':hashlib.sha256(cache.read_bytes()).hexdigest(),
+                                'call_number':self.active_call}
                 save(self.output/'control/submitted.json',self.submitted)
             return {**result,'native_preflight':'pass','submitted':action=='submit','notice':'Declarations/imports load; no goal or helper has been proved.'}
         raise ValueError('Unknown operation.')
 
     def artifacts(self):
         if self.submitted is None: raise ValueError('No explicit valid submission.')
-        public=self.submitted['proposal']; evidence=self.view.canonical_evidence(self.evidence()); canonical=self.view.decode(public)
+        public=self.submitted['proposal']
+        identity=hashlib.sha256(json.dumps(public,sort_keys=True).encode()).hexdigest()
+        cache=self.output/f'preflight/{identity}/result.json'
+        if (identity!=self.submitted['preflight_sha256']
+                or hashlib.sha256(cache.read_bytes()).hexdigest()!=self.submitted['preflight_result_sha256']):
+            raise ValueError('Submitted plan/preflight evidence integrity mismatch.')
+        native=json.loads(cache.read_text())
+        source=cache.parent/native['attempt']/'source'
+        for name,digest in native.get('source_sha256',{}).items():
+            if Path(name).name!=name or hashlib.sha256((source/name).read_bytes()).hexdigest()!=digest:
+                raise ValueError('Preflight source integrity mismatch.')
+        if native.get('log_sha256'):
+            from regen.planning.workspace_validation import PREFLIGHT_THEORY
+            if hashlib.sha256((source/(PREFLIGHT_THEORY+'.log')).read_bytes()).hexdigest()!=native['log_sha256']:
+                raise ValueError('Preflight log integrity mismatch.')
+        validation=self.validate(public)
+        if not validation['valid']:
+            raise ValueError('Submitted plan no longer validates against its inspection receipts.')
+        evidence=self.view.canonical_evidence(self.evidence()); canonical=self.view.decode(public)
         bundle=build_bundle({**self.view.canonical_payload,'planner_evidence':evidence},canonical)
         save(self.output/'agent-proposal.json',public); save(self.output/'agent-evidence.json',self.evidence()); save(self.output/'planner-evidence.json',evidence)
         return canonical,bundle

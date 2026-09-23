@@ -33,10 +33,10 @@
     "validation": "Agent incrementally edits plan.json and calls trusted validate/preflight/submit tools. Exact coverage, legal inspected facts, acyclic providers and native declaration/import preflight are required before publication.",
     "context_budget": "Whole public contract catalog and exact records are read-only files. Definitions and premises are explicit queries. Related-symbol candidates are on demand. No query-turn or proposal-correction cap.",
     "auxiliary_intents": "Optional shared-result intentions; precise statements and local dependencies belong to File Planner.",
-    "theory_dependencies": "suggested_predecessors identify planned providers: downstream execution waits for their seals and freezes those imports. They are not mandatory proof citations. Array priority separately orders ready theories.",
+    "theory_dependencies": "required_imports are mandatory provider imports once the plan is accepted: downstream execution waits for their seals and freezes those imports. They are not mandatory proof citations. Array priority separately orders ready theories.",
     "priority": "Theory array order is the explicit tie-break among ready theories; predecessor edges take precedence.",
-    "iteration": "Agent controls inspection, retrieval, validation, revision and submission; stop records a reason without publishing. Transport timeouts are distinct from proposal validation.",
-    "architecture_review": "Before submission, review the entire contract catalog and explain responsibilities, alternative splits/merges, shared-result strategy, consumer relationships, local planning scope, DAG/ready priority and uncertainties in the existing proposal fields. Structural validation does not certify architectural quality."
+    "iteration": "Agent edits its durable plan and notes, chooses inspection, retrieval, validation, native preflight and explicit submission. No query or correction limit. Transport timeouts are separate from validation failures.",
+    "architecture_review": "Review semantic provider/consumer boundaries using inspected definitions and fixed contracts, including restricted versus general cases and potential cycles. Explain shared-result opportunities, justified provider paths, independent ready priority and uncertainties. Do not infer proof dependencies solely from function calls or shared symbols."
   },
   "interaction": "agent-workspace",
   "timeout_retry": {
