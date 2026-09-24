@@ -31,6 +31,11 @@ def instruction(payload, schema_version=6):
     template=({5: prompt_v5, 6: prompt_v6}[schema_version])(minimal,[]).split('\nPREVIOUS VALIDATION ERRORS:')[0]
     template=template.replace('Use only the supplied legal input and any explicit harness operations offered by the enclosing interaction. Do not read files, history, removed proofs, or external sources.',
         'Use only /input, your own /workspace files, and the trusted /tool.py service. Never seek removed proofs, source owners, host files, credentials, or external sources.')
+    if payload.get('contract_visibility') == 'source-theory-visible-v1':
+        template=template.replace('removed proofs, source owners, host files', 'removed proofs, host files')
+        template=template.replace('do not reconstruct original source ownership.',
+            'original theory names are provided as reference metadata; choose a new allocation freely.')
+        template += '\nOriginal Refine theory names are explicitly available as owner_theory in /input/contracts.json and /input/catalog.json. You may use them for comparison and planning; they do not prescribe the new grouping or supply an import graph. No original proof bodies or deleted helper declarations are provided.\n'
     template=template.replace('Return JSON only matching this schema (all fields required):',
         'Write plan.json matching this schema (all fields required):')
     return '''You are an autonomous repository architecture planner in an isolated worker.
@@ -155,7 +160,8 @@ def call_worker(settings, policy, output, public, workspace, api, text, number):
     types=sorted({e['item']['type'] for e in events if isinstance(e.get('item'),dict) and 'type' in e['item']})
     audit={'allowed_item_types':sorted(ALLOWED_EVENTS),'observed_item_types':types,
            'forbidden_item_types':sorted(set(types)-ALLOWED_EVENTS),'invalid_json_lines':invalid_lines,
-           'isolation':'No repository, original owners, proof sources, Docker socket, or checker assets mounted into worker.'}
+           'contract_visibility':policy.get('contract_visibility','owner-blind-v1'),
+           'isolation':'Only sanitized input metadata and local planning artifacts are mounted; no raw repository, proof sources, Docker socket, or checker assets.'}
     save(artifact('.audit.json'),audit)
     meta.update(state='complete' if code==0 else 'failed',returncode=code,wall_ms=int((time.monotonic()-t0)*1000),
                 finished_at=datetime.now(timezone.utc).isoformat(),codex_sha256=settings['codex_sha256'])
@@ -217,7 +223,8 @@ def run_agent(payload, planning_input_path, policy, output):
         'model':policy['model'],'codex_sha256':settings['codex_sha256'],
         'policy':{k:v for k,v in policy.items() if not k.startswith('_')},
         'implementation':{name:hashlib.sha256(p.read_bytes()).hexdigest() for name,p in sorted(sources.items())}})
-    harness=WorkspaceHarness(planning_input_path,output,native_checker(Path(planning_input_path).parent,policy.get('preflight_seconds',900)))
+    harness=WorkspaceHarness(planning_input_path,output,native_checker(Path(planning_input_path).parent,policy.get('preflight_seconds',900)),
+        visibility=policy.get('contract_visibility','owner-blind-v1'))
     completed=completed_submission(harness,output,policy,settings)
     if completed is not None:
         return completed
@@ -269,7 +276,7 @@ def run_agent(payload, planning_input_path, policy, output):
                 return completed
             # Agent ended without explicit submission. Keep the same artifacts
             # and ask it to continue; no proposal retry ceiling is introduced.
-            text=instruction(harness.view.payload)+'\nContinue your existing plan and notes. No successful submit was recorded; inspect, validate, repair, and explicitly submit.\n'
+            text=instruction(harness.view.payload,policy.get('proposal_schema_version',5))+'\nContinue your existing plan and notes. No successful submit was recorded; inspect, validate, repair, and explicitly submit.\n'
     finally:
         stop.set(); watcher.join(timeout=3); server.shutdown(); server.server_close(); thread.join(timeout=3)
         endpoint=api/'planner.sock'

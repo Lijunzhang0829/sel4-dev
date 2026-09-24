@@ -148,14 +148,15 @@ def compact_input(payload):
                         for symbol in item['evidence']['shared_symbols']})
     symbol_indexes = {symbol: index for index, symbol in enumerate(symbols)}
     blind = payload.get('contract_visibility') == 'owner-blind-v1'
+    sanitized = payload.get('contract_visibility') in {'owner-blind-v1','source-theory-visible-v1'}
     card_columns = ['contract_id', 'name'] + ([] if blind else ['owner_theory']) + [
         'principal_symbol_indexes', 'logical_shape']
-    metadata = ('benchmark', 'context_profiles', 'parent_premises') if blind else (
+    metadata = ('benchmark', 'context_profiles', 'parent_premises') if sanitized else (
         'benchmark', 'owner_groups', 'session_graph', 'theory_import_graph',
         'context_profiles', 'parent_premises')
     compact = {key: payload[key] for key in metadata}
-    if blind:
-        compact['contract_visibility'] = 'owner-blind-v1'
+    if sanitized:
+        compact['contract_visibility'] = payload['contract_visibility']
     compact['symbols'] = symbols
     compact['symbol_encoding'] = 'zero-based indexes in symbols; exact inspected statements are unchanged'
     compact['contract_cards'] = {
@@ -167,11 +168,11 @@ def compact_input(payload):
     compact['contract_relation_candidates'] = {
         'endpoint_encoding': 'zero-based row indexes in contract_cards.rows',
         'columns': ['relation_id', 'left_contract_index', 'right_contract_index',
-                    'candidate_relation', 'shared_symbol_indexes'] + ([] if blind else ['same_owner_theory']),
+                    'candidate_relation', 'shared_symbol_indexes'] + ([] if sanitized else ['same_owner_theory']),
         'rows': [[item['relation_id'], indexes[item['left_contract_id']],
                   indexes[item['right_contract_id']], item['candidate_relation'],
                   [symbol_indexes[symbol] for symbol in item['evidence']['shared_symbols']]] +
-                  ([] if blind else [item['evidence']['same_owner_theory']])
+                  ([] if sanitized else [item['evidence']['same_owner_theory']])
                  for item in payload['contract_relation_candidates']],
     }
     return compact

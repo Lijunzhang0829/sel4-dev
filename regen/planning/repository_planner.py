@@ -56,6 +56,11 @@ def validate_policy(policy: dict):
         attempts = policy['model'].get('max_attempts')
         if not isinstance(attempts, int) or attempts <= 0:
             raise ValueError('legacy planning policy must specify positive max_attempts')
+    visibility = policy.get('contract_visibility', 'owner-blind-v1')
+    if visibility not in {'owner-blind-v1','source-theory-visible-v1'}:
+        raise ValueError('invalid contract visibility')
+    if visibility == 'source-theory-visible-v1' and policy.get('interaction') != 'agent-workspace':
+        raise ValueError('source-theory-visible mode requires agent-workspace planning')
     proposal_version = policy.get('proposal_schema_version')
     if proposal_version is not None and (type(proposal_version) is not int
             or proposal_version not in {5, 6} or policy.get('interaction') != 'agent-workspace'):

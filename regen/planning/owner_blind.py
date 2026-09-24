@@ -11,7 +11,10 @@ CONTRACT_FIELDS = ('name', 'kind', 'exact_statement', 'contract_owned_context',
 
 
 class OwnerBlindView:
-    def __init__(self, source):
+    def __init__(self, source, *, visibility="owner-blind-v1"):
+        if visibility not in {"owner-blind-v1", "source-theory-visible-v1"}:
+            raise ValueError("unknown contract visibility")
+        self.visibility = visibility
         self.source = source
         self.canonical_payload = deepcopy(source)
         self.to_original = {}
@@ -29,6 +32,10 @@ class OwnerBlindView:
                 self.to_original[alias] = original
                 self.to_public[original] = alias
                 contracts.append({'contract_id':alias, **public})
+        originals = {c['contract_id']:c for c in source['contracts']}
+        if visibility == 'source-theory-visible-v1':
+            for contract in contracts:
+                contract['owner_theory'] = originals[self.to_original[contract['contract_id']]]['owner_theory']
         source_cards = {c['contract_id']:c for c in source['contract_cards']}
         cards = []
         for contract in contracts:
@@ -36,6 +43,9 @@ class OwnerBlindView:
             cards.append({'contract_id':contract['contract_id'], 'name':contract['name'],
                           'principal_symbols':deepcopy(old['principal_symbols']),
                           'logical_shape':deepcopy(old['logical_shape'])})
+        if visibility == 'source-theory-visible-v1':
+            for card, contract in zip(cards, contracts):
+                card['owner_theory'] = contract['owner_theory']
         relations = []
         for index,left in enumerate(cards):
             for right in cards[index+1:]:
@@ -48,7 +58,7 @@ class OwnerBlindView:
         relations = relations[:2000]
         self.payload = {k:deepcopy(source[k]) for k in ('schema_version','artifact_type','benchmark',
             'context_profiles','parent_premises','planner_interfaces','planning_input_id')}
-        self.payload.update(contract_visibility='owner-blind-v1', contracts=contracts,
+        self.payload.update(contract_visibility=visibility, contracts=contracts,
                             contract_cards=cards, contract_relation_candidates=relations)
         # This payload is private and supports exact canonical file projections.
         self.canonical_payload['contract_relation_candidates'] = self.decode(relations)
@@ -70,7 +80,7 @@ class OwnerBlindView:
         return value
 
     def assert_no_owner_disclosure(self, text):
-        if self._owner_pattern.search(text) or any(old in text for old in self.to_public):
+        if (self.visibility == 'owner-blind-v1' and self._owner_pattern.search(text)) or any(old in text for old in self.to_public):
             raise ValueError('original contract theory attribution detected in planner output boundary')
 
     def queries(self, base):

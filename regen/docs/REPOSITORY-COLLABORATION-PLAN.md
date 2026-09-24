@@ -31,8 +31,12 @@ array's ready priority. Imports still freeze after their providers seal.
 
 The prompt asks for grouping by shared semantic operations, access/update
 behavior and invariants. It leaves precise helper statements and proof routes to
-File Planner. Original theory ownership remains hidden through the existing
-owner-blind view. No case-specific theorem or helper is hard-coded in the prompt.
+File Planner. Contract visibility is frozen per run. `owner-blind-v1` preserves the original
+hidden-ownership baseline; `source-theory-visible-v1` exposes only `owner_theory`
+on sanitized contracts/cards, with the same opaque IDs. The latter is the default
+for new Astra-medium comparison runs following the user request of 2026-09-24.
+Source theory names are reference metadata, not a prescribed new allocation.
+Original proof bodies, deleted helpers and the original import graph remain unavailable. No case-specific theorem or helper is hard-coded in the prompt.
 
 ## Pure construction and regrouping
 

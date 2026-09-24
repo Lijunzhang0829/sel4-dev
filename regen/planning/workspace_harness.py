@@ -32,8 +32,8 @@ def save(path, value):
     tmp.write_text(json.dumps(value, ensure_ascii=False, indent=2)+'\n'); tmp.replace(path)
 
 
-def short_view(source):
-    view = OwnerBlindView(source)
+def short_view(source, *, visibility="owner-blind-v1"):
+    view = OwnerBlindView(source, visibility=visibility)
     aliases = {c['contract_id']:f'C{i:04d}' for i,c in enumerate(view.payload['contracts'],1)}
     def replace(v):
         if isinstance(v,str): return aliases.get(v,v)
@@ -50,15 +50,16 @@ def short_view(source):
 
 
 class WorkspaceHarness:
-    def __init__(self, planning_input, output, native_check):
+    def __init__(self, planning_input, output, native_check, *, visibility="owner-blind-v1"):
         self.path=Path(planning_input).resolve()
-        self.view=short_view(json.loads(self.path.read_text()))
+        self.view=short_view(json.loads(self.path.read_text()), visibility=visibility)
         self.queries=PlanningInputQueries(self.path)
         if self.queries.database_version != 2: raise ValueError("Workspace planning requires the verified v2 premise database.")
         self.output=Path(output); self.native_check=native_check; self.lock=threading.RLock()
         identity=getattr(native_check,'identity',None)
         write_immutable_json(self.output/'control/input-binding.json',{
             'input_sha256':hashlib.sha256(self.path.read_bytes()).hexdigest(),
+            **({'contract_visibility':visibility} if visibility != 'owner-blind-v1' else {}),
             'premise_database_sha256':self.queries.input['parent_premises']['database_sha256'],
             'checker':identity if isinstance(identity,dict) else None,
         })
