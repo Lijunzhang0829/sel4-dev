@@ -274,6 +274,9 @@ def dependency_closure(
     return result
 
 
+from regen.execution.check_executor import native_operation, native_run, CURRENT_RESOURCES
+
+
 class IsabelleChecker:
     def __init__(
         self, run_dir: Path, work_dir: Path, *, image: str = "sel4-public:tuned",
@@ -413,13 +416,22 @@ class IsabelleChecker:
         command.extend(["-d", self.base_catalog])
         if (self.generated_dir / "ROOT").is_file():
             command.extend(["-d", "/generated"])
+        resources = CURRENT_RESOURCES.get()
+        if resources is not None:
+            at = command.index("process") + 1
+            command[at:at] = ["-o", "threads=" + str(resources.policy["threads"])]
         command.extend(["-T", f"/candidate/{source.stem}"])
         return command
 
+    @native_operation
     def _check(
         self, source_text: str, label: str, *,
         writable_mounts: list[tuple[Path, str]] | None = None,
+        timeout: float | None = None,
     ) -> dict[str, Any]:
+        if CURRENT_RESOURCES.get() is not None:
+            self.close_prefix()  # A cold process replaces, never accompanies, this resident.
+        timeout = self.timeout if timeout is None else timeout
         source = self.work_dir / f"{label}.thy"
         source.write_text(source_text, encoding="utf-8")
         session = "Generated_Refine" if self.previous_theories else self.base_session
@@ -431,11 +443,11 @@ class IsabelleChecker:
         command[2:2] = ["--name", container_name]
         emit_event(
             "isabelle_started", label=label, session=session,
-            timeout_seconds=self.timeout, container=container_name,
+            timeout_seconds=timeout, container=container_name,
         )
         try:
-            result = subprocess.run(
-                command, text=True, capture_output=True, timeout=self.timeout,
+            result = native_run(
+                command, text=True, capture_output=True, timeout=timeout,
             )
             returncode = result.returncode
             full_diagnostic = result.stdout + result.stderr
@@ -448,7 +460,7 @@ class IsabelleChecker:
 
             full_diagnostic = (
                 timeout_text(error.stdout) + timeout_text(error.stderr)
-                + f"\nIsabelle checker timed out after {self.timeout} seconds.\n"
+                + f"\nIsabelle checker timed out after {timeout} seconds.\n"
             )
             try:
                 subprocess.run(
@@ -757,7 +769,10 @@ class IsabelleChecker:
         result["incremental"] = False
         return result
 
+    @native_operation
     def build_generated_session(self, theories: list[str]) -> dict[str, Any]:
+        if CURRENT_RESOURCES.get() is not None:
+            self.close_prefix()
         self._last_node_check = None
         root = self.generated_dir / "ROOT"
         root.write_text("\n".join([
@@ -789,6 +804,10 @@ class IsabelleChecker:
         command.extend([
             "-d", self.base_catalog, "-d", "/generated", "Generated_Refine",
         ])
+        resources = CURRENT_RESOURCES.get()
+        if resources is not None:
+            at = command.index("build") + 1
+            command[at:at] = ["-j", "1", "-o", "threads=" + str(resources.policy["threads"])]
         started = time.time()
         container_name = f"regen-isabelle-build-{os.getpid()}-{uuid.uuid4().hex}"
         command[2:2] = ["--name", container_name]
@@ -797,7 +816,7 @@ class IsabelleChecker:
             timeout_seconds=self.timeout, container=container_name,
         )
         try:
-            result = subprocess.run(
+            result = native_run(
                 command, text=True, capture_output=True, timeout=self.timeout,
             )
             returncode = result.returncode

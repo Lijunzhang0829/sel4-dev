@@ -38,9 +38,12 @@ def instruction(payload, schema_version=6):
         template += '\nOriginal Refine theory names are explicitly available as owner_theory in /input/contracts.json and /input/catalog.json. You may use them for comparison and planning; they do not prescribe the new grouping or supply an import graph. No original proof bodies or deleted helper declarations are provided.\n'
     template=template.replace('Return JSON only matching this schema (all fields required):',
         'Write plan.json matching this schema (all fields required):')
+    ownership = ('Original theory names are reference metadata; choose the new grouping freely.'
+                 if payload.get('contract_visibility') == 'source-theory-visible-v1' else
+                 'Original theory attribution is deliberately absent. Do not try to reconstruct it.')
     return '''You are an autonomous repository architecture planner in an isolated worker.
 Read /input/catalog.json and /input/contracts.json (all exact frozen declarations and owned contexts).
-Original theory attribution is deliberately absent. Do not try to reconstruct it.
+''' + ownership + '''
 Keep a parseable plan.json in /workspace; write a scaffold early and edit incrementally.
 Use Python or shell scripts to assemble IDs, maintain coverage, and edit JSON; do not recopy whole plans in chat.
 Keep your architectural observations and evidence references in NOTES.md. There is no proposal-correction or tool-turn cap.

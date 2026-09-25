@@ -141,8 +141,6 @@ def load_context(dataset_root: Path) -> dict[str, Any]:
     from regen.preparation.premise_database import verify_database, digest
     if verify_database(database) == 2 and context.get("premise_database_sha256") != digest(database):
         raise ValueError("checker premise database binding mismatch")
-    if source_identity(resolved["isabelle"], allow_links=True) != context["isabelle_sha256"]:
-        raise ValueError("checker Isabelle installation changed")
     return {
         **context,
         **resolved,

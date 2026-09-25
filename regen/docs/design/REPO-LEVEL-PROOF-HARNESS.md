@@ -1,5 +1,8 @@
 # Repo-Level Proof Regeneration Harness
 
+2026-09-24：已确认的持续 File Planner、并行 Isabelle 检查与最终集成流程，统一维护在
+[端到端流程与模块 TODO](PARALLEL-PROOF-PIPELINE.md)。本文保留研究 setting 和历史方案；本次控制流与实施范围以新文档为准，不能据此认为并行或全仓集成 gate 已实现。
+
 本文统一维护任务 setting、拟议仓库规划和正确性边界；具体代码现状分别见
 [环境实现](../implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md)、
 [规划实现与扩展](../implementation/REPOSITORY-PLANNING-IMPLEMENTATION.md) 和

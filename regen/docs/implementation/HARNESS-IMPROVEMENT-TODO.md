@@ -2,7 +2,27 @@
 
 记录日期：2026-09-21。本文记录已观察的问题、改进顺序和验收标准，不代表这些改进已经实现，也不触发实验重启。
 
-当前范围：单 File Planner 管理一个 theory 的图、helper 生命周期、检索和批量证明。暂不扩展多 File Planner 并行。保持固定 contract 不可削弱、正式 GREEN 仅来自验证证据、最终完整封存的边界；不恢复任意决策次数上限。
+2026-09-21 历史范围：单 File Planner 管理一个 theory 的图、helper 生命周期、检索和批量证明。当时暂不扩展多 File Planner 并行；2026-09-24 已确认的新范围见下方索引。保持固定 contract 不可削弱、正式 GREEN 仅来自验证证据、最终完整封存的边界；不恢复任意决策次数上限。
+
+## 2026-09-25：当前流程与后续 TODO 索引
+
+当前主清单为 [跨 theory 并行、单 File Planner 串行](../design/PARALLEL-PROOF-PIPELINE.md)。本节只维护导航；下文是历史实验与问题记录，其勾选不替代当前验收。
+
+| 模块 | 当前状态与后续关注 | 主清单 |
+|---|---|---|
+| 输入与环境 | 人工保证环境内容不变，保留来源/数据库/目标校验 | [M0](../design/PARALLEL-PROOF-PIPELINE.md#m0) |
+| 仓库规划 | visibility 提示已修正；实际分组质量待评价 | [M1](../design/PARALLEL-PROOF-PIPELINE.md#m1) |
+| 规划验收 | 原生预检已接执行器，拒绝过期证据 | [M2](../design/PARALLEL-PROOF-PIPELINE.md#m2) |
+| 调度 | 多 theory 持续 agent、单写入与完成即补位已接通 | [M3](../design/PARALLEL-PROOF-PIPELINE.md#m3) |
+| File Planner | theory 内检索、读取、检查、seal 均串行；保留 batch 与探索自由 | [M4](../design/PARALLEL-PROOF-PIPELINE.md#m4) |
+| 检索与共享 | 一致提交快照与复制复验已有；索引增量化待评估 | [M5](../design/PARALLEL-PROOF-PIPELINE.md#m5) |
+| Isabelle | 跨 theory 共享资源池，工具完成后返回；资源校准待实验 | [M6](../design/PARALLEL-PROOF-PIPELINE.md#m6) |
+| 接受控制器 | 保留上下文/证据校验与原子 batch；raw check 独立重提交延后 | [M7](../design/PARALLEL-PROOF-PIPELINE.md#m7) |
+| Theory seal | 完整检查、审计、build 与资源关闭已接通 | [M8](../design/PARALLEL-PROOF-PIPELINE.md#m8) |
+| 仓库集成 | 全目标覆盖与独立构建 gate 已实现，实际生成闭环待实验 | [M9](../design/PARALLEL-PROOF-PIPELINE.md#m9) |
+| 日志评估 | 关键阶段日志已有；完整模型与 native 成本对照待实验 | [M10](../design/PARALLEL-PROOF-PIPELINE.md#m10) |
+
+先验证正常工作流程。环境冻结与强杀进程回收已退出当前必需范围；不再开展单 File Planner 内部异步交错。代码和单测通过不等于完整模型实验验收。
 
 ## 证据与统计口径
 

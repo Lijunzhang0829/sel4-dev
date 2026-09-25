@@ -1,15 +1,18 @@
 # Semantic Base 上的仓库级证明生成
 
 当前实现针对 Refine：删除普通人类证明层，在 command 级 Semantic Base 上生成固定 contracts。
-独立 Refine 数据准备和仓库规划已接入，可输出生成 theory DAG、固定目标分配、premise 复用、
-共享辅助意图和 revision-bound 文件投影。File Planner / Runner 已接通局部图、GRA 修订、失败
-helper 保留及 ready-theory 并行；完整仓库实验仍待执行。详细 setting、正确性与未决项
-统一见 [总体设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md)，本页只负责导航。
+持续共享工作区支持局部图、helper 修订、批量证明和成果复制复验。
+新 `parallel-workspace` 入口已接通每 theory 持续 File Planner、独立 native 资源池及仓库集成 gate；
+旧 `workspace` 入口仍保留。实现、CLI、测试和未完成验收见
+[并行流水线实现](docs/implementation/PARALLEL-PIPELINE-IMPLEMENTATION.md)，
+逐模块 TODO 见 [端到端流程](docs/design/PARALLEL-PROOF-PIPELINE.md)。
+研究 setting 见 [总体设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md)。当前尚未完成新版全程模型生成实验。
 
 ## 文档与代码入口
 
 | 文档 | 唯一职责 | 主要代码 |
 |---|---|---|
+| [端到端流程与模块 TODO](docs/design/PARALLEL-PROOF-PIPELINE.md) | 已确认的新控制流：规划、验证、持续 agent、跨 theory 并行及 theory 内串行工具、seal 与仓库集成；M0–M10 的代码现状和验收 | parallel_file_planner / check_executor / repository_integration；完整实验验收待完成 |
 | [总体设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md) | 研究目标、输入边界、生成合同、helper 政策与未决问题 | 目标设计，不声称全部实现 |
 | [环境实现](docs/implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md) | command 选择、环境／catalog 构建与 gate | [environment_preparation.py](preparation/environment_preparation.py)、[semantic_base_builder.py](preparation/semantic_base_builder.py) |
 | [规划实现与扩展](docs/implementation/REPOSITORY-PLANNING-IMPLEMENTATION.md) | 环境数据流到仓库方案、文件投影、重放与执行边界 | [repository_planner.py](planning/repository_planner.py) |
@@ -23,8 +26,8 @@ helper 保留及 ready-theory 并行；完整仓库实验仍待执行。详细 s
 代码链接相对当前文档；函数名用于定位。配置为
 [refine-semantic-base-campaign.json](config/refine-semantic-base-campaign.json)。
 
-新运行默认采用直接错误反馈及固定 GREEN 前缀复用；GREEN 仍须冷复核，最终 theory
-验收不变。参见[单节点执行设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md#单节点直接反馈与固定前缀检查)。
+旧单节点路径采用直接错误反馈、固定 GREEN 前缀及冷复核；当前 batch 路径使用带审计的热前缀检查，
+不要求每次 batch GREEN 再额外冷复核，最终完整 theory 验收保留。旧路径参见[单节点执行设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md#单节点直接反馈与固定前缀检查)。
 
 ## 目录划分
 
@@ -70,8 +73,8 @@ python3 -m unittest discover -s regen/tests -t . -p 'test_*.py'
 
 辅助脚本位于 `regen/tools/`。不再需要把 `regen` 或旧 `regen/scripts` 加入
 `PYTHONPATH`；原平铺 Python 路径已迁移，外部调用方应更新为上述包路径。
-既有实验产物保持原样；源码路径和内容变化会改变冻结输入哈希，不能将旧 seal
-当成对新布局的验证，后续真实运行需重新冻结环境。
+既有实验产物保持原样；目标输入或执行实现变化后应创建新的运行绑定，不能将旧 seal
+当成对新输入的验证。实验环境内容由人工保证不变，不要求运行时内容冻结。
 
 环境准备现在有统一的 `prepare / resume / restore / verify-dataflow` 入口，运行步骤和
 恢复边界见 [环境流水线说明](docs/implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md#5-统一准备入口下游数据流与恢复)。

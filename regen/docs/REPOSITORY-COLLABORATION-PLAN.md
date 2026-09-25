@@ -1,5 +1,8 @@
 # Repository collaboration planning protocol
 
+The confirmed 2026-09-24 execution design and code-level TODOs are tracked in
+[the end-to-end pipeline](design/PARALLEL-PROOF-PIPELINE.md). Collaboration metadata below does not itself enable concurrent File Planners or repository integration verification.
+
 New workspace planning policies select `proposal_schema_version: 6`. Existing
 policy files without this key retain schema 5; schema 3/4/5 plans remain readable
 under their original import semantics. Never rewrite a frozen plan or running

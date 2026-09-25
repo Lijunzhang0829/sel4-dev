@@ -211,7 +211,50 @@ def action_record(proposal, feedback, number):
     return record
 
 
-def apply_feedback(state, proposal, feedback, number):
+def apply_feedback(state, proposal, feedback, number, *, observation_order=None):
+    """Apply feedback with one selection order for live actions and recovery.
+
+    Legacy feedback without a task order cannot supersede task-ordered memory.
+    Proof acceptance and mathematical request accounting remain unchanged.
+    """
+    from regen.planning.async_observations import SELECTIONS
+    versions = state.get('async_selection_versions', {})
+    clean = deepcopy(proposal)
+    def stale(key):
+        return key in versions and (observation_order is None or observation_order < versions[key])
+    if isinstance(clean, dict):
+        for field in ('workspace', 'notes'):
+            if stale('batch_' + field):
+                clean.pop(field, None)
+    new = _apply_feedback(state, clean, feedback, number)
+    # History records the original request, even when its selection is obsolete.
+    for item in new.get('batch_history', []):
+        if item.get('request_number', item.get('request')) == number:
+            item.update(action_record(proposal or {}, feedback, number))
+    def touched(request, result):
+        if not isinstance(request, dict):return set()
+        keys = set()
+        if result.get('status') == 'available':
+            keys.update(SELECTIONS.get(request.get('action'), ()))
+            for item in result.get('observations', []):
+                keys.update(touched(item['request'], item['result']))
+        if isinstance(request.get('notes'), str):keys.add('batch_notes')
+        if isinstance(request.get('workspace'), dict) and result.get('status') not in {'rejected_request','tool_failed'}:
+            keys.add('batch_workspace')
+        return keys
+    selected = touched(proposal, feedback)
+    for key in set(versions) | selected:
+        if stale(key):
+            if key in state:new[key] = deepcopy(state[key])
+            else:new.pop(key, None)
+        elif observation_order is not None and key in selected and key in new:
+            new.setdefault('async_selection_versions', {})[key] = deepcopy(observation_order)
+    if observation_order is not None:
+        new.setdefault('batch_observation_orders', {})[str(number)] = deepcopy(observation_order)
+    return new
+
+
+def _apply_feedback(state, proposal, feedback, number):
     """Idempotent observation reducer shared by execution and recovery.
 
     This never changes graph/proof authority. Acceptance must already have been
@@ -224,7 +267,7 @@ def apply_feedback(state, proposal, feedback, number):
         for item in feedback.get('observations', []):
             if item['result'].get('status') == 'available':
                 successful.append(item)
-                new = apply_feedback(new, item['request'], item['result'], number)
+                new = _apply_feedback(new, item['request'], item['result'], number)
         # Same-kind reads in ONE decision form one selection, not replacements.
         for action, key, field, identity in (
                 ('read_attempts', 'batch_requested_attempts', 'attempts', 'request_number'),
@@ -434,7 +477,8 @@ def restore_batch_memory(directory, state, *, accepted_results=None):
         # A feedback file alone cannot establish proof acceptance.
         if feedback.get('status') == 'accepted' and number not in accepted_results:
             feedback = {**feedback, 'status':'checked_not_committed'}
-        restored = apply_feedback(restored, proposal, feedback, number)
+        restored = apply_feedback(restored, proposal, feedback, number,
+            observation_order=state.get('batch_observation_orders', {}).get(str(number)))
     return restored
 
 
@@ -470,6 +514,9 @@ def observation_summary(state):
             if item.get('status') == 'accepted':
                 last_green = number
     count = state.get('batch_requests', 0)
+    for query in state.get('async_queries',[]):
+        queries[query['query_id']] = {**queries.get(query['query_id'],{}),
+            **{key:value for key,value in query.items() if key not in {'cache','observation_order'}}}
     return list(queries.values()), {
         'requests_since_new_record_id':count-last_fact,
         'requests_since_proof_submission':count-last_submit,
@@ -531,7 +578,8 @@ def planner_input(package, state):
         'requested_attempts': compact_feedback(state.get('batch_requested_attempts', [])),
         'query_memory': [q for q in queries if q['query_id'] in expanded_queries],
         'query_index': [{'query_id':q['query_id'], 'context_node_id':q['request'].get('context_node_id'),
-                         'last_request':q['requests'][-1], 'count':len(q['requests'])} for q in queries],
+                         'last_request':q['requests'][-1] if q['requests'] else None,
+                         'task_ids':q.get('task_ids',[]), 'count':len(q['requests'])+len(q.get('task_ids',[]))} for q in queries],
         'requested_queries': state.get('batch_requested_queries', []),
         'progress_signals': signals,
         'requests_used': state.get('batch_requests', 0),
@@ -661,25 +709,29 @@ def cached_query_feedback(state, directory, identity):
     return None, None
 
 
-def execute_query(run, package, state, checker, directory, request, item_index=None):
+def execute_query(run, package, state, checker, directory, request, item_index=None, *, audit_directory=None):
     """One audited retrieval path for standalone and grouped tool decisions."""
     if not isinstance(request, dict):
         raise ValueError('query request must be an object')
-    audit_path = directory/('fact-selection.json' if item_index is None
+    audit_path = (audit_directory or directory)/('fact-selection.json' if item_index is None
                             else f'fact-selection-{item_index:02d}.json')
     identity = query_identity(run, state, directory, request)
     page, reused_request = cached_query_feedback(state, directory, identity)
+    reused_task = None
+    if page is None:
+        from regen.planning.async_observations import cached_query
+        page,reused_task = cached_query(state,identity)
     if page is None:
         page = batch_query(run, package, state, checker, directory, request, audit_path=audit_path)
     else:
         durable(audit_path, {'request':request, 'reused_request':reused_request,
-            'source_feedback_sha256':digest(page), 'result':page}, immutable=True)
+            'reused_task_id':reused_task, 'source_feedback_sha256':digest(page), 'result':page}, immutable=True)
     previous = [h['request_number'] for h in history_actions(state)
                 if h.get('query_identity') == identity]
     known = {f['record_id'] for f in state.get('batch_facts', [])}
     return {**page, 'status':'available', 'query_identity':identity,
         'query_progress':{'previous_identical_requests':previous,
-            'reused_request':reused_request,
+            'reused_request':reused_request,'reused_task_id':reused_task,
             'new_record_ids':[f['record_id'] for f in page.get('records', []) if f['record_id'] not in known]}}
 
 
@@ -848,7 +900,7 @@ def _record_termination(run_dir, theory, directory, journal, state, error):
 
 def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     call_timeout=600, check_timeout=900, candidate_timeout=120, max_requests=0,
-                    decision_source=None, runtime_cache=None):
+                    decision_source=None, runtime_cache=None, observation_source=None, observation_order=None):
     from regen.execution.repository_execution import setup, context_graph, progress
     from regen.execution.proof_session_runner import frozen_role_model
     from regen.execution.proof_batches import prepare_batch, check_batch
@@ -908,6 +960,10 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 state = journal.append('resume', new, {'reason':'authorized batch controller; preserve graph, proofs and historical costs'})
             initialization.mark('progress')
             progress(run_dir)
+        if observation_source is not None:
+            observed = observation_source(state)
+            if observed != state:
+                state = journal.append('planner-feedback',observed,{'reason':'merge verified read-only task receipts; no proof authority'})
         executed = 0
         source_phase = 'tool_source_audit' if decision_source else 'model'
         while not max_requests or executed < max_requests:
@@ -1080,7 +1136,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                                 'node_results':evidence.get('node_results',[]),
                                 'cost_seconds':{k:timing.seconds[k] for k in (source_phase,'action')}}, batch_candidate=None)
                             candidate.pop('revision_rejection', None)
-                            candidate = apply_feedback(candidate, proposal, candidate['batch_feedback'], count)
+                            candidate = apply_feedback(candidate, proposal, candidate['batch_feedback'], count, observation_order=observation_order)
                             state = journal.append('batch', candidate, evidence)
                             timing.metadata.update(status='accepted', action_completed=True, check_verdict='green')
                             timing.mark('progress')
@@ -1123,7 +1179,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     feedback['cost_seconds'] = {k:timing.seconds[k] for k in (source_phase,'action')}
                 timing.metadata['status'] = feedback['status']
                 durable(request_dir/'feedback.json', feedback, immutable=True)
-                new = apply_feedback(state, proposal, feedback, count)
+                new = apply_feedback(state, proposal, feedback, count, observation_order=observation_order)
                 state = journal.append('planner-feedback', new, {'request_number':count, 'feedback':feedback})
                 timing.mark('progress')
                 progress(run_dir)
@@ -1133,6 +1189,12 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     return {'status':'checkpoint', **progress(run_dir)}
         return {'status':'checkpoint', **progress(run_dir)}
     except BaseException as error:
+        from regen.execution.check_tasks import CheckCancelled
+        if isinstance(error, CheckCancelled):
+            # Task cancellation has its own durable state, never a mathematical failure.
+            if checker is not None:
+                checker.close_prefix()
+            raise
         _record_termination(run_dir, theory, directory, journal, state, error)
         from regen.infrastructure.provider_recovery import ProviderUnavailable
         if isinstance(error, ProviderUnavailable):

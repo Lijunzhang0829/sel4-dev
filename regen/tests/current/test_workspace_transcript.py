@@ -54,6 +54,20 @@ class WorkspaceTranscriptTest(unittest.TestCase):
         return record_workspace_action(self.prefix,'current harness context',self.proposal,self.metadata,
                                        theory='Demo',model='test',**kwargs)
 
+    def test_async_proof_submission_is_bound_to_exact_kind_and_proposal(self):
+        self.request['params']['tool']='submit_check'
+        self.request['params']['arguments']['kind']='proof_batch'
+        self.events[1]['message']['params']['dynamicTools'][0]['name']='submit_check'
+        self.events[-1]=self.event('in',self.request)
+        self.write_events()
+        self.record()
+        meta=inspect_call_artifact(self.prefix)
+        self.assertTrue(meta['sealable_generation'])
+        altered=deepcopy(self.metadata)
+        altered['raw_request']['params']['arguments']['kind']='statement'
+        with self.assertRaises(ValueError):
+            record_workspace_action(self.root/'bad','context',self.proposal,altered,theory='Demo',model='test')
+
     def test_real_bound_action_has_distinct_provider_and_no_false_no_tool_claim(self):
         self.assertEqual(json.loads(self.record()),self.proposal)
         meta=inspect_call_artifact(self.prefix)

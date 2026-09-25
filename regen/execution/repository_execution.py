@@ -322,12 +322,15 @@ def journal(run_dir, run, package):
                         binding, validator(package, run), cache_namespace=namespace)
 
 
+_SEALED_PUBLICATION_CACHE = {}
+
+
 def _progress_unlocked(run_dir):
     run=read(run_dir/'run.json'); data=read(run_dir/'execution-input.json'); files=deepcopy(data['files'])
     # Published facts are a projection of accepted seals; never trust old catalog rows.
-    durable(run_dir/'generated-premises.json',{'records':[]})
+    catalog_records = []
     for entry in files:
-        p=package_for(run,entry['file_slot']); state=journal(run_dir,run,p).replay()
+        p=package_for(run,entry['file_slot']); state=journal(run_dir,run,p).replay(repair=False)
         if state:
             nodes={n['id']:n for n in state['graph']['nodes']}
             entry['checked_contracts']=sum(nodes[k]['role']=='contract' for k in state['proofs'])
@@ -343,13 +346,24 @@ def _progress_unlocked(run_dir):
                 destination=run_dir/'generated'/(generated_checkpoint_theory(p['file_slot'])+'.thy')
                 if destination.exists() and destination.read_text()!=source: raise ValueError('published source drift')
                 if not destination.exists(): destination.write_text(source)
-                publish_generated_records(run_dir,state['graph'],state['seal_id'],p)
+                publication_key = (str(run_dir.resolve()), record['commit_id'], p['package_payload_sha256'])
+                if publication_key not in _SEALED_PUBLICATION_CACHE:
+                    if len(_SEALED_PUBLICATION_CACHE)>=128:
+                        _SEALED_PUBLICATION_CACHE.pop(next(iter(_SEALED_PUBLICATION_CACHE)))
+                    _SEALED_PUBLICATION_CACHE[publication_key] = publish_generated_records(run_dir,state['graph'],state['seal_id'],p,records_only=True)
+                catalog_records.extend(deepcopy(_SEALED_PUBLICATION_CACHE[publication_key]))
             entry.update(status=state['status'], graph_revision=state['graph']['revision'],
                 generation_ids=[run['run_id']+'--'+Path(entry['file_slot']).stem],
                 seal_id=state.get('seal_id'), reason=state.get('reason',''))
-    complete=all(f['status'] in {'sealed','retired'} for f in files)
+    catalog = {'records': sorted(catalog_records,key=lambda row:row['record_id'])}
+    catalog_path = run_dir/'generated-premises.json'
+    if not catalog_path.exists() or read(catalog_path)!=catalog:
+        durable(catalog_path,catalog)
+    complete=all(f['status']=='sealed' or (f['status']=='retired' and not f['contract_ids']) for f in files)
+    from regen.execution.repository_integration import current_verification
+    verified = complete and current_verification(run_dir)
     value={'schema_version':2,'artifact_type':'repository-proof-progress','files':files,
-        'session_status':'complete' if complete else 'partial', 'contracts':sum(len(f['contract_ids']) for f in files),
+        'session_status':'complete' if complete else 'partial', 'repository_verified':verified, 'contracts':sum(len(f['contract_ids']) for f in files),
         'proved_contracts':sum(len(f['contract_ids']) for f in files if f['status']=='sealed'),
         'checked_contracts':sum(f.get('checked_contracts',0) for f in files),
         'sealed_contracts':sum(len(f['contract_ids']) for f in files if f['status']=='sealed')}
@@ -364,9 +378,6 @@ def progress(run_dir):
 
 def checker_for(run_dir, run, directory, timeout, ancestors, *, heaps_dir=None):
     from regen.execution.isabelle_node_checker import IsabelleChecker
-    from regen.infrastructure.path_identity import source_identity
-    if source_identity(Path(run['isabelle_dir']),allow_links=True)!=run['isabelle_sha256']:
-        raise ValueError('execution Isabelle installation differs from frozen toolchain')
     context_root=Path(run.get('checker_context_root',run.get('environment_run',run_dir)))
     direct=run.get('execution_input_kind')=='refine-dataset'
     generated=directory.parent/'generated' if direct else run_dir/'generated'

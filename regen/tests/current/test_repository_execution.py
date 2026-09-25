@@ -125,7 +125,7 @@ class RepositoryExecutionTest(unittest.TestCase):
         self.assertEqual(state['proved_contracts'],1)
         records=json.loads((root/'generated-premises.json').read_text())['records']
         self.assertEqual(len(records),1);self.assertNotEqual(records[0]['record_id'],'forged')
-        self.assertTrue((d/'acceptance/HEAD.json').exists())
+        self.assertFalse((d/'acceptance/HEAD.json').exists())  # shared progress must not repair another writer's HEAD
         self.assertTrue((root/'generated/Regen_Generated_Read.thy').exists())
 
     def test_gra_split_candidate_preserves_parent_and_is_not_committed(self):

@@ -163,6 +163,10 @@ def _batch_declaration_coverage(old, new):
             'declarations_sha256':digest(after)}
 
 
+from regen.execution.check_executor import native_operation
+
+
+@native_operation
 def check_batch(checker, old, candidate):
     """Check every declaration, then all accepted and proposed proofs in one run.
 
@@ -243,12 +247,7 @@ def check_batch(checker, old, candidate):
                 checker._batch_worker = None
                 evidence['incremental_fallback'] = str(error)
         if result is None:
-            original_timeout = checker.timeout
-            try:
-                checker.timeout = candidate_timeout
-                result = checker._check(source, evidence['label'])
-            finally:
-                checker.timeout = original_timeout
+            result = checker._check(source, evidence['label'], timeout=candidate_timeout)
             result['timed_out'] = result.get('returncode') == 124
             result['timeout_scope'] = 'cold-candidate-including-prefix' if result['timed_out'] else None
             result['timeout_seconds'] = candidate_timeout

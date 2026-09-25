@@ -91,9 +91,10 @@ class BatchTimeoutTest(unittest.TestCase):
             old, new, checker = self.setup_case(Path(tmp))
             budgets = []
             original = checker._check
-            def check(source, label):
-                budgets.append(checker.timeout)
-                return original(source, label)
+            def check(source, label, *, timeout=None):
+                budgets.append(checker.timeout if timeout is None else timeout)
+                self.assertEqual(checker.timeout, 1800)
+                return original(source, label, timeout=timeout)
             checker._check = check
             with patch('regen.execution.batch_checker.BatchWorker', side_effect=RuntimeError('worker infrastructure failed')):
                 evidence = check_batch(checker, old, new)
@@ -110,8 +111,9 @@ class BatchTimeoutTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             old, new, checker = self.setup_case(Path(tmp))
             checker.batch_incremental = False
-            def check(source, label):
-                self.assertEqual(checker.timeout, 120)
+            def check(source, label, *, timeout=None):
+                self.assertEqual(timeout, 120)
+                self.assertEqual(checker.timeout, 1800)
                 raise RuntimeError('cold infrastructure failure')
             checker._check = check
             with self.assertRaisesRegex(RuntimeError, 'cold infrastructure failure'):

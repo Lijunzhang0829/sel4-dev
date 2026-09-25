@@ -1,5 +1,7 @@
 # 单 theory 证明、提交恢复与发布
 
+2026-09-24 范围说明：本文主要记录历史 node/GRA repository runner；其中并行线程池和 helper 政策不代表新版持续 File Planner 的行为。现有新版见 [共享工作区](SHARED-PROOF-WORKSPACE.md) 与 [批量 File Planner](BATCH-FILE-PLANNER.md)，已确认的改造及全仓集成缺口见 [端到端流程与 TODO](../design/PARALLEL-PROOF-PIPELINE.md)。
+
 当前 repository projection 路径由 [proof_session_runner.py](../../execution/proof_session_runner.py)
 分派到 [repository_execution.py](../../execution/repository_execution.py)。复用现有 File Planner、
 单 theory DAG、GRA、Lemma Prover、whole-proof/stepwise backend 和 Isabelle checker；没有新增

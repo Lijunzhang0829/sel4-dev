@@ -981,10 +981,10 @@ def sealed_checkpoint_theories(files: dict[str, Any]) -> list[str]:
 
 def publish_generated_records(
     run_dir: Path, graph: dict[str, Any], theory_seal_id: str,
-    package: dict[str, Any],
-) -> None:
+    package: dict[str, Any], *, records_only=False,
+):
     path = run_dir / "generated-premises.json"
-    value = read_json(path) if path.exists() else {"records": []}
+    value = read_json(path) if path.exists() and not records_only else {"records": []}
     records = {item["record_id"]: item for item in value["records"]}
     contract_attributes = {
         item["contract_id"]: list(item.get("contract_owned_attributes", []))
@@ -1040,7 +1040,10 @@ def publish_generated_records(
             "publication_scope": "sealed-downstream-theories",
         }
     value["records"] = sorted(records.values(), key=lambda item: item["record_id"])
-    write_json(path, value)
+    if records_only:
+        return value["records"]
+    from regen.execution.proof_commits import durable
+    durable(path, value)
 
 
 def create_theory_seal(
@@ -2281,6 +2284,15 @@ def main() -> int:
     workspace.add_argument("--candidate-timeout", type=int, default=120)
     workspace.add_argument("--allow-external-call", action="store_true", help="Enable the audited dynamic-tool provider session")
     workspace.add_argument("--codex-home", type=Path, help="Authentication source; only auth.json is copied")
+    parallel = sub.add_parser("parallel-workspace", parents=[workspace], add_help=False,
+                              help="Parallel theory agents with serial per-theory tools and bounded checks")
+    parallel.add_argument("--max-parallel-theories", type=int, default=2)
+    parallel.add_argument("--native-slots", type=int, default=1)
+    parallel.add_argument("--native-threads", type=int, default=4)
+    parallel.add_argument("--resident-limit", type=int, default=2)
+    integration = sub.add_parser("integrate", help="Verify exact sealed repository coverage and build")
+    integration.add_argument("--run-dir", type=Path, required=True)
+    integration.add_argument("--check-timeout", type=int, default=900)
     args = parser.parse_args()
     if args.command == "init" and bool(args.dataset_root) == bool(args.environment_run):
         parser.error("init requires exactly one of --dataset-root or --environment-run")
@@ -2292,6 +2304,21 @@ def main() -> int:
                 run_id=args.run_id,
                 schedule_path=args.schedule,
             )
+        elif args.command == "parallel-workspace":
+            from regen.planning.parallel_file_planner import run_parallel_workspace
+            result = run_parallel_workspace(args.run_dir, theories=args.theories, model=args.planner_model,
+                max_parallel_theories=args.max_parallel_theories, native_slots=args.native_slots,
+                native_threads=args.native_threads, resident_limit=args.resident_limit,
+                call_timeout=args.call_timeout, check_timeout=args.check_timeout,
+                candidate_timeout=args.candidate_timeout, allow_external_call=args.allow_external_call,
+                codex_home=args.codex_home)
+        elif args.command == "integrate":
+            from regen.execution.repository_integration import integrate_repository
+            token = acquire_run_mutation_lock(args.run_dir, operation='integrate')
+            try:
+                result = integrate_repository(args.run_dir, timeout=args.check_timeout)
+            finally:
+                release_run_mutation_lock(token)
         elif args.command == "workspace":
             from regen.planning.proof_workspace_agent import run_workspace
             result = run_workspace(args.run_dir, theories=args.theories, model=args.planner_model,

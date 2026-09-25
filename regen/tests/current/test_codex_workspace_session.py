@@ -73,6 +73,19 @@ class CodexWorkspaceSessionTest(unittest.TestCase):
             self.assertEqual(first['assurance'],'audited-tool-allowlist')
             self.assertFalse(first['exclusive_os_isolation'])
 
+    def test_coordinator_cancel_interrupts_remote_wait_and_closes_process(self):
+        import threading
+        with tempfile.TemporaryDirectory() as tmp, self.session('timeout') as session:
+            cancel=threading.Event()
+            timer=threading.Timer(.3,cancel.set);timer.start()
+            self.addCleanup(timer.cancel)
+            start=time.monotonic()
+            with self.assertRaisesRegex(SessionCancelled,'coordinator cancelled'):
+                session.run('x',lambda *a: {},artifact_dir=tmp,model='test',timeout=30,cancel_event=cancel)
+            self.assertLess(time.monotonic()-start,5)
+            self.assertIsNotNone(session.process.poll())
+            self.assertIn('session_failed',(Path(tmp)/'session-transcript.jsonl').read_text())
+
     def test_default_refuses_provider_launch(self):
         with tempfile.TemporaryDirectory() as tmp, CodexWorkspaceSession(tools=TOOLS) as session:
             with patch('regen.infrastructure.codex_workspace_session.subprocess.Popen') as popen:

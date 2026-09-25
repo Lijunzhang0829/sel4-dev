@@ -4,6 +4,7 @@ Worker failure discards all volatile state; callers may cold-check exact source.
 No model-provided admission or arbitrary ML enters this process.
 """
 import atexit
+from regen.execution.check_tasks import check_cancelled, CheckCancelled
 import hashlib
 import xml.etree.ElementTree as ET
 import subprocess
@@ -56,6 +57,11 @@ class BatchWorker(PrefixWorker):
         limit = self.checker.timeout if timeout is None else timeout
         emit_event('isabelle_batch_wait_started', worker=self.name, waiting_for=path.name, timeout_seconds=limit)
         while not path.exists():
+            try:
+                check_cancelled()
+            except CheckCancelled:
+                self.close()
+                raise
             if self.process.poll() is not None:
                 raise RuntimeError((self.root/'worker.log').read_text()[-6000:])
             now = time.monotonic()
@@ -70,6 +76,7 @@ class BatchWorker(PrefixWorker):
         emit_event('isabelle_batch_wait_finished', worker=self.name, waiting_for=path.name, elapsed_seconds=round(time.monotonic()-start, 3))
 
     def transaction(self, action, text='', names=(), line=1):
+        check_cancelled()
         self.index += 1
         stem = str(self.index)
         offset = (self.root/'worker.log').stat().st_size

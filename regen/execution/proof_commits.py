@@ -7,6 +7,39 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import threading
+from functools import wraps
+
+_CACHE_LOCK = threading.RLock()
+_JOURNAL_LOCKS = {}
+
+
+def journal_lock(directory):
+    key = str(Path(directory).resolve())
+    with _CACHE_LOCK:
+        return _JOURNAL_LOCKS.setdefault(key, threading.RLock())
+
+
+def locked_journal(function):
+    @wraps(function)
+    def call(self, *args, **kwargs):
+        with journal_lock(self.directory):
+            return function(self, *args, **kwargs)
+    return call
+
+
+def commit_paths(directory):
+    """Observe HEAD before listing append-only commits, never newer HEAD afterward."""
+    directory = Path(directory)
+    head = {}
+    try:
+        head = json.loads((directory/"HEAD.json").read_text())
+    except (OSError, ValueError):
+        pass
+    paths = sorted((directory/"commits").glob("*.json"))
+    if head.get("sequence", 0) > len(paths):
+        raise ValueError("committed history is missing; cannot recover from pointer alone")
+    return paths, head
 
 
 # Sharing is opt-in: callers identify the complete validation environment and
@@ -76,18 +109,21 @@ class ProofCommits:
         # evict active histories during a repository-wide progress traversal.
         if self.cache_namespace is not None and previous is not None:
             key = self._cache_key()
-            _VERIFIED_PREFIXES[key] = snapshot
-            _VERIFIED_PREFIXES.move_to_end(key)
-            while len(_VERIFIED_PREFIXES) > _MAX_VERIFIED_PREFIXES:
-                _VERIFIED_PREFIXES.popitem(last=False)
+            with _CACHE_LOCK:
+                _VERIFIED_PREFIXES[key] = snapshot
+                _VERIFIED_PREFIXES.move_to_end(key)
+                while len(_VERIFIED_PREFIXES) > _MAX_VERIFIED_PREFIXES:
+                    _VERIFIED_PREFIXES.popitem(last=False)
 
-    def replay(self):
-        paths = sorted((self.directory/'commits').glob('*.json'))
+    @locked_journal
+    def replay(self, *, repair=True):
+        paths, head = commit_paths(self.directory)
         fingerprints = tuple(_fingerprint(path) for path in paths)
         key = self._cache_key()
         cached = self._verified if self._cache_identity == (key, self.validate) else None
         if self.cache_namespace is not None:
-            shared = _VERIFIED_PREFIXES.get(key)
+            with _CACHE_LOCK:
+                shared = _VERIFIED_PREFIXES.get(key)
             # LRU eviction does not invalidate this object's verified prefix.
             # Retain the longest known prefix so a shorter shared snapshot
             # cannot hide deletion of previously observed commits.
@@ -115,21 +151,24 @@ class ProofCommits:
                 raise ValueError('invalid proof commit chain/binding')
             self.validate(state, record['state'], record['event'], record['evidence'])
             state = record['state']; previous = record['commit_id']
-        head_path = self.directory/'HEAD.json'
-        head = {}
-        if head_path.exists():
-            try: head = json.loads(head_path.read_text())
-            except (ValueError, OSError): pass
-            if head.get('sequence', 0) > len(paths):
-                raise ValueError('committed history is missing; cannot recover from pointer alone')
-        if previous:
+        if previous and repair:
             expected = {'commit_id': previous, 'sequence': len(paths)}
+            # Repair only as the owning writer; readers use repair=False.
             if head != expected:
-                durable(head_path, expected)
+                durable(self.directory/'HEAD.json', expected)
         self._remember(fingerprints, state, previous)
         return state
 
+    @locked_journal
     def append(self, event, state, evidence):
+        from regen.execution.check_tasks import acceptance_guard, check_cancelled
+        check_cancelled()
+        if event in {'batch', 'green', 'seal'}:
+            with acceptance_guard():
+                return self._append(event, state, evidence)
+        return self._append(event, state, evidence)
+
+    def _append(self, event, state, evidence):
         old = self.replay()
         self.validate(old, state, event, evidence)
         paths = sorted((self.directory/'commits').glob('*.json'))

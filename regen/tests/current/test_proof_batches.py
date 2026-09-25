@@ -11,7 +11,7 @@ class Checker:
     imports = lambda self: ['Semantic_Base.Semantic_Root']
     verdict = 'green'
     calls = 0
-    def _check(self, source, label):
+    def _check(self, source, label, *, timeout=None):
         self.calls += 1
         return {'verdict':self.verdict, 'returncode':0 if self.verdict == 'green' else 1,
                 'source_content':source, 'source_sha256':hashlib.sha256(source.encode()).hexdigest(),

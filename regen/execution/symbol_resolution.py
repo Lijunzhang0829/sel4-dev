@@ -63,12 +63,8 @@ end
     label='Symbol_Lookup_'+key[:16]
     source='\n'.join(['theory '+label,'imports',*[json.dumps(i) for i in checker.imports()],
                       'begin','unbundle l4v_word_context',wrap_context(context,block),'end',''])
-    original_timeout=checker.timeout
-    try:
-        checker.timeout=min(original_timeout,120)
-        check=checker._check(source,label,writable_mounts=[(directory,'/symbol-output')])
-    finally:
-        checker.timeout=original_timeout
+    check=checker._check(source,label,writable_mounts=[(directory,'/symbol-output')],
+                         timeout=min(checker.timeout,120))
     evidence=freeze_evidence(check)
     durable(directory/'check.json',evidence)
     evidence_id=digest({'source_sha256':evidence.get('source_sha256'),'log_sha256':evidence.get('log_sha256')})

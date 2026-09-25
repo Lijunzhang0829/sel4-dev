@@ -17,7 +17,8 @@ from regen.infrastructure.audited_llm import model_settings
 
 PROVIDER = 'codex-workspace-audited'
 ALLOWED_TOOLS = {'list_workspace','read_theory','list_generated','read_generated',
-                 'read_attempt','prepare_reuse','proof_action'}
+                 'read_attempt','prepare_reuse','proof_action',
+                 'submit_check','get_check_result','wait_checks','cancel_check'}
 PASSIVE_ITEMS = {'agentMessage','reasoning','userMessage','dynamicToolCall','contextCompaction','plan'}
 
 
@@ -165,8 +166,8 @@ def _audit(raw, *, require_terminal, require_real):
             'tool_requests':tool_requests, 'terminal':terminal, 'events':events}
 
 
-def audit_workspace_session(path, *, require_terminal=True, require_real=True):
-    raw = _load_prefix(path)
+def audit_workspace_session(path, *, require_terminal=True, require_real=True, offset=None):
+    raw = _load_prefix(path, offset)
     report = _audit(raw, require_terminal=require_terminal, require_real=require_real)
     return {'provider':PROVIDER, 'assurance':'audited-tool-allowlist', 'no_tool_events':False,
             'transcript_sha256':_hash(raw), 'transcript_bytes':len(raw),
@@ -186,8 +187,15 @@ def _binding(raw, proposal, metadata, theory, model, *, require_real):
             or request not in report['tool_requests']):
         raise ValueError('workspace action differs from its exact tool request receipt')
     params = request['params']
-    if (params.get('tool') != 'proof_action'
-            or params.get('arguments') != {'theory':theory,'proposal':proposal}
+    arguments = params.get('arguments', {})
+    expected = {'theory':theory,'proposal':proposal}
+    if params.get('tool') == 'submit_check':
+        kind = {'submit_batch':'proof_batch','finish':'seal'}.get(proposal.get('action'))
+        if kind is None:
+            raise ValueError('read-only task cannot establish proof generation provenance')
+        expected['kind'] = kind
+    if (params.get('tool') not in {'proof_action','submit_check'}
+            or arguments != expected
             or params.get('threadId') != metadata.get('thread_id')
             or params.get('turnId') != metadata.get('turn_id')
             or params.get('callId') != metadata.get('call_id')):

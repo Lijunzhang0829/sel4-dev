@@ -15,7 +15,8 @@ class SymbolResolutionTest(unittest.TestCase):
         def check(source,label,**kwargs):
             checker.calls=getattr(checker,'calls',0)+1
             checker.source=source
-            checker.active_timeout=checker.timeout
+            checker.active_timeout=kwargs.get('timeout',checker.timeout)
+            self.assertEqual(checker.timeout,900)
             path=kwargs['writable_mounts'][0][0]/'resolution.tsv'
             path.write_text(output)
             return {'verdict':verdict,'diagnostic':'infrastructure failure' if verdict!='green' else ''}

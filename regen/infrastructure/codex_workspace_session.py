@@ -67,6 +67,7 @@ class CodexWorkspaceSession:
         self._closed = False
         self._lock = threading.Lock()
         self._expired = threading.Event()
+        self._cancel_event = None
         self._log = None
         self._stderr = None
         self._temporary = None
@@ -107,6 +108,8 @@ class CodexWorkspaceSession:
         # Inactivity budget: callback/native-check time is deliberately excluded.
         deadline = time.monotonic() + self._timeout
         while b'\n' not in self._buffer:
+            if self._cancel_event is not None and self._cancel_event.is_set():
+                raise SessionCancelled('workspace coordinator cancelled')
             remaining = deadline-time.monotonic()
             if self._expired.is_set() or remaining <= 0:
                 raise TimeoutError('workspace session deadline expired')
@@ -231,12 +234,13 @@ class CodexWorkspaceSession:
         self._event('local', {'event':'tool_finished', 'call_id':call_id, 'response':response})
         self._send({'id':message['id'], 'result':response})
 
-    def run(self, prompt, on_tool_call, *, artifact_dir, model, reasoning_effort='medium', timeout=1800):
+    def run(self, prompt, on_tool_call, *, artifact_dir, model, reasoning_effort='medium', timeout=1800, cancel_event=None):
         if self._closed or self._broken:
             raise RuntimeError('session is closed or failed; automatic resume is forbidden')
         if timeout <= 0:
             raise ValueError('timeout must be positive')
         self._timeout = timeout
+        self._cancel_event = cancel_event
         deadline = time.monotonic()+timeout
         self._expired.clear()
         old_term = None
@@ -244,6 +248,8 @@ class CodexWorkspaceSession:
             old_term = signal.getsignal(signal.SIGTERM)
             signal.signal(signal.SIGTERM, self._cancel_signal)
         try:
+            if self._cancel_event is not None and self._cancel_event.is_set():
+                raise SessionCancelled('workspace coordinator cancelled')
             if self.process is None:
                 self._start(artifact_dir, model, deadline)
             elif Path(artifact_dir).resolve() != self._artifact_dir:
@@ -254,6 +260,8 @@ class CodexWorkspaceSession:
                 'approvalPolicy':'never', 'environments':[]}), deadline)
             self.turn_id = turn['turn']['id']
             while True:
+                if self._cancel_event is not None and self._cancel_event.is_set():
+                    raise SessionCancelled('workspace coordinator cancelled')
                 message = self._deferred.pop(0) if self._deferred else self._receive(deadline)
                 if message.get('method') == 'item/tool/call':
                     self._tool_call(message, on_tool_call, deadline)

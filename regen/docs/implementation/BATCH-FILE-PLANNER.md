@@ -1,5 +1,8 @@
 # Single-theory batch File Planner
 
+2026-09-24: Existing batch semantics below remain the acceptance baseline.
+The approved asynchronous and multi-theory changes are tracked in [M4–M8 of the end-to-end design](../design/PARALLEL-PROOF-PIPELINE.md#m4); they are not enabled by this documentation update.
+
 `python3 -m regen.execution.proof_session_runner batch-file --run-dir RUN --theory THEORY`
 
 This opt-in path keeps one continuing File Planner responsible for a theory's graph,

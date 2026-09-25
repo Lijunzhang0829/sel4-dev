@@ -29,6 +29,15 @@ class WorkspacePlanningTest(unittest.TestCase):
         self.h=WorkspaceHarness(self.input,self.root/'workspace-run',self.native)
         self.proposal=copy.deepcopy(f.proposal);self.proposal['theories'][0]['contract_ids']=[self.h.view.to_public[f.cid]]
 
+    def test_visibility_prompt_is_consistent_in_both_modes(self):
+        visible=instruction({**self.h.view.payload,'contract_visibility':'source-theory-visible-v1'})
+        self.assertIn('owner_theory',visible)
+        self.assertNotIn('Original theory attribution is deliberately absent',visible)
+        self.assertIn('choose the new grouping freely',visible)
+        blind=instruction({**self.h.view.payload,'contract_visibility':'owner-blind-v1'})
+        self.assertIn('Original theory attribution is deliberately absent',blind)
+        self.assertNotIn('names are explicitly available as owner_theory',blind)
+
     def test_public_short_ids_and_owner_independence(self):
         v=self.h.view
         self.assertEqual(list(v.to_original),['C0001'])

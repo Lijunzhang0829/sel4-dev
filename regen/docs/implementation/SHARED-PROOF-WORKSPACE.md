@@ -1,5 +1,8 @@
 # Persistent shared proof workspace
 
+2026-09-24: This document describes the implemented single-agent workspace baseline.
+The current `parallel-workspace` command implements persistent agents per theory, a shared native resource pool and repository integration. Each File Planner executes its tools serially; different theories may run concurrently. This page describes the older `workspace` command only; see the [current end-to-end design](../design/PARALLEL-PROOF-PIPELINE.md).
+
 The `workspace` command keeps one Codex app-server process and thread alive while
 File Planner uses harness tools. A model turn can make many proof/retrieval calls,
 switch between selected theories and read partial results before their theory seals.

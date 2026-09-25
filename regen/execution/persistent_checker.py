@@ -1,5 +1,6 @@
 """Speculative fixed-prefix worker; every GREEN is independently cold-certified."""
 import atexit
+from regen.execution.check_tasks import check_cancelled, CheckCancelled
 import hashlib
 import json
 import re
@@ -40,6 +41,11 @@ class PrefixWorker:
     def wait(self, path):
         start = time.monotonic()
         while not path.exists():
+            try:
+                check_cancelled()
+            except CheckCancelled:
+                self.close()
+                raise
             if self.process.poll() is not None:
                 raise RuntimeError((self.root/'worker.log').read_text()[-6000:])
             if time.monotonic()-start > self.checker.timeout:

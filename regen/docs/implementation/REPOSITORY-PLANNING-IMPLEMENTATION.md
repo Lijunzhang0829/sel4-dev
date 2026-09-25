@@ -1,5 +1,7 @@
 # 仓库规划实现
 
+2026-09-25：当前端到端控制流及本模块 TODO 见 [M1 仓库规划](../design/PARALLEL-PROOF-PIPELINE.md#m1) 与 [M2 规划验收](../design/PARALLEL-PROOF-PIPELINE.md#m2)。owner-visible/blind prompt 已按可见性策略修正，规划预检已接统一执行器；实际模型生成及架构质量评价仍需实验。
+
 当前默认链路只支持独立的 Refine 实验。Refine 与 CRefine 是两份数据集；Refine 的输入、
 premise 库、plan、运行状态和评价均不读取 CRefine，也不继承另一实验的生成结果。
 
@@ -32,7 +34,7 @@ Refine/CRefine 来源以及无法确认归属的记录均排除，并在 `select
 
 [repository_planner.py](../../planning/repository_planner.py) 的直接入口是 `--planning-input`。
 默认策略使用 `interaction: agent-workspace`：agent 在隔离工作区编辑计划文件，通过可信
-harness 查询证据、验证和提交，详见第 9 节。模型配置仍为 gpt-5.6-sol / medium。
+harness 查询证据、验证和提交，详见第 9 节。当前 workspace 政策为 gpt-6-astra / medium，既有冻结运行仍遵循原模型绑定。
 仓库规划不提供 proof state 查询；该召回接口属于后续证明阶段。
 
 下面的 JSON 逐轮接口保留供冻结实验重放，策略样本位于
@@ -76,7 +78,7 @@ Agent 可以在验证失败后补充检索，也可以在验证通过后继续�
 
 ## 3. Repository plan
 
-当前文件型 planner 的 proposal、plan 与 projection 使用 schema 5，file-generation-list 使用 schema 6。旧 schema 4 提案和投影仍可兼容读取。它包含：
+当前 workspace 政策的 proposal、plan 与 projection 使用 schema 6，file-generation-list 使用 schema 7，增加 advisory collaboration_groups/reuse_suggestions；旧 schema 4/5 仍按原语义兼容读取。它包含：
 
 - evidence-backed `contract_relations`；
 - 每个生成 theory 的完整 contract 分配和 context profile；

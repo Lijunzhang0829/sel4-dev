@@ -89,6 +89,23 @@ class SharedProofWorkspaceTest(unittest.TestCase):
         after = {str(p.relative_to(self.root)): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
         self.assertEqual(before, after)
 
+    def test_unchanged_index_reuses_rows_but_new_commit_invalidates_them(self):
+        from unittest.mock import patch
+        first=self.workspace.index(theory='Source')
+        with patch.object(self.workspace,'_ref',wraps=self.workspace._ref) as ref:
+            self.assertEqual(self.workspace.index(theory='Source'),first)
+            ref.assert_not_called()
+            j=journal(self.root,self.run,self.packages[0])
+            state=deepcopy(self.source);state['reason']='new observation'
+            j.append('planner-feedback',state,{})
+            after=self.workspace.index(theory='Source')
+            self.assertTrue(ref.called)
+        self.assertNotEqual(first['records'][0]['source_ref']['commit_id'],
+                            after['records'][0]['source_ref']['commit_id'])
+        after['records'][0]['source_ref']['commit_id']='modified response'
+        self.assertNotEqual(self.workspace.index(theory='Source')['records'][0]['source_ref']['commit_id'],
+                            'modified response')
+
     def test_source_refs_remain_bound_to_old_commit_after_new_feedback(self):
         ref = self.ref()
         j = journal(self.root, self.run, self.packages[0])

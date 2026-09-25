@@ -185,11 +185,15 @@ class WorkspaceController:
             if key[1] != theory:
                 runtime[4].close_prefix()
         if proposal.get('action') == 'finish':
-            audit_workspace_session(metadata['transcript_path'], require_terminal=False, require_real=True)
+            options = ({'offset':metadata['transcript_offset']}
+                       if metadata.get('raw_request',{}).get('params',{}).get('tool')=='submit_check' else {})
+            audit_workspace_session(metadata['transcript_path'], require_terminal=False, require_real=True, **options)
         def decision_source(prompt, payload, prefix, **identity):
             return record_workspace_action(prefix,prompt,proposal,metadata,**identity)
         _run_batch_file(self.root, theory, provider='codex', max_requests=1,
-                        decision_source=decision_source,runtime_cache=self.runtime_cache, **self.options)
+                        decision_source=decision_source,runtime_cache=self.runtime_cache,
+                        observation_source=getattr(self,'_observation_state',None),
+                        observation_order=getattr(self,'_action_observation_order',None), **self.options)
         _, state = self._state(theory)
         return {'theory':theory,'status':state['status'],'request_number':state.get('batch_requests',0),
                 'green_node_ids':list(state['accepted_order']),

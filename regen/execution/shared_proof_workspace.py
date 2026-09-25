@@ -9,8 +9,9 @@ from copy import deepcopy
 import json
 from pathlib import Path
 import re
+import threading
 
-from regen.execution.proof_commits import digest, _fingerprint
+from regen.execution.proof_commits import digest, _fingerprint, commit_paths
 from regen.planning.proof_graph import DECLARATION, normalized_declaration_body
 
 SCHEMA = 'shared-proof-workspace-v1'
@@ -76,7 +77,26 @@ class SharedProofWorkspace:
         self.entries = {e['theory']: e for e in self.inputs['files']}
         if len(self.entries) != len(self.inputs['files']):
             raise ValueError('duplicate workspace theory')
+        frozen = self.inputs['file_list']['files']
+        actual = self.inputs['files']
+        if [(r['theory'],r['file_slot']) for r in actual] != [(r['theory'],r['file_slot']) for r in frozen]:
+            raise ValueError('derived files differ from frozen file list')
+        self.fixed_contract_ids = []
+        for reference,row in zip(frozen,actual):
+            package = self._package(reference['theory'])
+            contracts = [c['contract_id'] for c in package['contracts']]
+            expected = reference.get('contract_ids',contracts)
+            if (len(set(expected)) != len(expected) or set(expected) != set(contracts)
+                    or ('contract_ids' in reference and 'contract_ids' not in row)
+                    or set(row.get('contract_ids',contracts)) != set(expected)
+                    or len(row.get('contract_ids',contracts)) != len(expected)):
+                raise ValueError('derived contract coverage differs from frozen targets')
+            self.fixed_contract_ids.extend(expected)
+        if len(set(self.fixed_contract_ids)) != len(self.fixed_contract_ids):
+            raise ValueError('duplicate frozen contract target')
+        self._lock = threading.RLock()
         self._cache = {}
+        self._index_cache = {}
         self._observed_sequences = {}
 
     def _path(self, path):
@@ -103,6 +123,10 @@ class SharedProofWorkspace:
         return package
 
     def _snapshot(self, theory, commit_id=None):
+        with self._lock:
+            return self._read_snapshot(theory, commit_id)
+
+    def _read_snapshot(self, theory, commit_id=None):
         """Validate the same chain/evidence as ProofCommits, without HEAD repair.
 
         Cached snapshots are bound to every immutable prefix file's fingerprint.
@@ -116,19 +140,13 @@ class SharedProofWorkspace:
         # because normal replay may repair its mutable HEAD.json projection.
         self._path(directory / 'imports.json')
         log = journal(self.root, self.run, package)
-        paths = sorted(self._path(directory / 'acceptance' / 'commits').glob('*.json'))
+        self._path(directory / 'acceptance' / 'HEAD.json')
+        paths, _ = commit_paths(self._path(directory / 'acceptance'))
         fingerprints = tuple(_fingerprint(self._path(p)) for p in paths)
         if len(paths) < self._observed_sequences.get(theory, 0):
             raise ValueError('workspace committed history is missing from an observed prefix')
         self._observed_sequences[theory] = len(paths)
         cache_key = (theory, commit_id, digest(log.binding))
-        if commit_id is None:
-            head_path = directory / 'acceptance' / 'HEAD.json'
-            if head_path.exists():
-                try: head = self._json(head_path)
-                except (ValueError, OSError): head = {}
-                if head.get('sequence', 0) > len(paths):
-                    raise ValueError('workspace committed history is missing')
         cached = self._cache.get(cache_key)
         if cached and cached[0] == fingerprints:
             return deepcopy(cached[1])
@@ -159,12 +177,6 @@ class SharedProofWorkspace:
         if commit_id is not None and result is None:
             raise ValueError('unknown immutable source commit in this theory')
         if commit_id is None:
-            head_path = directory / 'acceptance' / 'HEAD.json'
-            if head_path.exists():
-                try: head = self._json(head_path)
-                except (ValueError, OSError): head = {}
-                if head.get('sequence', 0) > len(paths):
-                    raise ValueError('workspace committed history is missing')
             result = None if state is None else {
                 'state': state, 'commit_id': previous, 'actual_dependencies': actual,
                 'directory': str(directory), 'package': package}
@@ -207,21 +219,29 @@ class SharedProofWorkspace:
             if snapshot is None:
                 summaries.append({'theory': owner, 'status': 'not_started', 'accepted': 0})
                 continue
-            state = snapshot['state']
-            failures = [{'request_number': h.get('request_number'), 'status': h.get('status')}
-                        for h in state.get('batch_history', [])
-                        if h.get('status') in {'rejected_batch', 'rejected_request', 'checked_not_committed'}]
-            summaries.append({'theory': owner, 'status': state['status'],
-                              'accepted': len(state['proofs']), 'failed_attempt_count': len(failures),
-                              'failed_attempts': failures[-8:]})
-            for node in state['graph']['nodes']:
-                if node['id'] not in state['proofs']:
-                    continue
-                if query.lower() not in (node['name'] + ' ' + node['statement']).lower():
-                    continue
-                rows.append({'source_ref': self._ref(snapshot, node), 'name': node['name'],
-                             'role': node['role'], 'status': 'source_green_reference',
-                             'statement_preview': node['statement'][:240]})
+            # Validate the source snapshot first, then reuse derived rows for its
+            # immutable commit. Retain only the latest index per theory.
+            with self._lock:
+                cached = self._index_cache.get(owner)
+                if cached is None or cached['commit_id'] != snapshot['commit_id']:
+                    state = snapshot['state']
+                    failures = [{'request_number': h.get('request_number'), 'status': h.get('status')}
+                                for h in state.get('batch_history', [])
+                                if h.get('status') in {'rejected_batch', 'rejected_request', 'checked_not_committed'}]
+                    summary = {'theory': owner, 'status': state['status'],
+                               'accepted': len(state['proofs']), 'failed_attempt_count': len(failures),
+                               'failed_attempts': failures[-8:]}
+                    records = []
+                    for node in state['graph']['nodes']:
+                        if node['id'] in state['proofs']:
+                            records.append(((node['name']+' '+node['statement']).lower(),
+                                {'source_ref': self._ref(snapshot,node), 'name':node['name'],
+                                 'role':node['role'], 'status':'source_green_reference',
+                                 'statement_preview':node['statement'][:240]}))
+                    cached = {'commit_id':snapshot['commit_id'],'summary':summary,'records':records}
+                    self._index_cache[owner] = cached
+                summaries.append(deepcopy(cached['summary']))
+                rows.extend(deepcopy(row) for text,row in cached['records'] if query.lower() in text)
         return {'kind': SCHEMA, 'status': 'available', 'theories': summaries,
                 'total': len(rows), 'offset': offset, 'records': rows[offset:offset + limit],
                 'notice': 'Source examples only; no theorem is imported or accepted in the target.'}
