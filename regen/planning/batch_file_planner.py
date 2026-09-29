@@ -1,8 +1,8 @@
-"""One persistent theory controller: editable proof graph and atomic proof batches.
+"""Shared acceptance engine for document versions and legacy graph batches.
 
 All authority stays in the existing acceptance journal. Model calls have no shell
 access. The controller can be restarted; requests and feedback are committed
-before another call. Only one controller may mutate a run at a time.
+before another call. Each active theory has one serial controller; the coordinator owns run mutation.
 """
 from copy import deepcopy
 from difflib import SequenceMatcher
@@ -15,6 +15,7 @@ from pathlib import Path
 
 from regen.execution.proof_commits import digest, durable, freeze_evidence
 from regen.infrastructure.llm_transcript import allocate_artifact_prefix, call_llm, validate_call_artifact
+from regen.execution.check_tasks import NativePreparationError
 from regen.planning.proof_graph import build_graph, parse_json_response
 
 
@@ -217,8 +218,8 @@ def apply_feedback(state, proposal, feedback, number, *, observation_order=None)
     Legacy feedback without a task order cannot supersede task-ordered memory.
     Proof acceptance and mathematical request accounting remain unchanged.
     """
-    from regen.planning.async_observations import SELECTIONS
-    versions = state.get('async_selection_versions', {})
+    from regen.planning.observation_memory import SELECTIONS, memory_fields, memory_value
+    versions = memory_value(state,1,{})
     clean = deepcopy(proposal)
     def stale(key):
         return key in versions and (observation_order is None or observation_order < versions[key])
@@ -248,7 +249,7 @@ def apply_feedback(state, proposal, feedback, number, *, observation_order=None)
             if key in state:new[key] = deepcopy(state[key])
             else:new.pop(key, None)
         elif observation_order is not None and key in selected and key in new:
-            new.setdefault('async_selection_versions', {})[key] = deepcopy(observation_order)
+            new.setdefault(memory_fields(new)[1], deepcopy(memory_value(new,1,{})))[key] = deepcopy(observation_order)
     if observation_order is not None:
         new.setdefault('batch_observation_orders', {})[str(number)] = deepcopy(observation_order)
     return new
@@ -412,7 +413,7 @@ def read_bound_json(path, expected=None):
 
 
 def committed_batch_results(directory):
-    """Extract request results from batch events, never derived action history.
+    """Extract batch/document acceptance, never derived action history.
 
     The controller calls this only after journal.replay validated this chain and
     any embedded continuation origins. Artifact summaries are not proof authority.
@@ -423,7 +424,7 @@ def committed_batch_results(directory):
             origin = record.get('evidence', {}).get('continuation', {})
             for source in origin.get('commits', []):
                 visit(source)
-        if record.get('event') == 'batch':
+        if record.get('event') in {'batch', 'document'}:
             state = record['state']
             number = state.get('batch_requests')
             if isinstance(number, int):
@@ -514,7 +515,8 @@ def observation_summary(state):
             if item.get('status') == 'accepted':
                 last_green = number
     count = state.get('batch_requests', 0)
-    for query in state.get('async_queries',[]):
+    from regen.planning.observation_memory import memory_value
+    for query in memory_value(state,0,[]):
         queries[query['query_id']] = {**queries.get(query['query_id'],{}),
             **{key:value for key,value in query.items() if key not in {'cache','observation_order'}}}
     return list(queries.values()), {
@@ -597,9 +599,11 @@ def planner_input(package, state):
     payload['diagnostic_pages'] = state.get('batch_diagnostic_pages', [])
     from regen.planning.planner_workspace import consumer_feedback
     payload['workspace'] = workspace
-    payload['consumer_feedback'] = consumer_feedback(state)
+    if 'document_order' not in graph:
+        payload['consumer_feedback'] = consumer_feedback(state)
     from regen.planning.batch_routes import route_signals
-    payload['batch_opportunities'] = route_signals(state)
+    if 'document_order' not in graph:
+        payload['batch_opportunities'] = route_signals(state)
     from regen.planning.planner_efficiency import next_proof_observation, failed_routes
     payload['next_proof_observation'] = next_proof_observation(state)
     payload['repeated_failed_routes'] = failed_routes(state)
@@ -719,7 +723,7 @@ def execute_query(run, package, state, checker, directory, request, item_index=N
     page, reused_request = cached_query_feedback(state, directory, identity)
     reused_task = None
     if page is None:
-        from regen.planning.async_observations import cached_query
+        from regen.planning.observation_memory import cached_query
         page,reused_task = cached_query(state,identity)
     if page is None:
         page = batch_query(run, package, state, checker, directory, request, audit_path=audit_path)
@@ -790,7 +794,7 @@ def seal_theory(run_dir, run, package, directory, checker, ancestors, state):
     name = generated_checkpoint_theory(package['file_slot'])
     source = checker.complete_source(graph, proofs, theory_name=name)
     path = checker.generated_dir/(name+'.thy'); path.write_text(source)
-    build = freeze_evidence(checker.build_generated_session([*ancestors, name]))
+    build = freeze_evidence(getattr(checker, 'build_sealed_session', checker.build_generated_session)([*ancestors, name]))
     deps = checker.last_complete_audit
     evidence = freeze_evidence({'complete':complete, 'impact':impact, 'build':build,
         'dependencies':deps, 'source':str(path), 'source_text':source, 'source_hash':digest(source)})
@@ -901,9 +905,10 @@ def _record_termination(run_dir, theory, directory, journal, state, error):
 def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     call_timeout=600, check_timeout=900, candidate_timeout=120, max_requests=0,
                     decision_source=None, runtime_cache=None, observation_source=None, observation_order=None):
-    from regen.execution.repository_execution import setup, context_graph, progress
+    from regen.execution.repository_execution import setup, progress
+    from regen.planning.declaration_index import accepted_declarations
     from regen.execution.proof_session_runner import frozen_role_model
-    from regen.execution.proof_batches import prepare_batch, check_batch
+    from regen.execution.proof_batches import prepare_batch, check_batch, check_declarations
     if call_timeout <= 0 or check_timeout <= 0 or candidate_timeout <= 0 or max_requests < 0:
         raise ValueError('invalid batch controller limits')
     checker = journal = directory = None
@@ -937,12 +942,16 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
             durable(directory/'batch-policy.json', policy, immutable=True)
             state = journal.replay()
             if state is None:
-                graph = build_graph(package, {'generated_nodes':[], 'contract_dependencies':{}},
-                                    run_id=run['run_id']+'--'+theory, revision=1)
+                if getattr(checker, 'document_mode', False) is True:
+                    from regen.planning.declaration_index import initial_index
+                    graph = initial_index(package, run_id=run['run_id']+'--'+theory)
+                else:
+                    graph = build_graph(package, {'generated_nodes':[], 'contract_dependencies':{}},
+                                        run_id=run['run_id']+'--'+theory, revision=1)
                 graph.update(initial_graph_owner='File Planner', runtime_graph_owner='File Planner',
                              execution_mode='file-planner-batch-v1')
-                graph = context_graph(graph, [])
-                check = freeze_evidence(checker.check_graph(graph))
+                graph = accepted_declarations(graph, [])
+                check = freeze_evidence(check_declarations(checker, graph))
                 if check['verdict'] != 'green':
                     raise RuntimeError('fixed-contract scaffold failed native elaboration: '+check.get('diagnostic',''))
                 state = journal.append('initial', {'graph':graph, 'proofs':{}, 'accepted_order':[],
@@ -1037,6 +1046,18 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     if not isinstance(proposal, dict):
                         proposal = None
                         raise ValueError('expected one JSON action object')
+                    if proposal.get('action') == 'check_theory':
+                        from regen.planning.theory_document import DocumentStore, candidate as document_candidate
+                        if set(proposal)-{'action','source_sha256','reason','notes','retry_check'}:
+                            raise ValueError('check_theory accepts source_sha256, reason, notes and optional retry_check')
+                        durable(request_dir/'model-proposal.json',proposal,immutable=True)
+                        store=DocumentStore(directory/'document',package,state,checker.imports())
+                        source=store.checked_source(proposal.get('source_sha256'))
+                        projected=document_candidate(package,state,source,checker.imports())
+                        proposal={**{k:v for k,v in proposal.items() if k in {'reason','notes','retry_check'}},
+                            'action':'submit_batch','document_source':source,
+                            'proofs':projected['proofs'],
+                            'graph':{'generated_nodes':[n for n in projected['graph']['nodes'] if n['role']!='contract']}}
                     if proposal.get('action') == 'submit_batch' and any(
                             key in proposal for key in ('proof_edits','reuse_proofs','reuse_helpers')):
                         durable(request_dir/'model-proposal.json', proposal, immutable=True)
@@ -1111,7 +1132,15 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         feedback = {'status':'available', 'proofs':[
                             {**nodes[k], 'proof_body':state['proofs'][k], 'proof_sha256':digest(state['proofs'][k])} for k in ids]}
                     elif action == 'submit_batch':
-                        candidate = prepare_batch(package, state, {k: v for k, v in proposal.items() if k not in {'action', 'notes', 'workspace', 'reuse_origin', 'edit_origin', 'retry_check', 'workspace_reuse_origin'}})
+                        document_source = proposal.get('document_source')
+                        if document_source is not None:
+                            from regen.planning.theory_document import candidate as document_candidate
+                            candidate=document_candidate(package,state,document_source,checker.imports())
+                            if proposal.get('proofs')!=candidate['proofs']:
+                                raise ValueError('document projection differs from source proofs')
+                            durable(request_dir/'document-source.json',{'source':document_source},immutable=True)
+                        else:
+                            candidate = prepare_batch(package, state, {k: v for k, v in proposal.items() if k not in {'action', 'notes', 'workspace', 'reuse_origin', 'edit_origin', 'retry_check', 'workspace_reuse_origin'}})
                         if 'workspace' in proposal:
                             from regen.planning.planner_workspace import validate_workspace
                             validate_workspace(candidate, proposal['workspace'])
@@ -1119,15 +1148,19 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         from regen.planning.planner_efficiency import failure_identity, reused_failure
                         identity = failure_identity(run, checker, state, candidate)
                         cached = reused_failure(directory, state, identity, retry_reason=proposal.get('retry_check'))
+                        from regen.planning.theory_document import check_document
                         evidence = ({'check':cached['check'], 'node_results':cached.get('node_results',[]),
                                      'cached_failure':True, 'failure_identity':identity,
                                      'reused_request':cached['reused_request']} if cached else
-                                    check_batch(checker, state, candidate))
+                                    (check_document(checker,state,candidate,document_source) if document_source is not None
+                                     else check_batch(checker, state, candidate)))
                         evidence.update(sealable_generation=bool(meta.get('sealable_generation')),
                                         transcript_prefix=str(prefix), reason=proposal.get('reason',''))
                         if 'workspace_reuse_origin' in proposal:
                             evidence['workspace_reuse_origin'] = deepcopy(proposal['workspace_reuse_origin'])
                         durable(request_dir/'check.json', evidence, immutable=True)
+                        if evidence['check'].get('failure_scope') == 'native_preparation':
+                            raise NativePreparationError(evidence['check'].get('diagnostic','native prefix preparation failed'))
                         if evidence['check']['verdict'] == 'green':
                             timing.mark('commit')
                             candidate.update(status='generating', reason='', batch_feedback={'status':'accepted',
@@ -1137,7 +1170,10 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                                 'cost_seconds':{k:timing.seconds[k] for k in (source_phase,'action')}}, batch_candidate=None)
                             candidate.pop('revision_rejection', None)
                             candidate = apply_feedback(candidate, proposal, candidate['batch_feedback'], count, observation_order=observation_order)
-                            state = journal.append('batch', candidate, evidence)
+                            if document_source is not None:
+                                candidate['batch_feedback'].update(source_sha256=candidate['document_source_sha256'],
+                                    check_mode=evidence['document_check_mode'],rechecked_ids=list(candidate['accepted_order']))
+                            state = journal.append('document' if document_source is not None else 'batch', candidate, evidence)
                             timing.metadata.update(status='accepted', action_completed=True, check_verdict='green')
                             timing.mark('progress')
                             progress(run_dir)
@@ -1168,6 +1204,8 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     feedback = {'status':'rejected_request', 'diagnostic':str(error)}
                     if isinstance(error, ReadIdError):
                         feedback.update(error.details)
+                except NativePreparationError:
+                    raise
                 except RuntimeError as error:
                     feedback = {'status':'tool_failed', 'failure_scope':'tool',
                                 'diagnostic':str(error),
@@ -1175,7 +1213,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 timing.metadata['action_completed'] = True
                 timing.metadata['check_verdict'] = feedback.get('check', {}).get('verdict')
                 timing.mark('commit')
-                if proposal and proposal.get('action') == 'submit_batch':
+                if proposal and proposal.get('action') in {'submit_batch','check_theory'}:
                     feedback['cost_seconds'] = {k:timing.seconds[k] for k in (source_phase,'action')}
                 timing.metadata['status'] = feedback['status']
                 durable(request_dir/'feedback.json', feedback, immutable=True)

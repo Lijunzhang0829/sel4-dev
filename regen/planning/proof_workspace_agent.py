@@ -99,17 +99,21 @@ class WorkspaceController:
             raise ValueError('execution code changed after run initialization; use a new proof run')
 
     def _state(self, theory):
-        from regen.execution.repository_execution import context_graph
+        from regen.planning.declaration_index import accepted_declarations
         from regen.planning.proof_graph import build_graph
         package = self.shared._package(theory)
         snapshot = self.shared._snapshot(theory)
         if snapshot:
             return package, deepcopy(snapshot['state'])
-        graph = build_graph(package, {'generated_nodes':[], 'contract_dependencies':{}},
-                            run_id=self.run['run_id']+'--'+theory, revision=1)
+        if getattr(self, 'document_mode', False):
+            from regen.planning.declaration_index import initial_index
+            graph = initial_index(package, run_id=self.run['run_id']+'--'+theory)
+        else:
+            graph = build_graph(package, {'generated_nodes':[], 'contract_dependencies':{}},
+                                run_id=self.run['run_id']+'--'+theory, revision=1)
         graph.update(initial_graph_owner='File Planner', runtime_graph_owner='File Planner',
                      execution_mode='file-planner-batch-v1')
-        return package, {'graph':context_graph(graph, []), 'proofs':{}, 'accepted_order':[],
+        return package, {'graph':accepted_declarations(graph, []), 'proofs':{}, 'accepted_order':[],
                          'rounds':{},'revisions':{},'status':'not_started','seal_id':None}
 
     def list_workspace(self):

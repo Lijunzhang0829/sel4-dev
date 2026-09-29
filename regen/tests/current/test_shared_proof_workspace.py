@@ -106,6 +106,39 @@ class SharedProofWorkspaceTest(unittest.TestCase):
         self.assertNotEqual(self.workspace.index(theory='Source')['records'][0]['source_ref']['commit_id'],
                             'modified response')
 
+    def test_snapshot_waits_for_inflight_acceptance_transaction(self):
+        from concurrent.futures import ThreadPoolExecutor
+        import threading
+        from regen.execution.proof_commits import journal_lock
+        acceptance = self.root / 'theories/Source/acceptance'
+        package_read = threading.Event()
+        commit_listing = threading.Event()
+        original_package = self.workspace._package
+        original_paths = __import__(
+            'regen.execution.shared_proof_workspace',
+            fromlist=['commit_paths']).commit_paths
+
+        def observed_package(theory):
+            result = original_package(theory)
+            package_read.set()
+            return result
+
+        def observed_paths(directory):
+            commit_listing.set()
+            return original_paths(directory)
+
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            with patch.object(
+                    self.workspace, '_package', side_effect=observed_package), patch(
+                    'regen.execution.shared_proof_workspace.commit_paths',
+                    side_effect=observed_paths):
+                with journal_lock(acceptance):
+                    future = pool.submit(self.workspace.index, theory='Source')
+                    self.assertTrue(package_read.wait(1))
+                    self.assertFalse(commit_listing.wait(.1))
+                self.assertEqual(future.result(timeout=1)['total'], 2)
+                self.assertTrue(commit_listing.is_set())
+
     def test_source_refs_remain_bound_to_old_commit_after_new_feedback(self):
         ref = self.ref()
         j = journal(self.root, self.run, self.packages[0])

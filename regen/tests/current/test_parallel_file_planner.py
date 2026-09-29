@@ -54,6 +54,18 @@ class ParallelControllerTests(unittest.TestCase):
         self.assertEqual(row['status'],'completed')
         self.assertEqual(row['kind'],'proof_batch')
 
+    def test_native_preparation_error_crosses_executor_without_feedback(self):
+        from regen.execution.check_tasks import NativePreparationError
+        with patch('regen.execution.proof_batches.check_batch', return_value={
+                'check':{'verdict':'infrastructure_error','failure_scope':'native_preparation',
+                         'diagnostic':'prefix deadline'}}):
+            with self.assertRaisesRegex(NativePreparationError, 'prefix deadline'):
+                self.controller.handle('proof_action', {'theory':'Target',
+                    'proposal':{'action':'submit_batch','proofs':{'target_contract':'by simp'}}}, self.metadata)
+        row = self.executor.get(next(iter(self.controller.task_ids)))
+        self.assertEqual(row['error_type'], 'NativePreparationError')
+        self.assertEqual(self.controller._state('Target')[1]['proofs'], {})
+
     def test_no_mathematical_pause_tool_in_new_controller(self):
         with self.assertRaisesRegex(ValueError,'continue local exploration'):
             self.controller.handle('proof_action',{'theory':'Target',
@@ -237,6 +249,101 @@ class IntegrationGateTests(unittest.TestCase):
 
 
 class SchedulerTests(unittest.TestCase):
+    def test_model_turn_end_continues_same_session_until_checker_seal(self):
+        import tempfile
+        from regen.planning.parallel_file_planner import run_theory_session
+        class Controller:
+            options={'model':'test','call_timeout':10,'check_timeout':10,'candidate_timeout':10}
+            run={'run_id':'test'}
+            model='test'
+            task_ids=set()
+            state={'status':'generating','graph':{'nodes':[{'id':'goal'}]},'proofs':{}}
+            closed=False
+            def __init__(self,*args,**kwargs):pass
+            def handle(self,name,args,metadata):
+                if name=='list_workspace':return {'theories':[]}
+                return {}
+            def _state(self,theory):return {},self.state
+            def close(self):self.closed=True
+        class Session:
+            prompts=[]
+            instance=None
+            def __init__(self,**kwargs):
+                self.tool_call_count=0;self.turns=0;Session.instance=self
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def run(self,prompt,handler,**kwargs):
+                self.prompts.append(prompt);self.turns+=1;self.tool_call_count+=1
+                if self.turns==2:handler.__self__.state['status']='sealed'
+                return {'status':'completed','turn_id':str(self.turns)}
+        with tempfile.TemporaryDirectory() as temporary:
+            directory=Path(temporary)/'session'
+            with patch('regen.planning.parallel_file_planner.TheoryController',Controller),patch(
+                    'regen.infrastructure.codex_workspace_session.CodexWorkspaceSession',Session),patch(
+                    'regen.infrastructure.workspace_transcript.audit_workspace_session',
+                    return_value={'terminal':True}):
+                result=run_theory_session(Path(temporary),'Target',
+                    resources=type('Resources',(),{'policy':{}})(),executor=object(),
+                    settings={'codex_bin':'codex','reasoning_effort':'medium'},directory=directory)
+        self.assertEqual(result['status'],'sealed')
+        self.assertEqual(result['continuation_turns'],1)
+        self.assertEqual(Session.instance.turns,2)
+        self.assertIn('previous model turn ended',Session.prompts[1])
+
+    def test_two_empty_turns_are_a_continuation_error(self):
+        import tempfile
+        from regen.planning.parallel_file_planner import run_theory_session, TheoryContinuationError
+        class Controller:
+            options={'model':'test','call_timeout':10,'check_timeout':10,'candidate_timeout':10}
+            run={'run_id':'test'};model='test';task_ids=set()
+            state={'status':'generating','graph':{'nodes':[{'id':'goal'}]},'proofs':{}}
+            def __init__(self,*args,**kwargs):pass
+            def handle(self,name,args,metadata):
+                return {'theories':[]} if name=='list_workspace' else {}
+            def _state(self,theory):return {},self.state
+            def close(self):pass
+        class Session:
+            tool_call_count=0
+            def __init__(self,**kwargs):pass
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def run(self,*args,**kwargs):return {'status':'completed'}
+        with tempfile.TemporaryDirectory() as temporary,patch(
+                'regen.planning.parallel_file_planner.TheoryController',Controller),patch(
+                'regen.infrastructure.codex_workspace_session.CodexWorkspaceSession',Session):
+            with self.assertRaisesRegex(TheoryContinuationError,'two consecutive turns'):
+                run_theory_session(Path(temporary),'Target',
+                    resources=type('Resources',(),{'policy':{}})(),executor=object(),
+                    settings={'codex_bin':'codex','reasoning_effort':'medium'},
+                    directory=Path(temporary)/'session')
+
+    def test_read_only_calls_do_not_reset_idle_turns(self):
+        import tempfile
+        from regen.planning.parallel_file_planner import run_theory_session, TheoryContinuationError
+        class Controller:
+            options={'model':'test','call_timeout':10,'check_timeout':10,'candidate_timeout':10}
+            run={'run_id':'test'};model='test';task_ids=set()
+            state={'status':'generating','graph':{'nodes':[{'id':'goal'}]},'proofs':{}}
+            def __init__(self,*args,**kwargs):pass
+            def handle(self,*args):return {}
+            def _state(self,theory):return {},self.state
+            def close(self):pass
+        class Session:
+            tool_call_count=0
+            def __init__(self,**kwargs):pass
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def run(self,*args,**kwargs):
+                self.tool_call_count+=1
+                return {'status':'completed','progress_made':False}
+        with tempfile.TemporaryDirectory() as temporary,patch(
+                'regen.planning.parallel_file_planner.TheoryController',Controller),patch(
+                'regen.infrastructure.codex_workspace_session.CodexWorkspaceSession',Session):
+            with self.assertRaisesRegex(TheoryContinuationError,'two consecutive turns'):
+                run_theory_session(Path(temporary),'Target',resources=type('R',(),{'policy':{}})(),
+                    executor=object(),settings={'codex_bin':'codex','reasoning_effort':'medium'},
+                    directory=Path(temporary)/'session')
+
     def test_completed_theory_refills_slot_without_waiting_for_slow_peer(self):
         import tempfile
         import hashlib

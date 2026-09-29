@@ -24,6 +24,13 @@ CURRENT_RESOURCES = ContextVar('regen_native_resources', default=None)
 _LEASE = ContextVar('regen_native_lease', default=None)
 
 
+def _raise_cleanup_errors(errors):
+    if errors:
+        for error in errors[1:]:
+            errors[0].add_note(f'Additional cleanup failure: {type(error).__name__}: {error}')
+        raise errors[0]
+
+
 class NativeResources:
     def __init__(self, slots=1, threads=4, resident_limit=2):
         if any(type(v) is not int or v < 1 for v in (slots, threads, resident_limit)) or resident_limit < slots:
@@ -33,6 +40,9 @@ class NativeResources:
         self.queue = deque()
         self.active = set()
         self.residents = OrderedDict()
+        self.evicting = set()
+        self.closed = False
+        self.close_lock = threading.Lock()
         self.metrics = []
         self.peak_active = 0
 
@@ -47,32 +57,54 @@ class NativeResources:
         queued = time.monotonic()
         from regen.infrastructure.progress_events import emit_event
         emit_event('native_queued', checker=str(getattr(checker,'work_dir',key)))
-        with self.condition:
-            self.queue.append(ticket)
-            admitted = False
-            try:
-                while self.queue[0] is not ticket or len(self.active) >= self.policy['native_slots'] or key in self.active:
+        admitted = False
+        victim = None
+        try:
+            with self.condition:
+                self.queue.append(ticket)
+                while True:
                     check_cancelled()
+                    if self.closed:
+                        raise RuntimeError('native pool is closed')
+                    if (self.queue[0] is ticket and len(self.active) < self.policy['native_slots']
+                            and key not in self.active and key not in self.evicting):
+                        if key in self.residents or len(self.residents) < self.policy['resident_limit']:
+                            break
+                        victim = next((k for k in self.residents
+                                       if k not in self.active and k not in self.evicting), None)
+                        if victim is not None:
+                            break
                     self.condition.wait(.1)
-                check_cancelled()
                 self.queue.popleft()
                 self.active.add(key)
                 admitted = True
                 self.peak_active = max(self.peak_active,len(self.active))
-                if key not in self.residents:
-                    while len(self.residents) >= self.policy['resident_limit']:
-                        victim = next(k for k in self.residents if k not in self.active)
-                        self.residents[victim].close_prefix()
-                        del self.residents[victim]
+                if victim is not None:
+                    # Keep the victim resident until close succeeds, reserving
+                    # its capacity for this replacement without holding the lock.
+                    self.evicting.add(victim)
+                    old_checker = self.residents[victim]
+                else:
                     self.residents[key] = checker
-                self.residents.move_to_end(key)
-            except BaseException:
+                    self.residents.move_to_end(key)
+                self.condition.notify_all()
+            if victim is not None:
+                old_checker.close_prefix()
+                with self.condition:
+                    del self.residents[victim]
+                    self.evicting.remove(victim)
+                    check_cancelled()
+                    self.residents[key] = checker
+                    self.condition.notify_all()
+        except BaseException:
+            with self.condition:
                 if ticket in self.queue:
                     self.queue.remove(ticket)
+                self.evicting.discard(victim)
                 if admitted:
                     self.active.discard(key)
                 self.condition.notify_all()
-                raise
+            raise
         lease = _LEASE.set((id(self), key, threading.get_ident()))
         started = time.monotonic()
         try:
@@ -91,12 +123,23 @@ class NativeResources:
             emit_event('native_slot_released', elapsed_seconds=round(time.monotonic()-started, 3))
 
     def close(self):
-        with self.condition:
-            if self.active:
-                raise RuntimeError('cannot close native pool while checks are active')
-            for checker in self.residents.values():
-                checker.close_prefix()
-            self.residents.clear()
+        with self.close_lock:
+            with self.condition:
+                if self.active or self.evicting:
+                    raise RuntimeError('cannot close native pool while checks are active')
+                self.closed = True
+                residents = list(self.residents.items())
+                self.condition.notify_all()
+            errors = []
+            for key, checker in residents:
+                try:
+                    checker.close_prefix()
+                except BaseException as error:
+                    errors.append(error)
+                else:
+                    with self.condition:
+                        del self.residents[key]
+            _raise_cleanup_errors(errors)
 
 
 def native_operation(function):
@@ -158,6 +201,7 @@ class CheckExecutor:
     accepted journals and explicitly submit a new task if work remains.
     """
     def __init__(self, directory, *, workers=4):
+        self.worker_capacity = workers
         self.root = Path(directory)
         self.root.mkdir(parents=True, exist_ok=True)
         self.owner_file = (self.root/'executor.lock').open('a+')
@@ -168,6 +212,8 @@ class CheckExecutor:
             raise RuntimeError('another executor owns this task directory')
         self.lock = threading.RLock()
         self.condition = threading.Condition(self.lock)
+        self.close_lock = threading.Lock()
+        self.shutdown_complete = False
         try:
             self.records, self.tokens, self.futures, self.owners = {}, {}, {}, {}
             self.closed = False
@@ -194,8 +240,10 @@ class CheckExecutor:
         owner = record.get('owner')
         if record['status'] in TERMINAL and owner is not None and self.owners.get(owner)==record['task_id']:
             del self.owners[owner]
-        durable(self.root/record['task_id']/'task.json', record)
-        self.condition.notify_all()
+        try:
+            durable(self.root/record['task_id']/'task.json', record)
+        finally:
+            self.condition.notify_all()
 
     def submit(self, *, kind, theory, binding, request, execute, owner=None, task_id=None):
         if kind not in {'proof_batch','statement','symbol','seal','action','preflight','integration'}:
@@ -220,9 +268,21 @@ class CheckExecutor:
             self.tokens[task_id] = Cancellation()
             if owner is not None:
                 self.owners[owner] = task_id
-            self._save(record)
-            context = copy_context()
-            self.futures[task_id] = self.pool.submit(context.run, self._run, task_id, execute)
+            try:
+                self._save(record)
+                context = copy_context()
+                self.futures[task_id] = self.pool.submit(context.run, self._run, task_id, execute)
+            except BaseException as error:
+                # A failed write or dispatch must not strand the theory owner.
+                # Retain the terminal identity so retrying this ID cannot run it.
+                self.tokens[task_id].cancel()
+                record.update(status='error', finished_at=time.time(),
+                              error_type=type(error).__name__, diagnostic=f'submission failed: {error}')
+                try:
+                    self._save(record)
+                except BaseException as save_error:
+                    error.add_note(f'Could not persist submission failure: {save_error}')
+                raise
             return self.get(task_id)
 
     def _run(self, task_id, execute):
@@ -287,11 +347,12 @@ class CheckExecutor:
             record = self.get(task_id)
             if record['status'] in TERMINAL:
                 return record
-            token = self.tokens[task_id]
-        allowed = token.cancel()
+            token = self.tokens.get(task_id)
+        allowed = token.cancel() if token is not None else True
         with self.lock:
-            if allowed and self.futures[task_id].cancel():
-                row = self.records[task_id]
+            future = self.futures.get(task_id)
+            row = self.records[task_id]
+            if allowed and row['status'] not in TERMINAL and (future is None or future.cancel()):
                 row.update(status='cancelled',finished_at=time.time(),diagnostic='cancelled before dispatch')
                 owner = row.get('owner')
                 if owner is not None and self.owners.get(owner)==task_id:
@@ -302,10 +363,27 @@ class CheckExecutor:
         return result
 
     def close(self):
-        with self.lock:
-            self.closed = True
-            pending = [key for key,row in self.records.items() if row['status'] not in TERMINAL]
-        for key in pending:
-            self.cancel(key)
-        self.pool.shutdown(wait=True)
-        self.owner_file.close()
+        with self.close_lock:
+            if self.shutdown_complete:
+                return
+            errors = []
+            with self.lock:
+                self.closed = True
+                pending = [key for key,row in self.records.items() if row['status'] not in TERMINAL]
+            try:
+                for key in pending:
+                    try:
+                        self.cancel(key)
+                    except BaseException as error:
+                        errors.append(error)
+            finally:
+                try:
+                    self.pool.shutdown(wait=True)
+                except BaseException as error:
+                    errors.append(error)
+                else:
+                    # A failed join does not prove the writers have stopped.
+                    # Retain directory ownership and allow close() to retry.
+                    self.owner_file.close()
+                    self.shutdown_complete = True
+            _raise_cleanup_errors(errors)

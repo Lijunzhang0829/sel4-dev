@@ -135,7 +135,8 @@ def init_run(run_dir, input_root, run_id, schedule):
     implementation = {str(p.relative_to(Path(__file__).resolve().parents[2])):
                       __import__('hashlib').sha256(p.read_bytes()).hexdigest()
                       for folder in ('execution','planning','infrastructure','analysis')
-                      for p in (Path(__file__).resolve().parents[1]/folder).iterdir() if p.suffix in {'.py','.ML'}}
+                      for p in (Path(__file__).resolve().parents[1]/folder).iterdir() if p.suffix in {'.py','.ML','.sh'}}
+    from regen.infrastructure.resource_budget import HEAP_COPY_POLICY, clone_heaps
     from regen.infrastructure.audited_llm import model_settings, MODEL_CONFIG
     implementation[str(MODEL_CONFIG.relative_to(Path(__file__).resolve().parents[2]))] = __import__('hashlib').sha256(MODEL_CONFIG.read_bytes()).hexdigest()
     run = {'schema_version':2, 'execution_mode':'repository-projection-v1', 'run_id':run_id,
@@ -153,6 +154,7 @@ def init_run(run_dir, input_root, run_id, schedule):
         'isabelle_dir':str(isabelle_dir), 'image':image,
         'isabelle_sha256':isabelle_sha256, 'budgets':budgets,
         'implementation':implementation,
+        'infrastructure_policy':{'heap_copy':dict(HEAP_COPY_POLICY)},
         'contract_package_dir':str((run_dir/'packages').resolve()),
         'session_progress_ledger':str((run_dir/'session-progress-ledger.json').resolve()),
         'session_schedule':{
@@ -169,7 +171,8 @@ def init_run(run_dir, input_root, run_id, schedule):
     durable(run_dir/'execution-input.json', {'file_list':listing, 'files':files,
             'package_hashes':{p['file_slot']:p['package_payload_sha256'] for p in packages}}, immutable=True)
     for p in packages: durable(run_dir/'packages'/(p['file_slot']+'.json'), p, immutable=True)
-    if not (run_dir/'heaps').exists(): shutil.copytree(context['heaps'], run_dir/'heaps')
+    if not (run_dir/'heaps').exists():
+        durable(run_dir/'heap-copy-budget.json', clone_heaps(context['heaps'], run_dir/'heaps'))
     (run_dir/'generated').mkdir(exist_ok=True)
     progress(run_dir)
     return run
@@ -185,11 +188,9 @@ def package_for(run, slot):
 
 
 def context_graph(graph, order):
-    graph = deepcopy(graph)
-    graph['context_policy'] = 'committed-prefix-v1'
-    graph['accepted_order'] = list(order)
-    graph['graph_payload_sha256'] = graph_payload_sha256(graph)
-    return graph
+    """Legacy alias for the shared declaration-context binding."""
+    from regen.planning.declaration_index import accepted_declarations
+    return accepted_declarations(graph, order)
 
 
 def validator(package, runtime=None):
@@ -208,7 +209,7 @@ def validator(package, runtime=None):
             validate_continuation(package, runtime, new, evidence['continuation'])
         if event=='initial' and 'sealed_reuse' in evidence:
             validate_continuation(package, runtime, new, evidence['sealed_reuse'], sealed_reuse=True)
-        if event in {'initial','revision','revoke','green','batch'}:
+        if event in {'initial','revision','revoke','green','batch','document'}:
             check=evidence.get('check',{})
             if (check.get('returncode')!=0 or not check.get('source_content')
                     or 'log_content' not in check):
@@ -228,9 +229,10 @@ def validator(package, runtime=None):
         if graph['accepted_order']!=order: raise ValueError('graph prefix differs from accepted proofs')
         if old:
             if old['status'] in {'sealed','retired'}: raise ValueError('terminal theory is immutable')
-            assert_green_nodes_unchanged(old['graph'], graph, set(old['proofs']))
-            if order[:len(old['accepted_order'])]!=old['accepted_order'] or any(proofs.get(k)!=v for k,v in old['proofs'].items()):
-                raise ValueError('GREEN proof/prefix changed')
+            if event != 'document':
+                assert_green_nodes_unchanged(old['graph'], graph, set(old['proofs']))
+                if order[:len(old['accepted_order'])]!=old['accepted_order'] or any(proofs.get(k)!=v for k,v in old['proofs'].items()):
+                    raise ValueError('GREEN proof/prefix changed')
             if old.get('runtime_policy') and new.get('runtime_policy')!=old['runtime_policy']:
                 raise ValueError('committed runtime budget changed')
             if new.get('batch_requests',0) < old.get('batch_requests',0):
@@ -276,6 +278,11 @@ def validator(package, runtime=None):
             if nodes[key]['statement'] not in source or proofs[key] not in source:
                 raise ValueError('GREEN evidence does not bind statement and proof')
             if evidence['visibility']!=fact_manifest(old['graph'],old['proofs'],key): raise ValueError('GREEN context mismatch')
+        elif event == 'document':
+            if not evidence.get('sealable_generation'):
+                raise ValueError('document lacks audited provider evidence')
+            from regen.planning.theory_document import validate_document_commit
+            validate_document_commit(package,old,new,evidence)
         elif event == 'batch':
             if not evidence.get('sealable_generation'):
                 raise ValueError('batch lacks audited provider evidence')
@@ -336,8 +343,14 @@ def _progress_unlocked(run_dir):
             entry['checked_contracts']=sum(nodes[k]['role']=='contract' for k in state['proofs'])
             entry['checked_generated_nodes']=sum(nodes[k]['role']!='contract' for k in state['proofs'])
             directory=run_dir/'theories'/Path(p['file_slot']).stem
-            durable(directory/'active-graph.json',state['graph'])
-            durable(directory/'progress.json',state)
+            if state['graph'].get('declaration_index_version') == 1:
+                from regen.planning.document_interface import public_view
+                durable(directory/'declaration-index.json',public_view(state['graph']))
+                durable(directory/'progress.json',public_view(state))
+                entry['checked_auxiliaries'] = entry.pop('checked_generated_nodes')
+            else:
+                durable(directory/'active-graph.json',state['graph'])
+                durable(directory/'progress.json',state)
             if state['status']=='sealed':
                 from regen.execution.proof_session_runner import publish_generated_records, generated_checkpoint_theory
                 record=read(sorted((directory/'acceptance/commits').glob('*.json'))[-1])
@@ -352,7 +365,9 @@ def _progress_unlocked(run_dir):
                         _SEALED_PUBLICATION_CACHE.pop(next(iter(_SEALED_PUBLICATION_CACHE)))
                     _SEALED_PUBLICATION_CACHE[publication_key] = publish_generated_records(run_dir,state['graph'],state['seal_id'],p,records_only=True)
                 catalog_records.extend(deepcopy(_SEALED_PUBLICATION_CACHE[publication_key]))
-            entry.update(status=state['status'], graph_revision=state['graph']['revision'],
+            revision_key = 'document_revision' if state['graph'].get('declaration_index_version') == 1 else 'graph_revision'
+            entry[revision_key] = state['graph']['revision']
+            entry.update(status=state['status'],
                 generation_ids=[run['run_id']+'--'+Path(entry['file_slot']).stem],
                 seal_id=state.get('seal_id'), reason=state.get('reason',''))
     catalog = {'records': sorted(catalog_records,key=lambda row:row['record_id'])}
@@ -479,7 +494,9 @@ def setup(run_dir, theory, timeout):
     heaps=run_dir/'heaps'
     if package['repository_projection'].get('schema_version',0)>=4:
         heaps=directory/'heaps'
-        if not heaps.exists(): shutil.copytree(run_dir/'heaps',heaps)
+        if not heaps.exists():
+            from regen.infrastructure.resource_budget import clone_heaps
+            durable(directory/'heap-copy-budget.json', clone_heaps(run_dir/'heaps',heaps))
     checker=checker_for(run_dir,run,directory/'isabelle',timeout,ancestors,heaps_dir=heaps)
     if run.get('execution_input_kind')=='refine-dataset':
         # Freeze only the providers and their transitive imports. ROOT, logs and
@@ -750,7 +767,7 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
             name=generated_checkpoint_theory(p['file_slot'])
             source=checker.complete_source(graph,proofs,theory_name=name)
             path=checker.generated_dir/(name+'.thy');path.write_text(source)
-            build=checker.build_generated_session([*ancestors,name])
+            build=getattr(checker, 'build_sealed_session', checker.build_generated_session)([*ancestors,name])
             if build['verdict']!='green':
                 stop('generated session assembly failed');durable(d/'assembly-failure.json',freeze_evidence(build));break
             proof_deps=checker.last_complete_audit
@@ -960,7 +977,7 @@ def fork_continuation(source_dir, destination, theory):
     _reuse_sealed_theories(destination,run,source_dir,providers)
     new_dir=destination/'theories'/theory
     shutil.copytree(old_dir,new_dir,ignore=shutil.ignore_patterns(
-        'acceptance','isabelle','progress.json','active-graph.json','runtime-policy.json','batch-policy.json',
+        'acceptance','isabelle','progress.json','active-graph.json','declaration-index.json','runtime-policy.json','batch-policy.json',
         'execution-stop.json','PROOF-RUN-REPORT.md'))
     graph_check=next((r['evidence']['graph_check'] if r['event']=='batch' else r['evidence']['check'])
                      for r in reversed(origin['commits'])
@@ -978,6 +995,143 @@ def fork_continuation(source_dir, destination, theory):
         'developer_assisted_probe_imported':False},immutable=True)
     progress(destination)
     return run
+
+
+def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
+    """Fork every verified repository state under a new implementation binding."""
+    source_dir, destination = Path(source_dir).resolve(), Path(destination).resolve()
+    if destination.exists():
+        raise ValueError('continuation destination already exists')
+    source = read(source_dir/'run.json')
+    if checkpoint is not None:
+        if checkpoint.get('source_run') != str(source_dir):
+            raise ValueError('checkpoint source mismatch')
+        names = {e['theory'] for e in read(source_dir/'execution-input.json')['files']}
+        if set(checkpoint['theories']) - names:
+            raise ValueError('unknown checkpoint theory')
+    sealed = []
+    continuing = []
+    for entry in read(source_dir/'execution-input.json')['files']:
+        package = package_for(source, entry['file_slot'])
+        old_dir = source_dir/'theories'/Path(entry['file_slot']).stem
+        selection = checkpoint['theories'].get(entry['theory']) if checkpoint is not None else None
+        if checkpoint is not None and selection is None:
+            continue
+        records = [read(p) for p in sorted((old_dir/'acceptance/commits').glob('*.json'))]
+        if selection is not None:
+            boundary = next((i for i,r in enumerate(records)
+                             if r['commit_id'] == selection['commit_id']), None)
+            if boundary is None:
+                raise ValueError('checkpoint commit not found')
+            records = records[:boundary+1]
+        if not records:
+            continue
+        origin = {'run':source, 'imports':read(old_dir/'imports.json'), 'commits':records}
+        status = records[-1]['state']['status']
+        if status == 'sealed':
+            state = continuation_state(package, origin, sealed_reuse=True)
+            sealed.append((package, origin, state))
+        elif status == 'retired':
+            raise ValueError('retired workspace continuation is not supported')
+        else:
+            state = continuation_state(package, origin)
+            continuing.append((package, origin, state, old_dir))
+    if not sealed and not continuing:
+        raise ValueError('source contains no verified theory state')
+    if checkpoint is not None:
+        from regen.execution.proof_session_runner import generated_checkpoint_theory
+        available = {generated_checkpoint_theory(p['file_slot']) for p,_,_ in sealed}
+        for _, origin, _ in sealed:
+            if not set(origin['imports']) <= available:
+                raise ValueError('checkpoint excludes a sealed dependency')
+        for package, origin, state, old_dir in continuing:
+            if not set(origin['imports']) <= available:
+                raise ValueError('checkpoint excludes a frozen dependency')
+            _checkpoint_artifacts(old_dir, checkpoint['theories'][package['theory']], state)
+    run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
+                   destination.name, Path(source['session_schedule']['source']))
+    if any(run.get(k) != source.get(k) for k in CONTINUATION_ENV_FIELDS):
+        raise ValueError('continuation environment mismatch')
+    _reuse_sealed_theories(destination, run, source_dir, sealed)
+    carried = []
+    for package, origin, state, old_dir in continuing:
+        new_dir = destination/'theories'/Path(package['file_slot']).stem
+        if checkpoint is None:
+            shutil.copytree(old_dir, new_dir, ignore=shutil.ignore_patterns(
+            'acceptance','isabelle','heaps','provider-session.json','progress.json','active-graph.json',
+            'declaration-index.json','runtime-policy.json','batch-policy.json',
+            'execution-stop.json','PROOF-RUN-REPORT.md'))
+        else:
+            durable(new_dir/'imports.json', origin['imports'], immutable=True)
+            for relative, payload in _checkpoint_artifacts(
+                    old_dir, checkpoint['theories'][package['theory']], state):
+                target = new_dir/relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(payload)
+        graph_check = next((r['evidence']['graph_check'] if r['event']=='batch'
+                            else r['evidence']['check'])
+                           for r in reversed(origin['commits'])
+                           if r['event'] in {'initial','revision','revoke'}
+                           or r['event']=='batch' and r['evidence'].get('graph_check') is not None)
+        initial_evidence = {'check':graph_check, 'continuation':origin}
+        if any(n['statement'] not in graph_check['source_content'] for n in state['graph']['nodes']):
+            initial_evidence['declaration_coverage'] = continuation_declaration_coverage(origin,state)
+        journal(destination,run,package).append('initial',state,initial_evidence)
+        carried.append({'theory':package['theory'],
+                        'source_commit':origin['commits'][-1]['commit_id'],
+                        'status':state['status']})
+    durable(destination/'workspace-continuation.json', {
+        'source_run':str(source_dir), 'theories':carried,
+        'sealed_theories':[p['theory'] for p,_,_ in sealed],
+        'reason':'explicitly authorised repository continuation after harness repair',
+        'policy':'replay embedded source chains; preserve drafts, proofs, costs and seals'}, immutable=True)
+    if checkpoint is not None:
+        durable(destination/'checkpoint.json', checkpoint, immutable=True)
+    progress(destination)
+    return run
+
+
+def _checkpoint_artifacts(directory, selection, state):
+    """Copy an explicit, hashed allowlist; never traverse the latest workspace.
+
+    The supervisor must establish temporal provenance for the manifest. This
+    gate additionally forbids caches, future request numbers and path escapes.
+    """
+    import hashlib
+    result = []
+    version = selection.get('draft_version')
+    if version is not None:
+        if (not isinstance(version, str) or len(version) != 64
+                or any(c not in '0123456789abcdef' for c in version)
+                or 'document/draft.thy' in selection.get('artifacts', {})):
+            raise ValueError('invalid checkpoint draft version')
+        path = directory/'document/versions'/version/'source.json'
+        if path.resolve() != directory.resolve()/'document/versions'/version/'source.json':
+            raise ValueError('checkpoint draft symlink')
+        payload = read(path)['source'].encode()
+        if hashlib.sha256(payload).hexdigest() != version:
+            raise ValueError('checkpoint draft hash mismatch')
+        result.append((Path('document/draft.thy'), payload))
+    for name, expected in selection.get('artifacts', {}).items():
+        relative = Path(name)
+        if relative.is_absolute() or '..' in relative.parts or not relative.parts:
+            raise ValueError('unsafe checkpoint artifact path')
+        parts = relative.parts
+        allowed = (name == 'document/draft.thy' or
+                   len(parts) == 4 and parts[:2] == ('document', 'versions')
+                   and parts[3] == 'source.json')
+        if len(parts) == 3 and parts[0] == 'batch-requests' and parts[1].isdigit():
+            allowed = 0 < int(parts[1]) <= state.get('batch_requests', 0)
+        if not allowed:
+            raise ValueError('artifact is outside checkpoint allowlist')
+        path = directory/relative
+        if path.resolve() != directory.resolve()/relative or path.is_symlink():
+            raise ValueError('checkpoint artifact symlink')
+        payload = path.read_bytes()
+        if hashlib.sha256(payload).hexdigest() != expected:
+            raise ValueError('checkpoint artifact hash mismatch')
+        result.append((relative, payload))
+    return result
 
 
 def fork_with_sealed_theories(source_dir, destination):

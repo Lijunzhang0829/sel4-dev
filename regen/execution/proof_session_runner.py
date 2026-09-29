@@ -9,7 +9,6 @@ import json
 import os
 import re
 import sys
-import shutil
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -844,6 +843,7 @@ def _init_run_unlocked(
             "event": "proof-run-bound",
             "run_id": run_id,
         })
+    from regen.infrastructure.resource_budget import HEAP_COPY_POLICY, clone_heaps
     run = {
         "schema_version": 1,
         "run_id": run_id,
@@ -861,11 +861,12 @@ def _init_run_unlocked(
         "environment_gate": gate,
         "session_schedule": binding,
         "session_progress_ledger": str(progress_path),
+        "infrastructure_policy": {"heap_copy": dict(HEAP_COPY_POLICY)},
     }
     write_json(run_dir / "run.json", run)
     save_progress(run_dir, progress)
     if not (run_dir / "heaps").exists():
-        shutil.copytree(source_heaps, run_dir / "heaps")
+        write_json(run_dir / "heap-copy-budget.json", clone_heaps(source_heaps, run_dir / "heaps"))
     (run_dir / "theories").mkdir(parents=True, exist_ok=True)
     (run_dir / "generated").mkdir(parents=True, exist_ok=True)
     return run
@@ -2286,10 +2287,14 @@ def main() -> int:
     workspace.add_argument("--codex-home", type=Path, help="Authentication source; only auth.json is copied")
     parallel = sub.add_parser("parallel-workspace", parents=[workspace], add_help=False,
                               help="Parallel theory agents with serial per-theory tools and bounded checks")
+    parallel.add_argument("--file-planner-interface", choices=["document","graph"], default="document",
+                          help="Persistent theory source (default), or legacy explicit proof graph")
     parallel.add_argument("--max-parallel-theories", type=int, default=2)
     parallel.add_argument("--native-slots", type=int, default=1)
     parallel.add_argument("--native-threads", type=int, default=4)
     parallel.add_argument("--resident-limit", type=int, default=2)
+    parallel.add_argument("--execution-policy", type=Path,
+                          help="JSON with ordered theory stages and bounded SessionStalled retries")
     integration = sub.add_parser("integrate", help="Verify exact sealed repository coverage and build")
     integration.add_argument("--run-dir", type=Path, required=True)
     integration.add_argument("--check-timeout", type=int, default=900)
@@ -2308,7 +2313,9 @@ def main() -> int:
             from regen.planning.parallel_file_planner import run_parallel_workspace
             result = run_parallel_workspace(args.run_dir, theories=args.theories, model=args.planner_model,
                 max_parallel_theories=args.max_parallel_theories, native_slots=args.native_slots,
+                file_planner_interface=args.file_planner_interface,
                 native_threads=args.native_threads, resident_limit=args.resident_limit,
+                execution_policy=json.loads(args.execution_policy.read_text()) if args.execution_policy else None,
                 call_timeout=args.call_timeout, check_timeout=args.check_timeout,
                 candidate_timeout=args.candidate_timeout, allow_external_call=args.allow_external_call,
                 codex_home=args.codex_home)
@@ -2370,6 +2377,11 @@ def main() -> int:
         close_event_monitor("failed")
         raise
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+    if args.command == 'parallel-workspace':
+        successful = result.get('status') == 'repository_verified' or (
+            result.get('status') == 'selected_theories_sealed'
+            and not result.get('integration_required', True))
+        return 0 if successful else 1
     return 0
 
 

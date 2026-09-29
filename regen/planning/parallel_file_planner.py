@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import shutil
 import signal
+import sys
 import tempfile
 import threading
 from uuid import uuid4
@@ -51,8 +52,96 @@ If genuinely unable to finish, report the exact unresolved issue, never claim su
 '''
 
 
-def tools():
+DOCUMENT_INSTRUCTIONS = '''You are the continuing File Planner for ONE Isabelle theory, using a persistent source workspace.
+Read the assigned theory with read_theory. Its document.source is the editable .thy draft.
+Implement the fixed goals by editing this file: batch several proofs, add/remove/reorder
+helper declarations, check the current version, then revise using Isabelle feedback.
+Do not create a proof DAG, consumer edges, routes, or scheduling JSON. File order determines
+which earlier proven declarations are available; oops slots export no theorem.
+
+Use proof_action(theory, proposal):
+{"action":"edit_theory","base_sha256":"hash from read_theory","edits":[{"old":"unique exact text","new":"replacement"}]}
+Or replace the complete file using source instead of edits. Edits are sequential. Saving
+performs boundary/hygiene checks, not Isabelle validation. Failed proof drafts persist.
+{"action":"check_theory","source_sha256":"current saved hash","reason":"what changed"}
+This checks all supplied proof bodies in file order, atomically accepting a successful
+version. Unchanged accepted prefixes may be reused. Editing/reordering/deleting accepted
+proofs/helpers triggers full proof revalidation; old evidence remains historical only.
+Read_theory returns the draft and last check feedback. You may edit a failed draft directly.
+{"action":"finish","source_sha256":"accepted current draft hash"}
+Seal requires every fixed goal and retained helper proved, unchanged since successful check,
+then complete-theory verification, semantic audit and build. A final message is not a seal.
+
+Preserve header/imports, fixed contract identity markers, exact statements and contexts.
+The REGEN-BEGIN metadata has only id, role (contract/helper/theorem), context (an available
+context list). REGEN-PROOF separates declaration and proof; REGEN-END closes the entry.
+A helper is an ordinary named lemma entry with a unique ID/name. Copy a block layout,
+choose its statement and context, and place it before consumers. No intended-consumer list
+is required. Context commands must match the marker list and close before REGEN-END.
+Use a sole oops for an unfinished proof; never sorry, axioms, ML or hidden declarations.
+Isabelle decides candidate validity; uncertainty or lack of a recalled example is not a
+reason to prohibit a trial. Keep useful local proofs in the shared file.
+
+All tools within this File Planner are serial; other theories have separate agents.
+Read external generated material with list_generated/read_generated. Unsealed/unimported
+facts are references only; copy helpers into this draft and validate in the target context.
+Retain legal premise search, symbol resolution, diagnostic/attempt reads through proof_action
+using the observation formats below. context_entry_id is the stable entry ID of an accepted
+or original contract declaration; new unsaved/unaccepted helpers have no accepted retrieval context.
+Ordinary proof failure should lead to editing or retrieval, not abandoning the theory.
+'''
+
+
+class TheoryContinuationError(RuntimeError):
+    """A provider turn ended repeatedly without advancing or sealing its theory."""
+
+
+def _cleanup_all(actions, primary=None):
+    """Run every cleanup, even when durable diagnostics or one close fails."""
+    errors = []
+    for action in actions:
+        try:
+            action()
+        except BaseException as error:
+            errors.append(error)
+    if errors:
+        target = primary if primary is not None else errors.pop(0)
+        for error in errors:
+            target.add_note('cleanup failed: '+type(error).__name__+': '+str(error))
+        if primary is None:
+            raise target
+
+
+def _reclaim_completed_heaps(root, result):
+    """Only call after future.result(): the controller's finally has completed."""
+    if result.get('status') == 'sealed' and result.get('provider', {}).get('status') == 'completed':
+        from regen.infrastructure.resource_budget import reclaim_theory_heaps
+        result['heap_reclamation'] = reclaim_theory_heaps(root, result['theory'])
+
+
+def _continuation_prompt(theory, state, idle_turns):
+    open_count = len(state['graph']['nodes']) - len(state['proofs'])
+    return (f'Continue the same assigned theory {theory}. The previous model turn ended, '
+            f'but checker authority still reports status={state["status"]!r} with '
+            f'{open_count} open declarations. A final message is not completion. '
+            'Use the current draft and latest feedback to keep editing and '
+            'checking until proof_action finish seals the theory. '
+            'Do not repeatedly reread unchanged state or wait for another agent to edit this theory; '
+            'you own its generation. Repeated reads and sleep are not progress. '
+            + ('The preceding turn produced no new tool information or proof work; act on the feedback or report a concrete '
+               'infrastructure fault through the tool feedback.' if idle_turns else ''))
+
+
+def tools(document_mode=False):
     registry = workspace_tools()
+    if document_mode:
+        registry = [tool for tool in registry if tool['name'] != 'prepare_reuse']
+        for tool in registry:
+            if tool['name']=='read_theory':
+                tool['description']='Read the persistent Isabelle draft, source hash, accepted entries and check feedback.'
+            elif tool['name']=='proof_action':
+                tool['description']='Edit/check/seal the persistent theory source, or execute a read-only observation.'
+        return registry
     text = {'type':'string','minLength':1}
     registry.extend([
         _tool('submit_check','Execute one check serially; wait and return terminal status, result and durable task ID.',
@@ -69,7 +158,8 @@ def tools():
 
 
 class TheoryController(WorkspaceController):
-    def __init__(self, run_dir, theory, *, resources, executor, **options):
+    def __init__(self, run_dir, theory, *, resources, executor, document_mode=False, **options):
+        self.document_mode = document_mode
         super().__init__(run_dir,theories=[theory],**options)
         self.theory, self.resources, self.executor = theory, resources, executor
         with executor.lock:
@@ -81,8 +171,8 @@ class TheoryController(WorkspaceController):
 
     def _observation_state(self, state):
         # Completed receipts are observation authority only, never proof authority.
-        from regen.planning.async_observations import merge
-        applied = set(state.get('async_observation_tasks',[]))
+        from regen.planning.observation_memory import merge, memory_value
+        applied = set(memory_value(state,2,[]))
         with self.executor.lock:
             rows = [self.executor.get(key) for key in self.task_ids
                     if key not in applied and self.executor.records[key]['status']=='completed'
@@ -101,6 +191,7 @@ class TheoryController(WorkspaceController):
         with self._runtime_lock:
             if key not in self.runtime_cache:
                 self.runtime_cache[key] = setup(self.root,self.theory,self.options['check_timeout'])
+            self.runtime_cache[key][4].document_mode = self.document_mode
             return self.runtime_cache[key]
 
     @staticmethod
@@ -126,16 +217,87 @@ class TheoryController(WorkspaceController):
         if name in {'get_check_result','wait_checks','cancel_check'}:
             return self._handle(name, arguments, metadata)
         with self._tool_lock:
-            return self._handle(name, arguments, metadata)
+            result = self._handle(name, arguments, metadata)
+            if self.document_mode:
+                from regen.planning.document_interface import public_view
+                result = public_view(result)
+            return result
+
+    def _document(self):
+        from regen.planning.theory_document import DocumentStore
+        package,state = self._state(self.theory)
+        runtime = self._runtime()
+        return DocumentStore(runtime[2]/'document',package,state,runtime[4].imports()),state
 
     def _handle(self, name, arguments, metadata):
+        if self.document_mode and name=='read_theory' and arguments.get('theory')==self.theory:
+            store,state = self._document()
+            from regen.planning.batch_file_planner import compact_feedback, planner_input
+            context = planner_input(self.shared._package(self.theory),state)
+            return {'theory':self.theory,'document':store.read(),
+                    'accepted_ids':list(state['accepted_order']),
+                    'accepted_source_sha256':state.get('document_source_sha256'),
+                    'status':state['status'],'feedback':compact_feedback(state.get('batch_feedback',{})),
+                    'observations':{k:compact_feedback(context[k]) for k in (
+                        'query_index','query_memory','requested_attempts','next_proof_observation',
+                        'requested_proof_state','resolved_symbols') if k in context}}
+        if self.document_mode and name=='read_theory':
+            package,state = self._state(arguments['theory'])
+            return {'theory':arguments['theory'], 'status':state['status'],
+                    'reference_only':True, 'repository_projection':package['repository_projection'],
+                    'declarations':state['graph']['nodes'], 'proofs':state['proofs'],
+                    'accepted_ids':state['accepted_order'],
+                    'notice':'External accepted snapshot; copy/adapt source and validate in the assigned theory. No external draft is created.'}
+        if self.document_mode and name == 'read_generated':
+            from regen.planning.document_interface import internal_request
+            return super().handle(name, internal_request(arguments), metadata)
+        if self.document_mode and name=='proof_action':
+            if arguments.get('theory')!=self.theory:
+                raise ValueError('only the assigned theory may be edited')
+            proposal=arguments['proposal']
+            if not isinstance(proposal,dict):
+                raise ValueError('proposal must be an object')
+            if proposal.get('action') not in {'edit_theory','check_theory','finish'}:
+                from regen.planning.document_interface import internal_request
+                proposal = internal_request(proposal)
+                arguments = {**arguments, 'proposal':proposal}
+            allowed = {'edit_theory','check_theory','finish','observe','query','read_facts',
+                       'read_proofs','read_attempts','read_queries','read_diagnostic',
+                       'read_proof_state','resolve_symbols'}
+            if proposal.get('action') not in allowed:
+                raise ValueError('document mode requires source edits/checks, not legacy graph actions')
+            if proposal.get('action')=='edit_theory':
+                from regen.infrastructure.workspace_transcript import record_workspace_action
+                store,state=self._document()
+                if state['status'] in {'sealed','retired'}:
+                    raise ValueError('terminal theory is immutable')
+                prefix=store.root/'edits'/uuid4().hex/'call'
+                record_workspace_action(prefix,'Persistent theory source edit',proposal,metadata,
+                                        theory=self.theory,model=self.model)
+                return store.edit(proposal,{'transcript_prefix':str(prefix)})
+            if proposal.get('action')=='finish':
+                store,state=self._document()
+                current=store.read()
+                if (proposal.get('source_sha256')!=current['source_sha256']
+                        or state.get('document_source_sha256')!=current['source_sha256']
+                        or current['open_ids']):
+                    raise ValueError('seal requires the current draft checked successfully with no open proof slots')
+        if self.document_mode and name == 'prepare_reuse':
+            raise ValueError('read_generated and copy source entries into the document for fresh checking')
         if name == 'list_workspace':
             result = super().handle(name,arguments,metadata)
+            result.pop('worker_count', None)
             result['assigned_theory'] = self.theory
+            result['assigned_writer_count'] = 1
+            result['theory_tool_execution'] = 'serial'
+            result['max_parallel_theories'] = self.executor.worker_capacity
+            result.update(self.resources.policy)
             result['check_tasks'] = [{key:row[key] for key in ('task_id','kind','status')}
                                      for row in (self._owned(task) for task in sorted(self.task_ids))]
             return result
         if name == 'submit_check':
+            if self.document_mode:
+                raise ValueError('document mode uses check_theory through proof_action')
             return self.submit(arguments, metadata)
         if name == 'get_check_result':
             return self._owned(arguments['task_id'])
@@ -150,11 +312,14 @@ class TheoryController(WorkspaceController):
             if arguments.get('proposal',{}).get('action') == 'pause':
                 raise ValueError('continue local exploration; report an external blocker or unresolved outcome in the final response')
             action = arguments['proposal'].get('action')
-            kind = {'submit_batch':'proof_batch','finish':'seal','resolve_symbols':'symbol'}.get(action,'observe')
+            kind = {'submit_batch':'proof_batch','check_theory':'proof_batch','finish':'seal','resolve_symbols':'symbol'}.get(action,'observe')
             proposal = arguments['proposal']
             if kind == 'observe' and action != 'observe':
                 proposal = {'action':'observe','reads':[proposal]}
             row = self.submit({'theory':arguments['theory'],'kind':kind,'proposal':proposal},metadata)
+            if row.get('error_type') == 'NativePreparationError':
+                from regen.execution.check_tasks import NativePreparationError
+                raise NativePreparationError(row.get('diagnostic','native prefix preparation failed'))
             if row['status'] != 'completed':
                 return {'status':row['status'],'task_id':row['task_id'],
                         'diagnostic':row.get('diagnostic','')}
@@ -175,7 +340,7 @@ class TheoryController(WorkspaceController):
         kind, proposal = arguments['kind'], deepcopy(arguments['proposal'])
         expected = {'proof_batch':'submit_batch','seal':'finish','statement':'submit_batch',
                     'symbol':'resolve_symbols','observe':'observe'}
-        if kind not in expected or proposal.get('action') != expected[kind]:
+        if kind not in expected or (proposal.get('action') != expected[kind] and not (kind=='proof_batch' and proposal.get('action')=='check_theory')):
             raise ValueError('check kind and proposal action disagree')
         if 'notes' in proposal and not isinstance(proposal['notes'],str):
             raise ValueError('notes must be a string')
@@ -213,7 +378,7 @@ class TheoryController(WorkspaceController):
                                 raise ValueError('submitted candidate context is stale')
                             runtime[4].work_dir = directory/'isabelle'
                             runtime[4].work_dir.mkdir(exist_ok=True)
-                            from regen.planning.async_observations import task_order
+                            from regen.planning.observation_memory import task_order
                             self._action_observation_order = task_order(self.executor.get(task_id))
                             result = super(TheoryController,self).proof_action(
                                 {'theory':self.theory,'proposal':proposal},metadata)
@@ -277,26 +442,30 @@ class TheoryController(WorkspaceController):
             checker.close_prefix()
 
     def close(self):
-        for key in list(self.task_ids):
-            self.executor.cancel(key)
-        for key in list(self.task_ids):
-            while self.executor.get(key)['status'] not in TERMINAL:
-                self.executor.wait([key],timeout=1)
-        super().close()
+        def drain():
+            for key in list(self.task_ids):
+                while self.executor.get(key)['status'] not in TERMINAL:
+                    self.executor.wait([key],timeout=1)
+        _cleanup_all([*(lambda key=key: self.executor.cancel(key) for key in list(self.task_ids)),
+                      drain, super().close])
 
 
 def run_theory_session(root, theory, *, resources, executor, settings, directory,
                        model=None, call_timeout=600, check_timeout=900, candidate_timeout=120,
-                       codex_home=None, cancel_event=None):
+                       codex_home=None, cancel_event=None, document_mode=True):
     from regen.infrastructure.codex_workspace_session import CodexWorkspaceSession
     from regen.infrastructure.workspace_transcript import audit_workspace_session
     from regen.planning.batch_file_planner import INSTRUCTIONS as FORMATS
-    controller = TheoryController(root,theory,resources=resources,executor=executor,
+    controller = TheoryController(root,theory,resources=resources,executor=executor,document_mode=document_mode,
         model=model,call_timeout=call_timeout,check_timeout=check_timeout,candidate_timeout=candidate_timeout)
     try:
         with event_scope(directory,run_id=controller.run['run_id'],theory=theory):
             durable(directory/'policy.json',{'theory':theory,**controller.options,
-                    **resources.policy,'mode':'parallel-file-planner-v1','theory_tool_execution':'serial'},immutable=True)
+                    **resources.policy,'mode':'parallel-file-planner-v1','theory_tool_execution':'serial',
+                    'progress_policy':{'idle_turn_limit':2,'repeated_result_limit':8,
+                        'no_information_timeout_seconds':call_timeout,'callback_time_excluded':True,
+                        'sleep_item_max_ms':60000,'sleep_per_turn_max_ms':120000},
+                    'file_planner_interface':'document' if document_mode else 'graph'},immutable=True)
             with tempfile.TemporaryDirectory(prefix='regen-theory-auth-') as temp:
                 home = Path(temp)
                 auth = Path(codex_home or os.environ.get('CODEX_HOME',Path.home()/'.codex'))/'auth.json'
@@ -305,50 +474,117 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                 formats = FORMATS.replace('Return one JSON action per call. No shell, arbitrary files or external tools.',
                     'Use the action formats below inside the approved tools; no shell or external tools.')
                 formats = formats.split('{"action":"pause"',1)[0]
-                prompt = INSTRUCTIONS+'\n'+formats+'\nASSIGNED THEORY: '+theory+'\n'+json.dumps(controller.handle('list_workspace',{},{}),ensure_ascii=False)
-                with CodexWorkspaceSession(tools=tools(),codex_bin=settings['codex_bin'],codex_home=home,
-                                           allow_external_call=True) as session:
-                    provider = session.run(prompt,controller.handle,artifact_dir=directory,model=controller.model,
-                                           reasoning_effort=settings['reasoning_effort'],timeout=call_timeout,
-                                           cancel_event=cancel_event)
+                if document_mode:
+                    from regen.planning.document_interface import observation_instructions
+                    formats = observation_instructions()
+                prompt = (DOCUMENT_INSTRUCTIONS if document_mode else INSTRUCTIONS)+'\n'+formats+'\nASSIGNED THEORY: '+theory+'\n'+json.dumps(controller.handle('list_workspace',{},{}),ensure_ascii=False)
+                providers = []
+                idle_turns = 0
+                with CodexWorkspaceSession(tools=tools(document_mode),codex_bin=settings['codex_bin'],codex_home=home,
+                                           allow_external_call=True,progress_timeout=call_timeout) as session:
+                    next_prompt = prompt
+                    while True:
+                        calls_before = session.tool_call_count
+                        provider = session.run(next_prompt,controller.handle,artifact_dir=directory,model=controller.model,
+                                               reasoning_effort=settings['reasoning_effort'],timeout=call_timeout,
+                                               cancel_event=cancel_event)
+                        providers.append(provider)
+                        _, state = controller._state(theory)
+                        if state['status'] in {'sealed','retired'}:
+                            break
+                        made_progress = provider.get('progress_made', session.tool_call_count != calls_before)
+                        idle_turns = 0 if made_progress else idle_turns + 1
+                        if idle_turns >= 2:
+                            raise TheoryContinuationError(
+                                f'{theory} ended two consecutive turns without new information or proof work; '
+                                f'checker status remains {state["status"]}')
+                        next_prompt = _continuation_prompt(theory,state,idle_turns)
                 audit = audit_workspace_session(directory/'session-transcript.jsonl',require_terminal=True,require_real=True)
             # A model ending a turn never upgrades pending work to success.
-            controller.close()
             _, state = controller._state(theory)
-            result = {'theory':theory,'status':state['status'],'provider':provider,'audit':audit,
+            result = {'theory':theory,'status':state['status'],'provider':providers[-1],
+                      'provider_turns':providers,'continuation_turns':len(providers)-1,'audit':audit,
                       'task_ids':sorted(controller.task_ids),'artifact_dir':str(directory)}
             durable(directory/'result.json',result,immutable=True)
             return result
     finally:
-        controller.close()
+        _cleanup_all([controller.close], primary=sys.exc_info()[1])
+
+
+def _execution_policy(value, selected):
+    value = {} if value is None else deepcopy(value)
+    if not isinstance(value, dict) or set(value) - {'stages', 'session_stall_retries'}:
+        raise ValueError('invalid execution policy keys')
+    stages = value.get('stages', [])
+    retries = value.get('session_stall_retries', 0)
+    if type(retries) is not int or not 0 <= retries <= 3:
+        raise ValueError('session_stall_retries must be an integer from 0 to 3')
+    if not isinstance(stages, list):
+        raise ValueError('stages must be a list')
+    seen = set()
+    for stage in stages:
+        if not isinstance(stage, list) or not stage:
+            raise ValueError('each stage must be a nonempty list')
+        for theory in stage:
+            if not isinstance(theory, str) or theory not in selected or theory in seen:
+                raise ValueError('stage contains an unknown or repeated theory')
+            seen.add(theory)
+    return {'stages':stages, 'session_stall_retries':retries}
+
+
+def _stage_eligible(rows, policy, active=()):
+    states = {row['theory']:row['status'] for row in rows}
+    for stage in policy['stages']:
+        if any(states.get(theory) not in {'sealed','retired'} or theory in active for theory in stage):
+            return set(stage)
+    return {row['theory'] for row in rows if row['selected']}
+
+
+def _retry_stalled(error, attempt, retries):
+    from regen.infrastructure.codex_workspace_session import SessionStalled
+    # A cleanup failure may leave a live owner; never overlap it with a retry.
+    return (isinstance(error, SessionStalled) and attempt <= retries
+            and not getattr(error, '__notes__', ()))
 
 
 def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, native_slots=1,
                            native_threads=4, resident_limit=2, model=None, call_timeout=600,
                            check_timeout=900, candidate_timeout=120, allow_external_call=False,
-                           codex_home=None, integrate=True):
+                           codex_home=None, integrate=True, file_planner_interface='document',
+                           execution_policy=None):
     from regen.execution.proof_session_runner import acquire_run_mutation_lock, release_run_mutation_lock
     from regen.infrastructure.audited_llm import model_settings
     if not allow_external_call:
         raise PermissionError('parallel workspace requires --allow-external-call')
     if type(max_parallel_theories) is not int or max_parallel_theories < 1:
         raise ValueError('max_parallel_theories must be positive')
+    if file_planner_interface not in {'document','graph'}:
+        raise ValueError('file_planner_interface must be document or graph')
     root = Path(run_dir).resolve()
     # This is the sole coordinator/legacy-runner exclusion lock. Worker actions do
     # not acquire it; their mutations are theory-owned and short journal transactions.
     resources = NativeResources(native_slots,native_threads,resident_limit)
     lock = acquire_run_mutation_lock(root,operation='parallel-workspace')
     executor = None
-    old_term = None
+    old_signals = {}
+    terminating = False
     if threading.current_thread() is threading.main_thread():
-        old_term = signal.getsignal(signal.SIGTERM)
         def terminate(signum, frame):
+            nonlocal terminating
+            # The service manager bounds shutdown; repeated soft signals must
+            # not interrupt cancellation halfway through resource cleanup.
+            if terminating:
+                return
+            terminating = True
             raise KeyboardInterrupt('parallel workspace terminated by signal '+str(signum))
-        signal.signal(signal.SIGTERM,terminate)
+        for signum in (signal.SIGTERM, signal.SIGHUP):
+            old_signals[signum] = signal.signal(signum, terminate)
     try:
         overview = WorkspaceController(root,theories=theories,model=model,
             call_timeout=call_timeout,check_timeout=check_timeout,candidate_timeout=candidate_timeout)
+        overview.document_mode = file_planner_interface == 'document'
         selected = overview.selected
+        policy = _execution_policy(execution_policy, selected)
         if overview.run.get("execution_input_kind") != "refine-dataset":
             raise ValueError("parallel workspace requires isolated refine-dataset input; legacy shared build directories are unsupported")
         if overview.run.get('execution_input_kind')=='refine-dataset':
@@ -361,10 +597,12 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
             raise ValueError('Codex executable differs from frozen configuration')
         durable(root/'parallel-workspace-policy.json',{'mode':'parallel-file-planner-v1',
             'selected_theories':selected,'max_parallel_theories':max_parallel_theories,
-            'theory_tool_execution':'serial',
-            **resources.policy,**overview.options,'integration_required':integrate},immutable=True)
+            'theory_tool_execution':'serial','file_planner_interface':file_planner_interface,
+            **resources.policy,**overview.options,'integration_required':integrate,
+            'execution_policy':policy},immutable=True)
         executor = CheckExecutor(root/'check-tasks',workers=max_parallel_theories)
-        results, attempted, active = [], set(), {}
+        results, active, failures = [], {}, {}
+        attempts, directories = {}, {}
         cancel_event = threading.Event()
         sessions = root/'parallel-sessions'/uuid4().hex
         with event_scope(sessions,run_id=overview.run['run_id']):
@@ -372,17 +610,26 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                 try:
                     while True:
                         rows = overview.list_workspace()['theories']
+                        eligible = _stage_eligible(rows, policy, active.values())
                         for row in rows:
                             if len(active)>=max_parallel_theories:
                                 break
                             theory = row['theory']
-                            if theory in attempted or not row['ready_for_proof_action']:
+                            if (theory not in eligible or theory in failures or theory in active.values()
+                                    or not row['ready_for_proof_action']):
                                 continue
-                            attempted.add(theory)
+                            attempt = attempts.get(theory, 0) + 1
+                            attempts[theory] = attempt
+                            directory = sessions/theory
+                            if attempt > 1:
+                                directory = directory/f'retry-{attempt-1:03d}'
+                            directories[theory] = directory
+                            durable(directory/'attempt.json', {'theory':theory,'attempt':attempt,
+                                'call_timeout':call_timeout}, immutable=True)
                             context = copy_context()
                             future = agents.submit(context.run,run_theory_session,root,theory,
-                                resources=resources,executor=executor,settings=settings,directory=sessions/theory,
-                                codex_home=codex_home,cancel_event=cancel_event,**overview.options)
+                                resources=resources,executor=executor,settings=settings,directory=directory,
+                                codex_home=codex_home,cancel_event=cancel_event,document_mode=file_planner_interface=='document',**overview.options)
                             active[future] = theory
                         if not active:
                             break
@@ -390,28 +637,63 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                         for future in done:
                             theory = active.pop(future)
                             try:
-                                results.append(future.result())
+                                completed = future.result()
+                                # A persisted result.json alone is too early:
+                                # run_theory_session must finish controller.close
+                                # before removing any worker-mounted heap cache.
+                                _reclaim_completed_heaps(root, completed)
+                                results.append(completed)
+                                if completed.get('status') not in {'sealed','retired'}:
+                                    failures[theory] = {'reason':'session_returned_unsealed',
+                                                        'status':completed.get('status')}
                             except Exception as error:
                                 result = {'theory':theory,'status':'infrastructure_error',
                                           'error_type':type(error).__name__,'diagnostic':str(error)}
-                                durable(sessions/theory/'failure.json',result)
+                                retry = _retry_stalled(error, attempts[theory], policy['session_stall_retries'])
+                                result.update(attempt=attempts[theory], retry_scheduled=retry)
+                                durable(directories[theory]/'failure.json',result,immutable=True)
                                 results.append(result)
+                                if retry:
+                                    emit_event('session_stall_retry_scheduled',theory=theory,
+                                               next_attempt=attempts[theory]+1)
+                                    continue
+                                failures[theory] = {'reason':'infrastructure_error',
+                                                    'error_type':type(error).__name__,
+                                                    'diagnostic':str(error)}
                         # Refill immediately; never wait for an entire wave of theories.
                 except BaseException as error:
                     cancel_event.set()
-                    emit_event('parallel_workspace_interrupted',exception_type=type(error).__name__,reason=str(error))
-                    durable(sessions/'interruption.json',{'status':'interrupted',
-                        'error_type':type(error).__name__,'diagnostic':str(error),
-                        'active_theories':list(active.values())})
                     with executor.lock:
                         executor.closed = True
                         pending = list(executor.records)
-                    for task in pending:
-                        executor.cancel(task)
+                    # Cancel before diagnostics: ENOSPC must never leave a
+                    # callback running while the agent pool waits to join it.
+                    _cleanup_all([
+                        *(lambda task=task: executor.cancel(task) for task in pending),
+                        lambda: emit_event('parallel_workspace_interrupted',
+                            exception_type=type(error).__name__,reason=str(error)),
+                        lambda: durable(sessions/'interruption.json',{'status':'interrupted',
+                            'error_type':type(error).__name__,'diagnostic':str(error),
+                            'active_theories':list(active.values())}),
+                    ], primary=error)
                     raise
             final = overview.list_workspace()
             final['worker_count'] = max_parallel_theories
-            result = {'status':'partial','workspace':final,'results':results,'repository_verified':False}
+            incomplete = [row for row in final['theories']
+                          if row['selected'] and row['status'] not in {'sealed','retired'}]
+            eligible = _stage_eligible(final['theories'], policy)
+            runnable = [row['theory'] for row in incomplete
+                        if row['ready_for_proof_action'] and row['theory'] not in failures
+                        and row['theory'] in eligible]
+            if runnable:
+                raise RuntimeError('scheduler exited while runnable theories remain: '+', '.join(runnable))
+            blocked = {row['theory']:{'reason':('priority_stage_incomplete'
+                       if row['theory'] not in eligible else 'dependency_blocked'),
+                       'unsealed_providers':row.get('unsealed_providers',[])}
+                       for row in incomplete if row['theory'] not in failures}
+            result = {'status':'partial','workspace':final,'results':results,'repository_verified':False,
+                      'integration_required':integrate,'failures':failures,'blocked':blocked,
+                      'session_attempts':attempts,'execution_policy':policy}
             all_sealed = all(row['status']=='sealed' or (row['status']=='retired' and not row['contracts'])
                              for row in final['theories'])
             if integrate and all_sealed:
@@ -429,10 +711,14 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
             return result
     finally:
         try:
-            if executor is not None:
-                executor.close()
-            resources.close()
+            _cleanup_all(([executor.close] if executor is not None else []) + [resources.close],
+                         primary=sys.exc_info()[1])
         finally:
-            if old_term is not None:
-                signal.signal(signal.SIGTERM,old_term)
-            release_run_mutation_lock(lock)
+            _cleanup_all([
+                *(lambda signum=signum, handler=handler: signal.signal(signum, handler)
+                  for signum, handler in old_signals.items()),
+                # A failed join may leave callbacks able to mutate this run.
+                # Keep ownership until they stop or the service exits.
+                *([lambda: release_run_mutation_lock(lock)]
+                  if executor is None or executor.shutdown_complete else []),
+            ], primary=sys.exc_info()[1])

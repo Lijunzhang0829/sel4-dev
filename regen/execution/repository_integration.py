@@ -1,7 +1,6 @@
 """Independent whole-repository gate over exact, journal-verified theory seals."""
 import hashlib
 from pathlib import Path
-import shutil
 from uuid import uuid4
 
 from regen.execution.proof_commits import digest, durable, freeze_evidence
@@ -124,7 +123,8 @@ def _integrate_repository(run_dir, *, timeout=900):
         generated.mkdir()
         # Copy only the trusted run-parent heap tree; force a fresh generated build
         # in an isolated output tree, never load a prior generated heap as evidence.
-        shutil.copytree(root/'heaps',heaps)
+        from regen.infrastructure.resource_budget import clone_heaps
+        durable(output/'heap-copy-budget.json', clone_heaps(root/'heaps',heaps))
         for path in list(heaps.rglob('Generated_Refine*')):
             if path.is_file():
                 path.unlink()

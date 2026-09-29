@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Isabelle authority for statement shells, node proofs, and complete theories."""
+"""Isabelle authority for declarations, proof batches, and complete theories.
+
+Legacy single-node and graph entry points remain for historical experiment replay.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -239,24 +242,31 @@ def declaration(node: dict[str, Any], proof: str) -> str:
     return wrap_context(node.get("context", []), node["statement"] + "\n" + proof.strip())
 
 
-def failed_statement_node(
-    graph: dict[str, Any], source: str, diagnostic: str,
+def failed_statement_declaration(
+    index: dict[str, Any], source: str, diagnostic: str,
 ) -> str | None:
     match = DIAGNOSTIC_LINE.search(diagnostic)
     if not match:
         return None
     failure_line = int(match.group(1))
-    by_id = {node["id"]: node for node in graph["nodes"]}
-    for node_id in graph["execution_order"]:
-        statement = by_id[node_id]["statement"]
+    by_id = {item["id"]: item for item in index["nodes"]}
+    for declaration_id in index["execution_order"]:
+        statement = by_id[declaration_id]["statement"]
         offset = source.find(statement)
         if offset < 0:
             continue
         first = source[:offset].count("\n") + 1
         last = first + statement.count("\n")
         if first <= failure_line <= last:
-            return node_id
+            return declaration_id
     return None
+
+
+def failed_statement_node(
+    graph: dict[str, Any], source: str, diagnostic: str,
+) -> str | None:
+    """Historical name for declaration error attribution."""
+    return failed_statement_declaration(graph, source, diagnostic)
 
 
 def dependency_closure(
@@ -501,34 +511,54 @@ class IsabelleChecker:
         return check
 
     def close_prefix(self):
-        worker = getattr(self, "_batch_worker", None)
-        if worker is not None:
-            worker.close()
-        self._batch_worker = None
-        if self._prefix_worker is not None:
-            self._prefix_worker.close()
-        self._prefix_worker = None
-        self._prefix_key = None
+        errors = []
+        for attribute in ("_batch_worker", "_prefix_worker"):
+            worker = getattr(self, attribute, None)
+            try:
+                if worker is not None:
+                    worker.close()
+            except BaseException as error:
+                # Keep the failed worker reachable for a later cleanup retry.
+                errors.append(error)
+            else:
+                setattr(self, attribute, None)
+                if attribute == "_prefix_worker":
+                    self._prefix_key = None
+        if errors:
+            for error in errors[1:]:
+                errors[0].add_note(f"Additional worker cleanup failure: {type(error).__name__}: {error}")
+            raise errors[0]
 
     def resolve_symbols(self, names, context=()):
         from regen.execution.symbol_resolution import resolve_symbols
         return resolve_symbols(self,names,list(context))
 
-    def check_graph(self, graph: dict[str, Any]) -> dict[str, Any]:
+    def _check_declaration_source(self, index, *, name, scope, failure_key):
         self._last_node_check = None
-        name = f"Graph_Check_v{graph['revision']}"
-        source = self._source(
-            graph, {}, theory_name=name, statements_only=True,
-        )
+        source = self._source(index, {}, theory_name=name, statements_only=True)
         from regen.execution.declaration_cache import checked_declarations
         result = checked_declarations(self, source, name)
-        result["check_scope"] = "all-graph-statements"
+        result["check_scope"] = scope
         result["incremental"] = False
         result["proofs_checked"] = False
-        result["failed_node_id"] = failed_statement_node(
-            graph, source, result["diagnostic"],
+        result[failure_key] = failed_statement_declaration(
+            index, source, result["diagnostic"],
         )
         return result
+
+    def check_declarations(self, index: dict[str, Any]) -> dict[str, Any]:
+        """Check document declarations without constructing a proof dependency graph."""
+        return self._check_declaration_source(
+            index, name=f"Declaration_Check_v{index['revision']}",
+            scope="all-document-declarations", failure_key="failed_declaration_id",
+        )
+
+    def check_graph(self, graph: dict[str, Any]) -> dict[str, Any]:
+        """Legacy entry point preserving historical source and evidence labels."""
+        return self._check_declaration_source(
+            graph, name=f"Graph_Check_v{graph['revision']}",
+            scope="all-graph-statements", failure_key="failed_node_id",
+        )
 
     def check_node(
         self, graph: dict[str, Any], proofs: dict[str, str], node_id: str, *,
@@ -771,20 +801,43 @@ class IsabelleChecker:
 
     @native_operation
     def build_generated_session(self, theories: list[str]) -> dict[str, Any]:
+        return self._build_session(theories, seal=False)
+
+    @native_operation
+    def build_sealed_session(self, theories: list[str]) -> dict[str, Any]:
+        """Build the target in a child session; never replace its provider heap."""
+        if not theories or theories[:-1] != list(self.previous_theories):
+            raise ValueError("seal must extend exactly the frozen provider closure")
+        return self._build_session(theories, seal=True)
+
+    def _build_session(self, theories: list[str], *, seal: bool) -> dict[str, Any]:
         if CURRENT_RESOURCES.get() is not None:
             self.close_prefix()
         self._last_node_check = None
+        session = "Sealed_Refine" if seal else "Generated_Refine"
         root = self.generated_dir / "ROOT"
-        root.write_text("\n".join([
+        providers = theories[:-1] if seal else theories
+        definitions = [
             f"session Generated_Refine = {self.base_session} +",
             "  sessions",
             "    Lib",
             "    CorresK",
             "    AInvs",
             "  theories",
-            *(f"    {name}" for name in theories),
+            *(f"    {name}" for name in providers),
             "",
-        ]), encoding="utf-8")
+        ] if providers or not seal else []
+        if seal:
+            # Isabelle requires distinct session directories, even for a child.
+            sealed_dir = self.generated_dir / 'sealed-session'
+            sealed_dir.mkdir(exist_ok=True)
+            (sealed_dir / (theories[-1] + '.thy')).write_bytes(
+                (self.generated_dir / (theories[-1] + '.thy')).read_bytes())
+            definitions += [
+                f'session {session} in "sealed-session" = {"Generated_Refine" if providers else self.base_session} +',
+                "  sessions Lib CorresK AInvs", "  theories", f"    {theories[-1]}", "",
+            ]
+        root.write_text("\n".join(definitions), encoding="utf-8")
         l4v = self.l4v_dir
         isabelle = self.isabelle_dir
         workspace = self.semantic_workspace
@@ -802,7 +855,7 @@ class IsabelleChecker:
         for item in SESSION_CATALOGS:
             command.extend(["-d", f"/sel4-project/verification/l4v/{item}"])
         command.extend([
-            "-d", self.base_catalog, "-d", "/generated", "Generated_Refine",
+            "-d", self.base_catalog, "-d", "/generated", session,
         ])
         resources = CURRENT_RESOURCES.get()
         if resources is not None:
@@ -812,7 +865,7 @@ class IsabelleChecker:
         container_name = f"regen-isabelle-build-{os.getpid()}-{uuid.uuid4().hex}"
         command[2:2] = ["--name", container_name]
         emit_event(
-            "isabelle_build_started", session="Generated_Refine",
+            "isabelle_build_started", session=session,
             timeout_seconds=self.timeout, container=container_name,
         )
         try:
@@ -840,7 +893,7 @@ class IsabelleChecker:
                 )
             except (OSError, subprocess.SubprocessError):
                 pass
-        log = self.generated_dir / "build.log"
+        log = self.generated_dir / ("seal-build.log" if seal else "build.log")
         log.write_text(diagnostic, encoding="utf-8")
         check = {
             "verdict": "green" if returncode == 0 else "red",
@@ -851,9 +904,10 @@ class IsabelleChecker:
             "check_scope": "accumulated-generated-session",
             "incremental": False,
             "theories": list(theories),
+            "session": session,
         }
         emit_event(
-            "isabelle_build_finished", session="Generated_Refine",
+            "isabelle_build_finished", session=session,
             verdict=check["verdict"], returncode=returncode,
             wall_ms=check["wall_ms"], log=str(log),
         )

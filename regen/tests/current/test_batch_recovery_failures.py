@@ -74,6 +74,7 @@ def cleanup_case(worker_class, *, touch_fails=True, removal_fails=False):
                 'unregistered':unregister.call_count}
             if removal_fails:
                 # A later cleanup attempt must remain possible after daemon recovery.
+                removal_fails = False
                 alive[0] = False
                 worker.close()
                 first['retry_closed'] = worker.closed

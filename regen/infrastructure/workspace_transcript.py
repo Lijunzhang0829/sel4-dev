@@ -14,6 +14,7 @@ from jsonschema import Draft202012Validator
 
 from regen.execution.proof_commits import durable
 from regen.infrastructure.audited_llm import model_settings
+from regen.infrastructure.codex_workspace_session import validate_sleep_event
 
 PROVIDER = 'codex-workspace-audited'
 ALLOWED_TOOLS = {'list_workspace','read_theory','list_generated','read_generated',
@@ -60,6 +61,8 @@ def _audit(raw, *, require_terminal, require_real):
     terminal = False
     seen_calls = set()
     pending_tools = set()
+    sleep_state = {}
+    finished_turns = set()
     for event in events:
         direction, message = event.get('direction'), event.get('message')
         if direction == 'local':
@@ -146,18 +149,25 @@ def _audit(raw, *, require_terminal, require_real):
             tool_requests.append(message)
         if direction == 'in' and method in {'item/started','item/completed'}:
             item = params.get('item', {})
-            if item.get('type') not in PASSIVE_ITEMS:
+            if item.get('type') == 'sleep':
+                validate_sleep_event(params, method, set(turns) - finished_turns, sleep_state)
+            elif item.get('type') not in PASSIVE_ITEMS:
                 raise ValueError('workspace session used a built-in tool')
             if item.get('type') == 'dynamicToolCall' and (item.get('tool') not in ALLOWED_TOOLS
                     or item.get('namespace') is not None):
                 raise ValueError('workspace session observed an unknown dynamic tool')
         if direction == 'in' and method == 'error':
-            raise ValueError('workspace session reported error')
+            key = (params.get('threadId'),params.get('turnId'))
+            if params.get('willRetry') is not True or key not in turns:
+                raise ValueError('workspace session reported terminal or unbound error')
         if direction == 'in' and method == 'turn/completed':
             key = (params.get('threadId'),params['turn']['id'])
             if key not in turns or params['turn'].get('status') != 'completed':
                 raise ValueError('workspace turn failed or has unknown identity')
+            if any(owner[:2] == key for owner in sleep_state.get('pending', {})):
+                raise ValueError('workspace turn completed with unfinished sleep item')
             terminal = True
+            finished_turns.add(key)
     if not threads or not turns:
         raise ValueError('workspace provenance lacks started thread/turn')
     if require_terminal and (not terminal or pending_tools):

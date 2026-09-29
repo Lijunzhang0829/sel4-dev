@@ -49,7 +49,8 @@ def node_results(old, candidate, evidence):
     result=[]
     graph_failed=evidence.get('graph_check') is not None and evidence['graph_check'].get('verdict')!='green'
     for key in new:
-        status=('audited_green' if check.get('verdict')=='green' else
+        status=('not_checked' if check.get('failure_scope')=='native_preparation' else
+                'audited_green' if check.get('verdict')=='green' else
                 'declaration_rejected' if graph_failed else
                 'completed_uncommitted' if key in ended else
                 'failed' if key==failed else 'not_reached' if failed and key not in started else 'unknown')

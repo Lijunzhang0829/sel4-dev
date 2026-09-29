@@ -10,6 +10,7 @@ import unittest
 from unittest.mock import patch
 
 from regen.infrastructure.codex_workspace_session import CodexWorkspaceSession, SessionProtocolError, SessionCancelled
+from regen.infrastructure.workspace_transcript import audit_workspace_session
 
 TOOLS = [{'name':'proof_action','description':'trusted proof harness',
           'inputSchema':{'type':'object','properties':{'action':{'type':'string'}},
@@ -30,16 +31,36 @@ for line in sys.stdin:
   turn+=1; tid='turn-'+str(turn)
   send({'id':m['id'],'result':{'turn':{'id':tid}}})
   if mode=='timeout': time.sleep(30)
+  elif mode=='chatter':
+   while True:
+    send({'method':'item/agentMessage/delta','params':{'delta':'still here'}})
+    time.sleep(.01)
   elif mode=='builtin':
    send({'method':'item/started','params':{'item':{'type':'commandExecution'}}})
   elif mode=='approval':
    send({'id':900,'method':'item/commandExecution/requestApproval','params':{}})
   else:
+   if mode.startswith('sleep'):
+    duration=-1 if mode=='sleep_negative' else 50000
+    owner='wrong-thread' if mode=='sleep_wrong_owner' else 'thread-one'
+    for i in range(3 if mode=='sleep_budget' else 1):
+     params={'threadId':owner,'turnId':tid,'item':{'type':'sleep','id':'sleep-'+str(i),'durationMs':duration}}
+     send({'method':'item/started','params':params})
+     if mode=='sleep_duplicate': send({'method':'item/started','params':params})
+     if mode!='sleep_unfinished': send({'method':'item/completed','params':params})
+   if mode=='retrying':
+    send({'method':'error','params':{'error':{'message':'Reconnecting... 2/5',
+      'additionalDetails':'stream disconnected before completion'},'willRetry':True,
+      'threadId':'thread-one','turnId':tid}})
    send({'id':100+turn,'method':'item/tool/call','params':{'threadId':'thread-one','turnId':tid,
       'callId':'call-'+str(turn),'namespace':None,'tool':'exec' if mode=='unknown' else 'proof_action','arguments':{'bad':'argument'} if mode=='schema' else {'action':'inspect'}}})
  elif 'result' in m:
   assert m['result']['contentItems'][0]['type']=='inputText'
-  if mode=='duplicate':
+  if mode=='readloop':
+   turn+=1
+   send({'id':100+turn,'method':'item/tool/call','params':{'threadId':'thread-one','turnId':tid,
+      'callId':'call-'+str(turn),'namespace':None,'tool':'proof_action','arguments':{'action':'inspect'}}})
+  elif mode=='duplicate':
    send({'id':200,'method':'item/tool/call','params':{'threadId':'thread-one','turnId':tid,
       'callId':'call-'+str(turn),'namespace':None,'tool':'proof_action','arguments':{'action':'inspect'}}})
   else:
@@ -49,9 +70,108 @@ for line in sys.stdin:
 
 
 class CodexWorkspaceSessionTest(unittest.TestCase):
+    def test_native_preparation_failure_stops_session_without_model_feedback(self):
+        from regen.execution.check_tasks import NativePreparationError
+        def fail(*args):
+            raise NativePreparationError('prefix deadline')
+        with tempfile.TemporaryDirectory() as tmp, self.session() as session:
+            with self.assertRaisesRegex(NativePreparationError, 'prefix deadline'):
+                session.run('x', fail, artifact_dir=tmp, model='test', timeout=2)
+            self.assertIsNotNone(session.process.poll())
+
     def session(self, mode='normal', **kwargs):
         return CodexWorkspaceSession(tools=TOOLS, command=[sys.executable,'-u','-c',SERVER,mode],
                                      allow_external_call=True, **kwargs)
+
+    def test_sleep_is_audited_without_host_sleep_or_callback(self):
+        calls=[]
+        with tempfile.TemporaryDirectory() as tmp, self.session('sleep') as session:
+            before=time.monotonic()
+            session.run('x',lambda *args: calls.append(args) or {},artifact_dir=tmp,model='test',timeout=2)
+            self.assertLess(time.monotonic()-before,5)
+            self.assertEqual(len(calls),1)
+            report=audit_workspace_session(Path(tmp)/'session-transcript.jsonl',require_real=False)
+            self.assertTrue(report['terminal'])
+
+    def test_sleep_invalid_lifecycle_identity_and_budget_fail_closed(self):
+        for mode in ['sleep_wrong_owner','sleep_negative','sleep_budget','sleep_duplicate','sleep_unfinished']:
+            with self.subTest(mode=mode),tempfile.TemporaryDirectory() as tmp,self.session(mode) as session:
+                with self.assertRaises(SessionProtocolError):
+                    session.run('x',lambda *args: {},artifact_dir=tmp,model='test',timeout=2)
+
+    def test_repeated_read_equivalent_results_cannot_run_forever(self):
+        from regen.infrastructure.codex_workspace_session import SessionStalled
+        with tempfile.TemporaryDirectory() as tmp,self.session(progress_timeout=10) as session:
+            first=session.run('x',lambda *args: {'same':1},artifact_dir=tmp,model='test',timeout=2)
+            self.assertTrue(first['progress_made'])
+            for _ in range(7):
+                result=session.run('x',lambda *args: {'same':1},artifact_dir=tmp,model='test',timeout=2)
+                self.assertFalse(result['progress_made'])
+            with self.assertRaises(SessionStalled):
+                session.run('x',lambda *args: {'same':1},artifact_dir=tmp,model='test',timeout=2)
+            self.assertIsNotNone(session.process.poll())
+
+    def test_progress_clock_and_real_failed_check_are_not_green_only(self):
+        from regen.infrastructure.codex_workspace_session import ProgressWatch, SessionStalled
+        now=[0.0]
+        watch=ProgressWatch(10,clock=lambda:now[0])
+        watch.observe('read_theory',{'theory':'T'},{'source':'a'},0)
+        now[0]=9
+        watch.observe('read_theory',{'theory':'T'},{'source':'a'},0)
+        self.assertEqual(watch.generation,1)
+        now[0]=10
+        with self.assertRaises(SessionStalled):watch.check()
+        # A real checker attempt, even RED, is work. Its callback time is excluded.
+        now[0]=100
+        watch.observe('proof_action',{'proposal':{'action':'check_theory'}},{'verdict':'red'},90)
+        watch.check()
+        self.assertEqual(watch.generation,2)
+        watch.observe('read_theory',{'theory':'T'},{'source':'b'},0)
+        self.assertEqual(watch.generation,3)
+
+    def test_single_turn_duplicate_loop_and_chatter_are_bounded(self):
+        from regen.infrastructure.codex_workspace_session import SessionStalled
+        for mode in ['readloop','chatter']:
+            with self.subTest(mode=mode),tempfile.TemporaryDirectory() as tmp,self.session(
+                    mode,progress_timeout=.5) as session:
+                with self.assertRaises(SessionStalled):
+                    session.run('x',lambda *args: {'same':1},artifact_dir=tmp,model='test',timeout=3)
+                self.assertIsNotNone(session.process.poll())
+
+    def test_auditor_independently_rejects_tampered_sleep(self):
+        with tempfile.TemporaryDirectory() as tmp,self.session('sleep') as session:
+            session.run('x',lambda *args: {},artifact_dir=tmp,model='test',timeout=2)
+            path=Path(tmp)/'session-transcript.jsonl'
+            original=path.read_text()
+            for change in ['owner','duration','completion']:
+                events=[json.loads(line) for line in original.splitlines()]
+                for event in events:
+                    if event['direction']!='in':continue
+                    m=event['message']['parsed']
+                    if m.get('params',{}).get('item',{}).get('type')!='sleep':continue
+                    if change=='owner':m['params']['threadId']='wrong-thread'
+                    if change=='duration':m['params']['item']['durationMs']=True
+                    if change=='completion' and m['method']=='item/completed':m['params']['item']['id']='wrong-item'
+                    event['message']['raw_json']=json.dumps(m)
+                path.write_text(''.join(json.dumps(e)+'\n' for e in events))
+                with self.assertRaises(ValueError):audit_workspace_session(path,require_real=False)
+
+    def test_real_launcher_keeps_dynamic_tool_host_without_shell(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with CodexWorkspaceSession(tools=TOOLS, codex_bin=sys.executable,
+                                       allow_external_call=True) as session:
+                with patch('regen.infrastructure.codex_workspace_session.subprocess.Popen',
+                           side_effect=RuntimeError('transport intercepted')) as popen:
+                    with self.assertRaisesRegex(RuntimeError, 'transport intercepted'):
+                        session.run('x', lambda *args: {}, artifact_dir=tmp, model='test', timeout=2)
+                command = popen.call_args.args[0]
+                disabled = {command[i+1] for i, arg in enumerate(command) if arg == '--disable'}
+                enabled = {command[i+1] for i, arg in enumerate(command) if arg == '--enable'}
+                self.assertIn('code_mode_host', enabled)
+                self.assertNotIn('code_mode_host', disabled)
+                self.assertTrue({'shell_tool', 'unified_exec'} <= disabled)
+                self.assertIn('web_search="disabled"', command)
+                self.assertIn('sandbox_mode="read-only"', command)
 
     def test_one_process_one_thread_multiple_turns_and_durable_callback_binding(self):
         calls=[]
@@ -121,6 +241,20 @@ class CodexWorkspaceSessionTest(unittest.TestCase):
             def callback(*args): time.sleep(.3); return {'native':'complete'}
             result=session.run('x',callback,artifact_dir=tmp,model='test',timeout=.2)
             self.assertEqual(result['status'],'completed')
+
+    def test_retryable_stream_error_keeps_same_turn_alive_and_remains_auditable(self):
+        calls=[]
+        with tempfile.TemporaryDirectory() as tmp, self.session('retrying') as session:
+            result=session.run('x',lambda *a: calls.append(1) or {'native':'complete'},
+                               artifact_dir=tmp,model='test',timeout=2)
+            self.assertEqual(result['status'],'completed')
+            self.assertEqual(calls,[1])
+            transcript=Path(tmp)/'session-transcript.jsonl'
+            log=transcript.read_text()
+            self.assertIn('provider_stream_retrying',log)
+            self.assertNotIn('session_failed',log)
+            self.assertTrue(audit_workspace_session(
+                transcript,require_real=False)['terminal'])
 
     def test_model_inactivity_timeout_cleans_up_process_and_logs(self):
         with tempfile.TemporaryDirectory() as tmp, self.session('timeout') as session:

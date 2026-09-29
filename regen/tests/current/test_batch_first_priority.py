@@ -49,6 +49,23 @@ class ObservationBudgetTests(unittest.TestCase):
 
 
 class LifecycleTests(timings.BatchTimingTest):
+    def test_prefix_failure_is_terminal_not_proof_feedback(self):
+        from regen.execution.check_tasks import NativePreparationError
+        with tempfile.TemporaryDirectory() as tmp:
+            run, directory, journal, checker, call = self.execute(Path(tmp), [
+                json.dumps({'action':'submit_batch','proofs':{'helper':'by simp'}})],
+                checked={'check':{'verdict':'infrastructure_error',
+                    'failure_scope':'native_preparation','diagnostic':'prefix deadline'}})
+            with self.assertRaisesRegex(NativePreparationError, 'prefix deadline'):
+                run()
+            terminal = journal.append.call_args.args[1]
+            self.assertEqual(terminal['status'], 'infrastructure_error')
+            self.assertEqual(terminal['batch_requests'], 1)
+            self.assertNotIn('helper', terminal['proofs'])
+            self.assertEqual(call.call_count, 1)
+            self.assertTrue((directory/'batch-requests/000001/check.json').exists())
+            self.assertFalse((directory/'batch-requests/000001/feedback.json').exists())
+
     def test_preflight_rejection_never_calls_backend_and_preserves_charge(self):
         with tempfile.TemporaryDirectory() as tmp:
             run, directory, journal, checker, call = self.execute(Path(tmp), [])

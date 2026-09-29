@@ -328,13 +328,19 @@ def build_graph(
         "nodes": nodes,
         "contract_routes": proposal.get("contract_routes", {}),
     }
+    if 'document_order' in proposal:
+        graph['document_order'] = list(proposal['document_order'])
     validate_graph(graph, package)
-    assert_no_definitional_wrappers(graph)
+    if 'document_order' not in graph:
+        assert_no_definitional_wrappers(graph)
     graph["execution_order"] = execution_order(graph)
     return graph
 
 
 def validate_graph(graph: dict[str, Any], package: dict[str, Any]) -> None:
+    if "document_order" in graph:
+        from regen.planning.declaration_index import validate_index
+        return validate_index(graph, package)
     nodes = graph.get("nodes")
     if not isinstance(nodes, list) or (not nodes and not package.get("repository_projection")):
         raise ValueError("graph must contain nodes")
@@ -425,6 +431,9 @@ def validate_graph(graph: dict[str, Any], package: dict[str, Any]) -> None:
 
 def execution_order(graph: dict[str, Any]) -> list[str]:
     nodes = graph["nodes"]
+    if 'document_order' in graph:
+        from regen.planning.declaration_index import document_order
+        return document_order(graph)
     by_id = {node["id"]: node for node in nodes}
     indegree = {node["id"]: len(node["dependencies"]) for node in nodes}
     consumers = {node["id"]: list(node["consumers"]) for node in nodes}

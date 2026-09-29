@@ -3,11 +3,9 @@
 Worker failure discards all volatile state; callers may cold-check exact source.
 No model-provided admission or arbitrary ML enters this process.
 """
-import atexit
 from regen.execution.check_tasks import check_cancelled, CheckCancelled
 import hashlib
 import xml.etree.ElementTree as ET
-import subprocess
 import time
 import uuid
 from pathlib import Path
@@ -21,6 +19,11 @@ def body(source):
     return source.split('\nbegin\n', 1)[1].rsplit('\nend\n', 1)[0]
 
 
+def prefix_startup_budget(command_timeout, certified_facts):
+    """Bound cumulative replay separately; individual commands keep their limit."""
+    return max(command_timeout, min(3600, 60 + 30 * certified_facts))
+
+
 class BatchWorker(PrefixWorker):
     def __init__(self, checker, source, names, imports):
         self.checker, self.closed, self.index = checker, False, 0
@@ -30,10 +33,15 @@ class BatchWorker(PrefixWorker):
         self.base = body(source)
         self.pending = None
         self.imports = list(imports)
+        # Replaying many certified declarations is not one candidate action.
+        # Keep a finite overall bound, distinct from the unchanged per-command
+        # and candidate limits. No proof/context text is rewritten for speed.
+        self.prefix_timeout = prefix_startup_budget(checker.timeout, len(names))
         self.label = source.splitlines()[0].split()[1]
         for name, value in [('prefix', self.base), ('prefix_facts', '\n'.join(names)), ('worker_id', self.name),
                             ('imports', '\n'.join(imports)), ('theory_name', self.label),
                             ('command_timeout', str(checker.timeout)),
+                            ('prefix_timeout', str(self.prefix_timeout)),
                             ('candidate_timeout', str(getattr(checker, 'batch_candidate_timeout', 120)))]:
             (self.root/name).write_text(value)
         (self.root/'server.ML').write_bytes(Path(__file__).with_suffix('.ML').read_bytes())
@@ -42,19 +50,14 @@ class BatchWorker(PrefixWorker):
             writable_mounts=[(self.root,'/worker')])
         command[2:2] = ['--name', self.name]
         command = command[:-2] + ['-e', 'ML_file "/worker/server.ML"']
-        self.log = open(self.root/'worker.log', 'w')
-        self.process = subprocess.Popen(command, stdout=self.log, stderr=subprocess.STDOUT, text=True)
-        atexit.register(self.close)
-        try:
-            self.wait(self.root/'ready')
-        except Exception:
-            self.close()
-            raise
+        self._launch(command)
 
     def wait(self, path, *, timeout=None):
         from regen.infrastructure.progress_events import emit_event
         start = time.monotonic()
-        limit = self.checker.timeout if timeout is None else timeout
+        limit = (getattr(self, 'prefix_timeout', self.checker.timeout)
+                 if path.name == 'ready' and timeout is None
+                 else self.checker.timeout if timeout is None else timeout)
         emit_event('isabelle_batch_wait_started', worker=self.name, waiting_for=path.name, timeout_seconds=limit)
         while not path.exists():
             try:

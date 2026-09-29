@@ -8,7 +8,7 @@
 - 每个活跃 theory 分配一个持续 File Planner，由它独占本 theory 的修改权。
 - 一个 File Planner 内部所有正常工具串行：模型决定 → 工具执行并完成 → 返回结果 → 模型继续。检索、声明、符号、证明 batch 和 seal 均遵守此规则。
 - 不同 theory 的 File Planner 可并行；只有硬 `required_imports` 约束启动顺序。协作组、复用建议及 theory 数组优先级不是额外 barrier。
-- 一次生成多个 contract/helper 的能力保留；batch 内按依赖顺序验证，只有完整 batch 成功才能提交。
+- 默认使用持久 theory 源码工作区；一次编辑多个 contract/helper，按文件顺序验证全部已填写证明，整版成功后原子接受。模型不维护局部依赖图。
 - 不按失败次数或时间片强制 agent 让出 theory，不限制探索性 helper 数量或数学提案修正次数。
 - 模型按当前配置采用 `gpt-6-astra / medium`，执行资源与模型会话数分别管理。
 - 环境内容由操作者保证实验期间不变，不实现父源码/heap/工具链的运行时内容冻结。保留路径可用性、数据库完整性、固定 contract 与证明证据校验；已有环境摘要作为来源记录兼容旧产物。
@@ -88,36 +88,33 @@ agent 负责把全部 contracts 重新划分到职责清晰的 theories，提出
 配置 `theory_tool_execution: serial` 写入根 policy 和各 theory session policy。旧运行的配置不被静默修改。
 
 <a id="m4"></a>
-### M4：单 File Planner 的持续循环
+### M4：单 File Planner 的持续源码工作区
 
-代码：`planning/parallel_file_planner.py:TheoryController`、`batch_file_planner.py`、`execution/proof_batches.py`。
+代码：`planning/theory_document.py`、`parallel_file_planner.py:TheoryController`、
+`batch_file_planner.py`。详细格式与验证边界见 [源码工作区](THEORY-SOURCE-WORKSPACE.md)。
 
-1. 创建控制器，加载固定 contracts、局部图、已有 GREEN、失败反馈及工作记忆；确定本 theory 的合法 imports。
-2. agent 选择下一项操作：读取、检索、声明/符号检查、批量证明、图修订或 finish。
-3. 控制器取得本 theory 工具锁，绑定当前候选和上下文，记录任务请求。
-4. 执行当前操作。需要 Isabelle 时等待全局 native 槽；本 File Planner 不同时提交第二项数学或读取操作。
-5. 持久化结果；需要接受的图/证明修改由所属控制器按 M7 校验并提交。
-6. 工具返回终态、反馈及任务 ID；释放工具锁，agent 再据此决策。
-7. 普通候选失败继续循环。全部活动节点完成后，agent 调用 finish 进入 seal。
+1. `read_theory` 返回持久 `.thy` 草稿、source hash、已接受条目和最近反馈。
+2. `proof_action(edit_theory)` 按 base hash 精确替换文本或保存全文件。固定声明、上下文、
+   imports 和目标覆盖受保护；保存不运行 Isabelle，也不产生 GREEN。
+3. 模型可连续编辑、添加/删除/重排 helper，一次填写多个证明；失败草稿继续保留。
+4. `proof_action(check_theory)` 校验指定草稿版本，在共享 native 资源池中检查全部已填写
+   证明。文件顺序决定可见性；未完成的 `oops` 槽不进入证明源、不产生可引用事实。
+5. 未改变的已验证前缀可以热复用；改写、删除或重排已证明声明时，重新验证当前所有已
+   填写证明。新版本原子接受，失败保留原已接受版本与当前失败草稿，历史证据不删除。
+6. 模型根据反馈继续编辑或检索。草稿与成功接受的版本完全一致、全部目标及保留 helper
+   完成后，`proof_action(finish)` 执行完整 seal。
 
-固定 contract 不可删除、弱化或替换。agent 可以创建/修改未证明 helper；删除 helper 时须同步处理消费者并通过图检查。已接受证明与其真实依赖继续保留。一个 batch 可包含多个 helper/contract，consumer 使用本批前面的 helper 时按依赖顺序验证。
+不要求模型输出 dependencies、consumers、routes 或证明 DAG。helper 是文件里的普通
+lemma。内部声明索引保留固定身份、文件顺序及证据，不把文本先后关系宣称为数学依赖。
+实际定理引用由 Isabelle 审计；跨 theory 仅由 required_imports 派生循环检查与就绪状态，不另维护调度图。
+协调器启动 File Planner，agent 的 list_workspace 只读状态，不承担跨 theory 派发。
+文档初始化/候选由 `declaration_index.py` 构建和校验；旧 graph/nodes 仅是 journal/checker
+兼容编码。源码接口拒绝旧图修改和闭包导入动作，跨 theory helper 通过读取源码、复制/改写及目标复验复用。
 
-### 保留接口与当前语义
-
-| 接口 | 当前行为与产出 |
-|---|---|
-| `proof_action(theory, proposal)` | 执行原 query/read/submit_batch/finish 等动作，等待完成后直接返回反馈及 task ID |
-| `submit_check(..., kind=observe)` | 执行检索或分组读取，等待全部操作结束，返回终态和 result |
-| `submit_check(..., kind=statement)` | 检查候选声明，不接受 graph/proof，返回 `proofs_checked=false` |
-| `submit_check(..., kind=symbol)` | 在相应上下文解析符号，完成后返回结果 |
-| `submit_check(..., kind=proof_batch)` | 检查并接受或拒绝整个 batch，完成后返回反馈 |
-| `submit_check(..., kind=seal)` | 完整 seal 流程结束后返回成功或具体失败 |
-| `read_theory/list_workspace/read_generated/read_attempt/prepare_reuse` | 同 theory 正常工具锁内直接读取；复用准备不授予 GREEN |
-| `get_check_result(task_id)` | 重读持久结果，不重新执行 |
-| `wait_checks(task_ids)` | 保留兼容；正常串行提交返回时已终态，无需额外 wait |
-| `cancel_check(task_id)` | 保留受控取消/兼容接口；接受后的证明不撤销 |
-
-结果查询、wait 和 cancel 可由外层控制在工具运行时使用；这不是允许 File Planner 并行开展第二项检索或证明。正常 agent 顺序调用无需轮询任务。
+默认 `--file-planner-interface document`；`graph` 仅兼容旧接口，不可静默切换旧 run。
+查询、符号解析、历史诊断以及跨 theory 成果读取继续可用。单 theory 所有工具保持串行，
+不同 theory 并行；保存草稿不占 native 槽。旧 submit_check/get/wait/cancel 接口保留供兼容
+控制，但默认源码 agent 不接收这些图检查工具，也无需轮询。
 
 <a id="m5"></a>
 ### M5：检索与共享成果
@@ -126,7 +123,7 @@ agent 负责把全部 contracts 重新划分到职责清晰的 theories，提出
 
 父 session 合法事实来自 SQLite；已 import 的 sealed theory 成果来自绑定的合法前提记录；当前 theory 的 GREEN 直接在工作区中提供。agent 可按名称、定义、完整目标或真实失败 proof state 检索，显式选择并阅读完整声明/证明样例。
 
-未 seal 或未 import 的他 theory 成果只能作为参考。`prepare_reuse` 给出绑定源提交的 helper 闭包，复制/重命名后必须在目标 theory 重新检查。失败尝试可供策略参考，不能作为事实。
+未 seal 或未 import 的他 theory 成果只能作为参考。源码模式使用 `list_generated/read_generated` 读取绑定提交的源码，复制/改写后必须在目标 theory 重新检查；旧 `prepare_reuse` 闭包接口仅供 graph 模式。失败尝试可供策略参考，不能作为事实。
 
 本 theory 检索串行返回，无后台观察与下一次证明争写工作记忆。观察结果先保存在 task 收据，读取时投影为工作记忆，下次证明动作合入 journal；这不增加证明决策计数。现有记忆 reducer、查询缓存和旧 task 顺序字段仍用于恢复兼容，不代表继续开放内部并发。缓存命中必须满足查询上下文身份及结果摘要验证。
 
@@ -135,7 +132,7 @@ agent 负责把全部 contracts 重新划分到职责清晰的 theories，提出
 <a id="m6"></a>
 ### M6：Isabelle 检查与资源
 
-代码：`execution/check_executor.py`、`check_tasks.py`、`isabelle_node_checker.py`、`batch_checker.py`、`persistent_checker.py`。
+代码：`execution/check_executor.py`、`check_tasks.py`、`isabelle_node_checker.py`（默认声明接口 `check_declarations`）、`batch_checker.py`、`persistent_checker.py`。
 
 任务先记请求、后执行，结果先落盘、后返回。执行器容量与活跃 theory 数匹配；同 theory 的所有任务使用相同 owner，不能重叠执行。全局 native 槽独立限制实际 Isabelle 操作数，FIFO 排队；每个 native 进程显式配置线程数。
 
@@ -144,20 +141,27 @@ agent 负责把全部 contracts 重新划分到职责清晰的 theories，提出
 不同 theory 的 proof、statement、symbol、seal 可以在 native 槽允许时重叠；同 theory 的这些操作不重叠。batch 中多个证明仍是有序验证，并非每节点启动一个 worker。
 
 <a id="m7"></a>
-### M7：结果接受与持久证明状态
+### M7：验证与版本接受
 
-代码：`execution/proof_batches.py:validate_batch_commit`、`proof_commits.py`、`repository_execution.py`。
+代码：`planning/theory_document.py`、`execution/repository_execution.py`、`proof_batches.py`。
 
-任务 completed 只表示执行结束。只有候选、statement/context、源码、检查及审计证据一致，完整 batch 才能 GREEN。失败 batch 中已经检查过的前缀不独立发布。
+草稿不是证明权威。检查绑定精确源码、固定 package、旧接受状态、实际 imports 与原生
+证据。`document` journal 事件独立复编译源码并验证全部绑定；改变旧证明时使用空证明
+前缀的完整检查，不能用旧 GREEN 或一个局部检查冒充整版有效。
 
-单写入控制器通过 journal 原子提交图与 proofs；不能凭模型自述、statement PASS 或一份未接受反馈推导证明成功。重复读取 task 结果不增加决策数或重复提交。工作记忆和证明权威分离，摘要/notes 不授予引理权限。
+固定 contract 必须精确覆盖，statement/context 不变，声明名称唯一；证明中禁止 admission、
+任意 ML/隐藏顶层声明。候选 helper 的数学有效性交给 Isabelle，不以“看似同义/可疑变量”
+启发式拒绝源码模式。完整失败版本不部分接受。旧 graph 模式的 GREEN 不可变规则保持兼容。
+
+外部生成成果先作为参考；只有正式 seal 且在当前 imports 中才成为可直接引用的前提。
+复制到本文件的 helper 是新候选，必须经过本文件正常验证。
 
 <a id="m8"></a>
 ### M8：Seal、终止与资源回收
 
 代码：`planning/batch_file_planner.py:seal_theory`、`planning/parallel_file_planner.py:run_theory_session`。
 
-seal 的输入是全部活动节点已有已接受 proofs 的精确 theory。顺序执行完整 theory 检查、语义/依赖审计和 generated session build。任一步失败，返回具体诊断，保留已接受进展，让 agent 继续修订；不得提前解锁下游。
+seal 的输入是全部保留声明已有已接受 proofs 的精确 theory。顺序执行完整 theory 检查、语义/依赖审计和 generated session build。任一步失败，返回具体诊断，保留已接受进展，让 agent 继续修订；不得提前解锁下游。
 
 成功后提交 seal、发布精确源码及合法事实。agent 应结束本 theory，会话返回后控制器关闭检查进程并释放执行槽，调度器补位。seal 成功的时点与模型会话结束的时点分别记录。
 
@@ -197,7 +201,7 @@ python3 -m regen.execution.proof_session_runner init \
   --dataset-root /path/to/dataset --run-dir /path/to/new-run --run-id new-run
 
 python3 -m regen.execution.proof_session_runner parallel-workspace \
-  --run-dir /path/to/new-run --max-parallel-theories 2 \
+  --run-dir /path/to/new-run --file-planner-interface document --max-parallel-theories 2 \
   --native-slots 2 --native-threads 4 --resident-limit 2 \
   --allow-external-call
 ```
@@ -210,7 +214,9 @@ python3 -m regen.execution.proof_session_runner parallel-workspace \
 | `parallel-workspace-policy.json` | theory 范围、串行工具策略与并行资源 |
 | `parallel-sessions/<session>/<theory>/` | 持续 agent 的审计、事件、结果 |
 | `check-tasks/<task>/` | 请求、状态、结果、完成收据及检查日志 |
-| `theories/<slot>/acceptance/` | 图与 GREEN/seal 的权威提交 |
+| `theories/<slot>/document/` | draft.thy、内容寻址草稿版本、经审计编辑记录 |
+| `theories/<slot>/declaration-index.json`、`progress.json` | 可重建的声明/文档进度视图，entry 命名 |
+| `theories/<slot>/acceptance/` | 声明/证明版本与 GREEN/seal 的权威提交 |
 | `generated/`、`sealed-premises.json` | 已发布源码及合法前提投影，具体前提文件位于 theory 上下文 |
 | `integration/`、`repository-verification.json` | 全仓集成证据与最终结果引用 |
 
@@ -220,7 +226,7 @@ python3 -m regen.execution.proof_session_runner parallel-workspace \
 |---|---|---|
 | M0 | 人工保持环境稳定，合法数据来源与完整性校验 | 不增加环境冻结功能 |
 | M1–M2 | 分组/硬 imports、精确覆盖、原生声明预检 | 实际分组质量与复用成本评价 |
-| M3–M4 | 多 theory 持续 agent、完成即补位、单 theory 工具串行、batch 生成 | 两个真实 File Planner 从零实验 |
+| M3–M4 | 多 theory 持续 agent、完成即补位、单 theory 工具串行、源码编辑/批量验证 | 两个真实 File Planner 从零实验 |
 | M5 | 检索、显式选择、共享成果读取与目标复验 | 索引仍扫描 journal 前缀，后续评估增量化 |
 | M6 | native 容量、隔离、热前缀、正常取消和关闭 | 真实负载 RSS/CPU 校准；强杀恢复延后 |
 | M7–M8 | 原子完整 batch、完整 seal、已接受 journal 恢复 | 未接受 raw check 的独立重提交协议延后 |
@@ -230,3 +236,13 @@ python3 -m regen.execution.proof_session_runner parallel-workspace \
 串行边界回归验证：工具返回时已终态且有结果；同 theory 的检索、proof、直接读取不重叠；不同 theory 控制器仍可重叠；同步取消不接受迟到 GREEN；重复读取不重跑；观察记忆恢复及检索缓存可用。成功 proof 的 Python 测试使用合成 native evidence，不冒充真实证明。
 
 完整模型生成、真实 native 检查、Python 回归是三类独立证据。测试结果与最新实现映射见 [实现记录](../implementation/PARALLEL-PIPELINE-IMPLEMENTATION.md)。
+
+
+### 名称与串行/并行边界
+
+默认接口使用 context_entry_id/entry_ids/entry_results；名称适配在 document_interface.py，
+不修改实际目标 ID 或证明源。文档观察记忆使用 observation_memory.py；async_* 只兼容
+历史状态。底层执行器使用线程池，但单 theory 工具要等待终态，检索不是 agent 可交错
+调用的异步任务。跨 theory 可以并行；native_slots=1 时 Isabelle 仍排队，resident_limit
+及 imports 就绪也会限制实际并发。list_workspace 分开报告单 theory 写入者数量、File
+Planner 容量和 native 槽数。详细命名映射见 [源码工作区](THEORY-SOURCE-WORKSPACE.md#接口命名与并发一致性复核2026-09-25)。

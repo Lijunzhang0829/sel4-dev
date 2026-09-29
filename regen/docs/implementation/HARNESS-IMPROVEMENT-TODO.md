@@ -24,6 +24,104 @@
 
 先验证正常工作流程。环境冻结与强杀进程回收已退出当前必需范围；不再开展单 File Planner 内部异步交错。代码和单测通过不等于完整模型实验验收。
 
+## 2026-09-25：仓库规划质量复核与 token 观测 TODO
+
+用户确认：记录以下建议，当前实验沿用已接受计划，不重新规划。模型为
+`gpt-6-astra / medium`，两个 theory 并行，各 theory 内工具串行；不新增修订次数上限。
+
+基线：`repository-plan-serial-astra-visible-20260925-001`，
+`plan_id=repository-plan:3cfec5a378b5d72d6f0c`。287 contracts、27 theories、57 条硬 imports、
+4 个根、最长链 9 层。当前已有持续 agent 内的草案、自审、验证与修订，不是一次无反馈出稿。
+
+### P1：边界、接口与并行瓶颈复核
+
+- [ ] 在现有覆盖、命名、引用、DAG 校验外，增加紧凑风险报告：组大小、根、最长链、
+  高影响 provider、后继数量、传递冗余。指标仅提示，不按数量阈值拒绝合理划分。
+- [ ] 试验一次独立定向复核：消费者具体希望获得什么成果，为什么必须等待 provider
+  整体 seal；可能帮助是否被误设硬 import；强相关证明是否拆散；受限/一般情况是否
+  消除了实际循环。每条意见引用具体 contract/theory 和证据。Planner 决定采纳或解释
+  保留理由；主观意见不成为机械拒绝门槛。复用已有 reason/NOTES，避免重复维护计划。
+- [ ] 优先检查 Thread_Object_State（22 contracts、22 后继）、Scheduler_Queues（24/14）、
+  Translation_Entries（22/10）：高复用小接口能否自然独立，还是确需共享局部证明空间。
+  不按数量机械拆分。13 条传递冗余边删除后不改变 readiness，不作为加速重点。
+- [ ] 分开评价声明上下文与未来证明接口：本次首次预检通过后，agent 自查为
+  Invocation_Dispatch 补充 TCB_Invocation_Decode import，两版均通过。oops 不导出
+  新定理，不能据此认定未来证明依赖齐全或数学路线成立。
+
+### P2：检查成本与小规模 A/B
+
+- [ ] 默认在边界复核后执行 native 预检，仍允许按需提前检查。本次总耗时 836.013 秒，
+  两次 native 分别 204.441、213.113 秒，约占一半。本次实际改了 import，第二次验证
+  有理由，不能直接标为无效重复。
+- [ ] 评估预检缓存按实际渲染的声明、上下文、imports 与 checker context 绑定，提交记录
+  独立绑定；仅解释文字变化不强迫重检。受影响 theory/后继增量复验另行实现和验收，
+  未实现前仍保留完整验证。不引入环境冻结。
+- [ ] A 用当前计划，B 用定向复核后的计划；选实际改变边界的 provider–consumer 子图
+  及必要上游，从空证明、同模型/资源开始。比较完成/封存、总墙钟、模型输入、native
+  时间、重复 helper 与跨 theory 读取，新增规划成本计入。有效后再决定 reviewer 是否
+  默认启用；当前实验不隐式执行 B。
+- [ ] 普通证明失败、helper 调整与检索问题留在 File Planner；仅有具体跨 theory 接口
+  缺失/边界证据时提出局部调整。已启动 theory 的 imports 不静默修改，不增加常驻
+  全局重规划或基于失败次数的自动让出执行槽。
+
+一手资料与边界：
+
+- [CodePlan](https://arxiv.org/pdf/2309.12499)：已有仓库的依赖/影响分析和验证反馈驱动
+  修订；未知证明依赖不能由共享符号或实现调用直接推导。
+- [Agentless](https://arxiv.org/html/2407.01489v2)：结构→相关声明→局部代码的分层读取及
+  定位/修复/验证；issue 修复结果不能直接外推为限制形式化证明自主探索的依据。
+- [MetaGPT](https://arxiv.org/html/2308.00352v6)：文件/接口设计、结构化交接及执行反馈；
+  借鉴接口复核，不直接复制全部角色或外推性能结论。
+
+### P1：统一 token 统计，利用现有事件而非周期心跳
+
+已有记录：仓库规划 `transcript/*.ndjson` 保存 `turn.completed.usage`；新版并行 File
+Planner 的 `parallel-sessions/<session>/<theory>/session-transcript.jsonl` 保存
+`thread/tokenUsage/updated`；正常结束的 theory `result.json` 包含 `provider.usage`。
+中断时可能只有最后一次 usage 通知，未观测尾部不能记成零。图修订和证明生成共享持续
+File Planner 会话，不能虚构独立 GRA/prover 成本。检索和 Isabelle 本身不消耗 LLM token，
+工具返回内容可能增加后续模型输入。
+
+- [ ] 可重建汇总：按 experiment/module/theory/thread 分开统计 input、cached input、
+  output、reasoning（服务提供时）、完整性、最后观测时间，保留原字段与来源。
+  CLI/app-server 字段不同；累计 total 快照不可相加，last 不与 total 重复计数；
+  transcript/result 是同一次消费，不能重复累计。重试和独立 thread 分别计入。
+- [ ] 结合工具时间线与成功提交分析上下文增长、缓存命中、检索反馈体积、失败修订成本、
+  每 GREEN/seal 成本和并行重复工作。批量证明/共享 helper 不强行精确摊分到 contract，
+  无法唯一归因的区间明确标注。
+- [ ] token 与总墙钟、模型等待、Isabelle 执行及资源排队分别报告。高缓存命中不等于
+  零延迟；token 不能独自证明数学质量、有效思考或前端正常，不能直接推算账单。
+
+本次规划 usage：input=3,261,580，cached input=3,155,456（约 96.75%），
+input 减 cached=106,124，output=16,180，reasoning output=1,772，cache-write input=0。
+input 是多次推理累计消费，非独立上下文长度；reasoning 不另加到 output。
+当前仍缺跨模块统一汇总与精确工具归因；现有原始日志可作为本轮基线。
+
+本轮启动诊断（2026-09-25）：
+
+- [x] 修复真实 app-server 启动时误禁用 `code_mode_host`，保持 shell/其他工具禁用及
+  原有动态工具白名单、参数校验、完整审计。21 项相关测试及 Astra medium 的单次真实
+  `proof_action` 传输测试通过，见 `reports/analysis/dynamic-tool-host-20260925/smoke-001/`。
+- 初次 `parallel-file-planner-astra-20260925-001` 四个根 theory 在工具传输阶段结束，
+  无 Isabelle 检查、无 GREEN/seal；总 input=402,955、cached=266,752、output=698、
+  reasoning=88。完整记录在该 run 的 `startup-diagnosis.json`，不计作数学证明失败。
+- 修复后使用新身份 `parallel-file-planner-astra-20260925-002`，沿用同一仓库计划，
+  重新从空证明开始。传输 smoke 成本另行保留，不混入 theory 证明成本。
+- [ ] 后续评估启动工具自检以及零回调终止的基础设施诊断；协调器进程 exit 0 只代表
+  调度正常返回，不代表 theory seal 或实验成功。
+
+## 2026-09-25：默认改为 theory 源码工作区
+
+- [x] 单 File Planner 默认持久 `.thy` 编辑、批量检查和失败修订，不要求模型维护局部 DAG。
+- [x] 固定 contract/imports 保护、按文件顺序检查、oops 无前提权威、失败草稿持久保存。
+- [x] 修改/删除/重排已接受 helper 或 proof 时完整复验；成功版本原子接受，旧证据保留。
+- [x] seal 绑定当前草稿；检索、实际引用审计和跨 theory 并行资源池保持可用。
+- [x] 735 项测试、真实 Isabelle 原文件通过→悬空 helper 引用失败→修复通过。
+- [ ] 同 theory 的源码模式/旧 graph 模式 A/B 成本与成功率，不能由接口小例推断性能。
+
+当前语义见 [源码工作区](../design/THEORY-SOURCE-WORKSPACE.md) 及主流程 M4/M7。
+内部 graph 字段保留作兼容声明索引；仓库 imports DAG 继续决定跨 theory readiness。
+
 ## 证据与统计口径
 
 ### Refine_Capability：固定前 178 次请求
@@ -377,3 +475,23 @@ fallback，也不限制File Planner决策次数。真实worker测试1秒预算�
 最终回归598项通过。抽样池、随机种子、修改前代码、精确候选绑定与全部结果见
 `reports/analysis/harness-reliability-20260923/REPORT.md`。原实验和已封存成果未修改。
 本批没有重新调用LLM，不能据此推断完整theory生成速度或新prompt下模型策略已经改善。
+
+
+### 2026-09-25：源码模式与局部 DAG 解耦
+
+- [x] 声明索引独立构建/校验，初始化与正常文档候选不调用旧图构建器。
+- [x] 文档接口拒绝旧图修改、submit_check 与 prepare_reuse；共享成果以源码复制后复验。
+- [x] 不计算源码模式的消费者/计划边批量建议，模型视图隐藏兼容边与图所有权。
+- [x] 保留旧文档证据 hash 回放；imports 循环/就绪检查与单 theory 写入约束不删。
+- [x] 明确 Python 协调器派发、File Planner 负责本 theory；同步流程与实现文档。
+- [ ] 全量 journal/checker wire-format 改名仅在后续确需 schema 迁移时考虑，不作为本轮运行前置条件。
+
+
+### 2026-09-25：DAG、并发与名称一致性复核
+
+- [x] 默认 source 流程不存在局部 DAG 排程；保留真实 imports 就绪/循环检查。
+- [x] 默认 document 的串行读写、跨 theory 工具重叠、单 native 槽排队轻量回归。
+- [x] 修复并行模式 list_workspace 固定 worker_count=1 的状态误报。
+- [x] 公共 entry 参数/反馈、Declaration_Check 标签及 declaration-index 进度投影。
+- [x] 中性 observation_memory 实现，旧 async 名称仅兼容历史导入/状态。
+- [x] 旧异步/图方案就地标明历史，当前主文档、接口和实现一致。

@@ -115,6 +115,7 @@ class ContextRetryIntegrationTest(unittest.TestCase):
                 log=self.work_dir/(label+'.log');log.write_text('test checker')
                 return {'verdict':'green','returncode':0,'source':str(source),'log':str(log),'diagnostic':''}
             def build_generated_session(self,*args):return {'verdict':'green'}
+            build_sealed_session = build_generated_session
         checker=Checker(f.root,root/'checks',heaps_dir=root,l4v_dir=f.fixture.l4v,semantic_workspace=root)
         checker._persistent_disabled=True  # This fixture mocks the cold checker, not Docker.
         def prove(graph,node,proofs,**kwargs):

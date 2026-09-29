@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "codex_bin": "/home/lijun/.vscode-server/extensions/openai.chatgpt-26.901.22334-linux-x64/bin/linux-x86_64/codex",
-  "codex_sha256": "fce635028842bfe9257140e8b7d53162732945e2f356fc35225be0702b4974be",
-  "codex_version": "0.153.0",
+  "codex_bin": "/home/lijun/.vscode-server/extensions/openai.chatgpt-26.917.62051-linux-x64/bin/linux-x86_64/codex",
+  "codex_sha256": "a969c7c42b842c759d157d2500bbf33a562ff95f22dcb7112aa4d8f9e68833d3",
+  "codex_version": "0.155.0-alpha.16.3",
   "reasoning_effort": "medium",
   "role_models": {
     "File Planner": "gpt-6-astra",

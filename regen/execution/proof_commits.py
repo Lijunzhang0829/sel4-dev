@@ -12,6 +12,7 @@ from functools import wraps
 
 _CACHE_LOCK = threading.RLock()
 _JOURNAL_LOCKS = {}
+ACCEPTANCE_EVENTS = frozenset({'batch', 'document', 'green', 'seal'})
 
 
 def journal_lock(directory):
@@ -163,7 +164,7 @@ class ProofCommits:
     def append(self, event, state, evidence):
         from regen.execution.check_tasks import acceptance_guard, check_cancelled
         check_cancelled()
-        if event in {'batch', 'green', 'seal'}:
+        if event in ACCEPTANCE_EVENTS:
             with acceptance_guard():
                 return self._append(event, state, evidence)
         return self._append(event, state, evidence)
@@ -177,7 +178,26 @@ class ProofCommits:
                 'event':event, 'state':state, 'evidence':evidence}
         record = {**body, 'commit_id':digest(body)}
         path = self.directory/'commits'/f'{len(paths)+1:06d}.json'
-        durable(path, record, immutable=True)
+        from regen.execution.check_tasks import CURRENT_TASK
+        token = CURRENT_TASK.get() if event in ACCEPTANCE_EVENTS else None
+        try:
+            durable(path, record, immutable=True)
+        except BaseException:
+            # link() can publish the complete record before directory fsync or
+            # temporary-link cleanup fails. A visible accepted commit must not
+            # be cancelled; keep the I/O error and let replay establish recovery.
+            if token is not None:
+                try:
+                    visible = json.loads(path.read_text()) == record
+                except (OSError, ValueError):
+                    visible = False
+                if visible:
+                    token.published = True
+            raise
+        # The commit is authoritative even if a later HEAD/cache projection
+        # fails. append holds the acceptance lock until this flag is visible.
+        if token is not None:
+            token.published = True
         durable(self.directory/'HEAD.json', {'commit_id':record['commit_id'], 'sequence':len(paths)+1})
         self._remember(self._verified['fingerprints'] + (_fingerprint(path),), state, record['commit_id'])
         return deepcopy(state)

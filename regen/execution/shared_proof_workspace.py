@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 import threading
 
-from regen.execution.proof_commits import digest, _fingerprint, commit_paths
+from regen.execution.proof_commits import digest, _fingerprint, commit_paths, journal_lock
 from regen.planning.proof_graph import DECLARATION, normalized_declaration_body
 
 SCHEMA = 'shared-proof-workspace-v1'
@@ -124,9 +124,18 @@ class SharedProofWorkspace:
 
     def _snapshot(self, theory, commit_id=None):
         with self._lock:
-            return self._read_snapshot(theory, commit_id)
+            package = self._package(theory)
+            directory = self._path(self.root / 'theories' / Path(package['file_slot']).stem)
+            # durable(..., immutable=True) links a complete temporary inode to
+            # the commit name and then removes the temporary link. The latter
+            # legitimately changes ctime without changing commit bytes. Share
+            # the writer's transaction lock so fingerprints never observe that
+            # short in-flight link-count transition.
+            with journal_lock(directory / 'acceptance'):
+                return self._read_snapshot(
+                    theory, commit_id, package=package, directory=directory)
 
-    def _read_snapshot(self, theory, commit_id=None):
+    def _read_snapshot(self, theory, commit_id=None, *, package, directory):
         """Validate the same chain/evidence as ProofCommits, without HEAD repair.
 
         Cached snapshots are bound to every immutable prefix file's fingerprint.
@@ -134,8 +143,6 @@ class SharedProofWorkspace:
         the beginning; it does not follow historical-run paths or catalog rows.
         """
         from regen.execution.repository_execution import journal
-        package = self._package(theory)
-        directory = self._path(self.root / 'theories' / Path(package['file_slot']).stem)
         # journal() constructs only a validator and binding; replay() is not used
         # because normal replay may repair its mutable HEAD.json projection.
         self._path(directory / 'imports.json')
@@ -151,6 +158,7 @@ class SharedProofWorkspace:
         if cached and cached[0] == fingerprints:
             return deepcopy(cached[1])
         state = previous = None
+        inherited_run_id = None
         actual = {}
         result = None
         for sequence, path in enumerate(paths, 1):
@@ -164,8 +172,16 @@ class SharedProofWorkspace:
                 raise ValueError('invalid workspace proof commit chain/binding')
             log.validate(state, record['state'], record['event'], record['evidence'])
             state, previous = record['state'], record['commit_id']
+            # The validator above replays the complete embedded origin and binds
+            # this initial state exactly. Retain its index identity without
+            # trusting arbitrary foreign run IDs in later records.
+            if sequence == 1 and record['event'] == 'initial' and any(
+                    key in record['evidence'] for key in ('sealed_reuse','continuation')):
+                inherited_run_id = state['graph']['run_id']
             run_ids = {self.run['run_id'], self.run['run_id'] + '--' + theory,
                        self.run['run_id'] + '--' + Path(package['file_slot']).stem}
+            if inherited_run_id is not None:
+                run_ids.add(inherited_run_id)
             if state['graph']['run_id'] not in run_ids or state['graph']['theory'] != theory:
                 raise ValueError('workspace graph belongs to a different run/theory')
             if record['event'] == 'seal':

@@ -105,6 +105,7 @@ class RepositoryExecutionTest(unittest.TestCase):
                 log=self.work_dir/(label+'.log');log.write_text('test checker')
                 return {'verdict':'green','returncode':0,'source':str(source),'log':str(log),'diagnostic':''}
             def build_generated_session(self,*args):return {'verdict':'green'}
+            build_sealed_session = build_generated_session
         c=Checker(f.root,root/'checks',heaps_dir=root,l4v_dir=f.fixture.l4v,semantic_workspace=root)
         c._persistent_disabled=True  # Mocked cold checker fixture.
         def audit(**kwargs):

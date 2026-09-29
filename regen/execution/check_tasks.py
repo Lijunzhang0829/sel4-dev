@@ -12,6 +12,10 @@ class CheckCancelled(Exception):
     """Cancellation must never enter the native cold-retry path."""
 
 
+class NativePreparationError(RuntimeError):
+    """The trusted prefix could not be prepared; this is not a candidate RED."""
+
+
 @dataclass
 class Cancellation:
     event: threading.Event = field(default_factory=threading.Event)

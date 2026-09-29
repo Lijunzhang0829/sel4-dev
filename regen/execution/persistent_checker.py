@@ -3,11 +3,23 @@ import atexit
 from regen.execution.check_tasks import check_cancelled, CheckCancelled
 import hashlib
 import json
+import os
 import re
 import subprocess
+import threading
 import time
 import uuid
 from pathlib import Path
+
+
+def _renew_owner_lease(heartbeat, stopped, interval):
+    """Resource lease only: no periodic experiment/progress events are emitted."""
+    while not stopped.wait(interval):
+        try:
+            os.utime(heartbeat, None)
+        except OSError:
+            # Fail closed: the in-container guardian will expire this lease.
+            return
 
 
 class PrefixWorker:
@@ -29,8 +41,35 @@ class PrefixWorker:
                                    writable_mounts=[(self.root,'/worker')])
         command[2:2] = ['--name',self.name]
         command = command[:-2] + ['-e','ML_file "/worker/server.ML"']
-        self.log = open(self.root/'worker.log','w')
-        self.process = subprocess.Popen(command,stdout=self.log,stderr=subprocess.STDOUT,text=True)
+        self._launch(command)
+
+    def _launch(self, command):
+        # The guardian is PID 1, outside Isabelle, so losing the coordinator also
+        # terminates a worker busy loading a heap or executing a candidate.
+        lease_seconds = int(getattr(self.checker, 'owner_lease_seconds', 60))
+        if lease_seconds < 1:
+            raise ValueError('owner_lease_seconds must be positive')
+        heartbeat = self.root/'owner.heartbeat'
+        heartbeat.touch()
+        (self.root/'owner_watchdog.sh').write_bytes(
+            Path(__file__).with_name('worker_owner.sh').read_bytes())
+        insertion = command.index('/workspace/verification/isabelle/bin/isabelle')
+        command[insertion:insertion] = [
+            '/bin/sh', '/worker/owner_watchdog.sh', str(lease_seconds), '/worker/owner.heartbeat']
+        self._owner_stopped = threading.Event()
+        self._owner_thread = threading.Thread(
+            target=_renew_owner_lease,
+            args=(heartbeat, self._owner_stopped, min(5, lease_seconds/3)),
+            name=self.name+'-owner-lease', daemon=True)
+        self.log = open(self.root/'worker.log', 'w')
+        try:
+            self._owner_thread.start()
+            self.process = subprocess.Popen(
+                command, stdout=self.log, stderr=subprocess.STDOUT, text=True)
+        except BaseException:
+            self._owner_stopped.set()
+            self.log.close()
+            raise
         atexit.register(self.close)
         try:
             self.wait(self.root/'ready')
@@ -78,23 +117,49 @@ class PrefixWorker:
     def close(self):
         if self.closed:
             return
-        # Disk failure must not prevent owned-process cleanup. Keep the atexit
-        # hook and allow retry until the process has actually stopped.
+        if hasattr(self, '_owner_stopped'):
+            self._owner_stopped.set()
+        # A dead Docker client says nothing about its container. Always remove
+        # the exact owned name; a daemon/transport error must remain retryable.
         try:
-            if self.process.poll() is None:
+            (self.root/'stop').touch()
+        except OSError:
+            pass  # Disk failure must not prevent owned-container cleanup.
+        if self.process.poll() is None:
+            try:
+                self.process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                pass
+        self._remove_container()
+        if self.process.poll() is None:
+            try:
+                self.process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.process.terminate()
                 try:
-                    (self.root/'stop').touch()
-                except OSError:
-                    pass  # The bounded wait below falls back to container removal.
-                try:
-                    self.process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    subprocess.run(['docker','rm','-f',self.name],capture_output=True,timeout=30)
                     self.process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+                    self.process.wait(timeout=5)
+                # Cover a Docker client that was still creating its container
+                # during the first removal attempt.
+                self._remove_container()
+        try:
+            self.log.close()
         finally:
-            if self.process.poll() is not None:
-                try:
-                    self.log.close()
-                finally:
-                    self.closed = True
-                    atexit.unregister(self.close)
+            self.closed = True
+            atexit.unregister(self.close)
+
+    def _remove_container(self):
+        result = subprocess.run(
+            ['docker', 'rm', '-f', self.name], capture_output=True,
+            text=True, timeout=30)
+        if result.returncode:
+            diagnostic = (result.stderr or '') + (result.stdout or '')
+            # --rm containers normally disappear on graceful exit. Do not
+            # mistake a daemon connection failure for confirmation of absence.
+            normalized = diagnostic.casefold()
+            absent = (f'no such container: {self.name}'.casefold() in normalized or
+                      f'no such object: {self.name}'.casefold() in normalized)
+            if not absent:
+                raise RuntimeError('failed to remove owned worker ' + self.name + ': ' + diagnostic.strip())

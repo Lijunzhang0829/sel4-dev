@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from regen.execution.batch_checker import BatchWorker, body
+from regen.execution.batch_checker import BatchWorker, body, prefix_startup_budget
 from regen.execution.proof_batches import check_batch, prepare_batch, validate_batch_commit
 from regen.tests.current.test_proof_batches import Checker
 from regen.tests.current.test_proof_commits import fixture
@@ -33,7 +33,7 @@ class BatchTimeoutTest(unittest.TestCase):
 
     def assert_timeout_evidence(self, old, new, evidence, scope):
         check = evidence['check']
-        self.assertEqual(check['verdict'], 'red')
+        self.assertEqual(check['verdict'], 'infrastructure_error' if scope == 'prefix-startup' else 'red')
         self.assertEqual(check['returncode'], 124)
         self.assertTrue(check['timed_out'])
         self.assertEqual(check['timeout_scope'], scope)
@@ -85,6 +85,42 @@ class BatchTimeoutTest(unittest.TestCase):
             self.assertEqual(evidence['check']['timeout_seconds'], 1800)
             self.assertEqual(checker.calls, 0)
             self.assertIsNone(checker._batch_worker)
+            self.assertEqual(evidence['check']['failure_scope'], 'native_preparation')
+            self.assertTrue(all(n['status']=='not_checked' for n in evidence['node_results']))
+
+    def test_prefix_budget_scales_but_candidate_and_command_limits_do_not(self):
+        self.assertEqual(prefix_startup_budget(900, 0), 900)
+        self.assertEqual(prefix_startup_budget(900, 78), 2400)
+        self.assertEqual(prefix_startup_budget(900, 1000), 3600)
+        self.assertEqual(prefix_startup_budget(4000, 78), 4000)
+        with tempfile.TemporaryDirectory() as tmp:
+            checker = Mock(work_dir=Path(tmp), timeout=900, batch_candidate_timeout=120)
+            checker.previous_theories = []
+            checker._command.return_value = ['docker','run','image','isabelle','-e','x']
+            with patch.object(BatchWorker, '_launch'):
+                worker = BatchWorker(checker, 'theory T\nbegin\n\nend\n', ['a']*78, [])
+            self.assertEqual(worker.prefix_timeout, 2400)
+            self.assertEqual((worker.root/'command_timeout').read_text(), '900')
+            self.assertEqual((worker.root/'candidate_timeout').read_text(), '120')
+
+    def test_ready_watchdog_uses_prefix_limit_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root/'worker.log').write_text('prefix replay log')
+            worker = object.__new__(BatchWorker)
+            worker.root = root; worker.name = 'test-worker'
+            worker.checker = Mock(timeout=900)
+            worker.prefix_timeout = 2400
+            worker.process = Mock(); worker.process.poll.return_value = None
+            worker.close = Mock()
+            for name, limit, scope in [('ready',2400,'prefix-startup'),
+                                       ('1.response',900,'candidate-watchdog')]:
+                with patch('regen.execution.batch_checker.time.monotonic', side_effect=[0,limit+1]):
+                    with self.assertRaises(TimeoutError) as caught:
+                        worker.wait(root/name)
+                self.assertEqual(caught.exception.timeout_seconds, limit)
+                self.assertEqual(caught.exception.timeout_scope, scope)
+                self.assertEqual(caught.exception.worker_log, 'prefix replay log')
 
     def test_infrastructure_fallback_uses_candidate_budget_then_restores_full_budget(self):
         with tempfile.TemporaryDirectory() as tmp:

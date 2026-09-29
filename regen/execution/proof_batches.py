@@ -166,15 +166,23 @@ def _batch_declaration_coverage(old, new):
 from regen.execution.check_executor import native_operation
 
 
+def check_declarations(checker, index):
+    """Use the document checker API, keeping old checker adapters replayable."""
+    method = getattr(checker, 'check_declarations', None)
+    if index.get('declaration_index_version') == 1 and callable(method):
+        return method(index)
+    return checker.check_graph(index)
+
+
 @native_operation
 def check_batch(checker, old, candidate):
     """Check every declaration, then all accepted and proposed proofs in one run.
 
-    Graph statement checks are not proof evidence. Failed batches return evidence
+    Declaration checks are not proof evidence. Failed batches return evidence
     for feedback but validate_batch_commit will reject them.
     """
     coverage = _batch_declaration_coverage(old, candidate)
-    graph_check = (freeze_evidence(checker.check_graph(candidate['graph']))
+    graph_check = (freeze_evidence(check_declarations(checker, candidate['graph']))
                    if _declarations(old) != _declarations(candidate) and coverage is None else None)
     evidence = {'schema_version': 1, 'old_binding': _binding(old),
                 'new_binding': _binding(candidate), 'graph_check': graph_check,
@@ -231,7 +239,10 @@ def check_batch(checker, old, candidate):
                 path.write_text(source)
                 log = path.with_suffix('.log')
                 log.write_text(getattr(error, 'worker_log', '') + '\n' + str(error))
-                result = {'verdict':'red', 'returncode':124, 'timed_out':True,
+                scope = getattr(error, 'timeout_scope', 'prefix-startup')
+                result = {'verdict':'infrastructure_error' if scope == 'prefix-startup' else 'red',
+                    'failure_scope':'native_preparation' if scope == 'prefix-startup' else 'candidate',
+                    'returncode':124, 'timed_out':True,
                     'diagnostic':str(error), 'source':str(path), 'log':str(log),
                     'timeout_scope':getattr(error, 'timeout_scope', 'prefix-startup'),
                     'timeout_seconds':getattr(error, 'timeout_seconds', checker.timeout),
@@ -256,9 +267,9 @@ def check_batch(checker, old, candidate):
         result['execution_wall_ms'] = round((time.monotonic()-batch_started)*1000)
         evidence['check'] = freeze_evidence(result)
     else:
-        # Graph-only changes still need concrete native evidence for commit.
+        # Declaration-only changes still need concrete native evidence for commit.
         if graph_check is None:
-            graph_check = freeze_evidence(checker.check_graph(candidate['graph']))
+            graph_check = freeze_evidence(check_declarations(checker, candidate['graph']))
             evidence['graph_check'] = graph_check
         evidence['check'] = graph_check
     from regen.planning.batch_routes import node_results
@@ -278,7 +289,7 @@ def _green(check):
 
 
 def validate_batch_commit(old, new, evidence):
-    """Replay-time binding check; general graph/state invariants remain caller-owned."""
+    """Replay-time binding check; declaration/state invariants remain caller-owned."""
     if old is None or evidence.get('old_binding') != _binding(old) or evidence.get('new_binding') != _binding(new):
         raise ValueError('batch state binding mismatch')
     assert_green_nodes_unchanged(old['graph'], new['graph'], set(old['proofs']))
@@ -293,9 +304,17 @@ def validate_batch_commit(old, new, evidence):
         _green(graph_check)
         renderer = object.__new__(IsabelleChecker)
         renderer.imports = lambda: evidence['imports']
-        expected_graph = renderer._source(new['graph'], {}, theory_name=f"Graph_Check_v{new['graph']['revision']}", statements_only=True)
-        if graph_check['source_content'] != expected_graph:
-            raise ValueError('graph checker source mismatch')
+        # Old document journals and checker adapters used Graph_Check labels.
+        # Accept only exact renderings of the candidate for the allowed names;
+        # this does not relax statement, context, imports or byte binding.
+        index = new['graph']
+        labels = [f"Graph_Check_v{index['revision']}"]
+        if index.get('declaration_index_version') == 1:
+            labels.append(f"Declaration_Check_v{index['revision']}")
+        expected_sources = [renderer._source(index, {}, theory_name=label,
+                            statements_only=True) for label in labels]
+        if graph_check['source_content'] not in expected_sources:
+            raise ValueError('declaration checker source mismatch')
     elif _declarations(old) != _declarations(new) and coverage is None:
         raise ValueError('changed declarations lack native evidence')
     _green(evidence['check'])
@@ -327,7 +346,7 @@ def validate_batch_commit(old, new, evidence):
                 # Preserve historical v1 journal validation without promoting its logs to v2.
                 raise ValueError('legacy incremental batch lacks audit markers')
     elif new['proofs'] != old['proofs']:
-        raise ValueError('graph-only batch changed proofs')
+        raise ValueError('declaration-only batch changed proofs')
     seen = set()
     nodes = {n['id']: n for n in new['graph']['nodes']}
     for key in new['accepted_order']:

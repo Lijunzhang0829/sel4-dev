@@ -3,10 +3,12 @@
 Local protocol source: `codex app-server generate-json-schema --experimental`.
 Dynamic tools are additive, not an exclusive OS sandbox. This adapter reports
 `audited-tool-allowlist` assurance, never claims filesystem read isolation, and
-requires explicit permission to launch a provider. No provider call is retried.
-A callback owns its native/action deadline and worker cleanup. The session
-timeout measures inactivity while waiting for protocol events, excluding callback
-time; cancellation cleans up the app-server process group.
+requires explicit permission to launch a provider. The harness never replays a
+provider call; app-server may reconnect a response stream when it explicitly
+reports that the same turn will be retried. A callback owns its native/action
+deadline and worker cleanup. The session timeout measures inactivity while
+waiting for protocol events, excluding callback time; cancellation cleans up the
+app-server process group.
 """
 from copy import deepcopy
 import hashlib
@@ -32,9 +34,74 @@ class SessionCancelled(KeyboardInterrupt):
     pass
 
 
+class SessionStalled(SessionProtocolError):
+    """Protocol is live but the planner is not obtaining new information."""
+
+
+def validate_sleep_event(params, method, known_turns, state):
+    """Shared runtime/audit policy for clock.sleep display events, never execution."""
+    item = params.get('item', {})
+    owner = (params.get('threadId'), params.get('turnId'))
+    duration = item.get('durationMs')
+    if (owner not in known_turns or not all(isinstance(x, str) and x for x in owner)
+            or set(item) != {'type', 'id', 'durationMs'} or item['type'] != 'sleep'
+            or not isinstance(item['id'], str) or not item['id']
+            or type(duration) is not int or not 0 <= duration <= 60000):
+        raise ValueError('invalid or unbound sleep item (maximum 60000 ms)')
+    key = (*owner, item['id'])
+    pending = state.setdefault('pending', {})
+    seen = state.setdefault('seen', set())
+    totals = state.setdefault('totals', {})
+    if method == 'item/started':
+        if key in seen or totals.get(owner, 0) + duration > 120000:
+            raise ValueError('duplicate sleep item or per-turn sleep budget exceeded')
+        seen.add(key)
+        totals[owner] = totals.get(owner, 0) + duration
+        pending[key] = duration
+    elif method == 'item/completed':
+        if pending.get(key) != duration:
+            raise ValueError('unmatched or changed sleep completion')
+        del pending[key]
+    else:
+        raise ValueError('invalid sleep lifecycle event')
+
+
+class ProgressWatch:
+    """Bound duplicate reads and event-only stalls; native callbacks own their timeouts."""
+    def __init__(self, timeout, *, clock=time.monotonic):
+        self.clock, self.timeout = clock, timeout
+        self.last_progress = clock()
+        self.generation = 0
+        self.seen = set()
+        self.repeats = 0
+
+    def check(self):
+        if self.clock() - self.last_progress >= self.timeout:
+            raise SessionStalled('no new tool information or proof action within progress deadline')
+
+    def observe(self, name, arguments, value, elapsed):
+        # Waiting inside an authorized callback is governed by the native/action
+        # timeout, not by provider inactivity or the progress clock.
+        self.last_progress += elapsed
+        fingerprint = hashlib.sha256(json.dumps([name, arguments, value],
+            sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+        action = arguments.get('action', arguments.get('proposal', {}).get('action'))
+        work = (name in {'proof_action', 'submit_check'} and action in {
+            'check_theory', 'submit_batch', 'finish', 'resolve_symbols'})
+        if work or fingerprint not in self.seen:
+            self.seen.add(fingerprint)
+            self.repeats = 0
+            self.generation += 1
+            self.last_progress = self.clock()
+        else:
+            self.repeats += 1
+            if self.repeats >= 8:
+                raise SessionStalled('eight repeated tool results without new information or proof work')
+
+
 class CodexWorkspaceSession:
     def __init__(self, *, tools, codex_bin='codex', codex_home=None,
-                 allow_external_call=False, command=None):
+                 allow_external_call=False, command=None, progress_timeout=None):
         self.tools = deepcopy(tools)
         self.validators = {}
         for tool in self.tools:
@@ -76,12 +143,19 @@ class CodexWorkspaceSession:
         self._usage = None
         self._deferred = []
         self._request_offsets = {}
+        self._progress_timeout = progress_timeout
+        self._progress = None
+        self._sleep_state = {}
 
     def __enter__(self):
         return self
 
     def __exit__(self, *args):
         self.close()
+
+    @property
+    def tool_call_count(self):
+        return len(self._calls)
 
     def _event(self, direction, message):
         if self._log is None:
@@ -107,7 +181,11 @@ class CodexWorkspaceSession:
     def _receive(self, deadline):
         # Inactivity budget: callback/native-check time is deliberately excluded.
         deadline = time.monotonic() + self._timeout
+        if self._progress is not None:
+            self._progress.check()
         while b'\n' not in self._buffer:
+            if self._progress is not None:
+                self._progress.check()
             if self._cancel_event is not None and self._cancel_event.is_set():
                 raise SessionCancelled('workspace coordinator cancelled')
             remaining = deadline-time.monotonic()
@@ -146,6 +224,12 @@ class CodexWorkspaceSession:
         method, params = message.get('method'), message.get('params', {})
         if method in ('item/started', 'item/completed'):
             kind = params.get('item', {}).get('type')
+            if kind == 'sleep':
+                try:
+                    validate_sleep_event(params, method, {(self.thread_id, self.turn_id)}, self._sleep_state)
+                except ValueError as error:
+                    raise SessionProtocolError(str(error)) from error
+                return
             allowed = {'agentMessage', 'reasoning', 'userMessage', 'dynamicToolCall', 'contextCompaction', 'plan'}
             if kind not in allowed:
                 raise SessionProtocolError('non-allowlisted built-in item: '+str(kind))
@@ -159,6 +243,14 @@ class CodexWorkspaceSession:
         if method == 'turn/started':
             self.turn_id = params['turn']['id']
         if method == 'error':
+            if (isinstance(params, dict) and params.get('willRetry') is True
+                    and params.get('threadId') == self.thread_id
+                    and params.get('turnId') == self.turn_id):
+                self._event('local', {'event':'provider_stream_retrying',
+                                      'thread_id':self.thread_id,
+                                      'turn_id':self.turn_id,
+                                      'error':deepcopy(params.get('error'))})
+                return
             raise SessionProtocolError(str(params))
 
     def _start(self, artifact_dir, model, deadline):
@@ -182,9 +274,13 @@ class CodexWorkspaceSession:
             '-c', 'sandbox_mode="read-only"', '-c', 'project_doc_max_bytes=0']
         if self.command is None:
             for feature in ('shell_tool','unified_exec','apps','plugins','remote_plugin','hooks',
-                            'browser_use','computer_use','code_mode','code_mode_host','view_image',
+                            'browser_use','computer_use','code_mode','view_image',
                             'multi_agent','multi_agent_v2','image_generation','skill_search','workspace_dependencies'):
                 command += ['--disable', feature]
+            # The model may route registered dynamic tools through this host even
+            # when optional code_mode is off. It does not grant shell access;
+            # callbacks and observable items still pass the existing allowlist.
+            command += ['--enable', 'code_mode_host']
         executable = Path(shutil.which(command[0]) or command[0]).resolve()
         executable_hash = hashlib.sha256(executable.read_bytes()).hexdigest()
         command = [str(executable), *command[1:]]
@@ -224,15 +320,26 @@ class CodexWorkspaceSession:
                     'callback_timeout_policy':'trusted harness owns native/action deadlines'}
         self._calls[key] = 'started'
         self._event('local', {'event':'tool_started', **{k:v for k,v in metadata.items() if k != 'raw_request'}})
+        started = time.monotonic()
+        succeeded = False
         try:
             value = handler(name, deepcopy(arguments), metadata)
+            succeeded = True
             response = {'success':True, 'contentItems':[{'type':'inputText','text':json.dumps(value, ensure_ascii=False)}]}
         except Exception as error:
+            from regen.execution.check_tasks import NativePreparationError
+            if isinstance(error, NativePreparationError):
+                raise  # Fail the session; never turn preparation faults into model feedback.
             response = {'success':False, 'contentItems':[{'type':'inputText','text':json.dumps(
                 {'error_type':type(error).__name__, 'message':str(error)}, ensure_ascii=False)}]}
         self._calls[key] = 'finished'
         self._event('local', {'event':'tool_finished', 'call_id':call_id, 'response':response})
         self._send({'id':message['id'], 'result':response})
+        if self._progress is not None:
+            if succeeded:
+                self._progress.observe(name, arguments, value, time.monotonic() - started)
+            else:
+                self._progress.last_progress += time.monotonic() - started
 
     def run(self, prompt, on_tool_call, *, artifact_dir, model, reasoning_effort='medium', timeout=1800, cancel_event=None):
         if self._closed or self._broken:
@@ -240,6 +347,11 @@ class CodexWorkspaceSession:
         if timeout <= 0:
             raise ValueError('timeout must be positive')
         self._timeout = timeout
+        if self._progress is None and self._progress_timeout is not None:
+            if self._progress_timeout <= 0:
+                raise ValueError('progress timeout must be positive')
+            self._progress = ProgressWatch(self._progress_timeout)
+        progress_before = self._progress.generation if self._progress else None
         self._cancel_event = cancel_event
         deadline = time.monotonic()+timeout
         self._expired.clear()
@@ -273,9 +385,14 @@ class CodexWorkspaceSession:
                         raise SessionProtocolError('terminal turn identity mismatch')
                     if params['turn']['status'] != 'completed':
                         raise SessionProtocolError('turn ended without completion: '+str(params['turn']))
+                    if any(key[:2] == (self.thread_id, self.turn_id)
+                           for key in self._sleep_state.get('pending', {})):
+                        raise SessionProtocolError('turn completed with unfinished sleep item')
                     result = {'thread_id':self.thread_id, 'turn_id':self.turn_id, 'turn':params['turn'],
                               'status':params['turn']['status'], 'usage':deepcopy(self._usage),
                               'assurance':'audited-tool-allowlist', 'exclusive_os_isolation':False}
+                    if self._progress is not None:
+                        result['progress_made'] = self._progress.generation != progress_before
                     self._event('local', {'event':'turn_completed', **result})
                     return result
         except BaseException as error:

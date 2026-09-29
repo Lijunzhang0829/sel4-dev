@@ -82,11 +82,53 @@ class ContinuationProvidersTest(unittest.TestCase):
         self.assertEqual([x['theory'] for x in reuse['theories']], ['Base', 'Provider'])
         self.assertTrue((destination/'theories/Target/batch-requests/000319/feedback.json').exists())
 
+    def test_workspace_continuation_carries_all_verified_states(self):
+        destination = self.root/'workspace-continuation'
+        durable(self.source/'theories/Target/provider-session.json', {'imports':['Regen_Provider']})
+        with patch.object(execution, 'init_run', side_effect=self.initialize), \
+             patch.object(execution, 'progress', return_value={}):
+            run = execution.fork_workspace_continuation(self.source,destination)
+        for name in ('Base','Provider','Target'):
+            state = execution.journal(destination,run,self.packages[name]).replay()
+            self.assertEqual(state['proofs'],{'helper':'by simp'})
+            self.assertEqual(state['status'],'generating' if name=='Target' else 'sealed')
+        record=json.loads((destination/'workspace-continuation.json').read_text())
+        self.assertEqual(record['sealed_theories'],['Base','Provider'])
+        self.assertEqual([x['theory'] for x in record['theories']],['Target'])
+        self.assertTrue((destination/'theories/Target/batch-requests/000319/feedback.json').exists())
+        self.assertFalse((destination/'theories/Target/provider-session.json').exists())
+
     def test_missing_transitive_seal_rejected_before_new_run(self):
         (self.source/'theories/Base/acceptance/commits/000003.json').unlink()
         with self.assertRaisesRegex(ValueError, 'terminal seal'):
             self.fork()
         self.assertFalse((self.root/'continuation').exists())
+
+    def test_checkpoint_uses_prefix_and_does_not_copy_latest_files(self):
+        selection = {'source_run':str(self.source), 'theories':{}}
+        for name in ('Base','Provider','Target'):
+            paths = sorted((self.source/'theories'/name/'acceptance/commits').glob('*.json'))
+            chosen = paths[0] if name == 'Target' else paths[-1]
+            selection['theories'][name] = {'commit_id':json.loads(chosen.read_text())['commit_id']}
+        durable(self.source/'theories/Target/provider-session.json', {'imports':['Regen_Provider']})
+        destination = self.root/'checkpoint'
+        with patch.object(execution, 'init_run', side_effect=self.initialize), \
+             patch.object(execution, 'progress', return_value={}):
+            run = execution.fork_workspace_continuation(self.source,destination,checkpoint=selection)
+        state = execution.journal(destination,run,self.packages['Target']).replay()
+        self.assertEqual(state['proofs'], {})
+        self.assertEqual(state['batch_requests'],319)
+        self.assertFalse((destination/'theories/Target/provider-session.json').exists())
+        self.assertFalse((destination/'theories/Target/batch-requests').exists())
+
+    def test_checkpoint_rejects_missing_dependency_before_creating_run(self):
+        paths = sorted((self.source/'theories/Target/acceptance/commits').glob('*.json'))
+        selection = {'source_run':str(self.source), 'theories':{'Target':{
+            'commit_id':json.loads(paths[-1].read_text())['commit_id']}}}
+        destination = self.root/'checkpoint'
+        with self.assertRaisesRegex(ValueError,'frozen dependency'):
+            execution.fork_workspace_continuation(self.source,destination,checkpoint=selection)
+        self.assertFalse(destination.exists())
 
     def test_tampered_provider_evidence_rejected_before_new_run(self):
         path = self.source/'theories/Provider/acceptance/commits/000003.json'
