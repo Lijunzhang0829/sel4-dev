@@ -11,7 +11,9 @@ from pathlib import Path
 import re
 import threading
 
-from regen.execution.proof_commits import digest, _fingerprint, commit_paths, journal_lock
+from regen.execution.proof_commits import (
+    digest, commit_paths, journal_lock, actual_dependencies as _actual_dependencies,
+)
 from regen.planning.proof_graph import DECLARATION, normalized_declaration_body
 
 SCHEMA = 'shared-proof-workspace-v1'
@@ -47,22 +49,6 @@ def _outside_strings(text, transform):
     return ''.join(pieces)
 
 
-def _actual_dependencies(evidence, graph):
-    """Read only dependency records embedded in a validated acceptance record."""
-    result = {}
-    check = evidence.get('dependencies', {})
-    audit = check.get('complete_theory_audit', {})
-    native = check.get('source_content', '')
-    label = re.search(r'^\s*theory\s+([A-Za-z0-9_]+)', native)
-    if not label or check.get('verdict') != 'green':
-        return result
-    names = {label[1] + '.' + n['name']: n['id'] for n in graph['nodes']}
-    for key, row in audit.get('proof_dependencies', {}).items():
-        result[key] = sorted({names[d['canonical_name']] for d in row.get('dependencies', [])
-                              if d.get('canonical_name') in names and names[d['canonical_name']] != key})
-    return result
-
-
 class SharedProofWorkspace:
     def __init__(self, run_dir):
         self.root = Path(run_dir).resolve()
@@ -95,7 +81,6 @@ class SharedProofWorkspace:
         if len(set(self.fixed_contract_ids)) != len(self.fixed_contract_ids):
             raise ValueError('duplicate frozen contract target')
         self._lock = threading.RLock()
-        self._cache = {}
         self._index_cache = {}
         self._observed_sequences = {}
 
@@ -138,70 +123,42 @@ class SharedProofWorkspace:
     def _read_snapshot(self, theory, commit_id=None, *, package, directory):
         """Validate the same chain/evidence as ProofCommits, without HEAD repair.
 
-        Cached snapshots are bound to every immutable prefix file's fingerprint.
-        A requested historical commit is still in this run and is validated from
-        the beginning; it does not follow historical-run paths or catalog rows.
+        ProofCommits shares validated prefixes with the writer and other readers.
+        Both latest and historical reads check the complete observed prefix;
+        no historical-run path or mutable catalog row confers authority.
         """
         from regen.execution.repository_execution import journal
-        # journal() constructs only a validator and binding; replay() is not used
-        # because normal replay may repair its mutable HEAD.json projection.
         self._path(directory / 'imports.json')
         log = journal(self.root, self.run, package)
         self._path(directory / 'acceptance' / 'HEAD.json')
         paths, _ = commit_paths(self._path(directory / 'acceptance'))
-        fingerprints = tuple(_fingerprint(self._path(p)) for p in paths)
+        for path in paths:
+            self._path(path)
         if len(paths) < self._observed_sequences.get(theory, 0):
             raise ValueError('workspace committed history is missing from an observed prefix')
         self._observed_sequences[theory] = len(paths)
-        cache_key = (theory, commit_id, digest(log.binding))
-        cached = self._cache.get(cache_key)
-        if cached and cached[0] == fingerprints:
-            return deepcopy(cached[1])
-        state = previous = None
+        snapshot = log.replay_snapshot(commit_id=commit_id)
+        if snapshot is None:
+            return None
         inherited_run_id = None
         actual = {}
-        result = None
-        for sequence, path in enumerate(paths, 1):
-            record = self._json(path)
-            if _fingerprint(path) != fingerprints[sequence - 1]:
-                raise ValueError('workspace source changed during journal validation')
-            body = {k: v for k, v in record.items() if k != 'commit_id'}
-            if (path.name != f'{sequence:06d}.json' or record.get('sequence') != sequence
-                    or record.get('parent') != previous or record.get('binding') != log.binding
-                    or record.get('commit_id') != digest(body)):
-                raise ValueError('invalid workspace proof commit chain/binding')
-            log.validate(state, record['state'], record['event'], record['evidence'])
-            state, previous = record['state'], record['commit_id']
-            # The validator above replays the complete embedded origin and binds
-            # this initial state exactly. Retain its index identity without
-            # trusting arbitrary foreign run IDs in later records.
-            if sequence == 1 and record['event'] == 'initial' and any(
-                    key in record['evidence'] for key in ('sealed_reuse','continuation')):
-                inherited_run_id = state['graph']['run_id']
+        for sequence, record in enumerate(snapshot['records'], 1):
+            # Lightweight metadata is collected only after ordinary acceptance
+            # validation, including full validation of embedded continuations.
+            identity = record['graph_identity']
+            if identity is None:
+                raise ValueError('workspace source has no proof graph')
+            if sequence == 1 and record['inherited']:
+                inherited_run_id = identity['run_id']
             run_ids = {self.run['run_id'], self.run['run_id'] + '--' + theory,
                        self.run['run_id'] + '--' + Path(package['file_slot']).stem}
             if inherited_run_id is not None:
                 run_ids.add(inherited_run_id)
-            if state['graph']['run_id'] not in run_ids or state['graph']['theory'] != theory:
+            if identity['run_id'] not in run_ids or identity['theory'] != theory:
                 raise ValueError('workspace graph belongs to a different run/theory')
-            if record['event'] == 'seal':
-                actual.update(_actual_dependencies(record['evidence'], state['graph']))
-            if commit_id is not None and previous == commit_id:
-                result = {'state': state, 'commit_id': previous, 'actual_dependencies': actual,
-                          'directory': str(directory), 'package': package}
-                break
-        if commit_id is not None and result is None:
-            raise ValueError('unknown immutable source commit in this theory')
-        if commit_id is None:
-            result = None if state is None else {
-                'state': state, 'commit_id': previous, 'actual_dependencies': actual,
-                'directory': str(directory), 'package': package}
-        # Retain a small read cache, never source journal records or raw logs.
-        if len(self._cache) >= 8: self._cache.pop(next(iter(self._cache)))
-        self._cache[cache_key] = (fingerprints, deepcopy(result))
-        if result is not None and commit_id is None:
-            self._cache[(theory, result['commit_id'], digest(log.binding))] = self._cache[cache_key]
-        return deepcopy(result)
+            actual.update(record['actual_dependencies'])
+        return {'state': snapshot['state'], 'commit_id': snapshot['commit_id'],
+                'actual_dependencies': actual, 'directory': str(directory), 'package': package}
 
     def _ref(self, snapshot, node):
         return {'run_id': self.run['run_id'], 'theory': snapshot['state']['graph']['theory'],

@@ -13,7 +13,7 @@ from regen.planning.proof_graph import build_graph
 from regen.tests.current.test_proof_batches import Checker
 
 
-def setup_run(root, *, source_context=None, contract_dependency=False):
+def setup_run(root, *, source_context=None, contract_dependency=False, target_started=True):
     source_context = source_context or []
     packages = []
     initial = {}
@@ -43,6 +43,8 @@ def setup_run(root, *, source_context=None, contract_dependency=False):
         'package_hashes': {p['file_slot']: p['package_payload_sha256'] for p in packages}})
     for package in packages:
         durable(root / 'packages' / (package['file_slot'] + '.json'), package)
+        if package['theory'] == 'Target' and not target_started:
+            continue
         j = journal(root, run, package)
         j.append('initial', initial[package['theory']], {'check': Checker().check_graph(initial[package['theory']]['graph'])})
     source_package = packages[0]

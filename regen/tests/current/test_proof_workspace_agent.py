@@ -6,7 +6,6 @@ from contextlib import ExitStack
 from copy import deepcopy
 import json
 from pathlib import Path
-import shutil
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
@@ -35,7 +34,9 @@ class ProofWorkspaceAgentTest(unittest.TestCase):
         return controller
 
     def fresh_target(self, **projection):
-        shutil.rmtree(self.root/'theories/Target')
+        # Start a genuinely empty target, not a deletion of accepted history.
+        self.root = self.root/'not-started-target'
+        self.run, self.packages, self.initial, self.source = setup_run(self.root, target_started=False)
         if projection:
             package = self.packages[1]
             package['repository_projection'] = projection

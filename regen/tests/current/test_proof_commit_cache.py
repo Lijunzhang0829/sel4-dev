@@ -6,7 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from regen.execution.proof_commits import ProofCommits, digest, durable
 
@@ -149,9 +149,10 @@ class ProofCommitCacheTest(unittest.TestCase):
         active = ProofCommits(self.root, {'run':'demo'}, self.validate, cache_namespace='repository')
         active.replay()
         self.validate.reset_mock()
-        for n in range(15):
-            other = ProofCommits(self.root/f'active-{n}', {}, Mock(), cache_namespace='repository')
-            other.append('initial', {'n':n}, {})
+        with patch('regen.execution.proof_commits._MAX_VERIFIED_PREFIXES', 8):
+            for n in range(15):
+                other = ProofCommits(self.root/f'active-{n}', {}, Mock(), cache_namespace='repository')
+                other.append('initial', {'n':n}, {})
         active.replay()
         self.validate.assert_not_called()
         path = self.root/'commits/000001.json'

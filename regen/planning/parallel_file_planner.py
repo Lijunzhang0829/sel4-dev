@@ -350,10 +350,10 @@ class TheoryController(WorkspaceController):
             raise ValueError('wait for outstanding checks before seal changes build outputs')
         if any(row['kind']=='seal' for row in self._pending()):
             raise ValueError('seal is in flight; its frozen build inputs are exclusive')
-        row = next(row for row in self.list_workspace()['theories'] if row['theory']==self.theory)
+        package, snapshot = self._state(self.theory)
+        row = self._theory_readiness(self.theory, package=package, state=snapshot)
         if not row['ready_for_proof_action']:
             raise ValueError('theory is not ready for checks: '+json.dumps(row['unsealed_providers']))
-        package, snapshot = self._state(self.theory)
         binding = {key:snapshot[key] for key in ('graph','proofs','accepted_order')}
         binding = {'state_sha256':digest(binding),'run_id':self.run['run_id'],
                    'package_sha256':package['package_payload_sha256']}
@@ -608,8 +608,10 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
         with event_scope(sessions,run_id=overview.run['run_id']):
             with ThreadPoolExecutor(max_workers=max_parallel_theories,thread_name_prefix='file-planner') as agents:
                 try:
+                    refresh = True
                     while True:
-                        rows = overview.list_workspace()['theories']
+                        if refresh:
+                            rows = overview.list_workspace()['theories']
                         eligible = _stage_eligible(rows, policy, active.values())
                         for row in rows:
                             if len(active)>=max_parallel_theories:
@@ -634,6 +636,11 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                         if not active:
                             break
                         done,_ = wait(active,timeout=1,return_when=FIRST_COMPLETED)
+                        # Full slots need no new scheduling decision. With a
+                        # free slot, a still-active writer may have sealed a
+                        # provider before returning from its session; continue
+                        # polling then so its hard dependants can start.
+                        refresh = bool(done) or len(active) < max_parallel_theories
                         for future in done:
                             theory = active.pop(future)
                             try:

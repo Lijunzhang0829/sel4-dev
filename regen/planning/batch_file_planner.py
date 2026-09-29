@@ -967,8 +967,10 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 new.update(status='generating', reason='', runtime_policy=policy)
                 new.pop('termination', None)
                 state = journal.append('resume', new, {'reason':'authorized batch controller; preserve graph, proofs and historical costs'})
-            initialization.mark('progress')
-            progress(run_dir)
+                initialization.mark('progress')
+                progress(run_dir)
+            # A cached workspace action has not changed accepted state here.
+            # Its result below publishes progress once, after the actual commit.
         if observation_source is not None:
             observed = observation_source(state)
             if observed != state:
@@ -1176,9 +1178,9 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                             state = journal.append('document' if document_source is not None else 'batch', candidate, evidence)
                             timing.metadata.update(status='accepted', action_completed=True, check_verdict='green')
                             timing.mark('progress')
-                            progress(run_dir)
+                            projection = progress(run_dir)
                             if max_requests and executed >= max_requests:
-                                return {'status':'checkpoint', **progress(run_dir)}
+                                return {'status':'checkpoint', **projection}
                             continue
                         feedback = {'status':'rejected_batch', 'check':evidence['check'],
                             'node_results':evidence.get('node_results',[]), 'failure_identity':identity}
@@ -1220,11 +1222,11 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 new = apply_feedback(state, proposal, feedback, count, observation_order=observation_order)
                 state = journal.append('planner-feedback', new, {'request_number':count, 'feedback':feedback})
                 timing.mark('progress')
-                progress(run_dir)
+                projection = progress(run_dir)
                 if feedback['status'] == 'paused':
-                    return {'status':'paused', 'reason':feedback['reason'], **progress(run_dir)}
+                    return {'status':'paused', 'reason':feedback['reason'], **projection}
                 if max_requests and executed >= max_requests:
-                    return {'status':'checkpoint', **progress(run_dir)}
+                    return {'status':'checkpoint', **projection}
         return {'status':'checkpoint', **progress(run_dir)}
     except BaseException as error:
         from regen.execution.check_tasks import CheckCancelled

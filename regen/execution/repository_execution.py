@@ -930,19 +930,24 @@ def _sealed_provider_inputs(source_dir, source, imports):
 def _reuse_sealed_theories(destination, run, source_dir, prepared):
     reused = []
     for package, origin, state in prepared:
-        directory = destination/'theories'/Path(package['file_slot']).stem
-        durable(directory/'imports.json', origin['imports'], immutable=True)
-        evidence = origin['commits'][-1]['evidence']
-        log = journal(destination, run, package)
-        log.append('initial', state, {'check':evidence['complete'], 'sealed_reuse':origin})
-        sealed = deepcopy(state)
-        sealed.update(status='sealed', reason='', seal_id=origin['commits'][-1]['state']['seal_id'])
-        log.append('seal', sealed, evidence)
-        reused.append({'theory':package['theory'], 'source_commit':origin['commits'][-1]['commit_id'],
-                       'seal_id':sealed['seal_id']})
+        reused.append(_reuse_sealed_theory(destination, run, package, origin, state))
     if reused:
         durable(destination/'sealed-reuse.json', {'source_run':str(source_dir), 'theories':reused,
             'policy':'verify embedded source chains and seals; preserve accepted proofs and cumulative costs'}, immutable=True)
+
+
+def _reuse_sealed_theory(destination, run, package, origin, state):
+    """Publish one already verified origin without retaining another history."""
+    directory = destination/'theories'/Path(package['file_slot']).stem
+    durable(directory/'imports.json', origin['imports'], immutable=True)
+    evidence = origin['commits'][-1]['evidence']
+    log = journal(destination, run, package)
+    log.append('initial', state, {'check':evidence['complete'], 'sealed_reuse':origin})
+    sealed = deepcopy(state)
+    sealed.update(status='sealed', reason='', seal_id=origin['commits'][-1]['state']['seal_id'])
+    log.append('seal', sealed, evidence)
+    return {'theory':package['theory'], 'source_commit':origin['commits'][-1]['commit_id'],
+            'seal_id':sealed['seal_id']}
 
 
 def continuation_declaration_coverage(origin, state):
@@ -997,8 +1002,101 @@ def fork_continuation(source_dir, destination, theory):
     return run
 
 
+def _workspace_continuation_input(source_dir, source, entry, selection, *, expected=None):
+    """Load and fully validate one origin; callers must not retain all origins.
+
+    The small descriptor binds both phases to the same immutable source prefix.
+    It is not proof authority: the second phase replays every embedded commit.
+    A checkpoint intentionally does not inspect later, excluded source records.
+    """
+    from regen.execution.proof_commits import _fingerprint
+    package = package_for(source, entry['file_slot'])
+    directory = source_dir/'theories'/Path(entry['file_slot']).stem
+    paths = sorted((directory/'acceptance/commits').glob('*.json'))
+    if expected is not None:
+        if selection is not None:
+            paths = paths[:len(expected['fingerprints'])]
+        if tuple(_fingerprint(p) for p in paths) != expected['fingerprints']:
+            raise ValueError('continuation source changed after preflight')
+    records, fingerprints = [], []
+    for path in paths:
+        fingerprint = _fingerprint(path)
+        record = read(path)
+        if _fingerprint(path) != fingerprint:
+            raise ValueError('continuation source changed during read')
+        records.append(record)
+        fingerprints.append(fingerprint)
+        if selection is not None and record['commit_id'] == selection['commit_id']:
+            break
+    if selection is not None and (not records or records[-1]['commit_id'] != selection['commit_id']):
+        raise ValueError('checkpoint commit not found')
+    if not records:
+        return None
+    imports_path = directory/'imports.json'
+    imports_fingerprint = _fingerprint(imports_path)
+    imports = read(imports_path)
+    origin = {'run':source, 'imports':imports, 'commits':records}
+    status = records[-1]['state']['status']
+    if status == 'retired':
+        raise ValueError('retired workspace continuation is not supported')
+    state = continuation_state(package, origin, sealed_reuse=status == 'sealed')
+    if (_fingerprint(imports_path) != imports_fingerprint
+            or tuple(_fingerprint(p) for p in paths[:len(records)]) != tuple(fingerprints)):
+        raise ValueError('continuation source changed during validation')
+    descriptor = {'entry':entry, 'imports':imports, 'status':status,
+                  'source_commit':records[-1]['commit_id'], 'state_sha256':digest(state),
+                  'package_sha256':package['package_payload_sha256'],
+                  'fingerprints':tuple(fingerprints), 'imports_fingerprint':imports_fingerprint}
+    if expected is not None and descriptor != expected:
+        raise ValueError('continuation source changed after preflight')
+    return package, origin, state, descriptor
+
+
+def _preflight_workspace_continuation(source_dir, source, entry, selection):
+    # Function scope ensures the large origin dies before the next is loaded.
+    prepared = _workspace_continuation_input(source_dir, source, entry, selection)
+    if prepared is None:
+        return None
+    package, _origin, state, descriptor = prepared
+    if selection is not None and descriptor['status'] != 'sealed':
+        _checkpoint_artifacts(source_dir/'theories'/Path(package['file_slot']).stem,
+                              selection, state)
+    return descriptor
+
+
+def _carry_workspace_continuation(source_dir, source, destination, run, descriptor, selection):
+    package, origin, state, _ = _workspace_continuation_input(
+        source_dir, source, descriptor['entry'], selection, expected=descriptor)
+    if descriptor['status'] == 'sealed':
+        return _reuse_sealed_theory(destination, run, package, origin, state)
+    old_dir = source_dir/'theories'/Path(package['file_slot']).stem
+    new_dir = destination/'theories'/Path(package['file_slot']).stem
+    if selection is None:
+        shutil.copytree(old_dir, new_dir, ignore=shutil.ignore_patterns(
+            'acceptance','isabelle','heaps','provider-session.json','progress.json','active-graph.json',
+            'declaration-index.json','runtime-policy.json','batch-policy.json',
+            'execution-stop.json','PROOF-RUN-REPORT.md'))
+    else:
+        durable(new_dir/'imports.json', origin['imports'], immutable=True)
+        for relative, payload in _checkpoint_artifacts(old_dir, selection, state):
+            target = new_dir/relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(payload)
+    graph_check = next((r['evidence']['graph_check'] if r['event']=='batch'
+                        else r['evidence']['check'])
+                       for r in reversed(origin['commits'])
+                       if r['event'] in {'initial','revision','revoke'}
+                       or r['event']=='batch' and r['evidence'].get('graph_check') is not None)
+    initial_evidence = {'check':graph_check, 'continuation':origin}
+    if any(n['statement'] not in graph_check['source_content'] for n in state['graph']['nodes']):
+        initial_evidence['declaration_coverage'] = continuation_declaration_coverage(origin, state)
+    journal(destination, run, package).append('initial', state, initial_evidence)
+    return {'theory':package['theory'], 'source_commit':origin['commits'][-1]['commit_id'],
+            'status':state['status']}
+
+
 def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
-    """Fork every verified repository state under a new implementation binding."""
+    """Fork verified states, retaining at most one decoded theory origin at a time."""
     source_dir, destination = Path(source_dir).resolve(), Path(destination).resolve()
     if destination.exists():
         raise ValueError('continuation destination already exists')
@@ -1012,77 +1110,39 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
     sealed = []
     continuing = []
     for entry in read(source_dir/'execution-input.json')['files']:
-        package = package_for(source, entry['file_slot'])
-        old_dir = source_dir/'theories'/Path(entry['file_slot']).stem
         selection = checkpoint['theories'].get(entry['theory']) if checkpoint is not None else None
         if checkpoint is not None and selection is None:
             continue
-        records = [read(p) for p in sorted((old_dir/'acceptance/commits').glob('*.json'))]
-        if selection is not None:
-            boundary = next((i for i,r in enumerate(records)
-                             if r['commit_id'] == selection['commit_id']), None)
-            if boundary is None:
-                raise ValueError('checkpoint commit not found')
-            records = records[:boundary+1]
-        if not records:
+        descriptor = _preflight_workspace_continuation(source_dir, source, entry, selection)
+        if descriptor is None:
             continue
-        origin = {'run':source, 'imports':read(old_dir/'imports.json'), 'commits':records}
-        status = records[-1]['state']['status']
-        if status == 'sealed':
-            state = continuation_state(package, origin, sealed_reuse=True)
-            sealed.append((package, origin, state))
-        elif status == 'retired':
-            raise ValueError('retired workspace continuation is not supported')
-        else:
-            state = continuation_state(package, origin)
-            continuing.append((package, origin, state, old_dir))
+        (sealed if descriptor['status'] == 'sealed' else continuing).append(descriptor)
     if not sealed and not continuing:
         raise ValueError('source contains no verified theory state')
     if checkpoint is not None:
         from regen.execution.proof_session_runner import generated_checkpoint_theory
-        available = {generated_checkpoint_theory(p['file_slot']) for p,_,_ in sealed}
-        for _, origin, _ in sealed:
-            if not set(origin['imports']) <= available:
+        available = {generated_checkpoint_theory(d['entry']['file_slot']) for d in sealed}
+        for descriptor in sealed:
+            if not set(descriptor['imports']) <= available:
                 raise ValueError('checkpoint excludes a sealed dependency')
-        for package, origin, state, old_dir in continuing:
-            if not set(origin['imports']) <= available:
+        for descriptor in continuing:
+            if not set(descriptor['imports']) <= available:
                 raise ValueError('checkpoint excludes a frozen dependency')
-            _checkpoint_artifacts(old_dir, checkpoint['theories'][package['theory']], state)
     run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
                    destination.name, Path(source['session_schedule']['source']))
     if any(run.get(k) != source.get(k) for k in CONTINUATION_ENV_FIELDS):
         raise ValueError('continuation environment mismatch')
-    _reuse_sealed_theories(destination, run, source_dir, sealed)
-    carried = []
-    for package, origin, state, old_dir in continuing:
-        new_dir = destination/'theories'/Path(package['file_slot']).stem
-        if checkpoint is None:
-            shutil.copytree(old_dir, new_dir, ignore=shutil.ignore_patterns(
-            'acceptance','isabelle','heaps','provider-session.json','progress.json','active-graph.json',
-            'declaration-index.json','runtime-policy.json','batch-policy.json',
-            'execution-stop.json','PROOF-RUN-REPORT.md'))
-        else:
-            durable(new_dir/'imports.json', origin['imports'], immutable=True)
-            for relative, payload in _checkpoint_artifacts(
-                    old_dir, checkpoint['theories'][package['theory']], state):
-                target = new_dir/relative
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes(payload)
-        graph_check = next((r['evidence']['graph_check'] if r['event']=='batch'
-                            else r['evidence']['check'])
-                           for r in reversed(origin['commits'])
-                           if r['event'] in {'initial','revision','revoke'}
-                           or r['event']=='batch' and r['evidence'].get('graph_check') is not None)
-        initial_evidence = {'check':graph_check, 'continuation':origin}
-        if any(n['statement'] not in graph_check['source_content'] for n in state['graph']['nodes']):
-            initial_evidence['declaration_coverage'] = continuation_declaration_coverage(origin,state)
-        journal(destination,run,package).append('initial',state,initial_evidence)
-        carried.append({'theory':package['theory'],
-                        'source_commit':origin['commits'][-1]['commit_id'],
-                        'status':state['status']})
+    reused, carried = [], []
+    for descriptor in sealed + continuing:
+        selection = checkpoint['theories'][descriptor['entry']['theory']] if checkpoint is not None else None
+        result = _carry_workspace_continuation(source_dir, source, destination, run, descriptor, selection)
+        (reused if descriptor['status'] == 'sealed' else carried).append(result)
+    if reused:
+        durable(destination/'sealed-reuse.json', {'source_run':str(source_dir), 'theories':reused,
+            'policy':'verify embedded source chains and seals; preserve accepted proofs and cumulative costs'}, immutable=True)
     durable(destination/'workspace-continuation.json', {
         'source_run':str(source_dir), 'theories':carried,
-        'sealed_theories':[p['theory'] for p,_,_ in sealed],
+        'sealed_theories':[d['entry']['theory'] for d in sealed],
         'reason':'explicitly authorised repository continuation after harness repair',
         'policy':'replay embedded source chains; preserve drafts, proofs, costs and seals'}, immutable=True)
     if checkpoint is not None:

@@ -135,6 +135,26 @@ class WorkspaceController:
         return {'run_id':self.run['run_id'], 'worker_count':1, 'theories':rows,
                 'all_selected_sealed':all(states[t] in {'sealed','retired'} for t in self.selected)}
 
+    def _theory_readiness(self, theory, *, package=None, state=None):
+        """Read only a target and its hard providers, not the whole repository."""
+        from regen.planning.import_contract import required_imports
+        if theory not in self.selected:
+            raise ValueError('proof target is outside selected theories')
+        if package is None or state is None:
+            package, state = self._state(theory)
+        providers = [p['theory'] for p in required_imports(package['repository_projection'])]
+        unsealed = [provider for provider in providers
+                    if provider not in self.shared.entries or self._state(provider)[1]['status'] != 'sealed']
+        return {'theory':theory, 'status':state['status'], 'unsealed_providers':unsealed,
+                'ready_for_proof_action':not unsealed and state['status'] not in {'sealed','retired'}}
+
+    def _all_selected_sealed(self, theory, state):
+        # Most actions leave their target generating; that alone proves false.
+        if state['status'] not in {'sealed','retired'}:
+            return False
+        return all(self._state(other)[1]['status'] in {'sealed','retired'}
+                   for other in self.selected if other != theory)
+
     def handle(self, name, arguments, metadata):
         from regen.infrastructure.progress_events import emit_event
         emit_event('workspace_tool_started', tool=name, theory=arguments.get('theory', arguments.get('target_theory')),
@@ -175,9 +195,7 @@ class WorkspaceController:
         theory, proposal = arguments['theory'], arguments['proposal']
         if not isinstance(proposal, dict):
             raise ValueError('proposal must be an object')
-        row = next((t for t in self.list_workspace()['theories'] if t['theory']==theory), None)
-        if row is None or theory not in self.selected:
-            raise ValueError('proof target is outside selected theories')
+        row = self._theory_readiness(theory)
         if row['status'] in {'sealed','retired'}:
             return {'status':'already_'+row['status'],'theory':theory}
         if row['unsealed_providers']:
@@ -202,7 +220,7 @@ class WorkspaceController:
         return {'theory':theory,'status':state['status'],'request_number':state.get('batch_requests',0),
                 'green_node_ids':list(state['accepted_order']),
                 'feedback':compact_feedback(state.get('batch_feedback',{})),
-                'all_selected_sealed':self.list_workspace()['all_selected_sealed']}
+                'all_selected_sealed':self._all_selected_sealed(theory, state)}
 
     def close(self):
         errors = []

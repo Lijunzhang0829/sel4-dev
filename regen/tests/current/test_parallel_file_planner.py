@@ -125,15 +125,14 @@ class ParallelControllerTests(unittest.TestCase):
         # Hold setup after submission, alter only graph identity before it returns.
         # No real run permits this second writer; this injects corruption for the gate.
         original=self.controller._state
-        calls=[]
+        submitted=threading.Event()
         def state(theory):
             package,value=original(theory)
-            calls.append(1)
-            if len(calls)>=4:
+            if submitted.is_set():
                 value=deepcopy(value);value['graph']['revision']+=1
             return package,value
         with patch.object(self.controller,'_state',side_effect=state),patch.object(
-                self.controller,'_runtime',return_value=None),patch(
+                self.controller,'_runtime',side_effect=submitted.set),patch(
                 'regen.planning.proof_workspace_agent.WorkspaceController.proof_action') as action:
             row=self.controller.submit({'theory':'Target','kind':'proof_batch',
                 'proposal':{'action':'submit_batch','proofs':{'target_contract':'by simp'}}},self.metadata)
