@@ -418,6 +418,7 @@ def committed_batch_results(directory):
     The controller calls this only after journal.replay validated this chain and
     any embedded continuation origins. Artifact summaries are not proof authority.
     """
+    from regen.execution import proof_commits
     results = {}
     def visit(record):
         if record.get('event') == 'initial':
@@ -429,8 +430,26 @@ def committed_batch_results(directory):
             number = state.get('batch_requests')
             if isinstance(number, int):
                 results[number] = deepcopy(state.get('batch_feedback', {'status':'accepted'}))
-    for path in sorted((directory/'acceptance/commits').glob('*.json')):
-        visit(json.loads(path.read_text()))
+    acceptance = directory/'acceptance'
+    # Match replay's journal -> cold-memory lock order. Recovery traverses the
+    # same potentially giant embedded origins and must share its memory gate.
+    with proof_commits.journal_lock(acceptance):
+        for path in sorted((acceptance/'commits').glob('*.json')):
+            fingerprint = proof_commits._fingerprint(path)
+            with proof_commits._COLD_REPLAY_LOCK:
+                record = None
+                try:
+                    record = json.loads(path.read_text())
+                    if proof_commits._fingerprint(path) != fingerprint:
+                        raise ValueError('proof commit changed during batch recovery')
+                    visit(record)
+                except BaseException as error:
+                    proof_commits._clear_validation_tracebacks(error)
+                    raise
+                finally:
+                    # Future exceptions must not retain a decoded origin, and
+                    # the next recovery/replay must not overlap its lifetime.
+                    del record
     return results
 
 
