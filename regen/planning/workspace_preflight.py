@@ -3,6 +3,7 @@ from pathlib import Path
 from regen.planning.import_contract import required_imports
 import hashlib
 import json
+import threading
 from regen.planning.workspace_validation import PREFLIGHT_THEORY
 from regen.execution.isabelle_node_checker import IsabelleChecker
 from regen.preparation.checker_context import load_context
@@ -35,6 +36,19 @@ def native_checker(dataset, timeout=900, *, threads=4):
     if type(threads) is not int or threads < 1:
         raise ValueError("preflight threads must be positive")
     ctx=load_context(Path(dataset))
+    active=set()
+    active_lock=threading.Lock()
+    aborted=threading.Event()
+    def abort():
+        aborted.set()
+        with active_lock:
+            executors=list(active)
+        from regen.execution.check_executor import _raise_cleanup_errors
+        errors=[]
+        for executor in executors:
+            try:executor.close()
+            except BaseException as error:errors.append(error)
+        _raise_cleanup_errors(errors)
     def execute(payload, proposal, output):
         output=Path(output); source=output/'source'
         hub=render(payload,proposal,source,ctx['base_import'])
@@ -65,8 +79,13 @@ def native_checker(dataset, timeout=900, *, threads=4):
         owned = resources is None
         resources = resources or NativeResources(1,threads,1)
         marker = CURRENT_RESOURCES.set(resources)
-        executor = CheckExecutor(Path(output)/'native-task',workers=1)
+        executor = None
         try:
+            executor = CheckExecutor(Path(output)/'native-task',workers=1)
+            with active_lock:
+                if aborted.is_set():
+                    raise RuntimeError('repository planning preflight owner aborted')
+                active.add(executor)
             task = executor.submit(kind='preflight',theory=PREFLIGHT_THEORY,
                 binding={'checker_context_id':ctx['checker_context_id'],'payload_sha256':digest(payload)},
                 request={'proposal':proposal},execute=lambda _: execute(payload,proposal,output))
@@ -76,10 +95,16 @@ def native_checker(dataset, timeout=900, *, threads=4):
                 raise RuntimeError('native preflight '+task['status']+': '+task.get('diagnostic',''))
             return task['result']
         finally:
-            executor.close()
-            if owned:
-                resources.close()
-            CURRENT_RESOURCES.reset(marker)
+            try:
+                if executor is not None:executor.close()
+            finally:
+                with active_lock:
+                    active.discard(executor)
+                try:
+                    if owned:resources.close()
+                finally:
+                    CURRENT_RESOURCES.reset(marker)
     check.identity={'checker_context_id':ctx['checker_context_id'],'timeout_seconds':timeout,'threads':threads}
+    check.abort=abort
 
     return check

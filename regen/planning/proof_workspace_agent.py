@@ -60,8 +60,14 @@ def workspace_tools():
                'limit':{'type':'integer','minimum':1,'maximum':100}}),
         _tool('read_generated', 'Read exact declarations, contexts and proof bodies from immutable source references.',
               {'source_refs':{'type':'array','items':obj,'minItems':1,'maxItems':8}}, ('source_refs',)),
-        _tool('read_attempt', 'Read a bound failed candidate and feedback in any theory as reference only.',
-              {'theory':text, 'request_number':{'type':'integer','minimum':1}}, ('theory','request_number')),
+        _tool('list_attempts', 'Page verified failed history; filter explicitly by entry ID/status before reading details. Submitted does not mean failed.',
+              {'theory':text, 'entry_id':text,
+               'status':{'enum':['rejected_batch','rejected_request','checked_not_committed']},
+               'offset':{'type':'integer','minimum':0}, 'limit':{'type':'integer','minimum':1,'maximum':100},
+               'snapshot_commit_id':text}, ('theory',)),
+        _tool('read_attempt', 'Read a verified failed-attempt summary by default. Use view=full for exact original candidate, context and feedback. Reference only.',
+              {'theory':text, 'request_number':{'type':'integer','minimum':1},
+               'view':{'enum':['summary','full']}}, ('theory','request_number')),
         _tool('prepare_reuse', 'Prepare a complete helper closure and receipt for fresh target-native validation.',
               {'source_ref':obj,'target_theory':text,'target_node_id':text,'mapping':obj},
               ('source_ref','target_theory','target_node_id')),
@@ -96,7 +102,8 @@ class WorkspaceController:
         repo = Path(__file__).resolve().parents[2]
         if any(hashlib.sha256((repo/path).read_bytes()).hexdigest() != sha
                for path,sha in self.run['implementation'].items()):
-            raise ValueError('execution code changed after run initialization; use a new proof run')
+            from regen.execution.check_tasks import ImplementationChangedError
+            raise ImplementationChangedError('execution code changed after run initialization; use a new proof run')
 
     def _state(self, theory):
         from regen.planning.declaration_index import accepted_declarations
@@ -177,7 +184,9 @@ class WorkspaceController:
             if name == 'read_generated':
                 return self.shared.read(arguments['source_refs'])
             if name == 'read_attempt':
-                return self.shared.read_attempt(arguments['theory'], arguments['request_number'])
+                return self.shared.read_attempt(**arguments)
+            if name == 'list_attempts':
+                return self.shared.list_attempts(**arguments)
             if name == 'prepare_reuse':
                 _,state = self._state(arguments['target_theory'])
                 if arguments['target_theory'] not in self.selected:
@@ -190,12 +199,13 @@ class WorkspaceController:
         finally:
             emit_event('workspace_tool_finished', tool=name, call_id=metadata.get('call_id'))
 
-    def proof_action(self, arguments, metadata):
+    def proof_action(self, arguments, metadata, *, state_snapshot=None, helper_attempt=None):
         from regen.infrastructure.workspace_transcript import record_workspace_action, audit_workspace_session
         theory, proposal = arguments['theory'], arguments['proposal']
         if not isinstance(proposal, dict):
             raise ValueError('proposal must be an object')
-        row = self._theory_readiness(theory)
+        row = (self._theory_readiness(theory) if state_snapshot is None else
+               self._theory_readiness(theory, package=self.shared._package(theory), state=state_snapshot))
         if row['status'] in {'sealed','retired'}:
             return {'status':'already_'+row['status'],'theory':theory}
         if row['unsealed_providers']:
@@ -207,20 +217,42 @@ class WorkspaceController:
             if key[1] != theory:
                 runtime[4].close_prefix()
         if proposal.get('action') == 'finish':
-            options = ({'offset':metadata['transcript_offset']}
-                       if metadata.get('raw_request',{}).get('params',{}).get('tool')=='submit_check' else {})
-            audit_workspace_session(metadata['transcript_path'], require_terminal=False, require_real=True, **options)
+            # The callback reader continues appending notifications while a
+            # seal runs. Audit the already durable callback boundary, never an
+            # unconstrained read that can end in its next partially written line.
+            offset = metadata.get('transcript_offset')
+            if type(offset) is not int or offset <= 0:
+                raise ValueError('finish requires a durable workspace transcript offset')
+            audit_workspace_session(metadata['transcript_path'], require_terminal=False,
+                                    require_real=True, offset=offset)
         def decision_source(prompt, payload, prefix, **identity):
             return record_workspace_action(prefix,prompt,proposal,metadata,**identity)
+        committed = []
         _run_batch_file(self.root, theory, provider='codex', max_requests=1,
                         decision_source=decision_source,runtime_cache=self.runtime_cache,
                         observation_source=getattr(self,'_observation_state',None),
-                        observation_order=getattr(self,'_action_observation_order',None), **self.options)
-        _, state = self._state(theory)
-        return {'theory':theory,'status':state['status'],'request_number':state.get('batch_requests',0),
+                        observation_order=getattr(self,'_action_observation_order',None),
+                        state_sink=committed.append, incremental_progress=True,
+                        helper_attempt=helper_attempt, **self.options)
+        if committed:
+            state = committed[-1]
+        else:
+            _, state = self._state(theory)
+        self._completed_action_state = state
+        from regen.planning.planner_efficiency import feedback_semantics, next_proof_observation
+        feedback = state.get('batch_feedback', {})
+        result = {'theory':theory,'status':state['status'],'request_number':state.get('batch_requests',0),
                 'green_node_ids':list(state['accepted_order']),
-                'feedback':compact_feedback(state.get('batch_feedback',{})),
+                'feedback':compact_feedback(feedback),
+                **feedback_semantics(feedback),
                 'all_selected_sealed':self._all_selected_sealed(theory, state)}
+        if proposal.get('action') == 'finish' and state['status'] == 'sealed':
+            result.update(tool_status='completed', proof_verdict='green', publication='sealed')
+        if proposal.get('action') in {'check_theory', 'submit_batch'}:
+            observation = next_proof_observation(state, feedback=feedback)
+            if observation is not None:
+                result['next_proof_observation'] = observation
+        return result
 
     def close(self):
         errors = []

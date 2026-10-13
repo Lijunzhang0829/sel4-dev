@@ -7,6 +7,7 @@ with proof_session_runner. No restart or request replay is automatic.
 from __future__ import annotations
 
 import argparse
+import base64
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import fcntl
@@ -79,7 +80,11 @@ def _manifest(root):
     valued = {'--run-dir', '--theory', '--planner-model', '--call-timeout',
               '--check-timeout', '--candidate-timeout', '--codex-home',
               '--file-planner-interface', '--max-parallel-theories',
-              '--native-slots', '--native-threads', '--resident-limit', '--execution-policy'}
+              '--native-slots', '--native-threads', '--resident-limit', '--execution-policy',
+              '--native-cpus', '--native-memory-mb', '--native-pids-limit',
+              '--provider-build-timeout', '--build-ml-heap-mb', '--generation-strategy',
+              '--focus-contract-id', '--effective-seconds', '--resume-authorization',
+              '--extend-effective-seconds'}
     switches = {'--allow-external-call'}
     arguments = command[5:] if command[1] == '-u' else command[4:]
     options = {}
@@ -133,6 +138,35 @@ def _resource_admission(root, requirements):
             'available_memory_bytes': actual['min_available_memory_bytes']}
 
 
+def _effective_budget_status(root, invocation_id):
+    """Only the verified service invocation may explain this process's exit."""
+    if not invocation_id or not (root/'run.json').is_file():
+        return None
+    from regen.execution.proof_commits import digest
+    from regen.infrastructure.experiment_ledger import Ledger
+    from regen.infrastructure.effective_time_budget import CHECKPOINT_KIND, POLICY
+    run = json.loads((root/'run.json').read_text())
+    ledger = Ledger(root/'effective-generation-budget', run['run_id'])
+    bindings = [r for r in ledger.rows if r['kind'] == 'parallel_budget_binding']
+    invocations = [r for r in ledger.rows if r['kind'] == 'parallel_budget_invocation']
+    checkpoints = [r for r in ledger.rows if r['kind'] == CHECKPOINT_KIND]
+    if not bindings or not invocations or not checkpoints:
+        return None
+    if bindings[0]['data'].get('run_sha256') != digest(run):
+        raise ValueError('effective budget source binding differs from service run')
+    invocation, checkpoint = invocations[-1], checkpoints[-1]
+    if (invocation['data'].get('service_invocation_id') != invocation_id
+            or checkpoint['sequence'] <= invocation['sequence']):
+        return None
+    state = checkpoint['data']['state']
+    if (state.get('policy') == POLICY and state.get('paused')
+            and not state.get('finished')):
+        return {'reason':state.get('reason') or 'runner_paused', 'checkpoint_event_id':checkpoint['event_id'],
+                'effective_seconds':state['effective_seconds'], 'seconds':state['seconds'],
+                'resume_requires_authorization':True}
+    return None
+
+
 def status(run_dir):
     """Read liveness from systemd and process birth identity, never a running flag."""
     root = Path(run_dir).resolve()
@@ -174,6 +208,14 @@ def status(run_dir):
         result['status'] = 'process_completed'
     else:
         result['status'] = 'stopped'
+    if not result['running']:
+        try:
+            budget = _effective_budget_status(root, unit.get('InvocationID'))
+        except (ValueError, OSError, KeyError) as error:
+            result['budget_status_error'] = str(error)
+        else:
+            if budget is not None:
+                result.update(status='paused', generation_budget=budget)
     return result
 
 
@@ -201,7 +243,7 @@ def start(run_dir, *, stop_timeout=45):
         log = root/'service-runner.log'
         command = ['systemd-run', '--user', '--no-ask-password', '--quiet',
                    '--unit='+unit, '--description='+receipt['description'],
-                   '--service-type=exec', '--expand-environment=no', '--remain-after-exit',
+                   '--service-type=exec', '--remain-after-exit',
                    '--working-directory='+manifest['cwd'], '--property=Restart=no',
                    '--property=KillMode=mixed', '--property=KillSignal=SIGTERM',
                    '--property=SendSIGKILL=yes', '--property=TimeoutStopSec='+str(stop_timeout),
@@ -212,7 +254,11 @@ def start(run_dir, *, stop_timeout=45):
         for key in ('CODEX_HOME', 'REGEN_CODEX_BIN'):
             if key in os.environ:
                 command.append('--setenv='+key+'='+os.environ[key])
-        command.extend(['--', *manifest['command']])
+        # systemd 245 lacks --expand-environment. Encode argv rather than let
+        # systemd expand dollar signs or split arguments from the frozen command.
+        encoded = base64.b64encode(json.dumps(manifest['command']).encode()).decode()
+        trampoline = 'import base64,json,os,sys;a=json.loads(base64.b64decode(sys.argv[1]));os.execv(a[0],a)'
+        command.extend(['--', manifest['command'][0], '-c', trampoline, encoded])
         launched = subprocess.run(command, capture_output=True, text=True, timeout=30)
         if launched.returncode:
             raise RuntimeError('service launch failed; inspect status before retry: '+launched.stderr.strip())
@@ -227,15 +273,38 @@ def start(run_dir, *, stop_timeout=45):
         return observed
 
 
-def stop(run_dir):
+def stop(run_dir, *, expected_receipt_sha256=None):
+    """Stop only the receipt owner; guards may pin the exact launch receipt.
+
+    The expected digest is checked under the same control lock as start/stop,
+    so a replacement owner cannot be adopted between monitor and stop calls.
+    Ordinary manual stop callers retain the previous API and semantics.
+    """
     root = Path(run_dir).resolve()
+    if (expected_receipt_sha256 is not None
+            and (not isinstance(expected_receipt_sha256, str)
+                 or len(expected_receipt_sha256) != 64
+                 or any(c not in '0123456789abcdef' for c in expected_receipt_sha256))):
+        raise ValueError('invalid expected service receipt SHA256')
+
+    def bound_receipt():
+        raw = (root/'service-launch.json').read_bytes()
+        if (expected_receipt_sha256 is not None
+                and hashlib.sha256(raw).hexdigest() != expected_receipt_sha256):
+            raise RuntimeError('service receipt changed; refusing to stop replacement owner')
+        return json.loads(raw)
+
     with _control_lock(root):
+        if expected_receipt_sha256 is not None:
+            bound_receipt()
         observed = status(root)
+        receipt = bound_receipt() if expected_receipt_sha256 is not None else None
         if observed['status'] in {'previous_boot', 'not_loaded'}:
             return observed
         if not observed['identity_verified']:
             raise RuntimeError('refusing to stop a service whose identity differs from the receipt')
-        receipt = json.loads((root/'service-launch.json').read_text())
+        if receipt is None:
+            receipt = bound_receipt()
         stopped = subprocess.run(['systemctl', '--user', 'stop', receipt['unit']],
                                  capture_output=True, text=True,
                                  timeout=receipt['stop_timeout_seconds']+15)

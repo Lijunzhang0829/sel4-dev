@@ -83,6 +83,22 @@ local
         if read (stem ^ ".action") = "commit" then
           (case !pending of NONE => error "No pending audited batch"
            | SOME (st, text) => (base := st; base_text := text; pending := NONE; "COMMITTED"))
+        else if read (stem ^ ".action") = "observe" then
+          let
+            (* Start from imports, NOT base or pending. Never publish this
+               temporary theory or assign it to either proof state. *)
+            val name = read (stem ^ ".observation_name");
+            val isolated = Theory.begin_theory (name, Position.none) parents;
+            val position = Position.line_file 1 ("/candidate/" ^ name ^ ".thy");
+            val _ = Timeout.apply
+              (Time.fromReal (the (Real.fromString (read (stem ^ ".observation_timeout")))))
+              (fn () =>
+                let val finished = execute position (read (stem ^ ".request"))
+                      (Toplevel.make_state (SOME isolated));
+                    val _ = Toplevel.end_theory Position.none finished;
+                in () end) ();
+          in "OBSERVED" end
+        else if read (stem ^ ".action") <> "check" then error "Unknown worker action"
         else let
           val _ = pending := NONE;
           val position = Position.line_file
@@ -102,7 +118,9 @@ local
           val _ = pending := SOME (st, !base_text ^ delta);
         in "GREEN" end) ();
       val answer = (case result of Exn.Res text => text
-        | Exn.Exn (Timeout.TIMEOUT _) => "TIMEOUT\nCandidate execution and audit exceeded the time budget"
+        | Exn.Exn (Timeout.TIMEOUT _) =>
+            if read (stem ^ ".action") = "observe" then "TIMEOUT\nObservation exceeded the time budget"
+            else "TIMEOUT\nCandidate execution and audit exceeded the time budget"
         | Exn.Exn exn => "RED\n" ^ Runtime.exn_message exn);
       val _ = publish (stem ^ ".response") answer;
     in loop (n+1) end;

@@ -70,6 +70,25 @@ for line in sys.stdin:
 
 
 class CodexWorkspaceSessionTest(unittest.TestCase):
+    def test_handler_stop_ends_same_turn_after_tool_response(self):
+        calls = []
+        with tempfile.TemporaryDirectory() as tmp, self.session() as session:
+            result = session.run(
+                'x',
+                lambda *args: calls.append(args) or {
+                    'target_contract_green': True},
+                artifact_dir=tmp, model='test', timeout=2,
+                stop_when=lambda value: (
+                    'target_contract_green'
+                    if value.get('target_contract_green') else None))
+            self.assertEqual(result['status'], 'stopped_by_handler')
+            self.assertEqual(result['stop_reason'], 'target_contract_green')
+            self.assertEqual(len(calls), 1)
+            report = audit_workspace_session(
+                Path(tmp)/'session-transcript.jsonl',
+                require_terminal=False, require_real=False)
+            self.assertEqual(report['tool_calls'], 1)
+
     def test_native_preparation_failure_stops_session_without_model_feedback(self):
         from regen.execution.check_tasks import NativePreparationError
         def fail(*args):
@@ -93,11 +112,18 @@ class CodexWorkspaceSessionTest(unittest.TestCase):
             report=audit_workspace_session(Path(tmp)/'session-transcript.jsonl',require_real=False)
             self.assertTrue(report['terminal'])
 
-    def test_sleep_invalid_lifecycle_identity_and_budget_fail_closed(self):
-        for mode in ['sleep_wrong_owner','sleep_negative','sleep_budget','sleep_duplicate','sleep_unfinished']:
+    def test_sleep_invalid_lifecycle_identity_fail_closed(self):
+        for mode in ['sleep_wrong_owner','sleep_negative','sleep_duplicate','sleep_unfinished']:
             with self.subTest(mode=mode),tempfile.TemporaryDirectory() as tmp,self.session(mode) as session:
                 with self.assertRaises(SessionProtocolError):
                     session.run('x',lambda *args: {},artifact_dir=tmp,model='test',timeout=2)
+
+    def test_sleep_declared_totals_do_not_replace_actual_progress_clock(self):
+        with tempfile.TemporaryDirectory() as tmp, self.session('sleep_budget', progress_timeout=2) as session:
+            session.run('x', lambda *args: {}, artifact_dir=tmp, model='test', timeout=2)
+            self.assertEqual(session._progress.generation, 1)  # Only the tool, not three sleep pairs.
+            self.assertTrue(audit_workspace_session(
+                Path(tmp)/'session-transcript.jsonl', require_real=False)['terminal'])
 
     def test_repeated_read_equivalent_results_cannot_run_forever(self):
         from regen.infrastructure.codex_workspace_session import SessionStalled
@@ -157,14 +183,26 @@ class CodexWorkspaceSessionTest(unittest.TestCase):
                 with self.assertRaises(ValueError):audit_workspace_session(path,require_real=False)
 
     def test_real_launcher_keeps_dynamic_tool_host_without_shell(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            with CodexWorkspaceSession(tools=TOOLS, codex_bin=sys.executable,
+        import base64
+        import hashlib
+        from regen.infrastructure.audited_llm import model_settings
+        with tempfile.TemporaryDirectory() as tmp, patch(
+                'regen.execution.native_container.remove_owned'):
+            settings = {**model_settings(), 'codex_bin': sys.executable,
+                        'codex_sha256': hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest(),
+                        'codex_runtime_root': str(Path(tmp) / 'runtime')}
+            settings.pop('codex_code_mode_host_sha256', None)
+            with patch('regen.infrastructure.audited_llm.model_settings', return_value=settings), \
+                    CodexWorkspaceSession(tools=TOOLS, codex_bin=sys.executable,
                                        allow_external_call=True) as session:
                 with patch('regen.infrastructure.codex_workspace_session.subprocess.Popen',
                            side_effect=RuntimeError('transport intercepted')) as popen:
                     with self.assertRaisesRegex(RuntimeError, 'transport intercepted'):
                         session.run('x', lambda *args: {}, artifact_dir=tmp, model='test', timeout=2)
-                command = popen.call_args.args[0]
+                transport = popen.call_args.args[0]
+                self.assertEqual(transport[:2], ['docker','run'])
+                self.assertIn('--network',transport)
+                command = json.loads(base64.b64decode(transport[-1]))
                 disabled = {command[i+1] for i, arg in enumerate(command) if arg == '--disable'}
                 enabled = {command[i+1] for i, arg in enumerate(command) if arg == '--enable'}
                 self.assertIn('code_mode_host', enabled)
@@ -263,15 +301,30 @@ class CodexWorkspaceSessionTest(unittest.TestCase):
             self.assertIsNotNone(session.process.poll())
             self.assertIn('TimeoutError',(Path(tmp)/'session-transcript.jsonl').read_text())
 
-    def test_nonallowlisted_tool_or_schema_violation_never_reaches_handler(self):
-        for mode in ('unknown','schema'):
-            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp, self.session(mode) as session:
-                calls=[]
-                with self.assertRaises(Exception):
-                    session.run('x',lambda *a:calls.append(1),artifact_dir=tmp,model='test',timeout=2)
-                self.assertEqual(calls,[])
-                self.assertIsNotNone(session.process.poll())
-                self.assertIn('"nonsealable": true',(Path(tmp)/'session-transcript.jsonl').read_text())
+    def test_nonallowlisted_tool_never_reaches_handler(self):
+        with tempfile.TemporaryDirectory() as tmp, self.session('unknown') as session:
+            calls=[]
+            with self.assertRaises(SessionProtocolError):
+                session.run('x',lambda *a:calls.append(1),artifact_dir=tmp,model='test',timeout=2)
+            self.assertEqual(calls,[])
+            self.assertIsNotNone(session.process.poll())
+            self.assertIn('"nonsealable": true',(Path(tmp)/'session-transcript.jsonl').read_text())
+
+    def test_schema_violation_returns_feedback_without_reaching_handler(self):
+        with tempfile.TemporaryDirectory() as tmp, self.session('schema') as session:
+            calls=[]
+            session.run('x',lambda *a:calls.append(1),artifact_dir=tmp,model='test',timeout=2)
+            self.assertEqual(calls,[])
+            path=Path(tmp)/'session-transcript.jsonl'
+            events=[json.loads(line) for line in path.read_text().splitlines()]
+            responses=[e['message']['result'] for e in events
+                       if e['direction']=='out' and 'result' in e['message']]
+            self.assertEqual(len(responses),1)
+            self.assertIs(responses[0]['success'],False)
+            self.assertEqual(json.loads(responses[0]['contentItems'][0]['text'])['code'],
+                             'invalid_tool_arguments')
+            self.assertNotIn('"nonsealable": true',path.read_text())
+            self.assertTrue(audit_workspace_session(path,require_real=False)['terminal'])
 
     def test_signal_during_callback_cancels_instead_of_becoming_tool_failure(self):
         with tempfile.TemporaryDirectory() as tmp, self.session() as session:

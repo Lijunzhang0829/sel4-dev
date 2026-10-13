@@ -100,6 +100,9 @@ class CheckerIsolationTest(unittest.TestCase):
             }
             checkers = [checker_for(root, run, root / name / 'isabelle', 10, [])
                         for name in ('A', 'B')]
+            for checker in checkers:
+                name = checker.generated_dir.parent.name
+                (checker.generated_dir/(name+'.thy')).write_text('theory '+name+' imports Main begin end')
             self.assertNotEqual(checkers[0].heaps_dir, checkers[1].heaps_dir)
             self.assertNotEqual(checkers[0].generated_dir, checkers[1].generated_dir)
             barrier = threading.Barrier(2)
@@ -118,7 +121,7 @@ class CheckerIsolationTest(unittest.TestCase):
                                   (directory / 'ROOT').read_text())
                 return subprocess.CompletedProcess(command, 0, 'checked', '')
 
-            with patch('regen.execution.isabelle_node_checker.subprocess.run',
+            with patch('regen.execution.isabelle_node_checker.native_run',
                        side_effect=execute):
                 with ThreadPoolExecutor(max_workers=2) as pool:
                     builds = list(pool.map(

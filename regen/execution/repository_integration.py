@@ -9,6 +9,7 @@ from regen.execution.shared_proof_workspace import SharedProofWorkspace
 from regen.execution.isabelle_node_checker import IsabelleChecker
 from regen.execution.proof_session_runner import generated_checkpoint_theory
 from regen.planning.import_contract import required_imports
+from regen.execution.checker_policy import resolve_complete_context_policy, policy_binding
 
 
 def verify_environment(run):
@@ -29,6 +30,13 @@ def verify_environment(run):
     return {'environment_policy':'operator-managed','checker_context_id':context_id,
             'environment_sha256':digest({key:run.get(key) for key in
                 ('image','l4v','semantic_workspace','base_session','base_import','base_catalog')})}
+
+
+def expected_sealed_source(run, graph, proofs, imports, generated):
+    renderer = object.__new__(IsabelleChecker)
+    renderer.complete_context_policy = resolve_complete_context_policy(run)
+    renderer.imports = lambda: ['Generated_Refine.'+name for name in imports] if imports else [run['base_import']]
+    return renderer.complete_source(graph, proofs, theory_name=generated)
 
 
 def integration_manifest(run_dir):
@@ -58,7 +66,8 @@ def integration_manifest(run_dir):
         directory = snapshot['directory']
         records = sorted((Path(directory)/'acceptance/commits').glob('*.json'))
         import json
-        record = json.loads(records[-1].read_text())
+        from regen.infrastructure.incremental_log import read_artifact
+        record = read_artifact(records[-1])
         if record['commit_id'] != snapshot['commit_id'] or record['event']!='seal':
             raise ValueError('integration snapshot is not the exact terminal seal')
         evidence = record['evidence']
@@ -74,9 +83,7 @@ def integration_manifest(run_dir):
                    for row in required_imports(package['repository_projection'])]
         if package['repository_projection'].get('schema_version',0)>=5 and imports!=planned:
             raise ValueError('actual imports differ from the frozen plan')
-        renderer = object.__new__(IsabelleChecker)
-        renderer.imports = lambda: ['Generated_Refine.'+name for name in imports] if imports else [run['base_import']]
-        expected_source = renderer.complete_source(state['graph'],state['proofs'],theory_name=generated)
+        expected_source = expected_sealed_source(run, state['graph'], state['proofs'], imports, generated)
         if source != expected_source:
             raise ValueError('sealed source does not render the accepted declarations/proofs')
 
@@ -105,7 +112,7 @@ def integration_manifest(run_dir):
         for name in ready:
             ordered.append(name); del pending[name]
     by_name = {row['theory']:row for row in theories}
-    manifest = {'schema_version':2,'run_id':run['run_id'],'environment':environment,
+    manifest = {'schema_version':2,'run_id':run['run_id'],'environment':environment, **policy_binding(run),
         'file_list_sha256':run['session_schedule']['file_list_sha256'],
         'implementation_sha256':digest(run['implementation']),
         'contracts':sorted(contracts),'theories':[by_name[name] for name in ordered]}

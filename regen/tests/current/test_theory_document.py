@@ -72,6 +72,16 @@ class TheoryDocumentTests(unittest.TestCase):
         with self.assertRaises(ValueError):validator(self.package)(old,new,'document',evidence)
         self.assertEqual(old,before)
 
+    def test_publication_policy_rejects_helper_loss_but_old_history_replays(self):
+        source=self.source.replace('oops','by simp')
+        old,_=self.accept(source)
+        nodes={n['id']:n for n in old['graph']['nodes']}
+        source=source.replace(block(nodes['helper'],'by simp'),'')
+        new,evidence=self.accept(source,old)  # historical semantics remain replayable
+        evidence['document_publication_policy']='preserve-accepted-ids-v1'
+        with self.assertRaisesRegex(ValueError,'cannot remove accepted'):
+            validate_document_commit(self.package,old,new,evidence)
+
     def test_reorder_green_proofs_requires_full_check(self):
         source=self.source.replace('oops','by simp');old,_=self.accept(source)
         nodes={n['id']:n for n in old['graph']['nodes']}
@@ -184,6 +194,27 @@ class DocumentControllerTests(unittest.TestCase):
     def read(self):
         return self.controller.handle('read_theory',{'theory':'Target'},{})
 
+    def test_hot_projection_matches_full_reconstruction_without_global_scan(self):
+        from regen.execution import repository_execution as execution
+        draft = self.read()['document']
+        saved = self.call({'action':'edit_theory', 'base_sha256':draft['source_sha256'],
+                           'edits':[{'old':'oops', 'new':'by simp'}]})
+        self.call({'action':'check_theory', 'source_sha256':saved['source_sha256']})
+        root = self.fixture.root
+        state = self.controller._state('Target')[1]
+        execution.progress(root)  # Seed a fully verified, rebuildable display.
+        with patch.object(execution, 'journal', side_effect=AssertionError('global replay')):
+            hot = execution.publish_theory_progress(root, 'Target', state)
+        self.assertEqual(hot, execution.progress(root))
+        execution._PROGRESS_SNAPSHOTS.pop(str(root.resolve()), None)
+        self.assertEqual(execution.publish_theory_progress(root, 'Target', state), hot)
+
+    def test_baseline_does_not_add_selection_document_replay(self):
+        with patch.object(self.controller, '_document', wraps=self.controller._document) as document:
+            result = self.read()
+        self.assertEqual(document.call_count, 1)
+        self.assertNotIn('helper_selection',result)
+
     def test_document_rejects_legacy_mutation_and_reuse_receipt_tools(self):
         self.assertNotIn('prepare_reuse',{t['name'] for t in tools(True)})
         with self.assertRaisesRegex(ValueError,'legacy graph'):
@@ -233,5 +264,38 @@ class DocumentControllerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'seal requires'):
             self.call({'action':'finish','source_sha256':saved['source_sha256']})
         self.fixture.llm.assert_not_called()
+
+    def test_green_diagnostic_draft_cannot_remove_accepted_proof(self):
+        draft=self.read()['document']
+        saved=self.call({'action':'edit_theory','base_sha256':draft['source_sha256'],
+                         'edits':[{'old':'oops','new':'by simp'}]})
+        self.assertEqual(self.call({'action':'check_theory',
+            'source_sha256':saved['source_sha256']})['feedback']['status'],'accepted')
+        before=deepcopy(self.controller._state('Target')[1])
+        diagnostic=self.call({'action':'edit_theory','base_sha256':saved['source_sha256'],
+                             'edits':[{'old':'by simp','new':'oops'}]})
+        checked=self.call({'action':'check_theory','source_sha256':diagnostic['source_sha256']})
+        feedback=checked['feedback']
+        self.assertEqual(feedback['check']['verdict'],'green',checked)
+        self.assertEqual(feedback['status'],'draft_checked',checked)
+        self.assertFalse(feedback['accepted'])
+        self.assertEqual(feedback['new_green'],[])
+        after=self.controller._state('Target')[1]
+        for key in ('proofs','accepted_order','graph','document_source_sha256'):
+            self.assertEqual(after[key],before[key],key)
+        self.assertEqual(self.read()['document']['source_sha256'],diagnostic['source_sha256'])
+        self.assertEqual(self.read()['accepted_source_sha256'],saved['source_sha256'])
+        # Reconstruct projections from the durable journal, not process cache.
+        from collections import OrderedDict
+        with patch('regen.execution.proof_commits._VERIFIED_PREFIXES',OrderedDict()):
+            recovered=self.controller._state('Target')[1]
+            self.assertEqual(recovered['proofs'],before['proofs'])
+            self.assertEqual(recovered['document_source_sha256'],saved['source_sha256'])
+        with self.assertRaisesRegex(ValueError,'seal requires'):
+            self.call({'action':'finish','source_sha256':diagnostic['source_sha256']})
+        restored=self.call({'action':'edit_theory','base_sha256':diagnostic['source_sha256'],
+                           'edits':[{'old':'oops','new':'by simp'}]})
+        self.assertEqual(self.call({'action':'check_theory',
+            'source_sha256':restored['source_sha256']})['feedback']['status'],'accepted')
 
 if __name__=='__main__':unittest.main()

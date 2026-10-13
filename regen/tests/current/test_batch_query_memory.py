@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from regen.execution.proof_commits import durable
 from regen.planning.batch_file_planner import apply_feedback, planner_input, query_identity
@@ -9,6 +10,20 @@ from regen.tests.current.test_proof_commits import fixture
 
 
 class QueryMemoryTest(unittest.TestCase):
+    def test_same_stat_equal_size_rewrite_invalidates_query_memory(self):
+        _, state=fixture()
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);directory=root/'batch-requests/000001';directory.mkdir(parents=True)
+            db=root/'premises.sqlite';db.write_bytes(b'one')
+            frozen=db.stat();original=Path.stat
+            def same_stat(path,*args,**kwargs):
+                return frozen if path==db else original(path,*args,**kwargs)
+            with patch.object(Path,'stat',autospec=True,side_effect=same_stat):
+                run={'premise_database':str(db)}
+                before=query_identity(run,state,directory,{})
+                db.write_bytes(b'two')
+                self.assertNotEqual(before,query_identity(run,state,directory,{}))
+
     def test_query_identity_tracks_environment_not_catalog_rewrite(self):
         _, state = fixture()
         with tempfile.TemporaryDirectory() as temp:
@@ -106,7 +121,8 @@ class QueryMemoryTest(unittest.TestCase):
         summary = view['target_memory']['helper']
         self.assertTrue(summary['diagnostic_excerpt_incomplete'])
         self.assertEqual(summary['read_action'], {'action':'read_attempts','request_numbers':[1]})
-        self.assertEqual(state['batch_target_memory']['helper']['feedback']['check']['diagnostic'], diagnostic)
+        from regen.planning.attempt_memory import target_attempts
+        self.assertEqual(dict(target_attempts(state))['helper']['feedback']['check']['diagnostic'], diagnostic)
 
     def test_compact_query_index_keeps_every_group_readable(self):
         package, state = fixture()

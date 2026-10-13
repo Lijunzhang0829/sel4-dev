@@ -129,6 +129,8 @@ class ContextRetryIntegrationTest(unittest.TestCase):
         def audit(**kwargs):
             checker.last_complete_audit={'verdict':'green','complete_theory_audit':{'proof_dependencies':{}}}
             return {'verdict':'pass'}
+        from regen.tests.current.seal_fixture import mock_bind
+        self.enterContext(patch('regen.execution.seal_evidence.bind_seal',side_effect=mock_bind))
         with patch.object(execution,'checker_for',return_value=checker), \
              patch('regen.execution.proof_session_runner.frozen_role_model',return_value='model'), \
              patch('regen.planning.file_planner.plan_file',return_value=graph), \

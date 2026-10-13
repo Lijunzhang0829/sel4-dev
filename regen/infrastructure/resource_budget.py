@@ -93,6 +93,13 @@ def _publish_directory(source, destination):
 
 
 def clone_heaps(source, destination, *, reserve_bytes=HEAP_COPY_POLICY['reserve_bytes']):
+    """Publish a heap clone with explicit, finally-closed preparation timing."""
+    from regen.infrastructure.progress_events import generation_exclusion
+    with generation_exclusion('heap_preparation'):
+        return _clone_heaps(source, destination, reserve_bytes=reserve_bytes)
+
+
+def _clone_heaps(source, destination, *, reserve_bytes):
     """Copy once with filesystem-wide admission; a failure never publishes heaps.
 
     Existing targets are never modified. All cooperating callers on the same
@@ -166,7 +173,8 @@ def reclaim_theory_heaps(root, theory):
             commits = sorted((directory / 'acceptance' / 'commits').glob('*.json'))
             if not commits or commits[-1].is_symlink():
                 raise ValueError('heap reclamation requires a terminal accepted commit')
-            last = json.loads(commits[-1].read_text())
+            from regen.infrastructure.incremental_log import read_artifact
+            last = read_artifact(commits[-1])
             body = {key: value for key, value in last.items() if key != 'commit_id'}
             if (last.get('commit_id') != digest(body)
                     or commits[-1].name != f'{last.get("sequence", 0):06d}.json'

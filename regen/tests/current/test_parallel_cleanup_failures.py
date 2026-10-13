@@ -99,6 +99,8 @@ class ParallelCleanupFailuresTests(unittest.TestCase):
                 os.kill(os.getpid(), signum)
                 self.fail('termination signal was not handled')
             def emit(*args, **kwargs):
+                if args[0] == 'parallel_generation_clock_started':
+                    return  # Failure injection belongs to shutdown, not bootstrap.
                 order.append('diagnostic.event')
                 raise OSError(errno.ENOSPC, 'event disk full')
             def save(path, *args, **kwargs):
@@ -113,7 +115,8 @@ class ParallelCleanupFailuresTests(unittest.TestCase):
             }.items():
                 stack.enter_context(patch.object(planner, name, replacement))
             stack.enter_context(patch('regen.infrastructure.audited_llm.model_settings', return_value={
-                'codex_bin': str(binary), 'codex_sha256': hashlib.sha256(binary.read_bytes()).hexdigest()}))
+                'codex_bin': str(binary), 'codex_runtime_root': str(root/'codex-runtime'),
+                'codex_sha256': hashlib.sha256(binary.read_bytes()).hexdigest()}))
             stack.enter_context(patch('regen.preparation.checker_context.load_context',
                                      return_value={'checker_context_id': 'fixture'}))
             stack.enter_context(patch('regen.execution.proof_session_runner.acquire_run_mutation_lock',
@@ -142,6 +145,20 @@ class ParallelCleanupFailuresTests(unittest.TestCase):
 
     def test_failed_join_preserves_run_ownership_while_attempting_resource_close(self):
         self._run_interrupted(failed_join=True)
+
+    def test_clock_bootstrap_event_failure_releases_resources_without_launch(self):
+        resources = SimpleNamespace(close=Mock())
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(planner, 'NativeResources', return_value=resources), \
+                patch.object(planner, 'WorkspaceController') as controller, \
+                patch.object(planner, 'emit_event', side_effect=OSError('clock event disk full')), \
+                patch('regen.execution.proof_session_runner.acquire_run_mutation_lock', return_value='lock'), \
+                patch('regen.execution.proof_session_runner.release_run_mutation_lock') as release:
+            with self.assertRaisesRegex(OSError, 'clock event disk full'):
+                planner.run_parallel_workspace(Path(tmp), allow_external_call=True)
+            controller.assert_not_called()
+            resources.close.assert_called_once_with()
+            release.assert_called_once_with('lock')
 
 
 if __name__ == '__main__':

@@ -7,6 +7,7 @@ import shutil
 import socketserver
 import stat
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -18,6 +19,7 @@ from regen.planning.workspace_preflight import native_checker
 from regen.planning.import_contract import prompt_v5, prompt_v6
 from regen.planning.planning_freeze import code_files
 from regen.infrastructure.audited_llm import model_settings
+from regen.infrastructure.model_isolation import ModelIsolation
 from regen.preparation.refine_campaign import write_immutable_json
 
 
@@ -104,26 +106,27 @@ def snapshot_file(path):
     except (OSError,UnicodeError): return None
 
 
-def container_command(settings, policy, public, workspace, api, runtime_home, name):
+def container_command(settings, policy, public, workspace, api, isolation):
     binary=Path(settings['codex_bin']).resolve()
-    return ['docker','run','--rm','-i','--name',name,'--read-only','--cap-drop=ALL',
-        '--security-opt=no-new-privileges','--user',f'{os.getuid()}:{os.getgid()}',
-        '--tmpfs','/tmp:rw,exec,mode=1777','--network','host',
-        '--mount',f'type=bind,src={public},dst=/input,readonly',
-        '--mount',f'type=bind,src={workspace},dst=/workspace',
-        '--mount',f'type=bind,src={api},dst=/api,readonly',
-        '--mount',f'type=bind,src={Path(__file__).with_name("workspace_tools.py").resolve()},dst=/tool.py,readonly',
-        '--mount',f'type=bind,src={binary.parent},dst=/runtime,readonly',
-        '--mount',f'type=bind,src={runtime_home},dst=/codex-home',
-        '-e','CODEX_HOME=/codex-home','-e','HOME=/tmp','-w','/workspace',
-        *[v for k in ('http_proxy','https_proxy','HTTP_PROXY','HTTPS_PROXY','NO_PROXY') if os.environ.get(k) for v in ('-e',k+'='+os.environ[k])],
-        policy.get('worker_image','python:3.11-slim'),'/runtime/'+binary.name,
+    logical=[str(binary),
         '-m',policy['model']['model'],'-C','/workspace','-s','danger-full-access','-a','never',
         'exec','--skip-git-repo-check','--ignore-user-config','--ignore-rules','--ephemeral',
         '-c','web_search="disabled"',
         '-c','model_reasoning_effort="'+policy['model'].get('reasoning_effort','medium')+'"',
         '--disable','apps','--disable','plugins','--disable','remote_plugin','--disable','hooks',
         '--json','-o','/workspace/final.txt','-']
+    command=isolation.command(logical)
+    # Preserve the existing public tool/file vocabulary without mounting host
+    # source trees or the client directory. Only this run's draft is writable.
+    old=f'type=bind,src={isolation.cwd},dst={isolation.cwd}'
+    command[command.index(old)]=f'type=bind,src={isolation.cwd},dst=/workspace'
+    command[command.index('--workdir')+1]='/workspace'
+    index=command.index(isolation.image)
+    command[index:index]=[
+        '--mount',f'type=bind,src={Path(public).resolve()},dst=/input,readonly',
+        '--mount',f'type=bind,src={Path(api).resolve()},dst=/api,readonly',
+        '--mount',f'type=bind,src={Path(__file__).with_name("workspace_tools.py").resolve()},dst=/tool.py,readonly']
+    return command
 
 
 def call_worker(settings, policy, output, public, workspace, api, text, number):
@@ -134,17 +137,37 @@ def call_worker(settings, policy, output, public, workspace, api, text, number):
     artifact('.prompt.txt').write_text(text)
     auth=Path(os.environ.get('CODEX_HOME',str(Path.home()/'.codex')))/'auth.json'
     if not auth.is_file(): raise ValueError('Codex authentication unavailable.')
-    name='regen-plan-worker-'+uuid.uuid4().hex
     started=datetime.now(timezone.utc).isoformat(); t0=time.monotonic()
     meta={'state':'running','provider':'codex-workspace-audited','scope':'repository-planning-only',
           'model':policy['model']['model'],'reasoning_effort':policy['model'].get('reasoning_effort','medium'),
           'started_at':started,'prompt_sha256':hashlib.sha256(text.encode()).hexdigest(),
-          'container':name,'external_isolation':'docker-nonroot-readonly-root','timed_out':False}
+          'external_isolation':'model-os-isolation-v1','timed_out':False}
     save(artifact('.meta.json'),meta)
-    with tempfile.TemporaryDirectory(prefix='regen-planner-auth-') as home:
-        shutil.copyfile(auth,Path(home)/'auth.json'); (Path(home)/'auth.json').chmod(0o600)
-        command=container_command(settings,policy,public,workspace,api,Path(home),name)
+    with tempfile.TemporaryDirectory(prefix='regen-planner-private-') as private:
+        home=Path(private)/'home';home.mkdir(mode=0o700)
+        shutil.copyfile(auth,home/'auth.json'); (home/'auth.json').chmod(0o600)
+        config=settings['model_isolation']
+        isolation=ModelIsolation(base=private,client=settings['codex_bin'],cwd=workspace,
+            home=home,image=policy.get('worker_image',config['image']),proxy=config.get('transport_proxy'))
+        process=None
+        guard=None
         try:
+            from regen.planning.planner_owner_guard import owner_identity
+            with artifact('.owner.log').open('w') as guard_log:
+                guard=subprocess.Popen([sys.executable,'-m','regen.planning.planner_owner_guard',
+                    '--private',private,'--owner',str(os.getpid()),'--identity',owner_identity(os.getpid()),
+                    '--container',isolation.name],cwd=Path(__file__).resolve().parents[2],
+                    stdin=subprocess.DEVNULL,stdout=guard_log,stderr=guard_log,start_new_session=True)
+            guard_deadline=time.monotonic()+5
+            while not (Path(private)/'guardian.ready').exists():
+                if guard.poll() is not None or time.monotonic()>guard_deadline:
+                    raise RuntimeError('planner owner guardian failed to initialize')
+                time.sleep(.02)
+            command=container_command(settings,policy,public,workspace,api,isolation)
+            meta.update(container=isolation.name,isolation={**isolation.evidence(),
+                'filesystem':'sanitized-input-readonly-tool-rpc-private-draft-clean-auth-home',
+                'resources':{'cpus':2,'memory_bytes':2147483648,'pids':128}})
+            save(artifact('.meta.json'),meta)
             with artifact('.ndjson').open('w') as raw, artifact('.stderr.txt').open('w') as err:
                 process=subprocess.Popen(command,stdin=subprocess.PIPE,stdout=raw,stderr=err,text=True)
                 try:
@@ -153,7 +176,14 @@ def call_worker(settings, policy, output, public, workspace, api, text, number):
                 except subprocess.TimeoutExpired:
                     process.kill(); process.wait(); code=124; meta['timed_out']=True
         finally:
-            subprocess.run(['docker','rm','-f',name],capture_output=True,timeout=30)
+            try:isolation.close()
+            finally:
+                try:
+                    if process is not None and process.poll() is None:
+                        process.kill();process.wait()
+                finally:
+                    if guard is not None:
+                        guard.terminate();guard.wait(timeout=5)
     final=snapshot_file(workspace/'final.txt') or ''
     artifact('.final.txt').write_text(final)
     events=[]; invalid_lines=0
@@ -216,7 +246,21 @@ def completed_submission(harness, output, policy, settings):
 
 
 def run_agent(payload, planning_input_path, policy, output):
-    output=Path(output).resolve(); settings=model_settings()
+    output=Path(output).resolve()
+    if not policy.get('_allow_external_call'):
+        raise ValueError('Workspace planning requires authorized external calls.')
+    output.mkdir(parents=True, exist_ok=True)
+    # One model-planning attempt per output identity. A crash leaves this marker
+    # in place, preventing partial state or a transcript from being resumed.
+    marker = output/'planning-attempt.json'
+    if any((output/name).exists() for name in ('workspace-binding.json', 'control', 'transcript')):
+        raise ValueError('Repository planning is fresh-only; use a new output directory.')
+    try:
+        with marker.open('x') as stream:
+            json.dump({'policy':'fresh-only-v1', 'status':'started'}, stream)
+    except FileExistsError as error:
+        raise ValueError('Repository planning is fresh-only; use a new output directory.') from error
+    settings=model_settings()
     if hashlib.sha256(Path(settings['codex_bin']).read_bytes()).hexdigest()!=settings['codex_sha256']:
         raise ValueError('Pinned Codex executable changed.')
     sources=code_files()
@@ -228,60 +272,42 @@ def run_agent(payload, planning_input_path, policy, output):
         'implementation':{name:hashlib.sha256(p.read_bytes()).hexdigest() for name,p in sorted(sources.items())}})
     harness=WorkspaceHarness(planning_input_path,output,native_checker(Path(planning_input_path).parent,policy.get('preflight_seconds',900)),
         visibility=policy.get('contract_visibility','owner-blind-v1'))
-    completed=completed_submission(harness,output,policy,settings)
-    if completed is not None:
-        return completed
-    if not policy.get('_allow_external_call'):
-        raise ValueError('Workspace planning requires authorized external calls.')
     public=output/'public'; public.mkdir(exist_ok=True)
     workspace=output/'workspace'; workspace.mkdir(exist_ok=True)
     save(public/'contracts.json',harness.view.payload['contracts'])
     save(public/'catalog.json',{'contracts':harness.view.payload['contract_cards'],'context_profiles':harness.view.payload['context_profiles']})
     text=instruction(harness.view.payload,policy.get('proposal_schema_version',5)); harness.view.assert_no_owner_disclosure(text)
     api=Path(tempfile.mkdtemp(prefix='regen-planner-api-')); server,thread=start_service(harness,api)
-    stop=threading.Event()
-    def watch():
-        previous=None
-        while not stop.wait(2):
-            content=snapshot_file(workspace/'plan.json')
-            if content is not None and content!=previous:
-                save(output/f'snapshots/{time.time_ns()}.json',{'content':content,'sha256':hashlib.sha256(content.encode()).hexdigest()}); previous=content
-    watcher=threading.Thread(target=watch,daemon=True); watcher.start()
-    number=len(list((output/'transcript').glob('workspace-agent-*.meta.json')))
-    timeouts=0
+    number=0
     try:
         while True:
             number+=1
-            checkpoint=output/f'control/checkpoint-{number:06d}'
-            shutil.copytree(workspace,checkpoint,symlinks=True)
-            before_state=json.loads(json.dumps(harness.state))
             harness.active_call=number
             meta,prefix=call_worker(settings,policy,output,public,workspace,api,text,number)
             if meta['timed_out']:
-                # Completed query logs remain charged/auditable. The retry sees
-                # the exact pre-call artifact state, never a partial response.
-                with harness.lock:
-                    before_state['sequence']=harness.state['sequence']
-                    harness.state=before_state; harness.submitted=None
-                    save(harness.state_path,harness.state)
-                    submitted=output/'control/submitted.json'
-                    if submitted.exists(): submitted.unlink()
-                    shutil.rmtree(workspace)
-                    shutil.copytree(checkpoint,workspace,symlinks=True)
-                timeouts+=1
-                if timeouts>=2: raise RuntimeError('Workspace planning paused after two consecutive timeouts.')
-                time.sleep(10); continue
-            timeouts=0
+                raise RuntimeError('Repository planning timed out; start a fresh plan in a new output directory.')
             if meta['returncode']!=0: raise RuntimeError('Workspace model call failed; inspect '+str(prefix)+'.stderr.txt')
             verify_worker_call(prefix,policy,settings['codex_sha256'])
             completed=completed_submission(harness,output,policy,settings)
             if completed is not None:
+                save(marker, {'policy':'fresh-only-v1', 'status':'submitted'})
                 return completed
             # Agent ended without explicit submission. Keep the same artifacts
             # and ask it to continue; no proposal retry ceiling is introduced.
             text=instruction(harness.view.payload,policy.get('proposal_schema_version',5))+'\nContinue your existing plan and notes. No successful submit was recorded; inspect, validate, repair, and explicitly submit.\n'
+    except BaseException as error:
+        abort = getattr(harness.native_check, 'abort', None)
+        if abort is not None:
+            abort()
+        with harness.lock:
+            harness.submitted=None
+            submitted=output/'control/submitted.json'
+            if submitted.exists(): submitted.unlink()
+        save(marker, {'policy':'fresh-only-v1', 'status':'failed',
+                      'error_type':type(error).__name__})
+        raise
     finally:
-        stop.set(); watcher.join(timeout=3); server.shutdown(); server.server_close(); thread.join(timeout=3)
+        server.shutdown(); server.server_close(); thread.join(timeout=3)
         endpoint=api/'planner.sock'
         if endpoint.exists(): endpoint.unlink()
         shutil.rmtree(api)

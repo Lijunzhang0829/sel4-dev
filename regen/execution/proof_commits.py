@@ -11,6 +11,9 @@ import tempfile
 import threading
 import traceback
 from functools import wraps
+from regen.infrastructure.incremental_log import (
+    read_artifact, write_artifact, find_root, selected, artifact_fingerprint, fingerprint_batch,
+)
 
 _CACHE_LOCK = threading.RLock()
 # A cold continuation record can contain gigabytes of embedded predecessor
@@ -107,7 +110,8 @@ def _record_summary(record):
 def _fingerprint(path):
     info = path.stat()
     return (path.name, info.st_dev, info.st_ino, info.st_size,
-            info.st_mtime_ns, info.st_ctime_ns)
+            info.st_mtime_ns, info.st_ctime_ns,
+            artifact_fingerprint(path) if find_root(path) is not None else ())
 
 
 def digest(value):
@@ -131,6 +135,8 @@ def _same_file_bytes(left, right):
 
 
 def durable(path: Path, value, *, immutable=False):
+    if selected(path) and (root := find_root(path)) is not None:
+        return write_artifact(path, value, immutable=immutable, root=root)
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, name = tempfile.mkstemp(dir=path.parent, prefix='.pending-')
     try:
@@ -225,7 +231,8 @@ class ProofCommits:
     @locked_journal
     def replay(self, *, repair=True):
         paths, head = commit_paths(self.directory)
-        fingerprints = tuple(_fingerprint(path) for path in paths)
+        with fingerprint_batch():
+            fingerprints = tuple(_fingerprint(path) for path in paths)
         key = self._cache_key()
         cached = self._verified if self._cache_identity == (key, self.validate) else None
         if self.cache_namespace is not None:
@@ -252,7 +259,7 @@ class ProofCommits:
             with _COLD_REPLAY_LOCK:
                 record = body = None
                 try:
-                    record = json.loads(path.read_text())
+                    record = read_artifact(path)
                     if _fingerprint(path) != fingerprints[number-1]:
                         raise ValueError('proof commit changed during replay')
                     body = {k:v for k,v in record.items() if k != 'commit_id'}
@@ -310,7 +317,7 @@ class ProofCommits:
                 with _COLD_REPLAY_LOCK:
                     record = body = None
                     try:
-                        record = json.loads(path.read_text())
+                        record = read_artifact(path)
                         body = {k:v for k,v in record.items() if k != 'commit_id'}
                         if (_fingerprint(path) != fingerprint
                                 or record['commit_id'] != previous_id
@@ -347,24 +354,28 @@ class ProofCommits:
         path = self.directory/'commits'/f'{len(paths)+1:06d}.json'
         from regen.execution.check_tasks import CURRENT_TASK
         token = CURRENT_TASK.get() if event in ACCEPTANCE_EVENTS else None
-        try:
-            durable(path, record, immutable=True)
-        except BaseException:
-            # link() can publish the complete record before directory fsync or
-            # temporary-link cleanup fails. A visible accepted commit must not
-            # be cancelled; keep the I/O error and let replay establish recovery.
+        from contextlib import nullcontext
+        from regen.infrastructure.progress_events import proof_publication
+        publication = proof_publication(record) if event in ACCEPTANCE_EVENTS else nullcontext()
+        with publication:
+            try:
+                durable(path, record, immutable=True)
+            except BaseException:
+                # link() can publish the complete record before directory fsync or
+                # temporary-link cleanup fails. A visible accepted commit must not
+                # be cancelled; keep the I/O error and let replay establish recovery.
+                if token is not None:
+                    try:
+                        visible = read_artifact(path) == record
+                    except (OSError, ValueError):
+                        visible = False
+                    if visible:
+                        token.published = True
+                raise
+            # The commit is authoritative even if a later HEAD/cache projection
+            # fails. append holds the acceptance lock until this flag is visible.
             if token is not None:
-                try:
-                    visible = json.loads(path.read_text()) == record
-                except (OSError, ValueError):
-                    visible = False
-                if visible:
-                    token.published = True
-            raise
-        # The commit is authoritative even if a later HEAD/cache projection
-        # fails. append holds the acceptance lock until this flag is visible.
-        if token is not None:
-            token.published = True
+                token.published = True
         durable(self.directory/'HEAD.json', {'commit_id':record['commit_id'], 'sequence':len(paths)+1})
         self._remember(self._verified['fingerprints'] + (_fingerprint(path),), state,
                        record['commit_id'], (*self._verified['records'], _record_summary(record)))

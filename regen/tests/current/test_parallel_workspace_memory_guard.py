@@ -1,4 +1,5 @@
 """Deterministic memory guard checks; never start workers or services."""
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -15,6 +16,7 @@ class MemoryGuardTests(unittest.TestCase):
         self.root = Path(temporary.name).resolve()
         self.receipt = {'run_dir': str(self.root), 'unit': guard.service._unit(self.root)}
         (self.root / 'service-launch.json').write_text(json.dumps(self.receipt))
+        self.receipt_sha = hashlib.sha256((self.root / 'service-launch.json').read_bytes()).hexdigest()
         self.live = {'unit': self.receipt['unit'], 'running': True,
                      'identity_verified': True, 'status': 'running'}
         self.dead = {**self.live, 'running': False, 'status': 'stopped'}
@@ -50,7 +52,7 @@ class MemoryGuardTests(unittest.TestCase):
         self.assertEqual(self.clock, 4)
         self.assertEqual(result['stop_reason'], 'sustained_low_memory')
         self.assertEqual(result['stop_receipt'], self.dead)
-        self.stop.assert_called_once_with(self.root)
+        self.stop.assert_called_once_with(self.root, expected_receipt_sha256=self.receipt_sha)
 
     def test_recovery_resets_pressure_duration(self):
         result = self.run_guard([5, 5, 8, 5, 5, 5][i] * guard.GiB for i in range(6))

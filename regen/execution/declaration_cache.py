@@ -48,7 +48,8 @@ def context_key(checker, source):
                    'runtime':{k:getattr(checker, k) for k in fields},
                    'imports':checker.imports(),
                    'inputs':{k:tree_stamp(getattr(checker, k)) for k in roots},
-                   'implementation':id(getattr(checker._check, '__func__', checker._check))})
+                   'implementation':id(getattr(checker._check, '__func__', checker._check)),
+                   'observation_implementation':id(getattr(type(checker), '_check_observation', None))})
 
 
 def checked_declarations(checker, source, name):
@@ -63,7 +64,8 @@ def checked_declarations(checker, source, name):
                                        'original_wall_ms':result.get('wall_ms', 0)}
         result['wall_ms'] = 0
         return result
-    result = checker._check(source, name)
+    observe = getattr(type(checker), '_check_observation', None)
+    result = checker._check(source, name) if observe is None else checker._check_observation(source, name)
     if key is not None and result.get('verdict') == 'green' and result.get('returncode') == 0:
         frozen = freeze_evidence(result)
         # Cache only complete native evidence, and only if inputs stayed stable.

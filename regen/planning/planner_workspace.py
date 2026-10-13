@@ -138,13 +138,15 @@ def read_observation(directory, state, request, checker=None, *, query_handler=N
             raise ValueError('query executor returned an invalid observation')
         return deepcopy(result)
     if action=='read_attempts':
+        from regen.planning.attempt_views import attempt_view
         numbers=request.get('request_numbers')
         if not isinstance(numbers,list) or not 1<=len(numbers)<=4:
             raise ValueError('read_attempts requires 1-4 request numbers')
         attempts=[]
         for number in numbers:
             candidate,feedback=attempt_evidence(directory,state,number)
-            attempts.append({'request_number':number,'candidate':candidate,'feedback':compact_feedback(feedback)})
+            attempts.append(attempt_view(number, candidate, feedback, view=request.get('view', 'summary'),
+                theory=state.get('graph', {}).get('theory'), run_id=state.get('graph', {}).get('run_id')))
         return {'status':'available','attempts':attempts}
     if action=='read_facts':
         facts={f['record_id']:f for f in state.get('batch_facts',[])}
@@ -160,13 +162,41 @@ def read_observation(directory, state, request, checker=None, *, query_handler=N
         return {'status':'available','queries':[queries[k] for k in ids]}
     if action=='read_diagnostic':return read_diagnostic(directory,state,request)
     if action=='read_proof_state':
+        origin = request.get('origin', 'diagnostic')
+        if origin not in {'diagnostic', 'before_command'}:
+            raise ValueError('proof state origin must be diagnostic or before_command')
         if 'goal_indices' not in request:
-            return proof_state(directory,state,request)
+            result = proof_state(directory,state,request)
+            if 'origin' in request:
+                result['proof_state']['selected_origin'] = origin
+            return result
         indices=request['goal_indices']
         if (not isinstance(indices,list) or not 1<=len(indices)<=4
                 or any(type(i) is not int or i<1 for i in indices) or len(set(indices))!=len(indices)):
             raise ValueError('goal_indices requires 1-4 distinct positive integers')
         observed=proof_state(directory,state,request,expand=True)['proof_state']
+        if origin == 'before_command':
+            native = observed.get('native_before_command')
+            if not isinstance(native, dict) or native.get('origin') == 'unavailable':
+                raise ValueError('native before-command state unavailable; no diagnostic fallback was used')
+            raw_goals = native.get('goals', [])
+            if any(i > len(raw_goals) for i in indices):
+                raise ValueError('selected native before-command goal missing')
+            assumptions = native.get('local_assumptions', [])
+            texts = [raw_goals[i-1] for i in indices]
+            if any(not text or '...' in text or '…' in text for text in [*texts, *assumptions]):
+                raise ValueError('selected native before-command state contains incomplete printed terms')
+            if sum(len(text) for text in [*texts, *assumptions]) > 60000:
+                raise ValueError('selected native state exceeds 60000 characters; select fewer goals or read_attempts view=full')
+            selected = [{'goal_index': i, 'text': raw_goals[i-1], 'complete': True,
+                         'sha256': digest([assumptions, raw_goals[i-1]])} for i in indices]
+            return {'status': 'available', 'proof_state': {
+                'request_number': request['request_number'], 'selected_origin': origin,
+                'submitted_node_ids': observed['submitted_node_ids'],
+                'native_before_command': {k: deepcopy(native[k]) for k in ('origin', 'command', 'line') if k in native}
+                    | {'goals': selected, 'local_assumptions': assumptions,
+                       'goal_count': len(raw_goals), 'all_goals_present': len(indices) == len(raw_goals)},
+                'notice': 'Exact selected state before the failed command, not post-failure diagnostic residuals or proved premises.'}}
         goals={g['goal_index']:g for g in observed['diagnostic']['goals']}
         if any(i not in goals or not goals[i]['complete'] for i in indices):
             raise ValueError('selected diagnostic goal missing or incomplete; read original diagnostic pages')
@@ -174,7 +204,8 @@ def read_observation(directory, state, request, checker=None, *, query_handler=N
         if sum(len(g['text']) for g in selected)>60000:
             raise ValueError('selected goals exceed 60000 characters; select fewer or read_diagnostic pages')
         return {'status':'available','proof_state':{
-            'request_number':request['request_number'],'submitted_node_ids':observed['submitted_node_ids'],
+            'request_number':request['request_number'],'selected_origin':origin,
+            'submitted_node_ids':observed['submitted_node_ids'],
             'diagnostic':{**observed['diagnostic'],'goals':selected,
                 'all_goals_present':len(selected)==observed['diagnostic']['goal_count']},
             'notice':'Exact selected diagnostic goals including printed assumptions; not proved premises.'}}

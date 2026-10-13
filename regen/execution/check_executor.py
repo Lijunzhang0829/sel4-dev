@@ -32,10 +32,26 @@ def _raise_cleanup_errors(errors):
 
 
 class NativeResources:
-    def __init__(self, slots=1, threads=4, resident_limit=2):
+    def __init__(self, slots=1, threads=4, resident_limit=2, *,
+                 cpus=4, memory_mb=16384, pids_limit=1024,
+                 provider_build_timeout=1800, build_ml_heap_mb=None):
         if any(type(v) is not int or v < 1 for v in (slots, threads, resident_limit)) or resident_limit < slots:
             raise ValueError('positive native slots/threads required; resident_limit must cover slots')
         self.policy = dict(native_slots=slots, threads=threads, resident_limit=resident_limit)
+        import math
+        if (type(cpus) not in (int, float) or not math.isfinite(cpus) or cpus <= 0
+                or any(type(v) is not int or v < 1 for v in (memory_mb, pids_limit))):
+            raise ValueError('positive finite native CPU/memory/PID limits required')
+        self.policy.update(cpus=cpus, memory_mb=memory_mb, pids_limit=pids_limit)
+        if (type(provider_build_timeout) not in (int, float)
+                or not math.isfinite(provider_build_timeout) or provider_build_timeout <= 0):
+            raise ValueError('positive finite provider build timeout required')
+        heap = memory_mb * 3 // 4 if build_ml_heap_mb is None else build_ml_heap_mb
+        if type(heap) is not int or not 0 < heap <= memory_mb * 3 // 4:
+            raise ValueError('build ML heap must be positive and leave at least 25% container headroom')
+        self.policy.update(provider_build_timeout=provider_build_timeout,
+                           build_ml_heap_mb=heap,
+                           build_java_heap_mb=max(1, min(2048, memory_mb // 8)))
         self.condition = threading.Condition()
         self.queue = deque()
         self.active = set()
@@ -155,6 +171,12 @@ def native_operation(function):
 
 
 def native_run(command, *, timeout, **kwargs):
+    from regen.execution.native_container import owner_command
+    with owner_command(command) as owned:
+        return _native_run(owned, timeout=timeout, **kwargs)
+
+
+def _native_run(command, *, timeout, **kwargs):
     """Only task-owned subprocesses are cancelled; old synchronous callers work unchanged."""
     token = CURRENT_TASK.get()
     if token is None:

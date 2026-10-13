@@ -81,11 +81,32 @@ def reused_failure(directory, state, identity, *, retry_reason=None):
     return None
 
 
-def next_proof_observation(state):
+def feedback_semantics(feedback):
+    """Unambiguous presentation beside legacy feedback, never proof authority."""
+    status = feedback.get('status')
+    verdict = feedback.get('check', {}).get('verdict')
+    if status in {'accepted', 'draft_checked'}:
+        verdict = 'green'
+    publication = {'accepted': 'accepted', 'draft_checked': 'diagnostic_only',
+                   'sealed': 'sealed'}.get(status, 'not_published')
+    return {'result_schema_version': 2,
+            'tool_status': 'rejected' if status == 'rejected_request' else
+                           'failed' if status == 'tool_failed' else 'completed',
+            'proof_verdict': verdict, 'publication': publication}
+
+
+def next_proof_observation(state, *, feedback=None):
     """Automatically expose exact small goals; keep large states accessible by ID."""
     from regen.planning.planner_workspace import diagnostic_goals
     attempt = state.get('batch_proof_feedback') or {}
-    check = attempt.get('feedback', {}).get('check', {})
+    if type(attempt.get('request_number')) is not int:
+        return None
+    if feedback is not None and attempt['request_number'] != state.get('batch_requests', attempt['request_number']):
+        return None  # A declaration/query failure must not be bound to an old proof.
+    # A just-completed callback can use its already-verified full feedback without
+    # rereading the entire theory. Historical prompt reconstruction remains bound
+    # to the stored last proof attempt and never expands all prior evidence.
+    check = (feedback if feedback is not None else attempt.get('feedback', {})).get('check', {})
     if not check or check.get('verdict') != 'red':
         return None
     parsed = diagnostic_goals(check)
@@ -97,10 +118,37 @@ def next_proof_observation(state):
         'goal_count':parsed.get('goal_count'),
         'notice':'Observed residuals are obligations, not premises. Use named have/show branches or helper nodes '
                  'to isolate stable subproofs; proof_edits preserves unchanged draft text, but the whole candidate is checked.'}
+    native = check.get('native_proof_state_full')
+    if isinstance(native, dict) and native.get('origin') != 'unavailable':
+        goals, assumptions = native.get('goals', []), native.get('local_assumptions', [])
+        texts = [*goals, *assumptions]
+        native_complete = all(isinstance(t, str) and '...' not in t and '…' not in t for t in texts)
+        result['native_goal_index'] = [{'goal_index': i+1, 'chars': len(text),
+            'sha256': digest([assumptions, text])} for i, text in enumerate(goals[:16])]
+        result['native_goal_index_complete'] = len(goals) <= 16
+        if native_complete and sum(len(text) for text in texts) <= 16000:
+            result['complete_native_before_command'] = {
+                **{key: deepcopy(native[key]) for key in ('origin', 'command', 'line') if key in native},
+                'goals': deepcopy(goals), 'local_assumptions': deepcopy(assumptions)}
+        elif goals:
+            if len(goals[0]) + sum(len(text) for text in assumptions) <= 60000:
+                result['native_read_action'] = {'action': 'read_proof_state',
+                    'request_number': attempt['request_number'], 'origin': 'before_command', 'goal_indices': [1]}
+            else:
+                result['native_read_action'] = {'action': 'read_attempts',
+                    'request_numbers': [attempt['request_number']], 'view': 'full'}
+    # Small location evidence is useful even when the raw residual is huge.
+    from regen.planning.batch_file_planner import compact_feedback
+    location = compact_feedback({key: check[key] for key in
+        ('source', 'source_content', 'source_sha256', 'diagnostic') if key in check})
+    for key in ('source_error_line', 'source_excerpt'):
+        if key in location:
+            result[key] = location[key]
     if complete and sum(len(g['text']) for g in parsed['goals']) <= 16000:
         result['complete_diagnostic_goals'] = parsed['goals']
     else:
-        result['read_action'] = {'action':'read_proof_state', 'request_number':attempt['request_number']}
+        result['read_action'] = {'action':'read_proof_state', 'request_number':attempt['request_number'],
+                                 'origin':'diagnostic'}
     return result
 
 

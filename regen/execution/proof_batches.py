@@ -3,7 +3,7 @@ from copy import deepcopy
 import hashlib
 import re
 
-from regen.execution.proof_commits import digest, freeze_evidence
+from regen.execution.proof_commits import digest, durable, freeze_evidence
 from regen.execution.isabelle_node_checker import IsabelleChecker, declaration
 from regen.planning.proof_graph import (
     build_graph, assert_green_nodes_unchanged, graph_payload_sha256,
@@ -205,13 +205,15 @@ def check_batch(checker, old, candidate):
             from regen.execution.batch_checker import BatchWorker, body
             import time
             started = time.monotonic()
+            # Input validation is not an infrastructure failure and must never
+            # be hidden by a worker recovery classification.
+            for node in candidate['graph']['nodes']:
+                if node['id'] in candidate['proofs']:
+                    _safe_text(node['statement'], statement=True)
+                    _safe_text(candidate['proofs'][node['id']])
+            prefix_source = _render(old['graph'], old['proofs'], evidence['imports'], evidence['label'])
+            failure_stage = 'prefix-startup-or-alignment'
             try:
-                # Prefix replay must obey the same restrictions as new candidates.
-                for node in candidate['graph']['nodes']:
-                    if node['id'] in candidate['proofs']:
-                        _safe_text(node['statement'], statement=True)
-                        _safe_text(candidate['proofs'][node['id']])
-                prefix_source = _render(old['graph'], old['proofs'], evidence['imports'], evidence['label'])
                 worker = getattr(checker, '_batch_worker', None)
                 if (worker is None or worker.closed or worker.process.poll() is not None
                         or worker.imports != evidence['imports']
@@ -226,8 +228,11 @@ def check_batch(checker, old, candidate):
                 worker.align(body(prefix_source))
                 prepare_ms = round((time.monotonic()-started)*1000)
                 names = {n['id']:n['name'] for n in candidate['graph']['nodes']}
+                failure_stage = 'candidate-execution-or-audit-transport'
+                candidate_started = time.monotonic()
                 result = worker.check_batch(source,
                     [names[k] for k in candidate['accepted_order'] if k in additions])
+                result['candidate_execution_ms'] = round((time.monotonic()-candidate_started)*1000)
                 result['prefix_prepare_ms'] = prepare_ms
                 result['execution_wall_ms'] = round((time.monotonic()-started)*1000)
             except TimeoutError as error:
@@ -252,11 +257,63 @@ def check_batch(checker, old, candidate):
                     'prefix_sha256':hashlib.sha256(body(prefix_source).encode()).hexdigest(),
                     'delta_sha256':hashlib.sha256(body(source)[len(body(prefix_source)):].encode()).hexdigest()}
             except (RuntimeError, OSError, ValueError) as error:
+                # A failed incremental transport is not a mathematical RED.
+                # Running the full prefix cold under the delta's candidate
+                # deadline changes the check contract and can fabricate a
+                # proof timeout. Preserve evidence and let the existing
+                # NativePreparationError boundary pause for infrastructure.
+                from uuid import uuid4
+                from regen.execution.check_tasks import NativePreparationError
                 worker = getattr(checker, '_batch_worker', None)
+                native_log = getattr(error, 'worker_log', '')
+                worker_root = getattr(worker, 'root', None)
+                log_error = None
+                if not native_log and worker_root is not None:
+                    try:
+                        native_log = (worker_root/'worker.log').read_text()
+                    except OSError as read_error:
+                        log_error = str(read_error)
+                # Cleanup must run even when disk exhaustion prevents saving a
+                # receipt. Failed cleanup retains the owned worker for retry.
+                cleanup_error = None
                 if worker is not None:
-                    worker.close()
-                checker._batch_worker = None
-                evidence['incremental_fallback'] = str(error)
+                    worker.pending = None
+                    try:
+                        worker.close()
+                    except Exception as close_error:
+                        cleanup_error = close_error
+                    else:
+                        checker._batch_worker = None
+                else:
+                    checker._batch_worker = None
+                directory = checker.work_dir / ('incremental-failure-' + uuid4().hex)
+                path, log = directory/'candidate.thy', directory/'native.log'
+                result = {'verdict':'infrastructure_error', 'failure_scope':'native_preparation',
+                    'native_failure_stage':failure_stage, 'error_type':type(error).__name__,
+                    'returncode':1, 'timed_out':False, 'diagnostic':str(error),
+                    'source':str(path), 'log':str(log), 'native_log_read_error':log_error,
+                    'wall_ms':round((time.monotonic()-started)*1000),
+                    'incremental':'audited-batch-worker-v1',
+                    'check_scope':'committed-prefix-and-incremental-batch',
+                    'prefix_sha256':hashlib.sha256(body(prefix_source).encode()).hexdigest(),
+                    'delta_sha256':hashlib.sha256(body(source)[len(body(prefix_source)):].encode()).hexdigest()}
+                try:
+                    directory.mkdir()
+                    path.write_text(source)
+                    log.write_text(native_log + '\n' + type(error).__name__ + ': ' + str(error))
+                    durable(directory/'failure.json', freeze_evidence(result), immutable=True)
+                    if cleanup_error is not None:
+                        durable(directory/'cleanup-failure.json', {
+                            'error_type':type(cleanup_error).__name__, 'message':str(cleanup_error)}, immutable=True)
+                except OSError as receipt_error:
+                    failure = NativePreparationError(str(error) + '; cannot save infrastructure evidence: ' + str(receipt_error))
+                    if cleanup_error is not None:
+                        failure.add_note('worker cleanup failed: ' + str(cleanup_error))
+                    raise failure from receipt_error
+                if cleanup_error is not None:
+                    failure = NativePreparationError(str(error) + '; worker cleanup failed: ' + str(cleanup_error))
+                    failure.add_note('incremental failure evidence: ' + str(directory/'failure.json'))
+                    raise failure from cleanup_error
         if result is None:
             result = checker._check(source, evidence['label'], timeout=candidate_timeout)
             result['timed_out'] = result.get('returncode') == 124

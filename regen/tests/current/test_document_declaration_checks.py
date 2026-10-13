@@ -13,6 +13,7 @@ from regen.tests.current.test_proof_commits import fixture
 class DocumentChecker(Checker):
     _source = IsabelleChecker._source
     _check_declaration_source = IsabelleChecker._check_declaration_source
+    _check_declaration_source_timed = IsabelleChecker._check_declaration_source_timed
     check_declarations = IsabelleChecker.check_declarations
     check_graph = IsabelleChecker.check_graph
 

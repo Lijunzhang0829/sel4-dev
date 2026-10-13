@@ -66,6 +66,19 @@ class ParallelControllerTests(unittest.TestCase):
         self.assertEqual(row['error_type'], 'NativePreparationError')
         self.assertEqual(self.controller._state('Target')[1]['proofs'], {})
 
+    def test_code_drift_crosses_executor_as_terminal_infrastructure_error(self):
+        from regen.execution.check_tasks import ImplementationChangedError, NativePreparationError
+        self.assertTrue(issubclass(ImplementationChangedError, NativePreparationError))
+        with patch('regen.execution.proof_batches.check_batch',
+                   side_effect=ImplementationChangedError('frozen code drift')):
+            with self.assertRaisesRegex(ImplementationChangedError, 'frozen code drift'):
+                self.controller.handle('proof_action', {'theory':'Target',
+                    'proposal':{'action':'submit_batch','proofs':{'target_contract':'by simp'}}}, self.metadata)
+        row = self.executor.get(next(iter(self.controller.task_ids)))
+        self.assertEqual(row['status'], 'error')
+        self.assertEqual(row['error_type'], 'ImplementationChangedError')
+        self.assertEqual(self.controller._state('Target')[1]['proofs'], {})
+
     def test_no_mathematical_pause_tool_in_new_controller(self):
         with self.assertRaisesRegex(ValueError,'continue local exploration'):
             self.controller.handle('proof_action',{'theory':'Target',
@@ -193,10 +206,8 @@ class IntegrationGateTests(unittest.TestCase):
             from regen.execution.isabelle_node_checker import IsabelleChecker
             renderer=object.__new__(IsabelleChecker);renderer.imports=lambda:[run['base_import']]
             source=renderer.complete_source(candidate['graph'],candidate['proofs'],theory_name=name)
-            evidence={'impact':{'verdict':'pass'},'dependencies':{'verdict':'green'},
-                      'complete':{'verdict':'green'},'build':{'verdict':'green'},
-                      'source_text':source,'source_hash':digest(source)}
-            state=deepcopy(candidate);state.update(status='sealed',seal_id='fixture-seal')
+            from regen.tests.current.seal_fixture import seal
+            state=deepcopy(candidate);evidence=seal(state)
             j.append('seal',state,evidence)
             (self.root/'generated').mkdir(exist_ok=True)
             (self.root/'generated'/(name+'.thy')).write_text(source)
@@ -263,6 +274,7 @@ class SchedulerTests(unittest.TestCase):
                 if name=='list_workspace':return {'theories':[]}
                 return {}
             def _state(self,theory):return {},self.state
+            def target_contract_green(self):return False
             def close(self):self.closed=True
         class Session:
             prompts=[]
@@ -289,59 +301,142 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(Session.instance.turns,2)
         self.assertIn('previous model turn ended',Session.prompts[1])
 
-    def test_two_empty_turns_are_a_continuation_error(self):
-        import tempfile
-        from regen.planning.parallel_file_planner import run_theory_session, TheoryContinuationError
+    def _empty_turn_scenario(self, temporary, *, progress_field=False,
+                             focus=False, on_turn=None, cancel_event=None):
+        """Synthetic provider; never claim these fixtures establish live GREEN."""
+        from types import SimpleNamespace
+        from regen.planning.parallel_file_planner import run_theory_session
+        from regen.infrastructure.codex_workspace_session import SessionCancelled
+        test = self
         class Controller:
             options={'model':'test','call_timeout':10,'check_timeout':10,'candidate_timeout':10}
             run={'run_id':'test'};model='test';task_ids=set()
-            state={'status':'generating','graph':{'nodes':[{'id':'goal'}]},'proofs':{}}
-            def __init__(self,*args,**kwargs):pass
+            def __init__(self,*args,**kwargs):
+                test.empty_controller=self
+                self.state={'status':'generating','graph':{'nodes':[{'id':'goal'}]},'proofs':{}}
+                self.closed=False
             def handle(self,name,args,metadata):
                 return {'theories':[]} if name=='list_workspace' else {}
             def _state(self,theory):return {},self.state
-            def close(self):pass
+            def target_contract_green(self):return focus and 'goal' in self.state['proofs']
+            def _runtime(self):
+                return None,None,None,SimpleNamespace(replay_snapshot=lambda:
+                    {'commit_id':'synthetic-green','records':[{}]})
+            def close(self):self.closed=True
         class Session:
-            tool_call_count=0
-            def __init__(self,**kwargs):pass
+            # No tool_call_count: continuation must not depend on this counter.
+            def __init__(self,**kwargs):
+                test.empty_session=self
+                self.turns=0;self.closed=False;self.prompts=[]
             def __enter__(self):return self
-            def __exit__(self,*args):pass
-            def run(self,*args,**kwargs):return {'status':'completed'}
-        with tempfile.TemporaryDirectory() as temporary,patch(
-                'regen.planning.parallel_file_planner.TheoryController',Controller),patch(
-                'regen.infrastructure.codex_workspace_session.CodexWorkspaceSession',Session):
-            with self.assertRaisesRegex(TheoryContinuationError,'two consecutive turns'):
-                run_theory_session(Path(temporary),'Target',
-                    resources=type('Resources',(),{'policy':{}})(),executor=object(),
-                    settings={'codex_bin':'codex','reasoning_effort':'medium'},
-                    directory=Path(temporary)/'session')
+            def __exit__(self,*args):self.closed=True
+            def run(self,prompt,handler,**kwargs):
+                self.turns+=1;self.prompts.append(prompt)
+                test.assertLessEqual(self.turns,7,'continuation failed to stop')
+                test.assertIs(kwargs['cancel_event'],cancel_event)
+                if cancel_event is not None and cancel_event.is_set():
+                    raise SessionCancelled('workspace coordinator cancelled')
+                if on_turn is not None:on_turn(self.turns)
+                if self.turns==6 and on_turn is None:
+                    if focus:handler.__self__.state['proofs']['goal']='by simp'
+                    else:handler.__self__.state['status']='sealed'
+                result={'status':'completed','turn_id':str(self.turns)}
+                if progress_field:result['progress_made']=False
+                return result
+        with patch('regen.planning.parallel_file_planner.TheoryController',Controller),patch(
+                'regen.infrastructure.codex_workspace_session.CodexWorkspaceSession',Session),patch(
+                'regen.infrastructure.workspace_transcript.audit_workspace_session',
+                return_value={'terminal':not focus}) as audit:
+            result=run_theory_session(Path(temporary),'Target',
+                resources=type('Resources',(),{'policy':{}})(),executor=object(),
+                settings={'codex_bin':'codex','reasoning_effort':'medium'},
+                directory=Path(temporary)/'session',cancel_event=cancel_event,
+                focus_contract_id='goal' if focus else None,stop_at_focus_contract=focus)
+            self.assertEqual(audit.call_args.kwargs['require_terminal'],not focus)
+            return result
 
-    def test_read_only_calls_do_not_reset_idle_turns(self):
+    def test_many_empty_turns_continue_until_checker_seal(self):
         import tempfile
-        from regen.planning.parallel_file_planner import run_theory_session, TheoryContinuationError
-        class Controller:
-            options={'model':'test','call_timeout':10,'check_timeout':10,'candidate_timeout':10}
-            run={'run_id':'test'};model='test';task_ids=set()
-            state={'status':'generating','graph':{'nodes':[{'id':'goal'}]},'proofs':{}}
-            def __init__(self,*args,**kwargs):pass
-            def handle(self,*args):return {}
-            def _state(self,theory):return {},self.state
-            def close(self):pass
-        class Session:
-            tool_call_count=0
-            def __init__(self,**kwargs):pass
-            def __enter__(self):return self
-            def __exit__(self,*args):pass
-            def run(self,*args,**kwargs):
-                self.tool_call_count+=1
-                return {'status':'completed','progress_made':False}
-        with tempfile.TemporaryDirectory() as temporary,patch(
-                'regen.planning.parallel_file_planner.TheoryController',Controller),patch(
-                'regen.infrastructure.codex_workspace_session.CodexWorkspaceSession',Session):
-            with self.assertRaisesRegex(TheoryContinuationError,'two consecutive turns'):
-                run_theory_session(Path(temporary),'Target',resources=type('R',(),{'policy':{}})(),
-                    executor=object(),settings={'codex_bin':'codex','reasoning_effort':'medium'},
-                    directory=Path(temporary)/'session')
+        for progress_field in (False,True):
+            with self.subTest(progress_field=progress_field),tempfile.TemporaryDirectory() as temporary:
+                result=self._empty_turn_scenario(temporary,progress_field=progress_field)
+                self.assertEqual(result['status'],'sealed')
+                self.assertEqual(result['continuation_turns'],5)
+                self.assertEqual(self.empty_session.turns,6)
+                self.assertTrue(self.empty_session.closed)
+                self.assertTrue(self.empty_controller.closed)
+                policy=json.loads((Path(temporary)/'session'/'policy.json').read_text())
+                self.assertNotIn('idle_turn_limit',policy['progress_policy'])
+                self.assertEqual(policy['progress_policy']['repeated_result_limit'],8)
+                self.assertNotIn('preceding turn produced no new',self.empty_session.prompts[-1])
+
+    def test_many_no_progress_turns_continue_until_focus_journal_green(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temporary:
+            result=self._empty_turn_scenario(temporary,progress_field=True,focus=True)
+        self.assertEqual(result['status'],'target_green_completed')
+        self.assertEqual(result['theory_status'],'generating')
+        self.assertEqual(result['continuation_turns'],5)
+        self.assertEqual(result['target_authority']['journal_commit_id'],'synthetic-green')
+
+    def test_many_no_progress_turns_remain_externally_cancellable(self):
+        import tempfile
+        from regen.infrastructure.codex_workspace_session import SessionCancelled
+        cancel=threading.Event()
+        def cancel_after_six(turn):
+            if turn==6:cancel.set()
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaises(SessionCancelled):
+                self._empty_turn_scenario(temporary,progress_field=True,
+                    cancel_event=cancel,on_turn=cancel_after_six)
+            self.assertFalse((Path(temporary)/'session'/'result.json').exists())
+        self.assertEqual(self.empty_session.turns,7)
+        self.assertTrue(self.empty_session.closed)
+        self.assertTrue(self.empty_controller.closed)
+
+    def test_many_no_progress_turns_preserve_session_guards_and_http_errors(self):
+        import tempfile
+        from regen.infrastructure.codex_workspace_session import (
+            ProviderHTTPError,SessionProtocolError,SessionStalled)
+        errors=(SessionStalled('no information deadline'),
+                SessionProtocolError('mismatched turn'),
+                ProviderHTTPError({'kind':'http_status','http_status':503}))
+        for error in errors:
+            def fail_after_six(turn):
+                if turn==6:raise error
+            with self.subTest(error=type(error).__name__),tempfile.TemporaryDirectory() as temporary:
+                with self.assertRaises(type(error)) as caught:
+                    self._empty_turn_scenario(temporary,progress_field=True,on_turn=fail_after_six)
+                self.assertIs(caught.exception,error)
+                self.assertEqual(self.empty_session.turns,6)
+                self.assertTrue(self.empty_session.closed)
+                self.assertTrue(self.empty_controller.closed)
+
+    def test_many_no_progress_turns_cannot_bypass_effective_budget(self):
+        import tempfile
+        from regen.execution.check_tasks import CheckCancelled
+        from regen.infrastructure.effective_time_budget import EffectiveTimeBudget,LIMIT_REASON
+        from regen.infrastructure.experiment_ledger import Ledger
+        now=[0.]
+        with tempfile.TemporaryDirectory() as temporary:
+            budget=EffectiveTimeBudget(Ledger(Path(temporary)/'budget','fixture'),
+                seconds=6,monotonic=lambda:now[0])
+            budget.register({'Target':['goal']});budget.select('Target')
+            def charge_turn(turn):
+                now[0]=float(turn)
+                budget.check()
+            try:
+                with self.assertRaises(CheckCancelled):
+                    self._empty_turn_scenario(temporary,progress_field=True,
+                        cancel_event=budget.event,on_turn=charge_turn)
+                self.assertEqual(self.empty_session.turns,6)
+                self.assertTrue(self.empty_session.closed)
+                self.assertTrue(self.empty_controller.closed)
+                self.assertTrue(budget.event.is_set())
+                self.assertEqual(budget.reason,LIMIT_REASON)
+                self.assertEqual(budget.snapshot()['effective_seconds'],6)
+                self.assertFalse((Path(temporary)/'session'/'result.json').exists())
+            finally:budget.close()
 
     def test_completed_theory_refills_slot_without_waiting_for_slow_peer(self):
         import tempfile
@@ -367,7 +462,8 @@ class SchedulerTests(unittest.TestCase):
                 if theory=='C':c_started.set()
                 with mutex:states[theory]='sealed'
                 return {'theory':theory,'status':'sealed'}
-            settings={'codex_bin':str(binary),'codex_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
+            settings={'codex_bin':str(binary),'codex_runtime_root':str(root/'codex-runtime'),
+                      'codex_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
             with patch('regen.planning.parallel_file_planner.WorkspaceController',Overview),patch(
                     'regen.planning.parallel_file_planner.run_theory_session',side_effect=session),patch(
                     'regen.infrastructure.audited_llm.model_settings',return_value=settings),patch(

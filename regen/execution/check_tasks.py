@@ -16,6 +16,10 @@ class NativePreparationError(RuntimeError):
     """The trusted prefix could not be prepared; this is not a candidate RED."""
 
 
+class ImplementationChangedError(NativePreparationError):
+    """Frozen execution code drift is terminal, never model-repairable feedback."""
+
+
 @dataclass
 class Cancellation:
     event: threading.Event = field(default_factory=threading.Event)

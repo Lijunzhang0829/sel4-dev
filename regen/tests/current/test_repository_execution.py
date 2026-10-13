@@ -14,6 +14,17 @@ from regen.execution.isabelle_node_checker import IsabelleChecker
 from regen.planning.file_planner import planning_environment,planner_prompt
 
 class RepositoryExecutionTest(unittest.TestCase):
+    def test_explicit_single_agent_model_is_frozen_at_initialization(self):
+        f=fixtures.RepositoryPlannerTest();f.setUp();self.addCleanup(f.doCleanups)
+        f.call([f.proposal],allow=True)
+        override={'File Planner':'test-single-agent-model'}
+        run=execution.init_run(f.root/'explicit-model',f.root,'model-test',
+            f.output/'file-generation-list.json',execution_models=override)
+        self.assertEqual(run['execution_models']['File Planner'],'test-single-agent-model')
+        self.assertEqual(run['execution_model_overrides'],override)
+        from regen.execution.proof_session_runner import frozen_role_model
+        self.assertEqual(frozen_role_model(run,'File Planner'),'test-single-agent-model')
+
     def test_actual_bundle_to_runner_free_grouping_and_auxiliary_only(self):
         f=fixtures.RepositoryPlannerTest();f.setUp();self.addCleanup(f.doCleanups)
         f.call([f.proposal],allow=True)
@@ -94,6 +105,8 @@ class RepositoryExecutionTest(unittest.TestCase):
         self.assertEqual(execution.progress(root)['files'][0]['status'],'failed')
 
     def test_green_and_seal_commits_restore_publication(self):
+        from regen.tests.current.seal_fixture import mock_bind
+        self.enterContext(patch('regen.execution.seal_evidence.bind_seal',side_effect=mock_bind))
         from regen.planning.proof_graph import build_graph
         f=fixtures.RepositoryPlannerTest();f.setUp();self.addCleanup(f.doCleanups);f.call([f.proposal],allow=True)
         root=f.root/'execution';run=execution.init_run(root,f.root,'r',f.output/'file-generation-list.json')

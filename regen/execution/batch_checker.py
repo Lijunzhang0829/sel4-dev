@@ -5,6 +5,7 @@ No model-provided admission or arbitrary ML enters this process.
 """
 from regen.execution.check_tasks import check_cancelled, CheckCancelled
 import hashlib
+import shlex
 import xml.etree.ElementTree as ET
 import time
 import uuid
@@ -53,6 +54,13 @@ class BatchWorker(PrefixWorker):
         self._launch(command)
 
     def wait(self, path, *, timeout=None):
+        from contextlib import nullcontext
+        from regen.infrastructure.progress_events import generation_exclusion
+        scope = generation_exclusion('prefix_preparation') if path.name == 'ready' else nullcontext()
+        with scope:
+            return self._wait(path, timeout=timeout)
+
+    def _wait(self, path, *, timeout=None):
         from regen.infrastructure.progress_events import emit_event
         start = time.monotonic()
         limit = (getattr(self, 'prefix_timeout', self.checker.timeout)
@@ -78,21 +86,59 @@ class BatchWorker(PrefixWorker):
             time.sleep(.05)
         emit_event('isabelle_batch_wait_finished', worker=self.name, waiting_for=path.name, elapsed_seconds=round(time.monotonic()-start, 3))
 
-    def transaction(self, action, text='', names=(), line=1):
+    def transaction(self, action, text='', names=(), line=1, *, fields=None, timeout=None):
         check_cancelled()
         self.index += 1
         stem = str(self.index)
         offset = (self.root/'worker.log').stat().st_size
         for suffix, value in [('action',action), ('facts','\n'.join(names)), ('line',str(line))]:
             (self.root/(stem+'.'+suffix)).write_text(value)
+        for suffix, value in (fields or {}).items():
+            (self.root/(stem+'.'+suffix)).write_text(str(value))
         temp = self.root/(stem+'.tmp'); temp.write_text(text)
         temp.rename(self.root/(stem+'.request'))
-        limit = getattr(self.checker, 'batch_candidate_timeout', 120) + 10 if action == 'check' else self.checker.timeout
+        limit = timeout if timeout is not None else (getattr(self.checker, 'batch_candidate_timeout', 120) + 10 if action == 'check' else self.checker.timeout)
         self.wait(self.root/(stem+'.response'), timeout=limit)
         answer = (self.root/(stem+'.response')).read_text()
         with open(self.root/'worker.log', 'rb') as stream:
             stream.seek(offset); log = stream.read().decode(errors='replace')
         return answer, log
+
+    def observe_source(self, source, label, *, timeout, output_directory=None):
+        """Trusted harness observation in an imports-only, disposable theory.
+
+        The exact executed source is saved. This is not a proof certificate and
+        cannot promote pending work. Only the fixed symbol output is exported.
+        """
+        header, separator, content = source.partition('\nbegin\n')
+        if (not separator or shlex.split(header) != ['theory', label, 'imports', *self.imports]
+                or not source.endswith('\nend\n')):
+            raise ValueError('observation header must match frozen worker imports')
+        stem = str(self.index + 1)
+        output = self.root/(stem+'.resolution.tsv')
+        executed = source
+        if output_directory is not None:
+            executed = source.replace('/symbol-output/resolution.tsv', '/worker/'+output.name)
+        started = time.monotonic()
+        try:
+            answer, log = self.transaction('observe', executed.partition('\nbegin\n')[2],
+                fields={'observation_name':label, 'observation_timeout':timeout}, timeout=timeout+10)
+        except (TimeoutError, RuntimeError, OSError):
+            self.close()
+            raise
+        path = self.root/(stem+'.observation.thy')
+        path.write_text(executed)
+        log_path = self.root/(stem+'.observation.log')
+        log_path.write_text(log+'\n'+answer)
+        if answer == 'OBSERVED' and output_directory is not None:
+            # Missing output is a transport error, not a successful lookup.
+            (Path(output_directory)/'resolution.tsv').write_bytes(output.read_bytes())
+        return {'verdict':'green' if answer == 'OBSERVED' else 'red',
+            'returncode':0 if answer == 'OBSERVED' else 124 if answer.startswith('TIMEOUT\n') else 1,
+            'diagnostic':answer, 'source':str(path), 'log':str(log_path),
+            'wall_ms':round((time.monotonic()-started)*1000),
+            'check_scope':'isolated-imports-observation', 'proofs_checked':False,
+            'worker':self.name, 'worker_preserved':True}
 
     def align(self, prefix):
         if prefix == self.base:

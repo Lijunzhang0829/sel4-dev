@@ -42,7 +42,8 @@ _MUTATION_LOCK_STATE = threading.local()
 
 
 def read_json(path: Path) -> dict[str, Any]:
-    value = json.loads(path.read_text(encoding="utf-8"))
+    from regen.infrastructure.incremental_log import read_artifact
+    value = read_artifact(path)
     if not isinstance(value, dict):
         raise ValueError(f"expected JSON object: {path}")
     return value
@@ -810,11 +811,20 @@ def theory_generation_id(run: dict[str, Any], file_slot: str) -> str:
 def _init_run_unlocked(
     run_dir: Path, input_root: Path, *, run_id: str,
     schedule_path: Path | None = None,
+    complete_context_policy: str = 'isolated-v1',
+    log_storage: str = 'inline-v1',
 ) -> dict[str, Any]:
+    from regen.execution.checker_policy import validate_complete_context_policy, policy_binding
+    validate_complete_context_policy(complete_context_policy)
+    from regen.infrastructure.incremental_log import policy_arguments
+    logging = policy_arguments({'log_storage':log_storage})
     if schedule_path and read_json(schedule_path).get('artifact_type') == 'repository-file-generation-list':
         from regen.execution.repository_execution import init_run as init_repository
-        return init_repository(run_dir, input_root, run_id, schedule_path)
+        return init_repository(run_dir, input_root, run_id, schedule_path,
+            **policy_binding({'complete_context_policy':complete_context_policy}), **logging)
     # Everything below is the compatibility path for pre-schema-5 runs.
+    if complete_context_policy != 'isolated-v1' or logging:
+        raise ValueError('Arch reuse requires a new refine-dataset repository run')
     environment_run = input_root.resolve()
     context = environment_context(environment_run)
     source_heaps = context["heaps"]
@@ -875,12 +885,16 @@ def _init_run_unlocked(
 def init_run(
     run_dir: Path, input_root: Path, *, run_id: str,
     schedule_path: Path | None = None,
+    complete_context_policy: str = 'isolated-v1',
+    log_storage: str = 'inline-v1',
 ) -> dict[str, Any]:
     lock = acquire_run_mutation_lock(run_dir, operation="init")
     try:
         return _init_run_unlocked(
             run_dir, input_root, run_id=run_id,
             schedule_path=schedule_path,
+            complete_context_policy=complete_context_policy,
+            log_storage=log_storage,
         )
     finally:
         release_run_mutation_lock(lock)
@@ -2206,6 +2220,12 @@ def main() -> int:
         help="Legacy schema only; new repository runs use --dataset-root.",
     )
     init.add_argument("--schedule", type=Path)
+    from regen.execution.checker_policy import COMPLETE_CONTEXT_POLICIES
+    init.add_argument('--complete-context-policy', choices=COMPLETE_CONTEXT_POLICIES,
+                      default='isolated-v1', help='Frozen final-theory renderer; new repository runs only')
+    from regen.infrastructure.incremental_log import FORMAT
+    init.add_argument('--log-storage', choices=['inline-v1', FORMAT], default='inline-v1',
+                      help='Incremental immutable log objects for a new run')
 
     plan = sub.add_parser("plan-file")
     plan.add_argument("--run-dir", type=Path, required=True)
@@ -2291,10 +2311,27 @@ def main() -> int:
                           help="Persistent theory source (default), or legacy explicit proof graph")
     parallel.add_argument("--max-parallel-theories", type=int, default=2)
     parallel.add_argument("--native-slots", type=int, default=1)
+    parallel.add_argument("--native-cpus", type=float, default=4)
+    parallel.add_argument("--native-memory-mb", type=int, default=16384)
+    parallel.add_argument("--native-pids-limit", type=int, default=1024)
     parallel.add_argument("--native-threads", type=int, default=4)
+    parallel.add_argument("--provider-build-timeout", type=int, default=1800,
+                          help="Cold provider session build budget; independent of candidate and seal timeouts")
+    parallel.add_argument("--build-ml-heap-mb", type=int, default=None,
+                          help="Build Poly/ML maximum heap MiB; default 75%% of container RAM, reserving native overhead")
     parallel.add_argument("--resident-limit", type=int, default=2)
     parallel.add_argument("--execution-policy", type=Path,
                           help="JSON with ordered theory stages and bounded SessionStalled retries")
+    parallel.add_argument("--generation-strategy", choices=['baseline','helper-closure-v1','bounded-audited-prefix-v1'], default='baseline',
+                          help="Explicitly bound diagnostic workflow variant; baseline preserves the original prompt")
+    parallel.add_argument("--focus-contract-id", default=None,
+                          help="Prioritize one unproved fixed contract ID without adding mathematical guidance")
+    parallel.add_argument("--effective-seconds", type=float, default=172800,
+                          help="Global effective generation allowance (default 48h); union of parallel worker activity")
+    parallel.add_argument("--resume-authorization", default=None,
+                          help="Explicit authorization reference to resume a persisted effective-time budget")
+    parallel.add_argument("--extend-effective-seconds", type=float, default=None,
+                          help="Explicit additional effective seconds; preserves already consumed time and requires resume authorization")
     integration = sub.add_parser("integrate", help="Verify exact sealed repository coverage and build")
     integration.add_argument("--run-dir", type=Path, required=True)
     integration.add_argument("--check-timeout", type=int, default=900)
@@ -2308,6 +2345,8 @@ def main() -> int:
                 args.run_dir, args.dataset_root or args.environment_run,
                 run_id=args.run_id,
                 schedule_path=args.schedule,
+                complete_context_policy=args.complete_context_policy,
+                log_storage=args.log_storage,
             )
         elif args.command == "parallel-workspace":
             from regen.planning.parallel_file_planner import run_parallel_workspace
@@ -2315,6 +2354,15 @@ def main() -> int:
                 max_parallel_theories=args.max_parallel_theories, native_slots=args.native_slots,
                 file_planner_interface=args.file_planner_interface,
                 native_threads=args.native_threads, resident_limit=args.resident_limit,
+                native_cpus=args.native_cpus,native_memory_mb=args.native_memory_mb,
+                native_pids_limit=args.native_pids_limit,
+                provider_build_timeout=args.provider_build_timeout,
+                build_ml_heap_mb=args.build_ml_heap_mb,
+                generation_strategy_name=args.generation_strategy,
+                focus_contract_id=args.focus_contract_id,
+                effective_seconds=args.effective_seconds,
+                resume_authorization=args.resume_authorization,
+                extend_effective_seconds=args.extend_effective_seconds,
                 execution_policy=json.loads(args.execution_policy.read_text()) if args.execution_policy else None,
                 call_timeout=args.call_timeout, check_timeout=args.check_timeout,
                 candidate_timeout=args.candidate_timeout, allow_external_call=args.allow_external_call,
@@ -2371,6 +2419,12 @@ def main() -> int:
                     max_parallel_theories=args.max_parallel_theories, **options,
                 )
     except BaseException as error:
+        pause_result = getattr(error, 'regen_pause_result', None)
+        if args.command == 'parallel-workspace' and isinstance(pause_result, dict):
+            emit_event('runner_paused', reason=pause_result.get('reason'))
+            close_event_monitor('paused')
+            print(json.dumps(pause_result, ensure_ascii=False, indent=2, sort_keys=True))
+            return 2
         emit_event(
             "runner_failed", error_type=type(error).__name__, error=str(error),
         )

@@ -15,6 +15,26 @@ from regen.execution.isabelle_node_checker import IsabelleChecker
 
 
 class RecoveryTests(unittest.TestCase):
+    def test_explicit_overload_retry_is_bounded_and_cleanup_safe(self):
+        from regen.infrastructure.codex_workspace_session import ProviderOverloaded, SessionProtocolError
+        self.assertTrue(_retry_stalled(ProviderOverloaded('capacity'), 1, 1))
+        self.assertFalse(_retry_stalled(ProviderOverloaded('capacity'), 2, 1))
+        self.assertFalse(_retry_stalled(SessionProtocolError('unknown'), 1, 1))
+        error = ProviderOverloaded('capacity'); error.add_note('cleanup failed')
+        self.assertFalse(_retry_stalled(error, 1, 1))
+
+    def test_only_bound_explicit_capacity_is_classified(self):
+        from regen.infrastructure.codex_workspace_session import CodexWorkspaceSession, ProviderOverloaded, SessionProtocolError
+        from regen.planning.parallel_file_planner import tools
+        session = CodexWorkspaceSession(tools=tools(True))
+        session.thread_id, session.turn_id = 'thread', 'turn'
+        message = {'method':'error','params':{'threadId':'thread','turnId':'turn',
+                   'willRetry':False,'error':{'codexErrorInfo':'serverOverloaded'}}}
+        with self.assertRaises(ProviderOverloaded):session._notification(message)
+        message['params']['turnId']='foreign'
+        with self.assertRaises(SessionProtocolError) as caught:session._notification(message)
+        self.assertNotIsInstance(caught.exception, ProviderOverloaded)
+
     def test_policy_validation_and_cleanup_retry_guard(self):
         for policy in ({'stages':[['A'],['A']]}, {'stages':[['B']]},
                        {'session_stall_retries':True}, {'session_stall_retries':4}):
@@ -58,7 +78,8 @@ class RecoveryTests(unittest.TestCase):
                             raise SessionStalled('fixture timeout')
                     states[theory] = 'sealed'
                 return {'theory':theory,'status':'sealed'}
-            settings = {'codex_bin':str(binary),'codex_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
+            settings = {'codex_bin':str(binary),'codex_runtime_root':str(root/'codex-runtime'),
+                        'codex_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
             with patch('regen.planning.parallel_file_planner.WorkspaceController',Overview), patch(
                     'regen.planning.parallel_file_planner.run_theory_session',side_effect=session), patch(
                     'regen.infrastructure.audited_llm.model_settings',return_value=settings), patch(
@@ -85,6 +106,7 @@ class RecoveryTests(unittest.TestCase):
                 heaps_dir=root,l4v_dir=root,semantic_workspace=root,isabelle_dir=root)
             heap = root/'Generated_Refine'; heap.write_bytes(b'provider heap')
             (checker.generated_dir/'Target.thy').write_text('target fixture')
+            (checker.generated_dir/'Provider.thy').write_text('provider fixture')
             with patch('regen.execution.isabelle_node_checker.native_run',
                        return_value=subprocess.CompletedProcess([],1,'','failed')) as run:
                 result = checker.build_sealed_session(['Provider','Target'])

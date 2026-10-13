@@ -27,6 +27,9 @@ def diagnostics(payload, proposal, evidence=None):
 
 
 def save(path, value):
+    from regen.infrastructure.incremental_log import find_root, selected, write_artifact
+    if selected(path) and find_root(path) is not None:
+        return write_artifact(path, value, immutable=True)
     path = Path(path); path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix+'.tmp')
     tmp.write_text(json.dumps(value, ensure_ascii=False, indent=2)+'\n'); tmp.replace(path)
@@ -66,6 +69,29 @@ class WorkspaceHarness:
         self.active_call=None
         self.state_path=self.output/'control/state.json'
         self.state=json.loads(self.state_path.read_text()) if self.state_path.exists() else {'inspected_contracts':{},'inspected_premises':{},'sequence':0}
+        from regen.infrastructure.incremental_log import find_root, read_artifact
+        self.incremental_logging = find_root(self.state_path) is not None
+        if self.incremental_logging:
+            # Query publication precedes the rebuildable state projection.
+            # Incomplete calls retain their charged sequence; never resend them.
+            starts = sorted((self.output/'queries').glob('*.started.json'))
+            if self.state.get('sequence', 0) > len(starts):
+                raise ValueError('planning query history is missing')
+            for expected, started in enumerate(starts, 1):
+                entry = read_artifact(started)
+                number = entry['sequence']
+                if number != expected or entry['state_before']['sequence'] != number:
+                    raise ValueError('planning query sequence mismatch')
+                completed = started.with_name(f'{number:06d}.json')
+                if completed.exists():
+                    result = read_artifact(completed)
+                    if (result['request'] != entry['request']
+                            or result['state_after']['sequence'] != number):
+                        raise ValueError('planning query request drift')
+                    self.state = result['state_after']
+                else:
+                    self.state = entry['state_before']
+                    self.state.setdefault('interrupted_queries', []).append(number)
         submitted=self.output/'control/submitted.json'
         self.submitted=json.loads(submitted.read_text()) if submitted.exists() else None
         save(self.output/'agent-input.json',self.view.payload)
@@ -88,6 +114,10 @@ class WorkspaceHarness:
     def dispatch(self, request):
         with self.lock:
             self.state['sequence']+=1; number=self.state['sequence']
+            if self.incremental_logging:
+                save(self.output/f'queries/{number:06d}.started.json', {
+                    'sequence':number, 'request':request, 'call_number':self.active_call,
+                    'state_before':deepcopy(self.state)})
             try:
                 result=self._dispatch(request)
                 self.view.assert_no_owner_disclosure(json.dumps(result,ensure_ascii=False))
@@ -96,7 +126,8 @@ class WorkspaceHarness:
                 try: self.view.assert_no_owner_disclosure(message)
                 except ValueError: message='Private source-context diagnostic withheld; inspect the public contracts and exact contexts.'
                 result={'valid':False,'error':message}
-            save(self.output/f'queries/{number:06d}.json',{'request':request,'response':result,'call_number':self.active_call})
+            save(self.output/f'queries/{number:06d}.json',{'request':request,'response':result,'call_number':self.active_call,
+                **({'state_after':self.state} if self.incremental_logging else {})})
             save(self.state_path,self.state)
             return result
 

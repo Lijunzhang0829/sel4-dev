@@ -63,6 +63,7 @@ class AcceptanceFixes(unittest.TestCase):
                 root=Path(tmp)
                 checker=IsabelleChecker(root,root/'check',heaps_dir=root,l4v_dir=root,semantic_workspace=root)
                 hot=Mock();checker._batch_worker=hot
+                (checker.generated_dir/'X.thy').write_text('theory X imports Main begin end')
                 pool=NativeResources(1,1,1);marker=CURRENT_RESOURCES.set(pool)
                 def launch(command,**kwargs):
                     hot.close.assert_called_once()

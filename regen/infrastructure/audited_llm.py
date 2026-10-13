@@ -16,8 +16,11 @@ from pathlib import Path
 
 MODEL_CONFIG = Path(__file__).resolve().parents[1] / "config/proof-models.json"
 
+def model_config_path():
+    return Path(os.environ.get('REGEN_MODEL_CONFIG', str(MODEL_CONFIG))).resolve()
+
 def model_settings():
-    return json.loads(MODEL_CONFIG.read_text())
+    return json.loads(model_config_path().read_text())
 
 PASSIVE_ITEM_TYPES = {"reasoning", "agent_message", "error"}
 
@@ -164,6 +167,9 @@ def call_codex(
 
     settings = model_settings()
     override = codex_bin or os.environ.get("REGEN_CODEX_BIN")
+    if not override:
+        from regen.infrastructure.codex_runtime import runtime_verified_settings
+        settings = runtime_verified_settings(settings)
     executable = Path(override or settings["codex_bin"]).resolve()
     if not executable.is_file():
         raise RuntimeError(f"configured Codex CLI not found: {executable}")

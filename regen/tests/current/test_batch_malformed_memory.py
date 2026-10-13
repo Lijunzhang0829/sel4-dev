@@ -47,7 +47,8 @@ class BatchMalformedMemoryTest(unittest.TestCase):
                 {'check': {'verdict': 'red', 'diagnostic': 'native check failed'}}))
             restored = restore_batch_memory(root, state)
             self.assertEqual(restored['batch_history'][0]['status'], 'rejected_batch')
-            self.assertEqual(restored['batch_target_memory']['helper']['feedback']['status'], 'rejected_batch')
+            from regen.planning.attempt_memory import target_attempts
+            self.assertEqual(dict(target_attempts(restored))['helper']['feedback']['status'], 'rejected_batch')
             self.assertEqual(restored['proofs'], {})
             self.assertEqual(restore_batch_memory(root, restored), restored)
 
@@ -145,7 +146,8 @@ class BatchMalformedMemoryTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             restored = restore_batch_memory(Path(tmp), state)
         self.assertEqual(restored['batch_history'][0]['status'], 'checked_not_committed')
-        self.assertEqual(restored['batch_target_memory']['helper']['feedback']['status'], 'checked_not_committed')
+        from regen.planning.attempt_memory import target_attempts
+        self.assertEqual(dict(target_attempts(restored))['helper']['feedback']['status'], 'checked_not_committed')
         self.assertEqual(restored['proofs'], {})
 
 

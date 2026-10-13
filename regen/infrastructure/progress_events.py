@@ -7,10 +7,42 @@ import json
 import os
 from pathlib import Path
 import threading
+from uuid import uuid4
 
 from regen.execution.proof_commits import durable
 
 _SINK = ContextVar('regen_progress_sink', default=None)
+_STDOUT_LOCK = threading.RLock()
+_OBSERVER = ContextVar('regen_progress_observer', default=None)
+_PUBLICATION_GUARD = ContextVar('regen_proof_publication_guard', default=None)
+
+
+@contextmanager
+def observe_events(observer, *, publication_guard=None):
+    """Harness-owned observer; copied with native/transport task contexts."""
+    marker = _OBSERVER.set(observer)
+    guard_marker = _PUBLICATION_GUARD.set(publication_guard)
+    try:
+        yield
+    finally:
+        _PUBLICATION_GUARD.reset(guard_marker)
+        _OBSERVER.reset(marker)
+
+
+@contextmanager
+def proof_publication(record):
+    """Linearize the trusted clock with durable accepted-proof publication.
+
+    The journal has already validated the record. The context ends immediately
+    after successful authoritative publication, before derived HEAD/cache work.
+    Failed writes propagate through the guard and must not report new progress.
+    """
+    guard = _PUBLICATION_GUARD.get()
+    if guard is None:
+        yield
+    else:
+        with guard(record):
+            yield
 
 
 class EventSink:
@@ -84,14 +116,31 @@ def close_event_monitor(reason='completed'):
 def emit_event(event, **fields):
     if event.endswith('_heartbeat'):
         return
+    observer = _OBSERVER.get()
+    if observer is not None:
+        observer(event, fields)
     sink = _SINK.get()
     payload = (sink.emit(event,fields) if sink is not None else
                {'time':datetime.now(timezone.utc).isoformat(),'event':event,**fields})
     try:
-        print('[regen-event] '+json.dumps(payload,ensure_ascii=False,default=str),flush=True)
+        with _STDOUT_LOCK:
+            print('[regen-event] '+json.dumps(payload,ensure_ascii=False,default=str),flush=True)
     except (BrokenPipeError, OSError):
         pass
 
 
 def short_node(node_id: str) -> str:
     return node_id.rsplit(':',1)[-1]
+
+
+@contextmanager
+def generation_exclusion(category, **fields):
+    """Bounded infrastructure evidence; consumers union, never sum overlaps."""
+    phase_id = uuid4().hex
+    emit_event('generation_exclusion_started', phase_id=phase_id,
+               category=category, **fields)
+    try:
+        yield
+    finally:
+        emit_event('generation_exclusion_finished', phase_id=phase_id,
+                   category=category, **fields)

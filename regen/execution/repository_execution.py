@@ -4,6 +4,9 @@ Legacy schedule replay remains in proof_session_runner; no second proof graph is
 """
 from __future__ import annotations
 from regen.planning.import_contract import required_imports
+from regen.execution.checker_policy import (
+    ISOLATED_CONTEXT, validate_complete_context_policy, resolve_complete_context_policy, policy_binding,
+)
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
@@ -12,6 +15,7 @@ import shutil
 import threading
 
 from regen.execution.proof_commits import ProofCommits, digest, durable, freeze_evidence
+from regen.infrastructure.incremental_log import policy_arguments as log_policy_arguments
 from regen.execution.fact_context import manifest as fact_manifest
 from regen.planning.proof_graph import (build_graph, validate_graph, assert_green_nodes_unchanged,
     executable_nodes, graph_payload_sha256, write_immutable_graph)
@@ -43,7 +47,9 @@ def resume_round_feedback(theory_dir, state, node_id):
     return select_resume_feedback(current, recovered)
 
 
-def read(path): return json.loads(Path(path).read_text())
+def read(path):
+    from regen.infrastructure.incremental_log import read_artifact
+    return read_artifact(path)
 
 
 def is_repository(run_dir):
@@ -74,12 +80,18 @@ def projection_package(projection, plan):
     return {**body, 'package_payload_sha256':digest(body)}
 
 
-def init_run(run_dir, input_root, run_id, schedule):
+def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=ISOLATED_CONTEXT,
+             log_storage='inline-v1', execution_models=None):
+    validate_complete_context_policy(complete_context_policy)
+    from regen.infrastructure.incremental_log import enable, policy_arguments
+    logging = policy_arguments({'log_storage':log_storage})
     from regen.planning.repository_planner import load_file_projection
     input_root, schedule = input_root.resolve(), schedule.resolve()
     listing = read(schedule)
     if not listing.get('files'): raise ValueError('empty repository file list')
     direct = listing.get('schema_version') in {5,6,7}
+    if not direct and complete_context_policy != ISOLATED_CONTEXT:
+        raise ValueError('Arch reuse requires a new refine-dataset repository run')
     if direct:
         from regen.planning.plan_revisions import verify_revisions
         revision = verify_revisions(schedule.parent/'planning')
@@ -137,15 +149,26 @@ def init_run(run_dir, input_root, run_id, schedule):
                       for folder in ('execution','planning','infrastructure','analysis')
                       for p in (Path(__file__).resolve().parents[1]/folder).iterdir() if p.suffix in {'.py','.ML','.sh'}}
     from regen.infrastructure.resource_budget import HEAP_COPY_POLICY, clone_heaps
-    from regen.infrastructure.audited_llm import model_settings, MODEL_CONFIG
-    implementation[str(MODEL_CONFIG.relative_to(Path(__file__).resolve().parents[2]))] = __import__('hashlib').sha256(MODEL_CONFIG.read_bytes()).hexdigest()
+    from regen.infrastructure.audited_llm import model_settings, model_config_path
+    MODEL_CONFIG = model_config_path()
+    models = dict(model_settings()['role_models'])
+    if execution_models is not None:
+        if (not isinstance(execution_models, dict) or not set(execution_models) <= set(models)
+                or any(not isinstance(v,str) or not v.strip() for v in execution_models.values())):
+            raise ValueError('invalid explicit execution role models')
+        models.update(execution_models)
+    config_root = Path(__file__).resolve().parents[2]
+    config_key = str(MODEL_CONFIG.relative_to(config_root)) if MODEL_CONFIG.is_relative_to(config_root) else str(MODEL_CONFIG)
+    implementation[config_key] = __import__('hashlib').sha256(MODEL_CONFIG.read_bytes()).hexdigest()
     run = {'schema_version':2, 'execution_mode':'repository-projection-v1', 'run_id':run_id,
         'execution_input_kind':'refine-dataset' if direct else 'legacy-environment',
         **({'checker_context_root':str(input_root),
             'checker_context_id':checker_context['checker_context_id']} if direct
            else {'environment_run':str(input_root)}),
         'target':'Refine', 'state':'ready',
-        'execution_models':model_settings()['role_models'],
+        'execution_models':models,
+        'model_config_path':str(MODEL_CONFIG),
+        **({'execution_model_overrides':dict(execution_models)} if execution_models is not None else {}),
         'checker_policy':'fixed-prefix-cold-green-v1',
         'premise_database':str(context['premise_database']), 'premise_snapshot':str(context['premise_snapshot']),
         'semantic_workspace':str(context['semantic_workspace']), 'l4v':str(context['l4v']),
@@ -166,6 +189,10 @@ def init_run(run_dir, input_root, run_id, schedule):
                 'environment_gate_id':plan['environment_gate_id'],
                 'environment_dataflow_id':plan['environment_dataflow_id'],
             })}}
+    run.update(policy_binding({'complete_context_policy':complete_context_policy}))
+    run.update(logging)
+    if logging:
+        enable(run_dir)
     # Immutable run identity; re-init cannot reset accepted proofs or change code.
     durable(run_dir/'run.json', run, immutable=True)
     durable(run_dir/'execution-input.json', {'file_list':listing, 'files':files,
@@ -193,7 +220,7 @@ def context_graph(graph, order):
     return accepted_declarations(graph, order)
 
 
-def validator(package, runtime=None):
+def validator(package, runtime=None, frozen_imports=None):
     def validate(old, new, event, evidence):
         def verify_embedded(value):
             if isinstance(value,list):
@@ -237,6 +264,11 @@ def validator(package, runtime=None):
                 raise ValueError('committed runtime budget changed')
             if new.get('batch_requests',0) < old.get('batch_requests',0):
                 raise ValueError('batch request counter decreased')
+            for key, previous in old.get('helper_route_costs', {}).items():
+                current = new.get('helper_route_costs', {}).get(key)
+                if current is None or any(current.get(field, 0) < previous.get(field, 0)
+                        for field in ('failures', 'failed_seconds', 'unattributed_failures', 'last_request')):
+                    raise ValueError('AND/OR historical route costs decreased')
             if event == 'planner-request' and new.get('batch_requests') != old.get('batch_requests',0)+1:
                 raise ValueError('invalid batch request charge')
             for field in ('rounds','revisions'):
@@ -305,6 +337,13 @@ def validator(package, runtime=None):
             elif new.get('attempt_contexts',{})!=before:
                 raise ValueError('attempt context changed outside charged attempt')
         if event=='seal':
+            from regen.execution.seal_evidence import validate_seal
+            expected_imports = None
+            if frozen_imports is not None and runtime and runtime.get('base_import'):
+                expected_imports = ([f'Generated_Refine.{name}' for name in frozen_imports]
+                                    if frozen_imports else [runtime['base_import']])
+            validate_seal(new, evidence, expected_imports=expected_imports,
+                          base_session=(runtime or {}).get('base_session'), runtime=runtime)
             if evidence.get('impact',{}).get('verdict')!='pass' or evidence.get('dependencies',{}).get('verdict')!='green':
                 raise ValueError('seal lacks dependency/impact audit')
             if set(proofs)!=nodes.keys() or evidence.get('complete',{}).get('verdict')!='green' or evidence.get('build',{}).get('verdict')!='green':
@@ -315,7 +354,10 @@ def validator(package, runtime=None):
 
 
 def journal(run_dir, run, package):
-    binding = {**run['session_schedule'], 'run_id':run['run_id'], 'implementation':digest(run['implementation']),
+    from regen.infrastructure.incremental_log import find_root, policy_arguments
+    if policy_arguments(run) and find_root(run_dir/'run.json') != run_dir.resolve():
+        raise ValueError('incremental run lost its logging policy')
+    binding = {**run['session_schedule'], **policy_binding(run), 'run_id':run['run_id'], 'implementation':digest(run['implementation']),
                'package_sha256':package['package_payload_sha256'],
                'imports':read(run_dir/'theories'/Path(package['file_slot']).stem/'imports.json')
                    if (run_dir/'theories'/Path(package['file_slot']).stem/'imports.json').exists() else []}
@@ -326,10 +368,11 @@ def journal(run_dir, run, package):
         'validator_version':'repository-validated-prefix-v1',
         'callables':[id(validator), id(validate_graph), id(validate_batch_commit), id(continuation_state)]})
     return ProofCommits(run_dir/'theories'/Path(package['file_slot']).stem/'acceptance',
-                        binding, validator(package, run), cache_namespace=namespace)
+                        binding, validator(package, run, binding['imports']), cache_namespace=namespace)
 
 
 _SEALED_PUBLICATION_CACHE = {}
+_PROGRESS_SNAPSHOTS = {}
 
 
 def _progress_unlocked(run_dir):
@@ -383,12 +426,61 @@ def _progress_unlocked(run_dir):
         'checked_contracts':sum(f.get('checked_contracts',0) for f in files),
         'sealed_contracts':sum(len(f['contract_ids']) for f in files if f['status']=='sealed')}
     durable(Path(run['session_progress_ledger']),value)
+    if len(_PROGRESS_SNAPSHOTS) >= 32:
+        _PROGRESS_SNAPSHOTS.clear()
+    _PROGRESS_SNAPSHOTS[str(Path(run_dir).resolve())] = deepcopy(value)
     return value
 
 
 def progress(run_dir):
+    from regen.infrastructure.incremental_log import fingerprint_batch
     with _PROJECTION_LOCK:
-        return _progress_unlocked(run_dir)
+        with fingerprint_batch():
+            return _progress_unlocked(run_dir)
+
+
+def publish_theory_progress(run_dir, theory, state):
+    """Writer-only projection from a just-committed state, never proof authority.
+
+    Cold processes and seals still use full verified reconstruction. Ordinary
+    callbacks update one row under the projection lock; scheduling/acceptance
+    continue reading journals, not this possibly lagging display cache.
+    """
+    root = Path(run_dir).resolve()
+    with _PROJECTION_LOCK:
+        previous = _PROGRESS_SNAPSHOTS.get(str(root))
+        if previous is None or state['status'] in {'sealed', 'retired'}:
+            return progress(root)
+        value = deepcopy(previous)
+        entry = next((item for item in value['files']
+                      if Path(item['file_slot']).stem == theory), None)
+        if entry is None:
+            return progress(root)
+        nodes = {n['id']: n for n in state['graph']['nodes']}
+        entry['checked_contracts'] = sum(nodes[k]['role'] == 'contract' for k in state['proofs'])
+        auxiliary = sum(nodes[k]['role'] != 'contract' for k in state['proofs'])
+        directory = root/'theories'/theory
+        document = state['graph'].get('declaration_index_version') == 1
+        if document:
+            from regen.planning.document_interface import public_view
+            durable(directory/'declaration-index.json', public_view(state['graph']))
+            durable(directory/'progress.json', public_view(state))
+            entry.pop('checked_generated_nodes', None)
+            entry['checked_auxiliaries'] = auxiliary
+        else:
+            durable(directory/'active-graph.json', state['graph'])
+            durable(directory/'progress.json', state)
+            entry['checked_generated_nodes'] = auxiliary
+        run = read(root/'run.json')
+        entry['document_revision' if document else 'graph_revision'] = state['graph']['revision']
+        entry.update(status=state['status'], generation_ids=[run['run_id']+'--'+theory],
+                     seal_id=state.get('seal_id'), reason=state.get('reason', ''))
+        value['checked_contracts'] = sum(item.get('checked_contracts', 0) for item in value['files'])
+        value['session_status'] = 'partial'
+        value['repository_verified'] = False
+        durable(Path(run['session_progress_ledger']), value)
+        _PROGRESS_SNAPSHOTS[str(root)] = deepcopy(value)
+        return value
 
 
 def checker_for(run_dir, run, directory, timeout, ancestors, *, heaps_dir=None):
@@ -401,7 +493,8 @@ def checker_for(run_dir, run, directory, timeout, ancestors, *, heaps_dir=None):
         previous_theories=ancestors,generated_dir=generated,heaps_dir=heaps,
         l4v_dir=Path(run['l4v']),semantic_workspace=Path(run['semantic_workspace']),
         base_session=run['base_session'],base_import=run['base_import'],base_catalog=run['base_catalog'],
-        image=run['image'],isabelle_dir=Path(run['isabelle_dir']),import_all_previous=True)
+        image=run['image'],isabelle_dir=Path(run['isabelle_dir']),import_all_previous=True,
+        complete_context_policy=resolve_complete_context_policy(run))
     checker.declaration_environment = digest(run)
     return checker
 
@@ -447,6 +540,20 @@ def sealed_import_closure(run_dir, states, ancestors):
     return ordered
 
 
+from regen.execution.check_tasks import NativePreparationError
+
+
+class ProviderPreparationError(NativePreparationError):
+    """Infrastructure bootstrap failure, never a candidate proof rejection."""
+    def __init__(self, result):
+        self.result = deepcopy(result) if isinstance(result, dict) else {'diagnostic':str(result)}
+        code = self.result.get('returncode')
+        self.category = ('timeout' if code == 124 else 'killed' if code == 137 else 'build_failed')
+        # 137 alone proves SIGKILL, not OOM; kernel/container evidence is required.
+        super().__init__('provider session build failed [' + self.category + ']: ' +
+                         str(self.result.get('diagnostic', ''))[-12000:])
+
+
 def setup(run_dir, theory, timeout):
     from regen.execution.proof_session_runner import generated_checkpoint_theory
     run=read(run_dir/'run.json'); data=read(run_dir/'execution-input.json')
@@ -454,7 +561,8 @@ def setup(run_dir, theory, timeout):
     repo=Path(__file__).resolve().parents[2]
     import hashlib
     if any(hashlib.sha256((repo/p).read_bytes()).hexdigest()!=h for p,h in run['implementation'].items()):
-        raise ValueError('execution code changed after run initialization; use a new proof run')
+        from regen.execution.check_tasks import ImplementationChangedError
+        raise ImplementationChangedError('execution code changed after run initialization; use a new proof run')
     entry=next(f for f in data['files'] if f['theory']==theory)
     package=package_for(run,entry['file_slot']); directory=run_dir/'theories'/Path(entry['file_slot']).stem
     directory.mkdir(parents=True,exist_ok=True)
@@ -514,7 +622,7 @@ def setup(run_dir, theory, timeout):
         if ancestors and not ready.exists():
             build=checker.build_generated_session(ancestors)
             if build['verdict']!='green':
-                raise RuntimeError('provider session build failed: '+build.get('diagnostic',''))
+                raise ProviderPreparationError(build)
             durable(ready,{'imports':ancestors},immutable=True)
     return run,package,directory,journal(run_dir,run,package),checker,ancestors
 
@@ -774,7 +882,9 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
             if proof_deps.get('verdict')!='green': raise ValueError('generated adoption audit failed')
             evidence={'complete':complete,'build':build,'impact':impact,'dependencies':proof_deps,
                       'source':str(path),'source_text':source,'source_hash':digest(source)}
-            new=deepcopy(state);new['status']='sealed';new['seal_id']='theory-seal:'+digest(freeze_evidence(evidence))[:20]
+            from regen.execution.seal_evidence import bind_seal
+            evidence=bind_seal(state,evidence,checker)
+            new=deepcopy(state);new['status']='sealed';new['seal_id']='theory-seal:'+digest(evidence)[:20]
             accept('seal',new,evidence)
             break
         key=ready[0]
@@ -864,7 +974,7 @@ def continuation_state(package, origin, *, sealed_reuse=False):
     """Verify every source commit before carrying proof state and charged costs."""
     source_run=origin['run']; records=origin['commits']
     if not records: raise ValueError('continuation has no source commits')
-    expected={**source_run['session_schedule'],'run_id':source_run['run_id'],
+    expected={**source_run['session_schedule'], **policy_binding(source_run), 'run_id':source_run['run_id'],
         'implementation':digest(source_run['implementation']),
         'package_sha256':package['package_payload_sha256'],'imports':origin['imports']}
     old=None; parent=None; contexts={}
@@ -873,7 +983,7 @@ def continuation_state(package, origin, *, sealed_reuse=False):
         if (record['sequence']!=number or record['parent']!=parent
                 or record['binding']!=expected or record['commit_id']!=digest(body)):
             raise ValueError('invalid continuation source chain')
-        validator(package,source_run)(old,record['state'],record['event'],record['evidence'])
+        validator(package,source_run,origin['imports'])(old,record['state'],record['event'],record['evidence'])
         if record['event']=='attempt':
             contexts[record['evidence']['node_id']]=required_context(old,record['evidence']['node_id'])
         old=record['state'];parent=record['commit_id']
@@ -894,6 +1004,8 @@ def validate_continuation(package, runtime, state, origin, *, sealed_reuse=False
     if runtime is None: raise ValueError('continuation requires frozen environment binding')
     if any(runtime.get(k)!=origin['run'].get(k) for k in CONTINUATION_ENV_FIELDS):
         raise ValueError('continuation changed proof environment')
+    if resolve_complete_context_policy(runtime) != resolve_complete_context_policy(origin['run']):
+        raise ValueError('continuation changed complete context policy')
     if state!=continuation_state(package,origin,sealed_reuse=sealed_reuse):
         raise ValueError('continuation changed proofs, graph, or cumulative costs')
 
@@ -976,12 +1088,15 @@ def fork_continuation(source_dir, destination, theory):
     providers=_sealed_provider_inputs(source_dir,source,origin['imports'])
     input_root=Path(source.get('checker_context_root') or source['environment_run'])
     run=init_run(destination,input_root,destination.name,
-                 Path(source['session_schedule']['source']))
+                 Path(source['session_schedule']['source']), **policy_binding(source),
+                 **({'execution_models':source['execution_models']} if 'execution_models' in source else {}),
+                 **log_policy_arguments(source))
     if any(run.get(k)!=source.get(k) for k in CONTINUATION_ENV_FIELDS):
         raise ValueError('continuation environment mismatch')
     _reuse_sealed_theories(destination,run,source_dir,providers)
     new_dir=destination/'theories'/theory
-    shutil.copytree(old_dir,new_dir,ignore=shutil.ignore_patterns(
+    from regen.infrastructure.incremental_log import copy_logged_file
+    shutil.copytree(old_dir,new_dir,copy_function=copy_logged_file,ignore=shutil.ignore_patterns(
         'acceptance','isabelle','progress.json','active-graph.json','declaration-index.json','runtime-policy.json','batch-policy.json',
         'execution-stop.json','PROOF-RUN-REPORT.md'))
     graph_check=next((r['evidence']['graph_check'] if r['event']=='batch' else r['evidence']['check'])
@@ -1072,7 +1187,8 @@ def _carry_workspace_continuation(source_dir, source, destination, run, descript
     old_dir = source_dir/'theories'/Path(package['file_slot']).stem
     new_dir = destination/'theories'/Path(package['file_slot']).stem
     if selection is None:
-        shutil.copytree(old_dir, new_dir, ignore=shutil.ignore_patterns(
+        from regen.infrastructure.incremental_log import copy_logged_file
+        shutil.copytree(old_dir, new_dir, copy_function=copy_logged_file, ignore=shutil.ignore_patterns(
             'acceptance','isabelle','heaps','provider-session.json','progress.json','active-graph.json',
             'declaration-index.json','runtime-policy.json','batch-policy.json',
             'execution-stop.json','PROOF-RUN-REPORT.md'))
@@ -1081,7 +1197,11 @@ def _carry_workspace_continuation(source_dir, source, destination, run, descript
         for relative, payload in _checkpoint_artifacts(old_dir, selection, state):
             target = new_dir/relative
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(payload)
+            from regen.infrastructure.incremental_log import copy_logged_file
+            if relative.parts[0] == 'batch-requests' and relative.suffix == '.json':
+                copy_logged_file(old_dir/relative, target)
+            else:
+                target.write_bytes(payload)
     graph_check = next((r['evidence']['graph_check'] if r['event']=='batch'
                         else r['evidence']['check'])
                        for r in reversed(origin['commits'])
@@ -1129,7 +1249,9 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
             if not set(descriptor['imports']) <= available:
                 raise ValueError('checkpoint excludes a frozen dependency')
     run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
-                   destination.name, Path(source['session_schedule']['source']))
+                   destination.name, Path(source['session_schedule']['source']), **policy_binding(source),
+                   **({'execution_models':source['execution_models']} if 'execution_models' in source else {}),
+                   **log_policy_arguments(source))
     if any(run.get(k) != source.get(k) for k in CONTINUATION_ENV_FIELDS):
         raise ValueError('continuation environment mismatch')
     reused, carried = [], []
@@ -1172,6 +1294,22 @@ def _checkpoint_artifacts(directory, selection, state):
         if hashlib.sha256(payload).hexdigest() != version:
             raise ValueError('checkpoint draft hash mismatch')
         result.append((Path('document/draft.thy'), payload))
+    purpose_key = selection.get('helper_purpose_snapshot')
+    if purpose_key is not None:
+        if (version is None or not isinstance(purpose_key, str) or len(purpose_key) != 64
+                or any(c not in '0123456789abcdef' for c in purpose_key)):
+            raise ValueError('invalid checkpoint helper purpose snapshot')
+        relative = Path('document/helper-purposes')/(purpose_key+'.json')
+        path = directory/relative
+        if path.resolve() != directory.resolve()/relative:
+            raise ValueError('checkpoint helper purpose symlink')
+        payload = path.read_bytes()
+        snapshot = json.loads(payload)
+        if digest(snapshot) != purpose_key or snapshot.get('source_sha256') != version:
+            raise ValueError('checkpoint helper purpose binding mismatch')
+        result.append((relative, payload))
+        result.append((Path('document/last-edit.json'), json.dumps({
+            'source_sha256':version,'helper_purpose_snapshot':purpose_key}).encode()))
     for name, expected in selection.get('artifacts', {}).items():
         relative = Path(name)
         if relative.is_absolute() or '..' in relative.parts or not relative.parts:
@@ -1213,7 +1351,9 @@ def fork_with_sealed_theories(source_dir, destination):
     if not prepared:
         raise ValueError('source contains no verified sealed theories')
     run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
-                   destination.name, Path(source['session_schedule']['source']))
+                   destination.name, Path(source['session_schedule']['source']), **policy_binding(source),
+                   **({'execution_models':source['execution_models']} if 'execution_models' in source else {}),
+                   **log_policy_arguments(source))
     if any(run.get(k) != source.get(k) for k in CONTINUATION_ENV_FIELDS):
         raise ValueError('sealed reuse environment mismatch')
     _reuse_sealed_theories(destination,run,source_dir,prepared)

@@ -81,6 +81,22 @@ class WorkspaceTranscriptTest(unittest.TestCase):
         self.assertEqual(audit['tool_calls'],1)
         with self.assertRaises(ValueError): audit_workspace_session(self.path)
 
+    def test_incremental_metadata_retains_real_provider_binding(self):
+        from regen.infrastructure.incremental_log import enable, read_artifact
+        log_root=self.root/'incremental'
+        enable(log_root)
+        self.prefix=log_root/'batch-requests'/'000001'/'call'
+        self.record()
+        paths=artifact_paths(self.prefix)
+        self.assertIn('$log_format',json.loads(paths['meta'].read_text()))
+        self.assertIn('$log_format',json.loads(paths['audit'].read_text()))
+        meta=inspect_call_artifact(self.prefix)
+        self.assertTrue(meta['provider_network_call'])
+        self.assertEqual(meta,read_artifact(paths['meta']))
+        self.path.write_text(self.path.read_text().replace('call-one','call-two'))
+        with self.assertRaisesRegex(ValueError,'prefix hash'):
+            inspect_call_artifact(self.prefix)
+
     def test_proposal_offset_and_thread_forgery_are_rejected(self):
         for field,value in [('thread_id','wrong-thread'),('transcript_offset',1),('transcript_offset',-1),('tool_request_offset',1)]:
             with self.subTest(field=field,value=value):

@@ -29,9 +29,9 @@ class WorkspaceSealedReuseTests(unittest.TestCase):
         current=prepare_batch(package,self.state,{'proofs':{'source_contract':'by simp'}})
         evidence=check_batch(Checker(),self.state,current);evidence['sealable_generation']=True
         log.append('batch',current,evidence)
-        sealed=deepcopy(current);sealed.update(status='sealed',seal_id='test-seal')
-        log.append('seal',sealed,{'impact':{'verdict':'pass'},'dependencies':{'verdict':'green'},
-            'complete':Checker().check_graph(sealed['graph']),'build':{'verdict':'green'}})
+        from regen.tests.current.seal_fixture import seal
+        sealed=deepcopy(current)
+        log.append('seal',sealed,seal(sealed))
         origin={'run':self.run,'imports':[], 'commits':[json.loads(p.read_text()) for p in sorted((self.source/'theories/Source/acceptance/commits').glob('*.json'))]}
         state=execution.continuation_state(package,origin,sealed_reuse=True)
         execution._reuse_sealed_theories(self.destination,self.new_run,self.source,[(package,origin,state)])

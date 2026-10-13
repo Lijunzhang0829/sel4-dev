@@ -99,7 +99,7 @@ class BatchAuditEvidenceTests(unittest.TestCase):
 
 
 class BatchAuditTransportTests(unittest.TestCase):
-    def test_missing_or_malformed_native_audit_uses_cold_fallback_not_bare_green(self):
+    def test_missing_or_malformed_native_audit_is_infrastructure_failure_without_cold_retry(self):
         for content in (None, '<broken', '<batch_audit />'):
             with self.subTest(content=content), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
@@ -123,9 +123,15 @@ class BatchAuditTransportTests(unittest.TestCase):
                     return worker
                 with patch('regen.execution.batch_checker.BatchWorker', side_effect=factory):
                     evidence = check_batch(checker, old, new)
-                self.assertIn('incremental audit transport failure', evidence['incremental_fallback'])
-                self.assertEqual(checker.calls, 1)
-                self.assertFalse(evidence['check']['incremental'])
+                self.assertIn('incremental audit transport failure', evidence['check']['diagnostic'])
+                self.assertEqual(checker.calls, 0)
+                self.assertEqual(evidence['check']['verdict'], 'infrastructure_error')
+                self.assertEqual(evidence['check']['failure_scope'], 'native_preparation')
+                self.assertEqual(evidence['check']['native_failure_stage'], 'candidate-execution-or-audit-transport')
+                self.assertNotIn('incremental_fallback', evidence)
                 self.assertTrue(instances[0].closed)
                 self.assertIsNone(instances[0].pending)
-                validate_batch_commit(old, new, evidence)
+                self.assertIsNone(checker._batch_worker)
+                self.assertTrue(all(row['status']=='not_checked' for row in evidence['node_results']))
+                with self.assertRaises(ValueError):
+                    validate_batch_commit(old, new, evidence)

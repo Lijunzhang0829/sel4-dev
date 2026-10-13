@@ -169,7 +169,26 @@ class WorkspaceProtocolTest(unittest.TestCase):
         self.assertEqual(self.f.f.policy['interaction'],'agent-iterative')
         self.assertNotIn('max_attempts',policy['model'])
 
-    def test_completed_submission_recovery_avoids_another_model_call_and_checks_hashes(self):
+    def test_timeout_discards_submission_and_never_retries_same_output(self):
+        output=self.f.root/'timeout-runner'
+        policy=json.loads(Path('regen/config/repository-planning-policy.json').read_text())
+        policy['_allow_external_call']=True
+        settings={'codex_bin':sys.executable,'codex_sha256':digest(Path(sys.executable))}
+        with patch.object(workspace_planner,'model_settings',return_value=settings), \
+             patch.object(workspace_planner,'native_checker',return_value=self.f.native), \
+             patch.object(workspace_planner,'call_worker',return_value=(
+                 {'timed_out':True,'returncode':124},output/'unused')) as call:
+            with self.assertRaisesRegex(RuntimeError,'fresh plan'):
+                workspace_planner.run_agent({},self.f.input,policy,output)
+            with self.assertRaisesRegex(ValueError,'fresh-only'):
+                workspace_planner.run_agent({},self.f.input,policy,output)
+            self.assertEqual(call.call_count,1)
+        self.assertFalse((output/'control/submitted.json').exists())
+        self.assertFalse(list((output/'control').glob('checkpoint-*')))
+        self.assertFalse((output/'snapshots').exists())
+        self.assertEqual(json.loads((output/'planning-attempt.json').read_text())['status'],'failed')
+
+    def test_completed_submission_cannot_restart_model_in_same_directory(self):
         output=self.f.root/'runner'
         policy=json.loads(Path('regen/config/repository-planning-policy.json').read_text())
         policy['model']['model']='test-model';policy['_allow_external_call']=True
@@ -198,11 +217,11 @@ class WorkspaceProtocolTest(unittest.TestCase):
             return meta,prefix
         with patch.object(workspace_planner,'model_settings',return_value=settings), patch.object(workspace_planner,'native_checker',return_value=self.f.native), patch.object(workspace_planner,'call_worker',side_effect=worker) as call:
             first=workspace_planner.run_agent({},self.f.input,policy,output)
-            policy['_allow_external_call']=False
-            second=workspace_planner.run_agent({},self.f.input,policy,output)
-            self.assertEqual(first,second);self.assertEqual(call.call_count,1)
+            with self.assertRaisesRegex(ValueError,'fresh-only'):
+                workspace_planner.run_agent({},self.f.input,policy,output)
+            self.assertEqual(call.call_count,1)
             Path(str(first['plan_prefix'])+'.final.txt').write_text('tampered')
-            with self.assertRaisesRegex(ValueError,'integrity'):
+            with self.assertRaisesRegex(ValueError,'fresh-only'):
                 workspace_planner.run_agent({},self.f.input,policy,output)
             self.assertEqual(call.call_count,1)
 

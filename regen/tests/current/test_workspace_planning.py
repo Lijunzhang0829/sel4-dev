@@ -1,4 +1,5 @@
 import copy
+import base64
 import json
 from pathlib import Path
 import shutil
@@ -11,6 +12,7 @@ from regen.planning.workspace_harness import WorkspaceHarness, diagnostics, shor
 from regen.planning.workspace_preflight import render
 from regen.planning.workspace_planner import snapshot_file, container_command, instruction
 from regen.preparation.premise_database import digest
+from regen.infrastructure.model_isolation import ModelIsolation
 
 
 class WorkspacePlanningTest(unittest.TestCase):
@@ -104,12 +106,24 @@ class WorkspacePlanningTest(unittest.TestCase):
         self.assertIn(first['exact_statement'],text);self.assertIn(second['exact_statement'],text)
 
     def test_worker_has_no_private_or_checker_mounts(self):
-        cmd=container_command({'codex_bin':'/runtime/bin/codex'},self.f.policy,Path('/public'),Path('/workspace'),Path('/api'),Path('/auth'),'worker')
+        isolation=object.__new__(ModelIsolation)
+        isolation.client=Path('/runtime/bin/codex');isolation.root=Path('/transport-source')
+        isolation.cwd=Path('/workspace');isolation.home=Path('/auth')
+        isolation.name='worker';isolation.image='sha256:'+'0'*64
+        cmd=container_command({'codex_bin':str(isolation.client)},self.f.policy,Path('/public'),Path('/workspace'),Path('/api'),isolation)
         mounts=[cmd[i+1] for i,v in enumerate(cmd) if v=='--mount']
         self.assertTrue(any('dst=/input,readonly' in x for x in mounts))
         self.assertFalse(any('docker.sock' in x or 'checker-assets' in x or 'planner-input' in x for x in mounts))
         self.assertIn('--read-only',cmd);self.assertIn('--cap-drop=ALL',cmd)
-        self.assertIn('web_search="disabled"',cmd)
+        logical=json.loads(base64.b64decode(cmd[-1]))
+        self.assertIn('web_search="disabled"',logical)
+        self.assertEqual(cmd[cmd.index('--network')+1],'none')
+        self.assertIn('--memory=2g',cmd)
+        self.assertIn('--memory-swap=2g',cmd)
+        self.assertIn('--cpus=2',cmd)
+        self.assertIn('--pids-limit=128',cmd)
+        self.assertFalse(any('src=/runtime/bin,' in x for x in mounts))
+        self.assertIn('type=bind,src=/runtime/bin/codex,dst=/runtime/bin/codex,readonly',mounts)
 
     def test_renderer_uses_frozen_contexts_and_only_oops(self):
         source=self.root/'rendered';render(self.h.view.payload,self.proposal,source,'Semantic_Base.Semantic_Root')

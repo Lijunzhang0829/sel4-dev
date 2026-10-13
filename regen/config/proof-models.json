@@ -1,6 +1,15 @@
 {
   "schema_version": 1,
-  "codex_bin": "/home/lijun/.vscode-server/extensions/openai.chatgpt-26.917.62051-linux-x64/bin/linux-x86_64/codex",
+  "model_isolation": {
+    "required": true,
+    "image": "sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834"
+  },
+  "codex_bin": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/reports/regen/refine-sol-medium-andor-20261011-007/runtime/a969c7c42b842c759d157d2500bbf33a562ff95f22dcb7112aa4d8f9e68833d3/codex",
+  "codex_runtime_root": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/reports/regen/refine-sol-medium-andor-20261011-007/runtime",
+  "codex_historical_paths": [
+    "/home/lijun/.vscode-server/extensions/openai.chatgpt-26.917.62051-linux-x64/bin/linux-x86_64/codex"
+  ],
+  "codex_code_mode_host_sha256": "247262ac00b0ea6009b0c062dd87e407af0f0c70f9ed761621e5cf204e2ffac1",
   "codex_sha256": "a969c7c42b842c759d157d2500bbf33a562ff95f22dcb7112aa4d8f9e68833d3",
   "codex_version": "0.155.0-alpha.16.3",
   "reasoning_effort": "medium",

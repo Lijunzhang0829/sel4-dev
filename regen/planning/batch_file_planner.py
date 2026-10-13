@@ -7,6 +7,7 @@ before another call. Each active theory has one serial controller; the coordinat
 from copy import deepcopy
 from difflib import SequenceMatcher
 import json
+import hashlib
 import logging
 import time
 from uuid import uuid4
@@ -17,6 +18,7 @@ from regen.execution.proof_commits import digest, durable, freeze_evidence
 from regen.infrastructure.llm_transcript import allocate_artifact_prefix, call_llm, validate_call_artifact
 from regen.execution.check_tasks import NativePreparationError
 from regen.planning.proof_graph import build_graph, parse_json_response
+from regen.planning.attempt_memory import compact_target_memory, target_attempts
 
 
 INSTRUCTIONS = '''You are the continuing File Planner for ONE Isabelle theory. Plan and revise its
@@ -115,7 +117,8 @@ Current-theory GREEN proofs are workspace material, available through read_proof
 
 {"action":"read_facts","record_ids":["previously recalled ID"]}: 1-24 complete facts.
 {"action":"read_proofs","node_ids":["GREEN ID"]}: 1-4 accepted declarations/contexts/proofs.
-{"action":"read_attempts","request_numbers":[39]}: 1-4 recorded candidates and bounded feedback.
+{"action":"read_attempts","request_numbers":[39],"view":"summary"}: 1-4 verified historical summaries, not complete proofs.
+Use "view":"full" for exact original candidate/context/feedback. Do not infer missing propositions from summaries.
 {"action":"read_queries","query_ids":["query_index ID"]}: 1-4 complete query summaries.
 {"action":"read_diagnostic","request_number":39,"path":["check","diagnostic"],
 "offset":0,"limit":8000}: exact original character page, maximum 12000; next_offset continues.
@@ -123,6 +126,10 @@ Current-theory GREEN proofs are workspace material, available through read_proof
 state where available; these are distinct observations, never proved premises.
 Add "goal_indices":[1,2] to retrieve 1-4 complete diagnostic goals (including printed
 hypotheses) in one read, up to 60000 characters; larger states remain pageable.
+Use "origin":"before_command" with goal_indices for exact native before-command
+goals and their local assumptions, or "origin":"diagnostic" (the default) for
+diagnostic residuals. These are different states; unavailable origins never silently
+fall back to another state. Small complete states are returned directly with check feedback.
 {"action":"resolve_symbols","names":["constant or abbreviation"],"context_node_id":"current node ID"}:
 Resolve 1-16 term identifiers in frozen imports and the node's declaration context;
 returns term expansions and types, not theorem statements. This does not query the
@@ -145,8 +152,26 @@ DIAGNOSTIC_CHARS = 12000
 PROMPT_CHARS = 800000
 
 
+def _source_diagnostic_lines(value, source, diagnostic):
+    """Map a native virtual filename only to its exact embedded candidate source.
+
+    BatchWorker stores evidence as N.thy while Isabelle reports /candidate/T.thy.
+    Never treat an imported theory's error position as a line in this source.
+    """
+    source_name = Path(value['source']).name if isinstance(value.get('source'), str) else None
+    header = re.match(r'\s*theory\s+(?:"([^"\\]+)"|([^\s"\\]+))\s', source)
+    theory_name = next((v for v in header.groups() if v), None) if header else None
+    virtual = '/candidate/' + theory_name + '.thy' if theory_name else None
+    return [int(number) for number, path in re.findall(r'line\s+(\d+)\s+of\s+"([^"]+)"', diagnostic)
+            if (source_name is None or Path(path).name == source_name or path == virtual)]
+
+
 def compact_feedback(value):
     if isinstance(value, dict):
+        # An explicit, hash-bound full history read must round-trip exactly even
+        # through controller receipts. Default reads use the summary projection.
+        if value.get('view') == 'full' and 'bindings' in value and 'content_id' in value:
+            return deepcopy(value)
         result = {k:compact_feedback(v) for k,v in value.items()
                   if k not in {'source_content','log_content','audit_content','native_proof_state_full'}
                   and not (k == 'command' and not isinstance(v, str))}
@@ -160,10 +185,7 @@ def compact_feedback(value):
         source = value.get('source_content')
         diagnostic = value.get('diagnostic', '')
         if isinstance(source, str) and isinstance(diagnostic, str):
-            locations = re.findall(r'line\s+(\d+)\s+of\s+"([^"]+)"', diagnostic)
-            source_name = Path(value['source']).name if isinstance(value.get('source'), str) else None
-            lines = [int(number) for number, path in locations
-                     if source_name is None or Path(path).name == source_name]
+            lines = _source_diagnostic_lines(value, source, diagnostic)
             if lines:
                 number = lines[-1]
                 source_lines = source.splitlines()
@@ -252,6 +274,11 @@ def apply_feedback(state, proposal, feedback, number, *, observation_order=None)
             new.setdefault(memory_fields(new)[1], deepcopy(memory_value(new,1,{})))[key] = deepcopy(observation_order)
     if observation_order is not None:
         new.setdefault('batch_observation_orders', {})[str(number)] = deepcopy(observation_order)
+    # Historical AND/OR attempts remain replayable. Ordinary document callbacks
+    # have no bound route attempt and need no scheduler/cost-table work.
+    if new.get('helper_route_attempt', {}).get('request_number') == number:
+        from regen.planning.helper_selection import record_attempt
+        record_attempt(new, feedback, number)
     return new
 
 
@@ -321,10 +348,12 @@ def _apply_feedback(state, proposal, feedback, number):
                    'feedback':compact_feedback(feedback)}
         if number >= new.get('batch_proof_feedback', {}).get('request_number', 0):
             new['batch_proof_feedback'] = attempt
-        targets = new.setdefault('batch_target_memory', {})
+        targets = dict(target_attempts(new))
+        new['batch_target_memory'] = targets
         for node_id in proposal['proofs']:
             if number >= targets.get(node_id, {}).get('request_number', 0):
-                targets[node_id] = deepcopy(attempt)
+                targets[node_id] = attempt
+        compact_target_memory(new)
     if isinstance(proposal.get('workspace'), dict) and feedback.get('status') not in {'rejected_request','tool_failed'}:
         from regen.planning.planner_workspace import validate_workspace
         if number >= new.get('batch_workspace_request', 0):
@@ -406,7 +435,8 @@ def validate_read_ids(ids, available, *, action, field, maximum, index):
 
 
 def read_bound_json(path, expected=None):
-    value = json.loads(path.read_text())
+    from regen.infrastructure.incremental_log import read_artifact
+    value = read_artifact(path)
     if expected is not None and digest(value) != expected:
         raise ValueError('observation artifact integrity mismatch: '+str(path))
     return value
@@ -439,7 +469,7 @@ def committed_batch_results(directory):
             with proof_commits._COLD_REPLAY_LOCK:
                 record = None
                 try:
-                    record = json.loads(path.read_text())
+                    record = proof_commits.read_artifact(path)
                     if proof_commits._fingerprint(path) != fingerprint:
                         raise ValueError('proof commit changed during batch recovery')
                     visit(record)
@@ -462,6 +492,10 @@ def restore_batch_memory(directory, state, *, accepted_results=None):
         number = item.get('request_number', item.get('request'))
         if item.get('status') == 'accepted' and number not in accepted_results:
             item['status'] = 'checked_not_committed'
+    # Repair derived acceptance status before computing immutable attempt IDs.
+    if 'batch_target_memory' in restored:
+        restored['batch_target_memory'] = {k:deepcopy(v) for k,v in target_attempts(restored)}
+    restored.pop('batch_attempt_objects', None)
     for attempt in [*restored.get('batch_target_memory', {}).values(),
                     restored.get('batch_proof_feedback', {})]:
         if (attempt.get('feedback', {}).get('status') == 'accepted'
@@ -482,7 +516,7 @@ def restore_batch_memory(directory, state, *, accepted_results=None):
             feedback = read_bound_json(feedback_path, committed.get(number, {}).get('feedback_sha256')
                                        or committed.get(number, {}).get('query_feedback_sha256'))
         elif check_path.exists():
-            check = json.loads(check_path.read_text())['check']
+            check = read_bound_json(check_path)['check']
             accepted = number in accepted_results and check.get('verdict') == 'green'
             feedback = {'status':'accepted' if accepted else
                         'rejected_batch' if check.get('verdict') != 'green' else 'checked_not_committed',
@@ -499,7 +533,7 @@ def restore_batch_memory(directory, state, *, accepted_results=None):
             feedback = {**feedback, 'status':'checked_not_committed'}
         restored = apply_feedback(restored, proposal, feedback, number,
             observation_order=state.get('batch_observation_orders', {}).get(str(number)))
-    return restored
+    return compact_target_memory(restored)
 
 
 def history_actions(state):
@@ -571,7 +605,7 @@ def planner_input(package, state):
     relevant_queries = [q for q in queries if not focus or q['request'].get('context_node_id') in focus]
     expanded_queries = {q['query_id'] for q in relevant_queries[-8:]}
     targets = {}
-    for node_id, attempt in state.get('batch_target_memory', {}).items():
+    for node_id, attempt in target_attempts(state):
         feedback = attempt.get('feedback', {})
         diagnostic = str(feedback.get('check', {}).get('diagnostic', feedback.get('diagnostic', '')))
         targets[node_id] = {'request_number':attempt['request_number'],
@@ -651,6 +685,23 @@ def prepare_prompt(payload):
     return payload, prompt
 
 
+def workspace_action_input(run, package, state, request_number):
+    """Small audit binding for an already-received dynamic tool action.
+
+    The actual model inputs/results are recorded in the workspace transcript.
+    Rebuilding its entire historical planner prompt here neither sends useful
+    information to the model nor adds proof authority. The journal and immutable
+    package retain the exact data addressed by these bindings.
+    """
+    from regen.execution.proof_batches import _binding
+    return {'schema': 'workspace-action-input-v2', 'run_id': run['run_id'],
+            'theory': package['theory'], 'request_number': request_number,
+            'package_sha256': digest(package), 'accepted_binding': _binding(state),
+            'accepted_source_sha256': state.get('document_source_sha256'),
+            'provider_called': False,
+            'input_origin': 'audited workspace transcript; not a new model prompt'}
+
+
 def read_diagnostic(directory, state, proposal):
     number = proposal.get('request_number')
     history = {h['request_number']:h for h in state.get('batch_history', [])}
@@ -687,8 +738,13 @@ def query_identity(run, state, directory, request):
         if not path.is_file():
             return {'path':str(path), 'missing':True}
         st = path.stat()
+        # Equal-size rewrites can share mtime/ctime on coarse host filesystems.
+        # Observations must bind the actual catalog/WAL bytes, not only stat().
+        with path.open('rb') as stream:
+            content_sha256=hashlib.file_digest(stream,'sha256').hexdigest()
         return {'path':str(path.resolve()), 'device':st.st_dev, 'inode':st.st_ino,
-                'size':st.st_size, 'mtime_ns':st.st_mtime_ns, 'ctime_ns':st.st_ctime_ns}
+                'size':st.st_size, 'mtime_ns':st.st_mtime_ns, 'ctime_ns':st.st_ctime_ns,
+                'content_sha256':content_sha256}
     node = next((n for n in state['graph']['nodes'] if n['id'] == request.get('context_node_id')), None)
     observation = None
     if 'proof_state_query' in request:
@@ -716,7 +772,7 @@ def cached_query_feedback(state, directory, identity):
         if not path.is_file():
             continue
         try:
-            feedback = json.loads(path.read_text())
+            feedback = read_bound_json(path)
             if 'item_index' in item:
                 if digest(feedback) != item.get('parent_feedback_sha256'):
                     continue
@@ -819,7 +875,11 @@ def seal_theory(run_dir, run, package, directory, checker, ancestors, state):
         'dependencies':deps, 'source':str(path), 'source_text':source, 'source_hash':digest(source)})
     if build['verdict'] != 'green' or impact.get('verdict') != 'pass' or deps.get('verdict') != 'green':
         return None, {'stage':'seal', 'evidence':evidence}
+    from regen.execution.seal_evidence import bind_seal, validate_seal
+    evidence = bind_seal(state, evidence, checker)
     new = deepcopy(state); new.update(status='sealed', reason='', seal_id='theory-seal:'+digest(evidence)[:20])
+    validate_seal(new, evidence, expected_imports=checker.imports(),
+                  base_session=checker.base_session, runtime=run)
     return new, evidence
 
 
@@ -923,7 +983,8 @@ def _record_termination(run_dir, theory, directory, journal, state, error):
 
 def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     call_timeout=600, check_timeout=900, candidate_timeout=120, max_requests=0,
-                    decision_source=None, runtime_cache=None, observation_source=None, observation_order=None):
+                    decision_source=None, runtime_cache=None, observation_source=None, observation_order=None,
+                    state_sink=None, incremental_progress=False, helper_attempt=None):
     from regen.execution.repository_execution import setup, progress
     from regen.planning.declaration_index import accepted_declarations
     from regen.execution.proof_session_runner import frozen_role_model
@@ -933,6 +994,12 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
     checker = journal = directory = None
     monitor_started = False
     state = {}
+    if incremental_progress:
+        from regen.execution.repository_execution import publish_theory_progress
+        full_progress = progress
+        def progress(path):
+            return (publish_theory_progress(path, theory, state)
+                    if state else full_progress(path))
     try:
         with _PhaseTimer(None, ('setup', 'initial_state', 'restore_and_resume', 'progress'),
                          theory=theory, scope='initialization_latest_invocation') as initialization:
@@ -958,6 +1025,8 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
             policy = {'mode':'file-planner-workspace-v1' if decision_source else 'file-planner-batch-v1', 'provider':provider, 'model':model,
                       'call_timeout':call_timeout, 'check_timeout':check_timeout,
                       'candidate_timeout':candidate_timeout, 'workers':1}
+            if getattr(checker, 'generation_strategy_name', 'baseline') == 'bounded-audited-prefix-v1':
+                policy['generation_strategy'] = 'bounded-audited-prefix-v1'
             durable(directory/'batch-policy.json', policy, immutable=True)
             state = journal.replay()
             if state is None:
@@ -1005,14 +1074,15 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 timing.metadata['request_number'] = count
                 request_dir.mkdir(parents=True, exist_ok=True)
                 new = deepcopy(state); new['batch_requests'] = count
+                if helper_attempt is not None:
+                    new['helper_route_attempt'] = {**helper_attempt, 'request_number': count}
                 state = journal.append('planner-request', new, {'request_number':count})
                 timing.mark('input_and_prompt')
                 timing.metadata['model_attempts'] = 0
                 if decision_source is None:
                     payload, prompt = prepare_prompt(planner_input(package, state))
                 else:
-                    from regen.planning.planner_context import project_context
-                    payload = project_context(planner_input(package, state))
+                    payload = workspace_action_input(run, package, state, count)
                     prompt = json.dumps({'kind':'workspace-action-context-reference',
                         'theory':theory,'request_number':count,'input_sha256':digest(payload)}, sort_keys=True)
                 durable(request_dir/'input.json', payload, immutable=True)
@@ -1062,12 +1132,15 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 timing.mark('action')
                 executed += 1
                 proposal = None
+                bounded_start_order = None
                 try:
+                    document_check_requested = False
                     proposal = parse_json_response(response)
                     if not isinstance(proposal, dict):
                         proposal = None
                         raise ValueError('expected one JSON action object')
                     if proposal.get('action') == 'check_theory':
+                        document_check_requested = True
                         from regen.planning.theory_document import DocumentStore, candidate as document_candidate
                         if set(proposal)-{'action','source_sha256','reason','notes','retry_check'}:
                             raise ValueError('check_theory accepts source_sha256, reason, notes and optional retry_check')
@@ -1099,7 +1172,37 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     if 'workspace' in proposal and action != 'submit_batch':
                         from regen.planning.planner_workspace import validate_workspace
                         validate_workspace(state, proposal['workspace'])
-                    if action == 'observe':
+                    bounded_feedback = None
+                    bounded_fallback = None
+                    if (document_check_requested and decision_source is not None
+                            and getattr(checker, 'generation_strategy_name', 'baseline') == 'bounded-audited-prefix-v1'):
+                        from regen.planning.bounded_prefix import run_prefix, STRATEGY
+                        durable(request_dir/'document-source.json', {'source':proposal['document_source']}, immutable=True)
+                        durable(request_dir/'candidate.json', projected, immutable=True)
+                        def commit_prefix(new, evidence):
+                            nonlocal state
+                            new = apply_feedback(new, proposal, new['batch_feedback'], count,
+                                                 observation_order=observation_order)
+                            state = journal.append('document', new, evidence)
+                            return state
+                        bounded_start_order = list(state['accepted_order'])
+                        bounded_feedback = run_prefix(package, state, proposal['document_source'], checker,
+                            request_dir/'bounded-prefix', commit=commit_prefix,
+                            evidence_origin={'sealable_generation':bool(meta.get('sealable_generation')),
+                                'transcript_prefix':str(prefix), 'reason':proposal.get('reason',''),
+                                'parent_request_number':count,
+                                'parent_model_proposal_path':str(request_dir/'model-proposal.json'),
+                                **deepcopy(getattr(
+                                    checker,
+                                    'bounded_prefix_evidence_origin', {}))},
+                            eligible_ids=getattr(
+                                checker, 'bounded_prefix_eligible_ids', None))
+                        if bounded_feedback is None:
+                            bounded_fallback = {'strategy':STRATEGY, 'status':'whole_check_fallback',
+                                'policy_path':str(request_dir/'bounded-prefix/policy.json')}
+                    if bounded_feedback is not None:
+                        feedback = bounded_feedback
+                    elif action == 'observe':
                         from regen.planning.planner_workspace import observe
                         feedback = observe(directory, state, proposal, checker,
                             query_handler=lambda request, index: execute_query(
@@ -1111,29 +1214,8 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         feedback = execute_query(run, package, state, checker, request_dir,
                                                  proposal.get('request'))
                     elif action == 'read_attempts':
-                        numbers = proposal.get('request_numbers')
-                        history = {h['request_number']:h for h in state.get('batch_history', [])}
-                        if (not isinstance(numbers, list) or not 1 <= len(numbers) <= 4
-                                or not all(type(n) is int and n in history for n in numbers)):
-                            raise ValueError('read_attempts requires 1-4 charged request_numbers from history')
-                        attempts = []
-                        for number in numbers:
-                            artifact_dir = directory/'batch-requests'/f'{number:06d}'
-                            proposal_file = artifact_dir/'proposal.json'
-                            feedback_file = artifact_dir/'feedback.json'
-                            check_file = artifact_dir/'check.json'
-                            original = read_bound_json(proposal_file, history[number].get('proposal_sha256')) if proposal_file.is_file() else None
-                            if feedback_file.is_file():
-                                observed = read_bound_json(feedback_file, history[number].get('feedback_sha256')
-                                                           or history[number].get('query_feedback_sha256'))
-                            elif check_file.is_file():
-                                observed = {'check':json.loads(check_file.read_text())['check']}
-                            else:
-                                observed = {'notice':'No local detailed result artifact is available.'}
-                            observed['status'] = history[number].get('status')
-                            attempts.append({'request_number':number, 'candidate':original,
-                                             'feedback':compact_feedback(observed)})
-                        feedback = {'status':'available', 'attempts':attempts}
+                        from regen.planning.planner_workspace import read_observation
+                        feedback = read_observation(directory, state, proposal)
                     elif action == 'read_diagnostic':
                         feedback = read_diagnostic(directory, state, proposal)
                     elif action == 'read_queries':
@@ -1156,7 +1238,12 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         document_source = proposal.get('document_source')
                         if document_source is not None:
                             from regen.planning.theory_document import candidate as document_candidate
-                            candidate=document_candidate(package,state,document_source,checker.imports())
+                            # check_theory was projected above from this exact
+                            # hash-bound source and unchanged state. Reuse it;
+                            # commit validation still independently reconstructs
+                            # and verifies the candidate at the authority boundary.
+                            candidate=(projected if document_check_requested else
+                                document_candidate(package,state,document_source,checker.imports()))
                             if proposal.get('proofs')!=candidate['proofs']:
                                 raise ValueError('document projection differs from source proofs')
                             durable(request_dir/'document-source.json',{'source':document_source},immutable=True)
@@ -1177,23 +1264,34 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                                      else check_batch(checker, state, candidate)))
                         evidence.update(sealable_generation=bool(meta.get('sealable_generation')),
                                         transcript_prefix=str(prefix), reason=proposal.get('reason',''))
+                        if document_source is not None:
+                            evidence['document_publication_policy'] = 'preserve-accepted-ids-v1'
+                        if bounded_fallback is not None:
+                            evidence['bounded_prefix'] = bounded_fallback
                         if 'workspace_reuse_origin' in proposal:
                             evidence['workspace_reuse_origin'] = deepcopy(proposal['workspace_reuse_origin'])
                         durable(request_dir/'check.json', evidence, immutable=True)
                         if evidence['check'].get('failure_scope') == 'native_preparation':
                             raise NativePreparationError(evidence['check'].get('diagnostic','native prefix preparation failed'))
-                        if evidence['check']['verdict'] == 'green':
+                        from regen.planning.theory_document import execution_scope
+                        scope = execution_scope(state, candidate, evidence)
+                        missing_accepted = (sorted(set(state['proofs']) - set(candidate['proofs']))
+                                            if document_source is not None else [])
+                        if evidence['check']['verdict'] == 'green' and not missing_accepted:
                             timing.mark('commit')
                             candidate.update(status='generating', reason='', batch_feedback={'status':'accepted',
                                 'new_green':sorted(set(candidate['proofs'])-set(state['proofs'])),
                                 'graph_revision':candidate['graph']['revision'],
                                 'node_results':evidence.get('node_results',[]),
+                                **scope,
                                 'cost_seconds':{k:timing.seconds[k] for k in (source_phase,'action')}}, batch_candidate=None)
                             candidate.pop('revision_rejection', None)
                             candidate = apply_feedback(candidate, proposal, candidate['batch_feedback'], count, observation_order=observation_order)
                             if document_source is not None:
                                 candidate['batch_feedback'].update(source_sha256=candidate['document_source_sha256'],
                                     check_mode=evidence['document_check_mode'],rechecked_ids=list(candidate['accepted_order']))
+                            if bounded_fallback is not None:
+                                candidate['batch_feedback']['bounded_prefix'] = bounded_fallback
                             state = journal.append('document' if document_source is not None else 'batch', candidate, evidence)
                             timing.metadata.update(status='accepted', action_completed=True, check_verdict='green')
                             timing.mark('progress')
@@ -1202,7 +1300,20 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                                 return {'status':'checkpoint', **projection}
                             continue
                         feedback = {'status':'rejected_batch', 'check':evidence['check'],
-                            'node_results':evidence.get('node_results',[]), 'failure_identity':identity}
+                            'node_results':evidence.get('node_results',[]), 'failure_identity':identity,
+                            **scope}
+                        if evidence['check']['verdict'] == 'green' and missing_accepted:
+                            # A diagnostic draft may intentionally contain oops.
+                            # Keep its native evidence, but never publish a smaller
+                            # accepted set or merge proofs from different contexts.
+                            feedback.update(status='draft_checked', accepted=False,
+                                publication_blocked='missing_accepted_proofs',
+                                missing_accepted_ids=missing_accepted, new_green=[],
+                                source_sha256=candidate['document_source_sha256'],
+                                accepted_source_sha256=state.get('document_source_sha256'),
+                                notice='Diagnostic draft is GREEN, not accepted. Restore all missing accepted entries and check the complete draft before publication; read_proofs retrieves accepted bodies.')
+                        if bounded_fallback is not None:
+                            feedback['bounded_prefix'] = bounded_fallback
                         if cached:
                             feedback.update(cached_failure=True, reused_request=cached['reused_request'], notice=cached['notice'])
                     elif action == 'finish':
@@ -1230,7 +1341,14 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 except RuntimeError as error:
                     feedback = {'status':'tool_failed', 'failure_scope':'tool',
                                 'diagnostic':str(error),
-                                'notice':'No graph or proof was accepted. Inspect the tool failure before choosing another action.'}
+                                'notice':'Inspect the tool failure; only durable checker-validated commits remain accepted.'}
+                if bounded_start_order is not None and 'bounded_prefix' not in feedback:
+                    accepted = [key for key in state['accepted_order'] if key not in bounded_start_order]
+                    feedback.update(new_green=accepted, bounded_prefix={
+                        'strategy':'bounded-audited-prefix-v1', 'accepted_ids':accepted,
+                        'pending_ids':[key for key in projected['accepted_order'] if key not in state['proofs']],
+                        'original_source_sha256':projected['document_source_sha256'],
+                        'draft_preserved':True, 'stop_reason':'tool_error'})
                 timing.metadata['action_completed'] = True
                 timing.metadata['check_verdict'] = feedback.get('check', {}).get('verdict')
                 timing.mark('commit')
@@ -1263,6 +1381,10 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
     finally:
         import sys
         active_error = sys.exc_info()[0] is not None
+        if not active_error and state_sink is not None and state:
+            # The caller owns the serial theory action. Reuse the exact state
+            # returned by the journal instead of replaying it for the response.
+            state_sink(state)
         monitor_reason = 'failed' if active_error else 'controller-returned'
         try:
             if checker is not None and runtime_cache is None:

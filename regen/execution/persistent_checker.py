@@ -159,6 +159,10 @@ class PrefixWorker:
             # --rm containers normally disappear on graceful exit. Do not
             # mistake a daemon connection failure for confirmation of absence.
             normalized = diagnostic.casefold()
+            if self.name.casefold() in normalized and 'is already in progress' in normalized:
+                from regen.execution.native_container import wait_for_owned_removal
+                wait_for_owned_removal(self.name)
+                return
             absent = (f'no such container: {self.name}'.casefold() in normalized or
                       f'no such object: {self.name}'.casefold() in normalized)
             if not absent:

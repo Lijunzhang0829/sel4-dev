@@ -122,9 +122,10 @@ class BatchTimeoutTest(unittest.TestCase):
                 self.assertEqual(caught.exception.timeout_scope, scope)
                 self.assertEqual(caught.exception.worker_log, 'prefix replay log')
 
-    def test_infrastructure_fallback_uses_candidate_budget_then_restores_full_budget(self):
+    def test_explicit_cold_mode_uses_candidate_budget_without_changing_full_budget(self):
         with tempfile.TemporaryDirectory() as tmp:
             old, new, checker = self.setup_case(Path(tmp))
+            checker.batch_incremental = False
             budgets = []
             original = checker._check
             def check(source, label, *, timeout=None):
@@ -132,8 +133,9 @@ class BatchTimeoutTest(unittest.TestCase):
                 self.assertEqual(checker.timeout, 1800)
                 return original(source, label, timeout=timeout)
             checker._check = check
-            with patch('regen.execution.batch_checker.BatchWorker', side_effect=RuntimeError('worker infrastructure failed')):
+            with patch('regen.execution.batch_checker.BatchWorker') as worker:
                 evidence = check_batch(checker, old, new)
+            worker.assert_not_called()
             self.assertEqual(budgets, [120])
             self.assertEqual(checker.timeout, 1800)
             self.assertEqual(checker.calls, 1)

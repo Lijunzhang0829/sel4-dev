@@ -144,11 +144,38 @@ def check_document(checker, old, new, source):
     return evidence
 
 
+def execution_scope(old, new, evidence):
+    """Observed execution scope, not a claim of acceptance or extra checking.
+
+    Legacy rechecked_ids describes a candidate order, not native invocations.
+    Unknown localization stays unknown; cached RED is never charged as execution.
+    """
+    mode = evidence.get('document_check_mode', 'append')
+    prefix = list(old['accepted_order']) if mode == 'append' else []
+    planned = [key for key in new['accepted_order'] if key not in prefix]
+    check = evidence.get('check', {})
+    cached = bool(evidence.get('cached_failure'))
+    rows = {row['node_id']: row.get('status') for row in evidence.get('node_results', [])}
+    known_executed = {'audited_green', 'completed_uncommitted', 'failed'}
+    checked = [] if cached else [key for key in planned if rows.get(key) in known_executed]
+    reused = (prefix if not cached and check.get('incremental')
+              and check.get('check_scope') == 'committed-prefix-and-incremental-batch'
+              and not check.get('failure_scope') else [])
+    return {'planned_delta_ids': planned, 'checked_delta_ids': checked,
+            'reused_prefix_ids': reused, 'cached_failure': cached,
+            'execution_scope_complete': cached or all(rows.get(key) not in (None, 'unknown') for key in planned),
+            'execution_scope_notice': 'Checked IDs identify observed executed candidates, not accepted proofs. '
+                'Unreached/unknown entries are excluded; reused prefix IDs are not new checks.'}
+
+
 def validate_document_commit(package, old, new, evidence):
     from regen.execution.proof_batches import validate_batch_commit, _binding
     source=evidence.get('document_source')
     if old is None or not isinstance(source,str) or evidence.get('document_old_binding')!=_binding(old):
         raise ValueError('document evidence has no matching accepted base')
+    if evidence.get('document_publication_policy') == 'preserve-accepted-ids-v1':
+        if set(old['proofs']) - set(new['proofs']):
+            raise ValueError('diagnostic draft cannot remove accepted proofs')
     expected=candidate(package,old,source,evidence['imports'],
                        legacy='declaration_index_version' not in new['graph'])
     if (_binding(expected)!=_binding(new) or new.get('document_source_sha256')!=source_hash(source)
@@ -162,6 +189,7 @@ def validate_document_commit(package, old, new, evidence):
 class DocumentStore:
     def __init__(self, directory, package, state, imports):
         self.root=Path(directory);self.package=package;self.imports=list(imports)
+        self.state=state
         self.root.mkdir(parents=True,exist_ok=True)
         self.path=self.root/'draft.thy'
         if not self.path.exists():
@@ -170,19 +198,37 @@ class DocumentStore:
     def read(self):
         source=self.path.read_text()
         entries,proofs=parse(source,self.package,self.imports)
+        from regen.planning.helper_purposes import view
         return {'source':source,'source_sha256':source_hash(source),
+                'helper_purposes':view(self._purposes(source_hash(source)),entries,proofs,self.state),
                 'open_ids':[n['id'] for n in entries if n['id'] not in proofs],
-                'notice':'Draft source; proof bodies are candidates until check_theory succeeds. oops slots are not premises.'}
+                'notice':'Draft source, separate from accepted_source_sha256. Only check feedback status=accepted publishes this version; draft_checked is diagnostic only. oops slots are not premises.'}
 
-    def _write(self, source, origin):
+    def _purposes(self, sha):
+        pointer=self.root/'last-edit.json'
+        if not pointer.exists(): return {}
+        data=json.loads(pointer.read_text())
+        if data.get('source_sha256') != sha or not data.get('helper_purpose_snapshot'): return {}
+        key=data['helper_purpose_snapshot']
+        if not isinstance(key,str) or len(key)!=64 or any(c not in '0123456789abcdef' for c in key):
+            raise ValueError('invalid helper purpose snapshot')
+        snapshot=json.loads((self.root/'helper-purposes'/f'{key}.json').read_text())
+        if digest(snapshot)!=key or snapshot['source_sha256']!=sha:
+            raise ValueError('helper purpose snapshot binding differs')
+        return snapshot['records']
+
+    def _write(self, source, origin, purposes=None):
         sha=source_hash(source)
         durable(self.root/'versions'/sha/'source.json',{'source':source},immutable=True)
+        snapshot={'source_sha256':sha,'records':purposes or {}}
+        key=digest(snapshot)
+        durable(self.root/'helper-purposes'/f'{key}.json',snapshot,immutable=True)
         # One owner serializes writes. Content-addressed versions preserve failed drafts.
-        durable(self.root/'last-edit.json',{'source_sha256':sha,**origin})
+        durable(self.root/'last-edit.json',{'source_sha256':sha,**origin,'helper_purpose_snapshot':key})
         temp=self.path.with_suffix('.tmp');temp.write_text(source);temp.replace(self.path)
 
     def edit(self, proposal, origin):
-        if set(proposal)-{'action','base_sha256','source','edits','notes'}:
+        if set(proposal)-{'action','base_sha256','source','edits','notes','helper_purposes'}:
             raise ValueError('edit_theory accepts base_sha256 and either source or exact-text edits')
         current=self.read()
         if proposal.get('base_sha256')!=current['source_sha256']:
@@ -195,9 +241,13 @@ class DocumentStore:
                 if not isinstance(edit,dict) or set(edit)!={'old','new'} or not all(isinstance(x,str) for x in edit.values()) or not edit['old'] or source.count(edit['old'])!=1:
                     raise ValueError('each edit needs a unique nonempty exact old string and replacement')
                 source=source.replace(edit['old'],edit['new'],1)
-        parse(source,self.package,self.imports)
-        self._write(source,origin)
-        return {'status':'draft_saved','source_sha256':source_hash(source),'checked':False}
+        entries,proofs=parse(source,self.package,self.imports)
+        from regen.planning.helper_purposes import merge, view
+        purposes=merge(self._purposes(current['source_sha256']),proposal.get('helper_purposes',{}),
+                       entries,proofs,source_hash(source))
+        self._write(source,origin,purposes)
+        return {'status':'draft_saved','source_sha256':source_hash(source),'checked':False,
+                'helper_purposes':view(purposes,entries,proofs,self.state)}
 
     def checked_source(self, sha):
         source=self.path.read_text()

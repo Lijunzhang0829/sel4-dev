@@ -69,7 +69,8 @@ class ProofWorkspaceAgentTest(unittest.TestCase):
 
     def call(self, controller, theory, proposal):
         return controller.handle('proof_action', {'theory':theory,'proposal':proposal},
-                                 {'transcript_path':'synthetic-test-transcript','call_id':'test'})
+                                 {'transcript_path':'synthetic-test-transcript','call_id':'test',
+                                  'transcript_offset':1})
 
     def test_read_not_started_state_and_other_theory_green_are_read_only(self):
         self.fresh_target()
@@ -122,7 +123,8 @@ class ProofWorkspaceAgentTest(unittest.TestCase):
         self.assertEqual(setups, ['Target'])
         self.assertEqual(self.record.call_count, 2)
         self.llm.assert_not_called()
-        self.audit.assert_called_once_with('synthetic-test-transcript', require_terminal=False, require_real=True)
+        self.audit.assert_called_once_with('synthetic-test-transcript', require_terminal=False,
+                                           require_real=True, offset=1)
         checkers['Target'].close_prefix.assert_not_called()
         self.monitor_close.assert_not_called()
 

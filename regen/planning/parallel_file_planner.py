@@ -15,12 +15,14 @@ import signal
 import sys
 import tempfile
 import threading
+from time import monotonic
 from uuid import uuid4
 
 from regen.execution.check_executor import CheckExecutor, NativeResources, CURRENT_RESOURCES
-from regen.execution.check_tasks import TERMINAL, check_cancelled
+from regen.execution.check_tasks import TERMINAL, CheckCancelled, check_cancelled
 from regen.execution.proof_commits import digest, durable
-from regen.infrastructure.progress_events import event_scope, emit_event
+from regen.infrastructure.codex_runtime import CodexRuntimeError, runtime_verified_settings
+from regen.infrastructure.progress_events import event_scope, emit_event, generation_exclusion, observe_events
 from regen.planning.proof_workspace_agent import WorkspaceController, workspace_tools, _tool
 
 INSTRUCTIONS = '''You are the continuing File Planner for the ONE assigned theory.
@@ -64,10 +66,22 @@ Use proof_action(theory, proposal):
 Or replace the complete file using source instead of edits. Edits are sequential. Saving
 performs boundary/hygiene checks, not Isabelle validation. Failed proof drafts persist.
 {"action":"check_theory","source_sha256":"current saved hash","reason":"what changed"}
-This checks all supplied proof bodies in file order, atomically accepting a successful
-version. Unchanged accepted prefixes may be reused. Editing/reordering/deleting accepted
-proofs/helpers triggers full proof revalidation; old evidence remains historical only.
+This checks all supplied proof bodies in file order. A successful version is atomically
+accepted only if it retains every previously accepted entry. A GREEN diagnostic draft
+with removed proofs/helpers or oops replacing accepted bodies returns draft_checked;
+it does not publish proofs or replace the accepted version. Restore the missing entries
+(read_proofs retrieves accepted bodies), then check the complete draft. Unchanged accepted
+prefixes may be reused. Editing/reordering accepted bodies triggers full revalidation.
 Read_theory returns the draft and last check feedback. You may edit a failed draft directly.
+Pass if_source_sha256 to read_theory when you already hold that exact source; an unchanged
+draft then returns source_unchanged=true without repeating its text. Omit the hash to
+retrieve the complete source. Observation indexes are paginated; use the returned
+read_context_index actions for older fact/query addresses, not repeated whole-file reads.
+Historical reads default to summaries. Use list_attempts with an entry_id to navigate
+failed history, then read_attempt or read_attempts with view="full" for exact evidence.
+Do not scan request numbers blindly. read_theory restores notes, recent actions and
+target navigation, not all selected historical draft bodies. A batch containing an
+entry does not prove that entry failed; follow checker_failed_entry_ids when available.
 {"action":"finish","source_sha256":"accepted current draft hash"}
 Seal requires every fixed goal and retained helper proved, unchanged since successful check,
 then complete-theory verification, semantic audit and build. A final message is not a seal.
@@ -77,7 +91,18 @@ The REGEN-BEGIN metadata has only id, role (contract/helper/theorem), context (a
 context list). REGEN-PROOF separates declaration and proof; REGEN-END closes the entry.
 A helper is an ordinary named lemma entry with a unique ID/name. Copy a block layout,
 choose its statement and context, and place it before consumers. No intended-consumer list
-is required. Context commands must match the marker list and close before REGEN-END.
+is required in source markers. For each new helper attach a helper_purposes entry to
+edit_theory, outside the .thy source: {"helper_id":{"contract_id":"fixed goal ID",
+"gap":"specific condition or proof step","expected_use":"where in the target proof",
+"remaining_gap":"what remains; write none if nothing"}}. Update these notes when
+the purpose changes or feedback reveals a remaining gap. To update notes alone,
+submit the unchanged source with the current base_sha256. After trying the helper
+in a non-oops target body, optionally add used_in_target with the exact use location.
+This is a reported attempt, not native dependency evidence or target success.
+read_theory returns these notes; accepted status is derived from committed proofs.
+Missing notes are reminders, never a reason to stop proving. Use the notes to revisit
+the target after useful helper progress; do not build a scheduling DAG.
+Context commands must match the marker list and close before REGEN-END.
 Use a sole oops for an unfinished proof; never sorry, axioms, ML or hidden declarations.
 Isabelle decides candidate validity; uncertainty or lack of a recalled example is not a
 reason to prohibit a trial. Keep useful local proofs in the shared file.
@@ -92,8 +117,43 @@ Ordinary proof failure should lead to editing or retrieval, not abandoning the t
 '''
 
 
-class TheoryContinuationError(RuntimeError):
-    """A provider turn ended repeatedly without advancing or sealing its theory."""
+GENERATION_STRATEGIES = {
+    'baseline': '',
+    'bounded-audited-prefix-v1': '''\nONLINE CHECK POLICY: BOUNDED AUDITED PREFIX V1
+For an append-only check_theory draft, the harness checks your new proof bodies
+one declaration at a time in source order, independently auditing and committing
+each GREEN declaration. It stops at the first rejected declaration or the first
+accepted fixed contract. The full draft, including all untested proof bodies,
+remains saved and readable. Inspect accepted_ids and bounded_prefix feedback;
+an untested body is never a premise. Non-append rewrites use an explicitly marked
+whole-document fallback. No proof bodies or new mathematical content are supplied
+by this policy. Keep existing fixed-contract and legal-fact restrictions.
+''',
+    'helper-closure-v1': '''\nEXPERIMENTAL WORKFLOW: HELPER CLOSURE V1
+Keep the original unproved fixed contract as the objective of each small helper batch.
+Before expanding that batch, state which observed obligation of that contract it addresses.
+After a helper batch is accepted, return to the original contract: inspect its current
+obligations and check a revised contract proof before starting another helper batch.
+If that check is not yet meaningful, state the exact remaining prerequisite and keep the
+next batch focused on it. Record remaining obligations in your ordinary check reason or
+analysis, not new formal declarations. Helpers do not renew the effective generation
+budget. Do not invent numeric remaining time: only harness-reported measurements count.
+This changes workflow only: preserve all contract statements, legal-fact restrictions,
+accepted-proof boundaries and complete native proof validation.
+''',
+}
+
+
+def generation_strategy(value):
+    if value == 'and-or-helper-selection-v1':
+        raise ValueError('and-or-helper-selection-v1 was removed from the current document workflow; '
+                         'use baseline for free helper/batch generation, or the original frozen '
+                         'application to replay historical AND/OR runs')
+    if value not in GENERATION_STRATEGIES:
+        raise ValueError('unknown generation strategy')
+    text = GENERATION_STRATEGIES[value]
+    return {'name':value, 'instructions':text,
+            'instructions_sha256':hashlib.sha256(text.encode()).hexdigest()}
 
 
 def _cleanup_all(actions, primary=None):
@@ -119,7 +179,7 @@ def _reclaim_completed_heaps(root, result):
         result['heap_reclamation'] = reclaim_theory_heaps(root, result['theory'])
 
 
-def _continuation_prompt(theory, state, idle_turns):
+def _continuation_prompt(theory, state):
     open_count = len(state['graph']['nodes']) - len(state['proofs'])
     return (f'Continue the same assigned theory {theory}. The previous model turn ended, '
             f'but checker authority still reports status={state["status"]!r} with '
@@ -127,9 +187,7 @@ def _continuation_prompt(theory, state, idle_turns):
             'Use the current draft and latest feedback to keep editing and '
             'checking until proof_action finish seals the theory. '
             'Do not repeatedly reread unchanged state or wait for another agent to edit this theory; '
-            'you own its generation. Repeated reads and sleep are not progress. '
-            + ('The preceding turn produced no new tool information or proof work; act on the feedback or report a concrete '
-               'infrastructure fault through the tool feedback.' if idle_turns else ''))
+            'you own its generation. Repeated reads and sleep are not progress.')
 
 
 def tools(document_mode=False):
@@ -139,8 +197,10 @@ def tools(document_mode=False):
         for tool in registry:
             if tool['name']=='read_theory':
                 tool['description']='Read the persistent Isabelle draft, source hash, accepted entries and check feedback.'
+                tool['inputSchema']['properties']['if_source_sha256'] = {'type':'string','minLength':1}
             elif tool['name']=='proof_action':
                 tool['description']='Edit/check/seal the persistent theory source, or execute a read-only observation.'
+        registry.append(_tool('proof_tool_help','Read shared document tool schemas, examples and result semantics without opening a theory or calling Isabelle.',{}))
         return registry
     text = {'type':'string','minLength':1}
     registry.extend([
@@ -158,8 +218,17 @@ def tools(document_mode=False):
 
 
 class TheoryController(WorkspaceController):
-    def __init__(self, run_dir, theory, *, resources, executor, document_mode=False, **options):
+    def __init__(self, run_dir, theory, *, resources, executor, document_mode=False,
+                 generation_strategy_name='baseline', focus_contract_id=None,
+                 stop_at_focus_contract=False, **options):
+        if type(stop_at_focus_contract) is not bool:
+            raise ValueError('stop_at_focus_contract must be boolean')
+        if stop_at_focus_contract and focus_contract_id is None:
+            raise ValueError('stop_at_focus_contract requires focus_contract_id')
         self.document_mode = document_mode
+        self.generation_strategy = generation_strategy(generation_strategy_name)
+        if generation_strategy_name == 'bounded-audited-prefix-v1' and not document_mode:
+            raise ValueError(generation_strategy_name + ' requires document mode')
         super().__init__(run_dir,theories=[theory],**options)
         self.theory, self.resources, self.executor = theory, resources, executor
         with executor.lock:
@@ -168,6 +237,44 @@ class TheoryController(WorkspaceController):
         self._runtime_lock = threading.RLock()
         self._action_lock = threading.RLock()
         self._tool_lock = threading.RLock()
+        self._abort_requested = threading.Event()
+        self._provider_preparation_error = None
+        self.focus_contract_id = focus_contract_id
+        self.stop_at_focus_contract = stop_at_focus_contract
+        if focus_contract_id is not None:
+            package, state = self._state(theory)
+            if (not isinstance(focus_contract_id, str)
+                    or focus_contract_id not in {c['contract_id'] for c in package['contracts']}
+                    or (focus_contract_id in state['proofs']
+                        and not stop_at_focus_contract)):
+                raise ValueError('focus_contract_id must identify an unproved fixed contract of the assigned theory')
+
+    def target_contract_green(self):
+        if not self.stop_at_focus_contract:
+            return False
+        _, state = self._state(self.theory)
+        return self.focus_contract_id in state.get('proofs', {})
+
+    def _check_session_active(self):
+        if self._abort_requested.is_set():
+            raise CheckCancelled('File Planner session aborted; no new action may be dispatched')
+
+    def abort_pending(self):
+        """Cooperative session-only abort; never wait for the theory tool lock.
+
+        The executor owns cancellation/acceptance linearization. An accepted
+        commit is retained even when its tool response can no longer be sent.
+        Inspect executor records, not just task_ids: submit may have published a
+        task before its caller has registered the returned ID on this controller.
+        """
+        self._abort_requested.set()
+        with self.executor.lock:
+            pending = [key for key, row in self.executor.records.items()
+                       if row['theory'] == self.theory
+                       and row['binding'].get('run_id') == self.run['run_id']
+                       and row['status'] not in TERMINAL]
+        # Never hold executor.lock while taking a token's acceptance lock.
+        _cleanup_all([lambda key=key: self.executor.cancel(key) for key in pending])
 
     def _observation_state(self, state):
         # Completed receipts are observation authority only, never proof authority.
@@ -186,12 +293,30 @@ class TheoryController(WorkspaceController):
         return package,state
 
     def _runtime(self):
-        from regen.execution.repository_execution import setup
+        from regen.execution.repository_execution import setup, ProviderPreparationError
         key = (str(self.root),self.theory,self.options['check_timeout'])
         with self._runtime_lock:
             if key not in self.runtime_cache:
-                self.runtime_cache[key] = setup(self.root,self.theory,self.options['check_timeout'])
+                if self._provider_preparation_error is not None:
+                    raise self._provider_preparation_error
+                # Document reads initialize providers too, outside CheckExecutor.
+                # Bind policy here, before checker construction, so every entry
+                # path receives the same admission, thread and build budgets.
+                marker = CURRENT_RESOURCES.set(self.resources)
+                try:
+                    with generation_exclusion('runtime_setup', theory=self.theory):
+                        self.runtime_cache[key] = setup(self.root,self.theory,self.options['check_timeout'])
+                except ProviderPreparationError as error:
+                    # Repeated reads must not silently rebuild a failed provider.
+                    # A fresh controller is the explicit retry boundary; neither
+                    # cancellation nor candidate RED feedback is latched here.
+                    self._provider_preparation_error = error
+                    raise
+                finally:
+                    CURRENT_RESOURCES.reset(marker)
             self.runtime_cache[key][4].document_mode = self.document_mode
+            self.runtime_cache[key][4].generation_strategy_name = self.generation_strategy['name']
+            self.runtime_cache[key][4].bounded_prefix_cancel_check = self._check_session_active
             return self.runtime_cache[key]
 
     @staticmethod
@@ -214,34 +339,66 @@ class TheoryController(WorkspaceController):
     def handle(self, name, arguments, metadata):
         # Receipt inspection/cancellation may be used by an external supervisor.
         # All mathematical/read tools share one theory-local serial boundary.
+        mathematical = name in {'proof_action', 'submit_check'}
+        if self.stop_at_focus_contract and mathematical:
+            if self.target_contract_green():
+                raise ValueError(
+                    'target contract is already journal-accepted; further '
+                    'mathematical actions are blocked')
+            if arguments.get('proposal', {}).get('action') == 'finish':
+                raise ValueError(
+                    'target-contract mode does not seal the whole theory')
         if name in {'get_check_result','wait_checks','cancel_check'}:
             return self._handle(name, arguments, metadata)
         with self._tool_lock:
+            self._check_session_active()
+            self._completed_action_state = None
+            self._helper_attempt = None
             result = self._handle(name, arguments, metadata)
             if self.document_mode:
                 from regen.planning.document_interface import public_view
                 result = public_view(result)
+            if self.target_contract_green():
+                if not isinstance(result, dict):
+                    result = {'result': result}
+                result = {**result,
+                    'target_contract_green': True,
+                    'target_contract_id': self.focus_contract_id}
             return result
 
-    def _document(self):
+    def _document(self, *, state=None):
         from regen.planning.theory_document import DocumentStore
-        package,state = self._state(self.theory)
+        if state is None:
+            package,state = self._state(self.theory)
+        else:
+            package = self.shared._package(self.theory)
         runtime = self._runtime()
         return DocumentStore(runtime[2]/'document',package,state,runtime[4].imports()),state
 
     def _handle(self, name, arguments, metadata):
+        if self.document_mode and name=='proof_tool_help':
+            from regen.planning.document_interface import tool_contracts
+            return tool_contracts(**arguments)
         if self.document_mode and name=='read_theory' and arguments.get('theory')==self.theory:
             store,state = self._document()
-            from regen.planning.batch_file_planner import compact_feedback, planner_input
+            from regen.planning.batch_file_planner import planner_input
+            from regen.planning.document_recall import compact_history_feedback, document_observations
             context = planner_input(self.shared._package(self.theory),state)
-            return {'theory':self.theory,'document':store.read(),
+            document = store.read()
+            known_source = arguments.get('if_source_sha256')
+            if known_source is not None and (not isinstance(known_source,str) or not known_source):
+                raise ValueError('if_source_sha256 must be a nonempty source hash')
+            if known_source == document.get('source_sha256'):
+                document = {key:value for key,value in document.items() if key != 'source'}
+                document['source_unchanged'] = True
+            return {'theory':self.theory,'document':document,
                     'accepted_ids':list(state['accepted_order']),
                     'accepted_source_sha256':state.get('document_source_sha256'),
-                    'status':state['status'],'feedback':compact_feedback(state.get('batch_feedback',{})),
-                    'observations':{k:compact_feedback(context[k]) for k in (
-                        'query_index','query_memory','requested_attempts','next_proof_observation',
-                        'requested_proof_state','resolved_symbols') if k in context}}
+                    'status':state['status'],'feedback':compact_history_feedback(state.get('batch_feedback',{}),state),
+                    'observations':document_observations(context,state)}
         if self.document_mode and name=='read_theory':
+            if 'if_source_sha256' in arguments:
+                raise ValueError('if_source_sha256 applies only to the assigned draft')
             package,state = self._state(arguments['theory'])
             return {'theory':arguments['theory'], 'status':state['status'],
                     'reference_only':True, 'repository_projection':package['repository_projection'],
@@ -257,6 +414,14 @@ class TheoryController(WorkspaceController):
             proposal=arguments['proposal']
             if not isinstance(proposal,dict):
                 raise ValueError('proposal must be an object')
+            if proposal.get('action') == 'select_helpers':
+                raise ValueError('select_helpers was removed; edit any needed helpers and check '
+                                 'one or more proof bodies directly with check_theory')
+            if proposal.get('action') == 'read_context_index':
+                from regen.planning.batch_file_planner import planner_input
+                from regen.planning.document_recall import context_index_page
+                package,state = self._state(self.theory)
+                return context_index_page(planner_input(package,state),proposal)
             if proposal.get('action') not in {'edit_theory','check_theory','finish'}:
                 from regen.planning.document_interface import internal_request
                 proposal = internal_request(proposal)
@@ -285,6 +450,20 @@ class TheoryController(WorkspaceController):
         if self.document_mode and name == 'prepare_reuse':
             raise ValueError('read_generated and copy source entries into the document for fresh checking')
         if name == 'list_workspace':
+            if arguments.get('assigned_only') is True:
+                package,state = self._state(self.theory)
+                ready = self._theory_readiness(self.theory,package=package,state=state)
+                from regen.planning.import_contract import required_imports
+                return {'run_id':self.run['run_id'],'assigned_theory':self.theory,
+                    'status':state['status'],'contract_count':len(package['contracts']),
+                    'accepted_entry_count':len(state['proofs']),
+                    'required_imports':[p['theory'] for p in required_imports(package['repository_projection'])],
+                    'ready_for_proof_action':ready['ready_for_proof_action'],
+                    'unsealed_providers':ready['unsealed_providers'],
+                    'assigned_writer_count':1,'theory_tool_execution':'serial',
+                    'notice':'Read this theory for exact goals/draft and feedback. list_workspace '
+                             'lists other theories on demand; list_generated/read_generated expose '
+                             'reference-only material. Current source imports govern legal facts.'}
             result = super().handle(name,arguments,metadata)
             result.pop('worker_count', None)
             result['assigned_theory'] = self.theory
@@ -332,12 +511,25 @@ class TheoryController(WorkspaceController):
             row = self._submit_task(arguments, metadata)
             while row['status'] not in TERMINAL:
                 row = self.executor.wait([row['task_id']], timeout=30)[0]
+            if row.get('error_type') == 'ImplementationChangedError':
+                from regen.execution.check_tasks import ImplementationChangedError
+                raise ImplementationChangedError(row.get('diagnostic', 'frozen execution code changed'))
+            if row.get('error_type') == 'ProviderPreparationError':
+                from regen.execution.repository_execution import ProviderPreparationError
+                raise ProviderPreparationError(row.get('diagnostic', 'provider preparation failed'))
+            if row.get('error_type') == 'CodexRuntimeError':
+                # Executor receipts retain only the exception type and message.
+                # Restore the infrastructure type before the session boundary:
+                # an unavailable/untrusted runtime is not candidate feedback.
+                raise CodexRuntimeError(row.get('diagnostic', 'trusted Codex runtime unavailable'))
             return self._public(row)
 
     def _submit_task(self, arguments, metadata):
+        self._check_session_active()
         if arguments['theory'] != self.theory:
             raise ValueError('only the assigned theory may be checked or modified')
         kind, proposal = arguments['kind'], deepcopy(arguments['proposal'])
+        helper_attempt = deepcopy(getattr(self, '_helper_attempt', None))
         expected = {'proof_batch':'submit_batch','seal':'finish','statement':'submit_batch',
                     'symbol':'resolve_symbols','observe':'observe'}
         if kind not in expected or (proposal.get('action') != expected[kind] and not (kind=='proof_batch' and proposal.get('action')=='check_theory')):
@@ -364,6 +556,7 @@ class TheoryController(WorkspaceController):
         def execute(directory):
             marker = CURRENT_RESOURCES.set(self.resources)
             try:
+                self._check_session_active()
                 with event_scope(directory,run_id=self.run['run_id'],theory=self.theory,task_id=task_id):
                     emit_event('check_task_started',kind=kind)
                     runtime = self._runtime()
@@ -381,19 +574,29 @@ class TheoryController(WorkspaceController):
                             from regen.planning.observation_memory import task_order
                             self._action_observation_order = task_order(self.executor.get(task_id))
                             result = super(TheoryController,self).proof_action(
-                                {'theory':self.theory,'proposal':proposal},metadata)
+                                {'theory':self.theory,'proposal':proposal},metadata,
+                                state_snapshot=now, helper_attempt=helper_attempt)
                     else:
                         result = self._observe(kind,proposal,snapshot,package,directory)
                     emit_event('check_task_result_ready',kind=kind)
                     return result
             finally:
-                CURRENT_RESOURCES.reset(marker)
+                try:
+                    emit_event('check_task_stopped', kind=kind, theory=self.theory,
+                               task_id=task_id, run_id=self.run['run_id'])
+                finally:
+                    CURRENT_RESOURCES.reset(marker)
 
+        self._check_session_active()
         result = self.executor.submit(kind='action' if kind=='observe' else kind,
             theory=self.theory,binding=binding,request={'proposal':proposal,'metadata':metadata},
             execute=execute,owner=self.theory,task_id=task_id)
         with self.executor.lock:
             self.task_ids.add(result['task_id'])
+        # Cover an abort between the final pre-submit check and registration.
+        # An already accepted task may decline cancellation; never roll it back.
+        if self._abort_requested.is_set():
+            result = self.executor.cancel(result['task_id'])
         return self._public(result)
 
     def _observe(self, kind, proposal, snapshot, package, directory):
@@ -415,8 +618,14 @@ class TheoryController(WorkspaceController):
             heaps_dir=original.heaps_dir,l4v_dir=original.l4v_dir,
             semantic_workspace=original.semantic_workspace,base_session=original.base_session,
             base_import=original.base_import,base_catalog=original.base_catalog,
-            isabelle_dir=original.isabelle_dir,import_all_previous=original.import_all_previous)
+            isabelle_dir=original.isabelle_dir,import_all_previous=original.import_all_previous,
+            complete_context_policy=getattr(original, 'complete_context_policy', 'isolated-v1'))
         checker.declaration_environment = digest(run)
+        # Keep task-local outputs and caches, but route supported observations
+        # through the original process under its action lock and native lease.
+        # Closing this task-local checker must never close the borrowed owner.
+        checker._observation_owner = original
+        checker._observation_lock = self._action_lock
         command = checker._command
         def readonly(*args, **kwargs):
             return [value+',readonly' if value.startswith('type=bind,') and value.endswith('dst=/root/.isabelle/heaps')
@@ -452,19 +661,47 @@ class TheoryController(WorkspaceController):
 
 def run_theory_session(root, theory, *, resources, executor, settings, directory,
                        model=None, call_timeout=600, check_timeout=900, candidate_timeout=120,
-                       codex_home=None, cancel_event=None, document_mode=True):
+                       codex_home=None, cancel_event=None, document_mode=True,
+                       generation_strategy_name='baseline', focus_contract_id=None,
+                       stop_at_focus_contract=False, and_or_control=None, retry_context=None,
+                       http_retry_mode=False):
     from regen.infrastructure.codex_workspace_session import CodexWorkspaceSession
     from regen.infrastructure.workspace_transcript import audit_workspace_session
     from regen.planning.batch_file_planner import INSTRUCTIONS as FORMATS
-    controller = TheoryController(root,theory,resources=resources,executor=executor,document_mode=document_mode,
-        model=model,call_timeout=call_timeout,check_timeout=check_timeout,candidate_timeout=candidate_timeout)
+    strategy = generation_strategy(generation_strategy_name)
+    controller_class = TheoryController
+    controller_options = {}
+    if and_or_control is not None:
+        from regen.planning.and_or_file_planner_supervisor import \
+            AndOrTheoryController
+        controller_class = AndOrTheoryController
+        controller_options = {
+            'and_or_problem': and_or_control['problem'],
+            'and_or_state': and_or_control['state'],
+            'execution_identity': and_or_control['execution_identity'],
+            'arm_attestation_path': and_or_control.get(
+                'arm_attestation_path'),
+            'supervisor_directory': and_or_control.get(
+                'supervisor_directory'),
+        }
+    controller = controller_class(root,theory,resources=resources,executor=executor,document_mode=document_mode,
+        generation_strategy_name=generation_strategy_name, focus_contract_id=focus_contract_id,
+        stop_at_focus_contract=stop_at_focus_contract,
+        model=model,call_timeout=call_timeout,check_timeout=check_timeout,
+        candidate_timeout=candidate_timeout, **controller_options)
     try:
         with event_scope(directory,run_id=controller.run['run_id'],theory=theory):
             durable(directory/'policy.json',{'theory':theory,**controller.options,
+                    'generation_strategy':strategy,
+                    'focus_contract_id':focus_contract_id,
+                    'stop_at_focus_contract':stop_at_focus_contract,
+                    'http_retry_mode':http_retry_mode,
                     **resources.policy,'mode':'parallel-file-planner-v1','theory_tool_execution':'serial',
-                    'progress_policy':{'idle_turn_limit':2,'repeated_result_limit':8,
+                    'progress_policy':{'repeated_result_limit':8,
                         'no_information_timeout_seconds':call_timeout,'callback_time_excluded':True,
-                        'sleep_item_max_ms':60000,'sleep_per_turn_max_ms':120000},
+                        'sleep_policy_version':2,'sleep_item_max_ms':60000,
+                        'sleep_semantics':'protocol-display-only; not proof progress',
+                        'deadline_authority':'no-information deadline and repeated-result limit; native/action deadlines govern callbacks'},
                     'file_planner_interface':'document' if document_mode else 'graph'},immutable=True)
             with tempfile.TemporaryDirectory(prefix='regen-theory-auth-') as temp:
                 home = Path(temp)
@@ -477,43 +714,113 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                 if document_mode:
                     from regen.planning.document_interface import observation_instructions
                     formats = observation_instructions()
-                prompt = (DOCUMENT_INSTRUCTIONS if document_mode else INSTRUCTIONS)+'\n'+formats+'\nASSIGNED THEORY: '+theory+'\n'+json.dumps(controller.handle('list_workspace',{},{}),ensure_ascii=False)
+                workspace_view = controller.handle('list_workspace',{'assigned_only':True} if document_mode else {}, {})
+                prompt = (DOCUMENT_INSTRUCTIONS if document_mode else INSTRUCTIONS)+strategy['instructions']+'\n'+formats+'\nASSIGNED THEORY: '+theory+'\n'+json.dumps(workspace_view,ensure_ascii=False)
+                if retry_context is not None:
+                    prompt += '\nRECOVERY RECEIPT (not mathematical advice):\n'+json.dumps(retry_context,ensure_ascii=False)
+                if focus_contract_id is not None:
+                    prompt += ('\nFOCUS FIXED CONTRACT ID: '+focus_contract_id+
+                        '\nPrioritize this fixed contract and its supporting helpers. '
+                        'All ordinary proof, legal-fact and checker-acceptance rules remain unchanged.')
                 providers = []
-                idle_turns = 0
-                with CodexWorkspaceSession(tools=tools(document_mode),codex_bin=settings['codex_bin'],codex_home=home,
-                                           allow_external_call=True,progress_timeout=call_timeout) as session:
-                    next_prompt = prompt
-                    while True:
-                        calls_before = session.tool_call_count
-                        provider = session.run(next_prompt,controller.handle,artifact_dir=directory,model=controller.model,
-                                               reasoning_effort=settings['reasoning_effort'],timeout=call_timeout,
-                                               cancel_event=cancel_event)
-                        providers.append(provider)
-                        _, state = controller._state(theory)
-                        if state['status'] in {'sealed','retired'}:
-                            break
-                        made_progress = provider.get('progress_made', session.tool_call_count != calls_before)
-                        idle_turns = 0 if made_progress else idle_turns + 1
-                        if idle_turns >= 2:
-                            raise TheoryContinuationError(
-                                f'{theory} ended two consecutive turns without new information or proof work; '
-                                f'checker status remains {state["status"]}')
-                        next_prompt = _continuation_prompt(theory,state,idle_turns)
-                audit = audit_workspace_session(directory/'session-transcript.jsonl',require_terminal=True,require_real=True)
+                transport_anomaly = None
+                target_completed = controller.target_contract_green()
+                if not target_completed:
+                    with CodexWorkspaceSession(tools=tools(document_mode),codex_bin=settings['codex_bin'],codex_home=home,
+                                               allow_external_call=True,progress_timeout=call_timeout,
+                                               http_retry_mode=http_retry_mode) as session:
+                        next_prompt = prompt
+                        while True:
+                            try:
+                                provider = session.run(next_prompt,controller.handle,artifact_dir=directory,model=controller.model,
+                                                       reasoning_effort=settings['reasoning_effort'],timeout=call_timeout,
+                                                       cancel_event=cancel_event,
+                                                       on_abort=getattr(controller,'abort_pending',None),
+                                                       stop_when=(
+                                                           (lambda value: 'target_contract_green'
+                                                            if isinstance(value,dict) and value.get('target_contract_green')
+                                                            else None)
+                                                           if stop_at_focus_contract else None))
+                            except BaseException as error:
+                                # The proof journal is the authority even if
+                                # transport fails after the accepting callback.
+                                # A global runtime-integrity fault must still
+                                # stop peers even if this target just became GREEN.
+                                if isinstance(error, CodexRuntimeError) or not controller.target_contract_green():
+                                    raise
+                                transport_anomaly = {
+                                    'error_type':type(error).__name__,
+                                    'diagnostic':str(error)}
+                                provider = {
+                                    'status':'target_green_post_acceptance_transport_anomaly',
+                                    'post_acceptance_transport_anomaly':transport_anomaly}
+                            providers.append(provider)
+                            _, state = controller._state(theory)
+                            target_completed = controller.target_contract_green()
+                            if target_completed or state['status'] in {'sealed','retired'}:
+                                break
+                            # A model turn is not a proof or budget boundary.
+                            # The persistent session keeps its independent
+                            # inactivity/duplicate-result guards; the coordinator
+                            # owns cancellation and effective-generation limits.
+                            next_prompt = _continuation_prompt(theory,state)
+                    if transport_anomaly is None:
+                        audit = audit_workspace_session(
+                            directory/'session-transcript.jsonl',
+                            require_terminal=not target_completed,
+                            require_real=True)
+                    else:
+                        audit = {
+                            'terminal':False,
+                            'post_acceptance_transport_anomaly':transport_anomaly}
+                else:
+                    audit = {
+                        'terminal':False,
+                        'provider_not_started':'target_already_journal_green'}
             # A model ending a turn never upgrades pending work to success.
             _, state = controller._state(theory)
-            result = {'theory':theory,'status':state['status'],'provider':providers[-1],
+            target_completed = controller.target_contract_green()
+            status = ('target_green_completed'
+                      if target_completed else state['status'])
+            provider = (providers[-1] if providers else
+                        {'status':'not_started_target_already_green'})
+            result = {'theory':theory,'status':status,
+                      'theory_status':state['status'],'provider':provider,
                       'provider_turns':providers,'continuation_turns':len(providers)-1,'audit':audit,
                       'task_ids':sorted(controller.task_ids),'artifact_dir':str(directory)}
+            if target_completed:
+                snapshot = controller._runtime()[3].replay_snapshot()
+                result['target_authority'] = {
+                    'focus_contract_id':focus_contract_id,
+                    'journal_commit_id':snapshot['commit_id'],
+                    'journal_sequence':len(snapshot['records']),
+                    'proof_body_sha256':digest(
+                        state['proofs'][focus_contract_id]),
+                }
+            if transport_anomaly is not None:
+                result['post_acceptance_transport_anomaly'] = \
+                    transport_anomaly
             durable(directory/'result.json',result,immutable=True)
             return result
+    except CodexRuntimeError as error:
+        # Cover launcher/final-audit faults outside session.run as well. Stop
+        # charging before controller.close can wait for native worker cleanup.
+        # The session already reports callback failures at their first boundary.
+        if not getattr(error, '_regen_runtime_failure_emitted', False):
+            try:
+                emit_event('generation_runtime_integrity_failure', theory=theory,
+                    error_type=type(error).__name__, reason=str(error))
+                error._regen_runtime_failure_emitted = True
+            except BaseException as timing_error:
+                error.add_note('runtime integrity timing close failed: '+str(timing_error))
+        raise
     finally:
         _cleanup_all([controller.close], primary=sys.exc_info()[1])
 
 
 def _execution_policy(value, selected):
     value = {} if value is None else deepcopy(value)
-    if not isinstance(value, dict) or set(value) - {'stages', 'session_stall_retries'}:
+    if not isinstance(value, dict) or set(value) - {'stages', 'session_stall_retries', 'provider_http_retries'}:
         raise ValueError('invalid execution policy keys')
     stages = value.get('stages', [])
     retries = value.get('session_stall_retries', 0)
@@ -529,7 +836,13 @@ def _execution_policy(value, selected):
             if not isinstance(theory, str) or theory not in selected or theory in seen:
                 raise ValueError('stage contains an unknown or repeated theory')
             seen.add(theory)
-    return {'stages':stages, 'session_stall_retries':retries}
+    out = {'stages':stages, 'session_stall_retries':retries}
+    if 'provider_http_retries' in value:
+        http_retries = value['provider_http_retries']
+        if type(http_retries) is not int or http_retries not in (0, 1):
+            raise ValueError('provider_http_retries must be 0 or 1')
+        out['provider_http_retries'] = http_retries
+    return out
 
 
 def _stage_eligible(rows, policy, active=()):
@@ -541,17 +854,46 @@ def _stage_eligible(rows, policy, active=()):
 
 
 def _retry_stalled(error, attempt, retries):
-    from regen.infrastructure.codex_workspace_session import SessionStalled
+    from regen.infrastructure.codex_workspace_session import SessionStalled, ProviderOverloaded
     # A cleanup failure may leave a live owner; never overlap it with a retry.
-    return (isinstance(error, SessionStalled) and attempt <= retries
+    return (isinstance(error, (SessionStalled, ProviderOverloaded)) and attempt <= retries
             and not getattr(error, '__notes__', ()))
+
+
+def _run_budgeted_theory_session(bridge, *args, **kwargs):
+    with bridge.worker(args[1]):
+        return run_theory_session(*args, **kwargs)
+
+
+def _pause_budget_for_exit(budget, error=None):
+    if budget is not None and not budget.finished:
+        reason = ('operator_pause' if isinstance(error, (KeyboardInterrupt, SystemExit))
+                  else 'infrastructure_error' if error is not None else 'runner_paused')
+        # Settle while the gate is still open. Setting event directly first loses
+        # the known generation interval since the last monotonic observation.
+        budget.cancel(budget.reason or reason)
+
+
+def _attach_budget_pause(error, budget, active=()):
+    if budget is None or budget.finished or not budget.event.is_set():
+        return
+    error.regen_pause_result = {
+        'status':'paused', 'disposition':'pause',
+        'reason':budget.reason or 'runner_paused',
+        'error_type':type(error).__name__, 'diagnostic':str(error),
+        'generation_budget':budget.snapshot(), 'active_theories':list(active),
+        'repository_verified':False, 'resume_requires_authorization':True}
 
 
 def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, native_slots=1,
                            native_threads=4, resident_limit=2, model=None, call_timeout=600,
                            check_timeout=900, candidate_timeout=120, allow_external_call=False,
                            codex_home=None, integrate=True, file_planner_interface='document',
-                           execution_policy=None):
+                           execution_policy=None, native_cpus=4, native_memory_mb=16384,
+                           native_pids_limit=1024, provider_build_timeout=1800,
+                           build_ml_heap_mb=None, generation_strategy_name='baseline', focus_contract_id=None,
+                           effective_seconds=172800, resume_authorization=None,
+                           extend_effective_seconds=None):
     from regen.execution.proof_session_runner import acquire_run_mutation_lock, release_run_mutation_lock
     from regen.infrastructure.audited_llm import model_settings
     if not allow_external_call:
@@ -560,12 +902,16 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
         raise ValueError('max_parallel_theories must be positive')
     if file_planner_interface not in {'document','graph'}:
         raise ValueError('file_planner_interface must be document or graph')
+    strategy = generation_strategy(generation_strategy_name)
     root = Path(run_dir).resolve()
     # This is the sole coordinator/legacy-runner exclusion lock. Worker actions do
     # not acquire it; their mutations are theory-owned and short journal transactions.
-    resources = NativeResources(native_slots,native_threads,resident_limit)
+    resources = NativeResources(native_slots,native_threads,resident_limit,
+        cpus=native_cpus,memory_mb=native_memory_mb,pids_limit=native_pids_limit,
+        provider_build_timeout=provider_build_timeout,build_ml_heap_mb=build_ml_heap_mb)
     lock = acquire_run_mutation_lock(root,operation='parallel-workspace')
     executor = None
+    budget = bridge = None
     old_signals = {}
     terminating = False
     if threading.current_thread() is threading.main_thread():
@@ -580,6 +926,10 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
         for signum in (signal.SIGTERM, signal.SIGHUP):
             old_signals[signum] = signal.signal(signum, terminate)
     try:
+        # Publish before controller/context recovery can emit native events.
+        # This is a schema marker, not the start of effective generation.
+        emit_event('parallel_generation_clock_started', clock_schema='theory_effective_v1',
+                   run_dir=str(root))
         overview = WorkspaceController(root,theories=theories,model=model,
             call_timeout=call_timeout,check_timeout=check_timeout,candidate_timeout=candidate_timeout)
         overview.document_mode = file_planner_interface == 'document'
@@ -592,24 +942,38 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
             context = load_context(Path(overview.run['checker_context_root']))
             if context['checker_context_id'] != overview.run['checker_context_id']:
                 raise ValueError('checker context differs from frozen run')
-        settings = model_settings()
-        if hashlib.sha256(Path(settings['codex_bin']).read_bytes()).hexdigest()!=settings['codex_sha256']:
-            raise ValueError('Codex executable differs from frozen configuration')
-        durable(root/'parallel-workspace-policy.json',{'mode':'parallel-file-planner-v1',
+        settings = runtime_verified_settings(model_settings())
+        workspace_policy = {'mode':'parallel-file-planner-v1',
+            'generation_strategy':strategy,
+            'focus_contract_id':focus_contract_id,
             'selected_theories':selected,'max_parallel_theories':max_parallel_theories,
             'theory_tool_execution':'serial','file_planner_interface':file_planner_interface,
             **resources.policy,**overview.options,'integration_required':integrate,
-            'execution_policy':policy},immutable=True)
+            'execution_policy':policy}
+        from regen.infrastructure.parallel_generation_budget import initialize_parallel_budget
+        rows = overview.list_workspace()['theories']
+        budget, bridge = initialize_parallel_budget(root, overview, workspace_policy,
+            seconds=effective_seconds, resume_authorization=resume_authorization,
+            extension_seconds=extend_effective_seconds, rows=rows)
+        budget.ledger.append('parallel_budget_invocation',
+            service_invocation_id=os.environ.get('INVOCATION_ID'), pid=os.getpid())
+        durable(root/'parallel-workspace-policy.json', workspace_policy, immutable=True)
         executor = CheckExecutor(root/'check-tasks',workers=max_parallel_theories)
         results, active, failures = [], {}, {}
         attempts, directories = {}, {}
-        cancel_event = threading.Event()
+        stall_attempts = {}
+        from regen.infrastructure.provider_http_failure import recovery_streak, recovery_decision
+        retry_not_before = {}
+        cancel_event = budget.event
+        budget.start(abort=cancel_event.set)
         sessions = root/'parallel-sessions'/uuid4().hex
-        with event_scope(sessions,run_id=overview.run['run_id']):
+        with event_scope(sessions,run_id=overview.run['run_id']), \
+                observe_events(bridge.handle, publication_guard=bridge.acceptance):
             with ThreadPoolExecutor(max_workers=max_parallel_theories,thread_name_prefix='file-planner') as agents:
                 try:
-                    refresh = True
+                    refresh = False
                     while True:
+                        budget.check()
                         if refresh:
                             rows = overview.list_workspace()['theories']
                         eligible = _stage_eligible(rows, policy, active.values())
@@ -618,8 +982,10 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                 break
                             theory = row['theory']
                             if (theory not in eligible or theory in failures or theory in active.values()
-                                    or not row['ready_for_proof_action']):
+                                    or not row['ready_for_proof_action']
+                                    or retry_not_before.get(theory, 0) > monotonic()):
                                 continue
+                            retry_not_before.pop(theory, None)
                             attempt = attempts.get(theory, 0) + 1
                             attempts[theory] = attempt
                             directory = sessions/theory
@@ -629,13 +995,32 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                             durable(directory/'attempt.json', {'theory':theory,'attempt':attempt,
                                 'call_timeout':call_timeout}, immutable=True)
                             context = copy_context()
-                            future = agents.submit(context.run,run_theory_session,root,theory,
+                            from regen.planning.document_recall import retry_summary
+                            future = agents.submit(context.run,_run_budgeted_theory_session,bridge,root,theory,
                                 resources=resources,executor=executor,settings=settings,directory=directory,
+                                generation_strategy_name=generation_strategy_name,
+                                focus_contract_id=focus_contract_id,
+                                retry_context=retry_summary(results,theory),
+                                http_retry_mode=bool(policy.get('provider_http_retries', 0)),
                                 codex_home=codex_home,cancel_event=cancel_event,document_mode=file_planner_interface=='document',**overview.options)
                             active[future] = theory
                         if not active:
+                            deferred = [retry_not_before[row['theory']] for row in rows
+                                if row['theory'] in retry_not_before and row['theory'] in eligible
+                                and row['theory'] not in failures and row['ready_for_proof_action']]
+                            if deferred:
+                                # A provider cooldown belongs to its theory, not
+                                # to the coordinator. Only wait when no other
+                                # ready work can fill a slot, and keep budget /
+                                # cancellation checks responsive while idle.
+                                cancel_event.wait(min(1, max(0, min(deferred) - monotonic())))
+                                # No live writers can change these rows; avoid
+                                # replaying the workspace every idle second.
+                                refresh = False
+                                continue
                             break
                         done,_ = wait(active,timeout=1,return_when=FIRST_COMPLETED)
+                        budget.check()
                         # Full slots need no new scheduling decision. With a
                         # free slot, a still-active writer may have sealed a
                         # provider before returning from its session; continue
@@ -654,22 +1039,75 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                     failures[theory] = {'reason':'session_returned_unsealed',
                                                         'status':completed.get('status')}
                             except Exception as error:
+                                from regen.infrastructure.codex_workspace_session import ProviderHTTPError
                                 result = {'theory':theory,'status':'infrastructure_error',
                                           'error_type':type(error).__name__,'diagnostic':str(error)}
-                                retry = _retry_stalled(error, attempts[theory], policy['session_stall_retries'])
+                                http_error = isinstance(error, ProviderHTTPError)
+                                if not http_error:
+                                    stall_attempts[theory] = stall_attempts.get(theory, 0) + 1
+                                decision = (recovery_decision(error.failure,
+                                    recovery_streak(budget.ledger.rows, theory, error.failure),
+                                    enabled=bool(policy.get('provider_http_retries', 0)),
+                                    cleanup_failed=bool(getattr(error, '__notes__', ()))) if http_error else {})
+                                retry = (decision['retry'] if http_error else
+                                         _retry_stalled(error, stall_attempts[theory], policy['session_stall_retries']))
                                 result.update(attempt=attempts[theory], retry_scheduled=retry)
                                 durable(directories[theory]/'failure.json',result,immutable=True)
                                 results.append(result)
+                                from regen.execution.check_tasks import ImplementationChangedError
+                                if isinstance(error, ImplementationChangedError):
+                                    raise  # Global frozen-code drift invalidates every worker.
+                                if isinstance(error, CodexRuntimeError):
+                                    # Session events normally close the clock at
+                                    # detection. This also covers bootstrap/audit
+                                    # failures outside session.run; never consume
+                                    # HTTP allowance or keep healthy peers running
+                                    # against the same broken trust boundary.
+                                    budget.cancel('runtime_integrity_failure')
+                                    raise
                                 if retry:
+                                    if http_error:
+                                        # This point is reached only after session/controller close.
+                                        # Reserve durably before scheduling a new provider request.
+                                        used = decision['consecutive_failures']
+                                        delay = decision['delay_seconds']
+                                        budget.ledger.append('provider_http_retry_scheduled', theory=theory,
+                                            retry_number=used, failure=error.failure,
+                                            consecutive_failures=used, retry_policy=decision['retry_policy'],
+                                            prior_attempt_directory=str(directories[theory]),
+                                            delay_seconds=delay, accepted_state_preserved=True)
+                                        retry_not_before[theory] = monotonic() + delay
+                                        emit_event('provider_http_retry_scheduled', theory=theory,
+                                            retry_number=used, delay_seconds=delay,
+                                            next_attempt=attempts[theory]+1)
+                                        continue
+                                    from regen.infrastructure.codex_workspace_session import ProviderOverloaded
+                                    if isinstance(error, ProviderOverloaded):
+                                        delay = min(120, 30 * 2 ** min(stall_attempts[theory] - 1, 2))
+                                        retry_not_before[theory] = monotonic() + delay
+                                        emit_event('provider_overload_backoff', theory=theory,
+                                                   delay_seconds=delay, next_attempt=attempts[theory]+1)
                                     emit_event('session_stall_retry_scheduled',theory=theory,
                                                next_attempt=attempts[theory]+1)
                                     continue
+                                if http_error:
+                                    reason = decision['reason']
+                                    budget.ledger.append('provider_http_retry_stopped', theory=theory,
+                                        reason=reason, retries_used=recovery_streak(budget.ledger.rows, theory),
+                                        failure=error.failure)
+                                    budget.cancel(reason)
+                                    raise
                                 failures[theory] = {'reason':'infrastructure_error',
                                                     'error_type':type(error).__name__,
                                                     'diagnostic':str(error)}
                         # Refill immediately; never wait for an entire wave of theories.
                 except BaseException as error:
+                    _cleanup_all([lambda: _pause_budget_for_exit(budget, error)], primary=error)
+                    # Persistence failure also closes the budget gate. Preserve
+                    # the original exception while still stopping every worker.
                     cancel_event.set()
+                    budget_paused = budget.event.is_set()
+                    _attach_budget_pause(error, budget, active.values())
                     with executor.lock:
                         executor.closed = True
                         pending = list(executor.records)
@@ -677,11 +1115,12 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                     # callback running while the agent pool waits to join it.
                     _cleanup_all([
                         *(lambda task=task: executor.cancel(task) for task in pending),
-                        lambda: emit_event('parallel_workspace_interrupted',
+                        lambda: emit_event('parallel_workspace_paused' if budget_paused else 'parallel_workspace_interrupted',
                             exception_type=type(error).__name__,reason=str(error)),
-                        lambda: durable(sessions/'interruption.json',{'status':'interrupted',
+                        lambda: durable(sessions/'interruption.json',{'status':'paused' if budget_paused else 'interrupted',
                             'error_type':type(error).__name__,'diagnostic':str(error),
-                            'active_theories':list(active.values())}),
+                            'active_theories':list(active.values()),
+                            'generation_budget':budget.snapshot()}),
                     ], primary=error)
                     raise
             final = overview.list_workspace()
@@ -700,26 +1139,45 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                        for row in incomplete if row['theory'] not in failures}
             result = {'status':'partial','workspace':final,'results':results,'repository_verified':False,
                       'integration_required':integrate,'failures':failures,'blocked':blocked,
-                      'session_attempts':attempts,'execution_policy':policy}
+                      'session_attempts':attempts,'execution_policy':policy,
+                      'generation_budget':budget.snapshot()}
             all_sealed = all(row['status']=='sealed' or (row['status']=='retired' and not row['contracts'])
                              for row in final['theories'])
             if integrate and all_sealed:
                 from regen.execution.repository_integration import integrate_repository
                 marker = CURRENT_RESOURCES.set(resources)
                 try:
-                    result['integration'] = integrate_repository(root,timeout=check_timeout)
+                    with bridge.integration():
+                        result['integration'] = integrate_repository(root,timeout=check_timeout)
                 finally:
                     CURRENT_RESOURCES.reset(marker)
                 result['repository_verified'] = result['integration']['repository_verified']
                 result['status'] = 'repository_verified' if result['repository_verified'] else 'integration_failed'
             elif all(row['status']=='sealed' for row in final['theories'] if row['selected']):
                 result['status'] = 'selected_theories_sealed'
+            if result['repository_verified']:
+                budget.finish('repository_verified')
+                result['disposition'] = 'complete'
+            else:
+                budget.cancel(result['status'])
+                result['disposition'] = 'pause'
+                result['resume_requires_authorization'] = True
+            result['generation_budget'] = budget.snapshot()
             durable(sessions/'result.json',result,immutable=True)
             return result
     finally:
+        primary = sys.exc_info()[1]
         try:
-            _cleanup_all(([executor.close] if executor is not None else []) + [resources.close],
-                         primary=sys.exc_info()[1])
+            _cleanup_all([lambda: _pause_budget_for_exit(budget, primary)]
+                         + ([executor.close] if executor is not None else []) + [resources.close]
+                         + ([bridge.close] if bridge is not None else [])
+                         + ([budget.close] if budget is not None else []),
+                         primary=primary)
+            if primary is not None:
+                _attach_budget_pause(primary, budget)
+        except BaseException as cleanup_error:
+            _attach_budget_pause(cleanup_error, budget)
+            raise
         finally:
             _cleanup_all([
                 *(lambda signum=signum, handler=handler: signal.signal(signum, handler)

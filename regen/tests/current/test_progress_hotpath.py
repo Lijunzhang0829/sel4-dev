@@ -127,7 +127,8 @@ class ProgressHotpathTests(unittest.TestCase):
                     return set(), set(active)
                 release_b.set()
                 return wait_futures(active, **kwargs)
-            settings = {'codex_bin':str(binary), 'codex_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
+            settings = {'codex_bin':str(binary), 'codex_runtime_root':str(root/'codex-runtime'),
+                        'codex_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
             with patch('regen.planning.parallel_file_planner.WorkspaceController', Overview), patch(
                     'regen.planning.parallel_file_planner.run_theory_session', side_effect=session), patch(
                     'regen.planning.parallel_file_planner.wait', side_effect=poll), patch(
@@ -170,7 +171,8 @@ class ProgressHotpathTests(unittest.TestCase):
                     self.assertTrue(sealed_a.wait(5))
                     return set(), set(active)
                 return wait_futures(active, **kwargs)
-            settings = {'codex_bin':str(binary), 'codex_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
+            settings = {'codex_bin':str(binary), 'codex_runtime_root':str(root/'codex-runtime'),
+                        'codex_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
             with patch('regen.planning.parallel_file_planner.WorkspaceController', Overview), patch(
                     'regen.planning.parallel_file_planner.run_theory_session', side_effect=session), patch(
                     'regen.planning.parallel_file_planner.wait', side_effect=poll), patch(

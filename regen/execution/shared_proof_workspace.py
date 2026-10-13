@@ -91,7 +91,8 @@ class SharedProofWorkspace:
         return path
 
     def _json(self, path):
-        return json.loads(self._path(path).read_text())
+        from regen.infrastructure.incremental_log import read_artifact
+        return read_artifact(self._path(path))
 
     def _package(self, theory):
         if not isinstance(theory, str) or theory not in self.entries:
@@ -231,7 +232,35 @@ class SharedProofWorkspace:
         return {'status': 'available', 'records': records,
                 'notice': 'Original contexts are retained. Copying requires a new target-native check.'}
 
-    def read_attempt(self, theory, request_number):
+    def list_attempts(self, theory, *, entry_id=None, status=None, offset=0, limit=20,
+                      snapshot_commit_id=None):
+        from regen.planning.attempt_views import FAILED_STATUSES, history_row
+        if (type(offset) is not int or offset < 0 or type(limit) is not int
+                or not 1 <= limit <= 100 or status is not None and status not in FAILED_STATUSES
+                or entry_id is not None and (not isinstance(entry_id, str) or not entry_id)):
+            raise ValueError('invalid attempt directory filter or page')
+        snapshot = self._snapshot(theory)
+        commit = snapshot['commit_id'] if snapshot else None
+        if snapshot_commit_id is not None and snapshot_commit_id != commit:
+            raise ValueError('attempt directory snapshot changed; restart pagination')
+        rows = []
+        for item in reversed(snapshot['state'].get('batch_history', []) if snapshot else []):
+            if item.get('status') not in FAILED_STATUSES or status and item.get('status') != status:
+                continue
+            row = history_row(item)
+            if entry_id and entry_id not in row['submitted_entry_ids'] and entry_id not in row['checker_failed_entry_ids']:
+                continue
+            row['read_tool'] = {'tool': 'read_attempt', 'arguments': {
+                'theory': theory, 'request_number': row['request_number'], 'view': 'summary'}}
+            rows.append(row)
+        end = min(offset + limit, len(rows))
+        return {'status': 'available', 'reference_only': True, 'theory': theory,
+                'snapshot_commit_id': commit, 'total': len(rows), 'offset': offset,
+                'next_offset': end if end < len(rows) else None, 'records': rows[offset:end],
+                'notice': 'Newest first, explicit filters only. Submitted entries are not necessarily failed entries. Pin snapshot_commit_id on subsequent pages.'}
+
+    def read_attempt(self, theory, request_number, *, view='summary'):
+        from regen.planning.attempt_views import attempt_view
         if type(request_number) is not int or request_number < 1:
             raise ValueError('candidate reference requires a positive request number')
         snapshot = self._snapshot(theory)
@@ -247,10 +276,13 @@ class SharedProofWorkspace:
         if (not entry.get('proposal_sha256') or digest(candidate) != entry['proposal_sha256']
                 or not entry.get('feedback_sha256') or digest(feedback) != entry['feedback_sha256']):
             raise ValueError('candidate/feedback is not bound to the verified source commit')
-        return {'status': 'candidate_reference', 'reference_only': True,
-                'theory': theory, 'request_number': request_number,
-                'source_commit_id': snapshot['commit_id'], 'candidate': candidate,
-                'feedback': feedback, 'notice': 'Failed source; never a GREEN premise or accepted reuse bundle.'}
+        return {**attempt_view(request_number, candidate, feedback, view=view,
+                    theory=theory, run_id=snapshot['state']['graph'].get('run_id'),
+                    proposal_sha256=entry['proposal_sha256'], feedback_sha256=entry['feedback_sha256']),
+                'status': 'candidate_reference', 'theory': theory,
+                'source_commit_id': snapshot['commit_id'],
+                'read_tool': {'tool': 'read_attempt', 'arguments': {
+                    'theory': theory, 'request_number': request_number, 'view': 'full'}}}
 
     def _closure(self, snapshot, root):
         state = snapshot['state']

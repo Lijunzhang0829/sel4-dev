@@ -17,6 +17,9 @@ from typing import Any
 
 from regen.preparation.semantic_base_builder import SESSION_CATALOGS
 from regen.infrastructure.progress_events import emit_event
+from regen.execution.checker_policy import (
+    ISOLATED_CONTEXT, ARCH_REUSE_CONTEXT, validate_complete_context_policy,
+)
 from regen.execution.assembly_stabilizer import extract_last_node_marker
 
 FORBIDDEN_PROOF = re.compile(r"\b(?:sorry|oops|axiomatization|admit)\b")
@@ -301,7 +304,9 @@ class IsabelleChecker:
         base_catalog: str = "/semantic-base",
         isabelle_dir: Path | None = None,
         import_all_previous: bool = False,
+        complete_context_policy: str = ISOLATED_CONTEXT,
     ) -> None:
+        self.complete_context_policy = validate_complete_context_policy(complete_context_policy)
         self._last_node_check = None
         self.persistent = False
         self.batch_incremental = True
@@ -341,8 +346,15 @@ class IsabelleChecker:
     def _source(
         self, graph: dict[str, Any], proofs: dict[str, str], *,
         theory_name: str, target: str | None = None, statements_only: bool = False,
-        diagnostic_markers: bool = False,
+        diagnostic_markers: bool = False, phase_timing: bool = False, arch_timing: bool = False,
+        reuse_arch_context: bool = False, reuse_declaration_context: bool = False,
     ) -> str:
+        if reuse_arch_context and (phase_timing or statements_only):
+            raise ValueError('Arch reuse is an isolated proof-check experiment only')
+        if reuse_declaration_context and not statements_only:
+            raise ValueError('Declaration context reuse requires statements_only')
+        if arch_timing and not phase_timing:
+            raise ValueError('Arch profiling requires phase_timing')
         by_id = {node["id"]: node for node in graph["nodes"]}
         included = (
             dependency_closure(graph, target) | {target}
@@ -358,12 +370,30 @@ class IsabelleChecker:
                 prefix = graph.get('accepted_order', [])
                 order = [*prefix, *(key for key in order if key not in prefix)]
         blocks = []
+        arch_open = False
+        arch_prefix_names = []
+        if phase_timing:
+            blocks.append('ML \\<open>if ! Multithreading.parallel_proofs = 0 then () '
+                          'else error "phase timing requires parallel_proofs=0"\\<close>')
         for node_id in order:
             node = by_id[node_id]
             if statements_only:
-                blocks.append(wrap_context(
-                    node.get("context", []), node["statement"] + "\n  oops"
-                ))
+                # Declaration probes abort every goal: they must never make an
+                # unproved fact available to subsequent goals. Reuse only the
+                # known Arch interpretation, and keep each statement in its own
+                # anonymous scope. Context changes (including nested or merely
+                # similar Arch contexts) are barriers. This is independent of
+                # the complete-theory proof/export policy.
+                reuse_node = (reuse_declaration_context
+                    and node.get('context') == ['context begin interpretation Arch .'])
+                if arch_open and not reuse_node:
+                    blocks.append('end')
+                    arch_open = False
+                if reuse_node and not arch_open:
+                    blocks.append('context begin interpretation Arch .')
+                    arch_open = True
+                context = ['context begin'] if reuse_node else node.get('context', [])
+                blocks.append(wrap_context(context, node["statement"] + "\n  oops"))
                 continue
             if included is not None and node_id not in included:
                 continue
@@ -372,13 +402,47 @@ class IsabelleChecker:
             proof = proofs.get(node_id)
             if proof is None:
                 raise ValueError(f"target proof is missing: {node_id}")
+            # Experimental, opt-in only. Attribute-bearing declarations are
+            # barriers: reinterpreting Arch can affect rule insertion order.
+            reuse_node = (reuse_arch_context
+                and node.get('context') == ['context begin interpretation Arch .']
+                and re.fullmatch(r'[A-Za-z][A-Za-z0-9_\']*', node.get('name', '')) is not None
+                and re.match(r'\s*lemma\s+' + re.escape(node.get('name', '')) + r'\s*:',
+                             node['statement']) is not None)
+            if arch_open and not reuse_node:
+                blocks.append('end')
+                arch_open = False
+                arch_prefix_names = []
+            if reuse_node and not arch_open:
+                blocks.append('context begin interpretation Arch .')
+                arch_open = True
+            if reuse_node and arch_prefix_names:
+                # Nested targets retain unnamed local copies of prior results.
+                # Original independent scopes instead see exported global
+                # facts. Restore that binding (and indexed global facts), not
+                # merely equal propositions, for proof dependency provenance.
+                names = ', '.join(json.dumps(n) for n in arch_prefix_names)
+                blocks.append('local_setup \\<open>fn lthy => Local_Theory.map_contexts '
+                    '(fn level => fn ctxt => if level = 0 then ctxt else ctxt |> '
+                    'fold (fn name => Proof_Context.put_thms false (name, NONE)) [' + names + '] '
+                    '|> Proof_Context.transfer_facts (Proof_Context.theory_of lthy)) lthy\\<close>')
             if diagnostic_markers:
                 marker = node_id.replace("\\", "\\\\").replace(chr(34), "\\" + chr(34))
                 blocks.append(f'ML \\<open>writeln "REGEN_NODE {marker}"\\<close>')
             timing_id = node_id.replace("\\", "\\\\").replace(chr(34), "\\" + chr(34))
             blocks.append(f'ML \\<open>writeln ("REGEN_TIMING_START {timing_id} " ^ Time.toString (Time.now ()))\\<close>')
-            blocks.append(declaration(node, proof))
+            if phase_timing:
+                from regen.execution.node_phase_timing import timed_declaration
+                declaration(node, proof)  # Retain the ordinary forbidden-proof guard.
+                blocks.append(timed_declaration(node, proof, split_arch=arch_timing))
+            else:
+                rendered_node = dict(node, context=['context begin']) if reuse_node else node
+                blocks.append(declaration(rendered_node, proof))
             blocks.append(f'ML \\<open>writeln ("REGEN_TIMING_END {timing_id} " ^ Time.toString (Time.now ()))\\<close>')
+            if reuse_node:
+                arch_prefix_names.append(node['name'])
+        if arch_open:
+            blocks.append('end')
         return "\n".join([
             f"theory {theory_name}",
             "  imports",
@@ -430,6 +494,18 @@ class IsabelleChecker:
         if resources is not None:
             at = command.index("process") + 1
             command[at:at] = ["-o", "threads=" + str(resources.policy["threads"])]
+            # Hot workers and cold process checks need the same ML headroom as
+            # builds. A Docker limit alone does not constrain Poly/ML's chosen
+            # heap; without this, a retained worker can grow close to cgroup OOM.
+            # Apply after Isabelle settings, just like the build path below.
+            heap = resources.policy['build_ml_heap_mb']
+            ml_options = (f'-H {min(1024, heap)} --maxheap {heap} --stackspace 64 '
+                          f'--gcthreads {resources.policy["threads"]}')
+            executable = '/workspace/verification/isabelle/bin/isabelle'
+            at = command.index(executable) + 1
+            command[at:at] = ['env', f'ML_OPTIONS={ml_options}', executable]
+        from regen.execution.native_container import docker_limits
+        command[2:2] = docker_limits()
         command.extend(["-T", f"/candidate/{source.stem}"])
         return command
 
@@ -503,12 +579,52 @@ class IsabelleChecker:
             "last_diagnostic_marker": last_marker,
             "diagnostic_marker_count": marker_count,
         }
+        if 'REGEN_PHASE ' in full_diagnostic or 'REGEN_ARCH_PHASE ' in full_diagnostic:
+            from regen.execution.node_phase_timing import parse_phase_timings
+            check['node_phase_timing'] = parse_phase_timings(full_diagnostic)
         emit_event(
             "isabelle_finished", label=label, session=session,
             verdict=check["verdict"], returncode=returncode,
             wall_ms=check["wall_ms"], log=str(log),
         )
         return check
+
+    def _check_observation(self, source_text, label, *, writable_mounts=None, timeout=None):
+        owner = getattr(self, '_observation_owner', None)
+        if owner is not None:
+            # Observation tasks keep independent paths/caches. Borrow the owning
+            # theory's native lease, not another resident slot; serialize against
+            # proof actions that may change its work_dir or accepted prefix.
+            with self._observation_lock:
+                worker = getattr(owner, '_batch_worker', None)
+                if (worker is not None and not worker.closed and worker.process.poll() is None
+                        and worker.imports == self.imports() == owner.imports()):
+                    return owner._check_observation_native(source_text, label,
+                        writable_mounts=writable_mounts, timeout=timeout)
+        return self._check_observation_native(source_text, label,
+            writable_mounts=writable_mounts, timeout=timeout)
+
+    @native_operation
+    def _check_observation_native(self, source_text, label, *, writable_mounts=None, timeout=None):
+        """Reuse only the process, never its accepted or speculative context."""
+        worker = getattr(self, '_batch_worker', None)
+        mounts = writable_mounts or []
+        supported = not mounts or (len(mounts) == 1 and mounts[0][1] == '/symbol-output')
+        if (supported and worker is not None and not worker.closed
+                and worker.process.poll() is None and worker.imports == self.imports()):
+            emit_event('isabelle_observation_started', worker=worker.name, label=label)
+            try:
+                result = worker.observe_source(source_text, label,
+                    timeout=self.timeout if timeout is None else timeout,
+                    output_directory=mounts[0][0] if mounts else None)
+            except BaseException as error:
+                emit_event('isabelle_observation_failed', worker=worker.name, label=label,
+                           error_type=type(error).__name__)
+                raise
+            emit_event('isabelle_observation_finished', worker=worker.name, label=label,
+                       verdict=result['verdict'], wall_ms=result['wall_ms'])
+            return result
+        return self._check(source_text, label, writable_mounts=writable_mounts, timeout=timeout)
 
     def close_prefix(self):
         errors = []
@@ -533,14 +649,25 @@ class IsabelleChecker:
         from regen.execution.symbol_resolution import resolve_symbols
         return resolve_symbols(self,names,list(context))
 
-    def _check_declaration_source(self, index, *, name, scope, failure_key):
+    def _check_declaration_source(self, index, *, name, scope, failure_key,
+                                  reuse_declaration_context=False):
+        from regen.infrastructure.progress_events import generation_exclusion
+        with generation_exclusion('statement_preflight'):
+            return self._check_declaration_source_timed(index, name=name, scope=scope,
+                failure_key=failure_key, reuse_declaration_context=reuse_declaration_context)
+
+    def _check_declaration_source_timed(self, index, *, name, scope, failure_key,
+                                      reuse_declaration_context=False):
         self._last_node_check = None
-        source = self._source(index, {}, theory_name=name, statements_only=True)
+        source = self._source(index, {}, theory_name=name, statements_only=True,
+                              reuse_declaration_context=reuse_declaration_context)
         from regen.execution.declaration_cache import checked_declarations
         result = checked_declarations(self, source, name)
         result["check_scope"] = scope
         result["incremental"] = False
         result["proofs_checked"] = False
+        result["declaration_context_policy"] = ("arch-declarations-reuse-v1"
+            if reuse_declaration_context else "isolated-v1")
         result[failure_key] = failed_statement_declaration(
             index, source, result["diagnostic"],
         )
@@ -551,6 +678,7 @@ class IsabelleChecker:
         return self._check_declaration_source(
             index, name=f"Declaration_Check_v{index['revision']}",
             scope="all-document-declarations", failure_key="failed_declaration_id",
+            reuse_declaration_context=True,
         )
 
     def check_graph(self, graph: dict[str, Any]) -> dict[str, Any]:
@@ -693,6 +821,20 @@ class IsabelleChecker:
         }
         return result
 
+    def complete_audit_source(self, graph, proofs, *, theory_name=None):
+        ordered = [next(n for n in graph['nodes'] if n['id'] == key)
+                   for key in graph['execution_order']]
+        blocks = []
+        for index, node in enumerate(ordered):
+            token = re.sub(r"[^A-Za-z0-9_.-]", "_", node['id'])[-48:]
+            token += '-' + hashlib.sha256(node['id'].encode()).hexdigest()[:10]
+            filename = 'proof-dependencies-' + token + '.tsv'
+            blocks.append(automation_audit_ml(node['name'], dependency_filename=filename)
+                          if index == 0 else proof_dependency_audit_ml(node['name'], dependency_filename=filename))
+        label = theory_name or 'Complete_Audit_' + graph['file_slot'].removesuffix('.thy')
+        return append_before_theory_end(
+            self._complete_theory_source(graph, proofs, theory_name=label), '\n\n'.join(blocks))
+
     def audit_complete_theory(
         self, graph: dict[str, Any], proofs: dict[str, str], *,
         theory_name: str | None = None,
@@ -710,28 +852,16 @@ class IsabelleChecker:
                 artifact.unlink()
 
         filenames = {}
-        blocks = []
-        for index, node in enumerate(ordered):
+        for node in ordered:
             token = re.sub(r"[^A-Za-z0-9_.-]", "_", node["id"])[-48:]
             token += "-" + hashlib.sha256(node["id"].encode()).hexdigest()[:10]
             filename = f"proof-dependencies-{token}.tsv"
             filenames[node["id"]] = filename
-            if index == 0:
-                blocks.append(automation_audit_ml(
-                    node["name"], dependency_filename=filename,
-                ))
-            else:
-                blocks.append(proof_dependency_audit_ml(
-                    node["name"], dependency_filename=filename,
-                ))
 
         self._last_node_check = None
         stem = graph["file_slot"].removesuffix(".thy")
         label = theory_name or f"Complete_Audit_{stem}"
-        source = append_before_theory_end(
-            self._source(graph, proofs, theory_name=label),
-            "\n\n".join(blocks),
-        )
+        source = self.complete_audit_source(graph, proofs, theory_name=label)
         result = self._check(
             source, label, writable_mounts=[(audit_dir, "/audit-output")],
         )
@@ -776,12 +906,19 @@ class IsabelleChecker:
         }
         return result
 
+    def _complete_theory_source(self, graph, proofs, *, theory_name, diagnostic_markers=False):
+        policy = validate_complete_context_policy(
+            getattr(self, 'complete_context_policy', ISOLATED_CONTEXT))
+        return self._source(graph, proofs, theory_name=theory_name,
+            diagnostic_markers=diagnostic_markers,
+            reuse_arch_context=policy == ARCH_REUSE_CONTEXT)
+
     def complete_source(
         self, graph: dict[str, Any], proofs: dict[str, str], *,
         theory_name: str | None = None,
     ) -> str:
         stem = theory_name or graph["file_slot"].removesuffix(".thy")
-        return self._source(graph, proofs, theory_name=stem)
+        return self._complete_theory_source(graph, proofs, theory_name=stem)
 
     def check_complete(
         self, graph: dict[str, Any], proofs: dict[str, str],
@@ -789,7 +926,7 @@ class IsabelleChecker:
         self._last_node_check = None
         stem = graph["file_slot"].removesuffix(".thy")
         result = self._check(
-            self._source(
+            self._complete_theory_source(
                 graph, proofs, theory_name=f"Complete_{stem}",
                 diagnostic_markers=True,
             ),
@@ -811,6 +948,11 @@ class IsabelleChecker:
         return self._build_session(theories, seal=True)
 
     def _build_session(self, theories: list[str], *, seal: bool) -> dict[str, Any]:
+        from regen.infrastructure.progress_events import generation_exclusion
+        with generation_exclusion('seal' if seal else 'provider_build'):
+            return self._build_session_timed(theories, seal=seal)
+
+    def _build_session_timed(self, theories: list[str], *, seal: bool) -> dict[str, Any]:
         if CURRENT_RESOURCES.get() is not None:
             self.close_prefix()
         self._last_node_check = None
@@ -838,6 +980,9 @@ class IsabelleChecker:
                 "  sessions Lib CorresK AInvs", "  theories", f"    {theories[-1]}", "",
             ]
         root.write_text("\n".join(definitions), encoding="utf-8")
+        build_sources = {name: (self.generated_dir / (name + '.thy')).read_text()
+                         for name in theories}
+        root_content = root.read_text()
         l4v = self.l4v_dir
         isabelle = self.isabelle_dir
         workspace = self.semantic_workspace
@@ -858,19 +1003,39 @@ class IsabelleChecker:
             "-d", self.base_catalog, "-d", "/generated", session,
         ])
         resources = CURRENT_RESOURCES.get()
+        build_timeout = self.timeout
+        resource_policy = None
         if resources is not None:
             at = command.index("build") + 1
             command[at:at] = ["-j", "1", "-o", "threads=" + str(resources.policy["threads"])]
+            resource_policy = dict(resources.policy)
+            if not seal:
+                build_timeout = resource_policy['provider_build_timeout']
+            heap = resource_policy['build_ml_heap_mb']
+            java_heap = resource_policy['build_java_heap_mb']
+            ml_options = (f'-H {min(1024, heap)} --maxheap {heap} --stackspace 64 '
+                          f'--gcthreads {resource_policy["threads"]}')
+            # The image's user settings overwrite Docker -e ML_OPTIONS. Load
+            # settings first, then override inside that initialized environment.
+            # Nested Isabelle retains ISABELLE_SETTINGS_PRESENT and the limits.
+            executable = '/workspace/verification/isabelle/bin/isabelle'
+            at = command.index(executable) + 1
+            command[at:at] = ['env', f'ML_OPTIONS={ml_options}',
+                f'ISABELLE_TOOL_JAVA_OPTIONS=-Djava.awt.headless=true -Xms128m -Xmx{java_heap}m -Xss4m',
+                f'ISABELLE_BUILD_JAVA_OPTIONS=-Xms128m -Xmx{java_heap}m -Xss4m', executable]
+        from regen.execution.native_container import docker_limits
+        command[2:2] = docker_limits()
         started = time.time()
         container_name = f"regen-isabelle-build-{os.getpid()}-{uuid.uuid4().hex}"
         command[2:2] = ["--name", container_name]
         emit_event(
             "isabelle_build_started", session=session,
-            timeout_seconds=self.timeout, container=container_name,
+            timeout_seconds=build_timeout, container=container_name,
+            resource_policy=resource_policy,
         )
         try:
             result = native_run(
-                command, text=True, capture_output=True, timeout=self.timeout,
+                command, text=True, capture_output=True, timeout=build_timeout,
             )
             returncode = result.returncode
             diagnostic = (result.stdout + result.stderr)[-12000:]
@@ -884,7 +1049,7 @@ class IsabelleChecker:
 
             diagnostic = (
                 timeout_text(error.stdout) + timeout_text(error.stderr)
-                + f"\nIsabelle build timed out after {self.timeout} seconds.\n"
+                + f"\nIsabelle build timed out after {build_timeout} seconds.\n"
             )[-12000:]
             try:
                 subprocess.run(
@@ -894,6 +1059,12 @@ class IsabelleChecker:
             except (OSError, subprocess.SubprocessError):
                 pass
         log = self.generated_dir / ("seal-build.log" if seal else "build.log")
+        if root.read_text() != root_content or any(
+                (self.generated_dir / (name + '.thy')).read_text() != source
+                for name, source in build_sources.items()):
+            raise ValueError('session build inputs changed during execution')
+        if seal and (sealed_dir / (theories[-1] + '.thy')).read_text() != build_sources[theories[-1]]:
+            raise ValueError('sealed session build inputs changed during execution')
         log.write_text(diagnostic, encoding="utf-8")
         check = {
             "verdict": "green" if returncode == 0 else "red",
@@ -905,10 +1076,16 @@ class IsabelleChecker:
             "incremental": False,
             "theories": list(theories),
             "session": session,
+            "timeout_seconds": build_timeout,
+            "resource_policy": resource_policy,
+            "source_files": build_sources,
+            "root_content": root_content,
+            "root_sha256": hashlib.sha256(root_content.encode()).hexdigest(),
         }
         emit_event(
             "isabelle_build_finished", session=session,
             verdict=check["verdict"], returncode=returncode,
             wall_ms=check["wall_ms"], log=str(log),
+            timeout_seconds=build_timeout, resource_policy=resource_policy,
         )
         return check

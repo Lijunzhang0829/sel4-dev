@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "clock_mode": "theory_effective_v1",
+  "progress_scope": "new_contract",
+  "timeout_seconds": 3600,
+  "poll_seconds": 5,
+  "trigger": "Any actively generating theory reaches the effective-time allowance without a newly accepted contract ID",
+  "action": "Pause all bound experiment services, retain journals/requests/costs and persist a restart-inhibiting checkpoint",
+  "automatic_resume_allowed_after_pause": false,
+  "contract_identity": "First accepted contract ID only; initial/inherited IDs, helper updates, proof-body variants and reacceptance never refresh the clock",
+  "clock_persistence": "Theory clocks persist across observer restarts, retries and continuations; offline time does not count; an expired budget needs an explicit audited extension, never silent reset",
+  "known_exclusions": [
+    "Before first model turn",
+    "Runtime setup and heap preparation",
+    "Provider builds, accepted-prefix replay and declaration prechecks, with matching preparation admission queues",
+    "Seal and integration",
+    "Explicit stream reconnect waiting when no native callback is working",
+    "Confirmed session failure through next model turn, manual pause and offline time"
+  ],
+  "included": [
+    "Normal reasoning, retrieval, edits, helper work, candidate checking, ordinary RED and candidate timeout",
+    "Unknown silence before a confirmed failure",
+    "Observed concurrent model work during a preparation callback"
+  ],
+  "binding_notice": "Policy template only. Bind new observer paths, verified run/service identities and any audited carried clock before launch. Never overwrite frozen historical launch/config/checkpoint artifacts."
+}

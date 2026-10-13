@@ -223,3 +223,16 @@ class ResourceTests(unittest.TestCase):
             with resources.lease(a):self.assertEqual(len(resources.active),1)
         with resources.lease(b):self.assertEqual(a.closed,1)
         resources.close()
+
+    def test_two_residents_retain_prefixes_with_one_execution_slot(self):
+        resources=NativeResources(slots=1,threads=1,resident_limit=2)
+        class Checker:
+            closed=0
+            def close_prefix(self):self.closed+=1
+        a,b=Checker(),Checker()
+        for checker in (a,b,a,b):
+            with resources.lease(checker):
+                self.assertEqual(len(resources.active),1)
+        self.assertEqual((a.closed,b.closed),(0,0))
+        resources.close()
+        self.assertEqual((a.closed,b.closed),(1,1))

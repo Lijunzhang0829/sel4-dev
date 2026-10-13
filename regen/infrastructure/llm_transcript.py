@@ -12,6 +12,7 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
+from regen.infrastructure.incremental_log import read_artifact
 
 try:
     from .audited_llm import call_codex as _call_codex
@@ -66,7 +67,7 @@ def transcript_health(prefix: Path, *, orphaned: bool = False) -> dict[str, Any]
     if missing:
         return {"state": "corrupt", "missing": missing}
     try:
-        meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+        meta = read_artifact(paths["meta"])
     except (OSError, json.JSONDecodeError) as error:
         return {"state": "corrupt", "error": str(error)}
     if meta.get("state") == "running":
@@ -135,7 +136,7 @@ def _upgrade(prefix: Path, *, theory: str | None, stage: str | None,
              sealable: bool, network_call: bool) -> None:
     paths = artifact_paths(prefix)
     paths["stderr"].touch(exist_ok=True)
-    meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+    meta = read_artifact(paths["meta"])
     meta.update({
         "schema_version": SCHEMA_VERSION, "theory": theory, "stage": stage,
         "provider_network_call": network_call, "sealable_generation": sealable,
@@ -431,7 +432,7 @@ def call_llm(provider: str, prompt: str, artifact_prefix: Path, *, model: str,
         meta = {}
         if paths["meta"].is_file():
             try:
-                meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+                meta = read_artifact(paths["meta"])
             except (OSError, json.JSONDecodeError):
                 pass
         emit_event(
@@ -471,8 +472,8 @@ def inspect_call_artifact(artifact_prefix: Path, *, require_real: bool = True,
     missing = [name for name, path in paths.items() if not path.is_file()]
     if missing:
         raise ValueError(f"incomplete LLM transcript {artifact_prefix}: missing {missing}")
-    meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
-    audit = json.loads(paths["audit"].read_text(encoding="utf-8"))
+    meta = read_artifact(paths["meta"])
+    audit = read_artifact(paths["audit"])
     if meta.get("provider") == "codex-workspace-audited":
         from regen.infrastructure.workspace_transcript import verify_workspace_action
         return verify_workspace_action(artifact_prefix, require_real=require_real, require_success=require_success)

@@ -48,10 +48,9 @@ class ContinuationProvidersTest(unittest.TestCase):
             journal.append('green', green, {'node_id':'helper', 'check':check(),
                 'sealable_generation':True, 'visibility':manifest(graph, {}, 'helper')})
             if name != 'Target':
-                sealed = deepcopy(green); sealed.update(status='sealed', seal_id='seal:'+name)
-                journal.append('seal', sealed, {'impact':{'verdict':'pass'},
-                    'dependencies':{'verdict':'green'}, 'complete':check(), 'build':{'verdict':'green'},
-                    'source_text':'theory '+name, 'source_hash':digest('theory '+name)})
+                from regen.tests.current.seal_fixture import seal
+                sealed = deepcopy(green)
+                journal.append('seal', sealed, seal(sealed))
         durable(self.source/'theories/Target/batch-requests/000319/feedback.json', {'status':'available'})
 
     def initialize(self, destination, *_args):
@@ -97,6 +96,21 @@ class ContinuationProvidersTest(unittest.TestCase):
         self.assertEqual([x['theory'] for x in record['theories']],['Target'])
         self.assertTrue((destination/'theories/Target/batch-requests/000319/feedback.json').exists())
         self.assertFalse((destination/'theories/Target/provider-session.json').exists())
+
+    def test_continuations_preserve_frozen_models_instead_of_local_defaults(self):
+        self.run['execution_models']={'File Planner':'frozen-model',
+            'Graph Revision Agent':'frozen-model','Lemma Prover':'frozen-model'}
+        durable(self.source/'run.json',self.run)
+        def initialize(*args,**kwargs):
+            self.assertEqual(kwargs['execution_models'],self.run['execution_models'])
+            return self.initialize(*args)
+        for index,operation in enumerate((
+                lambda d:execution.fork_continuation(self.source,d,'Target'),
+                lambda d:execution.fork_workspace_continuation(self.source,d),
+                lambda d:execution.fork_with_sealed_theories(self.source,d))):
+            with self.subTest(index=index),patch.object(execution,'init_run',side_effect=initialize), \
+                 patch.object(execution,'progress',return_value={}):
+                operation(self.root/('models-'+str(index)))
 
     def test_missing_transitive_seal_rejected_before_new_run(self):
         (self.source/'theories/Base/acceptance/commits/000003.json').unlink()

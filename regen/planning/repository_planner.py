@@ -695,6 +695,7 @@ def _bind_direct_artifacts(
 def run_prepared(
     planning_input_path: Path, policy: dict, output: Path, *,
     allow_external_call: bool = False, prepare_only: bool = False,
+    log_storage: str = 'inline-v1',
 ) -> dict:
     """Run Repository Planner directly over the prepared Refine dataset."""
     from regen.planning.plan_revisions import append_revision, start_plan
@@ -711,6 +712,11 @@ def run_prepared(
     validate_policy(policy)
     output = output.resolve()
     with output_lock(output):
+        from regen.infrastructure.incremental_log import enable, policy_arguments
+        logging = policy_arguments({'log_storage':log_storage})
+        if logging:
+            enable(output)
+            policy = {**policy, **logging}
         write_immutable_json(output / 'planner-input.json', payload)
         write_immutable_json(output / 'planner-policy.json', policy)
         if prepare_only:
@@ -834,7 +840,11 @@ def main() -> int:
     parser.add_argument('--allow-external-call', action='store_true')
     parser.add_argument('--prepare-only', action='store_true')
     parser.add_argument('--freeze-planning', action='store_true')
+    from regen.infrastructure.incremental_log import FORMAT
+    parser.add_argument('--log-storage', choices=['inline-v1', FORMAT], default='inline-v1')
     args = parser.parse_args()
+    if args.log_storage != 'inline-v1' and not args.planning_input:
+        parser.error('incremental planning logs require --planning-input')
     if args.prepare_only and (args.verify_only or args.allow_external_call):
         parser.error('--prepare-only cannot be combined with --verify-only or --allow-external-call')
 
@@ -854,6 +864,7 @@ def main() -> int:
             args.planning_input, policy, output,
             allow_external_call=args.allow_external_call,
             prepare_only=args.prepare_only,
+            log_storage=args.log_storage,
         )
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0

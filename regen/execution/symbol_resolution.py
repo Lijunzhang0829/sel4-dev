@@ -63,7 +63,9 @@ end
     label='Symbol_Lookup_'+key[:16]
     source='\n'.join(['theory '+label,'imports',*[json.dumps(i) for i in checker.imports()],
                       'begin','unbundle l4v_word_context',wrap_context(context,block),'end',''])
-    check=checker._check(source,label,writable_mounts=[(directory,'/symbol-output')],
+    observe = getattr(type(checker), '_check_observation', None)
+    execute = checker._check if observe is None else checker._check_observation
+    check=execute(source,label,writable_mounts=[(directory,'/symbol-output')],
                          timeout=min(checker.timeout,120))
     evidence=freeze_evidence(check)
     durable(directory/'check.json',evidence)

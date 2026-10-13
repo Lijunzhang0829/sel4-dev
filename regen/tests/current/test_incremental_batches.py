@@ -1,5 +1,8 @@
 from copy import deepcopy
 import hashlib
+import json
+from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -49,14 +52,82 @@ class IncrementalBatchTests(unittest.TestCase):
             validate_batch_commit(new,second,e2)
             self.assertEqual(checker.calls,0)
 
-    def test_worker_failure_falls_back_to_real_cold_source(self):
+    def test_worker_failure_preserves_source_without_cold_candidate_or_proof_red(self):
+        for error in (RuntimeError('worker died'), OSError('pipe failed'), ValueError('protocol mismatch')):
+            with self.subTest(error=error), tempfile.TemporaryDirectory() as tmp:
+                p,old=fixture();new=prepare_batch(p,old,{'proofs':{'helper':'by simp'}})
+                checker=Checker();checker.batch_incremental=True;checker.work_dir=Path(tmp)
+                before=deepcopy(old)
+                with patch('regen.execution.batch_checker.BatchWorker',side_effect=error):
+                    evidence=check_batch(checker,old,new)
+                check=evidence['check']
+                self.assertEqual(check['verdict'],'infrastructure_error')
+                self.assertEqual(check['failure_scope'],'native_preparation')
+                self.assertEqual(check['error_type'],type(error).__name__)
+                self.assertEqual(check['native_failure_stage'],'prefix-startup-or-alignment')
+                self.assertEqual(checker.calls,0)
+                self.assertEqual(old,before)
+                self.assertIsNone(checker._batch_worker)
+                self.assertNotIn('incremental_fallback',evidence)
+                self.assertTrue(all(row['status']=='not_checked' for row in evidence['node_results']))
+                self.assertIn('by simp',check['source_content'])
+                self.assertIn(str(error),check['log_content'])
+                receipt=json.loads(next(checker.work_dir.glob('incremental-failure-*/failure.json')).read_text())
+                self.assertEqual(receipt['source_content'],check['source_content'])
+                self.assertEqual(receipt['source_sha256'],hashlib.sha256(check['source_content'].encode()).hexdigest())
+                with self.assertRaises(ValueError):validate_batch_commit(old,new,evidence)
+
+    def test_failed_worker_retains_diagnostic_and_cleanup_failure_owner(self):
+        from regen.execution.check_tasks import NativePreparationError
+        with tempfile.TemporaryDirectory() as tmp:
+            p,old=fixture();new=prepare_batch(p,old,{'proofs':{'helper':'by simp'}})
+            checker=Checker();checker.batch_incremental=True;checker.work_dir=Path(tmp)
+            worker=MemoryWorker(checker,'theory T\nbegin\n\nend\n',[],checker.imports())
+            worker.root=checker.work_dir
+            (worker.root/'worker.log').write_text('native process ended unexpectedly')
+            worker.align=Mock()
+            worker.check_batch=Mock(side_effect=RuntimeError('audit transport failed'))
+            worker.close=Mock(side_effect=RuntimeError('owner cleanup failed'))
+            with patch('regen.execution.batch_checker.BatchWorker',return_value=worker):
+                with self.assertRaisesRegex(NativePreparationError,'cleanup failed'):
+                    check_batch(checker,old,new)
+            self.assertIs(checker._batch_worker,worker)
+            self.assertIsNone(worker.pending)
+            self.assertEqual(checker.calls,0)
+            directory=next(checker.work_dir.glob('incremental-failure-*'))
+            self.assertIn('native process ended', (directory/'native.log').read_text())
+            self.assertTrue((directory/'cleanup-failure.json').exists())
+            receipt=json.loads((directory/'failure.json').read_text())
+            self.assertEqual(receipt['verdict'],'infrastructure_error')
+            self.assertEqual(receipt['native_failure_stage'],'candidate-execution-or-audit-transport')
+            self.assertEqual(receipt['diagnostic'],'audit transport failed')
+
+    def test_receipt_write_failure_still_closes_worker_and_is_infrastructure(self):
+        from regen.execution.check_tasks import NativePreparationError
+        with tempfile.TemporaryDirectory() as tmp:
+            p,old=fixture();new=prepare_batch(p,old,{'proofs':{'helper':'by simp'}})
+            checker=Checker();checker.batch_incremental=True;checker.work_dir=Path(tmp)
+            worker=MemoryWorker(checker,'theory T\n'+'begin\n\nend\n',[],checker.imports())
+            worker.align=Mock()
+            worker.check_batch=Mock(side_effect=RuntimeError('worker died'))
+            with patch('regen.execution.batch_checker.BatchWorker',return_value=worker), \
+                    patch('regen.execution.proof_batches.durable',side_effect=OSError('disk full')):
+                with self.assertRaisesRegex(NativePreparationError,'cannot save infrastructure evidence'):
+                    check_batch(checker,old,new)
+            self.assertTrue(worker.closed)
+            self.assertIsNone(worker.pending)
+            self.assertIsNone(checker._batch_worker)
+            self.assertEqual(checker.calls,0)
+
+    def test_unsafe_candidate_is_validation_failure_before_worker_dispatch(self):
         p,old=fixture();new=prepare_batch(p,old,{'proofs':{'helper':'by simp'}})
+        new['proofs']['helper']='by simp\nML "unsafe"'
         checker=Checker();checker.batch_incremental=True
-        with patch('regen.execution.batch_checker.BatchWorker',side_effect=RuntimeError('worker died')):
-            evidence=check_batch(checker,old,new)
-        self.assertFalse(evidence['check']['incremental'])
-        self.assertEqual(evidence['incremental_fallback'],'worker died')
-        validate_batch_commit(old,new,evidence)
+        with patch('regen.execution.batch_checker.BatchWorker') as worker:
+            with self.assertRaisesRegex(ValueError,'unsafe command'):
+                check_batch(checker,old,new)
+        worker.assert_not_called()
+        self.assertEqual(checker.calls,0)
 
     def test_promotion_requires_matching_committed_prefix(self):
         worker=object.__new__(BatchWorker)

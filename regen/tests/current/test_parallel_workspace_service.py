@@ -1,4 +1,5 @@
 """Supervisor boundary tests; no service or provider is actually launched."""
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -12,6 +13,28 @@ from regen.tools import parallel_workspace_service as service
 
 
 class ParallelWorkspaceServiceTests(unittest.TestCase):
+    def test_focused_contract_is_bound_without_ambiguous_duplicates(self):
+        self.command.extend(['--focus-contract-id','contract:Test:target:123'])
+        self.manifest()
+        manifest, _ = service._manifest(self.root)
+        self.assertEqual(manifest['command'], self.command)
+        self.command.extend(['--focus-contract-id','contract:Test:other:456'])
+        self.manifest()
+        with self.assertRaisesRegex(ValueError, 'duplicate runner option'):
+            service._manifest(self.root)
+
+    def test_explicit_generation_strategy_is_bound_in_frozen_command(self):
+        self.command.extend(['--generation-strategy','helper-closure-v1'])
+        self.manifest()
+        manifest, _ = service._manifest(self.root)
+        self.assertEqual(manifest['command'],self.command)
+
+    def test_explicit_provider_build_policy_is_allowed(self):
+        self.command.extend(['--provider-build-timeout', '1800', '--build-ml-heap-mb', '12288'])
+        self.manifest()
+        manifest, _ = service._manifest(self.root)
+        self.assertEqual(manifest['command'], self.command)
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -84,9 +107,12 @@ class ParallelWorkspaceServiceTests(unittest.TestCase):
             self.assertTrue((self.root/'service-launch.json').exists())
             self.assertFalse((self.root/'service-invocation.json').exists())
             self.assertEqual(kwargs['timeout'], 30)
-            self.assertEqual(command[command.index('--')+1:], self.command)
+            import base64
+            actual = command[command.index('--')+1:]
+            self.assertEqual(json.loads(base64.b64decode(actual[-1])), self.command)
+            self.assertNotIn('--expand-environment=no', command)
             for option in ('--user', '--no-ask-password', '--quiet', '--service-type=exec',
-                           '--expand-environment=no', '--remain-after-exit',
+                           '--remain-after-exit',
                            '--property=Restart=no', '--property=KillMode=mixed',
                            '--property=KillSignal=SIGTERM', '--property=SendSIGKILL=yes',
                            '--property=TimeoutStopSec=7', '--property=StandardInput=null',
@@ -195,6 +221,72 @@ class ParallelWorkspaceServiceTests(unittest.TestCase):
             self.assertEqual(service.stop(self.root)['status'], 'not_loaded')
         stop.assert_called_once_with(['systemctl', '--user', 'stop', receipt['unit']],
                                     capture_output=True, text=True, timeout=22)
+
+    def test_expected_receipt_digest_allows_only_matching_owner(self):
+        receipt = self.receipt()
+        expected = hashlib.sha256((self.root/'service-launch.json').read_bytes()).hexdigest()
+        with patch.object(service, '_boot_id', return_value='boot-current'), \
+             patch.object(service, '_start_ticks', return_value='900'), \
+             patch.object(service, '_show', side_effect=[self.running(), {'LoadState':'not-found'}]), \
+             patch.object(service.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '', '')) as stop:
+            self.assertEqual(service.stop(self.root, expected_receipt_sha256=expected)['status'], 'not_loaded')
+        stop.assert_called_once_with(['systemctl', '--user', 'stop', receipt['unit']],
+                                    capture_output=True, text=True, timeout=22)
+
+    def test_replaced_receipt_is_rejected_before_status_or_external_stop(self):
+        receipt = self.receipt()
+        expected = hashlib.sha256((self.root/'service-launch.json').read_bytes()).hexdigest()
+        (self.root/'service-launch.json').write_text(json.dumps({**receipt, 'replacement':True}))
+        with patch.object(service, 'status') as status, \
+             patch.object(service.subprocess, 'run') as stop:
+            with self.assertRaisesRegex(RuntimeError, 'refusing to stop replacement owner'):
+                service.stop(self.root, expected_receipt_sha256=expected)
+        status.assert_not_called()
+        stop.assert_not_called()
+
+    def test_receipt_replacement_during_status_query_is_rejected(self):
+        receipt = self.receipt()
+        expected = hashlib.sha256((self.root/'service-launch.json').read_bytes()).hexdigest()
+
+        def replace(_):
+            (self.root/'service-launch.json').write_text(json.dumps({**receipt, 'replacement':True}))
+            return {'identity_verified':True, 'running':True, 'status':'running'}
+
+        with patch.object(service, 'status', side_effect=replace), \
+             patch.object(service.subprocess, 'run') as stop:
+            with self.assertRaisesRegex(RuntimeError, 'refusing to stop replacement owner'):
+                service.stop(self.root, expected_receipt_sha256=expected)
+        stop.assert_not_called()
+
+    def test_bound_stop_uses_same_control_lock_as_start(self):
+        self.receipt()
+        expected = hashlib.sha256((self.root/'service-launch.json').read_bytes()).hexdigest()
+        with service._control_lock(self.root), patch.object(service, 'status') as status:
+            with self.assertRaises(BlockingIOError):
+                service.stop(self.root, expected_receipt_sha256=expected)
+        status.assert_not_called()
+
+    def test_replacement_cannot_be_accepted_as_already_terminal(self):
+        receipt = self.receipt()
+        expected = hashlib.sha256((self.root/'service-launch.json').read_bytes()).hexdigest()
+
+        def replace(_):
+            (self.root/'service-launch.json').write_text(json.dumps({**receipt, 'replacement':True}))
+            return {'identity_verified':False, 'running':False, 'status':'not_loaded'}
+
+        with patch.object(service, 'status', side_effect=replace), \
+             patch.object(service.subprocess, 'run') as stop:
+            with self.assertRaisesRegex(RuntimeError, 'refusing to stop replacement owner'):
+                service.stop(self.root, expected_receipt_sha256=expected)
+        stop.assert_not_called()
+
+    def test_invalid_expected_receipt_digest_never_stops(self):
+        self.receipt()
+        with patch.object(service, 'status') as status:
+            for expected in (True, '', '0'*63, 'z'*64, 'A'*64):
+                with self.subTest(expected=expected), self.assertRaises(ValueError):
+                    service.stop(self.root, expected_receipt_sha256=expected)
+        status.assert_not_called()
 
     def test_instant_success_and_failure_record_invocation_without_live_pid(self):
         for active, substate, code, expected in (
