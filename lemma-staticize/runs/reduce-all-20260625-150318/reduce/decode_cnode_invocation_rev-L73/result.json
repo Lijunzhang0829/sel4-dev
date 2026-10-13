@@ -1,0 +1,117 @@
+{
+ "lemma": "decode_cnode_invocation_rev",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/Decode_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "NO-PATH",
+ "orig_ms": 11766.2,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (clarsimp simp: expand_len_gr_Suc_0)",
+    "apply (fastforce dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (clarsimp simp: expand_len_gr_Suc_0)` failed: failed for prove the goal using the tactic `apply (clarsimp simp: expand_len_gr_Suc_0)`. Get msg: Failed to apply proof method (line 1):\ngoal (3 su",
+   "gen_secs": 28.5,
+   "claude_secs": 27.7
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply clarsimp",
+    "apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap simp: expand_len_gr_Suc_0)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (3 subgoals):\n 1. \\<And>s. \\<lbrakk>pas_refined aag s; pas_ca",
+   "gen_secs": 27.5,
+   "claude_secs": 27.3
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (simp only: expand_len_gr_Suc_0)",
+    "apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: expand_len_gr_Suc_0)` failed: failed for prove the goal using the tactic `apply (simp only: expand_len_gr_Suc_0)`. Get msg: Failed to apply proof method (line 1):\ngoal (3 subgoals):",
+   "gen_secs": 29.5,
+   "claude_secs": 29.3
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply clarsimp",
+    "apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap simp: expand_len_gr_Suc_0)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (3 subgoals):\n 1. \\<And>s. \\<lbrakk>pas_refined aag s; pas_ca",
+   "gen_secs": 15.0,
+   "claude_secs": 14.7
+  },
+  {
+   "round": 4,
+   "variant": [
+    "apply (simp only: expand_len_gr_Suc_0)",
+    "apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap simp: expand_len_gr_Suc_0)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: expand_len_gr_Suc_0)` failed: failed for prove the goal using the tactic `apply (simp only: expand_len_gr_Suc_0)`. Get msg: Failed to apply proof method (line 1):\ngoal (3 subgoals):",
+   "gen_secs": 51.6,
+   "claude_secs": 51.4
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (clarsimp simp: expand_len_gr_Suc_0)",
+    "apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (clarsimp simp: expand_len_gr_Suc_0)` failed: failed for prove the goal using the tactic `apply (clarsimp simp: expand_len_gr_Suc_0)`. Get msg: Failed to apply proof method (line 1):\ngoal (3 su",
+   "gen_secs": 21.5,
+   "claude_secs": 21.0
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply (clarsimp simp: expand_len_gr_Suc_0)",
+    "apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (clarsimp simp: expand_len_gr_Suc_0)` failed: failed for prove the goal using the tactic `apply (clarsimp simp: expand_len_gr_Suc_0)`. Get msg: Failed to apply proof method (line 1):\ngoal (3 su",
+   "gen_secs": 39.0,
+   "claude_secs": 38.9
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (clarsimp simp: expand_len_gr_Suc_0)",
+    "apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap simp: expand_len_gr_Suc_0)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (clarsimp simp: expand_len_gr_Suc_0)` failed: failed for prove the goal using the tactic `apply (clarsimp simp: expand_len_gr_Suc_0)`. Get msg: Failed to apply proof method (line 1):\ngoal (3 su",
+   "gen_secs": 25.0,
+   "claude_secs": 24.4
+  }
+ ],
+ "target": "apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap simp: expand_len_gr_Suc_0)",
+ "B_sig": [],
+ "facts": [
+  "Suc",
+  "bspec",
+  "demo1",
+  "excaps",
+  "expand_len_gr_Suc_0",
+  "is_cnode_into_is_subject",
+  "nth_mem",
+  "prop_of_obj_ref_of_cnode_cap",
+  "where",
+  "x"
+ ]
+}

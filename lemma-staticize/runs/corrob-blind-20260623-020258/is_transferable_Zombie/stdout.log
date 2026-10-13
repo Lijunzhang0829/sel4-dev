@@ -1,0 +1,9 @@
+[genstat-stateful] is_transferable_Zombie @ proof/access-control/Access_AC.thy
+[init ok]
+[reached is_transferable_Zombie]
+== target: by (blast elim: is_transferable.cases)
+   A_goal: \<not> is_transferable_cap (Zombie ptr sz n)
+   B: close the goal (0 subgoals)
+  round 0: 8.5s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: option.inject option.distinct cap.distinct)+', 'done']
+  round 0: REACHED-B
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-is_transferable_Zombie.json  verdict=REACHED-B

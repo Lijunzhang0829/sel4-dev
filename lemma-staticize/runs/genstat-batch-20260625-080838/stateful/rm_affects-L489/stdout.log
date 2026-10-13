@@ -1,0 +1,18 @@
+[genstat-stateful] rm_affects @ proof/infoflow/PolicySystemSAC.thy
+[init ok]
+[reached rm_affects]
+== target: by (simp, blast?)+
+   A_goal: partition_label RM \<in> {partition_label NicA, partition_label NicB, partition_label NicD, partition_label R, partition
+   B: close the goal (0 subgoals)
+  step 0: gen=34.5s (claude 5.9s) -> ['apply (rule insertI1)']
+  step 0: FAILED `apply (rule insertI1)` failed: failed for prove the goal using the tactic `appl
+  step 1: gen=42.6s (claude 42.1s) -> ['apply (rule insertI2, rule insertI2, rule insertI2)', 'apply (rule insertI1)']
+  step 1: FAILED `apply (rule insertI1)` failed: failed for prove the goal using the tactic `appl
+  step 2: gen=25.0s (claude 24.7s) -> ['apply (rule insertI2, rule insertI2, rule insertI2, rule insertI2, rule insertI2, rule insertI2)', 'apply (rule insertI1)']
+  step 2: OK -> 10 subgoal(s); applied=['apply (rule insertI2, rule insertI2, rule insertI2, rule insertI2, rule insertI2, rule insertI2)', 'apply (rule insertI1)']
+  step 3: gen=7.0s (claude 6.5s) -> ['apply (simp only: insert_iff)', 'apply (rule disjI2, rule disjI2, rule disjI2, rule disjI2, rule disjI2, rule disjI2, rule disjI2, rule disjI2, rule disjI1)', 'apply assumption']
+  step 3: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 4: gen=203.8s (claude 203.6s) -> ['apply (simp only: SACAuthGraph_def insert_iff)']
+  step 4: OK -> 10 subgoal(s); applied=['apply (rule insertI2, rule insertI2, rule insertI2, rule insertI2, rule insertI2, rule insertI2)', 'apply (rule insertI1)', 'apply (simp only: SACAuthGraph_def insert_iff)']
+  step 5: gen=154.2s (claude 153.6s) -> ['apply (simp only: empty_iff disj_False_right)', 'apply assumption']
+  step 5: FAILED `apply (simp only: empty_iff disj_False_right)` failed: failed for prove the goa

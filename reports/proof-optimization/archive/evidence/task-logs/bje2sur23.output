@@ -1,0 +1,10 @@
+[run_profile] result=isabelle-exited@16s
+WALL 17s
+### 2.839s elapsed time, 3.340s cpu time, 1.116s GC time
+entries=0
+*** Outer syntax error (line 206 of "/tmp/prof_fvv0qgtv/Tmp_prof_9c9897f8
+*** but identifier pas_refined_all_auth_is_owns (line 206 of "/tmp/prof_f
+*** At command "<malformed>" (line 205 of "/tmp/prof_fvv0qgtv/Tmp_prof_9c
+=== PARSE ===
+NO PROFILE DATA FOUND.
+(check that the tactic ran under time_profile and tracing was captured)

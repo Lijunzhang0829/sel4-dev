@@ -1,0 +1,20 @@
+[init ok]
+[reached transfer_caps_loop_reads_respects']
+== target: by (fastforce simp: cte_wp_at_caps_of_state masked_as_full_def is_cap_
+   orig_ms=16974  B: leave EXACTLY these 2 subgoal(s):
+1. \<And>caps slots cap obj ind s ac
+  round 0: gen=44.5s (claude 44.0s) -> ['apply (simp only: cte_wp_at_caps_of_state)', 'apply (fastforce simp: masked_as_full_def is_cap_simps split: if_splits)', 'done']
+  round 0: REACH-B variant_ms=17435 orig_ms=16974 saved=-461.0 faster=False
+  round 1: gen=74.6s (claude 73.8s) -> ['apply (clarsimp simp: cte_wp_at_caps_of_state masked_as_full_def split: if_splits)', 'apply (fastforce simp: is_cap_simps)', 'done']
+  round 1: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 2: gen=77.6s (claude 77.4s) -> []
+  round 3: gen=44.5s (claude 43.8s) -> ['apply (simp only: cte_wp_at_caps_of_state)', 'apply (fastforce simp: masked_as_full_def is_cap_simps split: if_splits)', 'done']
+  round 3: REACH-B variant_ms=17677 orig_ms=16974 saved=-703.2 faster=False
+  round 4: gen=104.1s (claude 103.2s) -> []
+  round 5: gen=37.6s (claude 37.0s) -> ['apply (simp only: cte_wp_at_caps_of_state)', 'apply (fastforce simp: masked_as_full_def is_cap_simps split: if_splits)']
+  round 5: WRONG-STATE (0 subgoals)
+  round 6: gen=39.0s (claude 38.5s) -> ['apply (simp only: cte_wp_at_caps_of_state)']
+  round 6: WRONG-STATE (1 subgoals)
+  round 7: gen=53.5s (claude 53.2s) -> ['apply (simp only: cte_wp_at_caps_of_state split: if_splits)']
+  round 7: WRONG-STATE (1 subgoals)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-transfer_caps_loop_reads_respects'-P25929.json  verdict=REACHED-B-NOT-FASTER

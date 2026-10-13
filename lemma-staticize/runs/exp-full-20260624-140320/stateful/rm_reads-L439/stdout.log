@@ -1,0 +1,10 @@
+[genstat-stateful] rm_reads @ proof/infoflow/PolicySystemSAC.thy
+[init ok]
+[reached rm_reads]
+== target: by (simp, blast?)+
+   A_goal: l' \<in> {partition_label NicB, partition_label RM, partition_label R, partition_label NicA, partition_label NicD, parti
+   B: close the goal (0 subgoals)
+  step 0: gen=119.6s (claude 26.2s) -> ['apply assumption']
+  step 0: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 1: gen=254.8s (claude 75.9s) -> ['apply (simp only: SACAuthGraph_def insert_iff prod.inject singleton_iff)']
+  step 1: OK -> 10 subgoal(s); applied=['apply (simp only: SACAuthGraph_def insert_iff prod.inject singleton_iff)']

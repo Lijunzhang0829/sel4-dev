@@ -1,0 +1,19 @@
+Loading theory "Draft.iso_simp_old"
+ML_profilingkind=timeprofile_time:
+ML_profiling_entryname=Table().retrieve(4)find(1)count=1           1 Table().retrieve(4)find(1)
+ML_profiling_entryname=Table().retrieve(4)find(1)count=1           1 Table().retrieve(4)find(1)
+ML_profiling_entryname=Same.map(2)()count=1           1 Same.map(2)()
+ML_profiling_entryname=Thm.solve_constraints(1)count=1           1 Thm.solve_constraints(1)
+ML_profiling_entryname=Raw_Simplifier.rewritec(4)count=1           1 Raw_Simplifier.rewritec(4)
+ML_profiling_entryname=Ord_List.union(3)count=2           2 Ord_List.union(3)
+ML_profiling_entryname=UNKNOWNcount=2           2 UNKNOWN
+ML_profiling_entryname=GARBAGE COLLECTION (total)count=6           6 GARBAGE COLLECTION (total)
+ML_profiling_entryname=GARBAGE COLLECTION (minor collection)count=6           6 GARBAGE COLLECTION (minor collection)
+          21 TOTAL
+### theory "Draft.iso_simp_old"
+### 0.292s elapsed time, 0.329s cpu time, 0.054s GC time
+*** Failed to finish proof (line 11 of "/workspace/lemma-staticize/isa-repl/profiler/iso_simp_old.thy"):
+*** goal (1 subgoal):
+***  1. \<Sum> {0..<700} = 244650
+*** At command "by" (line 11 of "/workspace/lemma-staticize/isa-repl/profiler/iso_simp_old.thy")
+Exception- TOPLEVEL_ERROR raised

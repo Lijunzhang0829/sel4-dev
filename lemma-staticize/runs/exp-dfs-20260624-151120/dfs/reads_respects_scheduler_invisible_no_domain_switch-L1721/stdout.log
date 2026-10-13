@@ -1,0 +1,21 @@
+[init ok]
+[reached reads_respects_scheduler_invisible_no_domain_switch]
+== target line 11: by (safe; (fastforce simp: switch_thread_runnable | fastforce dest!: s
+   facts: ['cur_thread_cur_domain', 'obj_at_def', 'st_tcb_at_def', 'switch_thread_runnable', 'switch_to_cur_domain']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [3sg] 1. \<And>st s sta. \<lbrakk>pas_refined aag s; invs s; 
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [2sg] 1. \<And>st s sta. \<lbrakk>pas_refined aag s; invs s; 
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold st_tcb_at_def)  [2sg] 1. \<And>st s sta. \<lbrakk>pas_refined aag s; invs s; 
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule switch_thread_runnable)  [3sg] 1. \<And>st s sta. \<lbrakk>pas_refined aag s; invs s; 
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule switch_thread_runnable)  [3sg] 1. \<And>st s sta. \<lbrakk>pas_refined aag s; invs s; 
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst switch_thread_runnable)  [4sg] 1. \<And>st s sta x. \<lbrakk>pas_refined aag s; invs s
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-reads_respects_scheduler_invisible_no_domain_switch-P25843.json

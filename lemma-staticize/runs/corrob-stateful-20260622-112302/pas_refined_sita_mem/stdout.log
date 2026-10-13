@@ -1,0 +1,17 @@
+[genstat-stateful] pas_refined_sita_mem @ proof/access-control/Access_AC.thy
+[init ok]
+[reached pas_refined_sita_mem]
+== target: by (auto simp: pas_refined_def)
+   A_goal: (x, auth, y) \<in> pasPolicy aag
+   B: close the goal (0 subgoals)
+  step 0: 79.1s -> ['apply (simp only: pas_refined_def)']
+  step 0: OK -> 1 subgoal(s); applied=['apply (simp only: pas_refined_def)']
+  step 1: 125.7s -> ['apply assumption']
+  step 1: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 2: 218.3s -> ['apply (unfold pas_refined_def)', 'apply (erule conjE)+', 'apply (drule (1) subsetD)']
+  step 2: OK -> 1 subgoal(s); applied=['apply (simp only: pas_refined_def)', 'apply (unfold pas_refined_def)', 'apply (erule conjE)+', 'apply (drule (1) subsetD)']
+  step 3: 30.0s -> ['apply assumption']
+  step 3: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 4: 323.5s -> ['apply (simp only: pas_refined_def)', 'apply (erule conjE)+', 'apply (drule (1) subsetD; assumption)']
+  step 4: OK -> 0 subgoal(s); applied=['apply (simp only: pas_refined_def)', 'apply (unfold pas_refined_def)', 'apply (erule conjE)+', 'apply (drule (1) subsetD)', 'apply (simp only: pas_refined_def)', 'apply (erule conjE)+', 'apply (drule (1) subsetD; assumption)']
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-pas_refined_sita_mem.json  verdict=REACHED-B

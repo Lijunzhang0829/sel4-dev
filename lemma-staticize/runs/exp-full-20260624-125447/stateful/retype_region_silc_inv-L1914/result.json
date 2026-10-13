@@ -1,0 +1,8 @@
+{
+ "lemma": "retype_region_silc_inv",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/FinalCaps.thy",
+ "session": "InfoFlow",
+ "mode": "genstat-stateful",
+ "verdict": "NO-TARGET",
+ "rounds": []
+}

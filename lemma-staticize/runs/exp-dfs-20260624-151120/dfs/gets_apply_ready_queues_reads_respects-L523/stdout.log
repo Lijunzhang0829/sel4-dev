@@ -1,0 +1,17 @@
+[init ok]
+[reached gets_apply_ready_queues_reads_respects]
+== target line 1: apply (force elim: reads_equivE simp: equiv_for_def)
+   facts: ['equiv_for_def', 'reads_equivE']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule allI)  [1sg] 1. \<And>s. \<forall>t. reads_equiv aag s t \<and> affe
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule reads_equivE)  [2sg] 1. reads_equiv ?aag2 ?s2 ?s'2
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst reads_equivE)  [3sg] 1. reads_equiv ?aag2 ?s2 ?s'2
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+    ↩ backtrack
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-gets_apply_ready_queues_reads_respects-P25814.json

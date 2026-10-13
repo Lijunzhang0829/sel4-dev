@@ -1,0 +1,9 @@
+[genstat-stateful] sep_irq_node_domD' @ proof/capDL-api/RWHelper_DP.thy
+[init ok]
+[reached sep_irq_node_domD']
+== target: by (fastforce simp: sep_irq_node_dom_def)
+   A_goal: m = dom (sep_irq_node s)
+   B: close the goal (0 subgoals)
+  step 0: 104.6s -> ['apply (simp only: sep_irq_node_dom_def)']
+  step 0: OK -> 0 subgoal(s); applied=['apply (simp only: sep_irq_node_dom_def)']
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-sep_irq_node_domD'.json  verdict=REACHED-B

@@ -1,0 +1,208 @@
+[
+ {
+  "method": "reduce",
+  "lemma": "in_whileLoop_corres",
+  "line": 361,
+  "session": "Lib",
+  "builds_ok": true,
+  "orig_ms": 4697.5,
+  "static_ms": 298.6,
+  "saved_ms": 4398.9,
+  "verdict": "REAL-ACCEL",
+  "path": [
+   "apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce simp only: no_fail_def cond dest: nf)?)"
+  ],
+  "build_msg": "OK (34725ms)"
+ },
+ {
+  "method": "reduce",
+  "lemma": "is_derived_cap_arch_asid_issues",
+  "line": 198,
+  "session": "AInvs",
+  "builds_ok": true,
+  "orig_ms": 27847.4,
+  "static_ms": 2603.0,
+  "saved_ms": 25244.4,
+  "verdict": "REAL-ACCEL",
+  "path": [
+   "by (fastforce simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)"
+  ],
+  "build_msg": "OK (54947ms)"
+ },
+ {
+  "method": "reduce",
+  "lemma": "ntfn123_reads",
+  "line": 742,
+  "session": "InfoFlow",
+  "builds_ok": true,
+  "orig_ms": 21871.0,
+  "static_ms": 16880.0,
+  "saved_ms": 4991.0,
+  "verdict": "REAL-ACCEL",
+  "path": [
+   "apply (elim insertE emptyE)",
+   "apply (simp add: SACAuthGraph_def, blast?)+",
+   "done"
+  ],
+  "build_msg": "OK (75588ms)"
+ },
+ {
+  "method": "reduce",
+  "lemma": "invoke_cnode_silc_inv",
+  "line": 1825,
+  "session": "InfoFlow",
+  "builds_ok": false,
+  "orig_ms": 3651.6,
+  "static_ms": 646.0,
+  "saved_ms": 3005.6,
+  "verdict": "FALSE-POSITIVE",
+  "path": [
+   "apply clarsimp",
+   "apply (fastforce simp: silc_inv_def authorised_cnode_inv_def)"
+  ],
+  "build_msg": "*** Undefined constant: \"FinalCaps.slots_holding_overlapping_caps\" (line 1332 of \"/tmp/tmp.VLEDGmdPTa/Tmp_a73a799254293e5d.thy\")\n*** At command \"lemma\" (line 1329 of \"/tmp/tmp.VLEDGmdPTa/Tmp_a73a79925"
+ },
+ {
+  "method": "reduce",
+  "lemma": "cap_insert_pas_refined",
+  "line": 1032,
+  "session": "Access",
+  "builds_ok": true,
+  "orig_ms": 14697.2,
+  "static_ms": 12628.7,
+  "saved_ms": 2068.5,
+  "verdict": "REAL-ACCEL",
+  "path": [
+   "apply (clarsimp simp: cte_wp_at_caps_of_state Option.is_none_def simp del: split_paired_All)",
+   "apply (fastforce split: if_split_asm simp: pas_refined_refl F[symmetric] valid_mdb_def2 mdb_cte_at_def simp del: split_paired_All dest: aag_cdt_link_Control aag_cdt_link_DeleteDerived cap_auth_caps_of_state)",
+   "done"
+  ],
+  "build_msg": "OK (207278ms)"
+ },
+ {
+  "method": "reduce",
+  "lemma": "Sys1AgentMap_simps",
+  "line": 910,
+  "session": "InfoFlow",
+  "builds_ok": false,
+  "orig_ms": 22411.9,
+  "static_ms": 19747.5,
+  "saved_ms": 2664.4,
+  "verdict": "FALSE-POSITIVE",
+  "path": [
+   "apply (simp only: ptr_range_def pageBits_def s0_ptr_defs)",
+   "apply auto"
+  ],
+  "build_msg": "*** No such file: \"/tmp/tmp.Nf2NQgrRzT/ArchNoninterference.thy\"\n*** The error(s) above occurred for theory \"Draft.ArchNoninterference\" (line 10 of \"/tmp/tmp.Nf2NQgrRzT/Tmp_cda959ce0151b2b7.thy\")\n*** ("
+ },
+ {
+  "method": "reduce",
+  "lemma": "dmo_bind_ev'",
+  "line": 93,
+  "session": "InfoFlow",
+  "builds_ok": true,
+  "orig_ms": 23283.1,
+  "static_ms": 19459.8,
+  "saved_ms": 3823.3,
+  "verdict": "REAL-ACCEL",
+  "path": [
+   "apply (simp only: equiv_valid_def2 equiv_valid_2_def)",
+   "by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def return_def bind_def)"
+  ],
+  "build_msg": "OK (52483ms)"
+ },
+ {
+  "method": "reduce",
+  "lemma": "rm_affects",
+  "line": 489,
+  "session": "InfoFlow",
+  "builds_ok": true,
+  "orig_ms": 22541.4,
+  "static_ms": 2875.9,
+  "saved_ms": 19665.5,
+  "verdict": "REAL-ACCEL",
+  "path": [
+   "by (clarsimp, blast?)+"
+  ],
+  "build_msg": "OK (72855ms)"
+ },
+ {
+  "method": "reduce",
+  "lemma": "abd_affects",
+  "line": 241,
+  "session": "InfoFlow",
+  "builds_ok": true,
+  "orig_ms": 23227.4,
+  "static_ms": 8089.3,
+  "saved_ms": 15138.1,
+  "verdict": "REAL-ACCEL",
+  "path": [
+   "apply clarsimp",
+   "apply (auto simp: subjectAffects_def SACAuthGraph_def abd_affects_set_def)",
+   "done"
+  ],
+  "build_msg": "OK (75270ms)"
+ },
+ {
+  "method": "reduce",
+  "lemma": "insert_cap_child_corres",
+  "line": 332,
+  "session": "DRefine",
+  "builds_ok": true,
+  "orig_ms": 22818.0,
+  "static_ms": 18487.6,
+  "saved_ms": 4330.4,
+  "verdict": "REAL-ACCEL",
+  "path": [
+   "by (case_tac \"cdt s' child\", safe intro!: mdb_cte_atI; clarsimp simp: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def; auto dest: mdb_cte_atD is_untyped_cap_eqD)"
+  ],
+  "build_msg": "OK (163010ms)"
+ },
+ {
+  "method": "reduce",
+  "lemma": "empty_slot_pas_refined",
+  "line": 1103,
+  "session": "Access",
+  "builds_ok": true,
+  "orig_ms": 145716.2,
+  "static_ms": 124142.9,
+  "saved_ms": 21573.3,
+  "verdict": "REAL-ACCEL",
+  "path": [
+   "by (fastforce dest: pas_refined_Control pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] all_childrenD is_transferable_all_children)"
+  ],
+  "build_msg": "OK (182775ms)"
+ },
+ {
+  "method": "reduce",
+  "lemma": "cap_swap_silc_inv",
+  "line": 943,
+  "session": "InfoFlow",
+  "builds_ok": false,
+  "orig_ms": 22001.6,
+  "static_ms": 8311.0,
+  "saved_ms": 13690.6,
+  "verdict": "FALSE-POSITIVE",
+  "path": [
+   "apply (clarsimp simp del: split_paired_All)",
+   "apply (fastforce simp: all_children_def simp del: split_paired_All | simp add: all_children_def del: split_paired_All)+",
+   "done"
+  ],
+  "build_msg": "*** Undefined constant: \"FinalCaps.slots_holding_overlapping_caps\" (line 1333 of \"/tmp/tmp.OoTrWfrrvS/Tmp_3d0121482edaa2e7.thy\")\n*** At command \"lemma\" (line 1330 of \"/tmp/tmp.OoTrWfrrvS/Tmp_3d0121482"
+ },
+ {
+  "method": "reduce",
+  "lemma": "requiv_device_mem_eq",
+  "line": 811,
+  "session": "InfoFlow",
+  "builds_ok": true,
+  "orig_ms": 2807.4,
+  "static_ms": 1360.9,
+  "saved_ms": 1446.5,
+  "verdict": "REAL-ACCEL",
+  "path": [
+   "apply (intro typ_at_device_data_at | fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)+"
+  ],
+  "build_msg": "OK (67026ms)"
+ }
+]

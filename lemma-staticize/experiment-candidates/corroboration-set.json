@@ -1,0 +1,166 @@
+{
+ "n": 16,
+ "note": "history-confirmed statically-rewritable; discriminates DFS/stateful/blind",
+ "cases": [
+  {
+   "lemma": "sep_heap_domD",
+   "session": "DSpecProofs",
+   "thy": "proof/capDL-api/RWHelper_DP.thy",
+   "decl_line": 168,
+   "proof_line": 171,
+   "tactic": "fastforce",
+   "fast": true,
+   "file_lines": 502
+  },
+  {
+   "lemma": "sep_heap_domD'",
+   "session": "DSpecProofs",
+   "thy": "proof/capDL-api/RWHelper_DP.thy",
+   "decl_line": 173,
+   "proof_line": 176,
+   "tactic": "fastforce",
+   "fast": true,
+   "file_lines": 502
+  },
+  {
+   "lemma": "sep_irq_node_domD'",
+   "session": "DSpecProofs",
+   "thy": "proof/capDL-api/RWHelper_DP.thy",
+   "decl_line": 178,
+   "proof_line": 181,
+   "tactic": "fastforce",
+   "fast": true,
+   "file_lines": 502
+  },
+  {
+   "lemma": "is_transferable_Untyped",
+   "session": "Access",
+   "thy": "proof/access-control/Access_AC.thy",
+   "decl_line": 106,
+   "proof_line": 107,
+   "tactic": "blast",
+   "fast": true,
+   "file_lines": 1601
+  },
+  {
+   "lemma": "is_transferable_Endpoint",
+   "session": "Access",
+   "thy": "proof/access-control/Access_AC.thy",
+   "decl_line": 114,
+   "proof_line": 115,
+   "tactic": "blast",
+   "fast": true,
+   "file_lines": 1601
+  },
+  {
+   "lemma": "is_transferable_IRQ",
+   "session": "Access",
+   "thy": "proof/access-control/Access_AC.thy",
+   "decl_line": 108,
+   "proof_line": 109,
+   "tactic": "blast",
+   "fast": true,
+   "file_lines": 1601
+  },
+  {
+   "lemma": "is_transferable_Ntfn",
+   "session": "Access",
+   "thy": "proof/access-control/Access_AC.thy",
+   "decl_line": 112,
+   "proof_line": 113,
+   "tactic": "blast",
+   "fast": true,
+   "file_lines": 1601
+  },
+  {
+   "lemma": "is_transferable_Zombie",
+   "session": "Access",
+   "thy": "proof/access-control/Access_AC.thy",
+   "decl_line": 110,
+   "proof_line": 111,
+   "tactic": "blast",
+   "fast": true,
+   "file_lines": 1601
+  },
+  {
+   "lemma": "auth_graph_map_memI",
+   "session": "Access",
+   "thy": "proof/access-control/Access_AC.thy",
+   "decl_line": 80,
+   "proof_line": 83,
+   "tactic": "fastforce",
+   "fast": true,
+   "file_lines": 1601
+  },
+  {
+   "lemma": "pas_refined_sita_mem",
+   "session": "Access",
+   "thy": "proof/access-control/Access_AC.thy",
+   "decl_line": 280,
+   "proof_line": 283,
+   "tactic": "auto",
+   "fast": true,
+   "file_lines": 1601
+  },
+  {
+   "lemma": "tcb_domain_map_wellformed_mono",
+   "session": "Access",
+   "thy": "proof/access-control/Access_AC.thy",
+   "decl_line": 228,
+   "proof_line": 231,
+   "tactic": "auto",
+   "fast": true,
+   "file_lines": 1601
+  },
+  {
+   "lemma": "reply_masters_mdbD1",
+   "session": "Access",
+   "thy": "proof/access-control/CNode_AC.thy",
+   "decl_line": 470,
+   "proof_line": 473,
+   "tactic": "fastforce",
+   "fast": true,
+   "file_lines": 1757
+  },
+  {
+   "lemma": "ball_subsetE",
+   "session": "InfoFlow",
+   "thy": "proof/infoflow/Ipc_IF.thy",
+   "decl_line": 847,
+   "proof_line": 850,
+   "tactic": "blast",
+   "fast": false,
+   "file_lines": 2229
+  },
+  {
+   "lemma": "strengthen_imp_ex2",
+   "session": "AInvs",
+   "thy": "proof/invariant-abstract/Untyped_AI.thy",
+   "decl_line": 321,
+   "proof_line": 322,
+   "tactic": "auto",
+   "fast": false,
+   "file_lines": 3947
+  },
+  {
+   "lemma": "rel_terminate_weaken",
+   "session": "InfoFlow",
+   "thy": "proof/infoflow/ADT_IF.thy",
+   "decl_line": 1690,
+   "proof_line": 1693,
+   "tactic": "force",
+   "fast": false,
+   "file_lines": 3447
+  },
+  {
+   "lemma": "states_equiv_forI",
+   "session": "InfoFlow",
+   "thy": "proof/infoflow/InfoFlow_IF.thy",
+   "decl_line": 72,
+   "proof_line": 84,
+   "tactic": "auto",
+   "fast": false,
+   "file_lines": 1048
+  }
+ ]
+}

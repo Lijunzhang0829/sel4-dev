@@ -1,0 +1,20 @@
+[init ok]
+[reached send_sync_ipc_corres]
+== target: apply (clarsimp simp:pred_tcb_at_def obj_at_def, simp split:Structures
+   orig_ms=16659  B: leave EXACTLY these 10 subgoal(s):
+1. \<And>y ys s'a recv_state' x41 x
+  round 0: gen=29.5s (claude 28.7s) -> ['apply (clarsimp simp: pred_tcb_at_def obj_at_def split: Structures_A.thread_state.splits, fastforce)']
+  round 0: REACH-B variant_ms=32830 orig_ms=16659 saved=-16171.0 faster=False
+  round 1: gen=55.0s (claude 54.3s) -> []
+  round 2: gen=26.0s (claude 25.5s) -> ['apply (clarsimp simp: pred_tcb_at_def obj_at_def split: Structures_A.thread_state.splits, fastforce)']
+  round 2: REACH-B variant_ms=34240 orig_ms=16659 saved=-17581.9 faster=False
+  round 3: gen=36.5s (claude 35.9s) -> ['apply (clarsimp simp: pred_tcb_at_def obj_at_def split: Structures_A.thread_state.splits, fastforce)']
+  round 3: REACH-B variant_ms=32513 orig_ms=16659 saved=-15854.4 faster=False
+  round 4: gen=36.0s (claude 35.5s) -> ['apply (clarsimp simp only: pred_tcb_at_def obj_at_def, simp only: split: Structures_A.thread_state.splits, fastforce)']
+  round 4: FAILED `apply (clarsimp simp only: pred_tcb_at_def obj_at_def, simp only: spl
+  round 5: gen=51.5s (claude 51.4s) -> ['apply (clarsimp simp: pred_tcb_at_def obj_at_def, simp split: Structures_A.thread_state.splits, fastforce simp del: pred_tcb_at_def obj_at_def)']
+  round 5: REACH-B variant_ms=17198 orig_ms=16659 saved=-539.9 faster=False
+  round 6: gen=26.5s (claude 26.1s) -> []
+  round 7: gen=32.5s (claude 32.2s) -> ['apply (clarsimp simp: pred_tcb_at_def obj_at_def split: Structures_A.thread_state.splits, fastforce)']
+  round 7: REACH-B variant_ms=32773 orig_ms=16659 saved=-16114.6 faster=False
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-send_sync_ipc_corres-P25927.json  verdict=REACHED-B-NOT-FASTER

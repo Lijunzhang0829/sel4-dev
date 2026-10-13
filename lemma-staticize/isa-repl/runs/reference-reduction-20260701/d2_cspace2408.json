@@ -1,0 +1,60 @@
+{
+ "file": "CSpace_C.thy",
+ "line": 2408,
+ "truncated": false,
+ "n_apply": 418,
+ "n_trying": 96,
+ "n_failed": 96,
+ "n_succeeded": 184,
+ "n_rewrite": 322,
+ "n_anyrule_oldmetric": 3269,
+ "n_unknown_anon": 2843,
+ "n_addrule": 2851,
+ "failed_frac_of_trials": 1.0,
+ "top_failed_rules": [
+  [
+   "SR_lemmas_C.ctes_of_not_0",
+   96
+  ]
+ ],
+ "top_succeeded_rules": [
+  [
+   "Option.option.case_2",
+   44
+  ],
+  [
+   "SR_lemmas_C.ctes_of_not_0",
+   44
+  ],
+  [
+   "??.unknown",
+   24
+  ],
+  [
+   "Num.Let_numeral",
+   24
+  ],
+  [
+   "HOL.if_False",
+   24
+  ],
+  [
+   "structures_defs.cap_frame_cap_lift_def",
+   20
+  ]
+ ],
+ "depth_split_available": true,
+ "rw_wasted": 96,
+ "rw_necessary_cond": 0,
+ "rw_toplevel": 322,
+ "rw_total_attributed": 418,
+ "wasted_frac": 0.2297,
+ "n_fail_dsplit": 96,
+ "n_succ_dsplit": 184,
+ "top_wasted_rules": [
+  [
+   "SR_lemmas_C.ctes_of_not_0",
+   96
+  ]
+ ]
+}

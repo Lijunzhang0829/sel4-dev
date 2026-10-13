@@ -1,0 +1,8 @@
+coords: WRITTEN	/tmp/prof_zob9tlc7	Tmp_prof_aba15272142f	Access	/sel4-project/verification/l4v
+bash: line 7:  9328 Killed                  bash run_profile.sh "$TMPD" "$TMPNAME" "$SESS" "$L4VD" "$RAW" 1500
+WALL 24s
+=== entries: 0 ===
+*** Malformed theory (line 1120 of "/tmp/prof_zob9tlc7/Tmp_prof_aba15272142f.thy")
+=== PARSE ===
+NO PROFILE DATA FOUND.
+(check that the tactic ran under time_profile and tracing was captured)

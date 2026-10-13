@@ -1,0 +1,113 @@
+{
+ "lemma": "requiv_user_mem_eq",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/ArchUserOp_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "REACHED-B-NOT-FASTER",
+ "orig_ms": 2875.4,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)",
+    "apply (intro typ_at_user_data_at | fastforce)+"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 6,
+   "gen_secs": 27.5,
+   "claude_secs": 27.0
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply (fastforce simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_user_data_at)+"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 4,
+   "gen_secs": 79.6,
+   "claude_secs": 79.1
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (clarsimp simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)",
+    "apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_user_data_at)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 2968.8,
+   "saved_ms": -93.4,
+   "faster": false,
+   "gen_secs": 60.1,
+   "claude_secs": 59.7
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)",
+    "apply (fastforce | intro typ_at_user_data_at)+"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 6,
+   "gen_secs": 53.6,
+   "claude_secs": 53.1
+  },
+  {
+   "round": 4,
+   "variant": [
+    "apply (simp add: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)",
+    "apply (fastforce | intro typ_at_user_data_at)+"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 6,
+   "gen_secs": 126.1,
+   "claude_secs": 125.7
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def)",
+    "apply (fastforce | intro typ_at_user_data_at)+"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 6,
+   "gen_secs": 49.1,
+   "claude_secs": 48.6
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply (simp only: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_user_data_at)+"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 3,
+   "gen_secs": 247.3,
+   "claude_secs": 246.9
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply clarsimp",
+    "apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_user_data_at)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 2964.9,
+   "saved_ms": -89.5,
+   "faster": false,
+   "gen_secs": 43.6,
+   "claude_secs": 43.0
+  }
+ ],
+ "target": "apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_user_data_at)+",
+ "B_sig": [
+  "1. \\<And>sz. \\<lbrakk>globals_equiv s s'; invs s; invs s'; \\<forall>x\\<in>ran (kheap s). obj_valid_pdpt x; \\<forall>x\\<in>ran (kheap s'). obj_valid_pdpt x; is_subject aag (cur_thread s'); AllowRead \\<in> ptable_rights_s s x; ptable_lift_s s x = Some y; pas_refined aag s; pas_refined aag s'; equiv_for (aag_can_read aag) kheap s s'; equiv_for (aag_can_read aag \\<circ> fst) cdt s s'; equiv_for (aag_can_read aag \\<circ> fst) cdt_list s s'; equiv_for (aag_can_read aag) ekheap s s'; equiv_for (aag_can_read aag \\<circ> fst) is_original_cap s s'; equiv_for (aag_can_read_irq aag) interrupt_states s s'; equiv_for (aag_can_read_irq aag) interrupt_irq_node s s'; equiv_asids (aag_can_read_asid aag) s s'; equiv_for (aag_can_read_domain aag) ready_queues s s'; cur_thread s = cur_thread s'; cur_domain s = cur_domain s'; scheduler_action s = scheduler_action s'; work_units_completed s = work_units_completed s'; equiv_irq_state (machine_state s) (machine_state s'); typ_at (AArch (AUserData sz)) (ptrFromPAddr y && ~~ mask (pageBitsForSize sz)) s; equiv_for (aag_can_read aag) device_state (machine_state s) (machine_state s'); \\<And>x. aag_can_read aag x \\<Longrightarrow> underlying_memory (machine_state s) x = underlying_memory (machine_state s') x; (pasObjectAbs aag (cur_thread s'), Read, pasObjectAbs aag (ptrFromPAddr (y && ~~ mask (pageBitsForSize sz)))) \\<in> pasPolicy aag\\<rbrakk> \\<Longrightarrow> aag_can_read aag (ptrFromPAddr y && ~~ mask (pageBitsForSize sz))",
+  "2. \\<lbrakk>reads_equiv aag s s'; globals_equiv s s'; invs s; invs s'; \\<forall>x\\<in>ran (kheap s). obj_valid_pdpt x; \\<forall>x\\<in>ran (kheap s'). obj_valid_pdpt x; is_subject aag (cur_thread s); AllowRead \\<in> ptable_rights_s s x; ptable_lift_s s x = Some y; pas_refined aag s; pas_refined aag s'; in_user_frame (ptrFromPAddr y) s; in_user_frame (ptrFromPAddr y) s'\\<rbrakk> \\<Longrightarrow> in_user_frame (ptrFromPAddr y) s' \\<longrightarrow> underlying_memory (machine_state s) (ptrFromPAddr y) = underlying_memory (machine_state s') (ptrFromPAddr y)",
+  "3. \\<lbrakk>reads_equiv aag s s'; globals_equiv s s'; invs s; invs s'; \\<forall>x\\<in>ran (kheap s). obj_valid_pdpt x; \\<forall>x\\<in>ran (kheap s'). obj_valid_pdpt x; is_subject aag (cur_thread s); AllowRead \\<in> ptable_rights_s s x; ptable_lift_s s x = Some y; pas_refined aag s; pas_refined aag s'\\<rbrakk> \\<Longrightarrow> \\<not> in_user_frame (ptrFromPAddr y) s \\<longrightarrow> \\<not> in_user_frame (ptrFromPAddr y) s'"
+ ],
+ "facts": [
+  "ptable_lift_s_def",
+  "ptable_rights_s_def",
+  "typ_at_user_data_at",
+  "vspace_cap_rights_to_auth_def"
+ ],
+ "accelerated": false
+}

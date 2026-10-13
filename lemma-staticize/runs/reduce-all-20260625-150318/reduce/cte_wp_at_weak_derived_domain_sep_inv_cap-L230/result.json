@@ -1,0 +1,20 @@
+{
+ "lemma": "cte_wp_at_weak_derived_domain_sep_inv_cap",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/DomainSepInv.thy",
+ "session": "Access",
+ "mode": "reduce",
+ "verdict": "ERROR",
+ "orig_ms": 23771.9,
+ "rounds": [],
+ "target": "apply (force simp: domain_sep_inv_def domain_sep_inv_cap_def split: cap.splits dest: cte_wp_at_norm weak_derived_irq_handler weak_derived_DomainCap)",
+ "B_sig": [],
+ "facts": [
+  "cap.splits",
+  "cte_wp_at_norm",
+  "domain_sep_inv_cap_def",
+  "domain_sep_inv_def",
+  "weak_derived_DomainCap",
+  "weak_derived_irq_handler"
+ ],
+ "error": "An error occurred while calling t._step_without_timeout"
+}

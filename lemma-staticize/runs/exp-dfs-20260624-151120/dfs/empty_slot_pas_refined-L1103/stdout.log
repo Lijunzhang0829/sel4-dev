@@ -1,0 +1,23 @@
+[init ok]
+[reached empty_slot_pas_refined]
+== target line 3: by (fastforce dest: all_childrenD is_transferable_all_children pas_ref
+   facts: ['OF', 'all_childrenD', 'is_transferable_all_children', 'pas_refined_Control', 'pas_refined_mem', 'sta_cdt', 'sta_cdt_transferable']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [2sg] 1. \<And>s cap a b aa ba. \<lbrakk>pas_refined aag s; p
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [1sg] 1. \<And>s cap a b aa ba. \<lbrakk>pas_refined aag s; p
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule all_childrenD)  [3sg] 1. \<And>s cap a b aa ba. \<lbrakk>pas_refined aag s; p
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst all_childrenD)  [4sg] 1. \<And>s cap a b aa ba. \<lbrakk>pas_refined aag s; p
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule is_transferable_all_children)  [1sg] 1. \<And>s cap a b aa ba. \<lbrakk>pas_refined aag s; p
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule is_transferable_all_children)  [1sg] 1. \<And>s cap a b aa ba. \<lbrakk>pas_refined aag s; p
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst pas_refined_mem)  [3sg] 1. \<And>s cap a b aa ba. \<lbrakk>pas_refined aag s; p
+  [think d7] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-empty_slot_pas_refined-P25825.json

@@ -1,0 +1,90 @@
+{
+ "lemma": "SAC_partsSubjectAffects_exceptT",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "REACHED-B-NOT-FASTER",
+ "orig_ms": 7645.0,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (simp only: SAC_affects SAC_reads)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (144 subgoals):\n 1. \\<And>xa xaa d. \\<lbrakk>NicA \\<noteq> T; d \\<in> subjectAffects SACAuthGrap",
+   "gen_secs": 24.5,
+   "claude_secs": 23.9
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply (auto simp only: SAC_affects SAC_reads)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (5 subgoals):\n 1. \\<lbrakk>NicA \\<noteq> T; partition_label T \\<in> subjectAffects SACAuthGraph ",
+   "gen_secs": 35.0,
+   "claude_secs": 34.7
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply clarsimp",
+    "apply (auto simp: SAC_affects SAC_reads)",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 20101.8,
+   "saved_ms": -12456.8,
+   "faster": false,
+   "gen_secs": 22.0,
+   "claude_secs": 21.5
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (auto simp only: SAC_affects SAC_reads)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (5 subgoals):\n 1. \\<lbrakk>NicA \\<noteq> T; partition_label T \\<in> subjectAffects SACAuthGraph ",
+   "gen_secs": 37.0,
+   "claude_secs": 36.3
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply clarify",
+    "apply (auto simp: SAC_affects SAC_reads)",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 7555.8,
+   "saved_ms": 89.2,
+   "faster": false,
+   "gen_secs": 45.5,
+   "claude_secs": 45.2
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (simp only: SAC_affects SAC_reads)",
+    "apply auto",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (11 subgoals):\n 1. \\<And>d. \\<lbrakk>d \\<in> subjectAffects SACAuthGraph (partition_label NicA);",
+   "gen_secs": 24.5,
+   "claude_secs": 23.9
+  }
+ ],
+ "target": "apply (auto simp: SAC_affects SAC_reads)",
+ "B_sig": [],
+ "facts": [
+  "SAC_affects",
+  "SAC_reads"
+ ],
+ "accelerated": false
+}

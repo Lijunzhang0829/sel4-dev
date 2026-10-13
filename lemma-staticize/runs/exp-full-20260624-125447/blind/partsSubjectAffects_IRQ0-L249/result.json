@@ -1,0 +1,8 @@
+{
+ "lemma": "partsSubjectAffects_IRQ0",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+ "session": "InfoFlow",
+ "mode": "genstat-stateful",
+ "verdict": "NO-TARGET",
+ "rounds": []
+}

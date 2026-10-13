@@ -1,0 +1,10 @@
+{
+ "lemma": "retype_region_silc_inv",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/FinalCaps.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "ERROR",
+ "orig_ms": null,
+ "rounds": [],
+ "error": "An error occurred while calling t._step_without_timeout.\n: de.unruh.isabelle.control.IsabelleDestroyedException: Isabelle process was destroyed: null\n\tat de.unruh.isabelle.control.IsabelleDestroyedExc"
+}

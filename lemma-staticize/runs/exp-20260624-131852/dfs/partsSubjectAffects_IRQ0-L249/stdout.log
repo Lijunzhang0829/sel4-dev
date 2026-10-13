@@ -1,0 +1,6 @@
+[init ok]
+[reached partsSubjectAffects_IRQ0]
+[DEBUG proof fronts] ['apply', 'done']
+[DEBUG proof[0]] 'apply(auto simp: partsSubjectAffects_def image_def label_can_affect_partition_def subjectReads subjectAffects_IRQ0 | ren'
+[no target classical line]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-partsSubjectAffects_IRQ0-P25800.json

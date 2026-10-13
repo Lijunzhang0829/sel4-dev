@@ -1,0 +1,113 @@
+{
+ "note": "top-12 feasible high-value lemmas (cost-sorted, file<=2900L, non-heavy session) for 3-method attempt",
+ "cases": [
+  {
+   "lemma": "empty_slot_pas_refined",
+   "thy": "proof/access-control/CNode_AC.thy",
+   "session": "Access",
+   "proof_line": 1103,
+   "tactic": "fastforce",
+   "total_s": 147.571,
+   "file_lines": 1756
+  },
+  {
+   "lemma": "s0_ptr_defs",
+   "thy": "proof/infoflow/ARM/Example_Valid_State.thy",
+   "session": "InfoFlow",
+   "proof_line": 249,
+   "tactic": "auto",
+   "total_s": 125.98,
+   "file_lines": 1843
+  },
+  {
+   "lemma": "blocked_cancel_ipc_invs",
+   "thy": "proof/invariant-abstract/IpcCancel_AI.thy",
+   "session": "AInvs",
+   "proof_line": 369,
+   "tactic": "auto",
+   "total_s": 124.779,
+   "file_lines": 1219
+  },
+  {
+   "lemma": "reads_respects_scheduler_invisible_no_domain_switch",
+   "thy": "proof/infoflow/Scheduler_IF.thy",
+   "session": "InfoFlow",
+   "proof_line": 1721,
+   "tactic": "fastforce",
+   "total_s": 60.754,
+   "file_lines": 2432
+  },
+  {
+   "lemma": "set_cap_slots_holding_overlapping_caps_other",
+   "thy": "proof/infoflow/FinalCaps.thy",
+   "session": "InfoFlow",
+   "proof_line": 666,
+   "tactic": "fastforce",
+   "total_s": 29.511,
+   "file_lines": 2874
+  },
+  {
+   "lemma": "empty_slot_pas_refined_transferable",
+   "thy": "proof/access-control/CNode_AC.thy",
+   "session": "Access",
+   "proof_line": 1117,
+   "tactic": "fastforce",
+   "total_s": 27.345,
+   "file_lines": 1756
+  },
+  {
+   "lemma": "SAC_partsSubjectAffects_exceptT",
+   "thy": "proof/infoflow/PolicySystemSAC.thy",
+   "session": "InfoFlow",
+   "proof_line": 921,
+   "tactic": "auto",
+   "total_s": 22.23,
+   "file_lines": 961
+  },
+  {
+   "lemma": "Sys1AgentMap_simps",
+   "thy": "proof/infoflow/ARM/Example_Valid_State.thy",
+   "session": "InfoFlow",
+   "proof_line": 910,
+   "tactic": "auto",
+   "total_s": 21.592,
+   "file_lines": 1843
+  },
+  {
+   "lemma": "cap_insert_pas_refined",
+   "thy": "proof/access-control/CNode_AC.thy",
+   "session": "Access",
+   "proof_line": 1032,
+   "tactic": "fastforce",
+   "total_s": 20.712,
+   "file_lines": 1756
+  },
+  {
+   "lemma": "arm_asid_table_delete_ev2",
+   "thy": "proof/infoflow/ARM/ArchArch_IF.thy",
+   "session": "InfoFlow",
+   "proof_line": 872,
+   "tactic": "auto",
+   "total_s": 19.181,
+   "file_lines": 1805
+  },
+  {
+   "lemma": "insert_cap_child_corres",
+   "thy": "proof/drefine/CNode_DR.thy",
+   "session": "DRefine",
+   "proof_line": 332,
+   "tactic": "auto",
+   "total_s": 18.89,
+   "file_lines": 2743
+  },
+  {
+   "lemma": "valid_arch_caps_s0",
+   "thy": "proof/infoflow/ARM/Example_Valid_State.thy",
+   "session": "InfoFlow",
+   "proof_line": 1622,
+   "tactic": "auto",
+   "total_s": 15.744,
+   "file_lines": 1843
+  }
+ ]
+}

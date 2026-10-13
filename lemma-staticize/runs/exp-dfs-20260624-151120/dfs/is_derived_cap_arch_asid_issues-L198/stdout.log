@@ -1,0 +1,23 @@
+[init ok]
+[reached is_derived_cap_arch_asid_issues]
+== target line 1: by (auto simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap
+   facts: ['arch_cap.splits', 'cap.splits', 'cap_asid_def', 'cap_master_cap_def', 'is_cap_simps', 'option.splits']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [2sg] 1. \<lbrakk>(is_pt_cap cap \<longrightarrow> cap_asid c
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule conjE)  [1sg] 1. \<lbrakk>cap_master_cap cap = cap_master_cap cap'; i
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst arch_cap.splits)  [1sg] 1. \<lbrakk>(is_pt_cap cap \<longrightarrow> cap_asid c
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst cap.splits)  [1sg] 1. \<lbrakk>(is_pt_cap cap \<longrightarrow> cap_asid c
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold cap_asid_def)  [1sg] 1. \<lbrakk>(is_pt_cap cap \<longrightarrow> arch_cap_f
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold cap_master_cap_def)  [1sg] 1. \<lbrakk>(is_pt_cap cap \<longrightarrow> cap_asid c
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst is_cap_simps)  [1sg] 1. \<lbrakk>(is_pt_cap cap \<longrightarrow> cap_asid c
+  [think d7] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-is_derived_cap_arch_asid_issues-P25811.json

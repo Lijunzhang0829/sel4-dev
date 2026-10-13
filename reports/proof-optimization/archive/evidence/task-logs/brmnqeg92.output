@@ -1,0 +1,9 @@
+[run_profile] result=isabelle-exited@16s
+WALL 17s
+### 3.993s elapsed time, 4.333s cpu time, 0.973s GC time
+entries=0
+*** Bad context for command "subgoal" (line 431 of "/tmp/prof_r934vacs/Tm
+*** At command "subgoal" (line 431 of "/tmp/prof_r934vacs/Tmp_prof_ecb2d7
+=== PARSE ===
+NO PROFILE DATA FOUND.
+(check that the tactic ran under time_profile and tracing was captured)

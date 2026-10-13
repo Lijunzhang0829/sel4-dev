@@ -1,0 +1,26 @@
+diff --git a/proof/infoflow/Decode_IF.thy b/proof/infoflow/Decode_IF.thy
+index 0e70187..cd1da5f 100644
+--- a/proof/infoflow/Decode_IF.thy
++++ b/proof/infoflow/Decode_IF.thy
+@@ -134,7 +134,7 @@ lemma OR_choice_def2:
+   "\<lbrakk> \<And>P. \<lbrace>P\<rbrace> (c :: bool det_ext_monad) \<lbrace>\<lambda>_. P\<rbrace>; empty_fail c \<rbrakk>
+      \<Longrightarrow> (OR_choice c f g) = (do b \<leftarrow> c; if b then f else g od)"
+   apply (simp add: OR_choice_def wrap_ext_bool_det_ext_ext_def ef_mk_ef)
+-  by (subst no_state_changes[where f=c], simp, fastforce simp: bind_assoc split_def)
++  by (subst no_state_changes[where f=c], simp, clarsimp simp: bind_assoc split_def)
+ 
+ lemma check_prio_rev:
+   "reads_respects aag l (\<lambda>s. is_subject aag auth) (check_prio prio auth)"
+diff --git a/proof/invariant-abstract/VSpacePre_AI.thy b/proof/invariant-abstract/VSpacePre_AI.thy
+index a368c89..8174994 100644
+--- a/proof/invariant-abstract/VSpacePre_AI.thy
++++ b/proof/invariant-abstract/VSpacePre_AI.thy
+@@ -159,7 +159,7 @@ lemma arch_update_cap_valid_mdb:
+    apply (clarsimp dest!:master_cap_cap_range)
+   apply (rule conjI)
+    apply (clarsimp simp: untyped_inc_def is_arch_update_def)
+-   subgoal by (fastforce simp: is_cap_simps)
++   subgoal by (clarsimp simp: is_cap_simps)
+   apply (rule conjI)
+    apply (clarsimp simp: ut_revocable_def)
+    apply (clarsimp simp: is_arch_update_def is_cap_simps)

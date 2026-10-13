@@ -1,0 +1,47 @@
+[genstat-stateful] is_transferable_Ntfn @ proof/access-control/Access_AC.thy
+[init ok]
+[reached is_transferable_Ntfn]
+== target: by (blast elim: is_transferable.cases)
+   A_goal: \<not> is_transferable_cap (NotificationCap ntfn badge R)
+   B: close the goal (0 subgoals)
+  step 0: 7.0s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 0: OK -> 2 subgoal(s); applied=['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 1: 5.5s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 1: REPEAT-CHUNK (work already done)
+  step 2: 23.0s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 2: REPEAT-CHUNK (work already done)
+  step 3: 244.9s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 3: REPEAT-CHUNK (work already done)
+  step 4: 23.5s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 4: REPEAT-CHUNK (work already done)
+  step 5: 65.6s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 5: REPEAT-CHUNK (work already done)
+  step 6: 12.0s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 6: REPEAT-CHUNK (work already done)
+  step 7: 102.6s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 7: REPEAT-CHUNK (work already done)
+  step 8: 40.6s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 8: REPEAT-CHUNK (work already done)
+  step 9: 18.5s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 9: REPEAT-CHUNK (work already done)
+  step 10: 220.8s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 10: REPEAT-CHUNK (work already done)
+  step 11: 27.5s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 11: REPEAT-CHUNK (work already done)
+  step 12: 38.1s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 12: REPEAT-CHUNK (work already done)
+  step 13: 64.1s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 13: REPEAT-CHUNK (work already done)
+  step 14: 33.6s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 14: REPEAT-CHUNK (work already done)
+  step 15: 28.0s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 15: REPEAT-CHUNK (work already done)
+  step 16: 139.7s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 16: REPEAT-CHUNK (work already done)
+  step 17: 11.0s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 17: REPEAT-CHUNK (work already done)
+  step 18: 306.9s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 18: REPEAT-CHUNK (work already done)
+  step 19: 25.5s -> ['apply (rule notI)', 'apply (erule is_transferable.cases)', 'apply (simp only: cap.distinct option.distinct)+']
+  step 19: REPEAT-CHUNK (work already done)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-is_transferable_Ntfn.json  verdict=NO-PATH

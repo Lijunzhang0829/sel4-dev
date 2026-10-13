@@ -1,0 +1,18 @@
+[genstat-stateful] empty_slot_pas_refined @ proof/access-control/CNode_AC.thy
+[init ok]
+[reached empty_slot_pas_refined]
+== target: by (fastforce dest: all_childrenD is_transferable_all_children pas_ref
+   A_goal: (is_transferable_in (a, b) s \<or> (pasObjectAbs aag aa, Control, pasObjectAbs aag a) \<in> pasPolicy aag) \<and> (pasOb
+   B: close the goal (0 subgoals)
+  step 0: gen=21.0s (claude 20.7s) -> ['apply (intro conjI)']
+  step 0: OK -> 3 subgoal(s); applied=['apply (intro conjI)']
+  step 1: gen=94.1s (claude 93.8s) -> ['apply (rule disjI2)', 'apply (drule (1) pas_refined_Control)', 'apply assumption']
+  step 1: FAILED `apply (drule (1) pas_refined_Control)` failed: failed for prove the goal using 
+  step 2: gen=36.0s (claude 35.5s) -> ['apply (rule disjI1)', 'apply (drule all_childrenD)', 'apply (drule is_transferable_all_children)', 'apply assumption']
+  step 2: FAILED `apply (drule all_childrenD)` failed: failed for prove the goal using the tactic
+  step 3: gen=102.6s (claude 102.2s) -> ['apply (rule disjI2)', 'apply (drule pas_refined_mem[OF sta_cdt])', 'apply (drule pas_refined_Control)', 'apply assumption']
+  step 3: FAILED `apply (drule pas_refined_Control)` failed: failed for prove the goal using the 
+  step 4: gen=61.1s (claude 60.9s) -> ['apply (rule disjI2)', 'apply (drule (1) pas_refined_mem[OF sta_cdt])', 'apply assumption']
+  step 4: FAILED `apply (drule (1) pas_refined_mem[OF sta_cdt])` failed: failed for prove the goa
+  step 5: gen=71.6s (claude 71.2s) -> ['apply (rule disjI1)', 'apply (drule (1) all_childrenD)', 'apply (drule is_transferable_all_children)']
+  step 5: FAILED `apply (drule (1) all_childrenD)` failed: failed for prove the goal using the ta

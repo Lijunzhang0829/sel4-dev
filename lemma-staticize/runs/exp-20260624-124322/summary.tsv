@@ -1,0 +1,3 @@
+method	lemma	line	session	verdict	accelerated	saved_ms	secs
+dfs	abd_affects	241	InfoFlow	NO-PATH	None	None	64
+dfs	SAC_partsSubjectAffects_exceptT	921	InfoFlow	NO-PATH	None	None	87

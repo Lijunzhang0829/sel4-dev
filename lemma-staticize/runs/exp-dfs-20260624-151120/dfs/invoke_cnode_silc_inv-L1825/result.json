@@ -1,0 +1,24 @@
+{
+ "lemma": "invoke_cnode_silc_inv",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/FinalCaps.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (fastforce simp: silc_inv_def authorised_cnode_inv_def)",
+ "B_sig": [
+  "1. \\<And>x21 x22 x23. i = MoveCall x21 x22 x23 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3;",
+  "2. \\<And>x3. i = RevokeCall x3 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3;",
+  "3. \\<And>x4. i = DeleteCall x4 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3;",
+  "4. \\<And>x51 x52 x53 x54 x55. i = RotateCall x51 x52 x53 x54 x55 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3;",
+  "5. \\<And>x6. i = SaveCall x6 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3;",
+  "6. \\<And>x7. i = CancelBadgedSendsCall x7 \\<Longrightarrow> \\<lbrace>silc_inv aag st and einvs and simple_sched_action and pas_refined aag and valid_cnode_inv i and authorised_cnode_inv aag i and is_subject aag \\<circ> cur_thread\\<rbrace> case i of InsertCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_insert cap src_slot dest_slot | MoveCall cap src_slot dest_slot \\<Rightarrow> without_preemption $ cap_move cap src_slot dest_slot | RevokeCall dest_slot \\<Rightarrow> cap_revoke dest_slot | DeleteCall dest_slot \\<Rightarrow> cap_delete dest_slot | RotateCall cap1 cap2 slot1 slot2 slot3 \\<Rightarrow> without_preemption $ if slot1 = slot3 then cap_swap cap1 slot1 cap2 slot2 else do cap_move cap2 slot2 slot3;"
+ ],
+ "facts": [
+  "authorised_cnode_inv_def",
+  "silc_inv_def"
+ ],
+ "steps": [],
+ "path": null,
+ "audit": false,
+ "verdict": "SERVER-DIED",
+ "error": "An error occurred while calling t._step_with_30s_timeout.\n: de.unruh.isabelle.co"
+}

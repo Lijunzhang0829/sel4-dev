@@ -1,0 +1,695 @@
+{
+ "lemma": "dmo_user_memory_update_reads_respects_g",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/UserOp_IF.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (fastforce simp: equiv_valid_def2 equiv_valid_2_def in_monad do_machine_op_def user_memory_update_def select_f_def idle_equiv_def)",
+ "B_sig": [
+  "1. \\<And>s t. \\<lbrakk>affects_equiv aag l s t; reads_equiv aag s t; arch_globals_equiv (cur_thread t) (idle_thread s) (kheap s) (kheap t) (arch_state s) (arch_state t) (machine_state s) (machine_state t); idle_equiv s t; cur_thread s = cur_thread t; dom (device_state (machine_state s)) = dom (device_state (machine_state t))\\<rbrakk> \\<Longrightarrow> reads_respects aag l (\\<lambda>_. True) (do_machine_op (user_memory_update um))"
+ ],
+ "facts": [
+  "do_machine_op_def",
+  "equiv_valid_2_def",
+  "equiv_valid_def2",
+  "idle_equiv_def",
+  "in_monad",
+  "select_f_def",
+  "user_memory_update_def"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": true,
+   "obs": "[3sg] 1. \\<And>s t. \\<lbrakk>affects_equiv aag l s t; reads_equiv aag s t; arch_globals_equiv (cur_thread t) (idle_thread s) (kheap s) (kheap t) (arch_state s) (arch_state t) (machine_state s) (machine_stat"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold do_machine_op_def)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s t. \\<lbrakk>affects_equiv aag l s t; reads_equiv aag s t; arch_globals_equiv (cur_thread t) (idle_thread s) (kheap s) (kheap t) (arch_state s) (arch_state t) (machine_state s) (machine_stat"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: do_machine_op_def)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s t. \\<lbrakk>affects_equiv aag l s t; reads_equiv aag s t; arch_globals_equiv (cur_thread t) (idle_thread s) (kheap s) (kheap t) (arch_state s) (arch_state t) (machine_state s) (machine_stat"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold idle_equiv_def)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s t. \\<lbrakk>affects_equiv aag l s t; reads_equiv aag s t; arch_globals_equiv (cur_thread t) (idle_thread s) (kheap s) (kheap t) (arch_state s) (arch_state t) (machine_state s) (machine_stat"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: idle_equiv_def)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s t. \\<lbrakk>affects_equiv aag l s t; reads_equiv aag s t; arch_globals_equiv (cur_thread t) (idle_thread t) (kheap s) (kheap t) (arch_state s) (arch_state t) (machine_state s) (machine_stat"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule do_machine_op_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: equiv_valid_2_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst equiv_valid_def2)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule idle_equiv_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule in_monad)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule in_monad)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule in_monad)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule in_monad)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (subst in_monad)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule select_f_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule select_f_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule select_f_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule select_f_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold select_f_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (simp only: select_f_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (rule user_memory_update_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule user_memory_update_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (drule user_memory_update_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (frule user_memory_update_def)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (unfold user_memory_update_def)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s t. \\<lbrakk>affects_equiv aag l s t; reads_equiv aag s t; arch_globals_equiv (cur_thread t) (idle_thread s) (kheap s) (kheap t) (arch_state s) (arch_state t) (machine_state s) (machine_stat"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (2 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 18316.4
+}

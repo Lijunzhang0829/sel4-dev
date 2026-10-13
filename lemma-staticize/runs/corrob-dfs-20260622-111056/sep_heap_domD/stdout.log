@@ -1,0 +1,17 @@
+[init ok]
+[reached sep_heap_domD]
+== target line 0: by (fastforce simp:sep_heap_dom_def)
+   facts: ['sep_heap_dom_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [1sg] 1. \<lbrakk>sep_heap_dom P m; P s\<rbrakk> \<Longrighta
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold sep_heap_dom_def)  [1sg] 1. \<lbrakk>\<forall>s. P s \<longrightarrow> dom (sep_
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (simp only: sep_heap_dom_def)  [1sg] 1. \<lbrakk>\<forall>s. P s \<longrightarrow> dom (sep_
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+    ↩ backtrack
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-sep_heap_domD.json

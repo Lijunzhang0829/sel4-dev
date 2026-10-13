@@ -1,0 +1,3 @@
+{"lemma": "sep_heap_domD", "ipc_ms": 10.5, "orig": "by (fastforce simp:sep_heap_dom_def)", "orig_ms_raw": 36.6, "orig_ms_adj": 26.1, "static_steps": 5, "static_ms_raw": 57.8, "static_ms_adj": 5.3, "speedup_adj": 4.89, "delta_adj_ms": 20.8}
+{"lemma": "sep_heap_domD'", "ipc_ms": 6.9, "orig": "by (fastforce simp:sep_heap_dom_def)", "orig_ms_raw": 59.7, "orig_ms_adj": 52.8, "static_steps": 4, "static_ms_raw": 36.6, "static_ms_adj": 9.1, "speedup_adj": 5.83, "delta_adj_ms": 43.8}
+bash: -c: 行 11: 寻找匹配的 `'' 时遇到了未预期的 EOF

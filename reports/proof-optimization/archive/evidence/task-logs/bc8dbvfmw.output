@@ -1,0 +1,22 @@
+run_profile.sh: line 48: 10875 Killed                  setsid "$ISA" process -l "$SESSION" -d "$L4V" -o parallel_proofs=0 -o threads=1 -T "$THY" < /dev/null > "$RAW" 2>&1
+[run_profile] result=max-timeout@1500s
+WALL 1502s
+=== theory timing + entries ===
+entries=3
+=== PARSE ===
+total samples: 3  (process-reported TOTAL: 3)
+
+subsystem          samples   share
+------------------------------------
+kernel                   2   66.7%
+other                    1   33.3%
+
+(attributable samples: 2/3 = 67% of total; GC+other excluded from the ratio)
+VERDICT: MIXED (no single subsystem dominates attributable time)
+   classical+unify=0.0%  simp+arith=0.0%  setup=0.0%  (of attributable)
+
+top 15 raw functions (auditable):
+   66.7%  [kernel        ] Term.fold_term_types(2)
+   33.3%  [other         ] UNKNOWN
+
+wrote result-empty_slot_faithful.json

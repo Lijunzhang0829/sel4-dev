@@ -1,0 +1,24 @@
+[run_profile] result=max-timeout@705s
+run_profile.sh: line 51: 12491 Killed                  setsid "$ISA" process -l "$SESSION" -d "$L4V" -o parallel_proofs=0 -o quick_and_dirty=true -T "$THY" < /dev/null > "$RAW" 2>&1
+WALL 706s
+entries=5
+=== PARSE ===
+total samples: 7  (process-reported TOTAL: 7)
+
+subsystem          samples   share
+------------------------------------
+classical                1   14.3%
+unify                    1   14.3%
+other                    5   71.4%
+
+(attributable samples: 2/7 = 29% of total; GC+other excluded from the ratio)
+VERDICT: SEARCH-DOMINATED (v2 search-lean CONFIRMED — real target)
+   classical+unify=100.0%  simp+arith=0.0%  setup=0.0%  (of attributable)
+
+top 15 raw functions (auditable):
+   57.1%  [other         ] UNKNOWN
+   14.3%  [classical     ] Tactical.ORELSE'(1)(1)
+   14.3%  [unify         ] Pattern.cases(4)
+   14.3%  [other         ] Basics.#>(1)(1)
+
+wrote result-empty_slot_sp.json

@@ -1,0 +1,8 @@
+[init ok]
+[reached rm_reads]
+== target line 17: by (simp, blast?)+
+   facts: []
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-rm_reads-P25800.json

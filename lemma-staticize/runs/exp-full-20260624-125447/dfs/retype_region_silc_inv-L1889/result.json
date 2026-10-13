@@ -1,0 +1,13 @@
+{
+ "lemma": "retype_region_silc_inv",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/FinalCaps.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": null,
+ "B_sig": null,
+ "facts": [],
+ "steps": [],
+ "path": null,
+ "audit": false,
+ "verdict": "NO-TARGET"
+}

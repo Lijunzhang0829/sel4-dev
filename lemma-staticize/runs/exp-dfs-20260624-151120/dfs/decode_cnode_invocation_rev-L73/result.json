@@ -1,0 +1,685 @@
+{
+ "lemma": "decode_cnode_invocation_rev",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/Decode_IF.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap simp: expand_len_gr_Suc_0)",
+ "B_sig": [],
+ "facts": [
+  "Suc",
+  "bspec",
+  "excaps",
+  "expand_len_gr_Suc_0",
+  "is_cnode_into_is_subject",
+  "nth_mem",
+  "prop_of_obj_ref_of_cnode_cap",
+  "where",
+  "x"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>s. \\<lbrakk>pas_refined aag s; pas_cap_cur_auth aag cap; excaps = []\\<rbrakk> \\<Longrightarrow> 0 < data_to_nat (args ! Suc 0) \\<and> data_to_nat (args ! Suc 0) \\<le> word_bits \\<longrightarr"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (subst Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule bspec)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>s. \\<lbrakk>pas_refined aag s; pas_cap_cur_auth aag cap; excaps = []\\<rbrakk> \\<Longrightarrow> \\<forall>x\\<in>?A1414 s. x"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (subst Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule bspec)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule bspec)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule bspec)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (rule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (subst expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule is_cnode_into_is_subject)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule is_cnode_into_is_subject)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule nth_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule nth_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule nth_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule nth_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (subst nth_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule prop_of_obj_ref_of_cnode_cap)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>s. \\<lbrakk>pas_refined aag s; pas_cap_cur_auth aag cap; excaps = []\\<rbrakk> \\<Longrightarrow> is_cnode_cap cap"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (subst Suc)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule bspec)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule bspec)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule bspec)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (rule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (subst expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule is_cnode_into_is_subject)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule is_cnode_into_is_subject)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule nth_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule nth_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule nth_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule nth_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (subst nth_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule prop_of_obj_ref_of_cnode_cap)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule prop_of_obj_ref_of_cnode_cap)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule prop_of_obj_ref_of_cnode_cap)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule where)",
+   "ok": false,
+   "obs": "FAILED:   where"
+  },
+  {
+   "action": "apply (erule where)",
+   "ok": false,
+   "obs": "FAILED:   where"
+  },
+  {
+   "action": "apply (drule where)",
+   "ok": false,
+   "obs": "FAILED:   where"
+  },
+  {
+   "action": "apply (frule where)",
+   "ok": false,
+   "obs": "FAILED:   where"
+  },
+  {
+   "action": "apply (subst where)",
+   "ok": false,
+   "obs": "FAILED:   where"
+  },
+  {
+   "action": "apply (rule x)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule x)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule x)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule x)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst x)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule prop_of_obj_ref_of_cnode_cap)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule prop_of_obj_ref_of_cnode_cap)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule prop_of_obj_ref_of_cnode_cap)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule where)",
+   "ok": false,
+   "obs": "FAILED:   where"
+  },
+  {
+   "action": "apply (erule where)",
+   "ok": false,
+   "obs": "FAILED:   where"
+  },
+  {
+   "action": "apply (drule where)",
+   "ok": false,
+   "obs": "FAILED:   where"
+  },
+  {
+   "action": "apply (frule where)",
+   "ok": false,
+   "obs": "FAILED:   where"
+  },
+  {
+   "action": "apply (subst where)",
+   "ok": false,
+   "obs": "FAILED:   where"
+  },
+  {
+   "action": "apply (rule x)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule x)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule x)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule x)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst x)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule bspec)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule bspec)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule bspec)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst excaps)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (rule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (drule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (frule expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (subst expand_len_gr_Suc_0)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (rule is_cnode_into_is_subject)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  },
+  {
+   "action": "apply (erule is_cnode_into_is_subject)",
+   "ok": false,
+   "obs": "FAILED: goal (3 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 18578.3
+}

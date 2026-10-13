@@ -1,0 +1,159 @@
+{
+ "lemma": "cap_insert_simple_arch_caps_no_ap",
+ "thy": "/sel4-project/verification/l4v/proof/invariant-abstract/ARM/ArchCSpace_AI.thy",
+ "session": "AInvs",
+ "mode": "react",
+ "target": "by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_cap_simps)",
+ "B_sig": [],
+ "facts": [
+  "is_cap_simps",
+  "is_simple_cap_arch_def",
+  "is_simple_cap_def",
+  "simplified"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (rule is_cap_simps)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (erule is_cap_simps)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (drule is_cap_simps)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (frule is_cap_simps)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (subst is_cap_simps)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (rule is_simple_cap_arch_def)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (erule is_simple_cap_arch_def)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (drule is_simple_cap_arch_def)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (frule is_simple_cap_arch_def)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (unfold is_simple_cap_arch_def)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (rule is_simple_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (erule is_simple_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (drule is_simple_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (frule is_simple_cap_def)",
+   "ok": false,
+   "obs": "FAILED: goal (5 subgoals):"
+  },
+  {
+   "action": "apply (rule simplified)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule simplified)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule simplified)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule simplified)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst simplified)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH"
+}

@@ -1,0 +1,8 @@
+[init ok]
+[reached abd_affects]
+== target line 6: by auto
+   facts: []
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-abd_affects-P25821.json

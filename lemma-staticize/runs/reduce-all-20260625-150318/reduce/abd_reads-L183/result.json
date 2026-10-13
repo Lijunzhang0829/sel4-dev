@@ -1,0 +1,13 @@
+{
+ "lemma": "abd_reads",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "ERROR",
+ "orig_ms": 22974.7,
+ "rounds": [],
+ "target": "by (simp, blast?)+",
+ "B_sig": [],
+ "facts": [],
+ "error": "An error occurred while calling t._step_without_timeout"
+}

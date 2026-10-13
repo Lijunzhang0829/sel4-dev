@@ -1,0 +1,10 @@
+[init ok]
+[reached SAC_partsSubjectAffects_exceptT]
+== target: apply ((erule disjE, clarify, simp add:SAC_affects SAC_reads, blast?)+
+   orig_ms=7084  B: leave EXACTLY these 1 subgoal(s):
+1. x \<noteq> T \<Longrightarrow> pa
+  round 0: gen=91.6s (claude 43.6s) -> ['apply (simp add: SAC_affects SAC_reads)']
+  round 0: WRONG-STATE (10 subgoals)
+  round 1: gen=177.2s (claude 176.9s) -> ['apply (rule equalityI)', 'apply (clarsimp simp add: SAC_affects SAC_reads subjectAffects.affects_lrefl insert_subset subset_insertI)']
+  round 1: FAILED `apply (rule equalityI)` failed: failed for prove the goal using the t
+  round 2: gen=159.7s (claude 159.3s) -> ['apply (simp add: SAC_affects SAC_reads)', 'apply ((erule disjE, clarify, blast?)+, blast?)+']

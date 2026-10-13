@@ -1,0 +1,9 @@
+[init ok]
+[reached cap_insert_simple_arch_caps_no_ap]
+[cost-target] hottest of 2 classical lines: step6 = 27.4s DB; others=[0.2]
+== target line 6: by (auto simp:is_simple_cap_def[simplified is_simple_cap_arch_def] is_
+   facts: ['is_cap_simps', 'is_simple_cap_arch_def', 'is_simple_cap_def', 'simplified']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-cap_insert_simple_arch_caps_no_ap.json

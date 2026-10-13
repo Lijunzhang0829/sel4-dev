@@ -1,0 +1,7 @@
+[genstat-stateful] empty_slot_pas_refined @ proof/access-control/CNode_AC.thy
+[init ok]
+[reached empty_slot_pas_refined]
+== target: by (fastforce dest: all_childrenD is_transferable_all_children pas_ref
+   A_goal: (is_transferable_in (a, b) s \<or> (pasObjectAbs aag aa, Control, pasObjectAbs aag a) \<in> pasPolicy aag) \<and> (pasOb
+   B: close the goal (0 subgoals)
+  round 0: gen=400.5s (claude 400.1s) -> []

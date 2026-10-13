@@ -1,0 +1,21 @@
+[init ok]
+[reached valid_pspace_s0]
+== target: apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def
+   orig_ms=12107  B: leave EXACTLY these 3 subgoal(s):
+1. ex_nonz_cap_to 0xE0000200 s0_inte
+  round 0: gen=36.0s (claude 35.6s) -> ['apply (simp only: s0_internal_def kh0_def kh0_obj_def)', 'apply (force simp: cte_wp_at_cases s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)']
+  round 0: REACH-B variant_ms=23818 orig_ms=12107 saved=-11710.9 faster=False
+  round 1: gen=86.1s (claude 85.7s) -> ['apply (simp only: s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)', 'apply (force simp: cte_wp_at_cases)']
+  round 1: FAILED `apply (force simp: cte_wp_at_cases)` failed: failed for prove the goa
+  round 2: gen=31.5s (claude 31.1s) -> ['apply clarsimp', 'apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)']
+  round 2: REACH-B variant_ms=12137 orig_ms=12107 saved=-30.1 faster=False
+  round 3: gen=28.5s (claude 28.0s) -> ['apply (simp only: s0_internal_def kh0_def kh0_obj_def s0_ptr_defs the_nat_to_bl_def nat_to_bl_def)', 'apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def well_formed_cnode_n_def dom_empty_cnode)']
+  round 3: FAILED `apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def we
+  round 4: gen=38.0s (claude 37.8s) -> ['apply (simp only: s0_internal_def kh0_def kh0_obj_def s0_ptr_defs)', 'apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)']
+  round 4: FAILED `apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def th
+  round 5: gen=42.0s (claude 41.7s) -> ['apply (simp only: s0_internal_def kh0_def kh0_obj_def s0_ptr_defs)', 'apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)']
+  round 5: FAILED `apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def th
+  round 6: gen=33.0s (claude 32.3s) -> ['apply clarsimp', 'apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)']
+  round 6: REACH-B variant_ms=14445 orig_ms=12107 saved=-2337.7 faster=False
+  round 7: gen=121.1s (claude 120.9s) -> []
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-valid_pspace_s0-P25931.json  verdict=REACHED-B-NOT-FASTER

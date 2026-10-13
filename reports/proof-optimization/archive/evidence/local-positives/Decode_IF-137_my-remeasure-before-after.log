@@ -1,0 +1,5 @@
+[Decode_IF.thy:137 — my independent re-measurement, InfoFlow]
+AFTER(clarsimp,current)#1  OK (26078ms)
+AFTER(clarsimp,current)#2  OK (26605ms)
+BEFORE(fastforce,revert)#1 OK (29717ms)
+BEFORE(fastforce,revert)#2 OK (29697ms)

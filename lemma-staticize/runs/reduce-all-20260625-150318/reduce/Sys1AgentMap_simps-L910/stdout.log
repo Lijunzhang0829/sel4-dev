@@ -1,0 +1,20 @@
+[init ok]
+[reached Sys1AgentMap_simps]
+== target: by (auto simp: s0_ptr_defs ptr_range_def pageBits_def)
+   orig_ms=22412  B: close the goal (0 subgoals)
+  round 0: gen=30.5s (claude 30.3s) -> ['by (auto simp only: s0_ptr_defs ptr_range_def pageBits_def)']
+  round 0: FAILED `by (auto simp only: s0_ptr_defs ptr_range_def pageBits_def)` failed: 
+  round 1: gen=67.1s (claude 66.8s) -> ['apply (simp only: s0_ptr_defs ptr_range_def pageBits_def)', 'apply auto', 'done']
+  round 1: REACH-B variant_ms=20071 orig_ms=22412 saved=2340.8 faster=True
+  round 2: gen=55.5s (claude 55.4s) -> []
+  round 3: gen=65.5s (claude 65.0s) -> ['apply (simp only: s0_ptr_defs ptr_range_def pageBits_def)', 'apply auto', 'done']
+  round 3: REACH-B variant_ms=19987 orig_ms=22412 saved=2425.0 faster=True
+  round 4: gen=74.1s (claude 73.3s) -> ['apply (clarsimp simp: s0_ptr_defs ptr_range_def pageBits_def)+', 'done']
+  round 4: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 5: gen=31.0s (claude 30.9s) -> ['by (fastforce simp: s0_ptr_defs ptr_range_def pageBits_def)']
+  round 5: REACH-B variant_ms=21188 orig_ms=22412 saved=1224.3 faster=False
+  round 6: gen=47.0s (claude 46.9s) -> []
+  round 7: gen=75.1s (claude 74.6s) -> ['apply (simp only: ptr_range_def pageBits_def s0_ptr_defs)', 'apply auto']
+  round 7: REACH-B variant_ms=19748 orig_ms=22412 saved=2664.4 faster=True
+[WIN] 22412ms -> 19748ms  saved=2664.4ms (12%)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-Sys1AgentMap_simps-P25936.json  verdict=FASTER

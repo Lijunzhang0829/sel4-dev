@@ -1,0 +1,142 @@
+[
+ {
+  "lemma": "dmo_bind_ev'",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/Retype_IF.thy",
+  "proof_line": 93,
+  "tactic": "fastforce",
+  "elapsed": 13.0,
+  "file_lines": 575,
+  "line_text": " by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def re"
+ },
+ {
+  "lemma": "dmo_user_memory_update_reads_respects_g",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/UserOp_IF.thy",
+  "proof_line": 133,
+  "tactic": "fastforce",
+  "elapsed": 10.7,
+  "file_lines": 165,
+  "line_text": " apply (fastforce simp: equiv_valid_def2 equiv_valid_2_def in_monad do_machine_op_def user"
+ },
+ {
+  "lemma": "storeWord_equiv_but_for_labels",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchIpc_IF.thy",
+  "proof_line": 45,
+  "tactic": "fastforce",
+  "elapsed": 7.8,
+  "file_lines": 469,
+  "line_text": " apply (fastforce intro: is_aligned_no_wrap' word_plus_mono_right simp: is_aligned_mask fo"
+ },
+ {
+  "lemma": "perform_asid_control_invocation_silc_inv",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchFinalCaps.thy",
+  "proof_line": 229,
+  "tactic": "fastforce",
+  "elapsed": 6.8,
+  "file_lines": 341,
+  "line_text": " apply (fastforce intro: is_aligned_no_wrap' simp: blah)"
+ },
+ {
+  "lemma": "set_object_reads_respects_scheduler",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchScheduler_IF.thy",
+  "proof_line": 446,
+  "tactic": "auto",
+  "elapsed": 6.5,
+  "file_lines": 473,
+  "line_text": " by (auto simp: set_object_def bind_def get_def put_def return_def get_object_def assert_d"
+ },
+ {
+  "lemma": "dmo_loadWord_reads_respects",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchIpc_IF.thy",
+  "proof_line": 217,
+  "tactic": "fastforce",
+  "elapsed": 6.1,
+  "file_lines": 469,
+  "line_text": " apply (fastforce intro: is_aligned_no_wrap' word_plus_mono_right simp: is_aligned_mask fo"
+ },
+ {
+  "lemma": "dmo_bind_ev",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/Retype_IF.thy",
+  "proof_line": 87,
+  "tactic": "fastforce",
+  "elapsed": 5.4,
+  "file_lines": 575,
+  "line_text": " by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def re"
+ },
+ {
+  "lemma": "copy_mrs_reads_respects",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchIpc_IF.thy",
+  "proof_line": 321,
+  "tactic": "fastforce",
+  "elapsed": 4.2,
+  "file_lines": 469,
+  "line_text": " apply (fastforce simp: image_def)"
+ },
+ {
+  "lemma": "set_tcb_queue_reads_respects",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchFinalise_IF.thy",
+  "proof_line": 147,
+  "tactic": "force",
+  "elapsed": 4.0,
+  "file_lines": 386,
+  "line_text": " apply force"
+ },
+ {
+  "lemma": "invoke_tcb_irq_masks",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchIRQMasks_IF.thy",
+  "proof_line": 149,
+  "tactic": "fastforce",
+  "elapsed": 3.9,
+  "file_lines": 177,
+  "line_text": " by fastforce+"
+ },
+ {
+  "lemma": "decode_tcb_configure_authorised_helper",
+  "session": "Access",
+  "thy": "proof/access-control/Tcb_AC.thy",
+  "proof_line": 467,
+  "tactic": "auto",
+  "elapsed": 3.1,
+  "file_lines": 558,
+  "line_text": " apply (auto simp: aag_cap_auth_def update_cap_cli intro: update_cap_obj_refs_subset dest!"
+ },
+ {
+  "lemma": "decode_arch_invocation_authorised_for_globals",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchSyscall_IF.thy",
+  "proof_line": 171,
+  "tactic": "auto",
+  "elapsed": 3.1,
+  "file_lines": 185,
+  "line_text": " apply (auto simp: cap_range_def)"
+ },
+ {
+  "lemma": "perform_page_invocation_silc_inv",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchFinalCaps.thy",
+  "proof_line": 201,
+  "tactic": "fastforce",
+  "elapsed": 3.0,
+  "file_lines": 341,
+  "line_text": " apply (fastforce dest: is_arch_eq_pg_is_pt_or_pg_cap simp: silc_inv_def)"
+ },
+ {
+  "lemma": "equiv_asids_non_asid_pool_kheap_update",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/ARM/ArchInfoFlow_IF.thy",
+  "proof_line": 41,
+  "tactic": "fastforce",
+  "elapsed": 2.1,
+  "file_lines": 121,
+  "line_text": " apply (fastforce simp: equiv_asid'_def split: option.splits)"
+ }
+]

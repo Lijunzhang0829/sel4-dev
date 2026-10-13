@@ -1,0 +1,12 @@
+[genstat-stateful] retype_region_silc_inv @ proof/infoflow/FinalCaps.thy
+[init ok]
+[reached retype_region_silc_inv]
+== target: subgoal
+by (fastforce simp: default_object_def empty_cnode_def split: 
+   A_goal: cap = NullCap
+   B: reach EXACTLY this 2-subgoal state:
+1. \<And>s b cap p tcb getF setF restr. \<lb
+  round 0: gen=94.6s (claude 94.1s) -> ['apply (simp only: default_object_def empty_cnode_def split: apiobject_type.splits if_splits)']
+  round 0: WRONG-STATE wrong state (10 subgoals)
+  round 1: gen=278.4s (claude 223.3s) -> ['apply (simp only: default_object_def empty_cnode_def split: apiobject_type.splits if_splits)']
+  round 1: WRONG-STATE wrong state (10 subgoals)

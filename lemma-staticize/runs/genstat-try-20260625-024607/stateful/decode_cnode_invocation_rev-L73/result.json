@@ -1,0 +1,1 @@
+{"lemma": "decode_cnode_invocation_rev", "proof_line": 73, "verdict": "TIMEOUT", "reached_target": true, "llm_steps": 10, "orig_ms": null, "static_ms": null, "saved_ms": null, "accelerated": null}

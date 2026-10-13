@@ -1,0 +1,69 @@
+{
+ "lemma": "dmo_bind_ev'",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/Retype_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 23283.1,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (simp only: equiv_valid_def2 equiv_valid_2_def do_machine_op_def bind_def gets_def get_def select_f_def modify_def put_def return_def)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (1 subgoal):\n 1. (\\<forall>s t. P s \\<and> P t \\<and> I s t \\<and> A s t \\<longrightarrow> (\\<fo",
+   "gen_secs": 50.6,
+   "claude_secs": 50.3
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply (simp only: equiv_valid_def2 equiv_valid_2_def)",
+    "by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def return_def bind_def)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 19533.7,
+   "saved_ms": 3749.4,
+   "faster": true,
+   "gen_secs": 35.5,
+   "claude_secs": 35.1
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (simp only: equiv_valid_def2 equiv_valid_2_def)",
+    "by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def return_def bind_def)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 19459.8,
+   "saved_ms": 3823.3,
+   "faster": true,
+   "gen_secs": 46.6,
+   "claude_secs": 45.9
+  }
+ ],
+ "target": "by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def return_def bind_def equiv_valid_def2 equiv_valid_2_def)",
+ "B_sig": [],
+ "facts": [
+  "bind_def",
+  "do_machine_op_def",
+  "equiv_valid_2_def",
+  "equiv_valid_def2",
+  "get_def",
+  "gets_def",
+  "modify_def",
+  "put_def",
+  "return_def",
+  "select_f_def"
+ ],
+ "path": [
+  "apply (simp only: equiv_valid_def2 equiv_valid_2_def)",
+  "by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def return_def bind_def)"
+ ],
+ "variant_ms": 19459.8,
+ "saved_ms": 3823.3,
+ "frac_saved": 0.164,
+ "accelerated": true
+}

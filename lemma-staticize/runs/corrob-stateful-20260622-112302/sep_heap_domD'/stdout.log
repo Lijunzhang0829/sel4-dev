@@ -1,0 +1,26 @@
+[genstat-stateful] sep_heap_domD' @ proof/capDL-api/RWHelper_DP.thy
+[init ok]
+[reached sep_heap_domD']
+== target: by (fastforce simp:sep_heap_dom_def)
+   A_goal: m = dom (sep_heap s)
+   B: close the goal (0 subgoals)
+  step 0: 35.0s -> ['apply (simp only: sep_heap_dom_def[symmetric])', 'apply assumption']
+  step 0: FAILED `apply (simp only: sep_heap_dom_def[symmetric])` failed: failed for prove the go
+  step 1: 469.2s -> []
+  step 2: 63.1s -> ['apply (unfold sep_heap_dom_def)', 'apply (drule_tac x=s in spec)', 'apply (erule impE; assumption)']
+  step 2: FAILED `apply (erule impE; assumption)` failed: failed for prove the goal using the tac
+  step 3: 314.4s -> ['apply (drule (1) mp)', 'apply (rule sym)', 'apply assumption']
+  step 3: FAILED `apply (drule (1) mp)` failed: failed for prove the goal using the tactic `apply
+  step 4: 94.6s -> ['apply (unfold sep_heap_dom_def)', 'apply (drule_tac x=s in spec)', 'apply (erule impE)', 'apply assumption']
+  step 4: OK -> 1 subgoal(s); applied=['apply (unfold sep_heap_dom_def)', 'apply (drule_tac x=s in spec)', 'apply (erule impE)', 'apply assumption']
+  step 5: 123.7s -> ['apply assumption']
+  step 5: REPEAT-CHUNK (work already done)
+  step 6: 82.6s -> ['apply (erule sym)']
+  step 6: FAILED `apply (erule sym)` failed: failed for prove the goal using the tactic `apply (e
+  step 7: 400.6s -> []
+  step 8: 95.6s -> ['apply (rule sym)', 'apply assumption']
+  step 8: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 9: 400.6s -> []
+  step 10: 400.6s -> []
+  step 11: 400.6s -> []
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-sep_heap_domD'.json  verdict=CHANNEL-FAIL

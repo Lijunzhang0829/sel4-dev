@@ -1,0 +1,26 @@
+Loading theory "Draft.prof_validate2"
+ML_profilingkind=timeprofile_time:
+ML_profiling_entryname=Table().retrieve(4)find(1)count=1           1 Table().retrieve(4)find(1)
+ML_profiling_entryname=Table().retrieve(4)find(1)count=1           1 Table().retrieve(4)find(1)
+ML_profiling_entryname=eq-term(2)count=1           1 eq-term(2)
+ML_profiling_entryname=Library.~~(2)count=1           1 Library.~~(2)
+ML_profiling_entryname=Logic.list_implies(2)count=1           1 Logic.list_implies(2)
+ML_profiling_entryname=Envir.norm_term2(1)norm(1)count=1           1 Envir.norm_term2(1)norm(1)
+ML_profiling_entryname=Envir.head_norm(1)norm(1)count=1           1 Envir.head_norm(1)norm(1)
+ML_profiling_entryname=Seq.it_right(3)its(1)(1)count=1           1 Seq.it_right(3)its(1)(1)
+ML_profiling_entryname=Pattern.cases(4)count=1           1 Pattern.cases(4)
+ML_profiling_entryname=Term.could_unify(2)count=1           1 Term.could_unify(2)
+ML_profiling_entryname=Thm.bicompose_aux(10)count=1           1 Thm.bicompose_aux(10)
+ML_profiling_entryname=Thm.strip_assums2(3)count=1           1 Thm.strip_assums2(3)
+ML_profiling_entryname=Basics.#>(1)(1)count=1           1 Basics.#>(1)(1)
+ML_profiling_entryname=List.map(2)()count=1           1 List.map(2)()
+ML_profiling_entryname=Thm.norm_term_skip(3)count=1           1 Thm.norm_term_skip(3)
+ML_profiling_entryname=Seq.mapp(3)copy(1)count=1           1 Seq.mapp(3)copy(1)
+ML_profiling_entryname=UNKNOWNcount=1           1 UNKNOWN
+ML_profiling_entryname=Table().fold_table(1)fold(1)(1)count=2           2 Table().fold_table(1)fold(1)(1)
+ML_profiling_entryname=GARBAGE COLLECTION (total)count=9           9 GARBAGE COLLECTION (total)
+ML_profiling_entryname=GARBAGE COLLECTION (minor collection)count=9           9 GARBAGE COLLECTION (minor collection)
+          37 TOTAL
+### theory "Draft.prof_validate2"
+### 0.612s elapsed time, 0.691s cpu time, 0.124s GC time
+val it = (): unit

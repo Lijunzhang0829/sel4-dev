@@ -1,0 +1,10 @@
+{
+ "lemma": "dmo_device_state_update_reads_respects_g",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/UserOp_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "ERROR",
+ "orig_ms": null,
+ "rounds": [],
+ "error": ""
+}

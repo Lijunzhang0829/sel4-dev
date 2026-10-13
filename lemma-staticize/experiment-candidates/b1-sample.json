@@ -1,0 +1,301 @@
+{
+ "seed": 42,
+ "scope": "auto/fastforce/force commands (clarsimp-ablatable)",
+ "total_cpu_all": 33064.0,
+ "population_per_bucket": {
+  ">=10s": {
+   "cpu": 4604.0,
+   "n": 108
+  },
+  "5-10s": {
+   "cpu": 828.0,
+   "n": 117
+  },
+  "2-5s": {
+   "cpu": 760.0,
+   "n": 242
+  },
+  "0.5-2s": {
+   "cpu": 695.0,
+   "n": 712
+  }
+ },
+ "n_sample": 25,
+ "sample": [
+  {
+   "lemma": "final_cap_set_map",
+   "thy": "proof/drefine/KHeap_DR.thy",
+   "session": "DRefine",
+   "proof_line": 474,
+   "tactic": "auto",
+   "cpu_elapsed": 24.67,
+   "bucket": ">=10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by (auto simp: transform_cap_def cap_has_object_def cap_counts_def cdl_cap_irq_def split:"
+  },
+  {
+   "lemma": "swap_cap_corres",
+   "thy": "proof/drefine/Finalise_DR.thy",
+   "session": "DRefine",
+   "proof_line": 2937,
+   "tactic": "auto",
+   "cpu_elapsed": 10.54,
+   "bucket": ">=10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " apply (auto simp: map_lift_over_eq_Some inj_on_eq_iff[where f=transform_cslot_ptr] ranI d"
+  },
+  {
+   "lemma": "cap_insert_pas_refined",
+   "thy": "proof/access-control/CNode_AC.thy",
+   "session": "Access",
+   "proof_line": 1032,
+   "tactic": "fastforce",
+   "cpu_elapsed": 18.29,
+   "bucket": ">=10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by (fastforce split: if_split_asm simp: cte_wp_at_caps_of_state pas_refined_refl F[symmet"
+  },
+  {
+   "lemma": "next_sib",
+   "thy": "proof/invariant-abstract/Deterministic_AI.thy",
+   "session": "AInvs",
+   "proof_line": 3468,
+   "tactic": "force",
+   "cpu_elapsed": 23.77,
+   "bucket": ">=10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by ((intro impI conjI allI | drule next_sib_NoneD next_sibD' | simp add: next_sib_def rde"
+  },
+  {
+   "lemma": "s0H_pspace_distinct'",
+   "thy": "proof/infoflow/refine/ARM/Example_Valid_StateH.thy",
+   "session": "InfoFlowC",
+   "proof_line": 1920,
+   "tactic": "fastforce",
+   "cpu_elapsed": 581.83,
+   "bucket": ">=10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by (simp | erule disjE | clarsimp simp: kh0H_dom_sets_distinct[THEN orthD1] | clarsimp si"
+  },
+  {
+   "lemma": "decodeTCBConfigure_ccorres",
+   "thy": "proof/crefine/ARM/Tcb_C.thy",
+   "session": "CRefine",
+   "proof_line": 3069,
+   "tactic": "auto",
+   "cpu_elapsed": 33.3,
+   "bucket": ">=10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " apply (auto split: option.split elim!: inl_inrE)[1]"
+  },
+  {
+   "lemma": "is_derived_cap_arch_asid_issues",
+   "thy": "proof/invariant-abstract/ARM/ArchCSpaceInv_AI.thy",
+   "session": "AInvs",
+   "proof_line": 198,
+   "tactic": "auto",
+   "cpu_elapsed": 13.96,
+   "bucket": ">=10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by (auto simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.sp"
+  },
+  {
+   "lemma": "invoke_cnode_silc_inv",
+   "thy": "proof/infoflow/FinalCaps.thy",
+   "session": "InfoFlow",
+   "proof_line": 1825,
+   "tactic": "fastforce",
+   "cpu_elapsed": 10.05,
+   "bucket": ">=10s",
+   "has_chain_or_simpwork": false,
+   "hot_line": " apply (fastforce simp: silc_inv_def authorised_cnode_inv_def)"
+  },
+  {
+   "lemma": "cap_move_pas_refined",
+   "thy": "proof/access-control/CNode_AC.thy",
+   "session": "Access",
+   "proof_line": 1082,
+   "tactic": "fastforce",
+   "cpu_elapsed": 6.33,
+   "bucket": "5-10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by (fastforce simp: is_transferable_weak_derived valid_mdb_def2 mdb_cte_at_def Option.is_"
+  },
+  {
+   "lemma": "device_update_invs",
+   "thy": "proof/invariant-abstract/AInvs.thy",
+   "session": "AInvs",
+   "proof_line": 64,
+   "tactic": "fastforce",
+   "cpu_elapsed": 6.41,
+   "bucket": "5-10s",
+   "has_chain_or_simpwork": false,
+   "hot_line": " apply fastforce"
+  },
+  {
+   "lemma": "troa_tro_alt",
+   "thy": "proof/access-control/Access_AC.thy",
+   "session": "Access",
+   "proof_line": 421,
+   "tactic": "fastforce",
+   "cpu_elapsed": 6.59,
+   "bucket": "5-10s",
+   "has_chain_or_simpwork": false,
+   "hot_line": " apply (find_goal \\<open>match premises in \"ko = Some (TCB _)\" \\<Rightarrow> succeed\\<clos"
+  },
+  {
+   "lemma": "corrupt_intents_no_pending",
+   "thy": "proof/capDL-api/Retype_DP.thy",
+   "session": "DSpecProofs",
+   "proof_line": 879,
+   "tactic": "auto",
+   "cpu_elapsed": 5.66,
+   "bucket": "5-10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " apply (auto split: option.splits cdl_object.splits if_splits simp: object_slots_def optio"
+  },
+  {
+   "lemma": "rescheduleRequired_ccorres_valid_queues'_simple",
+   "thy": "proof/crefine/ARM/IpcCancel_C.thy",
+   "session": "CRefine",
+   "proof_line": 2094,
+   "tactic": "auto",
+   "cpu_elapsed": 9.27,
+   "bucket": "5-10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by (auto simp: tcb_at_not_NULL tcb_at_1 tcb_at_not_NULL[THEN not_sym] tcb_at_1[THEN not_s"
+  },
+  {
+   "lemma": "cancelIPC_ccorres1",
+   "thy": "proof/crefine/ARM/IpcCancel_C.thy",
+   "session": "CRefine",
+   "proof_line": 2832,
+   "tactic": "auto",
+   "cpu_elapsed": 6.24,
+   "bucket": "5-10s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " subgoal by (auto simp: obj_at'_def projectKOs pred_tcb_at'_def invs'_def valid_state'_def"
+  },
+  {
+   "lemma": "retype_region_invs_extras",
+   "thy": "proof/invariant-abstract/Untyped_AI.thy",
+   "session": "AInvs",
+   "proof_line": 1340,
+   "tactic": "auto",
+   "cpu_elapsed": 2.48,
+   "bucket": "2-5s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " apply (wp hoare_strengthen_post [OF retype_region_post_retype_invs], auto simp: post_rety"
+  },
+  {
+   "lemma": "steps_preserves_equivalence",
+   "thy": "proof/infoflow/ADT_IF.thy",
+   "session": "InfoFlow",
+   "proof_line": 3088,
+   "tactic": "fastforce",
+   "cpu_elapsed": 2.33,
+   "bucket": "2-5s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by (fastforce elim: sub_big_steps.induct)"
+  },
+  {
+   "lemma": "gets_machine_state_revrv",
+   "thy": "proof/infoflow/InfoFlow_IF.thy",
+   "session": "InfoFlow",
+   "proof_line": 769,
+   "tactic": "fastforce",
+   "cpu_elapsed": 4.53,
+   "bucket": "2-5s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by (fastforce simp: equiv_valid_2_def gets_def get_def return_def bind_def elim: reads_eq"
+  },
+  {
+   "lemma": "cancelIPC_ccorres1",
+   "thy": "proof/crefine/ARM/IpcCancel_C.thy",
+   "session": "CRefine",
+   "proof_line": 2804,
+   "tactic": "auto",
+   "cpu_elapsed": 4.33,
+   "bucket": "2-5s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " subgoal by (auto simp: obj_at'_def projectKOs pred_tcb_at'_def invs'_def valid_state'_def"
+  },
+  {
+   "lemma": "receive_ipc_reads_respects",
+   "thy": "proof/infoflow/Ipc_IF.thy",
+   "session": "InfoFlow",
+   "proof_line": 1417,
+   "tactic": "fastforce",
+   "cpu_elapsed": 2.66,
+   "bucket": "2-5s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by (fastforce simp: aag_cap_auth_def cap_auth_conferred_def cap_rights_to_auth_def dest: "
+  },
+  {
+   "lemma": "fastpath_reply_recv_ccorres",
+   "thy": "proof/crefine/ARM/Fastpath_C.thy",
+   "session": "CRefine",
+   "proof_line": 3096,
+   "tactic": "fastforce",
+   "cpu_elapsed": 3.64,
+   "bucket": "2-5s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " apply (fastforce dest: tcbs_of_valid_tcb' simp: valid_tcb'_def opt_map_def split: option."
+  },
+  {
+   "lemma": "set_asid_pool_valid_arch_caps_map",
+   "thy": "proof/invariant-abstract/ARM/ArchVSpace_AI.thy",
+   "session": "AInvs",
+   "proof_line": 4771,
+   "tactic": "auto",
+   "cpu_elapsed": 1.48,
+   "bucket": "0.5-2s",
+   "has_chain_or_simpwork": false,
+   "hot_line": " apply (auto simp add: valid_cap_def is_pt_cap_def is_pd_cap_def obj_at_def a_type_def)[1]"
+  },
+  {
+   "lemma": "exclusive_cap_has_type",
+   "thy": "proof/capDL-api/Invocation_DP.thy",
+   "session": "DSpecProofs",
+   "proof_line": 751,
+   "tactic": "fastforce",
+   "cpu_elapsed": 0.79,
+   "bucket": "0.5-2s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " by (fastforce simp: default_cap_def cap_type_def safe_for_derive_def split: cdl_cap.split"
+  },
+  {
+   "lemma": "seL4_Untyped_Retype_inc_no_preempt",
+   "thy": "proof/capDL-api/Retype_DP.thy",
+   "session": "DSpecProofs",
+   "proof_line": 1234,
+   "tactic": "fastforce",
+   "cpu_elapsed": 1.55,
+   "bucket": "0.5-2s",
+   "has_chain_or_simpwork": false,
+   "hot_line": " apply fastforce"
+  },
+  {
+   "lemma": "chooseThread_ccorres",
+   "thy": "proof/crefine/ARM/Schedule_C.thy",
+   "session": "CRefine",
+   "proof_line": 306,
+   "tactic": "fastforce",
+   "cpu_elapsed": 0.52,
+   "bucket": "0.5-2s",
+   "has_chain_or_simpwork": true,
+   "hot_line": " apply (fastforce dest: lookupBitmapPriority_le_maxPriority)"
+  },
+  {
+   "lemma": "rel_terminate_weaken",
+   "thy": "proof/infoflow/ADT_IF.thy",
+   "session": "InfoFlow",
+   "proof_line": 1693,
+   "tactic": "force",
+   "cpu_elapsed": 0.94,
+   "bucket": "0.5-2s",
+   "has_chain_or_simpwork": false,
+   "hot_line": " by (force simp: rel_terminate_def)"
+  }
+ ]
+}

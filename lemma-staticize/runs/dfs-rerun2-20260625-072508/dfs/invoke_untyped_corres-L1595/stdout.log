@@ -1,0 +1,21 @@
+[init ok]
+[reached invoke_untyped_corres]
+== target line 98: apply (fastforce dest: ex_cte_cap_to_not_idle)
+   facts: ['add_mask_fold', 'bit.conj_absorb', 'ex_cte_cap_to_not_idle', 'invoke_untyped_proofs.blah(15)', 'invoke_untyped_proofs.simps(6)', 'mask_eq_exp_minus_1', 'pspace_no_overlap_subset', 'word_and_le2']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule impE)  [9sg] 1. \<And>s. \<lbrakk>ct_active s; valid_etcbs s; invs s
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [8sg] 1. \<And>s. \<lbrakk>reset \<longrightarrow> pspace_no_
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule invoke_untyped_proofs.blah(15))  [8sg] 1. \<And>s. \<lbrakk>reset \<longrightarrow> pspace_no_
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule invoke_untyped_proofs.blah(15))  [8sg] 1. \<And>s. \<lbrakk>reset \<longrightarrow> pspace_no_
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule invoke_untyped_proofs.simps(6))  [8sg] 1. \<And>s. \<lbrakk>reset \<longrightarrow> pspace_no_
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule invoke_untyped_proofs.simps(6))  [8sg] 1. \<And>s. \<lbrakk>reset \<longrightarrow> pspace_no_
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-invoke_untyped_corres-P25800.json

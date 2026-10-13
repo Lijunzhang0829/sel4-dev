@@ -1,0 +1,17 @@
+[profile] lemma=empty_slot_pas_refined session=Access
+[profile] file=/workspace/verification/l4v/proof/access-control/CNode_AC.thy
+[profile] wrapping lines 1103-1105:
+    ORIG:   by (fastforce dest: all_childrenD is_transferable_all_children
+                      pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable]
+                      pas_refined_Control)
+    WRAP:   by (time_profile \<open>(fastforce dest: all_childrenD is_transferable_all_children
+                      pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable]
+                      p
+[profile] patched theory: /tmp/prof__a41qjea/Tmp_prof_177cba88a179.thy
+[profile] running: isabelle process -l Access -T Tmp_prof_177cba88a179
+[profile] TIMEOUT after 1700s
+[profile] raw output -> /workspace/lemma-staticize/isa-repl/profiler/raw-empty_slot_pas_refined.out  (0 @@PROF lines)
+NO PROFILE DATA FOUND.
+(check that the tactic ran under time_profile and tracing was captured)
+
+

@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash .claude/skills/isabelle_prover/scripts/check-theory.sh:*)",
+      "Bash(bash .claude/skills/isabelle_prover/scripts/goal-at.sh:*)",
+      "Bash(bash .claude/skills/isabelle_prover/scripts/proof-timing.sh:*)",
+      "Bash(bash .claude/skills/isabelle_prover/scripts/scan-slow-proofs.sh:*)",
+      "Bash(bash .claude/skills/isabelle_prover/scripts/strengthen-proof.sh:*)",
+      "Bash(docker compose exec l4v:*)",
+      "Bash(docker compose -f docker-compose.yml exec l4v:*)",
+      "Bash(docker compose -f /home/lijun/seL4-docker-main/docker-compose.yml exec l4v:*)",
+      "Bash(python3:*)",
+      "Bash(python3 -c:*)",
+      "Bash(jq:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(mkdir -p:*)",
+      "Bash(rm -f:*)",
+      "Bash(rm -rf /tmp/:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git status:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git show:*)",
+      "Bash(git -C:*)",
+      "Bash(echo:*)",
+      "Bash(printf:*)",
+      "Bash(date:*)",
+      "Bash(diff:*)",
+      "Bash(realpath:*)"
+    ]
+  }
+}

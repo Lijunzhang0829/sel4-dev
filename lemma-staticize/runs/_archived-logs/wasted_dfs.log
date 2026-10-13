@@ -1,0 +1,25 @@
+[corrob] ARM=dfs  7 cases -> /home/lijun/seL4-docker-main/lemma-staticize/runs/corrob-dfs-20260623-092047
+==================== cap_insert_simple_arch_caps_no_ap (AInvs) ====================
+  -> NO-PATH  effort=0  88s
+==================== SAC_partsSubjectAffects_exceptT (InfoFlow) ====================
+  -> NO-PATH  effort=0  91s
+==================== refinement2_both (CRefine) ====================
+  -> (noresult)  effort=0  601s
+==================== requiv_user_mem_eq (InfoFlow) ====================
+  -> NO-PATH  effort=0  178s
+==================== requiv_device_mem_eq (InfoFlow) ====================
+  -> NO-PATH  effort=0  167s
+==================== abstract_invs (InfoFlowC) ====================
+  -> (noresult)  effort=0  600s
+==================== ckernel_invariant (Refine) ====================
+  -> (noresult)  effort=0  600s
+[corrob] DONE (dfs) -> /home/lijun/seL4-docker-main/lemma-staticize/runs/corrob-dfs-20260623-092047
+
+lemma                              session    verdict     effort  secs
+cap_insert_simple_arch_caps_no_ap  AInvs      NO-PATH     0       88
+SAC_partsSubjectAffects_exceptT    InfoFlow   NO-PATH     0       91
+refinement2_both                   CRefine    (noresult)  0       601
+requiv_user_mem_eq                 InfoFlow   NO-PATH     0       178
+requiv_device_mem_eq               InfoFlow   NO-PATH     0       167
+abstract_invs                      InfoFlowC  (noresult)  0       600
+ckernel_invariant                  Refine     (noresult)  0       600

@@ -1,0 +1,9 @@
+[genstat-stateful] requiv_device_mem_eq @ proof/infoflow/ARM/ArchUserOp_IF.thy
+[init ok]
+[reached requiv_device_mem_eq]
+== target: apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_ca
+   A_goal: \<forall>x\<in>ran (kheap s). obj_valid_pdpt x
+   B: reach EXACTLY this 2-subgoal state:
+1. \<And>sz. \<lbrakk>globals_equiv s s'; in
+  step 0: gen=364.9s (claude 75.9s) -> ['apply assumption']
+  step 0: OK -> 7 subgoal(s); applied=['apply assumption']

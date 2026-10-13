@@ -1,0 +1,20 @@
+[init ok]
+[reached dmo_user_memory_update_reads_respects_g]
+== target: apply (fastforce simp: equiv_valid_def2 equiv_valid_2_def in_monad do_
+   orig_ms=22178  B: leave EXACTLY these 1 subgoal(s):
+1. \<And>s t. \<lbrakk>affects_equiv
+  round 0: gen=44.6s (claude 44.0s) -> ['apply (clarsimp simp only: equiv_valid_def2)']
+  round 0: WRONG-STATE (2 subgoals)
+  round 1: gen=182.8s (claude 182.0s) -> ['apply (clarsimp simp: reads_respects_g_def reads_equiv_g_def globals_equiv_scheduler_def)']
+  round 1: FAILED `apply (clarsimp simp: reads_respects_g_def reads_equiv_g_def globals_
+  round 2: gen=35.0s (claude 35.0s) -> ['apply (simp only: equiv_valid_def2 equiv_valid_2_def)', 'apply (fastforce simp: in_monad do_machine_op_def user_memory_update_def select_f_def idle_equiv_def)']
+  round 2: REACH-B variant_ms=8162 orig_ms=22178 saved=14015.5 faster=True
+  round 3: gen=91.1s (claude 91.0s) -> ['apply (simp only: equiv_valid_def2 equiv_valid_2_def)', 'apply clarsimp']
+  round 3: WRONG-STATE (2 subgoals)
+  round 4: gen=204.3s (claude 204.1s) -> ['apply (clarsimp simp: equiv_valid_def2 equiv_valid_2_def in_monad do_machine_op_def user_memory_update_def select_f_def idle_equiv_def)', 'apply fast']
+  round 4: FAILED `apply fast` failed: failed for prove the goal using the tactic `apply
+  round 5: gen=36.6s (claude 36.2s) -> ['apply (simp only: equiv_valid_def2 equiv_valid_2_def)', 'apply (fastforce simp: in_monad do_machine_op_def user_memory_update_def select_f_def idle_equiv_def)']
+  round 5: REACH-B variant_ms=8755 orig_ms=22178 saved=13422.6 faster=True
+  round 6: gen=57.1s (claude 56.6s) -> ['apply (simp only: equiv_valid_def2 equiv_valid_2_def)']
+  round 6: WRONG-STATE (2 subgoals)
+  round 7: gen=165.2s (claude 164.9s) -> ['apply (fastforce simp only: equiv_valid_def2 equiv_valid_2_def in_monad do_machine_op_def user_memory_update_def select_f_def idle_equiv_def)']

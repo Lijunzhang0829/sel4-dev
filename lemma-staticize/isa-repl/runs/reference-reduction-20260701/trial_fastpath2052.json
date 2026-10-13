@@ -1,0 +1,46 @@
+{
+ "file": "Fastpath_C.thy",
+ "line": 2052,
+ "truncated": false,
+ "n_apply": 311,
+ "n_trying": 221,
+ "n_failed": 221,
+ "n_succeeded": 72,
+ "n_rewrite": 153,
+ "n_anyrule_oldmetric": 110527,
+ "n_unknown_anon": 110227,
+ "n_addrule": 110216,
+ "failed_frac_of_trials": 1.0,
+ "top_failed_rules": [
+  [
+   "SR_lemmas_C.ctes_of_not_0",
+   107
+  ],
+  [
+   "HOL.implies_True_equals",
+   61
+  ],
+  [
+   "Sublist.list_emb_Nil2",
+   51
+  ],
+  [
+   "Product_Type.prod.case",
+   1
+  ]
+ ],
+ "top_succeeded_rules": [
+  [
+   "HOL.implies_True_equals",
+   61
+  ],
+  [
+   "SR_lemmas_C.ctes_of_not_0",
+   7
+  ],
+  [
+   "Product_Type.prod.case",
+   3
+  ]
+ ]
+}

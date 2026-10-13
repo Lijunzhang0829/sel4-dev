@@ -1,0 +1,23 @@
+{
+ "lemma": "dmo_setExMonitor_reads_respects_g",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/ArchUserOp_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "NO-PATH",
+ "orig_ms": 10267.5,
+ "rounds": [],
+ "target": "apply (auto simp: reads_equiv_g_def reads_equiv_def affects_equiv_def states_equiv_for_def equiv_for_def equiv_asids_def equiv_asid_def globals_equiv_def idle_equiv_def split: if_splits)",
+ "B_sig": [],
+ "facts": [
+  "affects_equiv_def",
+  "equiv_asid_def",
+  "equiv_asids_def",
+  "equiv_for_def",
+  "globals_equiv_def",
+  "idle_equiv_def",
+  "if_splits",
+  "reads_equiv_def",
+  "reads_equiv_g_def",
+  "states_equiv_for_def"
+ ]
+}

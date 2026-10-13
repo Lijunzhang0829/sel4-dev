@@ -1,0 +1,9 @@
+[genstat-stateful] insert_cap_child_corres @ proof/drefine/CNode_DR.thy
+[init ok]
+[reached insert_cap_child_corres]
+== target: by (case_tac "cdt s' child", safe intro!: mdb_cte_atI; auto dest: mdb_
+   A_goal: (src = child \<longrightarrow> (Structures_A.is_untyped_cap capa \<and> Structures_A.is_untyped_cap cap \<and> obj_ref_o
+   B: close the goal (0 subgoals)
+  round 0: gen=193.2s (claude 162.1s) -> ['apply (case_tac "cdt s\' child")', 'apply (simp only: valid_mdb_def swp_def cte_wp_at_caps_of_state not_idle_thread_def)', 'apply (rule mdb_cte_atI)', 'apply (drule (1) mdb_cte_atD)', 'apply (drule is_untyped_cap_eqD)', 'apply assumption', 'done']
+  round 0: BUILD-FAIL `apply (rule mdb_cte_atI)` failed: failed for prove the goal using the tactic `a
+  round 1: gen=400.5s (claude 400.1s) -> []

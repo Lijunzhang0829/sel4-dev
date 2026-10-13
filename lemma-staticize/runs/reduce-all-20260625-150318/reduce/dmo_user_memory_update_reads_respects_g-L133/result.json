@@ -1,0 +1,1 @@
+{"lemma": "dmo_user_memory_update_reads_respects_g", "proof_line": 133, "verdict": "TIMEOUT", "reached_target": true, "llm_steps": 0, "orig_ms": null, "static_ms": null, "saved_ms": null, "accelerated": null}

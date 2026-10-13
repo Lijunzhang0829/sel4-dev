@@ -1,0 +1,656 @@
+Loading theory "Draft.Tmp_prof_8fb637ea3840"
+crunching constant: cap_swap_ext
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_ekheap:
+    \<lbrace>\<lambda>s. ?P (ekheap s)\<rbrace> update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ekheap s)\<rbrace>
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_ekheap:
+    \<lbrace>\<lambda>s. ?P (ekheap s)\<rbrace> update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ekheap s)\<rbrace>
+attempting: \<lbrace>\<lambda>s. P (ekheap s)\<rbrace>
+cap_swap_ext param_a param_b param_c param_d 
+\<lbrace>\<lambda>_ s. P (ekheap s)\<rbrace>
+crunching constant: cap_move_ext
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_ekheap:
+    \<lbrace>\<lambda>s. ?P (ekheap s)\<rbrace> update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ekheap s)\<rbrace>
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_ekheap:
+    \<lbrace>\<lambda>s. ?P (ekheap s)\<rbrace> update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ekheap s)\<rbrace>
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_ekheap:
+    \<lbrace>\<lambda>s. ?P (ekheap s)\<rbrace> update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ekheap s)\<rbrace>
+attempting: \<lbrace>\<lambda>s. P (ekheap s)\<rbrace>
+cap_move_ext param_a param_b param_c param_d 
+\<lbrace>\<lambda>_ s. P (ekheap s)\<rbrace>
+crunching constant: empty_slot_ext
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_ekheap:
+    \<lbrace>\<lambda>s. ?P (ekheap s)\<rbrace> update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ekheap s)\<rbrace>
+attempting: \<lbrace>\<lambda>s. P (ekheap s)\<rbrace> empty_slot_ext param_a param_b 
+\<lbrace>\<lambda>_ s. P (ekheap s)\<rbrace>
+proved:
+  cap_swap_ext_ekheap: \<lbrace>\<lambda>s. ?P (ekheap s)\<rbrace>
+                       cap_swap_ext ?param_a ?param_b ?param_c ?param_d 
+                       \<lbrace>\<lambda>_ s. ?P (ekheap s)\<rbrace>
+  cap_move_ext_ekheap: \<lbrace>\<lambda>s. ?P (ekheap s)\<rbrace>
+                       cap_move_ext ?param_a ?param_b ?param_c ?param_d 
+                       \<lbrace>\<lambda>_ s. ?P (ekheap s)\<rbrace>
+  empty_slot_ext_ekheap: \<lbrace>\<lambda>s. ?P (ekheap s)\<rbrace>
+                         empty_slot_ext ?param_a ?param_b 
+                         \<lbrace>\<lambda>_ s. ?P (ekheap s)\<rbrace>
+crunching constant: cap_swap_ext
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_rqueues:
+    \<lbrace>\<lambda>s. ?P (ready_queues s)\<rbrace>
+    update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ready_queues s)\<rbrace>
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_rqueues:
+    \<lbrace>\<lambda>s. ?P (ready_queues s)\<rbrace>
+    update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ready_queues s)\<rbrace>
+attempting: \<lbrace>\<lambda>s. P (ready_queues s)\<rbrace>
+cap_swap_ext param_a param_b param_c param_d 
+\<lbrace>\<lambda>_ s. P (ready_queues s)\<rbrace>
+crunching constant: cap_move_ext
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_rqueues:
+    \<lbrace>\<lambda>s. ?P (ready_queues s)\<rbrace>
+    update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ready_queues s)\<rbrace>
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_rqueues:
+    \<lbrace>\<lambda>s. ?P (ready_queues s)\<rbrace>
+    update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ready_queues s)\<rbrace>
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_rqueues:
+    \<lbrace>\<lambda>s. ?P (ready_queues s)\<rbrace>
+    update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ready_queues s)\<rbrace>
+attempting: \<lbrace>\<lambda>s. P (ready_queues s)\<rbrace>
+cap_move_ext param_a param_b param_c param_d 
+\<lbrace>\<lambda>_ s. P (ready_queues s)\<rbrace>
+crunching constant: empty_slot_ext
+crunching constant: update_cdt_list
+found a rule for this constant:
+  update_cdt_list_rqueues:
+    \<lbrace>\<lambda>s. ?P (ready_queues s)\<rbrace>
+    update_cdt_list ?param_a 
+    \<lbrace>\<lambda>_ s. ?P (ready_queues s)\<rbrace>
+attempting: \<lbrace>\<lambda>s. P (ready_queues s)\<rbrace>
+empty_slot_ext param_a param_b 
+\<lbrace>\<lambda>_ s. P (ready_queues s)\<rbrace>
+proved:
+  cap_swap_ext_ready_queues: \<lbrace>\<lambda>s.
+   ?P (ready_queues s)\<rbrace>
+                             cap_swap_ext ?param_a ?param_b ?param_c
+                              ?param_d 
+                             \<lbrace>\<lambda>_ s.
+   ?P (ready_queues s)\<rbrace>
+  cap_move_ext_ready_queues: \<lbrace>\<lambda>s.
+   ?P (ready_queues s)\<rbrace>
+                             cap_move_ext ?param_a ?param_b ?param_c
+                              ?param_d 
+                             \<lbrace>\<lambda>_ s.
+   ?P (ready_queues s)\<rbrace>
+  empty_slot_ext_ready_queues: \<lbrace>\<lambda>s.
+     ?P (ready_queues s)\<rbrace>
+                               empty_slot_ext ?param_a ?param_b 
+                               \<lbrace>\<lambda>_ s.
+     ?P (ready_queues s)\<rbrace>
+crunching constant: set_untyped_cap_as_full
+crunching constant: set_cap
+found a rule for this constant:
+  set_cap_integrity_autarch:
+    \<lbrace>integrity ?aag ?X ?st and
+             K (is_subject ?aag (fst ?slot))\<rbrace>
+    set_cap ?cap ?slot \<lbrace>\<lambda>_. integrity ?aag ?X ?st\<rbrace>
+attempting: \<lbrace>integrity aag X st and K (is_subject aag (fst param_c))\<rbrace>
+set_untyped_cap_as_full param_a param_b param_c 
+\<lbrace>\<lambda>_. integrity aag X st\<rbrace>
+proved:
+  set_untyped_cap_as_full_integrity_autarch: \<lbrace>integrity ?aag ?X
+                 ?st and
+                K (is_subject ?aag (fst ?param_c))\<rbrace>
+       set_untyped_cap_as_full ?param_a ?param_b ?param_c 
+       \<lbrace>\<lambda>_. integrity ?aag ?X ?st\<rbrace>
+locale CNode_AC_1
+  fixes aag :: "'a PAS"
+    and val_t :: "'b"
+  assumes "CNode_AC_1 TYPE('b) aag"
+### Ambiguous input (line 194 of "/tmp/prof_o9y1frit/Tmp_prof_8fb637ea3840.thy") produces 2 parse trees:
+### ("\<^const>HOL.Trueprop"
+###   ("\<^const>Invariants_AI.valid_cap_syn" ("_position" s)
+###     ("\<^const>Nondet_VCG.validE"
+###       ("\<^const>Fun_Pred_Syntax.pred_conj"
+###         ("_applC" ("_position" pas_refined) ("_position" aag))
+###         ("_applC" ("_position" K)
+###           ("\<^const>HOL.implies"
+###             ("_applC" ("_position" is_cnode_cap)
+###               ("_applC" ("_position" fst)
+###                 ("_tuple" ("_position" cap)
+###                   ("_tuple_arg" ("_position" cref)))))
+###             ("_Ball" ("_position" x)
+###               ("_applC" ("_position" obj_refs_ac)
+###                 ("_applC" ("_position" fst)
+###                   ("_tuple" ("_position" cap)
+###                     ("_tuple_arg" ("_position" cref)))))
+###               ("_applC" ("_position" is_subject)
+###                 ("_cargs" ("_position" aag) ("_position" x)))))))
+###       ("_applC" ("_position" resolve_address_bits)
+###         ("_tuple" ("_position" cap) ("_tuple_arg" ("_position" cref))))
+###       ("_lambda" ("_pttrns" ("_position" rv) ("_position" s))
+###         ("_applC" ("_position" is_subject)
+###           ("_cargs" ("_position" aag)
+###             ("_applC" ("_position" fst)
+###               ("_applC" ("_position" fst) ("_position" rv))))))
+###       ("_lambda" ("_position" rv) ("\<^const>Fun_Pred_Syntax.pred_top")))))
+### ("\<^const>HOL.Trueprop"
+###   ("\<^const>SpecValid_R.spec_validE" ("_position" s)
+###     ("\<^const>Fun_Pred_Syntax.pred_conj"
+###       ("_applC" ("_position" pas_refined) ("_position" aag))
+###       ("_applC" ("_position" K)
+###         ("\<^const>HOL.implies"
+###           ("_applC" ("_position" is_cnode_cap)
+###             ("_applC" ("_position" fst)
+###               ("_tuple" ("_position" cap)
+###                 ("_tuple_arg" ("_position" cref)))))
+###           ("_Ball" ("_position" x)
+###             ("_applC" ("_position" obj_refs_ac)
+###               ("_applC" ("_position" fst)
+###                 ("_tuple" ("_position" cap)
+###                   ("_tuple_arg" ("_position" cref)))))
+###             ("_applC" ("_position" is_subject)
+###               ("_cargs" ("_position" aag) ("_position" x)))))))
+###     ("_applC" ("_position" resolve_address_bits)
+###       ("_tuple" ("_position" cap) ("_tuple_arg" ("_position" cref))))
+###     ("_lambda" ("_pttrns" ("_position" rv) ("_position" s))
+###       ("_applC" ("_position" is_subject)
+###         ("_cargs" ("_position" aag)
+###           ("_applC" ("_position" fst)
+###             ("_applC" ("_position" fst) ("_position" rv))))))
+###     ("_lambda" ("_position" rv) ("\<^const>Fun_Pred_Syntax.pred_top"))))
+### Fortunately, only one parse tree is well-formed and type-correct,
+### but you may still want to disambiguate your grammar or your input.
+### Ambiguous input (line 201 of "/tmp/prof_o9y1frit/Tmp_prof_8fb637ea3840.thy") produces 2 parse trees:
+### ("\<^const>Pure.all_binder"
+###   ("_idts" ("_position" s)
+###     ("_idts" ("_position" f) ("_idts" ("_position" P) ("_position" Q))))
+###   ("\<^const>HOL.Trueprop"
+###     ("\<^const>Invariants_AI.valid_cap_syn" ("_position" s)
+###       ("\<^const>Nondet_VCG.validE" ("_position" P)
+###         ("_applC" ("_position" throwError) ("_position" f)) ("_position" Q)
+###         ("_lambda" ("_pttrns" ("_position" rv) ("_position" s))
+###           ("_position" True))))))
+### ("\<^const>Pure.all_binder"
+###   ("_idts" ("_position" s)
+###     ("_idts" ("_position" f) ("_idts" ("_position" P) ("_position" Q))))
+###   ("\<^const>HOL.Trueprop"
+###     ("\<^const>SpecValid_R.spec_validE" ("_position" s) ("_position" P)
+###       ("_applC" ("_position" throwError) ("_position" f)) ("_position" Q)
+###       ("_lambda" ("_pttrns" ("_position" rv) ("_position" s))
+###         ("_position" True)))))
+### Fortunately, only one parse tree is well-formed and type-correct,
+### but you may still want to disambiguate your grammar or your input.
+locale CNode_AC_1
+  fixes aag :: "'a PAS"
+    and val_t :: "'b"
+  assumes "CNode_AC_1 TYPE('b) aag"
+locale CNode_AC_1
+  fixes aag :: "'a PAS"
+    and val_t :: "'b"
+  assumes "CNode_AC_1 TYPE('b) aag"
+locale CNode_AC_1
+  fixes aag :: "'a PAS"
+    and val_t :: "'b"
+  assumes "CNode_AC_1 TYPE('b) aag"
+crunching constant: deleted_irq_handler
+crunching constant: set_irq_state
+found a rule for this constant:
+  set_irq_state_respects:
+    \<lbrace>integrity aag ?X ?st and K (is_subject_irq aag ?irq)\<rbrace>
+    set_irq_state ?irqst ?irq 
+    \<lbrace>\<lambda>_. integrity aag ?X ?st\<rbrace>
+attempting: \<lbrace>integrity aag X st and K (is_subject_irq aag param_a)\<rbrace>
+deleted_irq_handler param_a \<lbrace>\<lambda>_. integrity aag X st\<rbrace>
+proved:
+  deleted_irq_handler_respects: \<lbrace>integrity aag ?X ?st and
+   K (is_subject_irq aag ?param_a)\<rbrace>
+                                deleted_irq_handler ?param_a 
+                                \<lbrace>\<lambda>_.
+      integrity aag ?X ?st\<rbrace>
+### Ambiguous input (line 461 of "/tmp/prof_o9y1frit/Tmp_prof_8fb637ea3840.thy") produces 2 parse trees:
+### ("\<^const>HOL.Trueprop"
+###   ("\<^const>SpecValid_R.spec_valid" ("_position" s)
+###     ("\<^const>Fun_Pred_Syntax.pred_conj"
+###       ("\<^const>Fun_Pred_Syntax.pred_conj"
+###         ("\<^const>Fun_Pred_Syntax.pred_conj"
+###           ("\<^const>Fun_Pred_Syntax.pred_conj" ("_position" valid_list)
+###             ("_position" valid_mdb))
+###           ("_position" valid_objs))
+###         ("_applC" ("_position" pas_refined) ("_position" aag)))
+###       ("_applC" ("_position" K)
+###         ("\<^const>HOL.conj"
+###           ("_applC" ("_position" is_subject)
+###             ("_cargs" ("_position" aag)
+###               ("_applC" ("_position" fst) ("_position" slot))))
+###           ("_applC" ("_position" cleanup_info_wf)
+###             ("_cargs" ("_position" cleanup_info) ("_position" aag))))))
+###     ("_applC" ("_position" empty_slot)
+###       ("_cargs" ("_position" slot) ("_position" cleanup_info)))
+###     ("_lambda" ("_idtdummy")
+###       ("_applC" ("_position" integrity)
+###         ("_cargs" ("_position" aag)
+###           ("_cargs" ("_position" X) ("_position" s)))))))
+### ("\<^const>HOL.Trueprop"
+###   ("\<^const>Invariants_AI.valid_cap_syn" ("_position" s)
+###     ("\<^const>Nondet_VCG.valid"
+###       ("\<^const>Fun_Pred_Syntax.pred_conj"
+###         ("\<^const>Fun_Pred_Syntax.pred_conj"
+###           ("\<^const>Fun_Pred_Syntax.pred_conj"
+###             ("\<^const>Fun_Pred_Syntax.pred_conj" ("_position" valid_list)
+###               ("_position" valid_mdb))
+###             ("_position" valid_objs))
+###           ("_applC" ("_position" pas_refined) ("_position" aag)))
+###         ("_applC" ("_position" K)
+###           ("\<^const>HOL.conj"
+###             ("_applC" ("_position" is_subject)
+###               ("_cargs" ("_position" aag)
+###                 ("_applC" ("_position" fst) ("_position" slot))))
+###             ("_applC" ("_position" cleanup_info_wf)
+###               ("_cargs" ("_position" cleanup_info) ("_position" aag))))))
+###       ("_applC" ("_position" empty_slot)
+###         ("_cargs" ("_position" slot) ("_position" cleanup_info)))
+###       ("_lambda" ("_idtdummy")
+###         ("_applC" ("_position" integrity)
+###           ("_cargs" ("_position" aag)
+###             ("_cargs" ("_position" X) ("_position" s))))))))
+### Fortunately, only one parse tree is well-formed and type-correct,
+### but you may still want to disambiguate your grammar or your input.
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (cdt s)\<rbrace> set_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (cdt s)\<rbrace>
+crunching constant: update_cdt_list
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (cdt s)\<rbrace> update_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (cdt s)\<rbrace>
+proved:
+  set_cdt_list_cdt: \<lbrace>\<lambda>s. ?P (cdt s)\<rbrace>
+                    set_cdt_list ?param_a 
+                    \<lbrace>\<lambda>_ s. ?P (cdt s)\<rbrace>
+  update_cdt_list_cdt: \<lbrace>\<lambda>s. ?P (cdt s)\<rbrace>
+                       update_cdt_list ?param_a 
+                       \<lbrace>\<lambda>_ s. ?P (cdt s)\<rbrace>
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (kheap s)\<rbrace> set_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (kheap s)\<rbrace>
+crunching constant: update_cdt_list
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (kheap s)\<rbrace> update_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (kheap s)\<rbrace>
+proved:
+  set_cdt_list_kheap: \<lbrace>\<lambda>s. ?P (kheap s)\<rbrace>
+                      set_cdt_list ?param_a 
+                      \<lbrace>\<lambda>_ s. ?P (kheap s)\<rbrace>
+  update_cdt_list_kheap: \<lbrace>\<lambda>s. ?P (kheap s)\<rbrace>
+                         update_cdt_list ?param_a 
+                         \<lbrace>\<lambda>_ s. ?P (kheap s)\<rbrace>
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (valid_mdb s)\<rbrace> set_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (valid_mdb s)\<rbrace>
+crunching constant: update_cdt_list
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (valid_mdb s)\<rbrace> update_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (valid_mdb s)\<rbrace>
+proved:
+  set_cdt_list_valid_mdb: \<lbrace>\<lambda>s. ?P (valid_mdb s)\<rbrace>
+                          set_cdt_list ?param_a 
+                          \<lbrace>\<lambda>_ s. ?P (valid_mdb s)\<rbrace>
+  update_cdt_list_valid_mdb: \<lbrace>\<lambda>s. ?P (valid_mdb s)\<rbrace>
+                             update_cdt_list ?param_a 
+                             \<lbrace>\<lambda>_ s.
+   ?P (valid_mdb s)\<rbrace>
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (valid_objs s)\<rbrace> set_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (valid_objs s)\<rbrace>
+crunching constant: update_cdt_list
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (valid_objs s)\<rbrace> update_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (valid_objs s)\<rbrace>
+proved:
+  set_cdt_list_valid_objs: \<lbrace>\<lambda>s. ?P (valid_objs s)\<rbrace>
+                           set_cdt_list ?param_a 
+                           \<lbrace>\<lambda>_ s. ?P (valid_objs s)\<rbrace>
+  update_cdt_list_valid_objs: \<lbrace>\<lambda>s.
+    ?P (valid_objs s)\<rbrace>
+                              update_cdt_list ?param_a 
+                              \<lbrace>\<lambda>_ s.
+    ?P (valid_objs s)\<rbrace>
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>
+crunching constant: update_cdt_list
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (arch_state s)\<rbrace> update_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>
+proved:
+  set_cdt_list_arch_state: \<lbrace>\<lambda>s. ?P (arch_state s)\<rbrace>
+                           set_cdt_list ?param_a 
+                           \<lbrace>\<lambda>_ s. ?P (arch_state s)\<rbrace>
+  update_cdt_list_arch_state: \<lbrace>\<lambda>s.
+    ?P (arch_state s)\<rbrace>
+                              update_cdt_list ?param_a 
+                              \<lbrace>\<lambda>_ s.
+    ?P (arch_state s)\<rbrace>
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (thread_st_auth s)\<rbrace> set_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (thread_st_auth s)\<rbrace>
+crunching constant: update_cdt_list
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (thread_st_auth s)\<rbrace> update_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (thread_st_auth s)\<rbrace>
+proved:
+  set_cdt_list_thread_st_auth: \<lbrace>\<lambda>s.
+     ?P (thread_st_auth s)\<rbrace>
+                               set_cdt_list ?param_a 
+                               \<lbrace>\<lambda>_ s.
+     ?P (thread_st_auth s)\<rbrace>
+  update_cdt_list_thread_st_auth: \<lbrace>\<lambda>s.
+        ?P (thread_st_auth s)\<rbrace>
+                                  update_cdt_list ?param_a 
+                                  \<lbrace>\<lambda>_ s.
+        ?P (thread_st_auth s)\<rbrace>
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (caps_of_state s)\<rbrace> set_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (caps_of_state s)\<rbrace>
+crunching constant: update_cdt_list
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (caps_of_state s)\<rbrace> update_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (caps_of_state s)\<rbrace>
+proved:
+  set_cdt_list_caps_of_state: \<lbrace>\<lambda>s.
+    ?P (caps_of_state s)\<rbrace>
+                              set_cdt_list ?param_a 
+                              \<lbrace>\<lambda>_ s.
+    ?P (caps_of_state s)\<rbrace>
+  update_cdt_list_caps_of_state: \<lbrace>\<lambda>s.
+       ?P (caps_of_state s)\<rbrace>
+                                 update_cdt_list ?param_a 
+                                 \<lbrace>\<lambda>_ s.
+       ?P (caps_of_state s)\<rbrace>
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (is_original_cap s)\<rbrace> set_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (is_original_cap s)\<rbrace>
+crunching constant: update_cdt_list
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (is_original_cap s)\<rbrace> update_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (is_original_cap s)\<rbrace>
+proved:
+  set_cdt_list_is_original_cap: \<lbrace>\<lambda>s.
+      ?P (is_original_cap s)\<rbrace>
+                                set_cdt_list ?param_a 
+                                \<lbrace>\<lambda>_ s.
+      ?P (is_original_cap s)\<rbrace>
+  update_cdt_list_is_original_cap: \<lbrace>\<lambda>s.
+         ?P (is_original_cap s)\<rbrace>
+                                   update_cdt_list ?param_a 
+                                   \<lbrace>\<lambda>_ s.
+         ?P (is_original_cap s)\<rbrace>
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (interrupt_irq_node s)\<rbrace> set_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (interrupt_irq_node s)\<rbrace>
+crunching constant: update_cdt_list
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (interrupt_irq_node s)\<rbrace>
+update_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (interrupt_irq_node s)\<rbrace>
+proved:
+  set_cdt_list_interrupt_irq_node: \<lbrace>\<lambda>s.
+         ?P (interrupt_irq_node s)\<rbrace>
+                                   set_cdt_list ?param_a 
+                                   \<lbrace>\<lambda>_ s.
+         ?P (interrupt_irq_node s)\<rbrace>
+  update_cdt_list_interrupt_irq_node: \<lbrace>\<lambda>s.
+            ?P (interrupt_irq_node s)\<rbrace>
+update_cdt_list ?param_a 
+\<lbrace>\<lambda>_ s. ?P (interrupt_irq_node s)\<rbrace>
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (thread_bound_ntfns s)\<rbrace> set_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (thread_bound_ntfns s)\<rbrace>
+crunching constant: update_cdt_list
+crunching constant: set_cdt_list
+attempting: \<lbrace>\<lambda>s. P (thread_bound_ntfns s)\<rbrace>
+update_cdt_list param_a 
+\<lbrace>\<lambda>_ s. P (thread_bound_ntfns s)\<rbrace>
+proved:
+  set_cdt_list_thread_bound_ntfns: \<lbrace>\<lambda>s.
+         ?P (thread_bound_ntfns s)\<rbrace>
+                                   set_cdt_list ?param_a 
+                                   \<lbrace>\<lambda>_ s.
+         ?P (thread_bound_ntfns s)\<rbrace>
+  update_cdt_list_thread_bound_ntfns: \<lbrace>\<lambda>s.
+            ?P (thread_bound_ntfns s)\<rbrace>
+update_cdt_list ?param_a 
+\<lbrace>\<lambda>_ s. ?P (thread_bound_ntfns s)\<rbrace>
+locale CNode_AC_2
+  fixes aag :: "'a PAS"
+    and val_t :: "'b"
+  assumes "CNode_AC_2 TYPE('b) aag"
+crunching constant: set_original
+attempting: \<lbrace>\<lambda>s. P (tcb_domain_map_wellformed aag s)\<rbrace>
+set_original param_a param_b 
+\<lbrace>\<lambda>_ s. P (tcb_domain_map_wellformed aag s)\<rbrace>
+proved:
+  set_original_tcb_domain_map_wellformed: \<lbrace>\<lambda>s.
+                ?P (tcb_domain_map_wellformed aag s)\<rbrace>
+    set_original ?param_a ?param_b 
+    \<lbrace>\<lambda>_ s. ?P (tcb_domain_map_wellformed aag s)\<rbrace>
+crunching constant: set_original
+attempting: \<lbrace>\<lambda>s. P (state_irqs_to_policy aag s)\<rbrace>
+set_original param_a param_b 
+\<lbrace>\<lambda>_ s. P (state_irqs_to_policy aag s)\<rbrace>
+proved:
+  set_original_state_irqs_to_policy: \<lbrace>\<lambda>s.
+           ?P (state_irqs_to_policy aag s)\<rbrace>
+                                     set_original ?param_a ?param_b 
+                                     \<lbrace>\<lambda>_ s.
+           ?P (state_irqs_to_policy aag s)\<rbrace>
+crunching constant: set_original
+attempting: \<lbrace>\<lambda>s. P (cdt_change_allowed' aag slot s)\<rbrace>
+set_original param_a param_b 
+\<lbrace>\<lambda>_ s. P (cdt_change_allowed' aag slot s)\<rbrace>
+proved:
+  set_original_cdt_change_allowed: \<lbrace>\<lambda>s.
+         ?P (cdt_change_allowed' aag ?slot s)\<rbrace>
+                                   set_original ?param_a ?param_b 
+                                   \<lbrace>\<lambda>_ s.
+         ?P (cdt_change_allowed' aag ?slot s)\<rbrace>
+crunching constant: set_original
+attempting: \<lbrace>\<lambda>s. P (irq_map_wellformed aag s)\<rbrace>
+set_original param_a param_b 
+\<lbrace>\<lambda>_ s. P (irq_map_wellformed aag s)\<rbrace>
+proved:
+  set_original_irq_map_wellformed: \<lbrace>\<lambda>s.
+         ?P (irq_map_wellformed aag s)\<rbrace>
+                                   set_original ?param_a ?param_b 
+                                   \<lbrace>\<lambda>_ s.
+         ?P (irq_map_wellformed aag s)\<rbrace>
+crunching constant: set_original
+attempting: \<lbrace>\<lambda>s. P (pas_refined aag s)\<rbrace>
+set_original param_a param_b 
+\<lbrace>\<lambda>_ s. P (pas_refined aag s)\<rbrace>
+proved:
+  set_original_pas_refined: \<lbrace>\<lambda>s.
+  ?P (pas_refined aag s)\<rbrace>
+                            set_original ?param_a ?param_b 
+                            \<lbrace>\<lambda>_ s.
+  ?P (pas_refined aag s)\<rbrace>
+crunching constant: set_original
+attempting: \<lbrace>\<lambda>s. P (valid_objs s)\<rbrace> set_original param_a param_b 
+\<lbrace>\<lambda>_ s. P (valid_objs s)\<rbrace>
+proved:
+  set_original_valid_objs: \<lbrace>\<lambda>s. ?P (valid_objs s)\<rbrace>
+                           set_original ?param_a ?param_b 
+                           \<lbrace>\<lambda>_ s. ?P (valid_objs s)\<rbrace>
+crunching constant: set_original
+attempting: \<lbrace>cte_wp_at P slot\<rbrace> set_original param_a param_b 
+\<lbrace>\<lambda>_. cte_wp_at P slot\<rbrace>
+proved:
+  set_original_cte_wp_at: \<lbrace>cte_wp_at ?P ?slot\<rbrace>
+                          set_original ?param_a ?param_b 
+                          \<lbrace>\<lambda>_. cte_wp_at ?P ?slot\<rbrace>
+locale CNode_AC_2
+  fixes aag :: "'a PAS"
+    and val_t :: "'b"
+  assumes "CNode_AC_2 TYPE('b) aag"
+crunching constant: deleted_irq_handler
+crunching constant: set_irq_state
+crunching constant: do_machine_op
+attempting: \<lbrace>pas_refined aag\<rbrace> do_machine_op param_a 
+\<lbrace>\<lambda>_. pas_refined aag\<rbrace>
+crunching constant: maskInterrupt
+The constant MachineOps.ARM.maskInterrupt has the wrong type and is being ignored
+attempting: \<lbrace>pas_refined aag\<rbrace> set_irq_state param_a param_b 
+\<lbrace>\<lambda>_. pas_refined aag\<rbrace>
+attempting: \<lbrace>pas_refined aag\<rbrace> deleted_irq_handler param_a 
+\<lbrace>\<lambda>_. pas_refined aag\<rbrace>
+proved:
+  deleted_irq_handler_pas_refined: \<lbrace>pas_refined aag\<rbrace>
+                                   deleted_irq_handler ?param_a 
+                                   \<lbrace>\<lambda>_.
+         pas_refined aag\<rbrace>
+  set_irq_state_pas_refined: \<lbrace>pas_refined aag\<rbrace>
+                             set_irq_state ?param_a ?param_b 
+                             \<lbrace>\<lambda>_. pas_refined aag\<rbrace>
+  do_machine_op_pas_refined: \<lbrace>pas_refined aag\<rbrace>
+                             do_machine_op ?param_a 
+                             \<lbrace>\<lambda>_. pas_refined aag\<rbrace>
+crunching constant: set_untyped_cap_as_full
+crunching constant: set_cap
+found a rule for this constant:
+  set_cap_pas_refined:
+    \<lbrace>pas_refined aag and pspace_aligned and valid_vspace_objs and
+             valid_arch_state and
+             (\<lambda>s.
+                 is_transferable_in ?ptr s \<and>
+                 \<not> Option.is_none (cdt s ?ptr) \<longrightarrow>
+                 is_transferable_cap ?cap \<or>
+                 (pasObjectAbs aag (fst $ the $ cdt s ?ptr), Control,
+                  pasObjectAbs aag (fst ?ptr))
+                 \<in> pasPolicy aag) and
+             K (aag_cap_auth aag (pasObjectAbs aag (fst ?ptr))
+                 ?cap)\<rbrace>
+    set_cap ?cap ?ptr \<lbrace>\<lambda>_. pas_refined aag\<rbrace>
+attempting: \<lbrace>pas_refined aag and
+         (pspace_aligned and valid_vspace_objs and valid_arch_state and
+          (\<lambda>s.
+              is_transferable_in param_c s \<and>
+              \<not> Option.is_none (cdt s param_c) \<longrightarrow>
+              is_transferable_cap (max_free_index_update param_a) \<or>
+              (pasObjectAbs aag (fst $ the $ cdt s param_c), Control,
+               pasObjectAbs aag (fst param_c))
+              \<in> pasPolicy aag) and
+          K (aag_cap_auth aag (pasObjectAbs aag (fst param_c))
+              (max_free_index_update param_a)))\<rbrace>
+set_untyped_cap_as_full param_a param_b param_c 
+\<lbrace>\<lambda>_. pas_refined aag\<rbrace>
+proved:
+  set_untyped_cap_as_full_pas_refined: \<lbrace>pas_refined aag and
+          (pspace_aligned and valid_vspace_objs and valid_arch_state and
+           (\<lambda>s.
+               is_transferable_in ?param_c s \<and>
+               \<not> Option.is_none (cdt s ?param_c) \<longrightarrow>
+               is_transferable_cap (max_free_index_update ?param_a) \<or>
+               (pasObjectAbs aag (fst $ the $ cdt s ?param_c), Control,
+                pasObjectAbs aag (fst ?param_c))
+               \<in> pasPolicy aag) and
+           K (aag_cap_auth aag (pasObjectAbs aag (fst ?param_c))
+               (max_free_index_update ?param_a)))\<rbrace>
+ set_untyped_cap_as_full ?param_a ?param_b ?param_c 
+ \<lbrace>\<lambda>_. pas_refined aag\<rbrace>
+crunching constant: set_cdt
+attempting: \<lbrace>\<lambda>s. P (thread_st_auth s)\<rbrace> set_cdt param_a 
+\<lbrace>\<lambda>_ s. P (thread_st_auth s)\<rbrace>
+proved:
+  set_cdt_thread_st_auth: \<lbrace>\<lambda>s.
+?P (thread_st_auth s)\<rbrace>
+                          set_cdt ?param_a 
+                          \<lbrace>\<lambda>_ s.
+?P (thread_st_auth s)\<rbrace>
+crunching constant: set_cdt
+attempting: \<lbrace>\<lambda>s. P (thread_bound_ntfns s)\<rbrace> set_cdt param_a 
+\<lbrace>\<lambda>_ s. P (thread_bound_ntfns s)\<rbrace>
+proved:
+  set_cdt_thread_bound_ntfns: \<lbrace>\<lambda>s.
+    ?P (thread_bound_ntfns s)\<rbrace>
+                              set_cdt ?param_a 
+                              \<lbrace>\<lambda>_ s.
+    ?P (thread_bound_ntfns s)\<rbrace>
+locale CNode_AC_3
+  fixes aag :: "'a PAS"
+    and val_t :: "'b"
+  assumes "CNode_AC_3 TYPE('b) aag"
+crunching constant: set_original
+attempting: \<lbrace>pspace_aligned\<rbrace> set_original param_a param_b 
+\<lbrace>\<lambda>_. pspace_aligned\<rbrace>
+crunching constant: set_cdt
+found a rule for this constant:
+  set_cdt_aligned:
+    \<lbrace>pspace_aligned\<rbrace> set_cdt ?param_a 
+    \<lbrace>\<lambda>_. pspace_aligned\<rbrace>
+proved:
+  set_original_pspace_aligned: \<lbrace>pspace_aligned\<rbrace>
+                               set_original ?param_a ?param_b 
+                               \<lbrace>\<lambda>_. pspace_aligned\<rbrace>
+crunching constant: set_original
+attempting: \<lbrace>valid_vspace_objs\<rbrace> set_original param_a param_b 
+\<lbrace>\<lambda>_. valid_vspace_objs\<rbrace>
+crunching constant: set_cdt
+found a rule for this constant:
+  set_cdt_vspace_objs:
+    \<lbrace>valid_vspace_objs\<rbrace> set_cdt ?param_a 
+    \<lbrace>\<lambda>_. valid_vspace_objs\<rbrace>
+proved:
+  set_original_valid_vspace_objs: \<lbrace>valid_vspace_objs\<rbrace>
+                                  set_original ?param_a ?param_b 
+                                  \<lbrace>\<lambda>_.
+        valid_vspace_objs\<rbrace>
+crunching constant: set_original
+attempting: \<lbrace>valid_arch_state\<rbrace> set_original param_a param_b 
+\<lbrace>\<lambda>_. valid_arch_state\<rbrace>
+crunching constant: set_cdt
+attempting: \<lbrace>valid_arch_state\<rbrace> set_cdt param_a 
+\<lbrace>\<lambda>_. valid_arch_state\<rbrace>
+proved:
+  set_original_valid_arch_state: \<lbrace>valid_arch_state\<rbrace>
+                                 set_original ?param_a ?param_b 
+                                 \<lbrace>\<lambda>_.
+       valid_arch_state\<rbrace>
+  set_cdt_valid_arch_state: \<lbrace>valid_arch_state\<rbrace>
+                            set_cdt ?param_a 
+                            \<lbrace>\<lambda>_. valid_arch_state\<rbrace>
+ML_profilingkind=timeprofile_time:
+ML_profiling_entryname=Term.fold_term_types(2)count=1           1 Term.fold_term_types(2)
+ML_profiling_entryname=UNKNOWNcount=1           1 UNKNOWN
+           2 TOTAL
+ML_profilingkind=timeprofile_time:
+ML_profiling_entryname=Term.fold_term_types(2)count=1           1 Term.fold_term_types(2)
+           1 TOTAL

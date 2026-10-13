@@ -1,0 +1,15 @@
+[init ok]
+[reached ntfn123_reads]
+== target: by (simp add:SACAuthGraph_def, blast?)+
+   orig_ms=21871  B: close the goal (0 subgoals)
+  round 0: gen=51.6s (claude 51.0s) -> ['apply (simp only: insert_iff empty_iff)', 'apply (simp add: SACAuthGraph_def)', 'apply blast']
+  round 0: WRONG-STATE (10 subgoals)
+  round 1: gen=108.1s (claude 107.8s) -> []
+  round 2: gen=259.2s (claude 258.8s) -> ['apply (elim insertE emptyE)', 'apply (simp add: SACAuthGraph_def, blast)+']
+  round 2: FAILED `apply (simp add: SACAuthGraph_def, blast)+` failed: failed for prove 
+  round 3: gen=107.6s (claude 107.2s) -> ['apply (elim insertE emptyE)', 'apply (simp add: SACAuthGraph_def, blast?)+', 'done']
+  round 3: REACH-B variant_ms=16880 orig_ms=21871 saved=4991.0 faster=True
+  round 4: gen=79.6s (claude 78.9s) -> ['apply (simp only: insert_iff empty_iff)', 'apply (elim disjE)', 'apply (simp add: SACAuthGraph_def, blast?)+', 'done']
+  round 4: REACH-B variant_ms=27272 orig_ms=21871 saved=-5400.9 faster=False
+  round 5: gen=85.6s (claude 85.3s) -> ['apply (simp only: insert_iff empty_iff)', 'apply (elim disjE; clarsimp simp add: SACAuthGraph_def)']
+  round 5: WRONG-STATE (10 subgoals)

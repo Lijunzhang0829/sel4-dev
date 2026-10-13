@@ -1,0 +1,4 @@
+method	lemma	line	session	verdict	accelerated	saved_ms	secs
+dfs	rm_reads	439	InfoFlow	NO-PATH	None	None	86
+stateful	rm_reads	439	InfoFlow	(noresult)	-	-	480
+blind	rm_reads	439	InfoFlow	(noresult)	-	-	480

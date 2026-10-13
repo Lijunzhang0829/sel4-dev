@@ -1,0 +1,15 @@
+[genstat-stateful] blocked_cancel_ipc_invs @ proof/invariant-abstract/IpcCancel_AI.thy
+[init ok]
+[reached blocked_cancel_ipc_invs]
+== target: apply (auto elim!: delta_sym_refs pred_tcb_weaken_strongerE simp: obj_
+   A_goal: (t = epptr \<longrightarrow> sym_refs (\<lambda>a. if a = epptr then {r \<in> set (remove1 epptr queue) \<times> {case e
+   B: reach EXACTLY this 2-subgoal state:
+1. \<And>epptr ep queue s. \<lbrakk>ep \<not
+  step 0: gen=45.0s (claude 44.8s) -> ['apply (rule conjI)']
+  step 0: OK -> 5 subgoal(s); applied=['apply (rule conjI)']
+  step 1: gen=237.8s (claude 237.0s) -> ['apply (rule impI)', 'apply (intro conjI)']
+  step 1: OK -> 8 subgoal(s); applied=['apply (rule conjI)', 'apply (rule impI)', 'apply (intro conjI)']
+  step 2: gen=41.5s (claude 41.0s) -> ['apply (erule delta_sym_refs)']
+  step 2: OK -> 9 subgoal(s); applied=['apply (rule conjI)', 'apply (rule impI)', 'apply (intro conjI)', 'apply (erule delta_sym_refs)']
+  step 3: gen=58.1s (claude 57.5s) -> ['apply (case_tac "y = epptr")']
+  step 3: OK -> 10 subgoal(s); applied=['apply (rule conjI)', 'apply (rule impI)', 'apply (intro conjI)', 'apply (erule delta_sym_refs)', 'apply (case_tac "y = epptr")']

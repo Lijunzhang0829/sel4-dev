@@ -1,0 +1,17 @@
+[init ok]
+[reached decode_cnode_invocation_rev]
+== target line 7: apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! 
+   facts: ['Suc', 'bspec', 'excaps', 'expand_len_gr_Suc_0', 'is_cnode_into_is_subject', 'nth_mem', 'prop_of_obj_ref_of_cnode_cap', 'where', 'x']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [4sg] 1. \<And>s. \<lbrakk>pas_refined aag s; pas_cap_cur_aut
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule bspec)  [4sg] 1. \<And>s. \<lbrakk>pas_refined aag s; pas_cap_cur_aut
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule prop_of_obj_ref_of_cnode_cap)  [4sg] 1. \<And>s. \<lbrakk>pas_refined aag s; pas_cap_cur_aut
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-decode_cnode_invocation_rev-P25809.json

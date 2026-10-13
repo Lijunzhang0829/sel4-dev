@@ -1,0 +1,21 @@
+START 17:58:48
+exit=137 elapsed=900s
+entries=6
+=== PARSE ===
+total samples: 7  (process-reported TOTAL: 7)
+
+subsystem          samples   share
+------------------------------------
+kernel                   2   28.6%
+other                    5   71.4%
+
+(attributable samples: 2/7 = 29% of total; GC+other excluded from the ratio)
+VERDICT: MIXED (no single subsystem dominates attributable time)
+   classical+unify=0.0%  simp+arith=0.0%  setup=0.0%  (of attributable)
+
+top 15 raw functions (auditable):
+   42.9%  [other         ] UNKNOWN
+   14.3%  [other         ] Term_Subst.instT_same(3)subst_typs(1)
+   14.3%  [other         ] Binding.name_spec(4)
+   14.3%  [kernel        ] Table().retrieve(4)find(1)
+   14.3%  [kernel        ] Thm.fold_atomic_ctyps(4)(1)

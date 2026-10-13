@@ -1,0 +1,21 @@
+[init ok]
+[reached cap_insert_pas_refined]
+== target line 4: by (fastforce split: if_split_asm simp: cte_wp_at_caps_of_state pas_re
+   facts: ['F', 'Option.is_none_def', 'aag_cdt_link_Control', 'aag_cdt_link_DeleteDerived', 'cap_auth_caps_of_state', 'cte_wp_at_caps_of_state', 'mdb_cte_at_def', 'pas_refined_refl', 'split_paired_All', 'symmetric', 'valid_mdb_def2']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule allI)  [1sg] 1. \<And>s cap. \<lbrakk>is_subject aag (fst dest_slot)
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule conjE)  [1sg] 1. \<And>s. \<lbrakk>pas_refined aag s \<and> pspace_al
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold Option.is_none_def)  [1sg] 1. \<And>s. \<lbrakk>is_subject aag (fst dest_slot) \<a
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst aag_cdt_link_Control)  [4sg] 1. \<And>s xa x cap. \<lbrakk>is_subject aag (fst dest_
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst aag_cdt_link_DeleteDerived)  [3sg] 1. \<And>s xa x cap. \<lbrakk>is_subject aag (fst dest_
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst cte_wp_at_caps_of_state)  [1sg] 1. \<And>s. \<lbrakk>is_subject aag (fst dest_slot) \<a
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-cap_insert_pas_refined-P25820.json

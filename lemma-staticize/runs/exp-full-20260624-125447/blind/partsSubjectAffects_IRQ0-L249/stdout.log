@@ -1,0 +1,5 @@
+[genstat-stateful] partsSubjectAffects_IRQ0 @ proof/infoflow/ARM/Example_Valid_State.thy
+[init ok]
+[reached partsSubjectAffects_IRQ0]
+[no target classical line]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-partsSubjectAffects_IRQ0-P25802.json  verdict=NO-TARGET

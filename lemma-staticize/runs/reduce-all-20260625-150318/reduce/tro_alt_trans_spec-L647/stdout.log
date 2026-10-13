@@ -1,0 +1,23 @@
+[init ok]
+[reached tro_alt_trans_spec]
+ERROR:root:Exception while sending command.
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.13/site-packages/py4j/java_gateway.py", line 1255, in send_command
+    answer = smart_decode(self.stream.readline()[:-1])
+                          ~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/conda/lib/python3.13/socket.py", line 719, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+TimeoutError: timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.13/site-packages/py4j/java_gateway.py", line 1038, in send_command
+    response = connection.send_command(command)
+  File "/opt/conda/lib/python3.13/site-packages/py4j/java_gateway.py", line 1268, in send_command
+    raise Py4JNetworkError(
+        "Error while receiving", e, proto.ERROR_ON_RECEIVE)
+py4j.protocol.Py4JNetworkError: Error while receiving
+[error] An error occurred while calling t._step_without_timeout
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-tro_alt_trans_spec-P25919.json  verdict=ERROR

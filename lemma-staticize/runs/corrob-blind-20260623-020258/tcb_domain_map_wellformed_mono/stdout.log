@@ -1,0 +1,9 @@
+[genstat-stateful] tcb_domain_map_wellformed_mono @ proof/access-control/Access_AC.thy
+[init ok]
+[reached tcb_domain_map_wellformed_mono]
+== target: by (auto simp: tcb_domain_map_wellformed_aux_def get_etcb_def)
+   A_goal: tcb_domain_map_wellformed pas s'
+   B: close the goal (0 subgoals)
+  round 0: 48.1s -> ['apply (unfold tcb_domain_map_wellformed_aux_def get_etcb_def)', 'apply (rule ballI)', 'apply (drule (1) subsetD)', 'apply (drule (1) bspec)', 'apply assumption', 'done']
+  round 0: REACHED-B
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-tcb_domain_map_wellformed_mono.json  verdict=REACHED-B

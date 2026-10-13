@@ -1,0 +1,23 @@
+[init ok]
+[reached insert_cap_child_corres]
+== target line 41: by (case_tac "cdt s' child", safe intro!: mdb_cte_atI; auto dest: mdb_
+   facts: ['cte_wp_at_caps_of_state', 'is_untyped_cap_eqD', 'mdb_cte_atD', 'mdb_cte_atI', 'not_idle_thread_def', 'swp_def', 'valid_mdb_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [2sg] 1. \<And>s' capa. \<lbrakk>should_be_parent_of capa (is
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [1sg] 1. \<And>s' capa. \<lbrakk>should_be_parent_of capa (is
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule mdb_cte_atD)  [2sg] 1. \<And>s' capa. \<lbrakk>should_be_parent_of capa (is
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule mdb_cte_atD)  [2sg] 1. \<And>s' capa. \<lbrakk>should_be_parent_of capa (is
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule mdb_cte_atD)  [2sg] 1. \<And>s' capa. \<lbrakk>should_be_parent_of capa (is
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst mdb_cte_atD)  [3sg] 1. \<And>s' capa. \<lbrakk>should_be_parent_of capa (is
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst mdb_cte_atI)  [2sg] 1. \<And>s' capa c p. \<lbrakk>should_be_parent_of capa
+  [think d7] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-insert_cap_child_corres-P25806.json

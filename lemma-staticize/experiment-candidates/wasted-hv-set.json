@@ -1,0 +1,62 @@
+{
+ "n": 7,
+ "note": "wasted-classical high-value (>=5s)",
+ "cases": [
+  {
+   "lemma": "cap_insert_simple_arch_caps_no_ap",
+   "thy": "proof/invariant-abstract/ARM/ArchCSpace_AI.thy",
+   "session": "AInvs",
+   "proof_line": 518,
+   "tactic": "auto",
+   "fast": true
+  },
+  {
+   "lemma": "SAC_partsSubjectAffects_exceptT",
+   "thy": "proof/infoflow/PolicySystemSAC.thy",
+   "session": "InfoFlow",
+   "proof_line": 921,
+   "tactic": "auto",
+   "fast": true
+  },
+  {
+   "lemma": "refinement2_both",
+   "thy": "proof/crefine/ARM/Refine_C.thy",
+   "session": "CRefine",
+   "proof_line": 1019,
+   "tactic": "fastforce",
+   "fast": true
+  },
+  {
+   "lemma": "requiv_user_mem_eq",
+   "thy": "proof/infoflow/ARM/ArchUserOp_IF.thy",
+   "session": "InfoFlow",
+   "proof_line": 859,
+   "tactic": "fastforce",
+   "fast": true
+  },
+  {
+   "lemma": "requiv_device_mem_eq",
+   "thy": "proof/infoflow/ARM/ArchUserOp_IF.thy",
+   "session": "InfoFlow",
+   "proof_line": 811,
+   "tactic": "fastforce",
+   "fast": true
+  },
+  {
+   "lemma": "abstract_invs",
+   "thy": "proof/infoflow/refine/ADT_IF_Refine.thy",
+   "session": "InfoFlowC",
+   "proof_line": 812,
+   "tactic": "fastforce",
+   "fast": true
+  },
+  {
+   "lemma": "ckernel_invariant",
+   "thy": "proof/refine/ARM/Refine.thy",
+   "session": "Refine",
+   "proof_line": 875,
+   "tactic": "fastforce",
+   "fast": true
+  }
+ ]
+}

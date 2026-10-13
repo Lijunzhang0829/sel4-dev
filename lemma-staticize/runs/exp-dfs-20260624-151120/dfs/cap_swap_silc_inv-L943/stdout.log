@@ -1,0 +1,8 @@
+[init ok]
+[reached cap_swap_silc_inv]
+== target line 23: by (fastforce simp: all_children_def simp del: split_paired_All | simp
+   facts: ['all_children_def', 'split_paired_All']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-cap_swap_silc_inv-P25840.json

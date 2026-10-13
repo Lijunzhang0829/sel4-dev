@@ -1,0 +1,29 @@
+{
+ "lemma": "transfer_caps_loop_reads_respects'",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/Ipc_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "ERROR",
+ "orig_ms": 9708.3,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "by (clarsimp simp: neq_Nil_conv cte_wp_at_caps_of_state)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`by (clarsimp simp: neq_Nil_conv cte_wp_at_caps_of_state)` failed: failed for prove the goal using the tactic `by (clarsimp simp: neq_Nil_conv cte_wp_at_caps_of_state)`. Get msg: Failed to finish proo",
+   "gen_secs": 22.5,
+   "claude_secs": 22.1
+  }
+ ],
+ "target": "subgoal\nby (fastforce simp: neq_Nil_conv cte_wp_at_caps_of_state)",
+ "B_sig": [
+  "1. \\<And>caps slots cap obj ind s actual_cap x. \\<lbrakk>\\<And>slots n mi. reads_respects aag l (pas_refined aag and pspace_aligned and valid_vspace_objs and valid_arch_state and valid_mdb and valid_objs and (\\<lambda>s. (\\<forall>cap\\<in>set caps. s \\<turnstile> fst cap \\<and> (\\<exists>capa. caps_of_state s (snd cap) = Some capa \\<and> (fst cap \\<noteq> NullCap \\<longrightarrow> capa \\<noteq> fst cap \\<longrightarrow> capa = masked_as_full (fst cap) (fst cap)))) \\<and> (\\<forall>slot\\<in>set slots. is_subject aag (fst slot) \\<and> caps_of_state s slot = Some NullCap \\<and> real_cte_at slot s) \\<and> distinct slots)) (transfer_caps_loop ep rcv_buffer n caps slots mi); pas_refined aag s; pspace_aligned s; valid_vspace_objs s; valid_arch_state s; valid_mdb s; valid_objs s; s \\<turnstile> cap; is_subject aag obj; pas_cap_cur_auth aag cap; \\<forall>cap\\<in>set caps. s \\<turnstile> fst cap \\<and> is_subject aag (fst (snd cap)) \\<and> pas_cap_cur_auth aag (fst cap) \\<and> (\\<exists>capa. caps_of_state s (snd cap) = Some capa \\<and> (fst cap \\<noteq> NullCap \\<longrightarrow> capa \\<noteq> fst cap \\<longrightarrow> capa = masked_as_full (fst cap) (fst cap))); caps_of_state s (obj, ind) = Some actual_cap; \\<forall>slot\\<in>set slots. is_subject aag (fst slot) \\<and> caps_of_state s slot = Some NullCap \\<and> real_cte_at slot s; distinct slots; is_ep_cap cap \\<longrightarrow> ep \\<noteq> Some (obj_ref_of cap); slots \\<noteq> []; s \\<turnstile> x; x \\<noteq> NullCap; auth_derived x cap; cap \\<noteq> NullCap; \\<not> is_zombie cap; cap \\<noteq> IRQControlCap; actual_cap \\<noteq> cap \\<longrightarrow> actual_cap = masked_as_full cap cap\\<rbrakk> \\<Longrightarrow> distinct (tl slots)"
+ ],
+ "facts": [
+  "cte_wp_at_caps_of_state",
+  "neq_Nil_conv"
+ ],
+ "error": "An error occurred while calling t._step_without_timeout"
+}

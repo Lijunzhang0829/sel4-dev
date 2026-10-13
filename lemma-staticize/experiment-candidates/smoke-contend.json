@@ -1,0 +1,1 @@
+{"cases": [{"lemma": "rm_reads", "thy": "proof/infoflow/PolicySystemSAC.thy", "session": "InfoFlow", "proof_line": 439, "tactic": "blast", "cpu_s": 10.42, "file_lines": 962, "enc_cmd": "lemma", "init_able": true, "feasible": true, "work_suspect": false, "n_simp_defs": 0, "hot_line": " by (simp, blast?)+", "lemma_search_lines": 1, "lemma_search_cpu": 10.42}]}

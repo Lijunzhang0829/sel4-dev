@@ -1,0 +1,638 @@
+{
+ "lemma": "empty_slot_pas_refined",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/CNode_AC.thy",
+ "session": "Access",
+ "mode": "react",
+ "target": "by (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)",
+ "B_sig": [],
+ "facts": [
+  "OF",
+  "all_childrenD",
+  "is_transferable_all_children",
+  "pas_refined_Control",
+  "pas_refined_mem",
+  "sta_cdt",
+  "sta_cdt_transferable"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": true,
+   "obs": "[2sg] 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined aag s; pspace_aligned s; valid_vspace_objs s; valid_arch_state s; valid_mdb s; is_subject aag (fst slot); cte_wp_at ((=) cap) slot s; cap \\<noteq> NullCa"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined aag s; pspace_aligned s; valid_vspace_objs s; valid_arch_state s; valid_mdb s; is_subject aag (fst slot); cte_wp_at ((=) cap) slot s; cdt s (a, b) = Some"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (rule all_childrenD)",
+   "ok": true,
+   "obs": "[3sg] 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined aag s; pspace_aligned s; valid_vspace_objs s; valid_arch_state s; valid_mdb s; is_subject aag (fst slot); cte_wp_at ((=) cap) slot s; cap \\<noteq> NullCa"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst all_childrenD)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined aag s; pspace_aligned s; valid_vspace_objs s; valid_arch_state s; valid_mdb s; is_subject aag (fst slot); cte_wp_at ((=) cap) slot s; cap \\<noteq> NullCa"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule is_transferable_all_children)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule is_transferable_all_children)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule is_transferable_all_children)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined aag s; pspace_aligned s; valid_vspace_objs s; valid_arch_state s; is_subject aag (fst slot); cte_wp_at ((=) cap) slot s; cap \\<noteq> NullCap; cdt s (a, "
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule is_transferable_all_children)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule is_transferable_all_children)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule is_transferable_all_children)",
+   "ok": true,
+   "obs": "[1sg] 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined aag s; pspace_aligned s; valid_vspace_objs s; valid_arch_state s; valid_mdb s; is_subject aag (fst slot); cte_wp_at ((=) cap) slot s; cap \\<noteq> NullCa"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule is_transferable_all_children)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule is_transferable_all_children)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst is_transferable_all_children)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule pas_refined_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule pas_refined_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule pas_refined_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule pas_refined_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst pas_refined_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule pas_refined_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule pas_refined_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule pas_refined_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule pas_refined_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst pas_refined_mem)",
+   "ok": true,
+   "obs": "[3sg] 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined aag s; pspace_aligned s; valid_vspace_objs s; valid_arch_state s; valid_mdb s; is_subject aag (fst slot); cte_wp_at ((=) cap) slot s; cap \\<noteq> NullCa"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (drule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (frule OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (subst OF)",
+   "ok": false,
+   "obs": "FAILED: At command \"apply\" (line 1)"
+  },
+  {
+   "action": "apply (erule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule all_childrenD)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule is_transferable_all_children)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule is_transferable_all_children)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst is_transferable_all_children)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule pas_refined_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule pas_refined_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (drule pas_refined_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (frule pas_refined_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (subst pas_refined_Control)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (rule pas_refined_mem)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 222269.3
+}

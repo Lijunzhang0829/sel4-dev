@@ -1,0 +1,31 @@
+[run_profile] result=max-timeout@1404s
+run_profile.sh: line 51: 13011 Killed                  setsid "$ISA" process -l "$SESSION" -d "$L4V" -o parallel_proofs=0 -o quick_and_dirty=true -T "$THY" < /dev/null > "$RAW" 2>&1
+WALL 1405s
+entries=9
+reached empty_slot? 0
+=== PARSE ===
+total samples: 23  (process-reported TOTAL: 23)
+
+subsystem          samples   share
+------------------------------------
+classical                1    4.3%
+locale_setup             1    4.3%
+kernel                   2    8.7%
+runtime_gc              14   60.9%
+other                    5   21.7%
+
+(attributable samples: 4/23 = 17% of total; GC+other excluded from the ratio)
+VERDICT: MIXED (no single subsystem dominates attributable time)
+   classical+unify=25.0%  simp+arith=0.0%  setup=25.0%  (of attributable)
+
+top 15 raw functions (auditable):
+   30.4%  [runtime_gc    ] GARBAGE COLLECTION (total)
+   30.4%  [runtime_gc    ] GARBAGE COLLECTION (minor collection)
+   13.0%  [other         ] UNKNOWN
+    8.7%  [other         ] Term_Subst.instT_same(3)subst_typs(1)
+    4.3%  [kernel        ] Term.fold_term_types(2)
+    4.3%  [kernel        ] Term.maxidx_term(2)
+    4.3%  [locale_setup  ] Variable.decl_type_occs-(1)
+    4.3%  [classical     ] Classical().add_unsafe_elim(3)
+
+wrote result-empty_slot_sp.json

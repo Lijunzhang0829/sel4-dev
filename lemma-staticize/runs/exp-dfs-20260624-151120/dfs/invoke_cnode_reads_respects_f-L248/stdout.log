@@ -1,0 +1,21 @@
+[init ok]
+[reached invoke_cnode_reads_respects_f]
+== target line 4: apply (auto intro: real_cte_emptyable_strg[rule_format] simp: silc_inv
+   facts: ['aag_cap_auth_recycle_EndpointCap', 'caps_of_state_cteD', 'cte_wp_at_weak_derived_ReplyCap', 'reads_equiv_f_def', 'real_cte_emptyable_strg', 'requiv_cur_thread_eq', 'rule_format', 'silc_inv_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [2sg] 1. \<And>s. \<lbrakk>silc_inv aag st s; only_timer_irq_
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule aag_cap_auth_recycle_EndpointCap)  [2sg] 1. \<And>s. \<lbrakk>silc_inv aag st s; only_timer_irq_
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule aag_cap_auth_recycle_EndpointCap)  [2sg] 1. \<And>s. \<lbrakk>silc_inv aag st s; only_timer_irq_
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst cte_wp_at_weak_derived_ReplyCap)  [2sg] 1. \<And>s xb xa x cap b a. \<lbrakk>silc_inv aag st s;
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst real_cte_emptyable_strg)  [2sg] 1. \<And>s b a. \<lbrakk>silc_inv aag st s; only_timer_
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst requiv_cur_thread_eq)  [2sg] 1. \<And>s b a. \<lbrakk>silc_inv aag st s; only_timer_
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-invoke_cnode_reads_respects_f-P25816.json

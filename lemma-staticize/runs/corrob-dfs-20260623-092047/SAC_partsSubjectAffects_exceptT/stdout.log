@@ -1,0 +1,9 @@
+[init ok]
+[reached SAC_partsSubjectAffects_exceptT]
+[cost-target] hottest of 2 classical lines: step11 = 22.2s DB; others=[13.1]
+== target line 11: apply (auto simp: SAC_affects SAC_reads)
+   facts: ['SAC_affects', 'SAC_reads']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-SAC_partsSubjectAffects_exceptT.json

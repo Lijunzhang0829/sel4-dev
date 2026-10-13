@@ -1,0 +1,21 @@
+[init ok]
+[reached decode_cnode_invocation_rev]
+== target: apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! 
+   orig_ms=11766  B: close the goal (0 subgoals)
+  round 0: gen=28.5s (claude 27.7s) -> ['apply (clarsimp simp: expand_len_gr_Suc_0)', 'apply (fastforce dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! Suc 0"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap)', 'done']
+  round 0: FAILED `apply (clarsimp simp: expand_len_gr_Suc_0)` failed: failed for prove 
+  round 1: gen=27.5s (claude 27.3s) -> ['apply clarsimp', 'apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! Suc 0"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap simp: expand_len_gr_Suc_0)']
+  round 1: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+  round 2: gen=29.5s (claude 29.3s) -> ['apply (simp only: expand_len_gr_Suc_0)', 'apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! Suc 0"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap)', 'done']
+  round 2: FAILED `apply (simp only: expand_len_gr_Suc_0)` failed: failed for prove the 
+  round 3: gen=15.0s (claude 14.7s) -> ['apply clarsimp', 'apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! Suc 0"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap simp: expand_len_gr_Suc_0)']
+  round 3: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+  round 4: gen=51.6s (claude 51.4s) -> ['apply (simp only: expand_len_gr_Suc_0)', 'apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! Suc 0"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap simp: expand_len_gr_Suc_0)', 'done']
+  round 4: FAILED `apply (simp only: expand_len_gr_Suc_0)` failed: failed for prove the 
+  round 5: gen=21.5s (claude 21.0s) -> ['apply (clarsimp simp: expand_len_gr_Suc_0)', 'apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! Suc 0"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap)', 'done']
+  round 5: FAILED `apply (clarsimp simp: expand_len_gr_Suc_0)` failed: failed for prove 
+  round 6: gen=39.0s (claude 38.9s) -> ['apply (clarsimp simp: expand_len_gr_Suc_0)', 'apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! Suc 0"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap)', 'done']
+  round 6: FAILED `apply (clarsimp simp: expand_len_gr_Suc_0)` failed: failed for prove 
+  round 7: gen=25.0s (claude 24.4s) -> ['apply (clarsimp simp: expand_len_gr_Suc_0)', 'apply (auto dest: bspec[where x="excaps ! 0"] bspec[where x="excaps ! Suc 0"] is_cnode_into_is_subject intro: nth_mem elim: prop_of_obj_ref_of_cnode_cap simp: expand_len_gr_Suc_0)']
+  round 7: FAILED `apply (clarsimp simp: expand_len_gr_Suc_0)` failed: failed for prove 
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-decode_cnode_invocation_rev-P25903.json  verdict=NO-PATH

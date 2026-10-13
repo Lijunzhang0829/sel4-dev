@@ -1,0 +1,15 @@
+[init ok]
+[reached dmo_bind_ev']
+== target line 0: by (fastforce simp: do_machine_op_def gets_def get_def select_f_def mo
+   facts: ['bind_def', 'do_machine_op_def', 'equiv_valid_2_def', 'equiv_valid_def2', 'get_def', 'gets_def', 'modify_def', 'put_def', 'return_def', 'select_f_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold bind_def)  [1sg] 1. equiv_valid_inv I A P (\<lambda>s. (\<Union> (fst ` 
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst equiv_valid_def2)  [1sg] 1. equiv_valid_rv_inv I A (=) P (do rv <- a;
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-dmo_bind_ev'-P25808.json

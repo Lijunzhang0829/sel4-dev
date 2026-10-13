@@ -1,0 +1,74 @@
+{
+ "lemma": "caps_of_state_init_A_st_Null",
+ "thy": "/sel4-project/verification/l4v/proof/invariant-abstract/ARM/ArchKernelInit_AI.thy",
+ "session": "AInvs",
+ "mode": "reduce",
+ "verdict": "NO-PATH",
+ "orig_ms": 10127.5,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (clarsimp simp: state_defs split: if_split_asm)",
+    "apply (auto simp add: tcb_cap_cases_def split: if_split_asm)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (5 subgoals):\n 1. \\<And>tcb. \\<lbrakk>NullCap \\<noteq> tcb_ipcframe tcb; kheap init_A_st (fst x)",
+   "gen_secs": 25.5,
+   "claude_secs": 25.4
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply clarsimp",
+    "apply (auto simp add: state_defs tcb_cap_cases_def split: if_split_asm)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (2 subgoals):\n 1. \\<And>sz fun cte. \\<lbrakk>kheap init_A_st ",
+   "gen_secs": 33.0,
+   "claude_secs": 32.8
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply (fastforce simp add: state_defs tcb_cap_cases_def split: if_split_asm)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (1 subgoal):\n 1. \\<And>tcb getF setF restr. \\<lbrakk>kheap init_A_st (fst x) = Some (TCB tcb); t",
+   "gen_secs": 32.1,
+   "claude_secs": 31.6
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (clarsimp simp add: state_defs split: if_split_asm)",
+    "apply (auto simp add: tcb_cap_cases_def)"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 1,
+   "gen_secs": 22.0,
+   "claude_secs": 21.3
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply clarsimp",
+    "apply (auto simp add: state_defs tcb_cap_cases_def split: if_split_asm)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (2 subgoals):\n 1. \\<And>sz fun cte. \\<lbrakk>kheap init_A_st ",
+   "gen_secs": 32.5,
+   "claude_secs": 31.8
+  }
+ ],
+ "target": "apply (auto simp add: state_defs tcb_cap_cases_def split: if_split_asm)",
+ "B_sig": [],
+ "facts": [
+  "state_defs",
+  "tcb_cap_cases_def"
+ ]
+}

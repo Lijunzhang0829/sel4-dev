@@ -1,0 +1,22 @@
+[init ok]
+[reached empty_slot_pas_refined]
+== target: by (fastforce dest: all_childrenD is_transferable_all_children pas_ref
+   orig_ms=145716  B: close the goal (0 subgoals)
+  round 0: gen=15.1s (claude 14.5s) -> ['apply clarsimp', 'apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)', 'done']
+  round 0: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+  round 1: gen=29.0s (claude 28.5s) -> ['apply clarify', 'by (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)']
+  round 1: FAILED `apply clarify` failed: failed for prove the goal using the tactic `ap
+  round 2: gen=61.0s (claude 60.5s) -> ['apply clarsimp', 'by (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)']
+  round 2: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+  round 3: gen=25.0s (claude 24.9s) -> ['by (fastforce dest: pas_refined_Control pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] all_childrenD is_transferable_all_children)']
+  round 3: REACH-B variant_ms=124143 orig_ms=145716 saved=21573.3 faster=True
+  round 4: gen=42.5s (claude 42.1s) -> ['apply clarsimp', 'apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)', 'done']
+  round 4: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+  round 5: gen=56.5s (claude 56.4s) -> ['apply clarify', 'apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)']
+  round 5: FAILED `apply clarify` failed: failed for prove the goal using the tactic `ap
+  round 6: gen=20.5s (claude 19.7s) -> ['apply clarsimp', 'apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)', 'done']
+  round 6: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+  round 7: gen=19.0s (claude 18.7s) -> ['apply clarify', 'by (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)']
+  round 7: FAILED `apply clarify` failed: failed for prove the goal using the tactic `ap
+[WIN] 145716ms -> 124143ms  saved=21573.3ms (15%)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-empty_slot_pas_refined-P25925.json  verdict=FASTER

@@ -1,0 +1,16 @@
+[init ok]
+[reached rm_reads]
+== target: by (simp, blast?)+
+   orig_ms=14964  B: close the goal (0 subgoals)
+  round 0: gen=23.0s (claude 22.6s) -> ['apply (simp add: c_reads_rm c_reads)', 'done']
+  round 0: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 1: gen=24.5s (claude 23.9s) -> []
+  round 2: gen=31.0s (claude 30.5s) -> ['apply (simp only: c_reads_rm c_reads subjectReads.reads_read_thread_read_pages)', 'apply blast+', 'done']
+  round 2: FAILED `apply (simp only: c_reads_rm c_reads subjectReads.reads_read_thread_r
+  round 3: gen=19.5s (claude 19.0s) -> ['by (simp only: c_reads_rm c_reads subjectReads.reads_read_thread_read_pages, blast?)+']
+  round 3: FAILED `by (simp only: c_reads_rm c_reads subjectReads.reads_read_thread_read
+  round 4: gen=25.0s (claude 24.5s) -> ['by (simp add: c_reads_rm c_reads subjectReads.reads_read_thread_read_pages, blast?)+']
+  round 4: REACH-B variant_ms=15565 orig_ms=14964 saved=-600.9 faster=False
+  round 5: gen=26.5s (claude 25.7s) -> ['apply (simp only: c_reads c_reads_rm subjectReads.reads_read_thread_read_pages)', 'apply blast', 'done']
+  round 5: FAILED `apply (simp only: c_reads c_reads_rm subjectReads.reads_read_thread_r
+  round 6: gen=26.5s (claude 26.0s) -> ['apply (simp add: c_reads c_reads_rm subjectReads.reads_read_thread_read_pages)', 'by blast']

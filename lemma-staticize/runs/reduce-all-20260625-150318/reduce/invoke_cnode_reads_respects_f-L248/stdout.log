@@ -1,0 +1,21 @@
+[init ok]
+[reached invoke_cnode_reads_respects_f]
+== target: apply (auto intro: real_cte_emptyable_strg[rule_format] simp: silc_inv
+   orig_ms=12604  B: close the goal (0 subgoals)
+  round 0: gen=36.0s (claude 35.6s) -> ['apply (clarsimp simp: silc_inv_def reads_equiv_f_def requiv_cur_thread_eq caps_of_state_cteD cte_wp_at_weak_derived_ReplyCap aag_cap_auth_recycle_EndpointCap)', 'apply (auto intro: real_cte_emptyable_strg[rule_format])', 'done']
+  round 0: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 1: gen=47.0s (claude 46.8s) -> ['apply clarsimp', 'apply (auto intro: real_cte_emptyable_strg[rule_format] simp: silc_inv_def reads_equiv_f_def requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)', 'done']
+  round 1: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+  round 2: gen=35.0s (claude 34.5s) -> ['apply (simp only: reads_equiv_f_def silc_inv_def)', 'apply (auto intro: real_cte_emptyable_strg[rule_format] simp: requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)']
+  round 2: REACH-B variant_ms=13199 orig_ms=12604 saved=-594.8 faster=False
+  round 3: gen=28.0s (claude 27.7s) -> ['apply (clarsimp simp: silc_inv_def reads_equiv_f_def requiv_cur_thread_eq caps_of_state_cteD)', 'apply (auto intro: real_cte_emptyable_strg[rule_format] simp: aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)']
+  round 3: WRONG-STATE (1 subgoals)
+  round 4: gen=65.5s (claude 65.1s) -> ['apply (simp only: silc_inv_def reads_equiv_f_def)', 'apply (auto intro: real_cte_emptyable_strg[rule_format] simp: requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)', 'done']
+  round 4: REACH-B variant_ms=13112 orig_ms=12604 saved=-507.9 faster=False
+  round 5: gen=72.6s (claude 72.3s) -> ['apply (simp only: reads_equiv_f_def silc_inv_def)', 'apply (clarsimp simp: requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)', 'apply (auto intro: real_cte_emptyable_strg[rule_format])']
+  round 5: WRONG-STATE (2 subgoals)
+  round 6: gen=21.0s (claude 20.5s) -> ['apply clarsimp', 'apply (auto intro: real_cte_emptyable_strg[rule_format] simp: silc_inv_def reads_equiv_f_def requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)', 'done']
+  round 6: FAILED `apply clarsimp` failed: failed for prove the goal using the tactic `a
+  round 7: gen=22.5s (claude 21.7s) -> ['apply (simp only: reads_equiv_f_def silc_inv_def)', 'apply (auto intro: real_cte_emptyable_strg[rule_format] simp: requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)', 'done']
+  round 7: REACH-B variant_ms=13041 orig_ms=12604 saved=-437.0 faster=False
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-invoke_cnode_reads_respects_f-P25916.json  verdict=REACHED-B-NOT-FASTER

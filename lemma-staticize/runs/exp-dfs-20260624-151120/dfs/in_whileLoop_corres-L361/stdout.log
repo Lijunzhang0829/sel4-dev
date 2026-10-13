@@ -1,0 +1,10 @@
+[init ok]
+[reached in_whileLoop_corres]
+== target line 3: apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce dest:
+   facts: ['cond', 'nf', 'no_fail_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ✓✓ apply (erule allE)  -> CLOSES
+[speed] orig=13275ms static=1ms saved=13275ms accel=True
+
+[result] verdict=PATH-FOUND  path=['apply (erule allE)']
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-in_whileLoop_corres-P25806.json

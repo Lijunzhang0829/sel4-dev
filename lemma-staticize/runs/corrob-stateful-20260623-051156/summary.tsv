@@ -1,0 +1,6 @@
+lemma	session	verdict	effort	secs
+sep_heap_domD	DSpecProofs	REACHED-B	2	291
+sep_heap_domD'	DSpecProofs	REACHED-B	2	83
+is_transferable_IRQ	Access	REACHED-B	6	974
+is_transferable_Ntfn	Access	REACHED-B	4	374
+is_transferable_Zombie	Access	NO-PATH	20	1116

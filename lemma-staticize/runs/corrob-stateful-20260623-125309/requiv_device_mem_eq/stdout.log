@@ -1,0 +1,18 @@
+[genstat-stateful] requiv_device_mem_eq @ proof/infoflow/ARM/ArchUserOp_IF.thy
+[init ok]
+[reached requiv_device_mem_eq]
+[cost-target] hottest of 10 classical lines: step9 = 10.8s DB
+== target: apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_ca
+   A_goal: \<forall>x\<in>ran (kheap s). obj_valid_pdpt x
+   B: reach EXACTLY this 2-subgoal state:
+1. \<And>sz. \<lbrakk>globals_equiv s s'; in
+  step 0: gen=28.0s (claude 27.4s) -> ['apply assumption']
+  step 0: OK -> 7 subgoal(s); applied=['apply assumption']
+  step 1: gen=36.5s (claude 36.2s) -> ['apply assumption']
+  step 1: REPEAT-CHUNK (work already done)
+  step 2: gen=144.2s (claude 143.6s) -> ['apply (simp only: ptable_lift_s_def ptable_rights_s_def)']
+  step 2: OK -> 6 subgoal(s); applied=['apply assumption', 'apply (simp only: ptable_lift_s_def ptable_rights_s_def)']
+  step 3: gen=126.1s (claude 125.9s) -> ['apply assumption']
+  step 3: REPEAT-CHUNK (work already done)
+  step 4: gen=97.1s (claude 96.5s) -> ['apply (simp only: vspace_cap_rights_to_auth_def)', 'apply assumption']
+  step 4: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass

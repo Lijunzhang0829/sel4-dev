@@ -1,0 +1,113 @@
+{
+ "lemma": "rm_affects",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 22541.4,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (simp only: subjectAffects_def SACAuthGraph_def)",
+    "apply blast",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: failed for prove the goal using the tactic `apply (simp only: subjectAffects_def SACAuthGraph_def)`. Get msg: Failed to apply proof met",
+   "gen_secs": 23.5,
+   "claude_secs": 22.7
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply (simp only: subjectAffects_def SACAuthGraph_def)",
+    "apply blast",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: failed for prove the goal using the tactic `apply (simp only: subjectAffects_def SACAuthGraph_def)`. Get msg: Failed to apply proof met",
+   "gen_secs": 23.0,
+   "claude_secs": 22.5
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (simp only: subjectAffects_def SACAuthGraph_def)",
+    "apply blast",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: failed for prove the goal using the tactic `apply (simp only: subjectAffects_def SACAuthGraph_def)`. Get msg: Failed to apply proof met",
+   "gen_secs": 16.0,
+   "claude_secs": 15.7
+  },
+  {
+   "round": 3,
+   "variant": [
+    "by (simp only: subjectAffects_def SACAuthGraph_def, blast)+"
+   ],
+   "outcome": "FAILED",
+   "diag": "`by (simp only: subjectAffects_def SACAuthGraph_def, blast)+` failed: failed for prove the goal using the tactic `by (simp only: subjectAffects_def SACAuthGraph_def, blast)+`. Get msg: Failed to apply",
+   "gen_secs": 20.5,
+   "claude_secs": 19.9
+  },
+  {
+   "round": 4,
+   "variant": [
+    "by (clarsimp, blast?)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 2875.9,
+   "saved_ms": 19665.5,
+   "faster": true,
+   "gen_secs": 40.5,
+   "claude_secs": 40.0
+  },
+  {
+   "round": 5,
+   "variant": [
+    "by (clarsimp, fastforce?)+"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 6169.6,
+   "saved_ms": 16371.8,
+   "faster": true,
+   "gen_secs": 36.0,
+   "claude_secs": 35.8
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply (simp only: subjectAffects_def SACAuthGraph_def)",
+    "by blast"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: failed for prove the goal using the tactic `apply (simp only: subjectAffects_def SACAuthGraph_def)`. Get msg: Failed to apply proof met",
+   "gen_secs": 28.5,
+   "claude_secs": 28.2
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (simp only: subjectAffects_def SACAuthGraph_def)",
+    "apply (simp, blast?)+",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: failed for prove the goal using the tactic `apply (simp only: subjectAffects_def SACAuthGraph_def)`. Get msg: Failed to apply proof met",
+   "gen_secs": 43.0,
+   "claude_secs": 42.5
+  }
+ ],
+ "target": "by (simp, blast?)+",
+ "B_sig": [],
+ "facts": [],
+ "path": [
+  "by (clarsimp, blast?)+"
+ ],
+ "variant_ms": 2875.9,
+ "saved_ms": 19665.5,
+ "frac_saved": 0.872,
+ "accelerated": true
+}

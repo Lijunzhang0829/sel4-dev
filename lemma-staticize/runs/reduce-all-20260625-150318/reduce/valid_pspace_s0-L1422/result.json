@@ -1,0 +1,110 @@
+{
+ "lemma": "valid_pspace_s0",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "REACHED-B-NOT-FASTER",
+ "orig_ms": 13617.2,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (simp only: s0_internal_def kh0_def kh0_obj_def s0_ptr_defs well_formed_cnode_n_def dom_empty_cnode)",
+    "apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def)` failed: failed for prove the goal using the tactic `apply (force simp: cte_wp_at_cases tcb_cap_cas",
+   "gen_secs": 36.5,
+   "claude_secs": 36.3
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply clarsimp",
+    "apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 14595.0,
+   "saved_ms": -977.8,
+   "faster": false,
+   "gen_secs": 64.6,
+   "claude_secs": 64.0
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (clarsimp simp: s0_internal_def kh0_def kh0_obj_def s0_ptr_defs the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)",
+    "apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def)` failed: failed for prove the goal using the tactic `apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def)`. Get msg:",
+   "gen_secs": 191.2,
+   "claude_secs": 190.7
+  },
+  {
+   "round": 4,
+   "variant": [
+    "apply (simp only: s0_internal_def kh0_def kh0_obj_def s0_ptr_defs)",
+    "apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)` failed: failed for prove the goal using the tactic `apply ",
+   "gen_secs": 31.0,
+   "claude_secs": 30.3
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (simp only: s0_internal_def kh0_def kh0_obj_def s0_ptr_defs)",
+    "apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)` failed: failed for prove the goal using the tactic `apply ",
+   "gen_secs": 38.5,
+   "claude_secs": 38.1
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply (fastforce simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 13858.6,
+   "saved_ms": -241.4,
+   "faster": false,
+   "gen_secs": 33.0,
+   "claude_secs": 32.9
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (clarsimp simp only: s0_internal_def kh0_def kh0_obj_def s0_ptr_defs)",
+    "apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply (force simp: cte_wp_at_cases tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)` failed: failed for prove the goal using the tactic `apply ",
+   "gen_secs": 52.6,
+   "claude_secs": 52.0
+  }
+ ],
+ "target": "apply (force simp: cte_wp_at_cases s0_internal_def kh0_def kh0_obj_def s0_ptr_defs tcb_cap_cases_def High_caps_def the_nat_to_bl_def nat_to_bl_def well_formed_cnode_n_def dom_empty_cnode)",
+ "B_sig": [
+  "1. ex_nonz_cap_to 0xE0000200 s0_internal",
+  "2. ex_nonz_cap_to 0xE0000010 s0_internal",
+  "3. zombies_final s0_internal \\<and> sym_refs (state_refs_of s0_internal) \\<and> sym_refs (state_hyp_refs_of s0_internal)"
+ ],
+ "facts": [
+  "High_caps_def",
+  "cte_wp_at_cases",
+  "dom_empty_cnode",
+  "kh0_def",
+  "kh0_obj_def",
+  "nat_to_bl_def",
+  "s0_internal_def",
+  "s0_ptr_defs",
+  "tcb_cap_cases_def",
+  "the_nat_to_bl_def",
+  "well_formed_cnode_n_def"
+ ],
+ "accelerated": false
+}

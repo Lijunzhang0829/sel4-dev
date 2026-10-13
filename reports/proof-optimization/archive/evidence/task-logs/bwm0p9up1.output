@@ -1,0 +1,38 @@
+coords: WRITTEN	/tmp/prof_kbjudp31	Tmp_prof_f24b848a47a2	Access	/sel4-project/verification/l4v
+[run_profile] result=max-timeout@1500s
+run_profile.sh: line 39: 10062 Killed                  setsid "$ISA" process -l "$SESSION" -d "$L4V" -T "$THY" < /dev/null > "$RAW" 2>&1
+WALL 1501s
+=== entries: 21 ===
+=== PARSE ===
+total samples: 23  (process-reported TOTAL: 23)
+
+subsystem          samples   share
+------------------------------------
+classical                1    4.3%
+simp                     4   17.4%
+unify                    4   17.4%
+kernel                   8   34.8%
+other                    6   26.1%
+
+(attributable samples: 17/23 = 74% of total; GC+other excluded from the ratio)
+VERDICT: MIXED (no single subsystem dominates attributable time)
+   classical+unify=29.4%  simp+arith=23.5%  setup=0.0%  (of attributable)
+
+top 15 raw functions (auditable):
+   13.0%  [kernel        ] Table().retrieve(4)find(1)
+    8.7%  [other         ] UNKNOWN
+    8.7%  [other         ] o(2)(1)
+    8.7%  [unify         ] Type.unified(1)unif(2)
+    4.3%  [other         ] Config.declare(3)map_value(1)
+    4.3%  [kernel        ] Term.subst_bound(2)term(2)
+    4.3%  [kernel        ] Logic.incr_tvar_same(1)(1)
+    4.3%  [unify         ] Pattern.typ_match(3)
+    4.3%  [simp          ] Raw_Simplifier.rewritec(4)
+    4.3%  [simp          ] Raw_Simplifier.rewritec(4)sort_rrules(1)
+    4.3%  [kernel        ] Table().modify(3)modfy(1)
+    4.3%  [other         ] Same.map(2)()
+    4.3%  [simp          ] Drule.is_norm_hhf(1)is_norm(1)
+    4.3%  [kernel        ] Thm.strip_assums2(3)
+    4.3%  [classical     ] Thm.bicompose_aux(10)res(1)
+
+wrote result-empty_slot_faithful.json

@@ -1,0 +1,15 @@
+[init ok]
+[reached dmo_bind_ev']
+== target: by (fastforce simp: do_machine_op_def gets_def get_def select_f_def mo
+   orig_ms=23283  B: close the goal (0 subgoals)
+  round 0: gen=50.6s (claude 50.3s) -> ['apply (simp only: equiv_valid_def2 equiv_valid_2_def do_machine_op_def bind_def gets_def get_def select_f_def modify_def put_def return_def)', 'done']
+  round 0: FAILED `done` failed: failed for prove the goal using the tactic `done`. Get 
+  round 1: gen=35.5s (claude 35.1s) -> ['apply (simp only: equiv_valid_def2 equiv_valid_2_def)', 'by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def return_def bind_def)']
+  round 1: REACH-B variant_ms=19534 orig_ms=23283 saved=3749.4 faster=True
+  round 2: gen=46.6s (claude 45.9s) -> ['apply (simp only: equiv_valid_def2 equiv_valid_2_def)', 'by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def return_def bind_def)']
+  round 2: REACH-B variant_ms=19460 orig_ms=23283 saved=3823.3 faster=True
+  round 3: gen=200.3s (claude 199.6s) -> ['apply (simp only: equiv_valid_def2 equiv_valid_2_def do_machine_op_def gets_def get_def select_f_def modify_def put_def return_def bind_def)', 'by fastforce']
+  round 3: REACH-B variant_ms=94983 orig_ms=23283 saved=-71699.8 faster=False
+  round 4: gen=111.6s (claude 111.3s) -> []
+  round 5: gen=120.7s (claude 120.3s) -> ['apply (simp only: equiv_valid_def2 equiv_valid_2_def do_machine_op_def bind_def gets_def get_def select_f_def modify_def put_def return_def)', 'by fastforce']
+  round 5: REACH-B variant_ms=95516 orig_ms=23283 saved=-72233.0 faster=False

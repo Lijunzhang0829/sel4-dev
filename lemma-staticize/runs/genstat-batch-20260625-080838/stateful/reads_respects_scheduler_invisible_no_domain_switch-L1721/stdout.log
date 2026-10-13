@@ -1,0 +1,20 @@
+[genstat-stateful] reads_respects_scheduler_invisible_no_domain_switch @ proof/infoflow/Scheduler_IF.thy
+[init ok]
+[reached reads_respects_scheduler_invisible_no_domain_switch]
+== target: by (safe; (fastforce simp: switch_thread_runnable | fastforce dest!: s
+   A_goal: (\<forall>x. scheduler_action s = switch_thread x \<longrightarrow> (runnable sta \<longrightarrow> st_tcb_at runnable x
+   B: close the goal (0 subgoals)
+  step 0: gen=275.8s (claude 24.5s) -> ['apply (rule allI)', 'apply (rule impI)', 'apply (intro conjI impI)']
+  step 0: FAILED `apply (rule allI)` failed: failed for prove the goal using the tactic `apply (r
+  step 1: gen=69.6s (claude 69.1s) -> ['apply (intro conjI allI impI)']
+  step 1: OK -> 10 subgoal(s); applied=['apply (intro conjI allI impI)']
+  step 2: gen=26.5s (claude 26.2s) -> ['apply (simp only: switch_thread_runnable)']
+  step 2: OK -> 10 subgoal(s); applied=['apply (intro conjI allI impI)', 'apply (simp only: switch_thread_runnable)']
+  step 3: gen=37.5s (claude 36.9s) -> ['apply (rule notI)', 'apply (drule cur_thread_cur_domain)', 'apply (drule switch_to_cur_domain)']
+  step 3: OK -> 10 subgoal(s); applied=['apply (intro conjI allI impI)', 'apply (simp only: switch_thread_runnable)', 'apply (rule notI)', 'apply (drule cur_thread_cur_domain)', 'apply (drule switch_to_cur_domain)']
+  step 4: gen=17.0s (claude 16.6s) -> ['apply assumption']
+  step 4: OK -> 10 subgoal(s); applied=['apply (intro conjI allI impI)', 'apply (simp only: switch_thread_runnable)', 'apply (rule notI)', 'apply (drule cur_thread_cur_domain)', 'apply (drule switch_to_cur_domain)', 'apply assumption']
+  step 5: gen=20.0s (claude 19.2s) -> ['apply assumption']
+  step 5: REPEAT-CHUNK (work already done)
+  step 6: gen=96.6s (claude 96.1s) -> ['apply (unfold obj_at_def st_tcb_at_def)', 'apply assumption']
+  step 6: OK -> 10 subgoal(s); applied=['apply (intro conjI allI impI)', 'apply (simp only: switch_thread_runnable)', 'apply (rule notI)', 'apply (drule cur_thread_cur_domain)', 'apply (drule switch_to_cur_domain)', 'apply assumption', 'apply (unfold obj_at_def st_tcb_at_def)', 'apply assumption']

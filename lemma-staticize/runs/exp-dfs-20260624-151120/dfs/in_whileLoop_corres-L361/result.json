@@ -1,0 +1,58 @@
+{
+ "lemma": "in_whileLoop_corres",
+ "thy": "/sel4-project/verification/l4v/lib/ExtraCorres.thy",
+ "session": "Lib",
+ "mode": "react",
+ "target": "apply (frule (1) corres_underlyingD2[OF body_corres]; (fastforce dest: nf simp: cond no_fail_def)?)",
+ "B_sig": [
+  "1. \\<And>r s r' s' r'' s'' sa ra. \\<lbrakk>C' r s; (r', s') \\<in> fst (B' r s); (r'', s'') \\<in> fst (whileLoop C'"
+ ],
+ "facts": [
+  "cond",
+  "nf",
+  "no_fail_def"
+ ],
+ "steps": [
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (1 subgoal):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": true,
+   "obs": "CLOSES (==target)"
+  }
+ ],
+ "path": [
+  "apply (erule allE)"
+ ],
+ "audit": true,
+ "verdict": "PATH-FOUND",
+ "orig_ms": 13275.1,
+ "static_ms": 0.6,
+ "ipc_ms": 12.8,
+ "saved_ms": 13274.5,
+ "frac_saved": 1.0,
+ "accelerated": true
+}

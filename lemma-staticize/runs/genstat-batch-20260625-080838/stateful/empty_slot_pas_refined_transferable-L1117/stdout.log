@@ -1,0 +1,20 @@
+[genstat-stateful] empty_slot_pas_refined_transferable @ proof/access-control/CNode_AC.thy
+[init ok]
+[reached empty_slot_pas_refined_transferable]
+== target: by (fastforce simp: cte_wp_at_caps_of_state dest: all_childrenD is_tra
+   A_goal: (is_transferable_in (a, b) s \<or> (pasObjectAbs aag aa, Control, pasObjectAbs aag a) \<in> pasPolicy aag) \<and> (pasOb
+   B: close the goal (0 subgoals)
+  step 0: gen=142.2s (claude 26.6s) -> ['apply (intro conjI)']
+  step 0: OK -> 3 subgoal(s); applied=['apply (intro conjI)']
+  step 1: gen=50.1s (claude 49.8s) -> ['apply (rule disjI2)', 'apply (drule (1) pas_refined_mem[OF sta_cdt])', 'apply assumption']
+  step 1: FAILED `apply (drule (1) pas_refined_mem[OF sta_cdt])` failed: failed for prove the goa
+  step 2: gen=103.1s (claude 102.6s) -> ['apply (rule disjI1)', 'apply (drule (1) all_childrenD)', 'apply (drule (1) is_transferable_all_children)', 'apply assumption']
+  step 2: FAILED `apply (drule (1) all_childrenD)` failed: failed for prove the goal using the ta
+  step 3: gen=47.6s (claude 47.4s) -> ['apply (rule disjI1)', 'apply (drule is_transferable_all_children)', 'apply (drule (1) all_childrenD)', 'apply assumption']
+  step 3: OK -> 3 subgoal(s); applied=['apply (intro conjI)', 'apply (rule disjI1)', 'apply (drule is_transferable_all_children)', 'apply (drule (1) all_childrenD)', 'apply assumption']
+  step 4: gen=69.1s (claude 68.5s) -> ['apply assumption']
+  step 4: REPEAT-CHUNK (work already done)
+  step 5: gen=135.7s (claude 135.3s) -> ['apply (drule is_transferable_all_children)', 'apply (drule (1) all_childrenD)', 'apply assumption']
+  step 5: REPEAT-CHUNK (work already done)
+  step 6: gen=26.0s (claude 25.4s) -> ['apply (drule pas_refined_mem[OF sta_cdt_transferable])', 'apply assumption']
+  step 6: OK -> 3 subgoal(s); applied=['apply (intro conjI)', 'apply (rule disjI1)', 'apply (drule is_transferable_all_children)', 'apply (drule (1) all_childrenD)', 'apply assumption', 'apply (drule pas_refined_mem[OF sta_cdt_transferable])', 'apply assumption']

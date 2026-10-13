@@ -1,0 +1,27 @@
+[init ok]
+[reached retype_region_silc_inv]
+== target line 42: by (fastforce elim: cte_wp_atE intro: cte_wp_at_cteI cte_wp_at_tcbI)
+   facts: ['cte_wp_atE', 'cte_wp_at_cteI', 'cte_wp_at_tcbI']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule conjE)  [1sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [1sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule allE)  [1sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule cte_wp_atE)  [3sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst cte_wp_atE)  [4sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule cte_wp_at_cteI)  [4sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst cte_wp_at_cteI)  [5sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d7] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule cte_wp_at_tcbI)  [3sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d8] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst cte_wp_at_tcbI)  [4sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d9] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-retype_region_silc_inv-P25809.json

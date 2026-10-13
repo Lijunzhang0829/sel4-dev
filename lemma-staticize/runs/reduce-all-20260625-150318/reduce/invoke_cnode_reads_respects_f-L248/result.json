@@ -1,0 +1,123 @@
+{
+ "lemma": "invoke_cnode_reads_respects_f",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/Syscall_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "REACHED-B-NOT-FASTER",
+ "orig_ms": 12604.0,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply (clarsimp simp: silc_inv_def reads_equiv_f_def requiv_cur_thread_eq caps_of_state_cteD cte_wp_at_weak_derived_ReplyCap aag_cap_auth_recycle_EndpointCap)",
+    "apply (auto intro: real_cte_emptyable_strg[rule_format])",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (2 subgoals):\n 1. \\<And>s a b x xa xb. \\<lbrakk>only_timer_irq_inv irq st' s; pas_refined aag s;",
+   "gen_secs": 36.0,
+   "claude_secs": 35.6
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply clarsimp",
+    "apply (auto intro: real_cte_emptyable_strg[rule_format] simp: silc_inv_def reads_equiv_f_def requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<And>s. \\<lbrakk>silc_inv aag st s; only_ti",
+   "gen_secs": 47.0,
+   "claude_secs": 46.8
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply (simp only: reads_equiv_f_def silc_inv_def)",
+    "apply (auto intro: real_cte_emptyable_strg[rule_format] simp: requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 13198.8,
+   "saved_ms": -594.8,
+   "faster": false,
+   "gen_secs": 35.0,
+   "claude_secs": 34.5
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply (clarsimp simp: silc_inv_def reads_equiv_f_def requiv_cur_thread_eq caps_of_state_cteD)",
+    "apply (auto intro: real_cte_emptyable_strg[rule_format] simp: aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 1,
+   "gen_secs": 28.0,
+   "claude_secs": 27.7
+  },
+  {
+   "round": 4,
+   "variant": [
+    "apply (simp only: silc_inv_def reads_equiv_f_def)",
+    "apply (auto intro: real_cte_emptyable_strg[rule_format] simp: requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 13111.9,
+   "saved_ms": -507.9,
+   "faster": false,
+   "gen_secs": 65.5,
+   "claude_secs": 65.1
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (simp only: reads_equiv_f_def silc_inv_def)",
+    "apply (clarsimp simp: requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)",
+    "apply (auto intro: real_cte_emptyable_strg[rule_format])"
+   ],
+   "outcome": "WRONG-STATE",
+   "subgoals": 2,
+   "gen_secs": 72.6,
+   "claude_secs": 72.3
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply clarsimp",
+    "apply (auto intro: real_cte_emptyable_strg[rule_format] simp: silc_inv_def reads_equiv_f_def requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<And>s. \\<lbrakk>silc_inv aag st s; only_ti",
+   "gen_secs": 21.0,
+   "claude_secs": 20.5
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (simp only: reads_equiv_f_def silc_inv_def)",
+    "apply (auto intro: real_cte_emptyable_strg[rule_format] simp: requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap)",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 13041.0,
+   "saved_ms": -437.0,
+   "faster": false,
+   "gen_secs": 22.5,
+   "claude_secs": 21.7
+  }
+ ],
+ "target": "apply (auto intro: real_cte_emptyable_strg[rule_format] simp: silc_inv_def reads_equiv_f_def requiv_cur_thread_eq caps_of_state_cteD aag_cap_auth_recycle_EndpointCap cte_wp_at_weak_derived_ReplyCap )",
+ "B_sig": [],
+ "facts": [
+  "aag_cap_auth_recycle_EndpointCap",
+  "caps_of_state_cteD",
+  "cte_wp_at_weak_derived_ReplyCap",
+  "reads_equiv_f_def",
+  "real_cte_emptyable_strg",
+  "requiv_cur_thread_eq",
+  "rule_format",
+  "silc_inv_def"
+ ],
+ "accelerated": false
+}

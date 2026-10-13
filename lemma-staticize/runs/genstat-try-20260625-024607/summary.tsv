@@ -1,0 +1,5 @@
+method	lemma	line	session	verdict	accelerated	saved_ms	secs
+stateful	decode_cnode_invocation_rev	73	InfoFlow	TIMEOUT	None	None	900
+blind	decode_cnode_invocation_rev	73	InfoFlow	TIMEOUT	None	None	901
+stateful	blocked_cancel_ipc_invs	369	AInvs	TIMEOUT	None	None	901
+blind	blocked_cancel_ipc_invs	369	AInvs	TIMEOUT	None	None	901

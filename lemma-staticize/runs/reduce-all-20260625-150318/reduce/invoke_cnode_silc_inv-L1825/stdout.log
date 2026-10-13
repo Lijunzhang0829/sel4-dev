@@ -1,0 +1,12 @@
+[init ok]
+[reached invoke_cnode_silc_inv]
+== target: apply (fastforce simp: silc_inv_def authorised_cnode_inv_def)
+   orig_ms=3652  B: leave EXACTLY these 6 subgoal(s):
+1. \<And>x21 x22 x23. i = MoveCall x
+  round 0: gen=42.5s (claude 42.3s) -> ['apply clarsimp', 'apply (fastforce simp: silc_inv_def authorised_cnode_inv_def)']
+  round 0: REACH-B variant_ms=646 orig_ms=3652 saved=3005.6 faster=True
+  round 1: gen=33.0s (claude 32.4s) -> ['apply (simp only: silc_inv_def authorised_cnode_inv_def)']
+  round 1: WRONG-STATE (7 subgoals)
+  round 2: gen=49.5s (claude 49.2s) -> ['apply (auto simp: silc_inv_def authorised_cnode_inv_def)']
+  round 2: WRONG-STATE (8 subgoals)
+  round 3: gen=238.2s (claude 237.8s) -> ['apply (fastforce simp only: silc_inv_def authorised_cnode_inv_def)']

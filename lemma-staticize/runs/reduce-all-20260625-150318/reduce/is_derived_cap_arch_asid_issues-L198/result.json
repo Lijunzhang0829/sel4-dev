@@ -1,0 +1,114 @@
+{
+ "lemma": "is_derived_cap_arch_asid_issues",
+ "thy": "/sel4-project/verification/l4v/proof/invariant-abstract/ARM/ArchCSpaceInv_AI.thy",
+ "session": "AInvs",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 27847.4,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "by (fastforce simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 2629.7,
+   "saved_ms": 25217.7,
+   "faster": true,
+   "gen_secs": 31.5,
+   "claude_secs": 31.0
+  },
+  {
+   "round": 2,
+   "variant": [
+    "by (clarsimp simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 6194.6,
+   "saved_ms": 21652.8,
+   "faster": true,
+   "gen_secs": 29.0,
+   "claude_secs": 28.5
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply (simp only: is_cap_simps cap_master_cap_def cap_asid_def)",
+    "apply (clarsimp split: cap.splits arch_cap.splits option.splits)",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 5050.4,
+   "saved_ms": 22797.0,
+   "faster": true,
+   "gen_secs": 55.1,
+   "claude_secs": 54.4
+  },
+  {
+   "round": 4,
+   "variant": [
+    "by (fastforce simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 2651.3,
+   "saved_ms": 25196.1,
+   "faster": true,
+   "gen_secs": 58.1,
+   "claude_secs": 57.7
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply (simp only: cap_master_cap_def is_cap_simps cap_asid_def)",
+    "apply (auto split: cap.splits arch_cap.splits option.splits)",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 5505.7,
+   "saved_ms": 22341.7,
+   "faster": true,
+   "gen_secs": 26.5,
+   "claude_secs": 26.4
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply (clarsimp simp: is_cap_simps cap_asid_def split: cap.splits arch_cap.splits)",
+    "by (fastforce simp: cap_master_cap_def split: option.splits)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`by (fastforce simp: cap_master_cap_def split: option.splits)` failed: failed for prove the goal using the tactic `by (fastforce simp: cap_master_cap_def split: option.splits)`. Get msg: Failed to fin",
+   "gen_secs": 40.5,
+   "claude_secs": 40.4
+  },
+  {
+   "round": 7,
+   "variant": [
+    "by (fastforce simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 2603.0,
+   "saved_ms": 25244.4,
+   "faster": true,
+   "gen_secs": 31.5,
+   "claude_secs": 31.1
+  }
+ ],
+ "target": "by (auto simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)",
+ "B_sig": [],
+ "facts": [
+  "arch_cap.splits",
+  "cap.splits",
+  "cap_asid_def",
+  "cap_master_cap_def",
+  "is_cap_simps",
+  "option.splits"
+ ],
+ "path": [
+  "by (fastforce simp: cap_master_cap_def is_cap_simps cap_asid_def split: cap.splits arch_cap.splits option.splits)"
+ ],
+ "variant_ms": 2603.0,
+ "saved_ms": 25244.4,
+ "frac_saved": 0.907,
+ "accelerated": true
+}

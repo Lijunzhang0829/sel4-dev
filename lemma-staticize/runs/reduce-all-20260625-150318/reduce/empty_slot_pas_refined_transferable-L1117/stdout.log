@@ -1,0 +1,12 @@
+[init ok]
+[reached empty_slot_pas_refined_transferable]
+== target: by (fastforce simp: cte_wp_at_caps_of_state dest: all_childrenD is_tra
+   orig_ms=23193  B: close the goal (0 subgoals)
+  round 0: gen=23.0s (claude 22.5s) -> ['apply (clarsimp simp: cte_wp_at_caps_of_state)', 'apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable])', 'done']
+  round 0: REACH-B variant_ms=24143 orig_ms=23193 saved=-950.6 faster=False
+  round 1: gen=43.5s (claude 43.4s) -> []
+  round 2: gen=65.1s (claude 64.2s) -> ['apply (clarsimp simp: cte_wp_at_caps_of_state dest!: is_transferable_all_children all_childrenD)', 'apply (fastforce dest: pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable])', 'done']
+  round 2: FAILED `apply (fastforce dest: pas_refined_mem[OF sta_cdt] pas_refined_mem[OF
+  round 3: gen=19.5s (claude 18.7s) -> ['apply (clarsimp simp: cte_wp_at_caps_of_state)', 'apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable])', 'done']
+  round 3: REACH-B variant_ms=23670 orig_ms=23193 saved=-477.8 faster=False
+  round 4: gen=61.1s (claude 60.8s) -> ['apply (clarsimp simp: cte_wp_at_caps_of_state is_transferable.simps)', 'apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt_transferable])', 'done']

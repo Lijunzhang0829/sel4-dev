@@ -1,0 +1,197 @@
+{
+ "lemmas": [
+  {
+   "lemma": "auth_graph_map_memI",
+   "thy": "proof/access-control/Access_AC.thy",
+   "verify": "BUILDS",
+   "verdict": "BELOW-FLOOR",
+   "span": [
+    80,
+    84
+   ],
+   "n_in_span": 0,
+   "T_orig_golden_ms": null,
+   "ceiling_upper_ms": 103.0,
+   "file_present": true,
+   "file_min_ms": 103.0,
+   "file_n_records": 139,
+   "confidence": "strong"
+  },
+  {
+   "lemma": "reply_masters_mdbD1",
+   "thy": "proof/access-control/CNode_AC.thy",
+   "verify": "BUILDS",
+   "verdict": "BELOW-FLOOR",
+   "span": [
+    470,
+    474
+   ],
+   "n_in_span": 0,
+   "T_orig_golden_ms": null,
+   "ceiling_upper_ms": 100.0,
+   "file_present": true,
+   "file_min_ms": 100.0,
+   "file_n_records": 221,
+   "confidence": "strong"
+  },
+  {
+   "lemma": "sep_heap_domD",
+   "thy": "proof/capDL-api/RWHelper_DP.thy",
+   "verify": "BUILDS",
+   "verdict": "BELOW-FLOOR",
+   "span": [
+    168,
+    172
+   ],
+   "n_in_span": 0,
+   "T_orig_golden_ms": null,
+   "ceiling_upper_ms": 171.0,
+   "file_present": true,
+   "file_min_ms": 171.0,
+   "file_n_records": 6,
+   "confidence": "weak(small-sample floor)"
+  },
+  {
+   "lemma": "sep_irq_node_domD'",
+   "thy": "proof/capDL-api/RWHelper_DP.thy",
+   "verify": "BUILDS",
+   "verdict": "BELOW-FLOOR",
+   "span": [
+    178,
+    182
+   ],
+   "n_in_span": 0,
+   "T_orig_golden_ms": null,
+   "ceiling_upper_ms": 171.0,
+   "file_present": true,
+   "file_min_ms": 171.0,
+   "file_n_records": 6,
+   "confidence": "weak(small-sample floor)"
+  },
+  {
+   "lemma": "tcb_domain_map_wellformed_mono",
+   "thy": "proof/access-control/Access_AC.thy",
+   "verify": "BUILDS",
+   "verdict": "BELOW-FLOOR",
+   "span": [
+    228,
+    232
+   ],
+   "n_in_span": 0,
+   "T_orig_golden_ms": null,
+   "ceiling_upper_ms": 103.0,
+   "file_present": true,
+   "file_min_ms": 103.0,
+   "file_n_records": 139,
+   "confidence": "strong"
+  },
+  {
+   "lemma": "is_transferable_Endpoint",
+   "thy": "proof/access-control/Access_AC.thy",
+   "verify": "BUILDS/neg",
+   "verdict": "BELOW-FLOOR",
+   "span": [
+    114,
+    124
+   ],
+   "n_in_span": 0,
+   "T_orig_golden_ms": null,
+   "ceiling_upper_ms": 103.0,
+   "file_present": true,
+   "file_min_ms": 103.0,
+   "file_n_records": 139,
+   "confidence": "strong"
+  },
+  {
+   "lemma": "is_transferable_Untyped",
+   "thy": "proof/access-control/Access_AC.thy",
+   "verify": "BUILDS/neg",
+   "verdict": "BELOW-FLOOR",
+   "span": [
+    106,
+    107
+   ],
+   "n_in_span": 0,
+   "T_orig_golden_ms": null,
+   "ceiling_upper_ms": 103.0,
+   "file_present": true,
+   "file_min_ms": 103.0,
+   "file_n_records": 139,
+   "confidence": "strong"
+  },
+  {
+   "lemma": "is_transferable_Ntfn",
+   "thy": "proof/access-control/Access_AC.thy",
+   "verify": "BUILDS/neg",
+   "verdict": "BELOW-FLOOR",
+   "span": [
+    112,
+    113
+   ],
+   "n_in_span": 0,
+   "T_orig_golden_ms": null,
+   "ceiling_upper_ms": 103.0,
+   "file_present": true,
+   "file_min_ms": 103.0,
+   "file_n_records": 139,
+   "confidence": "strong"
+  },
+  {
+   "lemma": "is_transferable_IRQ",
+   "thy": "proof/access-control/Access_AC.thy",
+   "verify": "BUILDS/neg",
+   "verdict": "BELOW-FLOOR",
+   "span": [
+    108,
+    109
+   ],
+   "n_in_span": 0,
+   "T_orig_golden_ms": null,
+   "ceiling_upper_ms": 103.0,
+   "file_present": true,
+   "file_min_ms": 103.0,
+   "file_n_records": 139,
+   "confidence": "strong"
+  },
+  {
+   "lemma": "is_transferable_Zombie",
+   "thy": "proof/access-control/Access_AC.thy",
+   "verify": "BUILDS/neg",
+   "verdict": "BELOW-FLOOR",
+   "span": [
+    110,
+    111
+   ],
+   "n_in_span": 0,
+   "T_orig_golden_ms": null,
+   "ceiling_upper_ms": 103.0,
+   "file_present": true,
+   "file_min_ms": 103.0,
+   "file_n_records": 139,
+   "confidence": "strong"
+  }
+ ],
+ "file_stats": {
+  "proof/access-control/Access_AC.thy": {
+   "present": true,
+   "n_records": 139,
+   "min_ms": 103.0,
+   "median_ms": 355.0,
+   "max_ms": 17925.0
+  },
+  "proof/access-control/CNode_AC.thy": {
+   "present": true,
+   "n_records": 221,
+   "min_ms": 100.0,
+   "median_ms": 364.0,
+   "max_ms": 163780.0
+  },
+  "proof/capDL-api/RWHelper_DP.thy": {
+   "present": true,
+   "n_records": 6,
+   "min_ms": 171.0,
+   "median_ms": 327.0,
+   "max_ms": 811.0
+  }
+ }
+}

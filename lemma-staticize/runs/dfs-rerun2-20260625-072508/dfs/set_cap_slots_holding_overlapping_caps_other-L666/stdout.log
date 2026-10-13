@@ -1,0 +1,17 @@
+[init ok]
+[reached set_cap_slots_holding_overlapping_caps_other]
+== target line 4: apply (fastforce simp: get_cap_def get_object_def bind_def split_def g
+   facts: ['assert_def', 'assert_opt_def', 'bind_def', 'fail_def', 'get_cap_def', 'get_def', 'get_object_def', 'gets_def', 'if_splits', 'kernel_object.splits', 'option.splits', 'return_def', 'split_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [3sg] 1. \<And>s xa xaa ko cap'. \<lbrakk>pasObjectAbs aag (f
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [2sg] 1. \<And>s xa xaa ko cap'. \<lbrakk>slot = (xa, xaa); k
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold get_cap_def)  [2sg] 1. \<And>s xa xaa ko cap'. \<lbrakk>pasObjectAbs aag (f
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst if_splits)  [2sg] 1. \<And>s xa xaa ko cap'. \<lbrakk>pasObjectAbs aag (f
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-set_cap_slots_holding_overlapping_caps_other-P25806.json

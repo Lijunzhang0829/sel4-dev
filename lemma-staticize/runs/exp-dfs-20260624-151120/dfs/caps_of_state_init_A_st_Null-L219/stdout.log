@@ -1,0 +1,14 @@
+[init ok]
+[reached caps_of_state_init_A_st_Null]
+== target line 3: apply (auto simp add: state_defs tcb_cap_cases_def split: if_split_asm
+   facts: ['state_defs', 'tcb_cap_cases_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [2sg] 1. \<And>sz fun cte. \<lbrakk>kheap init_A_st (fst x) =
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold tcb_cap_cases_def)  [2sg] 1. \<And>sz fun cte. \<lbrakk>kheap init_A_st (fst x) =
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-caps_of_state_init_A_st_Null-P25807.json

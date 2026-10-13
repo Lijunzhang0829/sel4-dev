@@ -1,0 +1,26 @@
+[init ok]
+[reached insert_cap_sibling_corres]
+== target: by (auto dest: mdb_cte_atD is_untyped_cap_eqD simp: revokable_cap_inse
+   orig_ms=17437  B: close the goal (0 subgoals)
+  round 0: gen=18.0s (claude 17.6s) -> ['apply (clarsimp simp: cte_wp_at_caps_of_state not_idle_thread_def valid_mdb_def swp_def revokable_cap_insert_dest_original)', 'by (fastforce dest: mdb_cte_atD is_untyped_cap_eqD)']
+ERROR:root:Exception while sending command.
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.13/site-packages/py4j/java_gateway.py", line 1255, in send_command
+    answer = smart_decode(self.stream.readline()[:-1])
+                          ~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/conda/lib/python3.13/socket.py", line 719, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+TimeoutError: timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.13/site-packages/py4j/java_gateway.py", line 1038, in send_command
+    response = connection.send_command(command)
+  File "/opt/conda/lib/python3.13/site-packages/py4j/java_gateway.py", line 1268, in send_command
+    raise Py4JNetworkError(
+        "Error while receiving", e, proto.ERROR_ON_RECEIVE)
+py4j.protocol.Py4JNetworkError: Error while receiving
+[error] An error occurred while calling t._step_without_timeout
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-insert_cap_sibling_corres-P25928.json  verdict=ERROR

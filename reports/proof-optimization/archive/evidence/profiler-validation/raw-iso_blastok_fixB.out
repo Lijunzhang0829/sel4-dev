@@ -1,0 +1,4 @@
+Loading theory "Draft.iso_blastok_fixB"
+### theory "Draft.iso_blastok_fixB"
+### 0.361s elapsed time, 0.387s cpu time, 0.079s GC time
+val it = (): unit

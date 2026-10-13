@@ -1,0 +1,12 @@
+method	lemma	line	session	verdict	accelerated	saved_ms	secs
+dfs	rm_reads	439	InfoFlow	NO-PATH	None	None	91
+dfs	requiv_device_mem_eq	811	InfoFlow	NO-PATH	None	None	170
+stateful	rm_reads	439	InfoFlow	(noresult)	-	-	600
+blind	rm_reads	439	InfoFlow	(noresult)	-	-	600
+dfs	dmo_user_memory_update_reads_respects_g	133	InfoFlow	NO-PATH	None	None	115
+stateful	requiv_device_mem_eq	811	InfoFlow	(noresult)	-	-	600
+blind	requiv_device_mem_eq	811	InfoFlow	(noresult)	-	-	600
+dfs	decode_cnode_invocation_rev	73	InfoFlow	NO-PATH	None	None	99
+stateful	dmo_user_memory_update_reads_respects_g	133	InfoFlow	(noresult)	-	-	600
+blind	dmo_user_memory_update_reads_respects_g	133	InfoFlow	(noresult)	-	-	600
+dfs	requiv_user_mem_eq	859	InfoFlow	NO-PATH	None	None	154

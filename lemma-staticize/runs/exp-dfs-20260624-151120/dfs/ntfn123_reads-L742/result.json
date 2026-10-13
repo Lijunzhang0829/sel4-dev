@@ -1,0 +1,77 @@
+{
+ "lemma": "ntfn123_reads",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "by (simp add:SACAuthGraph_def, blast?)+",
+ "B_sig": [],
+ "facts": [
+  "SACAuthGraph_def"
+ ],
+ "steps": [
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (rule SACAuthGraph_def)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (erule SACAuthGraph_def)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (drule SACAuthGraph_def)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  },
+  {
+   "action": "apply (frule SACAuthGraph_def)",
+   "ok": false,
+   "obs": "FAILED: goal (13 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 27423.1
+}

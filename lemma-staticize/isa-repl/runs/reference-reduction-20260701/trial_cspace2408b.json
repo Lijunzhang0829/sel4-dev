@@ -1,0 +1,37 @@
+{
+ "file": "CSpace_C.thy",
+ "line": 2408,
+ "truncated": false,
+ "n_apply": 146,
+ "n_trying": 0,
+ "n_failed": 0,
+ "n_succeeded": 96,
+ "n_rewrite": 146,
+ "n_anyrule_oldmetric": 2853,
+ "n_unknown_anon": 2675,
+ "n_addrule": 2707,
+ "failed_frac_of_trials": null,
+ "top_failed_rules": [],
+ "top_succeeded_rules": [
+  [
+   "HOL.implies_True_equals",
+   40
+  ],
+  [
+   "structures_defs.cap_frame_cap_lift_def",
+   24
+  ],
+  [
+   "Option.option.case_2",
+   24
+  ],
+  [
+   "structures_defs.cap_frame_cap_CL.select_convs_1",
+   7
+  ],
+  [
+   "structures_defs.cap_frame_cap_CL.select_convs_3",
+   1
+  ]
+ ]
+}

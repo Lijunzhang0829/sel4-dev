@@ -1,0 +1,8 @@
+[init ok]
+[reached valid_arch_caps_s0]
+== target: by auto
+   orig_ms=18231  B: close the goal (0 subgoals)
+  round 0: gen=10.0s (claude 9.5s) -> []
+  round 1: gen=23.5s (claude 23.3s) -> []
+  round 2: gen=24.5s (claude 23.8s) -> []
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-valid_arch_caps_s0-P25934.json  verdict=CHANNEL-FAIL

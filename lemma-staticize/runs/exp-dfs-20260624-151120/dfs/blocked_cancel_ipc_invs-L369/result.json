@@ -1,0 +1,456 @@
+{
+ "lemma": "blocked_cancel_ipc_invs",
+ "thy": "/sel4-project/verification/l4v/proof/invariant-abstract/IpcCancel_AI.thy",
+ "session": "AInvs",
+ "mode": "react",
+ "target": "apply (auto elim!: delta_sym_refs pred_tcb_weaken_strongerE simp: obj_at_def is_ep_def2 idle_not_queued refs_in_tcb_bound_refs dest: idle_no_refs split: if_split_asm)[2]",
+ "B_sig": [
+  "1. \\<And>epptr ep queue s. \\<lbrakk>ep \\<noteq> IdleEP; valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); valid_mdb s; valid_ioc s; valid_idle s; only_idle s; if_unsafe_then_cap s; valid_reply_caps s; valid_reply_masters s; valid_global_refs s; valid_arch_state s; valid_irq_node s; valid_irq_handlers s; valid_irq_states s; valid_ioports s; valid_machine_state s; valid_vspace_objs s; valid_arch_caps s; valid_global_objs s; valid_kernel_mappings s; equal_kernel_mappings s; valid_asid_map s; valid_global_vspace_mappings s; pspace_in_kernel_window s; cap_refs_in_kernel_window s; pspace_respects_device_region s; cap_refs_respects_device_region s; cur_tcb s; st_tcb_at ((=) st) t s; (\\<exists>d. st = BlockedOnReceive epptr d) \\<or> (\\<exists>d. st = BlockedOnSend epptr d); ep = SendEP queue \\<or> ep = RecvEP queue; ex_nonz_cap_to epptr s; state_refs_of s epptr = ep_q_refs_of ep; kheap s epptr = Some (Endpoint ep); valid_ep ep s; \\<exists>ts ntfnptr. st = ts \\<and> obj_at (tcb_ntfn_is_bound ntfnptr) t s \\<and> state_refs_of s t = tcb_st_refs_of ts \\<union> tcb_bound_refs ntfnptr\\<rbrakk> \\<Longrightarrow> epptr \\<notin> set (remove1 t queue)",
+  "2. \\<And>epptr ep queue s. (ko_at (Endpoint ep) epptr and (valid_objs and pspace_aligned and pspace_distinct and if_live_then_nonz_cap and zombies_final and (\\<lambda>s. sym_refs (state_refs_of s)) and (\\<lambda>s. sym_refs (state_hyp_refs_of s)) and valid_mdb and valid_ioc and valid_idle and only_idle and if_unsafe_then_cap and valid_reply_caps and valid_reply_masters and valid_global_refs and valid_arch_state and valid_irq_node and valid_irq_handlers and valid_irq_states and valid_ioports and valid_machine_state and valid_vspace_objs and valid_arch_caps and valid_global_objs and valid_kernel_mappings and equal_kernel_mappings and valid_asid_map and valid_global_vspace_mappings and pspace_in_kernel_window and cap_refs_in_kernel_window and pspace_respects_device_region and cap_refs_respects_device_region and cur_tcb and st_tcb_at ((=) st) t and (\\<lambda>y. (\\<exists>d. st = BlockedOnReceive epptr d) \\<or> (\\<exists>d. st = BlockedOnSend epptr d))) and (\\<lambda>y. ep = SendEP queue \\<or> ep = RecvEP queue)) s \\<Longrightarrow> ep \\<noteq> IdleEP"
+ ],
+ "facts": [
+  "delta_sym_refs",
+  "idle_no_refs",
+  "idle_not_queued",
+  "is_ep_def2",
+  "obj_at_def",
+  "pred_tcb_weaken_strongerE",
+  "refs_in_tcb_bound_refs"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule conjI)",
+   "ok": true,
+   "obs": "[5sg] 1. \\<And>epptr ep queue s x2. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); valid_md"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>epptr ep queue s x2. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); valid_md"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": true,
+   "obs": "[5sg] 1. \\<And>epptr ep queue s x2. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); valid_md"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>epptr ep queue s x2 ntfnptr. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); "
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": true,
+   "obs": "[5sg] 1. \\<And>epptr ep queue s x2. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); valid_md"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>epptr ep queue s x2. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); valid_md"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule delta_sym_refs)",
+   "ok": true,
+   "obs": "[6sg] 1. \\<And>epptr ep queue s x2 x y tp. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_hyp_refs_of s); valid_mdb s; valid_ioc s; val"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule delta_sym_refs)",
+   "ok": true,
+   "obs": "[6sg] 1. \\<And>epptr ep queue s x2 x y tp. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); v"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule idle_no_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule idle_no_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule idle_no_refs)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>epptr ep queue s x2. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); valid_md"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule idle_no_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule idle_no_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (frule idle_no_refs)",
+   "ok": true,
+   "obs": "[4sg] 1. \\<And>epptr ep queue s x2. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); valid_md"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule idle_no_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule idle_no_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (subst idle_no_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule idle_not_queued)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule idle_not_queued)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (drule idle_not_queued)",
+   "ok": true,
+   "obs": "[6sg] 1. \\<And>epptr ep queue s x2. \\<lbrakk>valid_objs s; pspace_aligned s; pspace_distinct s; if_live_then_nonz_cap s; zombies_final s; sym_refs (state_refs_of s); sym_refs (state_hyp_refs_of s); valid_md"
+  },
+  {
+   "action": "apply (rule impI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule exI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule notI)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply assumption",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (rule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  },
+  {
+   "action": "apply (erule delta_sym_refs)",
+   "ok": false,
+   "obs": "FAILED: goal (4 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH",
+ "orig_ms": 260949.0
+}

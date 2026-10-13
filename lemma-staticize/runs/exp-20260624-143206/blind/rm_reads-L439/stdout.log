@@ -1,0 +1,8 @@
+[genstat-stateful] rm_reads @ proof/infoflow/PolicySystemSAC.thy
+[init ok]
+[reached rm_reads]
+== target: by (simp, blast?)+
+   A_goal: l' \<in> {partition_label NicB, partition_label RM, partition_label R, partition_label NicA, partition_label NicD, parti
+   B: close the goal (0 subgoals)
+  round 0: gen=347.4s (claude 97.9s) -> ['apply (rule equalityI)', 'apply (rule subsetI)', 'apply (erule subjectReads.induct)', 'apply (simp only: SACAuthGraph_def partition_label_def)', 'apply (intro subsetI)', 'apply (simp only: insert_iff singleton_iff mem_Collect_eq)', 'apply (elim disjE)', 'apply (simp only: partition_label_def; rule subjectReads.reads_lrefl)', 'done']
+  round 0: BUILD-FAIL `apply (rule equalityI)` failed: failed for prove the goal using the tactic `app

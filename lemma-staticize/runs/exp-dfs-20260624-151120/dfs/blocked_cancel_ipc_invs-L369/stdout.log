@@ -1,0 +1,31 @@
+[init ok]
+[reached blocked_cancel_ipc_invs]
+== target line 18: apply (auto elim!: delta_sym_refs pred_tcb_weaken_strongerE simp: obj_
+   facts: ['delta_sym_refs', 'idle_no_refs', 'idle_not_queued', 'is_ep_def2', 'obj_at_def', 'pred_tcb_weaken_strongerE', 'refs_in_tcb_bound_refs']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [5sg] 1. \<And>epptr ep queue s x2. \<lbrakk>valid_objs s; ps
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule conjE)  [4sg] 1. \<And>epptr ep queue s x2. \<lbrakk>valid_objs s; ps
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule disjE)  [5sg] 1. \<And>epptr ep queue s x2. \<lbrakk>valid_objs s; ps
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule exE)  [4sg] 1. \<And>epptr ep queue s x2 ntfnptr. \<lbrakk>valid_ob
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule impE)  [5sg] 1. \<And>epptr ep queue s x2. \<lbrakk>valid_objs s; ps
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply hypsubst  [4sg] 1. \<And>epptr ep queue s x2. \<lbrakk>valid_objs s; ps
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule delta_sym_refs)  [6sg] 1. \<And>epptr ep queue s x2 x y tp. \<lbrakk>valid_obj
+  [think d7] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule delta_sym_refs)  [6sg] 1. \<And>epptr ep queue s x2 x y tp. \<lbrakk>valid_obj
+  [think d8] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule idle_no_refs)  [4sg] 1. \<And>epptr ep queue s x2. \<lbrakk>valid_objs s; ps
+  [think d9] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (frule idle_no_refs)  [4sg] 1. \<And>epptr ep queue s x2. \<lbrakk>valid_objs s; ps
+  [think d10] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (drule idle_not_queued)  [6sg] 1. \<And>epptr ep queue s x2. \<lbrakk>valid_objs s; ps
+  [think d11] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-blocked_cancel_ipc_invs-P25837.json

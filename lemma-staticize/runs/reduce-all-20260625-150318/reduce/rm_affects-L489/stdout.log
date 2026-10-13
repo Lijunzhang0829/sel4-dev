@@ -1,0 +1,22 @@
+[init ok]
+[reached rm_affects]
+== target: by (simp, blast?)+
+   orig_ms=22541  B: close the goal (0 subgoals)
+  round 0: gen=23.5s (claude 22.7s) -> ['apply (simp only: subjectAffects_def SACAuthGraph_def)', 'apply blast', 'done']
+  round 0: FAILED `apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: faile
+  round 1: gen=23.0s (claude 22.5s) -> ['apply (simp only: subjectAffects_def SACAuthGraph_def)', 'apply blast', 'done']
+  round 1: FAILED `apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: faile
+  round 2: gen=16.0s (claude 15.7s) -> ['apply (simp only: subjectAffects_def SACAuthGraph_def)', 'apply blast', 'done']
+  round 2: FAILED `apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: faile
+  round 3: gen=20.5s (claude 19.9s) -> ['by (simp only: subjectAffects_def SACAuthGraph_def, blast)+']
+  round 3: FAILED `by (simp only: subjectAffects_def SACAuthGraph_def, blast)+` failed: 
+  round 4: gen=40.5s (claude 40.0s) -> ['by (clarsimp, blast?)+']
+  round 4: REACH-B variant_ms=2876 orig_ms=22541 saved=19665.5 faster=True
+  round 5: gen=36.0s (claude 35.8s) -> ['by (clarsimp, fastforce?)+']
+  round 5: REACH-B variant_ms=6170 orig_ms=22541 saved=16371.8 faster=True
+  round 6: gen=28.5s (claude 28.2s) -> ['apply (simp only: subjectAffects_def SACAuthGraph_def)', 'by blast']
+  round 6: FAILED `apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: faile
+  round 7: gen=43.0s (claude 42.5s) -> ['apply (simp only: subjectAffects_def SACAuthGraph_def)', 'apply (simp, blast?)+', 'done']
+  round 7: FAILED `apply (simp only: subjectAffects_def SACAuthGraph_def)` failed: faile
+[WIN] 22541ms -> 2876ms  saved=19665.5ms (87%)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-rm_affects-P25923.json  verdict=FASTER

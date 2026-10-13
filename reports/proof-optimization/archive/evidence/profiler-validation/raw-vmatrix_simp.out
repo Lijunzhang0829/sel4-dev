@@ -1,0 +1,8 @@
+Loading theory "Draft.vmatrix_simp"
+### theory "Draft.vmatrix_simp"
+### 0.167s elapsed time, 0.248s cpu time, 0.067s GC time
+*** Failed to finish proof (line 22 of "/workspace/lemma-staticize/isa-repl/profiler/vmatrix_simp.thy"):
+*** goal (1 subgoal):
+***  1. \<Sum> {0..<700} = 244650
+*** At command "by" (line 22 of "/workspace/lemma-staticize/isa-repl/profiler/vmatrix_simp.thy")
+Exception- TOPLEVEL_ERROR raised

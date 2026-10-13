@@ -1,0 +1,28 @@
+Loading theory "Draft.prof_validate2"
+ML_profilingkind=timeprofile_time:
+ML_profiling_entryname=Term.maxidx_typ(2)count=1           1 Term.maxidx_typ(2)
+ML_profiling_entryname=Net.matching(4)count=1           1 Net.matching(4)
+ML_profiling_entryname=UNKNOWNcount=2           2 UNKNOWN
+ML_profiling_entryname=GARBAGE COLLECTION (total)count=5           5 GARBAGE COLLECTION (total)
+ML_profiling_entryname=GARBAGE COLLECTION (minor collection)count=5           5 GARBAGE COLLECTION (minor collection)
+          14 TOTAL
+ML_profilingkind=timeprofile_time:
+ML_profiling_entryname=Table().retrieve(4)find(1)count=1           1 Table().retrieve(4)find(1)
+ML_profiling_entryname=Table().retrieve(4)compare(2)count=1           1 Table().retrieve(4)compare(2)
+ML_profiling_entryname=Term.aconv(2)count=1           1 Term.aconv(2)
+ML_profiling_entryname=Envir.norm_term1(1)norm(1)count=1           1 Envir.norm_term1(1)norm(1)
+ML_profiling_entryname=Same.map(2)()count=1           1 Same.map(2)()
+ML_profiling_entryname=o(2)(1)count=1           1 o(2)(1)
+ML_profiling_entryname=Envir.head_norm(1)norm(1)count=1           1 Envir.head_norm(1)norm(1)
+ML_profiling_entryname=Pattern.unif(5)count=1           1 Pattern.unif(5)
+ML_profiling_entryname=Term.could_eta_contract(1)count=1           1 Term.could_eta_contract(1)
+ML_profiling_entryname=Logic.strip_imp_prems(1)count=1           1 Logic.strip_imp_prems(1)
+ML_profiling_entryname=Thm.rename_bvs(5)count=1           1 Thm.rename_bvs(5)
+ML_profiling_entryname=UNKNOWNcount=1           1 UNKNOWN
+ML_profiling_entryname=Proofterm.get_proofs_level(1)count=2           2 Proofterm.get_proofs_level(1)
+ML_profiling_entryname=GARBAGE COLLECTION (total)count=4           4 GARBAGE COLLECTION (total)
+ML_profiling_entryname=GARBAGE COLLECTION (minor collection)count=4           4 GARBAGE COLLECTION (minor collection)
+          22 TOTAL
+### theory "Draft.prof_validate2"
+### 0.457s elapsed time, 0.500s cpu time, 0.056s GC time
+val it = (): unit

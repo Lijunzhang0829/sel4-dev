@@ -1,0 +1,25 @@
+[init ok]
+[reached retype_region_silc_inv]
+== target line 19: by (fastforce simp: default_object_def empty_cnode_def split: apiobjec
+   facts: ['apiobject_type.splits', 'default_object_def', 'empty_cnode_def', 'if_splits']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule notE)  [1sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule allE)  [1sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply hypsubst  [1sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst apiobject_type.splits)  [1sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold default_object_def)  [1sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (simp only: default_object_def)  [1sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst if_splits)  [1sg] 1. \<lbrakk>range_cover ptr sz (obj_bits_api type o_bit
+  [think d7] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-retype_region_silc_inv-P25800.json

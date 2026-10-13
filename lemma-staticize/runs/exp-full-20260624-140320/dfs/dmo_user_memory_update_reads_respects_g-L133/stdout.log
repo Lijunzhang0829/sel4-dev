@@ -1,0 +1,21 @@
+[init ok]
+[reached dmo_user_memory_update_reads_respects_g]
+== target line 4: apply (fastforce simp: equiv_valid_def2 equiv_valid_2_def in_monad do_
+   facts: ['do_machine_op_def', 'equiv_valid_2_def', 'equiv_valid_def2', 'idle_equiv_def', 'in_monad', 'select_f_def', 'user_memory_update_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [3sg] 1. \<And>s t. \<lbrakk>affects_equiv aag l s t; reads_e
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold do_machine_op_def)  [2sg] 1. \<And>s t. \<lbrakk>affects_equiv aag l s t; reads_e
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (simp only: do_machine_op_def)  [2sg] 1. \<And>s t. \<lbrakk>affects_equiv aag l s t; reads_e
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold idle_equiv_def)  [2sg] 1. \<And>s t. \<lbrakk>affects_equiv aag l s t; reads_e
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (simp only: idle_equiv_def)  [2sg] 1. \<And>s t. \<lbrakk>affects_equiv aag l s t; reads_e
+  [think d5] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold user_memory_update_def)  [2sg] 1. \<And>s t. \<lbrakk>affects_equiv aag l s t; reads_e
+  [think d6] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-dmo_user_memory_update_reads_respects_g-P25806.json

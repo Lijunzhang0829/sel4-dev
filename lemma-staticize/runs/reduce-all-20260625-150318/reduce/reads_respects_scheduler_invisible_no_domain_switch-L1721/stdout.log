@@ -1,0 +1,7 @@
+[init ok]
+[reached reads_respects_scheduler_invisible_no_domain_switch]
+== target: by (safe; (fastforce simp: switch_thread_runnable | fastforce dest!: s
+   orig_ms=96943  B: close the goal (0 subgoals)
+  round 0: gen=23.1s (claude 22.8s) -> ['by (safe; clarsimp?;']
+  round 0: FAILED `by (safe; clarsimp?;` failed: failed for prove the goal using the tac
+  round 1: gen=19.5s (claude 19.1s) -> ['by (safe; fastforce simp: switch_thread_runnable st_tcb_at_def obj_at_def dest!: switch_to_cur_domain cur_thread_cur_domain)+']

@@ -1,0 +1,12 @@
+{
+ "lemma": "valid_arch_caps_s0",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "CHANNEL-FAIL",
+ "orig_ms": 18231.3,
+ "rounds": [],
+ "target": "by auto",
+ "B_sig": [],
+ "facts": []
+}

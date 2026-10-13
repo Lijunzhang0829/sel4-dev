@@ -1,0 +1,10 @@
+[genstat-stateful] Sys1AgentMap_simps @ proof/infoflow/ARM/Example_Valid_State.thy
+[init ok]
+[reached Sys1AgentMap_simps]
+== target: by (auto simp: s0_ptr_defs ptr_range_def pageBits_def)
+   A_goal: p \<noteq> Low_cnode_ptr \<longrightarrow> p \<noteq> High_cnode_ptr \<and> (p \<noteq> High_cnode_ptr \<longrightarrow>
+   B: close the goal (0 subgoals)
+  step 0: gen=228.3s (claude 46.4s) -> ['apply (simp only: s0_ptr_defs ptr_range_def pageBits_def)']
+  step 0: OK -> 1 subgoal(s); applied=['apply (simp only: s0_ptr_defs ptr_range_def pageBits_def)']
+  step 1: gen=72.1s (claude 71.7s) -> ['apply (intro impI conjI; assumption)']
+  step 1: FAILED `apply (intro impI conjI; assumption)` failed: failed for prove the goal using t

@@ -1,0 +1,11 @@
+[init ok]
+[reached tcb_domain_map_wellformed_mono]
+== target line 0: by (auto simp: tcb_domain_map_wellformed_aux_def get_etcb_def)
+   facts: ['get_etcb_def', 'tcb_domain_map_wellformed_aux_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold tcb_domain_map_wellformed_aux_def)  [1sg] 1. \<lbrakk>domains_of_state s' \<subseteq> domains_of_
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-tcb_domain_map_wellformed_mono.json

@@ -1,0 +1,122 @@
+[
+ {
+  "lemma": "rm_affects",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/PolicySystemSAC.thy",
+  "proof_line": 489,
+  "tactic": "blast",
+  "elapsed": 24.6,
+  "file_lines": 962,
+  "line_text": " by (simp, blast?)+"
+ },
+ {
+  "lemma": "SAC_partsSubjectAffects_exceptT",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/PolicySystemSAC.thy",
+  "proof_line": 921,
+  "tactic": "auto",
+  "elapsed": 22.2,
+  "file_lines": 962,
+  "line_text": " apply (auto simp: SAC_affects SAC_reads)"
+ },
+ {
+  "lemma": "abd_affects",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/PolicySystemSAC.thy",
+  "proof_line": 241,
+  "tactic": "auto",
+  "elapsed": 20.4,
+  "file_lines": 962,
+  "line_text": " by auto"
+ },
+ {
+  "lemma": "dmo_device_state_update_reads_respects_g",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/UserOp_IF.thy",
+  "proof_line": 151,
+  "tactic": "fastforce",
+  "elapsed": 17.7,
+  "file_lines": 165,
+  "line_text": " apply (fastforce simp: equiv_valid_def2 equiv_valid_2_def in_monad do_machine_op_def devi"
+ },
+ {
+  "lemma": "abd_reads",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/PolicySystemSAC.thy",
+  "proof_line": 183,
+  "tactic": "blast",
+  "elapsed": 15.4,
+  "file_lines": 962,
+  "line_text": " by (simp, blast?)+"
+ },
+ {
+  "lemma": "ntfn123_reads",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/PolicySystemSAC.thy",
+  "proof_line": 742,
+  "tactic": "blast",
+  "elapsed": 14.0,
+  "file_lines": 962,
+  "line_text": " by (simp add:SACAuthGraph_def, blast?)+"
+ },
+ {
+  "lemma": "dmo_bind_ev'",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/Retype_IF.thy",
+  "proof_line": 93,
+  "tactic": "fastforce",
+  "elapsed": 13.0,
+  "file_lines": 575,
+  "line_text": " by (fastforce simp: do_machine_op_def gets_def get_def select_f_def modify_def put_def re"
+ },
+ {
+  "lemma": "decode_cnode_invocation_rev",
+  "session": "InfoFlow",
+  "thy": "proof/infoflow/Decode_IF.thy",
+  "proof_line": 73,
+  "tactic": "auto",
+  "elapsed": 10.7,
+  "file_lines": 403,
+  "line_text": " apply (auto dest: bspec[where x=\"excaps ! 0\"] bspec[where x=\"excaps ! Suc 0\"] is_cnode_in"
+ },
+ {
+  "lemma": "storeWord_integrity_autarch",
+  "session": "Access",
+  "thy": "proof/access-control/ARM/ArchRetype_AC.thy",
+  "proof_line": 317,
+  "tactic": "auto",
+  "elapsed": 3.7,
+  "file_lines": 447,
+  "line_text": " apply (auto simp: integrity_def is_aligned_mask [symmetric] intro!: trm_lrefl ptr_range_m"
+ },
+ {
+  "lemma": "storeWord_respects",
+  "session": "Access",
+  "thy": "proof/access-control/ARM/ArchRetype_AC.thy",
+  "proof_line": 354,
+  "tactic": "auto",
+  "elapsed": 3.2,
+  "file_lines": 447,
+  "line_text": " apply (auto simp: integrity_def is_aligned_mask [symmetric] intro!: trm_write ptr_range_m"
+ },
+ {
+  "lemma": "invoke_tcb_pas_refined",
+  "session": "Access",
+  "thy": "proof/access-control/Tcb_AC.thy",
+  "proof_line": 377,
+  "tactic": "fastforce",
+  "elapsed": 2.9,
+  "file_lines": 558,
+  "line_text": " apply (wp ita_wps hoare_drop_imps hoare_strengthen_post[where Q=\"\\<lambda>_. pas_refined "
+ },
+ {
+  "lemma": "pas_refined_clear_asid",
+  "session": "Access",
+  "thy": "proof/access-control/ARM/ArchCNode_AC.thy",
+  "proof_line": 538,
+  "tactic": "fastforce",
+  "elapsed": 2.6,
+  "file_lines": 549,
+  "line_text": " by (fastforce simp: pas_refined_def state_objs_to_policy_def intro: state_asids_to_policy"
+ }
+]

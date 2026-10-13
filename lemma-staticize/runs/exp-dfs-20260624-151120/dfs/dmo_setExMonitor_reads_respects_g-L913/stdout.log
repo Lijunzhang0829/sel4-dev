@@ -1,0 +1,17 @@
+[init ok]
+[reached dmo_setExMonitor_reads_respects_g]
+== target line 2: apply (auto simp: reads_equiv_g_def reads_equiv_def affects_equiv_def 
+   facts: ['affects_equiv_def', 'equiv_asid_def', 'equiv_asids_def', 'equiv_for_def', 'globals_equiv_def', 'idle_equiv_def', 'if_splits', 'reads_equiv_def', 'reads_equiv_g_def', 'states_equiv_for_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [2sg] 1. \<And>s s' sa t. \<lbrakk>K (True \<and> True) sa; K
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold affects_equiv_def)  [1sg] 1. \<And>s s' sa t. \<lbrakk>K (True \<and> True) sa; K
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (subst if_splits)  [1sg] 1. \<And>s s' sa t. \<lbrakk>K (True \<and> True) sa; K
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold reads_equiv_g_def)  [1sg] 1. \<And>s s' sa t. \<lbrakk>K (True \<and> True) sa; K
+  [think d4] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[node cap]
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-dmo_setExMonitor_reads_respects_g-P25810.json

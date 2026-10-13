@@ -1,0 +1,36 @@
+{
+ "lemma": "abd_affects",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/PolicySystemSAC.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 23227.4,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply clarsimp",
+    "apply (auto simp: subjectAffects_def SACAuthGraph_def abd_affects_set_def)",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 8089.3,
+   "saved_ms": 15138.1,
+   "faster": true,
+   "gen_secs": 24.5,
+   "claude_secs": 24.0
+  }
+ ],
+ "target": "by auto",
+ "B_sig": [],
+ "facts": [],
+ "path": [
+  "apply clarsimp",
+  "apply (auto simp: subjectAffects_def SACAuthGraph_def abd_affects_set_def)",
+  "done"
+ ],
+ "variant_ms": 8089.3,
+ "saved_ms": 15138.1,
+ "frac_saved": 0.652,
+ "accelerated": true
+}

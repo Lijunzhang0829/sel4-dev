@@ -1,0 +1,14 @@
+Loading theory "Draft.prof_validate"
+ML_profilingkind=timeprofile_time:
+ML_profiling_entryname=Config.declare(3)map_value(1)(1)count=1           1 Config.declare(3)map_value(1)(1)
+ML_profiling_entryname=Table().retrieve(4)find(1)count=1           1 Table().retrieve(4)find(1)
+ML_profiling_entryname=Table().modify(3)modfy(1)count=1           1 Table().modify(3)modfy(1)
+ML_profiling_entryname=UNKNOWNcount=1           1 UNKNOWN
+           4 TOTAL
+### theory "Draft.prof_validate"
+### 0.482s elapsed time, 0.542s cpu time, 0.118s GC time
+*** Failed to finish proof (line 18 of "/workspace/lemma-staticize/isa-repl/profiler/prof_validate.thy"):
+*** goal (1 subgoal):
+***  1. \<Sum> {0..<700} = 244650
+*** At command "by" (line 18 of "/workspace/lemma-staticize/isa-repl/profiler/prof_validate.thy")
+Exception- TOPLEVEL_ERROR raised

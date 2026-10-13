@@ -1,0 +1,9 @@
+[genstat-stateful] abd_affects @ proof/infoflow/PolicySystemSAC.thy
+[init ok]
+[reached abd_affects]
+== target: by auto
+   A_goal: partition_label x \<in> partition_label ` abd_affects_set
+   B: close the goal (0 subgoals)
+  round 0: gen=180.7s (claude 180.3s) -> ['apply (simp only: insert_iff empty_iff)', 'apply (erule disjE)', 'apply hypsubst', 'apply (simp only: subjectAffects_def SACAuthGraph_def abd_affects_set_def)', 'done']
+  round 0: BUILD-FAIL `done` failed: failed for prove the goal using the tactic `done`. Get msg: Faile
+  round 1: gen=400.5s (claude 400.1s) -> []

@@ -1,0 +1,8 @@
+[init ok]
+[reached requiv_user_mem_eq]
+== target line 11: apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_ca
+   facts: ['ptable_lift_s_def', 'ptable_rights_s_def', 'ptrFromPAddr_mask_simp', 'subjectReads.reads_read', 'typ_at_user_data_at', 'vspace_cap_rights_to_auth_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-requiv_user_mem_eq-P25812.json

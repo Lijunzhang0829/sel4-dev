@@ -1,0 +1,11 @@
+[init ok]
+[reached cap_insert_pas_refined]
+== target: by (fastforce split: if_split_asm simp: cte_wp_at_caps_of_state pas_re
+   orig_ms=14697  B: close the goal (0 subgoals)
+  round 0: gen=40.5s (claude 40.1s) -> ['apply (clarsimp simp: cte_wp_at_caps_of_state Option.is_none_def simp del: split_paired_All)', 'apply (fastforce split: if_split_asm simp: pas_refined_refl F[symmetric] valid_mdb_def2 mdb_cte_at_def simp del: split_paired_All dest: aag_cdt_link_Control aag_cdt_link_DeleteDerived cap_auth_caps_of_state)', 'done']
+  round 0: REACH-B variant_ms=12629 orig_ms=14697 saved=2068.5 faster=True
+  round 1: gen=42.0s (claude 41.6s) -> []
+  round 2: gen=54.0s (claude 53.4s) -> []
+  round 3: gen=39.5s (claude 38.7s) -> []
+[WIN] 14697ms -> 12629ms  saved=2068.5ms (14%)
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/reduce-cap_insert_pas_refined-P25920.json  verdict=FASTER

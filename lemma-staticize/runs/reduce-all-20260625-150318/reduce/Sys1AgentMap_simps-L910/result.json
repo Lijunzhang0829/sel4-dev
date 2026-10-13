@@ -1,0 +1,99 @@
+{
+ "lemma": "Sys1AgentMap_simps",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 22411.9,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "by (auto simp only: s0_ptr_defs ptr_range_def pageBits_def)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`by (auto simp only: s0_ptr_defs ptr_range_def pageBits_def)` failed: failed for prove the goal using the tactic `by (auto simp only: s0_ptr_defs ptr_range_def pageBits_def)`. Get msg: Failed to finis",
+   "gen_secs": 30.5,
+   "claude_secs": 30.3
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply (simp only: s0_ptr_defs ptr_range_def pageBits_def)",
+    "apply auto",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 20071.1,
+   "saved_ms": 2340.8,
+   "faster": true,
+   "gen_secs": 67.1,
+   "claude_secs": 66.8
+  },
+  {
+   "round": 3,
+   "variant": [
+    "apply (simp only: s0_ptr_defs ptr_range_def pageBits_def)",
+    "apply auto",
+    "done"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 19986.9,
+   "saved_ms": 2425.0,
+   "faster": true,
+   "gen_secs": 65.5,
+   "claude_secs": 65.0
+  },
+  {
+   "round": 4,
+   "variant": [
+    "apply (clarsimp simp: s0_ptr_defs ptr_range_def pageBits_def)+",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`done` failed: failed for prove the goal using the tactic `done`. Get msg: Failed to finish proof:\ngoal (1 subgoal):\n 1. \\<And>p. \\<lbrakk>0xE0006000 \\<le> p; p \\<le> 0xE0006FFF; p \\<noteq> 0xE0010000",
+   "gen_secs": 74.1,
+   "claude_secs": 73.3
+  },
+  {
+   "round": 5,
+   "variant": [
+    "by (fastforce simp: s0_ptr_defs ptr_range_def pageBits_def)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 21187.6,
+   "saved_ms": 1224.3,
+   "faster": false,
+   "gen_secs": 31.0,
+   "claude_secs": 30.9
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply (simp only: ptr_range_def pageBits_def s0_ptr_defs)",
+    "apply auto"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 19747.5,
+   "saved_ms": 2664.4,
+   "faster": true,
+   "gen_secs": 75.1,
+   "claude_secs": 74.6
+  }
+ ],
+ "target": "by (auto simp: s0_ptr_defs ptr_range_def pageBits_def)",
+ "B_sig": [],
+ "facts": [
+  "pageBits_def",
+  "ptr_range_def",
+  "s0_ptr_defs"
+ ],
+ "path": [
+  "apply (simp only: ptr_range_def pageBits_def s0_ptr_defs)",
+  "apply auto"
+ ],
+ "variant_ms": 19747.5,
+ "saved_ms": 2664.4,
+ "frac_saved": 0.119,
+ "accelerated": true
+}

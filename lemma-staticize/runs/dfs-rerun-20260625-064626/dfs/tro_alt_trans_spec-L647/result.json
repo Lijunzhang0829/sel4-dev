@@ -1,0 +1,14 @@
+{
+ "lemma": "tro_alt_trans_spec",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/Access_AC.thy",
+ "session": "Access",
+ "mode": "react",
+ "target": null,
+ "B_sig": null,
+ "facts": [],
+ "steps": [],
+ "path": null,
+ "audit": false,
+ "verdict": "NO-PATH",
+ "error": "An error occurred while calling t._step_without_timeout"
+}

@@ -1,0 +1,13 @@
+lemma	session	verdict	effort	secs
+sep_heap_domD	DSpecProofs	NO-PATH	3	47
+sep_heap_domD'	DSpecProofs	PATH-FOUND	1	44
+sep_irq_node_domD'	DSpecProofs	PATH-FOUND	1	44
+is_transferable_Untyped	Access	NO-PATH	2	47
+is_transferable_Endpoint	Access	NO-PATH	2	46
+is_transferable_IRQ	Access	NO-PATH	2	46
+is_transferable_Ntfn	Access	NO-PATH	2	45
+is_transferable_Zombie	Access	NO-PATH	2	45
+auth_graph_map_memI	Access	NO-PATH	2	44
+pas_refined_sita_mem	Access	NO-PATH	1	46
+tcb_domain_map_wellformed_mono	Access	NO-PATH	1	46
+reply_masters_mdbD1	Access	PATH-FOUND	1	51

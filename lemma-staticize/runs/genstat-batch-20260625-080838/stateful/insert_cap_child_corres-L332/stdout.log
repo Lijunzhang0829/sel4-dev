@@ -1,0 +1,14 @@
+[genstat-stateful] insert_cap_child_corres @ proof/drefine/CNode_DR.thy
+[init ok]
+[reached insert_cap_child_corres]
+== target: by (case_tac "cdt s' child", safe intro!: mdb_cte_atI; auto dest: mdb_
+   A_goal: (src = child \<longrightarrow> (Structures_A.is_untyped_cap capa \<and> Structures_A.is_untyped_cap cap \<and> obj_ref_o
+   B: close the goal (0 subgoals)
+  step 0: gen=169.2s (claude 35.5s) -> ['apply (case_tac "cdt s\' child")']
+  step 0: OK -> 2 subgoal(s); applied=['apply (case_tac "cdt s\' child")']
+  step 1: gen=35.0s (claude 34.9s) -> ['apply (rule conjI)', 'apply (rule impI)']
+  step 1: OK -> 3 subgoal(s); applied=['apply (case_tac "cdt s\' child")', 'apply (rule conjI)', 'apply (rule impI)']
+  step 2: gen=67.1s (claude 66.7s) -> ['apply (rule conjI)', 'apply (rule impI)']
+  step 2: REPEAT-CHUNK (work already done)
+  step 3: gen=59.1s (claude 58.6s) -> ['apply (rule conjI)', 'apply (rule impI)']
+  step 3: REPEAT-CHUNK (work already done)

@@ -1,0 +1,18 @@
+{
+ "lemma": "reads_respects_scheduler_invisible_no_domain_switch",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/Scheduler_IF.thy",
+ "session": "InfoFlow",
+ "mode": "reduce",
+ "verdict": "NO-PATH",
+ "orig_ms": 96943.2,
+ "rounds": [],
+ "target": "by (safe; (fastforce simp: switch_thread_runnable | fastforce dest!: switch_to_cur_domain cur_thread_cur_domain | fastforce simp: st_tcb_at_def obj_at_def))+",
+ "B_sig": [],
+ "facts": [
+  "cur_thread_cur_domain",
+  "obj_at_def",
+  "st_tcb_at_def",
+  "switch_thread_runnable",
+  "switch_to_cur_domain"
+ ]
+}

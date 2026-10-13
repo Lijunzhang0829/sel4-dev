@@ -1,0 +1,170 @@
+{
+ "lemma": "requiv_user_mem_eq",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/ArchUserOp_IF.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": "apply (fastforce simp: ptable_lift_s_def ptable_rights_s_def vspace_cap_rights_to_auth_def | intro typ_at_user_data_at)+",
+ "B_sig": [
+  "1. \\<And>sz. \\<lbrakk>globals_equiv s s'; invs s; invs s'; \\<forall>x\\<in>ran (kheap s). obj_valid_pdpt x; \\<forall>x\\<in>ran (kheap s'). obj_valid_pdpt x; is_subject aag (cur_thread s'); AllowRead \\<in> ptable_rights_s s x; ptable_lift_s s x = Some y; pas_refined aag s; pas_refined aag s'; equiv_for (aag_can_read aag) kheap s s'; equiv_for (aag_can_read aag \\<circ> fst) cdt s s'; equiv_for (aag_can_read aag \\<circ> fst) cdt_list s s'; equiv_for (aag_can_read aag) ekheap s s'; equiv_for (aag_can_read aag \\<circ> fst) is_original_cap s s'; equiv_for (aag_can_read_irq aag) interrupt_states s s'; equiv_for (aag_can_read_irq aag) interrupt_irq_node s s'; equiv_asids (aag_can_read_asid aag) s s'; equiv_for (aag_can_read_domain aag) ready_queues s s'; cur_thread s = cur_thread s'; cur_domain s = cur_domain s'; scheduler_action s = scheduler_action s'; work_units_completed s = work_units_completed s'; equiv_irq_state (machine_state s) (machine_state s'); typ_at (AArch (AUserData sz)) (ptrFromPAddr y && ~~ mask (pageBitsForSize sz)) s; equiv_for (aag_can_read aag) device_state (machine_state s) (machine_state s'); \\<And>x. aag_can_read aag x \\<Longrightarrow> underlying_memory (machine_state s) x = underlying_memory (machine_state s') x; (pasObjectAbs aag (cur_thread s'), Read, pasObjectAbs aag (ptrFromPAddr (y && ~~ mask (pageBitsForSize sz)))) \\<in> pasPolicy aag\\<rbrakk> \\<Longrightarrow> aag_can_read aag (ptrFromPAddr y && ~~ mask (pageBitsForSize sz))",
+  "2. \\<lbrakk>reads_equiv aag s s'; globals_equiv s s'; invs s; invs s'; \\<forall>x\\<in>ran (kheap s). obj_valid_pdpt x; \\<forall>x\\<in>ran (kheap s'). obj_valid_pdpt x; is_subject aag (cur_thread s); AllowRead \\<in> ptable_rights_s s x; ptable_lift_s s x = Some y; pas_refined aag s; pas_refined aag s'; in_user_frame (ptrFromPAddr y) s; in_user_frame (ptrFromPAddr y) s'\\<rbrakk> \\<Longrightarrow> in_user_frame (ptrFromPAddr y) s' \\<longrightarrow> underlying_memory (machine_state s) (ptrFromPAddr y) = underlying_memory (machine_state s') (ptrFromPAddr y)",
+  "3. \\<lbrakk>reads_equiv aag s s'; globals_equiv s s'; invs s; invs s'; \\<forall>x\\<in>ran (kheap s). obj_valid_pdpt x; \\<forall>x\\<in>ran (kheap s'). obj_valid_pdpt x; is_subject aag (cur_thread s); AllowRead \\<in> ptable_rights_s s x; ptable_lift_s s x = Some y; pas_refined aag s; pas_refined aag s'\\<rbrakk> \\<Longrightarrow> \\<not> in_user_frame (ptrFromPAddr y) s \\<longrightarrow> \\<not> in_user_frame (ptrFromPAddr y) s'"
+ ],
+ "facts": [
+  "ptable_lift_s_def",
+  "ptable_rights_s_def",
+  "ptrFromPAddr_mask_simp",
+  "subjectReads.reads_read",
+  "typ_at_user_data_at",
+  "vspace_cap_rights_to_auth_def"
+ ],
+ "steps": [
+  {
+   "action": "apply (rule allI)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule conjE)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule disjE)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule exE)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule impE)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule notE)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule allE)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply hypsubst",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (rule ptable_lift_s_def)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule ptable_lift_s_def)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (drule ptable_lift_s_def)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (rule ptable_rights_s_def)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule ptable_rights_s_def)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (drule ptable_rights_s_def)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (rule ptrFromPAddr_mask_simp)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule ptrFromPAddr_mask_simp)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (drule ptrFromPAddr_mask_simp)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (subst ptrFromPAddr_mask_simp)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (rule subjectReads.reads_read)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule subjectReads.reads_read)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (drule subjectReads.reads_read)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (frule subjectReads.reads_read)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (subst subjectReads.reads_read)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (rule typ_at_user_data_at)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule typ_at_user_data_at)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (subst typ_at_user_data_at)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (rule vspace_cap_rights_to_auth_def)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (erule vspace_cap_rights_to_auth_def)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  },
+  {
+   "action": "apply (drule vspace_cap_rights_to_auth_def)",
+   "ok": false,
+   "obs": "FAILED: goal (9 subgoals):"
+  }
+ ],
+ "path": [],
+ "audit": false,
+ "verdict": "NO-PATH"
+}

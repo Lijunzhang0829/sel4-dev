@@ -1,0 +1,8 @@
+method	lemma	line	session	verdict	accelerated	saved_ms	secs
+dfs	retype_region_silc_inv	1889	InfoFlow	NO-PATH	None	None	147
+dfs	retype_region_silc_inv	1914	InfoFlow	NO-PATH	None	None	208
+stateful	retype_region_silc_inv	1889	InfoFlow	(noresult)	-	-	600
+blind	retype_region_silc_inv	1889	InfoFlow	(noresult)	-	-	600
+dfs	retype_region_silc_inv	1919	InfoFlow	NO-PATH	None	None	200
+stateful	retype_region_silc_inv	1914	InfoFlow	(noresult)	-	-	601
+blind	retype_region_silc_inv	1914	InfoFlow	(noresult)	-	-	600

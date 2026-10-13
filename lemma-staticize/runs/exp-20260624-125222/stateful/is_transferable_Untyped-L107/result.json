@@ -1,0 +1,68 @@
+{
+ "lemma": "is_transferable_Untyped",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/Access_AC.thy",
+ "session": "Access",
+ "mode": "genstat-stateful",
+ "verdict": "REACHED-B",
+ "rounds": [
+  {
+   "step": 0,
+   "tacs": [
+    "apply (rule notI)",
+    "apply (erule is_transferable.cases)",
+    "apply (simp only: cap.distinct option.distinct)+"
+   ],
+   "outcome": "OK",
+   "subgoals": 2,
+   "gen_secs": 15.0,
+   "claude_secs": 14.5,
+   "bridge_wait": 0.5,
+   "verify_secs": 0.1
+  },
+  {
+   "step": 1,
+   "tacs": [
+    "apply assumption",
+    "apply (simp only: cap.distinct option.distinct)+",
+    "apply (simp only: cap.simps option.simps)",
+    "apply (simp only: cap.distinct option.distinct)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply assumption` failed: failed for prove the goal using the tactic `apply assumption`. Get msg: Failed to apply proof method (line 1):\ngoal (2 subgoals):\n 1. Some (UntypedCap dev ptr sz freeIndex) = Some NullCap \\<Longrightarrow> False\n 2. \\<And>t R. Some (UntypedCap dev ptr sz freeIndex) = Some ",
+   "gen_secs": 9.5,
+   "claude_secs": 8.8,
+   "bridge_wait": 0.7,
+   "verify_secs": 0.0
+  },
+  {
+   "step": 2,
+   "tacs": [
+    "apply (simp only: option.inject cap.distinct)+"
+   ],
+   "outcome": "OK",
+   "subgoals": 0,
+   "gen_secs": 42.5,
+   "claude_secs": 42.2,
+   "bridge_wait": 0.3,
+   "verify_secs": 0.0
+  }
+ ],
+ "target": "by (blast elim: is_transferable.cases)",
+ "B_sig": [],
+ "A_goal": "\\<not> is_transferable_cap (UntypedCap dev ptr sz freeIndex)",
+ "facts": [
+  "is_transferable.cases"
+ ],
+ "path": [
+  "apply (rule notI)",
+  "apply (erule is_transferable.cases)",
+  "apply (simp only: cap.distinct option.distinct)+",
+  "apply (simp only: option.inject cap.distinct)+"
+ ],
+ "orig_ms": 12.9,
+ "static_ms": 43.8,
+ "ipc_ms": 8.3,
+ "saved_ms": -30.9,
+ "frac_saved": -2.403,
+ "accelerated": false
+}

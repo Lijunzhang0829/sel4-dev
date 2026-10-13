@@ -1,0 +1,31 @@
+[genstat-stateful] tcb_domain_map_wellformed_mono @ proof/access-control/Access_AC.thy
+[init ok]
+[reached tcb_domain_map_wellformed_mono]
+== target: by (auto simp: tcb_domain_map_wellformed_aux_def get_etcb_def)
+   A_goal: tcb_domain_map_wellformed pas s'
+   B: close the goal (0 subgoals)
+  step 0: 31.5s -> ['apply (simp only: tcb_domain_map_wellformed_aux_def get_etcb_def)']
+  step 0: OK -> 1 subgoal(s); applied=['apply (simp only: tcb_domain_map_wellformed_aux_def get_etcb_def)']
+  step 1: 21.0s -> ['apply assumption']
+  step 1: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 2: 286.4s -> ['apply (rule ballI)', 'apply (drule (1) subsetD)', 'apply (erule (1) ballE; assumption)']
+  step 2: FAILED `apply (rule ballI)` failed: failed for prove the goal using the tactic `apply (
+  step 3: 400.6s -> []
+  step 4: 400.5s -> []
+  step 5: 242.3s -> ['apply (unfold tcb_domain_map_wellformed_def tcb_domain_map_wellformed_aux_def)', 'apply (rule ballI)', 'apply (drule (1) subsetD)']
+  step 5: FAILED `apply (unfold tcb_domain_map_wellformed_def tcb_domain_map_wellformed_aux_def)`
+  step 6: 400.6s -> []
+  step 7: 400.6s -> []
+  step 8: 274.4s -> ['apply (unfold tcb_domain_map_wellformed_aux_def)', 'apply (intro allI impI)', 'apply assumption']
+  step 8: FAILED `apply (intro allI impI)` failed: failed for prove the goal using the tactic `ap
+  step 9: 212.8s -> ['apply (unfold tcb_domain_map_wellformed_aux_def)', 'apply (rule ballI)', 'apply (drule (1) subsetD)']
+  step 9: OK -> 1 subgoal(s); applied=['apply (simp only: tcb_domain_map_wellformed_aux_def get_etcb_def)', 'apply (unfold tcb_domain_map_wellformed_aux_def)', 'apply (rule ballI)', 'apply (drule (1) subsetD)']
+  step 10: 24.0s -> ['apply assumption']
+  step 10: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 11: 340.0s -> ['apply (simp only: tcb_domain_map_wellformed_aux_def)', 'apply (rule ballI)', 'apply (drule (1) subsetD)']
+  step 11: REPEAT-CHUNK (work already done)
+  step 12: 99.1s -> ['apply assumption']
+  step 12: FAILED `apply assumption` failed: failed for prove the goal using the tactic `apply ass
+  step 13: 341.5s -> ['apply (simp only: tcb_domain_map_wellformed_aux_def)', 'apply (rule ballI)', 'apply (drule (1) subsetD; drule (1) bspec; assumption)']
+  step 13: OK -> 0 subgoal(s); applied=['apply (simp only: tcb_domain_map_wellformed_aux_def get_etcb_def)', 'apply (unfold tcb_domain_map_wellformed_aux_def)', 'apply (rule ballI)', 'apply (drule (1) subsetD)', 'apply (simp only: tcb_domain_map_wellformed_aux_def)', 'apply (rule ballI)', 'apply (drule (1) subsetD; drule (1) bspec; assumption)']
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/genstat-stateful-tcb_domain_map_wellformed_mono.json  verdict=REACHED-B

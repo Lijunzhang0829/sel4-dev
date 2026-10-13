@@ -1,0 +1,22 @@
+START 18:21:58
+[profile] lemma=empty_slot_faithful session=Access PROFILE
+[profile] file=/workspace/verification/l4v/proof/access-control/CNode_AC.thy
+[profile] proof lines 1103-1105:
+    ORIG:   by (fastforce dest: all_childrenD is_transferable_all_children
+                      pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable]
+                      pas_refined_Control)
+    WRAP:   by (time_profile \<open>(fastforce dest: all_childrenD is_transferable_all_children
+                      pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable]
+                      p
+[profile] patched theory: /tmp/prof_h7h2ov5v/Tmp_prof_c37083047420.thy
+[profile] running (KILL timeout 1800s): isabelle process -l Access -T Tmp_prof_c37083047420
+[profile] isabelle exit=1 (137=KILLed after hang, output still captured)
+[profile] raw output -> /workspace/lemma-staticize/isa-repl/profiler/raw-empty_slot_faithful.out  (0 @@PROF lines)
+NO PROFILE DATA FOUND.
+(check that the tactic ran under time_profile and tracing was captured)
+
+
+[profile] build *** lines:
+*** Malformed theory (line 1124 of "/tmp/prof_h7h2ov5v/Tmp_prof_c37083047420.thy")
+
+WALL 19s

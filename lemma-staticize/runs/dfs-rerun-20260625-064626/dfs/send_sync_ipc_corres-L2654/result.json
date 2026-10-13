@@ -1,0 +1,14 @@
+{
+ "lemma": "send_sync_ipc_corres",
+ "thy": "/sel4-project/verification/l4v/proof/drefine/Ipc_DR.thy",
+ "session": "DRefine",
+ "mode": "react",
+ "target": null,
+ "B_sig": null,
+ "facts": [],
+ "steps": [],
+ "path": null,
+ "audit": false,
+ "verdict": "NO-PATH",
+ "error": "An error occurred while calling t._initializeRepl"
+}

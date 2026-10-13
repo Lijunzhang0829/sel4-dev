@@ -1,0 +1,15 @@
+[init ok]
+[reached invoke_cnode_silc_inv]
+== target line 3: apply (fastforce simp: silc_inv_def authorised_cnode_inv_def)
+   facts: ['authorised_cnode_inv_def', 'silc_inv_def']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule conjI)  [8sg] 1. \<And>x11 x12 x13 s. \<lbrakk>i = InsertCall x11 x12
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (erule conjE)  [7sg] 1. \<And>x11 x12 x13 s. \<lbrakk>i = InsertCall x11 x12
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (unfold authorised_cnode_inv_def)  [7sg] 1. \<And>x11 x12 x13 s. \<lbrakk>i = InsertCall x11 x12
+  [think d3] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+[server died]
+[error] An error occurred while calling t._step_with_30s_timeout.
+: de.unruh.isabelle.co
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-invoke_cnode_silc_inv-P25838.json

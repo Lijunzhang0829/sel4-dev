@@ -1,0 +1,120 @@
+{
+ "lemma": "empty_slot_pas_refined",
+ "thy": "/sel4-project/verification/l4v/proof/access-control/CNode_AC.thy",
+ "session": "Access",
+ "mode": "reduce",
+ "verdict": "FASTER",
+ "orig_ms": 145716.2,
+ "rounds": [
+  {
+   "round": 0,
+   "variant": [
+    "apply clarsimp",
+    "apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined ",
+   "gen_secs": 15.1,
+   "claude_secs": 14.5
+  },
+  {
+   "round": 1,
+   "variant": [
+    "apply clarify",
+    "by (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarify` failed: failed for prove the goal using the tactic `apply clarify`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined aa",
+   "gen_secs": 29.0,
+   "claude_secs": 28.5
+  },
+  {
+   "round": 2,
+   "variant": [
+    "apply clarsimp",
+    "by (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined ",
+   "gen_secs": 61.0,
+   "claude_secs": 60.5
+  },
+  {
+   "round": 3,
+   "variant": [
+    "by (fastforce dest: pas_refined_Control pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] all_childrenD is_transferable_all_children)"
+   ],
+   "outcome": "REACH-B",
+   "variant_ms": 124142.9,
+   "saved_ms": 21573.3,
+   "faster": true,
+   "gen_secs": 25.0,
+   "claude_secs": 24.9
+  },
+  {
+   "round": 4,
+   "variant": [
+    "apply clarsimp",
+    "apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined ",
+   "gen_secs": 42.5,
+   "claude_secs": 42.1
+  },
+  {
+   "round": 5,
+   "variant": [
+    "apply clarify",
+    "apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarify` failed: failed for prove the goal using the tactic `apply clarify`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined aa",
+   "gen_secs": 56.5,
+   "claude_secs": 56.4
+  },
+  {
+   "round": 6,
+   "variant": [
+    "apply clarsimp",
+    "apply (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)",
+    "done"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarsimp` failed: failed for prove the goal using the tactic `apply clarsimp`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined ",
+   "gen_secs": 20.5,
+   "claude_secs": 19.7
+  },
+  {
+   "round": 7,
+   "variant": [
+    "apply clarify",
+    "by (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)"
+   ],
+   "outcome": "FAILED",
+   "diag": "`apply clarify` failed: failed for prove the goal using the tactic `apply clarify`. Get msg: Failed to apply proof method (line 1):\ngoal (1 subgoal):\n 1. \\<And>s cap a b aa ba. \\<lbrakk>pas_refined aa",
+   "gen_secs": 19.0,
+   "claude_secs": 18.7
+  }
+ ],
+ "target": "by (fastforce dest: all_childrenD is_transferable_all_children pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] pas_refined_Control)",
+ "B_sig": [],
+ "facts": [
+  "OF",
+  "all_childrenD",
+  "is_transferable_all_children",
+  "pas_refined_Control",
+  "pas_refined_mem",
+  "sta_cdt",
+  "sta_cdt_transferable"
+ ],
+ "path": [
+  "by (fastforce dest: pas_refined_Control pas_refined_mem[OF sta_cdt] pas_refined_mem[OF sta_cdt_transferable] all_childrenD is_transferable_all_children)"
+ ],
+ "variant_ms": 124142.9,
+ "saved_ms": 21573.3,
+ "frac_saved": 0.148,
+ "accelerated": true
+}

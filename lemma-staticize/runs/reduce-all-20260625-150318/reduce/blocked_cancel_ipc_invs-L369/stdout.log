@@ -1,0 +1,11 @@
+[init ok]
+[reached blocked_cancel_ipc_invs]
+== target: apply (auto elim!: delta_sym_refs pred_tcb_weaken_strongerE simp: obj_
+   orig_ms=112484  B: leave EXACTLY these 2 subgoal(s):
+1. \<And>epptr ep queue s. \<lbrakk>
+  round 0: gen=34.0s (claude 33.3s) -> ['apply (simp only: obj_at_def is_ep_def2)[2]', 'apply (auto elim!: delta_sym_refs pred_tcb_weaken_strongerE simp: idle_not_queued refs_in_tcb_bound_refs dest: idle_no_refs split: if_split_asm)[2]']
+  round 0: WRONG-STATE (4 subgoals)
+  round 1: gen=191.7s (claude 191.3s) -> ['apply (clarsimp simp: obj_at_def is_ep_def2)[2]', 'apply (auto elim!: delta_sym_refs pred_tcb_weaken_strongerE simp: idle_not_queued refs_in_tcb_bound_refs dest: idle_no_refs split: if_split_asm)[2]']
+  round 1: WRONG-STATE (4 subgoals)
+  round 2: gen=102.6s (claude 102.2s) -> ['apply (simp only: obj_at_def is_ep_def2)[2]', 'apply (auto elim!: delta_sym_refs pred_tcb_weaken_strongerE simp: idle_not_queued refs_in_tcb_bound_refs dest: idle_no_refs split: if_split_asm)[2]']
+  round 2: WRONG-STATE (4 subgoals)

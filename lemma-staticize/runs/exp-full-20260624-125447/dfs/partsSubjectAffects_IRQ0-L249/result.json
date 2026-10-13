@@ -1,0 +1,13 @@
+{
+ "lemma": "partsSubjectAffects_IRQ0",
+ "thy": "/sel4-project/verification/l4v/proof/infoflow/ARM/Example_Valid_State.thy",
+ "session": "InfoFlow",
+ "mode": "react",
+ "target": null,
+ "B_sig": null,
+ "facts": [],
+ "steps": [],
+ "path": null,
+ "audit": false,
+ "verdict": "NO-TARGET"
+}

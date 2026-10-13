@@ -1,0 +1,8 @@
+[genstat-stateful] empty_slot_pas_refined_transferable @ proof/access-control/CNode_AC.thy
+[init ok]
+[reached empty_slot_pas_refined_transferable]
+== target: by (fastforce simp: cte_wp_at_caps_of_state dest: all_childrenD is_tra
+   A_goal: (is_transferable_in (a, b) s \<or> (pasObjectAbs aag aa, Control, pasObjectAbs aag a) \<in> pasPolicy aag) \<and> (pasOb
+   B: close the goal (0 subgoals)
+  round 0: gen=238.8s (claude 238.1s) -> ['apply (unfold valid_def)', 'apply (intro allI impI)', 'apply (elim conjE)', 'apply (simp only: cte_wp_at_caps_of_state)', 'apply (drule is_transferable_all_children)', 'apply (drule (1) all_childrenD)', 'apply (drule (1) pas_refined_mem[OF sta_cdt])', 'apply (drule (1) pas_refined_mem[OF sta_cdt_transferable])', 'done']
+  round 0: BUILD-FAIL `apply (unfold valid_def)` failed: failed for prove the goal using the tactic `a

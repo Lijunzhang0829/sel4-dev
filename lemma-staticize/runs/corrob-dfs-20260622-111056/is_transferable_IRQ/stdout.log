@@ -1,0 +1,14 @@
+[init ok]
+[reached is_transferable_IRQ]
+== target line 0: by (blast elim: is_transferable.cases)
+   facts: ['is_transferable.cases']
+  [think d0] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule notI)  [1sg] 1. is_transferable_cap IRQControlCap \<Longrightarrow> 
+  [think d1] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    → apply (rule is_transferable.cases)  [4sg] 1. is_transferable ?opt_cap
+  [think d2] (NO_CLAUDE: pure DFS, structural menu order)  -> []
+    ↩ backtrack
+    ↩ backtrack
+
+[result] verdict=NO-PATH  path=[]
+[saved] /workspace/tools/seL4-proof-search/Isa-Repl/runs/react-is_transferable_IRQ.json
