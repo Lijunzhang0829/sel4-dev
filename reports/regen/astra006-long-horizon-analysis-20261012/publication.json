@@ -1,0 +1,31 @@
+{
+  "project_id": "appgprj_6acde0eb02e8819192ff61eb127a4953",
+  "version_id": "appgprj_6acde0eb02e8819192ff61eb127a4953~appgver_ac7932319120819192f1a864c8874e95",
+  "deployment_id": "appgdep_6acdefc8d5bc8191bdd833716e721d60",
+  "status": "succeeded",
+  "url": "https://astra006-helper-case-studies.blush-duck-9562.chatgpt.site",
+  "access_mode": "public",
+  "source_commit": "79e283bbb348f81414f2c6ab0562ef4ade97cbda",
+  "version_number": 2,
+  "updated_at": "2026-10-13T16:46:10+08:00",
+  "published_content": [
+    "sanitized report",
+    "9 selected public agent messages",
+    "130-row derived helper CSV",
+    "4 continuous public-interaction replays with complete selected proof versions and checker diagnostics",
+    "193 public events, 21 edit events, 39 selected helper version entries",
+    "4 downloadable sanitized replay JSON files"
+  ],
+  "excluded": [
+    "raw transcripts",
+    "credentials",
+    "machine configuration"
+  ],
+  "verification": {
+    "deployment": "platform succeeded",
+    "internal_links": "passed",
+    "quotes": "matched original lines, including all replay public agent messages",
+    "proof_versions": "all selected patch-based edits reconstructed with unique replacements; complete proof blocks preserved",
+    "browser_visual_qa": "not performed; browser preview tool unavailable"
+  }
+}

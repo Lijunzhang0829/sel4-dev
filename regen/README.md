@@ -10,6 +10,13 @@
 
 ## 文档与代码入口
 
+当前应用层职责、协议／调度／检查／恢复全链路、版本化 Arch 策略与验收边界，统一见
+[Harness 应用层逻辑框架](docs/implementation/HARNESS-APPLICATION-FRAMEWORK.md)。
+关键修复已整合不等于新版双真实 Planner／全仓实验已经通过。
+
+新运行的日志格式、历史 step 中断恢复与空间／内存／耗时对照，见
+[增量实验日志](docs/implementation/INCREMENTAL-LOGGING.md)。旧实验不会自动迁移。
+
 | 文档 | 唯一职责 | 主要代码 |
 |---|---|---|
 | [端到端流程与模块 TODO](docs/design/PARALLEL-PROOF-PIPELINE.md) | 已确认的新控制流：规划、验证、持续 agent、跨 theory 并行及 theory 内串行工具、seal 与仓库集成；M0–M10 的代码现状和验收 | parallel_file_planner / check_executor / repository_integration；完整实验验收待完成 |

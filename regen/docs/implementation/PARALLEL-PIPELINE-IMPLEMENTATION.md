@@ -1,5 +1,10 @@
 # 跨 theory 并行、File Planner 内部串行：实现与验证
 
+> 2026-09-29 整合：协议 reader、sleep v2、取消／固定 transcript 前缀、热 worker
+> owner lease 及完整理论 Arch 渲染策略的最新边界，见
+> [Harness 应用层框架](HARNESS-APPLICATION-FRAMEWORK.md)。下文各日期的测试数量和
+> 缺口描述保留为当时记录，不替代最新验收结论。
+
 > 2026-09-25 源码工作区更新：默认接口已变为持久 `.thy` 编辑、批量检查及修订，见 [源码工作区](../design/THEORY-SOURCE-WORKSPACE.md)。默认流程已同步如下；旧 graph/submit_check 仅兼容历史接口，当前流程以主文档 M4/M7 为准。
 
 > 2026-09-25 串行化更新：单 File Planner 内部已恢复串行；不同 theory 继续并行。完整流程、模块产出和验证责任见 [流程主文档](../design/PARALLEL-PROOF-PIPELINE.md)。环境由人工保证不变，强杀等外部干扰暂不作为本阶段验收要求。

@@ -1,5 +1,9 @@
 # Read-only loop / clock.sleep compatibility recovery
 
+Historical record: the cumulative sleep policy described here is version 1.
+For the 2026-09-29 repair and versioned compatibility rules, see
+[workspace protocol repair](WORKSPACE-PROTOCOL-REPAIR-20260929.md).
+
 Authorized by user: pause experiment, fix both issues, then resume. Run 009 was
 stopped via its receipt-bound service on 2026-09-28 at 02:09 UTC. Its coordinator,
 app-server and native containers exited; no nonterminal check task remained.

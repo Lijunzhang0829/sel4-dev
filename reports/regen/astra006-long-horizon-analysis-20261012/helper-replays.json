@@ -1,0 +1,102 @@
+[
+  {
+    "slug": "tcb-slots",
+    "url": "https://astra006-helper-case-studies.blush-duck-9562.chatgpt.site/tcb-slots.html",
+    "title": "TCB slot helper 从宽泛展开到被父 helper 使用",
+    "events": 68,
+    "edit_events": 10,
+    "helper_versions": 19,
+    "batches": [
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85
+    ],
+    "origins": [
+      {
+        "source": "Scheduler_Dispatch/session-transcript.jsonl",
+        "first_line": 5721,
+        "last_line": 6923,
+        "sha256": "2943cb6966e2d5b9377c17094ee5ad93794adca5d6c44711b798139e85b87af3"
+      }
+    ],
+    "html_sha256": "fca2bd80d8aace4d28b2d10adb95e685f60ebd524d5b550c41602ec6342c6346"
+  },
+  {
+    "slug": "device-reset",
+    "url": "https://astra006-helper-case-studies.blush-duck-9562.chatgpt.site/device-reset.html",
+    "title": "Device reset helpers 从分支设计到三次检查",
+    "events": 40,
+    "edit_events": 3,
+    "helper_versions": 7,
+    "batches": [
+      74,
+      75,
+      76
+    ],
+    "origins": [
+      {
+        "source": "Untyped_Object_Lifecycle/retry-001/session-transcript.jsonl",
+        "first_line": 1049,
+        "last_line": 1722,
+        "sha256": "37fb7962500b82ce6bfa316c479af2ef3355379104d7779e005fdd88f405e187"
+      }
+    ],
+    "html_sha256": "90561ea3937b89a86fa6717d335caec92f7e82f8f24f6fbc94a48d8df211bbd8"
+  },
+  {
+    "slug": "machine-operation",
+    "url": "https://astra006-helper-case-studies.blush-duck-9562.chatgpt.site/machine-operation.html",
+    "title": "Machine operation helper 从通用设计到显式 witness",
+    "events": 71,
+    "edit_events": 6,
+    "helper_versions": 9,
+    "batches": [
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73
+    ],
+    "origins": [
+      {
+        "source": "Untyped_Object_Lifecycle/session-transcript.jsonl",
+        "first_line": 5242,
+        "last_line": 5395,
+        "sha256": "7f2d58dbb40c0b608a0dd986c5975340d818f97564212471861c24cedfd5deac"
+      },
+      {
+        "source": "Untyped_Object_Lifecycle/retry-001/session-transcript.jsonl",
+        "first_line": 1,
+        "last_line": 1049,
+        "sha256": "37fb7962500b82ce6bfa316c479af2ef3355379104d7779e005fdd88f405e187"
+      }
+    ],
+    "html_sha256": "8a2a9354c3c8d4d964b199f7c9df76b5069c93ad39511a8bb66b9c65f2e85cab"
+  },
+  {
+    "slug": "reset-arithmetic",
+    "url": "https://astra006-helper-case-studies.blush-duck-9562.chatgpt.site/reset-arithmetic.html",
+    "title": "循环算术 helpers 的设计与未完成检查",
+    "events": 14,
+    "edit_events": 2,
+    "helper_versions": 4,
+    "batches": [],
+    "origins": [
+      {
+        "source": "Untyped_Object_Lifecycle/retry-001/session-transcript.jsonl",
+        "first_line": 1847,
+        "last_line": 1940,
+        "sha256": "37fb7962500b82ce6bfa316c479af2ef3355379104d7779e005fdd88f405e187"
+      }
+    ],
+    "html_sha256": "984050b1e953eaf7e7ce52e9e3e1804c2679cc31ede1bbde370304e52f73ad1b"
+  }
+]
