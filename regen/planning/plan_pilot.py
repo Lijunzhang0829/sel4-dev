@@ -133,6 +133,18 @@ class PlanPilot:
         return {'pilot_receipt_sha256': result['receipt_sha256'], 'pilot_review': review}
 
 
+
+def native_status(checked):
+    if checked['verdict'] != 'green':
+        return 'check_timeout' if checked['returncode'] == 124 else 'proof_failed'
+    if checked.get('returncode') != 0:
+        raise ValueError('Inconsistent native success receipt')
+    path = checked.get('automation_audit', {}).get('proof_dependencies')
+    if not path or json.loads(Path(path).read_text()).get('has_skip_proof') is not False:
+        raise ValueError('Pilot proof lacks a clean dependency audit')
+    return 'proved'
+
+
 def native_attempt(dataset, *, allow_external_call):
     """Use the existing audited model transport and audited Isabelle node checker."""
     from regen.preparation.checker_context import load_context
@@ -185,7 +197,7 @@ def native_attempt(dataset, *, allow_external_call):
         graph = initial_index(package, run_id='planning-pilot')
         try:
             checked = checker.check_node(graph, {contract['contract_id']: proof}, contract['contract_id'], audit=True)
-            status = 'proved' if checked['verdict'] == 'green' else ('check_timeout' if checked['returncode'] == 124 else 'proof_failed')
+            status = native_status(checked)
             write(output / 'check.json', checked)
             return {'status': status, 'proof': proof, 'diagnostic': checked.get('diagnostic', ''),
                     'check_artifact': str(output / 'check.json'), 'model_artifact': str(prefix)}

@@ -70,3 +70,15 @@ class PlanPilotTest(unittest.TestCase):
         self.assertFalse(f.h.dispatch({'action':'submit','proposal':f.proposal})['valid'])
         r=f.h.dispatch({'action':'submit','proposal':f.proposal,'pilot_review':'retain; scope limited'})
         self.assertTrue(r['submitted']);f.h.artifacts()
+
+    def test_success_requires_clean_dependency_audit(self):
+        from regen.planning.plan_pilot import native_status
+        checked={'verdict':'green','returncode':0}
+        with self.assertRaises(ValueError):native_status(checked)
+        path=self.root/'dependencies.json'
+        checked['automation_audit']={'proof_dependencies':str(path)}
+        path.write_text(json.dumps({'has_skip_proof':True}))
+        with self.assertRaises(ValueError):native_status(checked)
+        path.write_text(json.dumps({'has_skip_proof':False}))
+        self.assertEqual(native_status(checked),'proved')
+        self.assertEqual(native_status({'verdict':'red','returncode':124}),'check_timeout')

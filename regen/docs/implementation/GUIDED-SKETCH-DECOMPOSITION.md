@@ -189,3 +189,32 @@ V1 只测试无 required_imports 的 theory 能否从合法基础环境启动证
   根据质量目标和场景识别风险、敏感点与权衡；对应报告证据及未知项，而非单一质量分数。
 - [ArchUnit](https://www.archunit.org/userguide/html/000_Index.html)：
   将架构约束转为可执行检查；对应覆盖、导入、无环和版本绑定，不能替代效率实验。
+
+### 真实小测试结果（2026-10-17）
+
+工件：`reports/regen/planning-pilot-astra-20261017-001/summary.json`。
+真实运行代码提交 `0759f03`；planner 与六次 proof 调用均为 gpt-6-astra / medium。
+结构校验、原生预检查、pilot、模型评审、最终发布均完成。
+模型将 getter 分入 Thread_Observations，setter 分入 Current_Thread_Update，均无硬导入。
+
+| Contract | 两次候选的结果 | 目标总墙钟 |
+|---|---|---:|
+| getCurThread_corres | 不存在的事实引用；原生检查超时 | 141.8 秒 |
+| setCurThread_corres | 未解决 stateAssert 对应义务；不存在的事实引用 | 137.4 秒 |
+| getIdleThread_corres | 证明方法失败；原生检查超时 | 139.4 秒 |
+
+本轮 0/3 得到完整试验证明，没有生成正式 GREEN。
+Planner 保留精确原计划，并记录上述失败不足以推断分组或导入错误。
+只用了一个 pilot 轮次，没有实测自动修订后再次 pilot 的模型路径；版本失效与
+两轮上限由单元测试覆盖。
+Pilot 耗时 418.5 秒；外层总墙钟 842.3 秒（包含 pilot，不可再相加）。
+submit 后模型约 311.9 秒才返回正常结束事件，最终退出码 0；没有强制停止或伪造完成。
+7 次模型调用合计 input 810405、cached input 696320、output 6001 tokens；
+cached input 是 input 的子集，reasoning output 也不另加到总 output。
+
+结论：验证了阶段隔离、结果回传和最终提交链路，尚未验证规划质量提升。
+当前原生 timeout 包含上下文和审计，不能把它直接标为纯 tactic 搜索失败。
+候选事实选择错误显示 V1 的固定定义检索和两候选短循环弱于完整 File Planner，
+后续宜先增加失败名称的合法解析/检索，再考虑用此试验否定某种架构。
+后续加固：`proved` 必须附带明确 has_skip_proof=false 的原生依赖审计；
+该条件通过正反单元测试验证，不改变本轮全部非成功的原始结果。
