@@ -53,7 +53,8 @@ def short_view(source, *, visibility="owner-blind-v1"):
 
 
 class WorkspaceHarness:
-    def __init__(self, planning_input, output, native_check, *, visibility="owner-blind-v1"):
+    def __init__(self, planning_input, output, native_check, *, visibility="owner-blind-v1", pilot=None):
+        self.pilot = pilot
         self.path=Path(planning_input).resolve()
         self.view=short_view(json.loads(self.path.read_text()), visibility=visibility)
         self.queries=PlanningInputQueries(self.path)
@@ -180,7 +181,7 @@ class WorkspaceHarness:
             if not values or len(values)>50: raise ValueError('Inspect 1 to 50 premise IDs.')
             records=self.inspect(values)
             return {'records':records,'withheld_records':len(values)-len(records),'notice':'Only records respecting the public input boundary are returned and eligible for reuse.'}
-        if action in {'validate','preflight','submit'}:
+        if action in {'validate','preflight','pilot','submit'}:
             proposal=request.get('proposal'); result=self.validate(proposal)
             if not result['valid'] or action=='validate': return result
             identity=hashlib.sha256(json.dumps(proposal,sort_keys=True).encode()).hexdigest()
@@ -191,9 +192,15 @@ class WorkspaceHarness:
                 native=self.native_check(self.view.payload,proposal,attempt)
                 native={**native,'attempt':attempt.name}; save(cache,native)
             if not native['valid']: return {'valid':False,'stage':'native-declaration-preflight',**native}
+            if action=='pilot':
+                if self.pilot is None: raise ValueError('Planning pilot is not configured')
+                return self.pilot.run(self.view.payload, proposal)
+            pilot_binding = {}
             if action=='submit':
+                if self.pilot is not None:
+                    pilot_binding = self.pilot.submission(proposal, request.get('pilot_review'))
                 if self.submitted is not None and self.submitted['proposal']!=proposal: raise ValueError('A plan was already submitted; end this call.')
-                self.submitted={'proposal':deepcopy(proposal),'preflight_sha256':identity,
+                self.submitted={**pilot_binding,'proposal':deepcopy(proposal),'preflight_sha256':identity,
                                 'preflight_result_sha256':hashlib.sha256(cache.read_bytes()).hexdigest(),
                                 'call_number':self.active_call}
                 save(self.output/'control/submitted.json',self.submitted)
@@ -203,6 +210,10 @@ class WorkspaceHarness:
     def artifacts(self):
         if self.submitted is None: raise ValueError('No explicit valid submission.')
         public=self.submitted['proposal']
+        if self.pilot is not None:
+            binding = self.pilot.submission(public, self.submitted.get('pilot_review'))
+            if binding['pilot_receipt_sha256'] != self.submitted.get('pilot_receipt_sha256'):
+                raise ValueError('Submitted pilot evidence changed')
         identity=hashlib.sha256(json.dumps(public,sort_keys=True).encode()).hexdigest()
         cache=self.output/f'preflight/{identity}/result.json'
         if (identity!=self.submitted['preflight_sha256']

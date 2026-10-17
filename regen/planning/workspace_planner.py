@@ -270,13 +270,22 @@ def run_agent(payload, planning_input_path, policy, output):
         'model':policy['model'],'codex_sha256':settings['codex_sha256'],
         'policy':{k:v for k,v in policy.items() if not k.startswith('_')},
         'implementation':{name:hashlib.sha256(p.read_bytes()).hexdigest() for name,p in sorted(sources.items())}})
+    pilot = None
+    if policy.get('pilot') is not None:
+        from regen.planning.plan_pilot import PlanPilot, native_attempt
+        attempt = native_attempt(Path(planning_input_path).parent, allow_external_call=policy['_allow_external_call'])
+        pilot = PlanPilot(output/'pilot', {**attempt.identity,
+            'implementation': hashlib.sha256((repo/'regen/planning/plan_pilot.py').read_bytes()).hexdigest()},
+            policy['pilot'], attempt)
     harness=WorkspaceHarness(planning_input_path,output,native_checker(Path(planning_input_path).parent,policy.get('preflight_seconds',900)),
-        visibility=policy.get('contract_visibility','owner-blind-v1'))
+        visibility=policy.get('contract_visibility','owner-blind-v1'), pilot=pilot)
     public=output/'public'; public.mkdir(exist_ok=True)
     workspace=output/'workspace'; workspace.mkdir(exist_ok=True)
     save(public/'contracts.json',harness.view.payload['contracts'])
     save(public/'catalog.json',{'contracts':harness.view.payload['contract_cards'],'context_profiles':harness.view.payload['context_profiles']})
     text=instruction(harness.view.payload,policy.get('proposal_schema_version',5)); harness.view.assert_no_owner_disclosure(text)
+    if pilot is not None:
+        text += '\n'+PILOT_INSTRUCTIONS
     api=Path(tempfile.mkdtemp(prefix='regen-planner-api-')); server,thread=start_service(harness,api)
     number=0
     try:
@@ -295,6 +304,8 @@ def run_agent(payload, planning_input_path, policy, output):
             # Agent ended without explicit submission. Keep the same artifacts
             # and ask it to continue; no proposal retry ceiling is introduced.
             text=instruction(harness.view.payload,policy.get('proposal_schema_version',5))+'\nContinue your existing plan and notes. No successful submit was recorded; inspect, validate, repair, and explicitly submit.\n'
+            if pilot is not None:
+                text += '\n'+PILOT_INSTRUCTIONS
     except BaseException as error:
         abort = getattr(harness.native_check, 'abort', None)
         if abort is not None:
@@ -311,3 +322,13 @@ def run_agent(payload, planning_input_path, policy, output):
         endpoint=api/'planner.sock'
         if endpoint.exists(): endpoint.unlink()
         shutil.rmtree(api)
+
+
+PILOT_INSTRUCTIONS = """Before submission run python /tool.py pilot plan.json.
+This V1 samples up to three root contracts, no hypothetical provider facts.
+Review the concrete diagnostics. A timeout or failed proof does not certify bad grouping.
+Revise only when evidence concerns boundaries or imports; at most two distinct plans can be piloted.
+Every changed plan needs a new pilot before submission. Do not exhaust the rounds on cosmetic edits.
+Submit using python /tool.py submit plan.json --pilot-review 'decision, evidence and unresolved risks'.
+Pilot proofs remain isolated and are never imported into formal generation.
+"""

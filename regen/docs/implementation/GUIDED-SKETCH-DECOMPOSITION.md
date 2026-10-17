@@ -143,3 +143,49 @@ python3 -m regen.tools.sketch_guided_native_smoke --output /tmp/sketch-guided-na
 ## 2026-10-16：可选 sketch-phased-v1
 
 新增受证据约束的 transition_proof 动作。短探测最多两次；formal_leaf 在不改变 helper 接口且父消费者已条件闭合时转入正式检查，不再以成功 probe 作为风险叶子的唯一入口。失败初次加一次局部修复后要求显式升级，可选择 revise_consumer、revise_interface、decompose_helper。升级绑定失败 ID 和当前候选，不生成 GREEN、不刷新总预算。记录位于 document/workflow/transitions。普通检查和父 sketch 仍必须重新验证。默认与历史 guided 策略不变。实现仅限制 entry 接口和候选版本，不提供任意 tactic checkpoint 的前缀保持证明。
+
+## 2026-10-17：规划冻结前的 pilot 小版本
+
+实现：`regen/planning/plan_pilot.py`；入口由
+`regen/config/repository-planning-policy-pilot.json` 显式启用。
+默认规划策略与正式生成调度器不变。工作区流程为
+`validate → preflight → pilot → review/revise → submit`。
+`/tool.py pilot plan.json` 返回试验反馈；提交需增加
+`--pilot-review '保留/修订的理由，以及未解决的风险'`。
+
+V1 只测试无 required_imports 的 theory 能否从合法基础环境启动证明。
+按 theory 轮转选择最多三个 contract（优先级顺序内取样，不是难度预测），
+每目标 300 秒墙钟预算、最多两次候选；模型调用上限 120 秒、原生检查上限
+60 秒，两者均受剩余目标预算限制。模型为 gpt-6-astra / medium。
+每份规划最多两个不同版本试验；同一版本复用已绑定证据。
+意外中断保留 started 记录，不自动重跑或返还轮次。
+
+实现复用已有无工具审计模型传输和 Isabelle `check_node(audit=True)`，
+输入为冻结 contract/context、合法定义候选和本目标失败反馈。
+原生检查成功记录 `proved`，不写正式 GREEN，不把试验证明导入正式生成。
+证明失败、检查超时、模型错误、基础设施错误和预算耗尽分别记录；均不能
+直接推导规划错误。尚未 seal 的 provider 不被假设，依赖这些 provider 的
+目标列为未测试。当前不实现跨 theory 条件接口测试、自动共享 helper、全量
+生成或自定义 proving agent 工具循环；因此不得声称试验验证了架构整体质量。
+
+试验证据绑定完整 proposal、输入、checker 身份、策略及实现摘要；最终收据
+另绑定试验目录内工件摘要。任何规划字段变化都要求重测（V1 保守失效，不实现
+局部重用）。提交需要当前版本收据与评审文字；重新读取发布产物时再核对。
+只要求人工/模型明确承认证据与未知项，不要求所有试验成功，避免把困难目标
+错误当成架构失败。评审文字本身不构成数学质量证书。
+
+测试：`python3 -m unittest regen.tests.current.test_plan_pilot`。
+真实小测试先运行 `python3 -m regen.tools.plan_pilot_smoke --dataset <合法数据集> --output <新目录>`，
+再用现有 `regen.planning.repository_planner --planning-input <新目录>/dataset/repository-planning-input.json
+--policy <新目录>/policy.json --output <新目录>/planning --allow-external-call`。
+三个真实 Refine contracts 的精确声明保持不变，未读取或注入历史目标证明；
+这是流水线试验，不是理论划分性能 A/B。报告必须计入规划、试验与准备成本。
+
+设计参考（方法迁移，而非文献已经验证本系统）：
+
+- SEI [ARID](https://www.sei.cmu.edu/library/active-reviews-for-intermediate-design-arid/)：
+  在设计尚未全部实现时，以具体使用场景主动检查适用性；对应冻结前的小范围执行。
+- SEI [ATAM](https://www.sei.cmu.edu/library/architecture-tradeoff-analysis-method-collection/)：
+  根据质量目标和场景识别风险、敏感点与权衡；对应报告证据及未知项，而非单一质量分数。
+- [ArchUnit](https://www.archunit.org/userguide/html/000_Index.html)：
+  将架构约束转为可执行检查；对应覆盖、导入、无环和版本绑定，不能替代效率实验。
