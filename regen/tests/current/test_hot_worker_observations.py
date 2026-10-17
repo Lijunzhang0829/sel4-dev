@@ -3,6 +3,7 @@ import tempfile
 from pathlib import Path
 import unittest
 import threading
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from regen.execution.batch_checker import BatchWorker
@@ -15,6 +16,7 @@ class ObservationTests(unittest.TestCase):
             w = object.__new__(BatchWorker)
             w.root, w.index, w.name = Path(tmp), 0, 'worker'
             w.imports, w.base, w.pending = ['Main'], 'base', 'pending'
+            w.checker = SimpleNamespace(imports=lambda: ['Main'])
             w.transaction = Mock(return_value=('OBSERVED', 'log'))
             source = 'theory Probe\nimports\n    "Main"\nbegin\nlemma x: "True"\noops\nend\n'
             result = w.observe_source(source, 'Probe', timeout=10)

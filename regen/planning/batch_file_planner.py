@@ -1141,12 +1141,17 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         raise ValueError('expected one JSON action object')
                     if proposal.get('action') == 'check_theory':
                         document_check_requested = True
-                        from regen.planning.theory_document import DocumentStore, candidate as document_candidate
-                        if set(proposal)-{'action','source_sha256','reason','notes','retry_check'}:
-                            raise ValueError('check_theory accepts source_sha256, reason, notes and optional retry_check')
+                        from regen.planning.theory_document import DocumentStore, candidate as document_candidate, selected_source
+                        if set(proposal)-{'action','source_sha256','reason','notes','retry_check','entry_ids'}:
+                            raise ValueError('check_theory accepts source_sha256, entry_ids, reason, notes and optional retry_check')
                         durable(request_dir/'model-proposal.json',proposal,immutable=True)
-                        store=DocumentStore(directory/'document',package,state,checker.imports())
+                        from regen.planning.sketch_check import strategy_options
+                        store=DocumentStore(directory/'document',package,state,checker.imports(),
+                            **strategy_options(getattr(checker,'generation_strategy_name','baseline')))
                         source=store.checked_source(proposal.get('source_sha256'))
+                        from regen.planning.sketch_check import authorize
+                        document_sketch_authorizations=authorize(store,source,proposal.get('entry_ids'))
+                        source=selected_source(package,state,source,checker.imports(),proposal.get('entry_ids'))
                         projected=document_candidate(package,state,source,checker.imports())
                         proposal={**{k:v for k,v in proposal.items() if k in {'reason','notes','retry_check'}},
                             'action':'submit_batch','document_source':source,
@@ -1266,6 +1271,8 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                                         transcript_prefix=str(prefix), reason=proposal.get('reason',''))
                         if document_source is not None:
                             evidence['document_publication_policy'] = 'preserve-accepted-ids-v1'
+                            if document_check_requested:
+                                evidence['sketch_authorizations'] = document_sketch_authorizations
                         if bounded_fallback is not None:
                             evidence['bounded_prefix'] = bounded_fallback
                         if 'workspace_reuse_origin' in proposal:
@@ -1273,6 +1280,9 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         durable(request_dir/'check.json', evidence, immutable=True)
                         if evidence['check'].get('failure_scope') == 'native_preparation':
                             raise NativePreparationError(evidence['check'].get('diagnostic','native prefix preparation failed'))
+                        if document_check_requested and store.require_review and not cached:
+                            from regen.planning.sketch_workflow import record_formal_result
+                            record_formal_result(store, document_source, evidence)
                         from regen.planning.theory_document import execution_scope
                         scope = execution_scope(state, candidate, evidence)
                         missing_accepted = (sorted(set(state['proofs']) - set(candidate['proofs']))
@@ -1289,7 +1299,9 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                             candidate = apply_feedback(candidate, proposal, candidate['batch_feedback'], count, observation_order=observation_order)
                             if document_source is not None:
                                 candidate['batch_feedback'].update(source_sha256=candidate['document_source_sha256'],
-                                    check_mode=evidence['document_check_mode'],rechecked_ids=list(candidate['accepted_order']))
+                                    check_mode=evidence['document_check_mode'],
+                                    rechecked_ids=scope['checked_delta_ids'],
+                                    requested_source_sha256=store.read()['source_sha256'])
                             if bounded_fallback is not None:
                                 candidate['batch_feedback']['bounded_prefix'] = bounded_fallback
                             state = journal.append('document' if document_source is not None else 'batch', candidate, evidence)

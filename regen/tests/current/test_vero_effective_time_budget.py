@@ -97,17 +97,39 @@ class VeroActiveWallBudgetTests(unittest.TestCase):
                 calls.append(recovering)
                 if not recovering:
                     tick[0]+=10
-                    raise entry.RecoverableAgentFailure('provider failed')
+                    raise entry.RecoverableAgentFailure('provider failed',
+                        classification={'category':'transient',
+                            'failure':{'kind':'http_status','http_status':503},
+                            'evidence':'turn.failed'},checkpoint_verified=True)
                 tick[0]+=1000
                 self.assertEqual(stop.snapshot()['active_wall_seconds'],10)
                 gate.generation_started();tick[0]+=1
                 return {'status':'complete'}
             result=entry.run_with_agent_takeover(run_once,
                 journal_path=root/'unused',ledger=ledger,stop=stop,
-                load=lambda p:None,save=lambda *a:None,recovery_gate=gate)
+                load=lambda p:None,save=lambda *a:None,recovery_gate=gate,
+                clock=lambda:tick[0],
+                sleep=lambda seconds:tick.__setitem__(0,tick[0]+seconds))
             self.assertEqual(result['status'],'complete')
             self.assertEqual(calls,[False,True])
             self.assertEqual(stop.snapshot()['active_wall_seconds'],11)
+            stop.close()
+
+    def test_normal_planning_generation_counts_toward_active_wall(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);tick=[0.];ledger=Ledger(root/'ledger','planning-clock')
+            stop=ActiveWallBudget(ledger,100,monotonic=lambda:tick[0])
+            class Agent:
+                def __init__(self,config,log_dir):pass
+                def run(self,*,sandbox_dir,instruction_file):
+                    tick[0]+=17
+                    (Path(sandbox_dir)/'PLAN.json').write_text('{"modules":[]}')
+                    return {'ok':True}
+            entry.create_fresh_plan(root=root,bench={'contracts':[]},
+                config={'agent':{}},Agent=Agent,stop=stop,ledger=ledger,
+                compile_plan=lambda bench,plan:{'contracts':[]},
+                clock=lambda:tick[0])
+            self.assertEqual(stop.snapshot()['active_wall_seconds'],17)
             stop.close()
 
     def test_limit_interruption_is_reported_nonresumable(self):

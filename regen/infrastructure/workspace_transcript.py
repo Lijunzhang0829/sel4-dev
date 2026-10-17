@@ -47,6 +47,29 @@ def _pre_delta_registry(registry):
     return previous
 
 
+def _pre_sketch_registry(registry):
+    """Exact source-action schema before conditional groups/selected checks."""
+    previous = deepcopy(registry)
+    for tool in previous:
+        if tool['name'] != 'proof_action':
+            continue
+        proposal = tool['inputSchema']['properties'].get('proposal', {})
+        if 'oneOf' not in proposal:
+            continue
+        alternatives = []
+        for action in proposal['oneOf']:
+            kind = action.get('properties', {}).get('action', {}).get('const')
+            if kind in {'check_sketch','read_sketch'}:
+                continue
+            if kind == 'edit_theory':
+                action['properties'].pop('sketches', None)
+            elif kind == 'check_theory':
+                action['properties'].pop('entry_ids', None)
+            alternatives.append(action)
+        proposal['oneOf'] = alternatives
+    return previous
+
+
 def approved_registry(tools):
     names = [t.get('name') for t in tools]
     if not names or len(set(names)) != len(names) or any(t.get('type') != 'function' for t in tools):
@@ -71,6 +94,10 @@ def approved_registry(tools):
     from regen.planning.generic_codex_agent import registry
     current=[{'type':'function', **tool} for tool in registry()]
     if tools == current or tools == _pre_history_registry(current):return True
+    before_sketch = _pre_sketch_registry(current)
+    for previous_sketch in (before_sketch, _pre_delta_registry(before_sketch)):
+        if tools == previous_sketch or tools == _pre_history_registry(previous_sketch):
+            return True
     previous = _pre_delta_registry(current)
     if tools == previous or tools == _pre_history_registry(previous):return True
     # Replay the exact previously exported generic registry; never launch it anew.
@@ -80,7 +107,11 @@ def approved_registry(tools):
             tool['description']='Read deadline, accounting, plan and previous revision identities; optional notes persist across resume.'
     previous = _pre_delta_registry(legacy)
     return (tools == legacy or tools == _pre_history_registry(legacy)
-            or tools == previous or tools == _pre_history_registry(previous))
+            or tools == previous or tools == _pre_history_registry(previous)
+            or tools == _pre_sketch_registry(legacy)
+            or tools == _pre_history_registry(_pre_sketch_registry(legacy))
+            or tools == _pre_delta_registry(_pre_sketch_registry(legacy))
+            or tools == _pre_history_registry(_pre_delta_registry(_pre_sketch_registry(legacy))))
 
 
 def _hash(raw):

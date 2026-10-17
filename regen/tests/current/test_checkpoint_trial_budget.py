@@ -114,6 +114,19 @@ class CheckpointTrialBudgetTests(unittest.TestCase):
             initialize_parallel_budget(self.root,self.overview,{**self.binding,'native_slots':2},
                 seconds=900,resume_authorization='test')
 
+    def test_authorized_two_hour_window_resumes_with_source_and_costs_unchanged(self):
+        before_source=self.files(self.source)
+        accepted=self.files(self.root/'theories')
+        receipt=self.prepare(seconds=7200)
+        self.assertEqual(receipt['seconds'],7200)
+        self.assertFalse(receipt['historical_costs_reset'])
+        stage,_=initialize_parallel_budget(self.root,self.overview,self.binding,seconds=7200,
+            resume_authorization='explicitly authorized two-hour diagnostic')
+        self.addCleanup(stage.close)
+        self.assertEqual(stage.snapshot()['remaining_seconds'],7200)
+        self.assertEqual(self.files(self.source),before_source)
+        self.assertEqual(self.files(self.root/'theories'),accepted)
+
     def test_partial_preparation_with_a_clock_checkpoint_is_not_runnable(self):
         append=Ledger.append
         def interrupt(ledger,kind,**fields):
@@ -186,7 +199,7 @@ class CheckpointTrialBudgetTests(unittest.TestCase):
         self.assertFalse((self.root/'effective-generation-budget').exists())
 
     def test_no_authorization_no_unbounded_window_no_unknown_contract(self):
-        for kwargs in ({'authorization':''},{'seconds':0},{'seconds':3601},
+        for kwargs in ({'authorization':''},{'seconds':0},{'seconds':10801},
                        {'seconds':float('inf')},{'seconds':True},{'target_contract_id':'missing'}):
             with self.subTest(kwargs=kwargs),self.assertRaises(ValueError):
                 self.prepare(**kwargs)

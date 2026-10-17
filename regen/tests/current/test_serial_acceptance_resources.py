@@ -24,7 +24,10 @@ class SerialAcceptanceResourcesTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'stop before native'):
                 acceptance.run('/unused', '/unused-output', native_memory_mb=10240,
                                native_threads=4, native_cpus=4)
-            resources.assert_called_once_with(1, 4, 1, memory_mb=10240, cpus=4)
+            resources.assert_called_once_with(
+                1, 4, 1, memory_mb=10240, cpus=4,
+                shared_host_lock_dir=None, shared_host_slots=1,
+            )
 
 
 if __name__ == '__main__':

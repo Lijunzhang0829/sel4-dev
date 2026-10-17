@@ -29,7 +29,7 @@ for line in sys.stdin:
  if method=='initialize':send({'id':m['id'],'result':{}})
  elif method=='thread/start':
   names={t['name'] for t in m['params']['dynamicTools']}
-  assert names=={'list_workspace','read_theory','list_generated','read_generated','read_attempt','prepare_reuse','proof_action'}
+  assert names=={'list_workspace','read_theory','list_generated','read_generated','list_attempts','read_attempt','prepare_reuse','proof_action'}
   send({'id':m['id'],'result':{'thread':{'id':'workspace-thread'}}})
  elif method=='turn/start':
   send({'id':m['id'],'result':{'turn':{'id':'workspace-turn'}}});tool()

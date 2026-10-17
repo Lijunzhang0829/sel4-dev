@@ -39,12 +39,17 @@ class BatchWorker(PrefixWorker):
         # and candidate limits. No proof/context text is rewritten for speed.
         self.prefix_timeout = prefix_startup_budget(checker.timeout, len(names))
         self.label = source.splitlines()[0].split()[1]
+        self.checkpoints = {}
         for name, value in [('prefix', self.base), ('prefix_facts', '\n'.join(names)), ('worker_id', self.name),
                             ('imports', '\n'.join(imports)), ('theory_name', self.label),
                             ('command_timeout', str(checker.timeout)),
                             ('prefix_timeout', str(self.prefix_timeout)),
                             ('candidate_timeout', str(getattr(checker, 'batch_candidate_timeout', 120)))]:
             (self.root/name).write_text(value)
+        self.checkpoints = self._write_checkpoints('initial', source)
+        self.checkpoints[hashlib.sha256(self.base.encode()).hexdigest()] = self.base
+        (self.root/'prefix_key').write_text(hashlib.sha256(self.base.encode()).hexdigest())
+        (self.root/'initial_line').write_text(str(source.partition('\nbegin\n')[0].count('\n') + 2))
         (self.root/'server.ML').write_bytes(Path(__file__).with_suffix('.ML').read_bytes())
         command = checker._command(checker.work_dir/(self.label+'.thy'),
             session='Generated_Refine' if checker.previous_theories else checker.base_session,
@@ -133,22 +138,58 @@ class BatchWorker(PrefixWorker):
         if answer == 'OBSERVED' and output_directory is not None:
             # Missing output is a transport error, not a successful lookup.
             (Path(output_directory)/'resolution.tsv').write_bytes(output.read_bytes())
-        return {'verdict':'green' if answer == 'OBSERVED' else 'red',
+        result = {'verdict':'green' if answer == 'OBSERVED' else 'red',
             'returncode':0 if answer == 'OBSERVED' else 124 if answer.startswith('TIMEOUT\n') else 1,
             'diagnostic':answer, 'source':str(path), 'log':str(log_path),
             'wall_ms':round((time.monotonic()-started)*1000),
             'check_scope':'isolated-imports-observation', 'proofs_checked':False,
-            'worker':self.name, 'worker_preserved':True}
+            'worker':self.name, 'worker_preserved':True,
+            'timeout_seconds':timeout,
+            'timeout_scope':'isolated-imports-observation' if answer.startswith('TIMEOUT\n') else None}
+        from regen.execution.native_check_receipt import native_check_receipt
+        result['native_receipt'] = native_check_receipt(
+            self.checker, result, source=executed, scope='isolated-imports-observation',
+            log_text=log+'\n'+answer, request_id=f'{self.name}:{stem}:observe',
+            candidate_execution_ms=result['wall_ms'])
+        return result
+
+    def _write_checkpoints(self, stem, source):
+        """Declare exact renderer boundaries after complete, closed entries."""
+        content = body(source)
+        offset = 0
+        first = source.partition('\nbegin\n')[0].count('\n') + 2
+        keys, lines = [], []
+        for number, line in enumerate(content.splitlines(keepends=True), first):
+            offset += len(line)
+            if line.startswith('ML \\<open>writeln ("REGEN_TIMING_END '):
+                prefix = content[:offset]
+                key = hashlib.sha256(prefix.encode()).hexdigest()
+                keys.append(key); lines.append(str(number))
+                (self.root/(stem+'.checkpoint_'+key)).write_text(prefix)
+        (self.root/(stem+'.checkpoint_keys')).write_text('\n'.join(keys))
+        (self.root/(stem+'.checkpoint_lines')).write_text('\n'.join(lines))
+        return {key:(self.root/(stem+'.checkpoint_'+key)).read_text() for key in keys}
+
+    def can_align(self, prefix):
+        return prefix in (self.base, self.pending) or hashlib.sha256(prefix.encode()).hexdigest() in getattr(self,'checkpoints',{})
 
     def align(self, prefix):
         if prefix == self.base:
             return
         if prefix != self.pending:
-            raise ValueError('worker prefix differs from committed source')
+            key = hashlib.sha256(prefix.encode()).hexdigest()
+            if getattr(self, 'checkpoints', {}).get(key) != prefix:
+                raise ValueError('worker prefix differs from committed source')
+            answer, _ = self.transaction('restore', fields={'checkpoint_key':key})
+            if answer != 'RESTORED':
+                raise RuntimeError(answer)
+            self.base, self.pending = prefix, None
+            return
         answer, _ = self.transaction('commit')
         if answer != 'COMMITTED':
             raise RuntimeError(answer)
         self.base, self.pending = prefix, None
+        self.checkpoints = {k:v for k,v in getattr(self,'checkpoints',{}).items() if prefix.startswith(v)}
 
     def check_batch(self, source, names):
         candidate = body(source)
@@ -157,6 +198,7 @@ class BatchWorker(PrefixWorker):
         suffix = candidate[len(self.base):]
         before = source.split('\nbegin\n',1)[0]+'\nbegin\n'+self.base
         started = time.monotonic()
+        checkpoints = self._write_checkpoints(str(self.index + 1), source)
         timed_out = False
         timeout_scope = None
         try:
@@ -184,6 +226,8 @@ class BatchWorker(PrefixWorker):
                 self.pending = None
                 raise RuntimeError('incremental audit transport failure: ' + str(error)) from error
         self.pending = candidate if answer == 'GREEN' else None
+        if answer == 'GREEN':
+            self.checkpoints.update(checkpoints)
         path = self.root/(stem+'.thy'); path.write_text(source)
         log_path = self.root/(stem+'.log'); log_path.write_text(log+'\n'+answer)
         snapshot = None
@@ -197,7 +241,7 @@ class BatchWorker(PrefixWorker):
                     'executed_commands':[dict(x.attrib) for x in tree.findall('./executed_commands/command')]}
             except (ET.ParseError, OSError) as error:
                 snapshot = {'origin':'unavailable', 'error':str(error)}
-        return freeze_evidence({**audit, 'native_proof_state_full':snapshot,
+        result = {**audit, 'native_proof_state_full':snapshot,
             'native_proof_state':({'origin':snapshot.get('origin'), 'command':snapshot.get('command'),
                 'line':snapshot.get('line'), 'goal_count':len(snapshot.get('goals',[])),
                 'available_via':'read_proof_state'} if snapshot else None),
@@ -212,4 +256,56 @@ class BatchWorker(PrefixWorker):
             'incremental':PROTOCOL,
             'prefix_sha256':hashlib.sha256(self.base.encode()).hexdigest(),
             'delta_sha256':hashlib.sha256(suffix.encode()).hexdigest(),
-            'audited_facts':list(names), 'worker':self.name})
+            'audited_facts':list(names), 'worker':self.name}
+        from regen.execution.native_check_receipt import native_check_receipt
+        result['native_receipt'] = native_check_receipt(
+            self.checker, result, source=source,
+            scope='committed-prefix-and-incremental-batch',
+            log_text=log+'\n'+answer,
+            request_id=f'{self.name}:{self.index}',
+            prefix_sha256=result['prefix_sha256'],
+            delta_sha256=result['delta_sha256'],
+            candidate_execution_ms=result['wall_ms'])
+        return freeze_evidence(result)
+
+    def check_sketch(self, source, admitted_names, *, timeout=None):
+        """Discard a conditional transaction without changing the proof prefix."""
+        candidate = body(source)
+        if not candidate.startswith(self.base):
+            raise ValueError('sketch is not an append to the certified prefix')
+        before = source.split('\nbegin\n', 1)[0] + '\nbegin\n' + self.base
+        started = time.monotonic()
+        stem = str(self.index + 1)
+        path = self.root / (stem + '.sketch.thy')
+        path.write_text(source)
+        answer, log = self.transaction('sketch', candidate[len(self.base):], admitted_names,
+            before.count('\n') + 1,
+            fields={} if timeout is None else {'candidate_timeout': timeout},
+            timeout=(getattr(self.checker, 'batch_candidate_timeout', 120) if timeout is None else timeout) + 10)
+        log_path = self.root / (stem + '.sketch.log')
+        log_path.write_text(log + '\n' + answer)
+        snapshot = self.root / (stem + '.proof-state.xml')
+        state = None
+        if snapshot.exists():
+            tree=ET.fromstring(snapshot.read_text())
+            state={'origin':tree.get('origin'),'command':tree.get('command'),'line':tree.get('line'),
+                   'goals':[x.text or '' for x in tree.findall('./goals/goal')],
+                   'local_assumptions':[x.text or '' for x in tree.findall('./assumptions/assumption')]}
+        result = {'verdict': 'green' if answer == 'CONDITIONAL' else 'red',
+                'returncode': 0 if answer == 'CONDITIONAL' else 124 if answer.startswith('TIMEOUT\n') else 1,
+                'diagnostic': answer, 'source': str(path), 'log': str(log_path),
+                'wall_ms': round((time.monotonic() - started) * 1000),
+                'check_scope': 'conditional-sketch-with-certified-prefix',
+                'publishable': False, 'incremental': True,
+                'proof_state_path': str(snapshot) if snapshot.exists() else None,
+                'native_proof_state_full':state,
+                'timeout_seconds':timeout if timeout is not None else getattr(self.checker,'batch_candidate_timeout',120),
+                'timeout_scope':'conditional-sketch-candidate' if answer.startswith('TIMEOUT\n') else None}
+        from regen.execution.native_check_receipt import native_check_receipt
+        result['native_receipt'] = native_check_receipt(
+            self.checker, result, source=source, scope='conditional-sketch-with-certified-prefix',
+            log_text=log+'\n'+answer, request_id=f'{self.name}:{stem}:sketch',
+            prefix_sha256=hashlib.sha256(self.base.encode()).hexdigest(),
+            delta_sha256=hashlib.sha256(candidate[len(self.base):].encode()).hexdigest(),
+            candidate_execution_ms=result['wall_ms'])
+        return result

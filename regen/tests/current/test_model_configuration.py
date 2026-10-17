@@ -26,9 +26,9 @@ class ModelConfigurationTest(unittest.TestCase):
             self.assertEqual(meta['codex_sha256'],self.settings()['codex_sha256'])
 
     def test_changed_default_binary_is_rejected_before_model_call(self):
-        settings={**self.settings(),'codex_sha256':'wrong'}
+        settings={**self.settings(),'codex_sha256':'0'*64}
         with tempfile.TemporaryDirectory() as tmp, patch('regen.infrastructure.audited_llm.model_settings',return_value=settings), patch('regen.infrastructure.audited_llm._run_provider') as run:
-            with self.assertRaisesRegex(RuntimeError,'CLI changed'):call_codex('test',Path(tmp)/'call',clean_runtime=True)
+            with self.assertRaisesRegex(RuntimeError,'digest mismatch'):call_codex('test',Path(tmp)/'call',clean_runtime=True)
             run.assert_not_called()
 
     def test_run_frozen_model_takes_precedence_over_environment_default(self):

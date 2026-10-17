@@ -58,7 +58,7 @@ DOCUMENT_INSTRUCTIONS = '''You are the continuing File Planner for ONE Isabelle 
 Read the assigned theory with read_theory. Its document.source is the editable .thy draft.
 Implement the fixed goals by editing this file: batch several proofs, add/remove/reorder
 helper declarations, check the current version, then revise using Isabelle feedback.
-Do not create a proof DAG, consumer edges, routes, or scheduling JSON. File order determines
+Use explicit sketches groups, without legacy proof-DAG, route or scheduling JSON. File order determines
 which earlier proven declarations are available; oops slots export no theorem.
 
 Use proof_action(theory, proposal):
@@ -66,12 +66,17 @@ Use proof_action(theory, proposal):
 Or replace the complete file using source instead of edits. Edits are sequential. Saving
 performs boundary/hygiene checks, not Isabelle validation. Failed proof drafts persist.
 {"action":"check_theory","source_sha256":"current saved hash","reason":"what changed"}
+Optional entry_ids selects several proof updates while retaining every accepted proof.
+{"action":"check_sketch","source_sha256":"current saved hash","target_entry_ids":["parent ID"]}
+Explicit sketches groups on edit_theory contain target_entry_id and helper_ids.
+This diagnostic checks the consumer with precisely those helpers temporarily admitted;
+conditional_closed never proves a helper or the parent and never publishes a fact.
 This checks all supplied proof bodies in file order. A successful version is atomically
 accepted only if it retains every previously accepted entry. A GREEN diagnostic draft
 with removed proofs/helpers or oops replacing accepted bodies returns draft_checked;
 it does not publish proofs or replace the accepted version. Restore the missing entries
 (read_proofs retrieves accepted bodies), then check the complete draft. Unchanged accepted
-prefixes may be reused. Editing/reordering accepted bodies triggers full revalidation.
+prefixes are reused. Editing/reordering accepted bodies rechecks the affected suffix.
 Read_theory returns the draft and last check feedback. You may edit a failed draft directly.
 Pass if_source_sha256 to read_theory when you already hold that exact source; an unchanged
 draft then returns source_unchanged=true without repeating its text. Omit the hash to
@@ -91,7 +96,7 @@ The REGEN-BEGIN metadata has only id, role (contract/helper/theorem), context (a
 context list). REGEN-PROOF separates declaration and proof; REGEN-END closes the entry.
 A helper is an ordinary named lemma entry with a unique ID/name. Copy a block layout,
 choose its statement and context, and place it before consumers. No intended-consumer list
-is required in source markers. For each new helper attach a helper_purposes entry to
+is required in source markers. Optional helper_purposes notes may be attached to
 edit_theory, outside the .thy source: {"helper_id":{"contract_id":"fixed goal ID",
 "gap":"specific condition or proof step","expected_use":"where in the target proof",
 "remaining_gap":"what remains; write none if nothing"}}. Update these notes when
@@ -100,7 +105,7 @@ submit the unchanged source with the current base_sha256. After trying the helpe
 in a non-oops target body, optionally add used_in_target with the exact use location.
 This is a reported attempt, not native dependency evidence or target success.
 read_theory returns these notes; accepted status is derived from committed proofs.
-Missing notes are reminders, never a reason to stop proving. Use the notes to revisit
+Missing notes are reminders, never a reason to stop proving. Use checked sketches to revisit
 the target after useful helper progress; do not build a scheduling DAG.
 Context commands must match the marker list and close before REGEN-END.
 Use a sole oops for an unfinished proof; never sorry, axioms, ML or hidden declarations.
@@ -119,6 +124,19 @@ Ordinary proof failure should lead to editing or retrieval, not abandoning the t
 
 GENERATION_STRATEGIES = {
     'baseline': '',
+    'sketch-groups-v1': '''\nENFORCED HELPER GROUPS: SKETCH GROUPS V1
+When adding helpers, supply sketches=[{"target_entry_id":"parent ID",
+"helper_ids":["h1","h2"]}] on edit_theory and include the executable parent
+consumer proof in the same draft. A group may contain one or many helpers; its
+complete interface must close the parent. Multiple parent groups may share one
+edit. Call check_sketch with source_sha256 (optional target_entry_ids) before
+proving a group. The harness rejects orphan or unchecked helpers regardless of
+your explanation. Recursively add a checked group for a difficult helper.
+Use check_theory with entry_ids to check several selected proof updates while
+other failed or sketch-only bodies stay in the draft. After the helpers are
+proved, check their parent using its actual proof. Conditional results are never
+GREEN, never premises for helper proofs, and never replenish generation budget.
+''',
     'bounded-audited-prefix-v1': '''\nONLINE CHECK POLICY: BOUNDED AUDITED PREFIX V1
 For an append-only check_theory draft, the harness checks your new proof bodies
 one declaration at a time in source order, independently auditing and committing
@@ -143,6 +161,85 @@ accepted-proof boundaries and complete native proof validation.
 ''',
 }
 
+
+GENERATION_STRATEGIES['sketch-local-demands-v1'] = GENERATION_STRATEGIES['sketch-groups-v1'] + '''
+LOCAL HELPER DEMANDS: inspect requirements before generalizing
+Every pending group must include use_sites covering every helper. Each selector
+has helper_id, consumer_line (1-based line of the parent's proof body), and fact
+(the exact helper fact expression, e.g. h[where x=x]). Put its using/from/with/
+apply/by command on its own line. check_sketch observes the native fact after
+attributes, the pending goals and local assumptions at that position. Read the
+full receipt's helper_uses before proving helpers. Schematic variables still in
+the fact are unresolved; neither the selector nor its observation proves actual
+dependency, minimality, truth or difficulty. Keep selectors current after edits.
+Default to the instance, available hypotheses and conclusion required at the
+consumer. Avoid dropping useful premises, broadening objects or adding stronger
+conclusions merely for generality. If a general helper stalls, specialize it or
+restore legal local premises, then edit the consumer and rerun check_sketch.
+The consumer must prove all restored premises. Generalization remains allowed
+when useful for induction or measured reuse. A conditional receipt does not
+prove a complexity reduction. Briefly probe all leaves before committing the
+main budget; repair a script/known-fact gap before creating more helpers.
+'''
+
+GENERATION_STRATEGIES['sketch-reviewed-v1'] = GENERATION_STRATEGIES['sketch-local-demands-v1'] + '''
+ENFORCED DECOMPOSITION REVIEW
+After check_sketch closes, use probe_helpers to briefly check each pending leaf
+in its own legal GREEN prefix (10 candidate seconds; preparation is separate).
+An oops leaf receives a basic simp probe. Probes never publish GREEN or assume
+siblings. Missing dependencies remain diagnostic proof failures, not admissions.
+Call review_sketch bottom-up, referencing the exact receipt and native use
+indices. Review domain_scope, premises and conclusion as local/generalized;
+generalization needs induction/reuse justification. Reject unchanged burden;
+explain the isolated reasoning, or delegate to a reviewed child sketch. Every
+pending leaf needs a native probe; its failure/timeout does not prove hardness.
+Native failure IDs appear in read_theory.workflow. Use diagnose_failure before
+revising related decompositions. For script/known_fact failures, change and
+check the existing proof first. Unrelated parents may continue independently.
+Reviews are accountable model judgments, not kernel difficulty certificates.
+'''
+
+GENERATION_STRATEGIES['sketch-guided-v1'] = GENERATION_STRATEGIES['sketch-local-demands-v1'].replace(
+    'Briefly probe all leaves before committing the\nmain budget;',
+    'Assess the current sketch before committing the main budget;') + '''
+NATIVE STRUCTURAL SCREENING AND LOCAL REPAIR
+After conditional closure call assess_sketch. It observes the parent and helpers
+in legal native contexts without assuming siblings, ranks archived alternatives
+by worst remaining obligation, and recommends at most two diagnostic probes.
+Scores are untrained structural heuristics, not solvability probabilities.
+review_sketch bottom-up remains required. A repeated parent, retained multi-operation
+burden, iteration, or unknown profile needs a successful native probe or a reviewed
+child decomposition. Merely labeling it isolated cannot override these signals.
+Other leaves can proceed without mandatory probes. Do not expand definitions or
+generalize just to manipulate a score; the final parent must still be proved.
+For generalized demands add generalization_evidence: induction needs variable,
+invariant, base_case, step_case; reuse needs consumers and shared_pattern.
+These explanations are auditable judgments, not proofs of induction or reuse.
+Use read_failure for the exact failed entry, saved proof, native diagnostic and
+proof state. Diagnose script/known_fact errors and check a changed local proof
+before revising related interfaces. Preserve accepted siblings and recheck every
+changed consumer; no temporary admission or successful prefix publishes GREEN.
+'''
+
+
+GENERATION_STRATEGIES['sketch-phased-v1'] = GENERATION_STRATEGIES['sketch-guided-v1'] + '''
+PHASED WORKFLOW (overrides probe-success-only rules above)
+At most two short probes per leaf: initial attempt plus one changed-script repair.
+Then stop probing. Use transition_proof with current source_sha256, failure_id,
+decision and concrete plan. formal_leaf keeps the interface, requires a closed
+consumer and prior probe, and permits risk-reviewed formal proof via check_theory
+without first solving the leaf in a probe. This is not GREEN or a difficulty certificate.
+Continue with the existing script and diagnostics; budgets never reset.
+After an initial failed check and one failed local repair, a transition is required.
+revise_consumer preserves the entry interface and requires a changed consumer proof;
+revise_interface requires changing a helper declaration (contracts stay fixed);
+decompose_helper requires a saved child group. Diagnose failures before interface
+edits; recheck modified sketches and review bottom-up. Transitions bind the exact
+current candidate; execute it before editing again. Formal proof work may continue
+while making native progress; repeated residual obligations should be decomposed.
+These actions gate entries, not arbitrary tactic checkpoints: do not claim a kernel
+verified unchanged prefix when no native checkpoint evidence exists.
+'''
 
 def generation_strategy(value):
     if value == 'and-or-helper-selection-v1':
@@ -227,7 +324,7 @@ class TheoryController(WorkspaceController):
             raise ValueError('stop_at_focus_contract requires focus_contract_id')
         self.document_mode = document_mode
         self.generation_strategy = generation_strategy(generation_strategy_name)
-        if generation_strategy_name == 'bounded-audited-prefix-v1' and not document_mode:
+        if generation_strategy_name in {'bounded-audited-prefix-v1', 'sketch-groups-v1', 'sketch-local-demands-v1', 'sketch-reviewed-v1', 'sketch-guided-v1', 'sketch-phased-v1'} and not document_mode:
             raise ValueError(generation_strategy_name + ' requires document mode')
         super().__init__(run_dir,theories=[theory],**options)
         self.theory, self.resources, self.executor = theory, resources, executor
@@ -373,7 +470,9 @@ class TheoryController(WorkspaceController):
         else:
             package = self.shared._package(self.theory)
         runtime = self._runtime()
-        return DocumentStore(runtime[2]/'document',package,state,runtime[4].imports()),state
+        from regen.planning.sketch_check import strategy_options
+        return DocumentStore(runtime[2]/'document',package,state,runtime[4].imports(),
+            **strategy_options(self.generation_strategy['name'])),state
 
     def _handle(self, name, arguments, metadata):
         if self.document_mode and name=='proof_tool_help':
@@ -417,16 +516,54 @@ class TheoryController(WorkspaceController):
             if proposal.get('action') == 'select_helpers':
                 raise ValueError('select_helpers was removed; edit any needed helpers and check '
                                  'one or more proof bodies directly with check_theory')
+            if proposal.get('action') == 'read_sketch':
+                from regen.planning.sketch_check import read_receipt
+                if set(proposal)-{'action','receipt_id','view'}:
+                    raise ValueError('read_sketch accepts receipt_id and view only')
+                store, _ = self._document()
+                return read_receipt(store,proposal.get('receipt_id'),proposal.get('view','summary'))
+            if proposal.get('action') == 'read_failure':
+                from regen.planning.sketch_assessment import read_failure
+                if set(proposal) != {'action','failure_id'}:
+                    raise ValueError('read_failure accepts failure_id only')
+                store, _ = self._document()
+                return read_failure(store, proposal['failure_id'])
+            if proposal.get('action') == 'transition_proof':
+                from regen.planning.sketch_phases import transition_proof
+                from regen.infrastructure.workspace_transcript import record_workspace_action
+                if set(proposal) != {'action','source_sha256','failure_id','decision','plan'}:
+                    raise ValueError('invalid transition_proof fields')
+                store,state = self._document()
+                if state['status'] in {'sealed','retired'}: raise ValueError('terminal theory is immutable')
+                record_workspace_action(store.root/'workflow'/'calls'/uuid4().hex/'call',
+                    'transition_proof',proposal,metadata,theory=self.theory,model=self.model)
+                return transition_proof(store,proposal['source_sha256'],proposal['failure_id'],proposal['decision'],proposal['plan'])
+            if proposal.get('action') in {'review_sketch','diagnose_failure'}:
+                from regen.planning.sketch_workflow import review_sketch, diagnose_failure
+                from regen.infrastructure.workspace_transcript import record_workspace_action
+                action = proposal['action']
+                fields = ({'action','source_sha256','target_entry_id','receipt_id','reviews'}
+                          if action == 'review_sketch' else {'action','failure_id','classification','plan'})
+                if set(proposal) != fields:
+                    raise ValueError('invalid ' + action + ' fields')
+                store,state = self._document()
+                if state['status'] in {'sealed','retired'}:
+                    raise ValueError('terminal theory is immutable')
+                record_workspace_action(store.root/'workflow'/'calls'/uuid4().hex/'call',
+                    action,proposal,metadata,theory=self.theory,model=self.model)
+                return (review_sketch(store,proposal['source_sha256'],proposal['target_entry_id'],
+                        proposal['receipt_id'],proposal['reviews']) if action == 'review_sketch' else
+                        diagnose_failure(store,proposal['failure_id'],proposal['classification'],proposal['plan']))
             if proposal.get('action') == 'read_context_index':
                 from regen.planning.batch_file_planner import planner_input
                 from regen.planning.document_recall import context_index_page
                 package,state = self._state(self.theory)
                 return context_index_page(planner_input(package,state),proposal)
-            if proposal.get('action') not in {'edit_theory','check_theory','finish'}:
+            if proposal.get('action') not in {'edit_theory','check_theory','check_sketch','probe_helpers','assess_sketch','finish'}:
                 from regen.planning.document_interface import internal_request
                 proposal = internal_request(proposal)
                 arguments = {**arguments, 'proposal':proposal}
-            allowed = {'edit_theory','check_theory','finish','observe','query','read_facts',
+            allowed = {'edit_theory','check_theory','check_sketch','probe_helpers','assess_sketch','finish','observe','query','read_facts',
                        'read_proofs','read_attempts','read_queries','read_diagnostic',
                        'read_proof_state','resolve_symbols'}
             if proposal.get('action') not in allowed:
@@ -491,7 +628,8 @@ class TheoryController(WorkspaceController):
             if arguments.get('proposal',{}).get('action') == 'pause':
                 raise ValueError('continue local exploration; report an external blocker or unresolved outcome in the final response')
             action = arguments['proposal'].get('action')
-            kind = {'submit_batch':'proof_batch','check_theory':'proof_batch','finish':'seal','resolve_symbols':'symbol'}.get(action,'observe')
+            kind = {'submit_batch':'proof_batch','check_theory':'proof_batch','check_sketch':'sketch','probe_helpers':'sketch','assess_sketch':'sketch',
+                    'finish':'seal','resolve_symbols':'symbol'}.get(action,'observe')
             proposal = arguments['proposal']
             if kind == 'observe' and action != 'observe':
                 proposal = {'action':'observe','reads':[proposal]}
@@ -530,9 +668,11 @@ class TheoryController(WorkspaceController):
             raise ValueError('only the assigned theory may be checked or modified')
         kind, proposal = arguments['kind'], deepcopy(arguments['proposal'])
         helper_attempt = deepcopy(getattr(self, '_helper_attempt', None))
-        expected = {'proof_batch':'submit_batch','seal':'finish','statement':'submit_batch',
+        expected = {'proof_batch':'submit_batch','seal':'finish','statement':'submit_batch','sketch':'check_sketch',
                     'symbol':'resolve_symbols','observe':'observe'}
-        if kind not in expected or (proposal.get('action') != expected[kind] and not (kind=='proof_batch' and proposal.get('action')=='check_theory')):
+        if kind not in expected or (proposal.get('action') != expected[kind]
+                and not (kind=='proof_batch' and proposal.get('action')=='check_theory')
+                and not (kind=='sketch' and proposal.get('action') in {'probe_helpers','assess_sketch'})):
             raise ValueError('check kind and proposal action disagree')
         if 'notes' in proposal and not isinstance(proposal['notes'],str):
             raise ValueError('notes must be a string')
@@ -561,7 +701,7 @@ class TheoryController(WorkspaceController):
                     emit_event('check_task_started',kind=kind)
                     runtime = self._runtime()
                     check_cancelled()
-                    if kind in {'proof_batch','seal'}:
+                    if kind in {'proof_batch','seal','sketch'}:
                         with self._action_lock:
                             # Read-only observations never mutate this accepted snapshot.
                             _, now = self._state(self.theory)
@@ -573,9 +713,31 @@ class TheoryController(WorkspaceController):
                             runtime[4].work_dir.mkdir(exist_ok=True)
                             from regen.planning.observation_memory import task_order
                             self._action_observation_order = task_order(self.executor.get(task_id))
-                            result = super(TheoryController,self).proof_action(
-                                {'theory':self.theory,'proposal':proposal},metadata,
-                                state_snapshot=now, helper_attempt=helper_attempt)
+                            if kind == 'sketch':
+                                from regen.planning.sketch_check import check_groups
+                                from regen.infrastructure.workspace_transcript import record_workspace_action
+                                probing = proposal['action'] == 'probe_helpers'
+                                selectors = 'entry_ids' if probing else 'target_entry_ids'
+                                if set(proposal)-{'action','source_sha256',selectors}:
+                                    raise ValueError('check_sketch accepts source_sha256 and target_entry_ids only')
+                                store, _ = self._document(state=now)
+                                label = ('Native sketch structural assessment' if proposal['action']=='assess_sketch'
+                                         else 'Native helper probes' if probing else 'Conditional sketch check')
+                                record_workspace_action(directory/'call', label,
+                                    proposal, metadata, theory=self.theory, model=self.model)
+                                if proposal['action'] == 'assess_sketch':
+                                    from regen.planning.sketch_assessment import assess_sketch
+                                    result = assess_sketch(runtime[4],store,proposal.get('source_sha256'),proposal.get('target_entry_ids'))
+                                elif probing:
+                                    from regen.planning.sketch_workflow import probe_helpers
+                                    result = probe_helpers(runtime[4],store,proposal.get('source_sha256'),proposal.get('entry_ids'))
+                                else:
+                                    result = check_groups(runtime[4], store, proposal.get('source_sha256'),
+                                        proposal.get('target_entry_ids'))
+                            else:
+                                result = super(TheoryController,self).proof_action(
+                                    {'theory':self.theory,'proposal':proposal},metadata,
+                                    state_snapshot=now, helper_attempt=helper_attempt)
                     else:
                         result = self._observe(kind,proposal,snapshot,package,directory)
                     emit_event('check_task_result_ready',kind=kind)
@@ -891,7 +1053,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                            codex_home=None, integrate=True, file_planner_interface='document',
                            execution_policy=None, native_cpus=4, native_memory_mb=16384,
                            native_pids_limit=1024, provider_build_timeout=1800,
-                           build_ml_heap_mb=None, generation_strategy_name='baseline', focus_contract_id=None,
+                           build_ml_heap_mb=None, generation_strategy_name='sketch-reviewed-v1', focus_contract_id=None,
                            effective_seconds=172800, resume_authorization=None,
                            extend_effective_seconds=None):
     from regen.execution.proof_session_runner import acquire_run_mutation_lock, release_run_mutation_lock

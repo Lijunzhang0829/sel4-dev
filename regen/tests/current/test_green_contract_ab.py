@@ -143,6 +143,162 @@ class WorkflowTests(unittest.TestCase):
             with self.assertRaisesRegex(OSError, 'fork failed'):
                 ab.prepare(self.control, self.config)
 
+    def test_over_limit_window_rejected_before_expensive_preparation(self):
+        self.config.update(incremental_checkpoint_window=True,budget_effective_seconds=10801)
+        self.config_path.write_text(json.dumps(self.config))
+        with self.assertRaisesRegex(ValueError,'at most 10800'):
+            ab.configuration(self.config_path)
+
+    def test_variant_only_runs_two_cases_without_new_baselines(self):
+        self.config.update(variant_only=True,variant_strategy='sketch-groups-v1',
+                           wall_budget=True,wall_limit_seconds=3600)
+        self.config_path.write_text(json.dumps(self.config))
+        order=[]
+        with ExitStack() as stack:
+            start,_=self.patches(stack)
+            def observed(root,output,theory,target,**limits):
+                order.append(root.name)
+                self.assertEqual(limits,{'budget':3600,'wall_limit':3600,'wall_budget':True})
+                return {'window_result_verified':True,'target_success':False,
+                        'reason':'trial_wall_safety_limit'}
+            stack.enter_context(patch.object(ab,'observe',side_effect=observed))
+            report=ab.run_workflow(self.control,self.config_path,self.manifest)
+        self.assertEqual(order,['deletion--variant','insertion--variant'])
+        self.assertEqual(start.call_count,2)
+        self.assertTrue(report['comparison_complete'])
+        preparation=json.loads((self.control/'preparation.json').read_text())
+        self.assertTrue(preparation['variant_only'])
+        self.assertFalse(preparation['same_inherited_states'])
+
+    def test_explicit_sol_model_is_release_bound_and_used_in_command(self):
+        self.config.update(model='gpt-5.6-sol',reasoning_effort='medium',variant_only=True)
+        self.config_path.write_text(json.dumps(self.config))
+        with ExitStack() as stack:
+            self.patches(stack)
+            stack.enter_context(patch('regen.infrastructure.audited_llm.model_settings',return_value={
+                'role_models':{'File Planner':'gpt-5.6-sol'},'reasoning_effort':'medium'}))
+            def observed(root,*args,**kwargs):
+                argv=json.loads((root/'experiment.json').read_text())['command']
+                self.assertEqual(argv[argv.index('--planner-model')+1],'gpt-5.6-sol')
+                return {'window_result_verified':True,'target_success':True}
+            stack.enter_context(patch.object(ab,'observe',side_effect=observed))
+            self.assertTrue(ab.run_workflow(self.control,self.config_path,self.manifest)['comparison_complete'])
+
+    def test_independent_case_failure_does_not_stop_peer_or_claim_complete(self):
+        import threading
+        self.config.update(variant_only=True,case_workers=2,independent_case_failures=True)
+        self.config_path.write_text(json.dumps(self.config))
+        barrier=threading.Barrier(2)
+        with ExitStack() as stack:
+            self.patches(stack)
+            stack.enter_context(patch.object(ab,'parallel_admission',return_value={'admitted':True}))
+            def observed(root,*args,**limits):
+                barrier.wait(timeout=5)
+                if root.name.startswith('deletion'):raise RuntimeError('one provider failed')
+                self.assertFalse(limits['stop_event'].is_set())
+                return {'window_result_verified':True,'target_success':True}
+            stack.enter_context(patch.object(ab,'observe',side_effect=observed))
+            report=ab.run_workflow(self.control,self.config_path,self.manifest)
+        self.assertEqual(report['phase'],'partial')
+        self.assertFalse(report['comparison_complete'])
+        self.assertEqual(sum(r['report']['target_success'] for r in report['arms']),1)
+
+    def test_two_case_workers_overlap_and_keep_independent_budgets(self):
+        import threading
+        self.config.update(variant_only=True,variant_strategy='sketch-reviewed-v1',case_workers=2,
+                           native_memory_mb=12288,budget_effective_seconds=7200,
+                           wall_budget=True,wall_limit_seconds=7200)
+        self.config_path.write_text(json.dumps(self.config))
+        barrier=threading.Barrier(2)
+        observed=[]
+        with ExitStack() as stack:
+            start,_=self.patches(stack)
+            stack.enter_context(patch.object(ab,'parallel_admission',return_value={'admitted':True}))
+            def observe(root,output,theory,target,**limits):
+                barrier.wait(timeout=5)
+                observed.append(root.name)
+                self.assertEqual(limits['budget'],7200)
+                self.assertGreater(limits['wall_limit'],7190)
+                self.assertLessEqual(limits['wall_limit'],7200)
+                self.assertFalse(limits['stop_event'].is_set())
+                argv=json.loads((root/'experiment.json').read_text())['command']
+                self.assertEqual(argv[argv.index('--native-memory-mb')+1],'12288')
+                return {'window_result_verified':True,'target_success':False}
+            stack.enter_context(patch.object(ab,'observe',side_effect=observe))
+            report=ab.run_workflow(self.control,self.config_path,self.manifest)
+        self.assertCountEqual(observed,['deletion--variant','insertion--variant'])
+        self.assertEqual(start.call_count,2)
+        self.assertTrue(report['comparison_complete'])
+        self.assertEqual(report['case_workers'],2)
+
+    def test_parallel_failure_stops_the_peer_and_preserves_error(self):
+        import threading
+        self.config.update(variant_only=True,case_workers=2,native_memory_mb=12288)
+        self.config_path.write_text(json.dumps(self.config))
+        barrier=threading.Barrier(2)
+        stopped=threading.Event()
+        with ExitStack() as stack:
+            self.patches(stack)
+            stack.enter_context(patch.object(ab,'parallel_admission',return_value={}))
+            def observe(root,output,theory,target,**limits):
+                barrier.wait(timeout=5)
+                if root.name.startswith('deletion'):
+                    raise ValueError('parallel observer failure')
+                self.assertTrue(limits['stop_event'].wait(timeout=5))
+                stopped.set()
+                return {'window_result_verified':False}
+            stack.enter_context(patch.object(ab,'observe',side_effect=observe))
+            with self.assertRaisesRegex(ValueError,'parallel observer failure'):
+                ab.run_workflow(self.control,self.config_path,self.manifest)
+        self.assertTrue(stopped.is_set())
+        self.assertEqual(json.loads((self.control/'report.json').read_text())['phase'],'failed')
+
+    def test_configured_memory_matches_the_checkpoint_budget_binding(self):
+        from unittest.mock import Mock
+        overview=Mock(selected=['T'],options={})
+        root=self.root/'memory-arm';root.mkdir()
+        row={'run_dir':str(root),'theory':'T','strategy':'sketch-reviewed-v1',
+             'target_contract_id':'contract:target','checkpoint':self.config['cases'][0]['checkpoint']}
+        with patch('regen.planning.proof_workspace_agent.WorkspaceController',return_value=overview), \
+             patch('regen.tools.checkpoint_trial_budget.initialize_checkpoint_trial_budget',return_value={}) as initialize:
+            ab.diagnostic_window(row,{'authorization':'user authorized','native_memory_mb':12288})
+        self.assertEqual(initialize.call_args.args[2]['memory_mb'],12288)
+        self.assertEqual(initialize.call_args.args[2]['build_ml_heap_mb'],9216)
+
+    def test_prepared_workflow_reuses_validated_forks_and_is_single_use(self):
+        self.config.update(variant_only=True,variant_strategy='sketch-groups-v1')
+        self.config_path.write_text(json.dumps(self.config))
+        self.control.mkdir()
+        with patch('regen.execution.repository_execution.fork_workspace_continuation',side_effect=self.fork):
+            ab.prepare(self.control,self.config)
+        with ExitStack() as stack:
+            self.patches(stack)
+            fork=stack.enter_context(patch('regen.execution.repository_execution.fork_workspace_continuation'))
+            stack.enter_context(patch.object(ab,'observe',return_value={'window_result_verified':True}))
+            report=ab.run_workflow(self.control,self.config_path,self.manifest,reuse_prepared=True)
+        fork.assert_not_called()
+        self.assertTrue(report['comparison_complete'])
+        with ExitStack() as stack:
+            self.patches(stack)
+            with self.assertRaisesRegex(ValueError,'single-use'):
+                ab.run_workflow(self.control,self.config_path,self.manifest,reuse_prepared=True)
+
+    def test_diagnostic_policy_matches_normal_cli_integration_default(self):
+        from unittest.mock import Mock
+        root=self.root/'arm';root.mkdir()
+        overview=Mock(root=root,selected=['T'],options={'model':'gpt-6-astra',
+            'call_timeout':900,'check_timeout':900,'candidate_timeout':120})
+        row={'run_dir':str(root),'theory':'T','strategy':'sketch-groups-v1',
+             'target_contract_id':'contract:target','checkpoint':self.config['cases'][0]['checkpoint']}
+        with patch('regen.planning.proof_workspace_agent.WorkspaceController',return_value=overview), \
+             patch('regen.tools.checkpoint_trial_budget.initialize_checkpoint_trial_budget',return_value={}) as initialize:
+            ab.diagnostic_window(row,{'authorization':'user authorized','budget_effective_seconds':3600})
+        binding=initialize.call_args.args[2]
+        self.assertTrue(binding['integration_required'])
+        self.assertIsInstance(binding['cpus'],float)
+        self.assertEqual(binding['selected_theories'],['T'])
+        self.assertEqual(binding['candidate_timeout'],120)
+
     def test_failure_stops_switch_and_persists_original_and_cleanup_errors(self):
         with ExitStack() as stack:
             start, gate = self.patches(stack)
@@ -204,6 +360,37 @@ class WorkflowTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'binding changed'):
                 ab.stop_workflow(self.control)
         cleanup.assert_not_called()
+
+
+class ProviderWarmupTests(unittest.TestCase):
+    def test_materializes_only_byte_matched_sealed_providers(self):
+        for tampered in (False,True):
+            with self.subTest(tampered=tampered), tempfile.TemporaryDirectory() as tmp:
+                base=Path(tmp); root=base/'arm'; source=base/'source'
+                generated=root/'generated'; generated.mkdir(parents=True)
+                provider=generated/'Regen_P.thy'; provider.write_text('sealed provider')
+                directory=root/'theories/T'; directory.mkdir(parents=True)
+                (directory/'imports.json').write_text('["Regen_P"]')
+                record={'source_heaps':str(source/'theories/T/heaps'),
+                    'provider_session_receipt_copied':False,
+                    'standard_native_build_gate_preserved':True,
+                    'scope':'sealed provider session only; target theory was never sealed',
+                    'exact_generated_provider_sha256':{'Regen_P.thy':ab.watch.sha(provider)},
+                    'imports':['Regen_P']}
+                manifest=base/'manifest.json'; manifest.write_text(json.dumps(record))
+                case={'theory':'T','native_provider_heap_manifest':str(manifest),
+                    'native_provider_heap_manifest_sha256':ab.watch.sha(manifest)}
+                if tampered: provider.write_text('different provider')
+                with patch('regen.infrastructure.resource_budget.clone_heaps',return_value={}) as clone:
+                    if tampered:
+                        with self.assertRaisesRegex(ValueError,'continuation providers differ'):
+                            ab.warm_provider_heaps(root,case,source)
+                        clone.assert_not_called()
+                    else:
+                        ab.warm_provider_heaps(root,case,source)
+                        self.assertEqual((directory/'generated/Regen_P.thy').read_bytes(),provider.read_bytes())
+                        clone.assert_called_once_with(source/'theories/T/heaps',directory/'heaps')
+                        self.assertFalse((directory/'provider-session.json').exists())
 
 
 class ObserverTests(unittest.TestCase):

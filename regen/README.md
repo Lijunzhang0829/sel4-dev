@@ -19,6 +19,7 @@
 
 | 文档 | 唯一职责 | 主要代码 |
 |---|---|---|
+| [Helper 分解评估与局部修复](docs/implementation/GUIDED-SKETCH-DECOMPOSITION.md) | `sketch-guided-v1` 原生结构评估、风险叶子准入、按需探测、泛化机制与测试边界 | sketch_assessment / sketch_workflow；独立实验策略，默认保持 reviewed |
 | [端到端流程与模块 TODO](docs/design/PARALLEL-PROOF-PIPELINE.md) | 已确认的新控制流：规划、验证、持续 agent、跨 theory 并行及 theory 内串行工具、seal 与仓库集成；M0–M10 的代码现状和验收 | parallel_file_planner / check_executor / repository_integration；完整实验验收待完成 |
 | [总体设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md) | 研究目标、输入边界、生成合同、helper 政策与未决问题 | 目标设计，不声称全部实现 |
 | [环境实现](docs/implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md) | command 选择、环境／catalog 构建与 gate | [environment_preparation.py](preparation/environment_preparation.py)、[semantic_base_builder.py](preparation/semantic_base_builder.py) |

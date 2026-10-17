@@ -507,8 +507,14 @@ class ContractAndOrABTests(unittest.TestCase):
             self.assertTrue(row['target_journal_green'])
             self.assertEqual(
                 row['model_tokens']['totals']['total_tokens'], 150)
+            if row['search_policy'] == ab.AND_OR_SCHEMA:
+                self.assertEqual(
+                    row['root_reachable_helpers']['new_accepted_ids'],
+                    [self.helper])
+            else:
+                self.assertIsNone(row['root_reachable_helpers'])
             self.assertEqual(
-                row['root_reachable_helpers']['new_accepted_ids'],
+                row['new_accepted_auxiliary']['new_accepted_ids'],
                 [self.helper])
             self.assertEqual(row['native_checks']['count'], 2)
             self.assertEqual(
@@ -522,6 +528,10 @@ class ContractAndOrABTests(unittest.TestCase):
                 -20, places=3)
             self.assertEqual(
                 pair['treatment_minus_current']['model_total_tokens'], 0)
+            self.assertIsNone(pair['treatment_minus_current'][
+                'new_root_reachable_helper_count'])
+            self.assertEqual(pair['treatment_minus_current'][
+                'new_accepted_auxiliary_count'], 0)
 
     def test_missing_usage_is_unknown_and_not_full_metric(self):
         for arm in self.plan['arms']:
@@ -555,6 +565,7 @@ class ContractAndOrABTests(unittest.TestCase):
                 value, timezone.utc).isoformat()
         self.write(raw.with_suffix('.meta.json'), {
             'provider': 'codex-exec-audited',
+            'stage': 'file-planner',
             'state': 'complete',
             'timed_out': False,
             'started_at': stamp(service_started - 30),

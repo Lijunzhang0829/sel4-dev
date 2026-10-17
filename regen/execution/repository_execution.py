@@ -496,6 +496,7 @@ def checker_for(run_dir, run, directory, timeout, ancestors, *, heaps_dir=None):
         image=run['image'],isabelle_dir=Path(run['isabelle_dir']),import_all_previous=True,
         complete_context_policy=resolve_complete_context_policy(run))
     checker.declaration_environment = digest(run)
+    checker.checker_context_id = run.get('checker_context_id')
     return checker
 
 

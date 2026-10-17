@@ -159,7 +159,8 @@ def _prepare(root, source, dataset, config, inactivity_seconds, *, restore_befor
     elif launch['inactivity_seconds']!=inactivity_seconds:
         raise ValueError('continuation inactivity policy differs')
     for key in ('inactivity_policy','provider_retry_limit','native_slots','resident_limit',
-                'native_cpus','native_memory_mb','native_pids_limit','provider_build_timeout'):
+                'native_cpus','native_memory_mb','native_pids_limit','provider_build_timeout',
+                'shared_host_lock_dir','shared_host_slots','shared_host_cleanup_timeout'):
         if config.get(key)!=old_config.get(key):
             raise ValueError('continuation policy differs: '+key)
     result=(read_artifact(source/'result.json') if (source/'result.json').exists() else

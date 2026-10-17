@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 from threading import RLock
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 from regen.execution.vero_checker_adapter import VeroCheckerAdapter
 from regen.infrastructure.experiment_ledger import Ledger
@@ -20,6 +21,74 @@ class VeroAdapterTests(unittest.TestCase):
         checker.timeout=3;checker.resources=Mock();checker.lock=RLock();checker.closed=False
         checker.frozen_plan=None
         return checker
+
+    def test_contract_receipt_is_stable_across_later_sibling_edits(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);c=self.adapter(root)
+            c.observer=SimpleNamespace(bench={'contracts':[
+                {'id':'c0001','module':'T'}, {'id':'c0002','module':'T'}]})
+            c.set_frozen_plan({'imports':{'A':[],'T':['A']},
+                'plan_sha256':'p'*64,'imports_sha256':'i'*64,
+                'allocation_sha256':'a'*64})
+            first=('theory T imports Vero_Support A begin\n'
+                '(* VERO START c0001 prove *)\nby simp\n'
+                '(* VERO END c0001 prove *)\n'
+                '(* VERO START c0001 disprove *)\noops\n'
+                '(* VERO END c0001 disprove *)\n')
+            second=('(* VERO START c0002 prove *)\nby simp\n'
+                '(* VERO END c0002 prove *)\n'
+                '(* VERO START c0002 disprove *)\noops\n'
+                '(* VERO END c0002 disprove *)\nend\n')
+            snapshot={'A.thy':b'theory A imports Main begin end',
+                'Vero_Support.thy':b'theory Vero_Support imports Main begin end',
+                'T.thy':(first+second).encode()}
+            imports={'A':(),'T':('A',)}
+            original=c._contract_receipts('T',snapshot,imports)
+            later={**snapshot,'T.thy':(first+second.replace('by simp','by blast')).encode()}
+            changed=c._contract_receipts('T',later,imports)
+            self.assertEqual(original['c0001'],changed['c0001'])
+            self.assertNotEqual(original['c0002']['proof_body_sha256'],
+                changed['c0002']['proof_body_sha256'])
+            self.assertEqual(original['c0001']['proof_body_sha256'],
+                hashlib.sha256(b'by simp').hexdigest())
+            edited_import={**snapshot,'A.thy':snapshot['A.thy']+b'\nlemma changed: True by simp'}
+            affected=c._contract_receipts('T',edited_import,imports)
+            self.assertEqual(original['c0001']['prefix_sha256'],
+                affected['c0001']['prefix_sha256'])
+            self.assertNotEqual(original['c0001']['context_identity'],
+                affected['c0001']['context_identity'])
+
+    def test_native_result_rejected_when_raw_workspace_changes_in_flight(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);workspace=root/'workspace';workspace.mkdir()
+            immutable=root/'snapshot';immutable.mkdir()
+            source=b'theory T imports Main begin end\n'
+            (workspace/'T.thy').write_bytes(source)
+            (immutable/'T.thy').write_bytes(source)
+            c=self.adapter(root)
+            observer=Mock();observer.workspace=workspace
+            observer.audit_workspace_snapshot=immutable
+            observer.bench={'contracts':[{'id':'c0001','module':'T'}]}
+            c.observer=observer
+            log=root/'native.log';log.write_text('VERO_RESULT c0001 prove clean\n')
+            with patch('regen.execution.vero_checker_adapter.IsabelleChecker') as factory:
+                def native(*args,**kwargs):
+                    (workspace/'T.thy').write_bytes(source+b'(* concurrent edit *)\n')
+                    return {'log':str(log),'returncode':0,'wall_ms':1}
+                factory.return_value._check.side_effect=native
+                with self.assertRaisesRegex(ValueError,'raw workspace changed'):
+                    c.check(workspace,'T')
+                observer.checked.assert_not_called()
+                factory.return_value.build_generated_session.assert_not_called()
+            # Missing/new planned files are also mismatches, even when the
+            # rendered candidate was created before the raw edit.
+            (workspace/'T.thy').unlink()
+            with self.assertRaisesRegex(ValueError,'raw workspace changed'):
+                c.check(immutable,'T')
+            (immutable/'T.thy').unlink()
+            (workspace/'T.thy').write_bytes(source)
+            with self.assertRaisesRegex(ValueError,'raw workspace changed'):
+                c.check(workspace,'T')
 
     def test_reject_paths_symlinks_and_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -105,10 +174,13 @@ class VeroAdapterTests(unittest.TestCase):
 
     def test_successful_seal_is_reused_from_ledger_for_exact_frozen_closure(self):
         class Stop:
-            def __init__(self):
+            def __init__(self,ledger):
                 self.event=Mock(is_set=Mock(return_value=False));self.sealed=[]
+                self.ledger=ledger
             def check(self):pass
             def mark_sealed(self,theory):self.sealed.append(theory)
+            def invalidate_seal(self,theory,**data):
+                self.ledger.append('seal_invalidated',theory=theory,**data)
             def begin_exclusion(self,reason):return reason
             def end_exclusion(self,handle):pass
         with tempfile.TemporaryDirectory() as tmp:
@@ -116,7 +188,7 @@ class VeroAdapterTests(unittest.TestCase):
             for name in ('A','T','U'):
                 (root/(name+'.thy')).write_text('theory '+name+' imports Main begin end')
             log=root/'native.log';log.write_text('VERO_RESULT c0001 prove clean\n')
-            ledger=Ledger(root/'ledger','seal-recovery');stop=Stop()
+            ledger=Ledger(root/'ledger','seal-recovery');stop=Stop(ledger)
             bench={'contracts':[{'id':'c0001','module':'T'}]}
             c=self.adapter(root)
             c.set_frozen_plan({'imports':{'A':[],'T':['A'],'U':[]},
@@ -150,8 +222,13 @@ class VeroAdapterTests(unittest.TestCase):
                 self.assertEqual(second['seal_status'],'sealed')
                 (root/'A.thy').write_text(
                     'theory A imports Main begin lemma changed: True by simp end')
-                with self.assertRaisesRegex(ValueError,'own/support source changed'):
-                    c.check(root,'T')
+                changed=c.check(root,'T')
+                self.assertEqual(changed['seal_status'],'waiting_for_imports')
+                self.assertEqual(changed['certification_blocked_by'],['A'])
+                self.assertEqual(observer2.seals,{})
+                self.assertEqual([(r['data']['theory'],r['data']['reason'])
+                    for r in ledger.rows if r['kind']=='seal_invalidated'],
+                    [('A','own_source_changed'),('T','import_source_changed')])
             self.assertGreaterEqual(stop.sealed.count('T'),2)
             self.assertEqual(sum(r['kind']=='seal_attempt' and r['data']['theory']=='T'
                 for r in ledger.rows),1)
@@ -159,6 +236,84 @@ class VeroAdapterTests(unittest.TestCase):
                 for r in ledger.rows),1)
             self.assertEqual(sum(r['kind']=='sealed' for r in ledger.rows),1)
             self.assertEqual(sum(r['kind']=='seal_reused' for r in ledger.rows),1)
+
+    def test_changed_parent_invalidates_all_sealed_descendants_even_when_checking_sibling(self):
+        class Stop:
+            def __init__(self,ledger):
+                self.ledger=ledger;self.theories={name:{} for name in ('A','B','C','X')}
+                self.sealed=set()
+            def mark_sealed(self,theory):self.sealed.add(theory)
+            def invalidate_seal(self,theory,**data):
+                self.ledger.append('seal_invalidated',theory=theory,**data)
+                self.sealed.remove(theory)
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            imports={'A':[],'B':['A'],'C':['B'],'X':[]}
+            for name in imports:
+                (root/(name+'.thy')).write_text('theory '+name+' imports Main begin end')
+            c=self.adapter(root)
+            c.set_frozen_plan({'imports':imports,'plan_sha256':'p'*64,
+                'imports_sha256':'i'*64,'allocation_sha256':'a'*64})
+            original={p.name:p.read_bytes() for p in root.glob('*.thy')}
+            manifest=root/'manifest.json'
+            manifest.write_text(json.dumps({name:hashlib.sha256(data).hexdigest()
+                for name,data in original.items()}))
+            ledger=Ledger(root/'ledger','all-descendants');stop=Stop(ledger)
+            for name in ('A','B','C'):
+                ledger.append('seal_result',theory=name,status='sealed',
+                    source_identity=c._seal_source_identity(name,original),
+                    source_manifest=str(manifest),evidence={'returncode':0})
+            observer=VeroObserver(ledger,stop,root,{'contracts':[]})
+            self.assertEqual(stop.sealed,{'A','B','C'})
+            (root/'A.thy').write_text(
+                'theory A imports Main begin lemma changed: True by simp end')
+            changed={p.name:p.read_bytes() for p in root.glob('*.thy')}
+            self.assertEqual(observer.reconcile_seals('X',changed,
+                c._seal_source_identity,imports),[])
+            invalid=[r['data'] for r in ledger.rows if r['kind']=='seal_invalidated']
+            self.assertEqual([(r['theory'],r['reason']) for r in invalid],
+                [('A','own_source_changed'),('B','import_source_changed'),
+                    ('C','import_source_changed')])
+            self.assertTrue(all(r['changed_sources']==['A.thy'] for r in invalid))
+            self.assertEqual(stop.sealed,set())
+            # Rechecks and journal replay never charge or invalidate twice.
+            observer.reconcile_seals('X',changed,c._seal_source_identity,imports)
+            recovered=VeroObserver(ledger,stop,root,{'contracts':[]})
+            self.assertEqual(recovered.seals,{})
+            self.assertEqual(sum(r['kind']=='seal_invalidated' for r in ledger.rows),3)
+
+    def test_support_source_removal_invalidates_receipt_without_losing_history(self):
+        class Stop:
+            def __init__(self,ledger):
+                self.ledger=ledger;self.theories={'A':{}};self.sealed=set()
+            def mark_sealed(self,theory):self.sealed.add(theory)
+            def invalidate_seal(self,theory,**data):
+                self.ledger.append('seal_invalidated',theory=theory,**data)
+                self.sealed.remove(theory)
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/'A.thy').write_text('theory A imports Main begin end')
+            (root/'Vero_Support.thy').write_text('theory Vero_Support imports Main begin end')
+            c=self.adapter(root)
+            c.set_frozen_plan({'imports':{'A':[]},'plan_sha256':'p'*64,
+                'imports_sha256':'i'*64,'allocation_sha256':'a'*64})
+            original={p.name:p.read_bytes() for p in root.glob('*.thy')}
+            manifest=root/'manifest.json'
+            manifest.write_text(json.dumps({name:hashlib.sha256(data).hexdigest()
+                for name,data in original.items()}))
+            ledger=Ledger(root/'ledger','support-removal');stop=Stop(ledger)
+            ledger.append('seal_result',theory='A',status='sealed',
+                source_identity=c._seal_source_identity('A',original),
+                source_manifest=str(manifest),evidence={'returncode':0})
+            observer=VeroObserver(ledger,stop,root,{'contracts':[]})
+            changed={'A.thy':original['A.thy']}
+            observer.reconcile_seals('A',changed,c._seal_source_identity,{'A':[]})
+            self.assertEqual(stop.sealed,set())
+            invalid=[r['data'] for r in ledger.rows if r['kind']=='seal_invalidated']
+            self.assertEqual(len(invalid),1)
+            self.assertEqual(invalid[0]['reason'],'support_source_changed')
+            self.assertEqual(invalid[0]['changed_sources'],['Vero_Support.thy'])
+            self.assertEqual(sum(r['kind']=='seal_result' for r in ledger.rows),1)
 
     def test_corrupt_successful_seal_receipt_is_rejected_on_recovery(self):
         with tempfile.TemporaryDirectory() as tmp:

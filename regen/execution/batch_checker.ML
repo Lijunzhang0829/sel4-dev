@@ -17,6 +17,14 @@ local
   val baseline = map #1 (Thm.all_axioms_of thy);
   val active = Unsynchronized.ref (NONE : string option);
   val completed = Unsynchronized.ref ([] : (string * string) list);
+  val requested_checkpoints = Unsynchronized.ref ([] : (int * string * string) list);
+  val captured_checkpoints = Unsynchronized.ref ([] : (string * Toplevel.state * string) list);
+  fun load_checkpoints stem =
+    (requested_checkpoints := map2 (fn key => fn line =>
+       (the (Int.fromString line), key, read (stem ^ ".checkpoint_" ^ key)))
+       (split_lines (read (stem ^ ".checkpoint_keys")))
+       (split_lines (read (stem ^ ".checkpoint_lines")));
+     captured_checkpoints := []);
   fun command_position tr = the_default "" (Option.map Int.toString (Position.line_of (Toplevel.pos_of tr)));
   fun save_state tr st = (case !active of NONE => () | SOME stem =>
     if not (Toplevel.is_proof st) then () else
@@ -41,7 +49,12 @@ local
                 (Toplevel.command_exception true tr)) st;
           in writeln ("REGEN_COMMAND " ^ Toplevel.name_of tr ^ " " ^
                LargeInt.toString (Time.toMilliseconds (Time.- (Time.now (), started))));
-             (case out of Exn.Res _ => completed := (Toplevel.name_of tr, command_position tr) :: !completed
+             (case out of Exn.Res next =>
+                (completed := (Toplevel.name_of tr, command_position tr) :: !completed;
+                 List.app (fn (line, key, text) =>
+                   if command_position tr = Int.toString line andalso Toplevel.is_theory next
+                   then captured_checkpoints := (key, next, text) :: !captured_checkpoints else ())
+                   (!requested_checkpoints))
               | Exn.Exn _ => ignore (Exn.capture (fn () => save_state tr st) ()));
              Exn.release out end;
     in fold step transitions state end;
@@ -60,11 +73,15 @@ local
           in writeln ("REGEN_BATCH_CLEAN " ^ name) end;
     in List.app fact names end;
   val initial_text = read "prefix";
-  val initial = execute Position.none initial_text (Toplevel.make_state (SOME thy));
+  val _ = load_checkpoints "initial";
+  val initial = execute (Position.line_file (the (Int.fromString (read "initial_line")))
+    ("/candidate/" ^ theory_name ^ ".thy")) initial_text (Toplevel.make_state (SOME thy));
   val _ = audit (split_lines (read "prefix_facts")) initial;
   val base = Unsynchronized.ref initial;
   val base_text = Unsynchronized.ref initial_text;
   val pending = Unsynchronized.ref (NONE : (Toplevel.state * string) option);
+  val checkpoints = Unsynchronized.ref
+    ((read "prefix_key", initial, initial_text) :: !captured_checkpoints);
   fun publish_audit stem delta names = publish (stem ^ ".audit.xml")
     (XML.string_of (XML.Elem (("batch_audit", [("version","2"),
       ("worker",worker_id),("request",stem),("theory",theory_name)]),
@@ -82,7 +99,14 @@ local
       val result = Exn.capture (fn () =>
         if read (stem ^ ".action") = "commit" then
           (case !pending of NONE => error "No pending audited batch"
-           | SOME (st, text) => (base := st; base_text := text; pending := NONE; "COMMITTED"))
+           | SOME (st, text) =>
+               (base := st; base_text := text; pending := NONE;
+                checkpoints := filter (fn (_, _, prefix) => String.isPrefix prefix text) (!checkpoints);
+                "COMMITTED"))
+        else if read (stem ^ ".action") = "restore" then
+          (case List.find (fn (key, _, _) => key = read (stem ^ ".checkpoint_key")) (!checkpoints) of
+             NONE => error "Unknown audited prefix checkpoint"
+           | SOME (_, st, text) => (base := st; base_text := text; pending := NONE; "RESTORED"))
         else if read (stem ^ ".action") = "observe" then
           let
             (* Start from imports, NOT base or pending. Never publish this
@@ -98,9 +122,31 @@ local
                     val _ = Toplevel.end_theory Position.none finished;
                 in () end) ();
           in "OBSERVED" end
+        else if read (stem ^ ".action") = "sketch" then
+          let
+            val _ = (requested_checkpoints := []; captured_checkpoints := []);
+            val trial_timeout = if File.exists (path (stem ^ ".candidate_timeout"))
+              then read (stem ^ ".candidate_timeout") else read "candidate_timeout";
+            (* Discard the conditional trial, including its admitted facts.
+               Never assign base, base_text or pending here. *)
+            val position = Position.line_file
+              (the (Int.fromString (read (stem ^ ".line"))))
+              ("/candidate/" ^ read "theory_name" ^ ".thy");
+            val _ = Timeout.apply
+              (Time.fromReal (the (Real.fromString trial_timeout)))
+              (fn () =>
+                let val trial = execute position (read (stem ^ ".request")) (!base);
+                    val _ = if Toplevel.is_theory trial then () else error "Unclosed sketch";
+                    val finished = execute Position.none "end" trial;
+                    val theory = Toplevel.end_theory Position.none finished;
+                    val _ = if forall (member (op =) baseline) (map #1 (Thm.all_axioms_of theory))
+                      then () else error "New axioms in sketch";
+                in () end) ();
+          in "CONDITIONAL" end
         else if read (stem ^ ".action") <> "check" then error "Unknown worker action"
         else let
           val _ = pending := NONE;
+          val _ = load_checkpoints stem;
           val position = Position.line_file
             (the (Int.fromString (read (stem ^ ".line"))))
             ("/candidate/" ^ read "theory_name" ^ ".thy");
@@ -115,6 +161,7 @@ local
           (* Native evidence is complete before the response becomes visible.
              stdout remains diagnostic and may be delivered asynchronously. *)
           val _ = publish_audit stem delta names;
+          val _ = checkpoints := !captured_checkpoints @ !checkpoints;
           val _ = pending := SOME (st, !base_text ^ delta);
         in "GREEN" end) ();
       val answer = (case result of Exn.Res text => text

@@ -42,6 +42,32 @@ Only the frozen legal parent context and this experiment's generated material ar
 available. Imported facts require the appropriate sealed theory context. Other
 unsealed generated proofs are references, not automatically available premises.
 Do not use removed proofs, other experiments, extra axioms, sorry or raw ML.
+When read_theory reports sketch_required, propose new helpers as explicit sketches groups on edit_theory, together
+with an executable parent proof. Call check_sketch to conditionally close each
+group before proving it. Groups may contain multiple helpers and an edit may
+update several parents. Use check_theory entry_ids to check several selected
+proofs without executing other failed/sketch-only drafts. A conditional result
+never establishes GREEN or grants extra proof budget.
+When the strategy requires use_sites, cover every helper with a consumer-line
+selector and its exact fact expression. Inspect the native helper_uses in the
+full sketch receipt: instantiated facts, local assumptions and pending goals.
+Prefer helpers specialized to those demands. A stalled general helper may be
+specialized or receive premises already provable at that site; recheck every
+affected sketch. Generalization for induction or demonstrated reuse is allowed.
+Observations do not certify necessity, difficulty or implicit instantiation.
+When decomposition_review_required is true, review_sketch bottom-up against the
+current native receipt before formal helper checks. If structural_assessment_required
+is false, probe every pending leaf first. Otherwise call assess_sketch, inspect
+its structural risks, and probe selected leaves only. Risky leaves need a successful
+probe or reviewed child. In sketch-phased-v1 a recorded formal_leaf transition also
+allows a risky leaf to enter reviewed formal proof; it never establishes GREEN.
+Honor the strategy-specific two-probe limit and transition_proof escalation gate.
+Add concrete generalization_evidence for generalized demands.
+Reject unchanged burden. Structural scores do not certify lower proof difficulty.
+Inspect read_theory.workflow failure IDs and call diagnose_failure before
+revising related helper interfaces. Script/known-fact failures require a changed
+existing-proof retry first. Native probes never publish facts or refresh budgets.
+read_failure exposes the saved failed proof, exact native diagnostic and proof state.
 
 There is no token, total wall-time, iteration or per-target attempt cap. The run
 stops on verified completion, an external infrastructure blocker, operator stop,
@@ -145,7 +171,7 @@ def registry():
         'description':('Source-changing actions use the exact edit_theory/check_theory/finish schemas. '
                        'The enumerated observation actions remain read-only and receive their detailed '
                        'runtime contracts from proof_tool_help.'),
-        'oneOf':[deepcopy(source_actions[action]) for action in ('edit_theory','check_theory','finish')]
+        'oneOf':[deepcopy(source_actions[action]) for action in ('edit_theory','check_theory','check_sketch','read_sketch','probe_helpers','transition_proof','assess_sketch','read_failure','review_sketch','diagnose_failure','finish')]
                 +[observation]}
     return tools+[
         _tool('repository_plan','Inspect fixed contracts/parents or validate, preflight and submit one immutable initial plan. action=schema returns operation contracts and proposal format. Retrieval uses values (a list of strings). Inspect valid/errors: a returned result is not necessarily accepted.',{'request':request_schema(allow_revision=False)},('request',)),
@@ -197,7 +223,10 @@ class Controller:
         self.resources=NativeResources(1,config['threads'],config.get('resident_limit',2),
             cpus=config.get('native_cpus',4),memory_mb=config.get('native_memory_mb',16384),
             pids_limit=config.get('native_pids_limit',1024),
-            provider_build_timeout=config.get('provider_build_timeout',1800))
+            provider_build_timeout=config.get('provider_build_timeout',1800),
+            shared_host_lock_dir=config.get('shared_host_lock_dir'),
+            shared_host_slots=config.get('shared_host_slots',1),
+            shared_host_cleanup_timeout=config.get('shared_host_cleanup_timeout',30))
         self.executor=CheckExecutor(self.root/'native-tasks',workers=1);self.controllers={}
         self.current_path=self.root/'current-plan.json';self.current=read(self.current_path) if self.current_path.exists() else None
         self.planning_path=self.root/'planning-draft.json'
@@ -301,7 +330,8 @@ class Controller:
         if theory is None:theory=read(run/'execution-input.json')['files'][0]['theory']
         if theory not in self.controllers:
             self.controllers[theory]=TheoryController(run,theory,resources=self.resources,executor=self.executor,
-                document_mode=True,model=self.config['model'],call_timeout=self.config['transport_idle_timeout'],
+                document_mode=True,generation_strategy_name=self.config.get('generation_strategy','sketch-reviewed-v1'),
+                model=self.config['model'],call_timeout=self.config['transport_idle_timeout'],
                 check_timeout=self.config['check_timeout'],candidate_timeout=self.config['candidate_timeout'])
         return self.controllers[theory]
     def _publish(self,metadata):

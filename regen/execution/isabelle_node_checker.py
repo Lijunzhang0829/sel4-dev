@@ -520,6 +520,15 @@ class IsabelleChecker:
         timeout = self.timeout if timeout is None else timeout
         source = self.work_dir / f"{label}.thy"
         source.write_text(source_text, encoding="utf-8")
+        # Both mounts can affect a cold process check. In particular, a VERO
+        # target may import another generated theory from /generated even when
+        # its own bytes at /candidate are unchanged.
+        mounted_sources = {'candidate/' + source.name: source.read_bytes()}
+        mounted_sources.update({'generated/' + path.name: path.read_bytes()
+            for path in sorted(self.generated_dir.glob('*.thy'))})
+        generated_root = self.generated_dir / 'ROOT'
+        if generated_root.is_file():
+            mounted_sources['generated/ROOT'] = generated_root.read_bytes()
         session = "Generated_Refine" if self.previous_theories else self.base_session
         started = time.time()
         container_name = f"regen-isabelle-check-{os.getpid()}-{uuid.uuid4().hex}"
@@ -578,7 +587,15 @@ class IsabelleChecker:
             "wall_ms": int((time.time() - started) * 1000),
             "last_diagnostic_marker": last_marker,
             "diagnostic_marker_count": marker_count,
+            "timeout_seconds": timeout,
+            "timeout_scope": "cold-full-theory" if returncode == 124 else None,
+            "check_scope": "cold-full-theory",
+            "incremental": False,
         }
+        from regen.execution.native_check_receipt import native_check_receipt
+        check['native_receipt'] = native_check_receipt(
+            self, check, source=mounted_sources, scope='cold-full-theory',
+            log_text=full_diagnostic, candidate_execution_ms=check['wall_ms'])
         if 'REGEN_PHASE ' in full_diagnostic or 'REGEN_ARCH_PHASE ' in full_diagnostic:
             from regen.execution.node_phase_timing import parse_phase_timings
             check['node_phase_timing'] = parse_phase_timings(full_diagnostic)
@@ -625,6 +642,35 @@ class IsabelleChecker:
                        verdict=result['verdict'], wall_ms=result['wall_ms'])
             return result
         return self._check(source_text, label, writable_mounts=writable_mounts, timeout=timeout)
+
+    @native_operation
+    def check_sketch_source(self, source, prefix_source, admitted_names, *, timeout=None):
+        """Native conditional diagnostic; never certify or commit this source."""
+        from regen.execution.batch_checker import BatchWorker, body
+        worker = getattr(self, '_batch_worker', None)
+        if getattr(self, 'batch_incremental', False):
+            if (worker is None or worker.closed or worker.process.poll() is not None
+                    or worker.imports != self.imports()
+                    or not worker.can_align(body(prefix_source))):
+                if worker is not None:
+                    worker.close()
+                self._batch_worker = None
+                # Recover names from the trusted caller's exact prefix snapshot.
+                names = getattr(self, '_sketch_prefix_names', [])
+                worker = BatchWorker(self, prefix_source, names, self.imports())
+                self._batch_worker = worker
+            worker.align(body(prefix_source))
+            try:
+                return worker.check_sketch(source, admitted_names, timeout=timeout)
+            except (TimeoutError, RuntimeError, OSError):
+                worker.close()
+                self._batch_worker = None
+                raise
+        label = prefix_source.splitlines()[0].split()[1]
+        result = self._check(source, label, timeout=timeout if timeout is not None else getattr(self, 'batch_candidate_timeout', 120))
+        result.update(check_scope='isolated-conditional-sketch', publishable=False,
+                      incremental=False)
+        return result
 
     def close_prefix(self):
         errors = []
@@ -982,6 +1028,14 @@ class IsabelleChecker:
         root.write_text("\n".join(definitions), encoding="utf-8")
         build_sources = {name: (self.generated_dir / (name + '.thy')).read_text()
                          for name in theories}
+        # The ROOT may name only the target while its source imports another
+        # generated theory. Bind and guard every theory mounted at /generated,
+        # rather than hashing just the explicitly requested target list.
+        mounted_sources = {path.name: path.read_bytes()
+                           for path in sorted(self.generated_dir.glob('*.thy'))}
+        if seal:
+            child = sealed_dir / (theories[-1] + '.thy')
+            mounted_sources['sealed-session/' + child.name] = child.read_bytes()
         root_content = root.read_text()
         l4v = self.l4v_dir
         isabelle = self.isabelle_dir
@@ -1061,7 +1115,9 @@ class IsabelleChecker:
         log = self.generated_dir / ("seal-build.log" if seal else "build.log")
         if root.read_text() != root_content or any(
                 (self.generated_dir / (name + '.thy')).read_text() != source
-                for name, source in build_sources.items()):
+                for name, source in build_sources.items()) or any(
+                (self.generated_dir / name).read_bytes() != source
+                for name, source in mounted_sources.items()):
             raise ValueError('session build inputs changed during execution')
         if seal and (sealed_dir / (theories[-1] + '.thy')).read_text() != build_sources[theories[-1]]:
             raise ValueError('sealed session build inputs changed during execution')
@@ -1082,6 +1138,10 @@ class IsabelleChecker:
             "root_content": root_content,
             "root_sha256": hashlib.sha256(root_content.encode()).hexdigest(),
         }
+        from regen.execution.native_check_receipt import native_check_receipt
+        check['native_receipt'] = native_check_receipt(
+            self, check, source={**mounted_sources, 'ROOT': root_content},
+            scope='generated-session-build', log_text=diagnostic)
         emit_event(
             "isabelle_build_finished", session=session,
             verdict=check["verdict"], returncode=returncode,

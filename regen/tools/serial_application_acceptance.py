@@ -5,6 +5,7 @@ Private heap copies are removed after the test, while evidence is retained.
 """
 import argparse
 from copy import deepcopy
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -24,13 +25,31 @@ from regen.preparation.checker_context import load_context
 from regen.tests.current.test_proof_commits import fixture
 
 
+def require_native_receipt(check, *, name):
+    """Check the new common metadata against embedded immutable native bytes."""
+    receipt=check.get('native_receipt')
+    if not isinstance(receipt,dict) or receipt.get('schema')!='native-check-receipt-v1':
+        raise AssertionError(name+' lacks a common native check receipt')
+    if receipt.get('returncode')!=check.get('returncode') or receipt.get('verdict')!=check.get('verdict'):
+        raise AssertionError(name+' native receipt changed the checker verdict')
+    log=check.get('log_content')
+    if not isinstance(log,str) or receipt.get('log_sha256')!=hashlib.sha256(log.encode()).hexdigest():
+        raise AssertionError(name+' native receipt log hash differs')
+    if not isinstance(receipt.get('source_sha256'),str) or len(receipt['source_sha256'])!=64:
+        raise AssertionError(name+' native receipt lacks source identity')
+    return receipt
+
+
 def run(dataset, output, *, proof_bodies=None, native_memory_mb=16384,
-        native_threads=4, native_cpus=4, and_or_helper_selection=False):
+        native_threads=4, native_cpus=4, and_or_helper_selection=False,
+        shared_host_lock_dir=None, shared_host_slots=1):
     # Validate caps before creating a run or copying any heaps. This lets the
     # same full acceptance path qualify constrained hosts without monkeypatching
     # the real native resource policy.
     resources = NativeResources(1, native_threads, 1, memory_mb=native_memory_mb,
-                                cpus=native_cpus)
+                                cpus=native_cpus,
+                                shared_host_lock_dir=shared_host_lock_dir,
+                                shared_host_slots=shared_host_slots)
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
     context = load_context(Path(dataset))
@@ -59,6 +78,7 @@ def run(dataset, output, *, proof_bodies=None, native_memory_mb=16384,
         semantic_workspace=context['semantic_workspace'],isabelle_dir=context['isabelle'],
         image=context['image'],base_session=context['base_session'],base_import=context['base_import'],
         base_catalog=context['base_catalog'],timeout=300,complete_context_policy='arch-reuse-v1')
+    checker.checker_context_id=context['checker_context_id']
     token = CURRENT_RESOURCES.set(resources)
     report = {'passed':False,'model_calls':0,'synthetic_goals_only':True,
               'method_adapter_acceptance':False,'cases':[], 'resource_policy':resources.policy}
@@ -74,6 +94,7 @@ def run(dataset, output, *, proof_bodies=None, native_memory_mb=16384,
         durable(output/'symbol-query.json',query)
         note('native_symbol_query',status='resolved')
         check = freeze_evidence(checker.check_declarations(initial['graph']))
+        require_native_receipt(check,name='initial declarations')
         log.append('initial',initial,{'check':check})
         source = render(package,initial,checker.imports())
         old = initial
@@ -101,6 +122,7 @@ def run(dataset, output, *, proof_bodies=None, native_memory_mb=16384,
             trial_source = source.replace('oops',body,1)
             new = candidate(package,old,trial_source,checker.imports())
             evidence = check_document(checker,old,new,trial_source)
+            require_native_receipt(evidence['check'],name=name)
             evidence.update(sealable_generation=True,provenance='synthetic-native-acceptance-only')
             if success:
                 log.append('document',new,evidence)
@@ -123,6 +145,7 @@ def run(dataset, output, *, proof_bodies=None, native_memory_mb=16384,
         sealed,evidence=seal_theory(output,config,package,directory,checker,[],old)
         if sealed is None:
             raise ValueError('seal failed: '+str(evidence))
+        require_native_receipt(evidence['build'],name='seal build')
         log.append('seal',sealed,evidence)
         if journal(output,config,package).replay()!=sealed:
             raise AssertionError('seal replay differs')
@@ -169,10 +192,14 @@ def main():
     parser.add_argument('--native-memory-mb',type=int,default=16384)
     parser.add_argument('--native-threads',type=int,default=4)
     parser.add_argument('--native-cpus',type=float,default=4)
+    parser.add_argument('--shared-host-lock-dir',type=Path)
+    parser.add_argument('--shared-host-slots',type=int,default=1)
     parser.add_argument('--and-or-helper-selection',action='store_true')
     args=parser.parse_args()
     print(json.dumps(run(args.dataset,args.output,native_memory_mb=args.native_memory_mb,
         native_threads=args.native_threads,native_cpus=args.native_cpus,
+        shared_host_lock_dir=args.shared_host_lock_dir,
+        shared_host_slots=args.shared_host_slots,
         and_or_helper_selection=args.and_or_helper_selection),indent=2))
 
 

@@ -12,7 +12,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import shutil
 import socketserver
 import stat
 import subprocess
@@ -23,6 +22,7 @@ import time
 from uuid import uuid4
 
 from regen.execution.proof_commits import durable, digest
+from regen.execution.check_executor import shared_host_binding
 from regen.infrastructure.experiment_ledger import Ledger
 from regen.infrastructure.experiment_activity import experiment_summary
 from regen.infrastructure.effective_time_budget import CHECKPOINT_KIND
@@ -31,7 +31,21 @@ from regen.infrastructure.active_wall_budget import (
     LIMIT_REASON as ACTIVE_WALL_LIMIT_REASON,
 )
 from regen.infrastructure.vero_experiment_observer import VeroObserver
+from regen.infrastructure.vero_auth_state import (
+    existing_vero_auth_source,prepare_vero_auth_state,rotate_vero_auth_state,
+)
+from regen.infrastructure.vero_cli_provider_failure import (
+    RECOVERY_WINDOW_SECONDS, classify_vero_cli_failure,
+    vero_cli_recovery_decision,
+)
+from regen.tools.generic_serial_application import (
+    DEFAULT_AUTH_LEASE_DIR,provider_auth_lease,
+)
 from regen.execution.vero_checker_adapter import VeroCheckerAdapter
+from regen.execution.vero_import_graph import (
+    attributable_import_failure, conservative_missing_imports,
+    effective_generated_imports,
+)
 from regen.planning.premise_retrieval import retrieve_premises
 from regen.preparation.checker_context import load_context
 
@@ -56,6 +70,71 @@ SEAL_MIGRATION_FILES=(
 class RecoverableAgentFailure(RuntimeError):
     """A provider process failed after the runner durably submitted its call."""
 
+    def __init__(self, message, *, classification=None, checkpoint_verified=False):
+        super().__init__(message)
+        self.classification=classification or {'category':'unknown','failure':None,
+            'evidence':'none'}
+        self.checkpoint_verified=checkpoint_verified
+
+
+class ProviderRecoveryPause(RuntimeError):
+    """A classified failure cannot safely authorize a fresh model invocation."""
+
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.reason=reason
+
+
+def classify_agent_invocation(log_dir):
+    """Read only terminal CLI envelopes and bounded stderr, never model prose."""
+    log_dir=Path(log_dir)
+    events=[]
+    events_file=log_dir/'agent_events.jsonl'
+    try:
+        fd=os.open(events_file,os.O_RDONLY|os.O_NOFOLLOW)
+        with os.fdopen(fd,'rb') as stream:
+            info=os.fstat(stream.fileno())
+            if not stat.S_ISREG(info.st_mode):raise ValueError('unsafe agent event log')
+            offset=max(0,info.st_size-1024*1024)
+            stream.seek(offset)
+            raw=stream.read(1024*1024)
+        lines=raw.splitlines()[1:] if offset else raw.splitlines()
+        for line in lines:
+            try:event=json.loads(line)
+            except (ValueError,UnicodeError):continue
+            if isinstance(event,dict) and event.get('type') in {'error','turn.failed'}:
+                events.append(event)
+    except FileNotFoundError:pass
+    stderr=''
+    try:
+        fd=os.open(log_dir/'agent.stderr',os.O_RDONLY|os.O_NOFOLLOW)
+        with os.fdopen(fd,'rb') as stream:
+            info=os.fstat(stream.fileno())
+            if not stat.S_ISREG(info.st_mode):raise ValueError('unsafe agent stderr log')
+            stream.seek(max(0,info.st_size-4096))
+            stderr=stream.read(4096).decode('utf-8',errors='replace')
+    except FileNotFoundError:pass
+    return classify_vero_cli_failure(events,stderr)
+
+
+def _agent_checkpoint_verified(log_dir):
+    """Only the original runner's submitted, terminated call can be recovered."""
+    log_dir=Path(log_dir)
+    try:
+        submitted=_read_json(log_dir.parent/'submitted.json',limit=65536)
+        state=_read_json(log_dir/'state.json',limit=65536)
+    except (FileNotFoundError,ValueError,OSError):
+        return False
+    return (isinstance(submitted,dict) and
+        state.get('status') in {'interrupted','finished'})
+
+
+def _planning_checkpoint_verified(log_dir):
+    """A closed CLI process has no outstanding call to replay during planning."""
+    try:state=_read_json(Path(log_dir)/'state.json',limit=65536)
+    except (FileNotFoundError,ValueError,OSError):return False
+    return isinstance(state,dict) and state.get('status') in {'interrupted','finished'}
+
 
 def _read_json(path, *, limit=32*1024*1024):
     """Read an operator-owned artifact without following a symlink."""
@@ -76,10 +155,12 @@ def _source_binding(source):
 
 
 def expected_runtime_config(root, base_binding, frozen_plan):
+    host_keys=('shared_host_lock_dir','shared_host_slots','shared_host_cleanup_timeout')
     return {'sandbox':str((Path(root)/'workspace').resolve()),
         'total_agent_seconds':None,'max_iterations':None,
         'external_activity_supervisor':True,'completion_metric':'positive',
-        'feedback':True,'resume_artifact':True,'checker':{},
+        'feedback':True,'resume_artifact':True,
+        'checker':{key:base_binding[key] for key in host_keys if key in base_binding},
         'activity_poll_seconds':FORMAL_POLL_SECONDS,
         'activity_checkpoint_seconds':FORMAL_CHECKPOINT_SECONDS,
         'exploration_policy':ACTIVE_WALL_BUDGET_POLICY,
@@ -88,6 +169,11 @@ def expected_runtime_config(root, base_binding, frozen_plan):
                 'active_wall_seconds_limit',FORMAL_ACTIVE_WALL_SECONDS),
             'combination':'active-wall-only'},
         'recovery_mode':'workspace-level-new-agent-thread-v1',
+        'provider':{'recovery_policy':'provider-recovery-v2',
+            'recovery_window_seconds':RECOVERY_WINDOW_SECONDS,
+            'auth_policy':'durable-private-home-v1',
+            'auth_state_base':base_binding.get('auth_state_base'),
+            'auth_lease_dir':base_binding.get('auth_lease_dir')},
         'agent':{'codex':base_binding['client_path'],'home':RUNTIME_HOME_SENTINEL,
             'model':FORMAL_MODEL,'reasoning_effort':FORMAL_REASONING,
             'timeout_seconds':None,'sandbox_mode':'workspace-write',
@@ -189,15 +275,51 @@ class ProviderRecoveryGate:
 
 
 def run_with_agent_takeover(run_once, *, journal_path, ledger, stop, load, save,
-                            resume=False, recovery_gate=None):
-    """Continue only from runner-owned evaluated/recoverable checkpoints."""
+                            resume=False, recovery_gate=None,
+                            clock=time.monotonic, sleep=time.sleep):
+    """Continue a trusted checkpoint only for a bounded transient CLI failure."""
     recovering=bool(resume);takeovers=0
+    first_failure_at=None;prior_failures=0
+
+    def schedule(classification, *, checkpoint_verified):
+        nonlocal first_failure_at,prior_failures
+        now=clock()
+        if first_failure_at is None:first_failure_at=now
+        decision=vero_cli_recovery_decision(classification,prior_failures,
+            now-first_failure_at,checkpoint_verified=checkpoint_verified)
+        if not decision['retry']:
+            ledger.append('provider_recovery_paused',category=classification['category'],
+                evidence=classification['evidence'],reason=decision['reason'],
+                recovery_window_seconds=RECOVERY_WINDOW_SECONDS,
+                consecutive_failures=prior_failures)
+            raise ProviderRecoveryPause(decision['reason'])
+        prior_failures=decision['consecutive_failures']
+        ledger.append('provider_recovery_scheduled',category=classification['category'],
+            evidence=classification['evidence'],
+            http_status=classification['failure']['http_status'],
+            delay_seconds=decision['delay_seconds'],
+            consecutive_failures=prior_failures,
+            recovery_window_seconds=RECOVERY_WINDOW_SECONDS,
+            incident_elapsed_seconds=now-first_failure_at,
+            retry_policy=decision['retry_policy'],
+            recovery='new CLI invocation from runner checkpoint; no pending tool replay')
+        if recovery_gate:recovery_gate.begin('provider_recovery')
+        try:
+            deadline=clock()+decision['delay_seconds']
+            while (remaining:=deadline-clock())>0:
+                stop.check()
+                sleep(min(1,remaining))
+        except BaseException:
+            if recovery_gate:recovery_gate.close()
+            raise
+
     while True:
         stop.check()
         try:
             result=run_once(recovering)
         except RecoverableAgentFailure as error:
-            if recovery_gate:recovery_gate.begin('provider_recovery')
+            schedule(error.classification,
+                checkpoint_verified=error.checkpoint_verified)
             takeovers+=1
             ledger.append('agent_provider_takeover',takeover=takeovers,
                 error_type=type(error.__cause__ or error).__name__,
@@ -205,8 +327,9 @@ def run_with_agent_takeover(run_once, *, journal_path, ledger, stop, load, save,
                 conversation_restored=False)
             recovering=True
             continue
-        if result.get('status')!='agent_error':return result
-        if recovery_gate:recovery_gate.begin('provider_recovery')
+        if result.get('status')!='agent_error':
+            if recovery_gate:recovery_gate.close()
+            return result
         journal=load(journal_path)
         iterations=journal.get('iterations',[])
         if (not iterations or iterations[-1].get('agent',{}).get('ok') is not False
@@ -215,6 +338,12 @@ def run_with_agent_takeover(run_once, *, journal_path, ledger, stop, load, save,
         # A watchdog pause may have caused the agent_error. Never reopen the
         # runner journal after the authoritative global clock has stopped.
         stop.check()
+        agent=iterations[-1]['agent']
+        if agent.get('num_turns',0)>0:
+            first_failure_at=None;prior_failures=0
+        classification=agent.get('provider_failure') or {
+            'category':'unknown','failure':None,'evidence':'none'}
+        schedule(classification,checkpoint_verified=True)
         takeovers+=1
         journal['status']='running'
         journal['formal_takeover_count']=int(journal.get('formal_takeover_count',0))+1
@@ -226,7 +355,8 @@ def run_with_agent_takeover(run_once, *, journal_path, ledger, stop, load, save,
         recovering=True
 
 
-def create_fresh_plan(*, root, bench, config, Agent, stop, ledger, compile_plan):
+def create_fresh_plan(*, root, bench, config, Agent, stop, ledger, compile_plan,
+                      clock=time.monotonic, sleep=time.sleep):
     planning=root/'planning-workspace';planning.mkdir()
     durable(planning/'benchmark.json',bench)
     (planning/'INSTRUCTION.md').write_text(
@@ -236,26 +366,61 @@ def create_fresh_plan(*, root, bench, config, Agent, stop, ledger, compile_plan)
         'and a nonempty rationale. Assign every contract exactly once. Imports must precede their consumers in execution_order. '
         'Choose the division and order yourself. This is the only allocation pass: after acceptance, theories, contracts and imports are immutable. Do not generate proof bodies in this planning phase. '
         'Parent search is available through python3 /backend/tool.py search QUERY. Read PLAN-FEEDBACK.json if present.')
-    attempt=0
-    handle=stop.begin_exclusion('planning')
-    try:
-        while True:
-            stop.check();attempt+=1
-            agent=Agent({**config['agent'],'application_workspace':str(planning)},
-                root/f'planning-{attempt:04d}'/'agent')
-            result=agent.run(sandbox_dir=planning,instruction_file=planning/'INSTRUCTION.md')
-            durable(root/f'planning-{attempt:04d}'/'result.json',result)
-            stop.check()
-            if not result.get('ok'):
-                raise RuntimeError('planning provider failed: '+str(result))
+    attempt=0;first_failure_at=None;prior_failures=0
+    while True:
+        stop.check();attempt+=1
+        agent=Agent({**config['agent'],'application_workspace':str(planning)},
+            root/f'planning-{attempt:04d}'/'agent')
+        try:result=agent.run(sandbox_dir=planning,
+            instruction_file=planning/'INSTRUCTION.md')
+        except RecoverableAgentFailure as error:
+            result={'ok':False,'provider_failure':error.classification,
+                'interrupted':True}
+        durable(root/f'planning-{attempt:04d}'/'result.json',result)
+        stop.check()
+        if not result.get('ok'):
+            classification=result.get('provider_failure') or {
+                'category':'unknown','failure':None,'evidence':'none'}
+            if result.get('num_turns',0)>0:
+                first_failure_at=None;prior_failures=0
+            now=clock()
+            if first_failure_at is None:first_failure_at=now
+            decision=vero_cli_recovery_decision(classification,prior_failures,
+                now-first_failure_at,
+                checkpoint_verified=_planning_checkpoint_verified(agent.log_dir))
+            if not decision['retry']:
+                ledger.append('planning_provider_recovery_paused',
+                    category=classification['category'],
+                    evidence=classification['evidence'],reason=decision['reason'],
+                    recovery_window_seconds=RECOVERY_WINDOW_SECONDS,
+                    consecutive_failures=prior_failures)
+                raise ProviderRecoveryPause(decision['reason'])
+            prior_failures=decision['consecutive_failures']
+            ledger.append('planning_provider_recovery_scheduled',
+                category=classification['category'],
+                evidence=classification['evidence'],
+                http_status=classification['failure']['http_status'],
+                delay_seconds=decision['delay_seconds'],
+                consecutive_failures=prior_failures,
+                recovery_window_seconds=RECOVERY_WINDOW_SECONDS,
+                incident_elapsed_seconds=now-first_failure_at,
+                retry_policy=decision['retry_policy'],
+                recovery='new CLI invocation over planning workspace; no tool replay')
+            stop.note_provider_failure()
+            handle=stop.begin_exclusion('provider_recovery')
             try:
-                plan=_read_json(planning/'PLAN.json',limit=4*1024*1024)
-                planned=compile_plan(bench,plan)
-            except (ValueError,OSError,KeyError,TypeError) as error:
-                durable(planning/'PLAN-FEEDBACK.json',{'error':str(error)})
-                ledger.append('plan_rejected',error=str(error));continue
-            return plan,planned
-    finally:stop.end_exclusion(handle)
+                deadline=clock()+decision['delay_seconds']
+                while (remaining:=deadline-clock())>0:
+                    stop.check();sleep(min(1,remaining))
+            finally:stop.end_exclusion(handle)
+            continue
+        try:
+            plan=_read_json(planning/'PLAN.json',limit=4*1024*1024)
+            planned=compile_plan(bench,plan)
+        except (ValueError,OSError,KeyError,TypeError) as error:
+            durable(planning/'PLAN-FEEDBACK.json',{'error':str(error)})
+            ledger.append('plan_rejected',error=str(error));continue
+        return plan,planned
 
 
 def formal_configuration_binding(args):
@@ -263,7 +428,10 @@ def formal_configuration_binding(args):
     values={'model':args.model,'reasoning_effort':args.reasoning,
         'expected_contract_count':args.expected_contracts,
         'token_limit':None,
-        'active_wall_seconds_limit':args.active_wall_seconds}
+        'active_wall_seconds_limit':args.active_wall_seconds,
+        **shared_host_binding(getattr(args,'shared_host_lock_dir',None),
+            getattr(args,'shared_host_slots',1),
+            getattr(args,'shared_host_cleanup_timeout',30))}
     if (args.model!=FORMAL_MODEL or args.reasoning!=FORMAL_REASONING or
             args.expected_contracts!=FORMAL_EXPECTED_CONTRACTS or
             args.active_wall_seconds!=FORMAL_ACTIVE_WALL_SECONDS):
@@ -274,6 +442,20 @@ def formal_configuration_binding(args):
         raise ValueError('legacy token-limit is unsupported: VERO now uses '
             'only the active-wall time limit')
     return values
+
+
+def provider_auth_binding(args):
+    """Freeze only paths and policy identifiers, never credential contents."""
+    seed=Path(args.auth).absolute()
+    state_base=(Path(args.auth_state_base).absolute()
+        if getattr(args,'auth_state_base',None) else seed.parent/'.regen-vero-auth-state')
+    lease_dir=(Path(args.auth_lease_dir).absolute()
+        if getattr(args,'auth_lease_dir',None) else DEFAULT_AUTH_LEASE_DIR)
+    return {'auth_seed_path_sha256':hashlib.sha256(str(seed.resolve()).encode()).hexdigest(),
+        'auth_state_base':str(state_base),'auth_lease_dir':str(lease_dir),
+        'auth_policy':'durable-private-home-v1',
+        'provider_recovery_policy':'provider-recovery-v2',
+        'provider_recovery_window_seconds':RECOVERY_WINDOW_SECONDS}
 
 
 def active_wall_budget_instruction(seconds):
@@ -293,18 +475,32 @@ def active_wall_budget_instruction(seconds):
         'contracts, change imports or replan. All theories remain one shared workspace, but unsealed '
         'sibling facts are not legal imported premises. A theory may be drafted in any order, but its '
         'contracts cannot be certified GREEN and its seal cannot be published until every frozen imported '
-        'theory is sealed. When every contract in a theory is GREEN, request seal immediately; if imports '
+        'theory is sealed. When every contract and helper in a theory has passed the current '
+        'native theory check, request seal immediately; if imports '
         'are not yet sealed, the harness records a deferred seal and you must finish those imports first. '
-        'If seal fails, use its diagnostics to repair proofs or helpers inside that same '
-        'theory and retry automatically; do not change the frozen plan.\n')
+        'A contract proof body accepted GREEN by a native check is frozen during ordinary '
+        'generation. Editing another lemma in the same theory does not erase that contract\'s '
+        'independent GREEN evidence if its checked prefix and imports are unchanged. '
+        'When all contracts and helper declarations in a theory have passed the exact '
+        'native theory check and its imports are sealed, use '
+        '`tool.py begin-seal THEORY` before editing any already-GREEN proof body as part '
+        'of seal repair; `scope --phase seal` is only cost attribution and grants no edit '
+        'authority. If abandoning seal repair, restore the accepted proof bodies and '
+        'checked context, then call `tool.py abort-seal THEORY TRANSACTION_ID`. '
+        'A failed seal may be repaired inside the same theory; recheck and '
+        'seal it, and do not change the frozen plan.\n')
 
 
 def interrupted_result(stop, error):
     """Stop a run segment without declaring an unfinished experiment complete."""
     already_paused=stop.event.is_set()
-    if not already_paused:stop.cancel('infrastructure_error')
+    if not already_paused:
+        stop.cancel(error.reason if isinstance(error,ProviderRecoveryPause)
+            else 'infrastructure_error')
     terminal=stop.reason==ACTIVE_WALL_LIMIT_REASON
-    return {'status':'stopped' if terminal else ('paused' if already_paused else 'infrastructure_error'),
+    classified_pause=isinstance(error,ProviderRecoveryPause)
+    return {'status':'stopped' if terminal else ('paused' if already_paused or classified_pause
+        else 'infrastructure_error'),
         'disposition':'stop' if terminal else 'pause','resumable':not terminal,'stop_reason':stop.reason,
         'error_type':type(error).__name__,'error':str(error)}
 
@@ -373,6 +569,48 @@ def snapshot(workspace, destination, modules):
         (destination/name).write_bytes(raw)
 
 
+def canonical_contract_receipts(bench, artifact, checker, frozen_imports, destination):
+    """Fingerprint checked prefixes in the full, unmasked VERO render."""
+    from vero.isabelle.benchmark import render
+    if not all(callable(getattr(checker,name,None)) for name in
+            ('_contract_receipts','_seal_source_identity')):
+        raise ValueError('checker cannot audit seal readiness')
+    render(bench,destination,{
+        key:slot['body'] for key,slot in artifact['slots'].items()
+        if slot['found']})
+    canonical={path.name:path.read_bytes()
+        for path in sorted(Path(destination).glob('*.thy'))}
+    effective=effective_generated_imports(canonical,frozen_imports,
+        require_rendered=True)
+    receipts={theory:checker._contract_receipts(theory,canonical,effective)
+        for theory in effective}
+    return canonical,effective,receipts
+
+
+def audit_live_workspace_after_step(checker, observer, bench, frozen_imports,
+                                    raw_snapshot, source, requested_theory):
+    """Close a no-native-check gap against the live model-writable workspace.
+
+    VERO may reject a draft before calling the checker at all. A concurrent
+    edit during that evaluator or a progress response must still reconcile
+    any previously accepted certificate against the *new* raw source.
+    """
+    assert_raw=getattr(checker,'_assert_workspace_snapshot_unchanged',None)
+    if not callable(assert_raw):return
+    prior=getattr(observer,'audit_workspace_snapshot',None)
+    observer.audit_workspace_snapshot=raw_snapshot
+    try:
+        try:assert_raw(observer)
+        except (OSError,ValueError):
+            reconcile=getattr(checker,'_reconcile_changed_raw_workspace',None)
+            if callable(reconcile):
+                reconcile(observer,Path(source),requested_theory,bench,
+                    frozen_imports,{},reason='source_changed_during_vero_step')
+            raise
+    finally:
+        observer.audit_workspace_snapshot=prior
+
+
 class Service(socketserver.UnixStreamServer):
     def __init__(self,path,bench,workspace,dataset,output,checker):
         from vero.isabelle.benchmark import extract
@@ -400,6 +638,11 @@ class Service(socketserver.UnixStreamServer):
             actual.setdefault(contract['module'],[]).append(contract['id'])
         if digest({k:sorted(v) for k,v in actual.items()}) != self.frozen_plan['allocation_sha256']:
             raise ValueError('service allocation changed after freeze')
+
+    def canonical_receipts(self, artifact, attempt):
+        """Recreate the same complete source fingerprints used by native checks."""
+        return canonical_contract_receipts(self.bench,artifact,self.checker,
+            self.frozen_plan['imports'],attempt/'canonical')
 
     def dispatch(self,request):
         if not isinstance(request,dict):raise ValueError('request must be an object')
@@ -444,36 +687,205 @@ class Service(socketserver.UnixStreamServer):
                 raise ValueError('invalid search')
             return {'records':retrieve_premises(self.dataset/'parent-premises.sqlite',query,limit=limit)}
         self.verify_plan()
-        if cmd not in {'check','progress'}:raise ValueError('unknown command')
-        if cmd=='check' and request.get('module') not in self.modules:
+        if cmd not in {'check','progress','begin-seal','abort-seal'}:raise ValueError('unknown command')
+        if cmd in {'check','begin-seal','abort-seal'} and request.get('module') not in self.modules:
             raise ValueError('unknown module')
-        if cmd=='check' and observer:observer.select_theory(request['module'])
+        if cmd in {'check','begin-seal'} and observer:observer.select_theory(request['module'])
         attempt=self.output/uuid4().hex
         snapshot(self.workspace,attempt/'snapshot',self.modules)
+        # Reject changes to an accepted proof before any source-invalidating
+        # observer hook can erase the receipt that makes the edit detectable.
         artifact=self.extract(self.bench,attempt/'snapshot')
+        if observer and hasattr(type(observer),'guard_green_proofs'):
+            observer.guard_green_proofs(artifact,snapshot_dir=attempt/'snapshot')
+        # The VERO renderer materializes every planned theory even when the
+        # agent deleted its source file. Observe the original workspace now,
+        # before extraction can turn the missing proof into an open slot.
+        invalid_observed=False
+        if observer and hasattr(type(observer),'source_missing'):
+            workspace_sources={p.name:p.read_bytes()
+                for p in sorted((attempt/'snapshot').glob('*.thy'))}
+            try:
+                observed_imports=effective_generated_imports(
+                    workspace_sources,self.frozen_plan['imports'])
+            except (ValueError,UnicodeError) as error:
+                # Extraction will report the malformed slot. Missing-source
+                # revocation must still cover any possible additive consumer.
+                observed_imports=conservative_missing_imports(
+                    self.frozen_plan['imports'])
+                invalid_hook=getattr(observer,'source_invalid',None)
+                if callable(invalid_hook) and hasattr(type(observer),'source_invalid'):
+                    invalid_theories,trusted_imports=attributable_import_failure(
+                        workspace_sources,self.frozen_plan['imports'])
+                    if trusted_imports is not None:
+                        observed_imports=trusted_imports
+                    invalid_hook(reason=type(error).__name__,
+                        requested_theory=request.get('module') if cmd=='check' else None,
+                        candidate_theories=observer.candidate_theories_for_snapshot(
+                            attempt/'snapshot'),invalid_theories=invalid_theories,
+                        imports=trusted_imports)
+                    invalid_observed=True
+            observer.source_missing(workspace_sources,observed_imports,
+                request.get('module') if cmd=='check' else None,
+                support_required=False)
+            if artifact.get('file_errors') and not invalid_observed:
+                observer.source_extraction_invalid(artifact['file_errors'],
+                    observed_imports,snapshot_dir=attempt/'snapshot')
         durable(attempt/'artifact.json',artifact)
+        if cmd=='begin-seal':
+            if observer is None or not hasattr(type(observer),'begin_seal_transaction'):
+                raise ValueError('seal transaction owner unavailable')
+            if invalid_observed:
+                raise ValueError('cannot begin seal with invalid generated imports')
+            # Re-render every raw slot exactly as VERO's checker does. An
+            # unchanged proof body can still have a changed helper, earlier
+            # declaration, imported theory, or support context. Such a stale
+            # contract must lose current GREEN before it can authorize seal.
+            canonical,effective,receipts=self.canonical_receipts(artifact,attempt)
+            audit_again=attempt/'precommit'
+            snapshot(self.workspace,audit_again,self.modules)
+            if any(((attempt/'snapshot'/(name+'.thy')).read_bytes()
+                        if (attempt/'snapshot'/(name+'.thy')).exists() else None)
+                    != ((audit_again/(name+'.thy')).read_bytes()
+                        if (audit_again/(name+'.thy')).exists() else None)
+                    for name in sorted(self.modules)):
+                raise ValueError('raw workspace changed while beginning seal')
+            observer.reconcile_contracts(request['module'],receipts)
+            observer.reconcile_seals(request['module'],canonical,
+                lambda theory,contents:self.checker._seal_source_identity(
+                    theory,contents,effective),effective)
+            missing=sorted(set(effective[request['module']])-observer.seals.keys())
+            if missing:
+                raise ValueError('seal edit requires sealed imported theories: '+', '.join(missing))
+            # A GREEN contract receipt alone does not mean the whole theory is
+            # ready for seal repair: a later helper may still be unfinished.
+            # Admit edits only after a native successful check of this exact
+            # canonical theory source, including its auxiliary declarations.
+            theory=request['module']
+            ids={c['id'] for c in self.bench['contracts'] if c['module']==theory}
+            if not ids or not ids<=observer.accepted_receipts.keys():
+                raise ValueError('seal edit requires all theory contracts GREEN')
+            identity=self.checker._seal_source_identity(theory,canonical,effective)
+            latest=next((row['data'] for row in reversed(observer.ledger.rows)
+                if row['kind']=='proof_commit' and row['data'].get('theory')==theory
+                and isinstance(row['data'].get('evidence'),dict)),None)
+            checked_rows=latest.get('nodes',()) if latest else ()
+            if (latest is None or latest.get('source_identity')!=identity
+                    or latest['evidence'].get('returncode')!=0
+                    or not ids<={row.get('uid') for row in checked_rows
+                        if row.get('kind')=='contract' and row.get('status')=='green'}
+                    or any(row.get('status')!='green' for row in checked_rows
+                        if row.get('kind') in ('contract','helper'))):
+                raise ValueError('seal edit requires exact native GREEN theory check, including helpers')
+            transaction=observer.begin_seal_transaction(request['module'],artifact,
+                snapshot_dir=attempt/'snapshot')
+            result={'theory':request['module'],'seal_transaction_id':transaction,
+                'status':'seal_edit_active'}
+            durable(attempt/'response.json',result)
+            return result
+        if cmd=='abort-seal':
+            if observer is None or not hasattr(type(observer),'abort_seal_transaction'):
+                raise ValueError('seal transaction owner unavailable')
+            transaction=request.get('transaction_id')
+            if not isinstance(transaction,str) or not transaction:
+                raise ValueError('seal transaction ID required')
+            _,_,receipts=self.canonical_receipts(artifact,attempt)
+            ids={c['id'] for c in self.bench['contracts']
+                if c['module']==request['module']}
+            if any(receipts[request['module']].get(uid)
+                    != observer.accepted_receipts.get(uid) for uid in ids):
+                raise ValueError('restore accepted GREEN proofs and checked context before abort')
+            observer.abort_seal_transaction(request['module'],transaction,artifact,
+                snapshot_dir=attempt/'snapshot')
+            result={'theory':request['module'],'status':'seal_edit_abandoned'}
+            durable(attempt/'response.json',result)
+            return result
         if cmd=='progress':
             from vero.isabelle.checker import filled
-            return {'filled_slots':sum(s['found'] and filled(s['body']) for k,s in artifact['slots'].items()
-                if k.endswith((':prove',':disprove'))),'file_errors':artifact['file_errors'],
-                'authority':'filled is not proved; use check and final evaluation'}
+            from vero.isabelle.slots import context
+            if (observer and observer.accepted_receipts and not invalid_observed
+                    and not artifact.get('file_errors')):
+                prior_snapshot=getattr(observer,'audit_workspace_snapshot',None)
+                observer.audit_workspace_snapshot=attempt/'snapshot'
+                try:
+                    canonical,effective,receipts=self.canonical_receipts(artifact,attempt)
+                    audit_live_workspace_after_step(self.checker,observer,self.bench,
+                        self.frozen_plan['imports'],attempt/'snapshot',attempt,
+                        next(iter(sorted(self.modules))))
+                    observer.reconcile_contracts(None,receipts)
+                    if observer.seals:
+                        observer.reconcile_seals(next(iter(effective)),canonical,
+                            lambda theory,contents:self.checker._seal_source_identity(
+                                theory,contents,effective),effective)
+                finally:
+                    observer.audit_workspace_snapshot=prior_snapshot
+            try:
+                imports_error=None
+                try:
+                    context(self.bench,{k:s['body'] for k,s in artifact['slots'].items() if s['found']})
+                except (ValueError,KeyError) as error:
+                    imports_error=str(error)
+                    invalid_hook=getattr(observer,'source_invalid',None) if observer else None
+                    if (not invalid_observed and callable(invalid_hook)
+                            and hasattr(type(observer),'source_invalid')):
+                        invalid_hook(reason=type(error).__name__,requested_theory=None,
+                            candidate_theories=observer.candidate_theories_for_snapshot(
+                                attempt/'snapshot'))
+                result={'filled_slots':sum(s['found'] and filled(s['body'])
+                    for k,s in artifact['slots'].items()
+                    if k.endswith((':prove',':disprove'))),
+                    'file_errors':artifact['file_errors'],
+                    'authority':'filled is not proved; use check and final evaluation'}
+                if imports_error is not None:result['imports_error']=imports_error
+                return result
+            finally:
+                if observer:
+                    audit_live_workspace_after_step(self.checker,observer,self.bench,
+                        self.frozen_plan['imports'],attempt/'snapshot',attempt,
+                        next(iter(sorted(self.modules))))
         # Same VERO hygiene/render/audit evaluator. Scope is the requested module
         # and generated imports, not unrelated unfinished sibling proofs.
         from vero.isabelle.slots import context,schedule
         from vero.isabelle.planning import dependencies
         from vero.isabelle.checker import evaluate
-        effective=context(self.bench,{k:s['body'] for k,s in artifact['slots'].items() if s['found']})
+        try:
+            effective=context(self.bench,{k:s['body'] for k,s in artifact['slots'].items() if s['found']})
+        except (ValueError,KeyError) as error:
+            invalid_hook=getattr(observer,'source_invalid',None) if observer else None
+            if (not invalid_observed and callable(invalid_hook)
+                    and hasattr(type(observer),'source_invalid')):
+                invalid_hook(reason=type(error).__name__,
+                    requested_theory=request['module'],
+                    candidate_theories=observer.candidate_theories_for_snapshot(
+                        attempt/'snapshot'))
+            raise
         closure=dependencies(effective,request['module'])|{request['module']}
         for key,(module,kind) in schedule(self.bench).items():
             if module not in closure:
                 artifact['slots'][key]={'found':False,'body':''}
         artifact['file_errors']={m:e for m,e in artifact['file_errors'].items() if m in closure}
-        result=evaluate(self.bench,artifact,attempt/'evaluation',self.checker)
-        if observer:observer.evaluated(result,closure)
+        if observer:
+            prior_snapshot=getattr(observer,'audit_workspace_snapshot',None)
+            observer.audit_workspace_snapshot=attempt/'snapshot'
+        try:
+            result=evaluate(self.bench,artifact,attempt/'evaluation',self.checker)
+            if observer:observer.evaluated(result,closure)
+        finally:
+            if observer:
+                try:
+                    audit_live_workspace_after_step(self.checker,observer,self.bench,
+                        self.frozen_plan['imports'],attempt/'snapshot',attempt,
+                        request['module'])
+                finally:
+                    observer.audit_workspace_snapshot=prior_snapshot
         # Include actual checker diagnostics rather than returning status alone.
         result['diagnostics']={m:(attempt/'evaluation'/(m+'.log')).read_text()
             for m in result['modules']}
         durable(attempt/'response.json',result)
+        if observer:
+            audit_live_workspace_after_step(self.checker,observer,self.bench,
+                self.frozen_plan['imports'],attempt/'snapshot',attempt,
+                request['module'])
         return result
 
 
@@ -501,9 +913,73 @@ def bind_runner(runner,checker,agent_class):
         observer=getattr(checker,'observer',None)
         if observer and old_evaluate:
             def evaluate(*args,**kwargs):
-                result=old_evaluate(*args,**kwargs)
-                observer.evaluated(result)
-                return result
+                # The original runner performs its own turn-end and recovery
+                # evaluations without visiting Service.dispatch. Observe the
+                # raw workspace first: extraction can replace a deleted file
+                # with an open rendered slot, and then no native check reaches
+                # the adapter's source reconciliation.
+                frozen=(getattr(checker,'frozen_plan',None) or {}).get('imports',{})
+                if not frozen:
+                    result=old_evaluate(*args,**kwargs)
+                    observer.evaluated(result)
+                    return result
+                from vero.isabelle.benchmark import extract
+                with tempfile.TemporaryDirectory(prefix='vero-runner-audit-') as tmp:
+                    raw_snapshot=Path(tmp)/'snapshot'
+                    snapshot(observer.workspace,raw_snapshot,frozen)
+                    artifact=extract(observer.bench,raw_snapshot)
+                    observer.guard_green_proofs(artifact,snapshot_dir=raw_snapshot)
+                    raw={path.name:path.read_bytes()
+                        for path in sorted(raw_snapshot.glob('*.thy'))}
+                    invalid_reason=None
+                    try:imports=effective_generated_imports(raw,frozen)
+                    except (ValueError,UnicodeError) as error:
+                        invalid_reason=type(error).__name__
+                        imports=conservative_missing_imports(frozen)
+                    if invalid_reason:
+                        invalid_theories,trusted_imports=attributable_import_failure(
+                            raw,frozen)
+                        if trusted_imports is not None:
+                            imports=trusted_imports
+                        observer.source_invalid(reason=invalid_reason,requested_theory=None,
+                            candidate_theories=observer.candidate_theories_for_snapshot(
+                                raw_snapshot),invalid_theories=invalid_theories,
+                            imports=trusted_imports)
+                    observer.source_missing(raw,imports,support_required=False)
+                    if artifact.get('file_errors') and not invalid_reason:
+                        observer.source_extraction_invalid(artifact['file_errors'],
+                            imports,snapshot_dir=raw_snapshot)
+                    if (observer.accepted_receipts and not invalid_reason
+                            and not artifact.get('file_errors')):
+                        canonical,effective,receipts=canonical_contract_receipts(observer.bench,
+                            artifact,checker,frozen,Path(tmp)/'canonical')
+                        previous=getattr(observer,'audit_workspace_snapshot',None)
+                        observer.audit_workspace_snapshot=raw_snapshot
+                        try:
+                            audit_live_workspace_after_step(checker,observer,
+                                observer.bench,frozen,raw_snapshot,Path(tmp),
+                                next(iter(sorted(frozen))))
+                            observer.reconcile_contracts(None,receipts)
+                            if observer.seals:
+                                observer.reconcile_seals(next(iter(effective)),canonical,
+                                    lambda theory,contents:checker._seal_source_identity(
+                                        theory,contents,effective),effective)
+                        finally:
+                            observer.audit_workspace_snapshot=previous
+                    prior_snapshot=getattr(observer,'audit_workspace_snapshot',None)
+                    observer.audit_workspace_snapshot=raw_snapshot
+                    try:
+                        result=old_evaluate(*args,**kwargs)
+                        observer.evaluated(result,preflight_source_invalidated=bool(
+                            invalid_reason or artifact.get('file_errors')))
+                    finally:
+                        try:
+                            audit_live_workspace_after_step(checker,observer,
+                                observer.bench,frozen,raw_snapshot,Path(tmp),
+                                next(iter(sorted(frozen))))
+                        finally:
+                            observer.audit_workspace_snapshot=prior_snapshot
+                    return result
             runner.evaluate=evaluate
         yield
     finally:
@@ -538,6 +1014,7 @@ def run(args):
         'benchmark_id':bench['benchmark_id'],'dataset':str(Path(args.dataset).resolve()),
         'checker_context_id':checker_context_id,
         'input_benchmark_sha256':digest(bench),**formal_binding,
+        **provider_auth_binding(args),
         'client_path':client,'client_sha256':hashlib.sha256(Path(client).read_bytes()).hexdigest(),
         'vero_sources':_source_binding(source),
         'application':str(Path(__file__).resolve()),
@@ -550,13 +1027,45 @@ def run(args):
         'shutdown_tail_policy':'unknown crash tail; checkpoint cadence is not a guaranteed bound',
         'activity_policy':ACTIVE_WALL_BUDGET_POLICY,
         **inventory_binding}
+    plan=planned=config=plan_binding=None
     if resume:
         try:plan,planned,config,plan_binding=validate_resume_artifacts(root,base_binding,
             seal_migration=bool(getattr(args,'seal_dependency_migration',False)))
         except Exception:
             formal_lock.close()
             raise
-    else:durable(root/'binding.json',base_binding)
+    try:
+        sources=[args.auth]
+        if resume:
+            sources.append(existing_vero_auth_source(root,args.auth,
+                state_base=base_binding['auth_state_base']))
+        with provider_auth_lease(root,*sources,
+                lease_dir=base_binding['auth_lease_dir']):
+            auth_state=prepare_vero_auth_state(root,args.auth,resume=resume,
+                state_base=base_binding['auth_state_base'])
+            if not resume:durable(root/'binding.json',base_binding)
+            return _run_segment(args,root=root,bench=bench,planned=planned,
+                plan=plan,config=config,plan_binding=plan_binding,
+                base_binding=base_binding,resume=resume,formal_lock=formal_lock,
+                workspace=workspace,client=client,runner=runner,read=read,save=save,
+                auth_state=auth_state)
+    except BaseException:
+        if not formal_lock.closed:formal_lock.close()
+        if not resume and not (root/'binding.json').exists():
+            # This output was created by this invocation and no experiment
+            # record exists. Never remove a directory with unexpected files.
+            if {p.name for p in root.iterdir()}=={'.formal-wrapper.lock'}:
+                (root/'.formal-wrapper.lock').unlink()
+                root.rmdir()
+        raise
+    finally:
+        if not formal_lock.closed:formal_lock.close()
+
+
+def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
+                 base_binding,resume,formal_lock,workspace,client,runner,read,save,
+                 auth_state):
+    """Run only while the output and host-wide provider auth leases are held."""
     ledger=Ledger(root,root.name)
     if resume:
         try:validate_resume_ledger(ledger)
@@ -590,8 +1099,7 @@ def run(args):
         bench=planned
     observer=VeroObserver(ledger,stop,workspace,bench)
     with tempfile.TemporaryDirectory(prefix='regen-vero-home-') as home:
-        auth_home=Path(home)/'.codex';auth_home.mkdir(mode=0o700)
-        shutil.copyfile(args.auth,auth_home/'auth.json');(auth_home/'auth.json').chmod(0o600)
+        auth_home=auth_state.home
         (Path(home)/'.isabelle').mkdir()
         observer.home=auth_home
         # Linux sockaddr_un.sun_path is normally limited to 108 bytes. Bind an
@@ -608,15 +1116,23 @@ def run(args):
         socket_path=socket_dir/'checker.sock'
         if resume:socket_path.unlink(missing_ok=True)
         native_segment=root/'native-segments'/('segment-'+uuid4().hex)
-        with VeroCheckerAdapter(args.dataset,native_segment,timeout=args.check_timeout,observer=observer) as checker:
+        with VeroCheckerAdapter(args.dataset,native_segment,timeout=args.check_timeout,
+                observer=observer,
+                shared_host_lock_dir=base_binding.get('shared_host_lock_dir'),
+                shared_host_slots=base_binding.get('shared_host_slots',1),
+                shared_host_cleanup_timeout=base_binding.get('shared_host_cleanup_timeout',30)) as checker:
             service=Service(socket_path,bench,workspace,args.dataset,root/'requests',checker)
             service.plan_ready=False
             thread=threading.Thread(target=service.serve_forever,daemon=True);thread.start()
             stop.start(sample=observer.drafts)
             original_agent=runner.CodexAgent
             recovery_gate=ProviderRecoveryGate(stop,ledger)
+            agent_invocations=0
             class Agent(original_agent):
                 def __init__(self,config,log_dir):
+                    nonlocal agent_invocations
+                    if agent_invocations:rotate_vero_auth_state(auth_state)
+                    agent_invocations+=1
                     identity=uuid4().hex[:8]
                     transport=Path(home)/('transport-'+identity);transport.mkdir()
                     transport_config=root/('transport-'+identity+'.json')
@@ -649,12 +1165,14 @@ def run(args):
                     try:
                         if service.frozen_plan is not None:recovery_gate.generation_started()
                         result=super().run(**kwargs,monitor=monitor)
-                        if service.frozen_plan is not None and not result.get('ok'):
-                            recovery_gate.begin('provider_recovery')
+                        if not result.get('ok'):
+                            result['provider_failure']=classify_agent_invocation(self.log_dir)
                         return result
                     except (OSError,subprocess.SubprocessError) as error:
-                        if service.frozen_plan is not None:recovery_gate.begin('provider_recovery')
-                        raise RecoverableAgentFailure('provider/agent process failed') from error
+                        raise RecoverableAgentFailure('provider/agent process failed',
+                            classification=classify_agent_invocation(self.log_dir),
+                            checkpoint_verified=_agent_checkpoint_verified(
+                                self.log_dir)) from error
                     finally:
                         observer.usage_events(self.log_dir/'agent_events.jsonl',self.log_dir.parent.name,final=True)
                         stop.check()
@@ -750,6 +1268,14 @@ def main():
         default=FORMAL_ACTIVE_WALL_SECONDS,choices=[FORMAL_ACTIVE_WALL_SECONDS],
         help='immutable cumulative online wall-clock limit (fixed at 48 hours)')
     parser.add_argument('--check-timeout',type=int,default=900)
+    parser.add_argument('--auth-state-base',
+        help='Private durable VERO auth directory outside output (same path on resume)')
+    parser.add_argument('--auth-lease-dir',
+        help='Host-shared private local lock directory for provider auth chains')
+    parser.add_argument('--shared-host-lock-dir',
+        help='Opt in to one shared native slot directory mounted by every experiment')
+    parser.add_argument('--shared-host-slots',type=int,default=1)
+    parser.add_argument('--shared-host-cleanup-timeout',type=float,default=30)
     parser.add_argument('--resume',action='store_true',
         help='explicitly continue the same frozen output with a new model thread')
     parser.add_argument('--seal-dependency-migration',action='store_true',
@@ -759,6 +1285,8 @@ def main():
         parser.error('--seal-dependency-migration requires --resume')
     if min(args.expected_contracts,args.active_wall_seconds,args.check_timeout)<=0:
         parser.error('budgets and expected contract count must be positive')
+    try:shared_host_binding(args.shared_host_lock_dir,args.shared_host_slots,args.shared_host_cleanup_timeout)
+    except ValueError as error:parser.error(str(error))
     result=run(args)
     print(json.dumps({'status':result['status'],'iterations':len(result.get('iterations',[]))}))
     sys.exit(result['status'] not in {'complete','stopped'})

@@ -55,6 +55,34 @@ class ActivityTests(unittest.TestCase):
             recovered.record('thread',b,scope={},source='test')
             self.assertEqual(len(recovered.ledger.rows),len(ledger.rows))
 
+    def test_stale_seal_removes_current_green_but_preserves_historical_cost(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger=Ledger(tmp,'run');usage=UsageSnapshots(ledger)
+            usage.record('thread',{'totalTokens':100},scope={'target_ids':['c']},source='test')
+            ledger.append('proof_commit',theory='A',nodes=[
+                {'uid':'c','kind':'contract','status':'green'},
+                {'uid':'h','kind':'helper','status':'green'}])
+            ledger.append('seal_result',theory='A',status='sealed')
+            ledger.append('seal_invalidated',theory='A',reason='own_source_changed')
+            stale=experiment_summary(ledger)
+            self.assertEqual(stale['historical_first_green_contract_ids'],['c'])
+            self.assertEqual(stale['historical_first_green_helper_ids'],['h'])
+            self.assertEqual(stale['current_valid_contract_ids'],[])
+            self.assertEqual(stale['current_valid_helper_ids'],[])
+            self.assertEqual(stale['current_valid_sealed_theories'],[])
+            self.assertEqual(stale['targets']['c']['status'],'stale_after_seal_invalidation')
+            self.assertEqual(stale['curve'][-1]['contracts_green'],0)
+            self.assertEqual(stale['usage_by_thread']['thread']['totalTokens'],100)
+            ledger.append('proof_commit',theory='A',nodes=[
+                {'uid':'c','kind':'contract','status':'green'},
+                {'uid':'h','kind':'helper','status':'green'}])
+            ledger.append('seal_result',theory='A',status='sealed')
+            restored=experiment_summary(ledger)
+            self.assertEqual(restored['current_valid_contract_ids'],['c'])
+            self.assertEqual(restored['current_valid_sealed_theories'],['A'])
+            self.assertEqual(restored['historical_first_green_contract_ids'],['c'])
+            self.assertEqual(restored['usage_by_thread']['thread']['totalTokens'],100)
+
     def test_operation_time_stops_at_recorded_pause_but_includes_normal_work(self):
         with tempfile.TemporaryDirectory() as tmp:
             now=[100.];ledger=Ledger(tmp,'run',clock=lambda:now[0])

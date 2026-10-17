@@ -22,6 +22,7 @@ def controller(resources, theory='Target'):
     value._runtime_lock = threading.RLock()
     value._provider_preparation_error = None
     value.document_mode = True
+    value.generation_strategy = {'name': 'normal'}
     return value
 
 

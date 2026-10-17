@@ -860,11 +860,30 @@ claim of exact causal per-contract cost. Unknown counters stay unknown.
 def experiment_summary(ledger):
     """Comparable time/token curve, with helpers kept separate from contracts."""
     totals = {}; green = set(); helpers = set(); curve = []; owners = {}; costs=[]; targets={}; checks=[]; seals=[]
-    start = ledger.rows[0]['time_unix'] if ledger.rows else ledger.clock()
+    ever_green=set();ever_helpers=set();current_seals=set()
+    integration={'verified':None,'event_id':None,'invalidated_by':None}
+    rows = ledger.rows
+    # Budget initialization can write events before the actual experiment starts.
+    start_row = next((r for r in rows if r['kind']=='experiment_started'),
+                     rows[0] if rows else None)
+    start = start_row['time_unix'] if start_row else ledger.clock()
     segment_start = start
     running_seconds = 0
     stopped_at = None
-    for row in ledger.rows:
+    snapshot_threads={r['data']['thread_id'] for r in rows if r['kind']=='usage_snapshot'}
+    response_running={}
+    def cost_interval(row, usage, scope, basis):
+        scope=scope if isinstance(scope,dict) else {}
+        scoped_targets=set(scope.get('target_ids') or ())
+        scoped_theories=set(scope.get('theories') or ()) | set(scope.get('theory_ids') or ())
+        if scope.get('theory'):scoped_theories.add(scope['theory'])
+        shared=len(scoped_targets)>1 or len(scoped_theories)>1
+        costs.append({'event_id':row['event_id'],'time_unix':row['time_unix'],
+            'thread_id':row['data']['thread_id'],'scope':scope,'usage':usage,
+            'usage_basis':basis,
+            'allocation':'shared' if shared else
+                'declared-single-target' if len(scoped_targets)==1 else 'unattributed'})
+    for row in rows:
         data = row['data']
         if row['kind'] == 'experiment_resumed' and segment_start is None:
             segment_start = row['time_unix']
@@ -882,18 +901,29 @@ def experiment_summary(ledger):
                                      if segment_start is not None else 0)
         if row['kind'] == 'usage_snapshot':
             totals[data['thread_id']] = data['total']
-            scope=data['scope']; scoped_targets=scope.get('target_ids',[])
-            scoped_theories=scope.get('theories')
-            if scoped_theories is None:
-                scoped_theories=[scope['theory']] if scope.get('theory') else []
-            shared=len(scoped_targets)>1 or len(scoped_theories)>1
-            costs.append({'event_id':row['event_id'],'time_unix':row['time_unix'],
-                'thread_id':data['thread_id'],'scope':scope,'usage':data['delta'],
-                'allocation':'shared' if shared else
-                    'declared-single-target' if len(scoped_targets)==1 else 'unattributed'})
+            cost_interval(row,data['delta'],data.get('scope'),'cumulative_snapshot_delta')
+        if row['kind']=='response' and data['thread_id'] not in snapshot_threads:
+            # A thread with no cumulative snapshots still has deduplicated
+            # response receipts. Never add responses to that thread's snapshots.
+            usage=data.get('usage')
+            amount=usage.get('totalTokens') if isinstance(usage,dict) else None
+            prior=response_running.get(data['thread_id'],0)
+            response_running[data['thread_id']]=(prior+amount
+                if prior is not None and amount is not None else None)
+            totals[data['thread_id']]={'totalTokens':response_running[data['thread_id']]}
+            cost_interval(row,usage if isinstance(usage,dict) else
+                {key:None for key in TOKEN_KEYS},data.get('scope'),'response_receipt_only')
         if row['kind'] == 'proof_commit':
             theory=data.get('theory')
             if theory is not None:
+                # Codex's durable acceptance journal publishes a seal as a
+                # proof_commit(event='seal'); its later seal_result is telemetry.
+                # VERO has no commit event and publishes independent seal_result.
+                if 'event' in data:
+                    if (data['event']=='seal' and data['nodes']
+                            and all(n.get('status')=='sealed' for n in data['nodes'])):
+                        current_seals.add(theory)
+                    else:current_seals.discard(theory)
                 prior=owners.get(theory,set());green.difference_update(prior);helpers.difference_update(prior)
                 owners[theory]={node['uid'] for node in data['nodes']}
                 for uid in prior - owners[theory]:
@@ -907,32 +937,100 @@ def experiment_summary(ledger):
                 group = green if node['kind'] == 'contract' else helpers
                 if node['status'] in ('green', 'sealed'):
                     group.add(node['uid'])
+                    (ever_green if node['kind']=='contract' else ever_helpers).add(node['uid'])
                 else:
                     group.discard(node['uid'])
         if row['kind'] in ('plan_accepted','plan_restored'):
-            green.clear(); helpers.clear(); owners.clear()
+            green.clear(); helpers.clear(); owners.clear();current_seals.clear()
             for n in targets.values():n['status']='invalidated_by_plan_revision'
         if row['kind']=='check_completed':checks.append({'event_id':row['event_id'],'time_unix':row['time_unix'],**data})
-        if row['kind'] in ('seal_attempt','seal_result','sealed','seal_failed'):seals.append({'event_id':row['event_id'],'kind':row['kind'],'time_unix':row['time_unix'],**data})
-        if row['kind'] in ('proof_commit', 'usage_snapshot', 'integrated', 'termination'):
+        if (row['kind']=='seal_result' and data.get('status')=='sealed'
+                and data.get('theory') not in (None,'Vero_All')):
+            current_seals.add(data['theory'])
+        if row['kind']=='seal_invalidated':
+            theory=data['theory'];current_seals.discard(theory)
+            for uid in owners.get(theory,()):
+                # VERO's theory seal covers the complete latest draft, while
+                # native contract receipts cover checked prefixes. A later
+                # sibling edit can revoke the seal without touching an earlier
+                # contract certificate. Scoped contract_green_invalidated
+                # events below revoke only certificates whose own context moved.
+                if (targets.get(uid,{}).get('kind')=='contract' and
+                        isinstance(targets[uid].get('accepted_receipt'),dict)):
+                    continue
+                green.discard(uid);helpers.discard(uid)
+                if uid in targets:
+                    targets[uid].update(status='stale_after_seal_invalidation',
+                        invalidated_at_unix=row['time_unix'],invalidation_event_id=row['event_id'])
+        if row['kind']=='contract_green_invalidated':
+            uid=data['target_id'];green.discard(uid)
+            if uid in targets:
+                targets[uid].update(status='stale_after_contract_context_change',
+                    invalidated_at_unix=row['time_unix'],invalidation_event_id=row['event_id'],
+                    invalidation_reason=data.get('reason'))
+        if row['kind'] in ('source_missing','source_invalid','source_extraction_invalid'):
+            # Only observed missing or invalid generated sources revoke the
+            # current projection; historical first-GREEN remains intact. A
+            # host-owned seal transaction can preserve the prior accepted
+            # contract version while its local candidate is malformed.
+            preserved=set(data.get('preserved_contract_theories',()))
+            for theory in data['affected_theories']:
+                current_seals.discard(theory)
+                for uid in owners.get(theory,()):
+                    if (theory in preserved and
+                            targets.get(uid,{}).get('kind')=='contract' and
+                            isinstance(targets[uid].get('accepted_receipt'),dict)):
+                        continue
+                    green.discard(uid);helpers.discard(uid)
+                    if uid in targets:
+                        targets[uid].update(status='stale_after_'+row['kind'],
+                            invalidated_at_unix=row['time_unix'],
+                            invalidation_event_id=row['event_id'])
+        if row['kind'] in ('proof_commit','plan_accepted','plan_restored',
+                           'seal_invalidated','source_missing','source_invalid',
+                           'source_extraction_invalid',
+                           'contract_green_invalidated') and integration['verified']:
+            integration={'verified':False,'event_id':integration['event_id'],
+                'invalidated_by':row['event_id']}
+        if row['kind']=='integrated':
+            verified=data.get('verified')
+            integration={'verified':verified if type(verified) is bool else None,
+                'event_id':row['event_id'],'invalidated_by':None}
+        if row['kind'] in ('seal_attempt','seal_result','sealed','seal_failed','seal_invalidated'):
+            seals.append({'event_id':row['event_id'],'kind':row['kind'],'time_unix':row['time_unix'],**data})
+        if row['kind'] in ('proof_commit', 'usage_snapshot', 'response', 'integrated',
+                           'termination', 'seal_invalidated', 'source_missing', 'source_invalid',
+                           'source_extraction_invalid',
+                           'contract_green_invalidated',
+                           'plan_accepted', 'plan_restored'):
             known = [v.get('totalTokens') for v in totals.values()]
             curve.append(dict(event_id=row['event_id'], elapsed_seconds=elapsed,
                 wall_elapsed_seconds=row['time_unix']-start,
                 total_tokens=sum(known) if known and all(v is not None for v in known) else None,
-                contracts_green=len(green), helpers_green=len(helpers)))
+                contracts_green=len(green), helpers_green=len(helpers),
+                integration_verified=integration['verified']))
     end = ledger.clock() if segment_start is not None else stopped_at
     elapsed = running_seconds + (max(0, end - segment_start)
                                  if segment_start is not None else 0)
     # A live report must include time since its most recent durable event.  A
     # stopped report remains pinned to the latest recorded boundary, so merely
     # reading it later cannot turn pause/offline time into observed run time.
-    wall_end=end if segment_start is not None else ledger.rows[-1]['time_unix'] if ledger.rows else end
+    wall_end=end if segment_start is not None else rows[-1]['time_unix'] if rows else end
     from regen.infrastructure.effective_time_budget import budget_journal_summary
     return {'curve':curve, 'elapsed_seconds':elapsed, 'wall_elapsed_seconds':wall_end-start,
         'generation_clock':budget_journal_summary(ledger),
         'time_accounting':'sum of running segments; finished/paused to resumed gaps excluded; wall includes gaps',
         'usage_by_thread':totals, 'usage_accounting':observed_usage(ledger),
-        'targets':targets,'checks':checks,'seal_events':seals, 'accounting':'cumulative snapshots; cached input is a subset of input',
+        'targets':targets,'checks':checks,'seal_events':seals,
+        'historical_first_green_contract_ids':sorted(ever_green),
+        'historical_first_green_helper_ids':sorted(ever_helpers),
+        'current_valid_contract_ids':sorted(green),
+        'current_valid_helper_ids':sorted(helpers),
+        'current_valid_sealed_theories':sorted(current_seals),
+        'current_integration':integration,
+        'current_validity_basis':'ledger projection through last observed source reconciliation; '
+            'unobserved workspace edits require a new native check before final evaluation',
+        'accounting':'cumulative snapshots; cached input is a subset of input',
         'target_cost_policy':'shared/unattributed intervals retained; no fabricated exclusive allocation',
         'cost_intervals':costs,
         'milestones':{str(n):next((r for r in curve if r['contracts_green']>=n),None) for n in (10,30,50,75,100)},

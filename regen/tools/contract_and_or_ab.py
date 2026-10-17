@@ -1572,9 +1572,17 @@ def _difference(treatment, control):
         'native_check_count': treatment['native_checks']['count'] - control['native_checks']['count'],
         'native_check_wall_seconds': (treatment['native_checks']['wall_seconds']
                                       - control['native_checks']['wall_seconds']),
+        'new_accepted_auxiliary_count': (
+            treatment['new_accepted_auxiliary']['new_accepted_count']
+            - control['new_accepted_auxiliary']['new_accepted_count']),
+        # The realized AND/OR graph belongs to the treatment arm.  The
+        # existing-search arm must not read it, so a paired difference in
+        # graph reachability is undefined rather than zero.
         'new_root_reachable_helper_count': (
             treatment['root_reachable_helpers']['new_accepted_count']
-            - control['root_reachable_helpers']['new_accepted_count']),
+            - control['root_reachable_helpers']['new_accepted_count']
+            if treatment['root_reachable_helpers'] is not None
+            and control['root_reachable_helpers'] is not None else None),
         'probe_count': treatment['probes']['count'] - control['probes']['count'],
         'probe_wall_seconds': (treatment['probes']['wall_seconds']
                                - control['probes']['wall_seconds']),
@@ -1624,8 +1632,15 @@ def _policy_summary(rows, policy):
         'wall_seconds_sum': sum(row['wall_seconds'] for row in selected),
         'native_check_count': sum(row['native_checks']['count'] for row in selected),
         'native_check_wall_seconds': sum(row['native_checks']['wall_seconds'] for row in selected),
-        'new_root_reachable_helper_count': sum(
-            row['root_reachable_helpers']['new_accepted_count'] for row in selected),
+        'new_accepted_auxiliary_count': sum(
+            row['new_accepted_auxiliary']['new_accepted_count'] for row in selected),
+        'root_reachable_helper_metric_arms': sum(
+            row['root_reachable_helpers'] is not None for row in selected),
+        'new_root_reachable_helper_count': (
+            sum(row['root_reachable_helpers']['new_accepted_count']
+                for row in selected)
+            if all(row['root_reachable_helpers'] is not None
+                   for row in selected) else None),
         'probe_count': sum(row['probes']['count'] for row in selected),
         'decisive_proof_outcomes': decisive,
         'target_success_rate_decisive_only': (

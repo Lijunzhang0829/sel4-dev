@@ -193,8 +193,12 @@ class GenericEffectiveActivityTests(unittest.TestCase):
             'provider_retry_limit', 'native_slots', 'resident_limit',
             'native_cpus', 'native_memory_mb', 'native_pids_limit',
             'provider_build_timeout')}
+        config.update(shared_host_lock_dir=str(self.root/'shared-native'),
+                      shared_host_slots=1,shared_host_cleanup_timeout=30)
         config['inactivity_policy'] = POLICY
-        for key, old in [('inactivity_policy', 'old-wall-clock'), ('provider_retry_limit', 3)]:
+        for key, old in [('inactivity_policy', 'old-wall-clock'), ('provider_retry_limit', 3),
+                         ('shared_host_lock_dir', str(self.root/'other-native')),
+                         ('shared_host_slots', 2), ('shared_host_cleanup_timeout', 60)]:
             launch = {'config': {**config, key: old}, 'dataset': str(self.root),
                       'inactivity_seconds': 100}
             (source / 'launch.json').write_text(json.dumps(launch))
@@ -223,7 +227,8 @@ class GenericEffectiveActivityTests(unittest.TestCase):
         config = self.root / 'model-config'; config.write_text('{}')
         args = SimpleNamespace(output=str(self.root / 'out'), model_config=str(config),
             auth=str(auth), dataset=str(self.root), model='gpt-6-astra', reasoning='medium',
-            idle_timeout=900, check_timeout=900, inactivity_seconds=100, provider_retry_limit=1)
+            idle_timeout=900, check_timeout=900, inactivity_seconds=100,
+            provider_retry_limit=1, provider_recovery_window_seconds=60)
         controllers = []; sessions = []; stages = []; now = self.now
         class C:
             def __init__(self, output, dataset, ledger, stage, cfg):
@@ -270,12 +275,14 @@ class GenericEffectiveActivityTests(unittest.TestCase):
             stage.start = Mock()  # Fake time is driven synchronously in this test.
             stages.append(stage)
             return stage
-        def backoff(stage, ledger, retry, error):
+        def backoff(stage, ledger, retry, error, decision=None):
+            self.assertEqual(decision['delay_seconds'],30)
             now[0] += 2000
             stage.check()
         with redirect_stdout(io.StringIO()), \
              patch('regen.tools.generic_serial_application.model_settings', return_value={
-                 'codex_bin': str(client), 'codex_sha256': hashlib.sha256(client.read_bytes()).hexdigest()}), \
+                 'codex_bin': str(client), 'codex_sha256': hashlib.sha256(client.read_bytes()).hexdigest(),
+                 'role_models': {'File Planner': 'gpt-6-astra'}}), \
              patch('regen.tools.generic_serial_application.Controller', C), \
              patch('regen.tools.generic_serial_application.CodexWorkspaceSession', S), \
              patch('regen.tools.generic_serial_application.TheoryActivityStop', make_stage), \
@@ -297,7 +304,7 @@ class GenericEffectiveActivityTests(unittest.TestCase):
     def test_real_runner_retry_exhaustion_pauses_without_budget_renewal(self):
         result = self._runner(exhaust=True)
         self.assertFalse(result['passed'])
-        self.assertEqual(result['stop_reason'], 'provider_recovery_exhausted')
+        self.assertEqual(result['stop_reason'], 'provider_recovery_window_exhausted')
         self.assertTrue(result['generation_clock']['paused'])
 
 

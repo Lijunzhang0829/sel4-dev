@@ -217,7 +217,7 @@ def check_batch(checker, old, candidate):
                 worker = getattr(checker, '_batch_worker', None)
                 if (worker is None or worker.closed or worker.process.poll() is not None
                         or worker.imports != evidence['imports']
-                        or body(prefix_source) not in (worker.base, worker.pending)):
+                        or not worker.can_align(body(prefix_source))):
                     if worker is not None:
                         worker.close()
                     names = {n['id']: n['name'] for n in old['graph']['nodes']}
@@ -235,6 +235,11 @@ def check_batch(checker, old, candidate):
                 result['candidate_execution_ms'] = round((time.monotonic()-candidate_started)*1000)
                 result['prefix_prepare_ms'] = prepare_ms
                 result['execution_wall_ms'] = round((time.monotonic()-started)*1000)
+                receipt = result.get('native_receipt')
+                if receipt is not None:
+                    receipt['prefix_prepare_ms'] = prepare_ms
+                    receipt['candidate_execution_ms'] = result['candidate_execution_ms']
+                    receipt['wall_ms'] = result['execution_wall_ms']
             except TimeoutError as error:
                 worker = getattr(checker, '_batch_worker', None)
                 if worker is not None:
@@ -321,7 +326,27 @@ def check_batch(checker, old, candidate):
             result['timeout_seconds'] = candidate_timeout
             result['check_scope'] = 'accepted-prefix-and-batch'
             result['incremental'] = False
+        if result.get('native_receipt') is None:
+            # Prefix startup and transport failures have no successful worker
+            # transaction, but their saved diagnostic still needs a bound
+            # receipt. This metadata cannot authorize GREEN acceptance.
+            from pathlib import Path
+            from regen.execution.native_check_receipt import native_check_receipt
+            log_path = Path(result['log']) if result.get('log') else None
+            if log_path is not None and log_path.is_file():
+                result['native_receipt'] = native_check_receipt(
+                    checker, result, source=source,
+                    scope='committed-prefix-and-incremental-batch'
+                        if result.get('incremental') else 'cold-full-theory',
+                    log_text=log_path.read_bytes(),
+                    prefix_sha256=result.get('prefix_sha256'),
+                    delta_sha256=result.get('delta_sha256'),
+                    prefix_prepare_ms=result.get('prefix_prepare_ms'),
+                    candidate_execution_ms=result.get('candidate_execution_ms'))
         result['execution_wall_ms'] = round((time.monotonic()-batch_started)*1000)
+        if result.get('native_receipt') is not None:
+            result['native_receipt']['timeout_scope'] = result.get('timeout_scope')
+            result['native_receipt']['timeout_seconds'] = result.get('timeout_seconds')
         evidence['check'] = freeze_evidence(result)
     else:
         # Declaration-only changes still need concrete native evidence for commit.

@@ -678,8 +678,10 @@ class CodexWorkspaceSession:
             if (params.get('willRetry') is True and self.thread_id is not None
                     and self.turn_id is not None and params.get('threadId') == self.thread_id
                     and params.get('turnId') == self.turn_id):
+                from regen.infrastructure.provider_http_failure import classify_provider_http_failure
                 self._event('local', {'event':'provider_stream_retrying',
-                    'thread_id':self.thread_id, 'turn_id':self.turn_id, 'error':deepcopy(error)})
+                    'thread_id':self.thread_id, 'turn_id':self.turn_id,
+                    'failure':classify_provider_http_failure(error)})
                 self._begin_stream_retry(error)
                 return
             if (params.get('threadId') == self.thread_id
@@ -690,7 +692,10 @@ class CodexWorkspaceSession:
                 # item in the stream. Charge work to this boundary and retry a
                 # new thread; the missing item/completed is expected here.
                 self._overload_interrupted = True
-                raise ProviderOverloaded(str(params))
+                # Keep provider diagnostics in the private transcript. The
+                # coordinator's events/results must never serialize raw error
+                # objects, which may contain credential or endpoint details.
+                raise ProviderOverloaded('provider capacity rejection')
             if (self._http_retry_mode and params.get('threadId') == self.thread_id
                     and params.get('turnId') == self.turn_id
                     and self.thread_id is not None and self.turn_id is not None):

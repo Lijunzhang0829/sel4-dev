@@ -23,6 +23,17 @@ class RecoveryPolicyTests(unittest.TestCase):
             self.assertFalse(result['retry'])
             self.assertEqual(result['reason'],'provider_http_requires_intervention')
 
+    def test_bounded_codex_window_and_auth_pause(self):
+        for status in (401,403):
+            self.assertEqual(recovery_decision({'http_status':status},0,enabled=True,
+                elapsed_seconds=0,window_seconds=1800,pause_auth_immediately=True),
+                {'retry':False,'reason':'provider_authentication_required'})
+        self.assertEqual(recovery_decision({'http_status':503},1,enabled=True,
+            elapsed_seconds=1740,window_seconds=1800),
+            {'retry':False,'reason':'provider_recovery_window_exhausted'})
+        self.assertEqual(recovery_decision({'http_status':503},0,enabled=True,
+            elapsed_seconds=0,window_seconds=1800)['delay_seconds'],30)
+
     def test_never_overlap_unclean_owner_even_for_network_fault(self):
         self.assertFalse(recovery_decision({'http_status':503},0,enabled=True,cleanup_failed=True)['retry'])
 

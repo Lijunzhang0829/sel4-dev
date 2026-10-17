@@ -13,6 +13,9 @@ from regen.tests.current.test_proof_commits import fixture
 
 
 class MemoryWorker:
+    def can_align(self, prefix):
+        return prefix in (self.base, self.pending)
+
     def __init__(self, checker, source, names, imports):
         self.base, self.pending = body(source), None
         self.imports, self.closed = imports, False

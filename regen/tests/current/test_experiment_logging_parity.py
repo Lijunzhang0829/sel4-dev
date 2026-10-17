@@ -44,7 +44,7 @@ class LoggingTests(unittest.TestCase):
             controller.close.side_effect=RuntimeError('cleanup failed')
             args=SimpleNamespace(output=str(root/'run'),model_config=str(config),dataset=str(root),auth=str(auth),
                 model='gpt-6-astra',reasoning='medium',idle_timeout=1,check_timeout=1,candidate_timeout=2,preflight_seconds=3,inactivity_seconds=7200)
-            with patch('regen.tools.generic_serial_application.model_settings',return_value={'codex_bin':str(client),'codex_sha256':hashlib.sha256(client.read_bytes()).hexdigest()}),patch('regen.tools.generic_serial_application.Controller',return_value=controller),patch('regen.tools.generic_serial_application.CodexWorkspaceSession',Session):
+            with patch('regen.tools.generic_serial_application.model_settings',return_value={'codex_bin':str(client),'codex_sha256':hashlib.sha256(client.read_bytes()).hexdigest(),'role_models':{'File Planner':'gpt-6-astra'}}),patch('regen.tools.generic_serial_application.Controller',return_value=controller),patch('regen.tools.generic_serial_application.CodexWorkspaceSession',Session):
                 result=run(args)
             launch=json.loads((root/'run/launch.json').read_text())['config']
             self.assertEqual((launch['preflight_seconds'],launch['check_timeout'],launch['candidate_timeout']),(3,1,2))

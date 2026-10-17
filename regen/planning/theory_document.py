@@ -114,7 +114,7 @@ def candidate(package, state, source, imports, *, legacy=False):
 
 
 def baseline(old, new):
-    """Reuse an unchanged accepted prefix; source rewrites recheck every proof."""
+    """Reuse the longest identical proof prefix; recheck the affected suffix."""
     before = {n['id']:n for n in old['graph']['nodes']}
     after = {n['id']:n for n in new['graph']['nodes']}
     try:
@@ -128,11 +128,47 @@ def baseline(old, new):
             raise ValueError('changed accepted source')
         return old,'append'
     except ValueError:
+        prefix = []
+        for left, right in zip(old['accepted_order'], new['accepted_order']):
+            if (left != right or left not in after
+                    or any(before[left].get(f) != after[left].get(f)
+                           for f in ('id', 'name', 'role', 'statement', 'context'))
+                    or old['proofs'][left] != new['proofs'][left]):
+                break
+            prefix.append(left)
         fresh=deepcopy(old)
-        fresh['proofs']={};fresh['accepted_order']=[]
-        fresh['graph']['accepted_order']=[]
+        fresh['proofs']={key:old['proofs'][key] for key in prefix}
+        fresh['accepted_order']=prefix
+        fresh['graph']['accepted_order']=prefix
         fresh['graph']['graph_payload_sha256']=index_payload_sha256(fresh['graph'])
-        return fresh,'full'
+        return fresh,'suffix' if prefix else 'full'
+
+
+def selected_source(package, state, source, imports, entry_ids=None):
+    """Project selected drafts plus every accepted proof, preserving source order."""
+    if entry_ids is None:
+        return source
+    entries, proofs = parse(source, package, imports)
+    if (not isinstance(entry_ids, list) or not entry_ids
+            or any(not isinstance(key, str) or not key for key in entry_ids)
+            or len(set(entry_ids)) != len(entry_ids)):
+        raise ValueError('entry_ids must be a nonempty unique list of proof IDs')
+    if set(entry_ids) - set(proofs):
+        raise ValueError('selected entries must have proof bodies in the draft')
+    if set(state['proofs']) - set(proofs):
+        raise ValueError('targeted checks must retain every accepted proof')
+    keep = set(entry_ids) | set(state['proofs'])
+    existing={n['id']:n for n in state['graph']['nodes']}
+    projected=[]
+    for node in entries:
+        key=node['id']
+        if node['role']!='contract' and key not in keep:
+            if key not in existing:
+                continue  # An unrelated new declaration is still draft-only.
+            node=existing[key]  # Defer edits to an unselected open declaration.
+        projected.append(block(node, proofs.get(key) if key in keep else None))
+    return header(package['theory'], imports) + ''.join(
+        projected) + 'end\n'
 
 
 def check_document(checker, old, new, source):
@@ -140,7 +176,8 @@ def check_document(checker, old, new, source):
     base,mode=baseline(old,new)
     evidence=check_batch(checker,base,new)
     evidence.update(document_source=source,document_source_sha256=source_hash(source),
-                    document_old_binding=_binding(old),document_check_mode=mode)
+                    document_old_binding=_binding(old),document_check_mode=mode,
+                    document_incremental_policy='longest-prefix-v1')
     return evidence
 
 
@@ -151,7 +188,7 @@ def execution_scope(old, new, evidence):
     Unknown localization stays unknown; cached RED is never charged as execution.
     """
     mode = evidence.get('document_check_mode', 'append')
-    prefix = list(old['accepted_order']) if mode == 'append' else []
+    prefix = list(baseline(old, new)[0]['accepted_order'])
     planned = [key for key in new['accepted_order'] if key not in prefix]
     check = evidence.get('check', {})
     cached = bool(evidence.get('cached_failure'))
@@ -182,14 +219,26 @@ def validate_document_commit(package, old, new, evidence):
             or evidence.get('document_source_sha256')!=source_hash(source)):
         raise ValueError('document evidence differs from exact source')
     base,mode=baseline(old,new)
+    if evidence.get('document_incremental_policy') is None and mode == 'suffix':
+        # Exact historical full-recheck evidence remains replayable.
+        base=deepcopy(old)
+        base['proofs']={};base['accepted_order']=[]
+        base['graph']['accepted_order']=[]
+        base['graph']['graph_payload_sha256']=index_payload_sha256(base['graph'])
+        mode='full'
     if evidence.get('document_check_mode')!=mode: raise ValueError('document recheck scope mismatch')
     validate_batch_commit(base,new,evidence)
 
 
 class DocumentStore:
-    def __init__(self, directory, package, state, imports):
+    def __init__(self, directory, package, state, imports, *, require_sketch=False, require_use_sites=False, require_review=False, require_assessment=False, require_phases=False):
         self.root=Path(directory);self.package=package;self.imports=list(imports)
         self.state=state
+        self.require_sketch=require_sketch
+        self.require_use_sites=require_use_sites
+        self.require_phases=require_phases
+        self.require_review=require_review
+        self.require_assessment=require_assessment
         self.root.mkdir(parents=True,exist_ok=True)
         self.path=self.root/'draft.thy'
         if not self.path.exists():
@@ -199,7 +248,15 @@ class DocumentStore:
         source=self.path.read_text()
         entries,proofs=parse(source,self.package,self.imports)
         from regen.planning.helper_purposes import view
+        from regen.planning.sketch_check import group_view
+        from regen.planning.sketch_workflow import workflow_view
         return {'source':source,'source_sha256':source_hash(source),
+                'sketch_required':self.require_sketch,
+                'helper_use_sites_required':self.require_use_sites,
+                'decomposition_review_required':self.require_review,
+                'structural_assessment_required':self.require_assessment,
+                'workflow':workflow_view(self) if self.require_review else {},
+                'sketch_groups':group_view(self, entries, proofs),
                 'helper_purposes':view(self._purposes(source_hash(source)),entries,proofs,self.state),
                 'open_ids':[n['id'] for n in entries if n['id'] not in proofs],
                 'notice':'Draft source, separate from accepted_source_sha256. Only check feedback status=accepted publishes this version; draft_checked is diagnostic only. oops slots are not premises.'}
@@ -217,18 +274,22 @@ class DocumentStore:
             raise ValueError('helper purpose snapshot binding differs')
         return snapshot['records']
 
-    def _write(self, source, origin, purposes=None):
+    def _write(self, source, origin, purposes=None, sketches=None):
         sha=source_hash(source)
         durable(self.root/'versions'/sha/'source.json',{'source':source},immutable=True)
         snapshot={'source_sha256':sha,'records':purposes or {}}
         key=digest(snapshot)
         durable(self.root/'helper-purposes'/f'{key}.json',snapshot,immutable=True)
+        sketch_snapshot={'source_sha256':sha,'groups':sketches or []}
+        sketch_key=digest(sketch_snapshot)
+        durable(self.root/'sketch-plans'/f'{sketch_key}.json',sketch_snapshot,immutable=True)
         # One owner serializes writes. Content-addressed versions preserve failed drafts.
-        durable(self.root/'last-edit.json',{'source_sha256':sha,**origin,'helper_purpose_snapshot':key})
+        durable(self.root/'last-edit.json',{'source_sha256':sha,**origin,
+            'helper_purpose_snapshot':key,'sketch_plan_snapshot':sketch_key})
         temp=self.path.with_suffix('.tmp');temp.write_text(source);temp.replace(self.path)
 
     def edit(self, proposal, origin):
-        if set(proposal)-{'action','base_sha256','source','edits','notes','helper_purposes'}:
+        if set(proposal)-{'action','base_sha256','source','edits','notes','helper_purposes','sketches'}:
             raise ValueError('edit_theory accepts base_sha256 and either source or exact-text edits')
         current=self.read()
         if proposal.get('base_sha256')!=current['source_sha256']:
@@ -242,10 +303,21 @@ class DocumentStore:
                     raise ValueError('each edit needs a unique nonempty exact old string and replacement')
                 source=source.replace(edit['old'],edit['new'],1)
         entries,proofs=parse(source,self.package,self.imports)
+        if self.require_sketch:
+            accepted = {n['id']:n for n in self.state['graph']['nodes'] if n['id'] in self.state['proofs']}
+            for node in entries:
+                if node['id'] in accepted and any(node[k] != accepted[node['id']][k]
+                        for k in ('name','role','statement','context')):
+                    raise ValueError('sketch mode preserves accepted declarations; add a new grouped helper instead')
+        from regen.planning.sketch_check import merge_groups
+        sketches=merge_groups(self, entries, proofs, proposal.get('sketches', []))
+        if self.require_review:
+            from regen.planning.sketch_workflow import guard_revision
+            guard_revision(self, entries, proofs, sketches)
         from regen.planning.helper_purposes import merge, view
         purposes=merge(self._purposes(current['source_sha256']),proposal.get('helper_purposes',{}),
                        entries,proofs,source_hash(source))
-        self._write(source,origin,purposes)
+        self._write(source,origin,purposes,sketches)
         return {'status':'draft_saved','source_sha256':source_hash(source),'checked':False,
                 'helper_purposes':view(purposes,entries,proofs,self.state)}
 

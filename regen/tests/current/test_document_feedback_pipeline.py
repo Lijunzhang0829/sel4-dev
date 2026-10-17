@@ -93,8 +93,14 @@ class FeedbackProjectionTests(unittest.TestCase):
             {'action': 'read_attempts', 'request_numbers': [1], 'view': 'full'})
 
     def test_scope_excludes_unreached_and_cached_work(self):
-        old = {'accepted_order': ['old']}
-        new = {'accepted_order': ['old', 'a', 'b']}
+        def node(key):
+            return {'id': key, 'name': key, 'role': 'helper',
+                    'statement': f'lemma {key}: "True"', 'context': []}
+        old = {'accepted_order': ['old'], 'proofs': {'old': 'by simp'},
+               'graph': {'nodes': [node('old')]}}
+        new = {'accepted_order': ['old', 'a', 'b'],
+               'proofs': {'old': 'by simp', 'a': 'by simp', 'b': 'by simp'},
+               'graph': {'nodes': [node(key) for key in ('old', 'a', 'b')]}}
         evidence = {'document_check_mode': 'append', 'check': {'verdict': 'red',
             'incremental': 'audited-batch-worker-v1', 'check_scope': 'committed-prefix-and-incremental-batch'},
             'node_results': [{'node_id': 'a', 'status': 'failed'}, {'node_id': 'b', 'status': 'not_reached'}]}

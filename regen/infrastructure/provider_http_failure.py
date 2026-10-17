@@ -119,20 +119,39 @@ def recovery_streak(rows, theory, failure=None):
     return count
 
 
-def recovery_decision(failure, prior_failures, *, enabled, cleanup_failed=False):
-    """All HTTP failures get a fresh retry; transient outages cool down forever.
+def recovery_decision(failure, prior_failures, *, enabled, cleanup_failed=False,
+                      elapsed_seconds=None, window_seconds=None,
+                      pause_auth_immediately=False):
+    """Choose a fresh transport retry without replaying a harness callback.
 
-    Repeated definitive client/authentication failures require intervention.
-    There is no automatic replay of a harness callback or accepted proof.
+    Existing callers retain the unbounded transient policy unless they freeze a
+    recovery window. A bounded caller measures the *same consecutive incident*
+    with a monotonic clock and resets it only after transport progress. Explicit
+    authentication failures may be paused immediately instead of spending a
+    diagnostic retry on credentials that require operator action.
     """
     if cleanup_failed:
         return {'retry': False, 'reason': 'provider_http_cleanup_failed'}
+    status = failure.get('http_status')
+    if pause_auth_immediately and status in (401, 403):
+        return {'retry': False, 'reason': 'provider_authentication_required'}
     if not enabled:
         return {'retry': False, 'reason': 'provider_http_retry_disabled'}
-    status = failure.get('http_status')
     transient = status is None or status >= 500 or status in (408, 409, 425, 429)
     if not transient and prior_failures >= 1:
         return {'retry': False, 'reason': 'provider_http_requires_intervention'}
+    delay = min(300, 30 * 2 ** min(prior_failures, 4))
+    if window_seconds is not None:
+        import math
+        if (type(window_seconds) not in (int, float) or not math.isfinite(window_seconds)
+                or window_seconds <= 0 or type(elapsed_seconds) not in (int, float)
+                or not math.isfinite(elapsed_seconds) or elapsed_seconds < 0):
+            raise ValueError('recovery window and elapsed time must be finite and positive')
+        # Do not schedule a wait that would consume the last instant available
+        # for a fresh transport attempt. A native callback is never interrupted
+        # by this administrative retry window.
+        if elapsed_seconds + delay >= window_seconds:
+            return {'retry': False, 'reason': 'provider_recovery_window_exhausted'}
     return {'retry': True, 'consecutive_failures': prior_failures + 1,
-            'delay_seconds': min(300, 30 * 2 ** min(prior_failures, 4)),
+            'delay_seconds': delay,
             'retry_policy': RECOVERY_POLICY}

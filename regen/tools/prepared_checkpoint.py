@@ -343,6 +343,70 @@ def derive(fixture, destination, *, expected_manifest_sha256):
     return instance
 
 
+def recover_prelaunch_arm(source, destination, *, expected_initial_state_sha256,
+                          authorization, wall_deadline_unix=None):
+    """New physical instance after a pre-model startup fault; costs stay recorded.
+
+    This narrow recovery refuses model/native/task history or changed journals.
+    It preserves the lineage run ID and proof authority, relocates only the same
+    two physical paths as derive(), and requires ordinary cold validation again.
+    The caller retains the original case deadline across both physical instances.
+    """
+    from regen.execution.proof_commits import digest
+    from regen.tools import parallel_workspace_service as service
+    from regen.tools.proof_idle_watch import projection
+    from regen.infrastructure.incremental_log import read_artifact
+    source,destination=Path(source).resolve(),Path(destination).resolve()
+    if (not authorization or destination.exists() or destination.is_relative_to(source)
+            or source.is_relative_to(destination)):
+        raise ValueError('authorized new independent recovery destination required')
+    if (source/'service-launch.json').exists() and service.status(source)['running']:
+        raise ValueError('source service still running')
+    for folder in ('parallel-sessions','check-tasks'):
+        if (source/folder).exists():
+            raise ValueError('prelaunch recovery refuses model/task history')
+    for pattern in ('theories/*/batch-requests/*','theories/*/document/last-edit.json'):
+        if next(source.glob(pattern),None) is not None:
+            raise ValueError('prelaunch recovery refuses generated actions')
+    budget=source/'effective-generation-budget/events'
+    if budget.exists():
+        rows=[read_artifact(p) for p in sorted(budget.glob('*.json'))]
+        if any(r['kind'] in {'parallel_budget_invocation','response','model_work_observed',
+                              'time_budget_worker_selected'} for r in rows):
+            raise ValueError('prelaunch recovery refuses consumed generation history')
+    continuation=read_artifact(source/'workspace-continuation.json')
+    unfinished=continuation['theories']
+    if len(unfinished)!=1:
+        raise ValueError('prelaunch recovery requires one inherited unfinished theory')
+    theory=unfinished[0]['theory']
+    commits=sorted((source/'theories'/theory/'acceptance/commits').glob('*.json'))
+    if len(commits)!=1 or projection(commits[0])[0]['event']!='initial':
+        raise ValueError('prelaunch recovery refuses new accepted work')
+    initial=read_artifact(commits[0])
+    if digest(initial['state'])!=expected_initial_state_sha256:
+        raise ValueError('inherited state differs from verified preparation')
+    before={str(p.relative_to(source)):sha(p) for p in source.glob('theories/*/acceptance/commits/*.json')}
+    skip={'effective-generation-budget','parallel-workspace-policy.json','diagnostic-window.json',
+        'experiment.json','trial-stop.json','service-control.lock','service-launch.json',
+        'service-invocation.json','service-status.json','service-runner.log','.runner-locks'}
+    shutil.copytree(source,destination,copy_function=shutil.copyfile,
+        ignore=lambda directory,names: [n for n in names if Path(directory)==source and n in skip])
+    run=read_artifact(destination/'run.json')
+    run.update(contract_package_dir=str(destination/'packages'),
+               session_progress_ledger=str(destination/'session-progress-ledger.json'))
+    durable(destination/'run.json',run)
+    if any(sha(destination/relative)!=value or sha(source/relative)!=value for relative,value in before.items()):
+        raise ValueError('recovery changed proof authority')
+    receipt={'schema':'pre-model-startup-recovery-v1','instance_id':uuid4().hex,
+        'source_instance':str(source),'lineage_run_id':run['run_id'],
+        'authorization':authorization,'wall_deadline_unix':wall_deadline_unix,
+        'initial_state_sha256':expected_initial_state_sha256,'model_calls_before_recovery':0,
+        'accepted_journal_sha256':before,'historical_proof_counters_reset':False,
+        'source_budget_and_failure_records_preserved':True,'cold_start_validation_required':True}
+    durable(destination/'arm-instance.json',receipt,immutable=True)
+    return receipt
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     sub=parser.add_subparsers(dest='action',required=True)

@@ -2322,7 +2322,7 @@ def main() -> int:
     parallel.add_argument("--resident-limit", type=int, default=2)
     parallel.add_argument("--execution-policy", type=Path,
                           help="JSON with ordered theory stages and bounded SessionStalled retries")
-    parallel.add_argument("--generation-strategy", choices=['baseline','helper-closure-v1','bounded-audited-prefix-v1'], default='baseline',
+    parallel.add_argument("--generation-strategy", choices=['baseline','helper-closure-v1','bounded-audited-prefix-v1','sketch-groups-v1','sketch-local-demands-v1','sketch-reviewed-v1','sketch-guided-v1','sketch-phased-v1'], default='sketch-reviewed-v1',
                           help="Explicitly bound diagnostic workflow variant; baseline preserves the original prompt")
     parallel.add_argument("--focus-contract-id", default=None,
                           help="Prioritize one unproved fixed contract ID without adding mathematical guidance")

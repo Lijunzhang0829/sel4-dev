@@ -9,9 +9,13 @@ from contextlib import contextmanager
 from contextvars import ContextVar, copy_context
 from copy import deepcopy
 from functools import wraps
+import errno
 import json
 import fcntl
+import math
+import os
 from pathlib import Path
+import stat
 import subprocess
 import threading
 import time
@@ -31,14 +35,122 @@ def _raise_cleanup_errors(errors):
         raise errors[0]
 
 
+def shared_host_binding(lock_dir=None, slots=1, cleanup_timeout=30):
+    """Canonical opt-in policy for frozen launch records and resource owners."""
+    if lock_dir is None:
+        if slots != 1 or cleanup_timeout != 30:
+            raise ValueError('shared host slot options require a lock directory')
+        return {}
+    path = Path(lock_dir)
+    if not path.is_absolute() or path.is_symlink():
+        raise ValueError('shared host lock directory must be absolute and not a symlink')
+    if type(slots) is not int or slots < 1:
+        raise ValueError('shared host slots must be a positive integer')
+    if (type(cleanup_timeout) not in (int, float) or not math.isfinite(cleanup_timeout)
+            or cleanup_timeout <= 0):
+        raise ValueError('shared host cleanup timeout must be positive and finite')
+    return {'shared_host_lock_dir': str(path.resolve()), 'shared_host_slots': slots,
+            'shared_host_cleanup_timeout': cleanup_timeout}
+
+
+class _SharedHostSlots:
+    """Opt-in host-wide native admission using crash-released file locks.
+
+    All participants must mount the same local lock directory and agree on its
+    slot count. Lock descriptors are private to a lease and close on exec, so a
+    dead controller cannot leave a permanently occupied slot.
+    """
+
+    def __init__(self, directory, slots):
+        path = Path(directory)
+        if not path.is_absolute():
+            raise ValueError('shared host lock directory must be absolute')
+        if type(slots) is not int or slots < 1:
+            raise ValueError('shared host slots must be a positive integer')
+        path.mkdir(parents=True, exist_ok=True, mode=0o700)
+        try:
+            directory_fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        except OSError as error:
+            raise ValueError('shared host lock directory must be a real directory, not a symlink') from error
+        directory_stat = os.fstat(directory_fd)
+        os.close(directory_fd)
+        if directory_stat.st_uid != os.geteuid() or directory_stat.st_mode & 0o022:
+            raise ValueError('shared host lock directory must be owned by this user and not group/world writable')
+        self.directory = path.resolve()
+        self.slots = slots
+        policy_path = self.directory / 'policy.json'
+        policy = {'schema_version': 1, 'shared_host_slots': slots}
+        # The gate protects initial creation and comparison, including two
+        # experiments starting on an empty directory at the same instant.
+        with self._open_file('policy.lock') as gate:
+            fcntl.flock(gate.fileno(), fcntl.LOCK_EX)
+            try:
+                try:
+                    with self._open_file('policy.json', create=False) as existing:
+                        existing.seek(0)
+                        saved = json.loads(existing.read())
+                except FileNotFoundError:
+                    durable(policy_path, policy)
+                else:
+                    if saved != policy:
+                        raise ValueError('shared host slot policy mismatch; use a new lock directory')
+            finally:
+                fcntl.flock(gate.fileno(), fcntl.LOCK_UN)
+
+    def _open_file(self, name, *, create=True):
+        flags = os.O_RDWR | os.O_CLOEXEC | os.O_NOFOLLOW
+        if create:
+            flags |= os.O_CREAT
+        try:
+            fd = os.open(self.directory / name, flags, 0o600)
+        except OSError as error:
+            if error.errno == errno.ELOOP:
+                raise ValueError(f'unsafe shared host lock file: {name}') from error
+            raise
+        metadata = os.fstat(fd)
+        if (not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.geteuid()
+                or metadata.st_mode & 0o022 or metadata.st_nlink != 1):
+            os.close(fd)
+            raise ValueError(f'unsafe shared host lock file: {name}')
+        return os.fdopen(fd, 'a+b')
+
+    def acquire(self, *, cancellable=True, timeout=None):
+        queued = time.monotonic()
+        deadline = None if timeout is None else queued + timeout
+        while True:
+            if cancellable:
+                check_cancelled()
+            if deadline is not None and time.monotonic() >= deadline:
+                raise TimeoutError('shared host native slot acquisition timed out; cleanup can be retried')
+            for slot in range(self.slots):
+                stream = self._open_file(f'slot-{slot:04d}.lock')
+                try:
+                    fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except OSError as error:
+                    stream.close()
+                    if error.errno not in (errno.EACCES, errno.EAGAIN, errno.EWOULDBLOCK):
+                        raise
+                else:
+                    if cancellable:
+                        try:
+                            check_cancelled()
+                        except BaseException:
+                            stream.close()
+                            raise
+                    return stream, slot, time.monotonic() - queued
+            remaining = None if deadline is None else deadline - time.monotonic()
+            time.sleep(.1 if remaining is None else min(.1, max(0., remaining)))
+
+
 class NativeResources:
     def __init__(self, slots=1, threads=4, resident_limit=2, *,
                  cpus=4, memory_mb=16384, pids_limit=1024,
-                 provider_build_timeout=1800, build_ml_heap_mb=None):
+                 provider_build_timeout=1800, build_ml_heap_mb=None,
+                 shared_host_lock_dir=None, shared_host_slots=1,
+                 shared_host_cleanup_timeout=30):
         if any(type(v) is not int or v < 1 for v in (slots, threads, resident_limit)) or resident_limit < slots:
             raise ValueError('positive native slots/threads required; resident_limit must cover slots')
         self.policy = dict(native_slots=slots, threads=threads, resident_limit=resident_limit)
-        import math
         if (type(cpus) not in (int, float) or not math.isfinite(cpus) or cpus <= 0
                 or any(type(v) is not int or v < 1 for v in (memory_mb, pids_limit))):
             raise ValueError('positive finite native CPU/memory/PID limits required')
@@ -52,6 +164,20 @@ class NativeResources:
         self.policy.update(provider_build_timeout=provider_build_timeout,
                            build_ml_heap_mb=heap,
                            build_java_heap_mb=max(1, min(2048, memory_mb // 8)))
+        self.shared_host = None
+        if shared_host_lock_dir is not None:
+            if (type(shared_host_cleanup_timeout) not in (int, float)
+                    or not math.isfinite(shared_host_cleanup_timeout)
+                    or shared_host_cleanup_timeout <= 0):
+                raise ValueError('shared host cleanup timeout must be positive and finite')
+            self.shared_host = _SharedHostSlots(shared_host_lock_dir, shared_host_slots)
+            # Retain this launch binding for existing frozen policies. Owned
+            # worker close no longer queues for the host's active native slot.
+            self.policy.update(shared_host_lock_dir=str(self.shared_host.directory),
+                               shared_host_slots=shared_host_slots,
+                               shared_host_cleanup_timeout=shared_host_cleanup_timeout)
+        elif shared_host_slots != 1:
+            raise ValueError('shared_host_slots requires shared_host_lock_dir')
         self.condition = threading.Condition()
         self.queue = deque()
         self.active = set()
@@ -75,6 +201,10 @@ class NativeResources:
         emit_event('native_queued', checker=str(getattr(checker,'work_dir',key)))
         admitted = False
         victim = None
+        inserted_resident = False
+        host_slot = None
+        host_slot_index = None
+        host_queue_seconds = 0.
         try:
             with self.condition:
                 self.queue.append(ticket)
@@ -101,9 +231,12 @@ class NativeResources:
                     self.evicting.add(victim)
                     old_checker = self.residents[victim]
                 else:
+                    inserted_resident = key not in self.residents
                     self.residents[key] = checker
                     self.residents.move_to_end(key)
                 self.condition.notify_all()
+            if self.shared_host is not None:
+                host_slot, host_slot_index, host_queue_seconds = self.shared_host.acquire()
             if victim is not None:
                 old_checker.close_prefix()
                 with self.condition:
@@ -119,24 +252,34 @@ class NativeResources:
                 self.evicting.discard(victim)
                 if admitted:
                     self.active.discard(key)
+                if inserted_resident:
+                    self.residents.pop(key, None)
                 self.condition.notify_all()
+            if host_slot is not None:
+                host_slot.close()
             raise
         lease = _LEASE.set((id(self), key, threading.get_ident()))
         started = time.monotonic()
         try:
             from regen.infrastructure.progress_events import emit_event
             emit_event('native_slot_acquired', checker=str(getattr(checker, 'work_dir', key)),
-                       queue_seconds=round(started-queued,3))
+                       queue_seconds=round(started-queued,3),
+                       host_queue_seconds=round(host_queue_seconds,3), host_slot=host_slot_index)
             yield
             check_cancelled()
         finally:
             _LEASE.reset(lease)
-            with self.condition:
-                self.active.remove(key)
-                self.metrics.append({'checker':str(getattr(checker,'work_dir',key)),
-                    'queue_seconds':started-queued,'execution_seconds':time.monotonic()-started})
-                self.condition.notify_all()
-            emit_event('native_slot_released', elapsed_seconds=round(time.monotonic()-started, 3))
+            try:
+                with self.condition:
+                    self.active.remove(key)
+                    self.metrics.append({'checker':str(getattr(checker,'work_dir',key)),
+                        'queue_seconds':started-queued,'host_queue_seconds':host_queue_seconds,
+                        'host_slot':host_slot_index,'execution_seconds':time.monotonic()-started})
+                    self.condition.notify_all()
+                emit_event('native_slot_released', elapsed_seconds=round(time.monotonic()-started, 3))
+            finally:
+                if host_slot is not None:
+                    host_slot.close()
 
     def close(self):
         with self.close_lock:
@@ -149,6 +292,9 @@ class NativeResources:
             errors = []
             for key, checker in residents:
                 try:
+                    # This closes only workers owned by this checker. It frees
+                    # native capacity and does not perform a proof check, so it
+                    # must not wait behind another process's active native slot.
                     checker.close_prefix()
                 except BaseException as error:
                     errors.append(error)
@@ -268,7 +414,7 @@ class CheckExecutor:
             self.condition.notify_all()
 
     def submit(self, *, kind, theory, binding, request, execute, owner=None, task_id=None):
-        if kind not in {'proof_batch','statement','symbol','seal','action','preflight','integration'}:
+        if kind not in {'proof_batch','statement','symbol','seal','action','preflight','integration','sketch'}:
             raise ValueError('unknown check task kind')
         task_id = task_id or uuid4().hex
         if not isinstance(task_id, str) or not task_id or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in task_id):

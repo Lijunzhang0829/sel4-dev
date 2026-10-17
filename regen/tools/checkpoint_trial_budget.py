@@ -19,7 +19,15 @@ from regen.infrastructure.incremental_log import read_artifact
 
 
 SCHEMA = 'checkpoint-incremental-diagnostic-budget-v1'
-MAX_TRIAL_SECONDS = 3600
+MAX_TRIAL_SECONDS = 10800
+
+
+def validate_trial_seconds(seconds):
+    if (type(seconds) not in (int,float) or not math.isfinite(seconds)
+            or not 0 < seconds <= MAX_TRIAL_SECONDS):
+        raise ValueError('diagnostic window must be positive and at most '
+                         + str(MAX_TRIAL_SECONDS) + ' seconds')
+    return seconds
 
 
 def _file(path, label):
@@ -137,7 +145,7 @@ def initialize_checkpoint_trial_budget(root, overview, binding, *, target_contra
     ``binding`` must be exactly the workspace_policy the ordinary runner will
     compute; it will independently enforce its hash on launch. ``overview`` is
     that application's normal WorkspaceController. Only one target theory is
-    admitted, with at most one hour of *new* diagnostic generation. No original
+    admitted, with at most three hours of *new* diagnostic generation. No original
     elapsed time is assigned a fabricated zero or subtracted. A second call is
     rejected rather than resetting/replacing a window.
     """
@@ -147,9 +155,7 @@ def initialize_checkpoint_trial_budget(root, overview, binding, *, target_contra
 
     if not isinstance(authorization,str) or not authorization.strip():
         raise ValueError('explicit checkpoint diagnostic authorization required')
-    if (type(seconds) not in (int,float) or not math.isfinite(seconds)
-            or not 0 < seconds <= MAX_TRIAL_SECONDS):
-        raise ValueError('diagnostic window must be positive and at most 3600 seconds')
+    validate_trial_seconds(seconds)
     root = Path(root).resolve()
     if not root.is_dir() or Path(overview.root).resolve() != root:
         raise ValueError('overview must belong to the existing independent checkpoint fork')
