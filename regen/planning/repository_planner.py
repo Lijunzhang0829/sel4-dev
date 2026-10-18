@@ -43,11 +43,6 @@ def read_stream(root: Path, reference: dict) -> list[dict]:
 
 
 def validate_policy(policy: dict):
-    if policy.get('pilot') is not None:
-        from regen.planning.plan_pilot import settings
-        settings(policy['pilot'])
-        if policy.get('interaction') != 'agent-workspace':
-            raise ValueError('Plan pilot requires agent-workspace planning')
     if policy.get('schema_version') not in {2, 3} or policy.get('mode') != 'repository-proof-planning':
         raise ValueError('repository planning requires policy schema 2 or 3')
     if not policy_artifact_supported(policy.get('artifact_type'), POLICY_ARTIFACT) or policy.get('stage') != 'Refine':

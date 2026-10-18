@@ -144,7 +144,11 @@ python3 -m regen.tools.sketch_guided_native_smoke --output /tmp/sketch-guided-na
 
 新增受证据约束的 transition_proof 动作。短探测最多两次；formal_leaf 在不改变 helper 接口且父消费者已条件闭合时转入正式检查，不再以成功 probe 作为风险叶子的唯一入口。失败初次加一次局部修复后要求显式升级，可选择 revise_consumer、revise_interface、decompose_helper。升级绑定失败 ID 和当前候选，不生成 GREEN、不刷新总预算。记录位于 document/workflow/transitions。普通检查和父 sketch 仍必须重新验证。默认与历史 guided 策略不变。实现仅限制 entry 接口和候选版本，不提供任意 tactic checkpoint 的前缀保持证明。
 
-## 2026-10-17：规划冻结前的 pilot 小版本
+## 2026-10-17：规划冻结前的 pilot 小版本（已撤回，历史记录）
+
+以下记录对应提交 `0759f03` / `4e6f262`，不再描述当前入口。根据用户要求，
+规划代码已恢复到 `085913f`，移除 pilot 工具和提交门槛，保留实验工件。
+替代检查见 [PLAN-INTERFACE-REVIEW.md](PLAN-INTERFACE-REVIEW.md)。
 
 实现：`regen/planning/plan_pilot.py`；入口由
 `regen/config/repository-planning-policy-pilot.json` 显式启用。

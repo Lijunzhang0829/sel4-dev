@@ -23,6 +23,7 @@
 | [端到端流程与模块 TODO](docs/design/PARALLEL-PROOF-PIPELINE.md) | 已确认的新控制流：规划、验证、持续 agent、跨 theory 并行及 theory 内串行工具、seal 与仓库集成；M0–M10 的代码现状和验收 | parallel_file_planner / check_executor / repository_integration；完整实验验收待完成 |
 | [总体设计](docs/design/REPO-LEVEL-PROOF-HARNESS.md) | 研究目标、输入边界、生成合同、helper 政策与未决问题 | 目标设计，不声称全部实现 |
 | [环境实现](docs/implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md) | command 选择、环境／catalog 构建与 gate | [environment_preparation.py](preparation/environment_preparation.py)、[semantic_base_builder.py](preparation/semantic_base_builder.py) |
+| [规划消费检查](docs/implementation/PLAN-INTERFACE-REVIEW.md) | 冻结前全量接口评审、阻塞范围与历史原生依赖回测；不运行短证明 pilot | [plan_review.py](planning/plan_review.py) |
 | [规划实现与扩展](docs/implementation/REPOSITORY-PLANNING-IMPLEMENTATION.md) | 环境数据流到仓库方案、文件投影、重放与执行边界 | [repository_planner.py](planning/repository_planner.py) |
 | [证明生成实现](docs/implementation/PROOF-GENERATION-IMPLEMENTATION.md) | node、GRA、组装、发布、日志与缺口 | [proof_session_runner.py](execution/proof_session_runner.py)、[isabelle_node_checker.py](execution/isabelle_node_checker.py) |
 | [Harness 改进 TODO](docs/implementation/HARNESS-IMPROVEMENT-TODO.md) | 决策开销、检索记忆、上下文管理、增量检查与恢复问题的优先级和验收标准 | 基于 StatePrimitives 与 Capability 实验证据 |
