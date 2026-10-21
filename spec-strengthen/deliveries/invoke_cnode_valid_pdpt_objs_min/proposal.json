@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "A maximally-weak precondition for invoke_cnode valid_pdpt_objs preservation; useful in contexts where no cnode validity is available",
+ "lemma_name": "invoke_cnode_valid_pdpt_objs_min",
+ "anchor_line": 614,
+ "hint_lemma": "invoke_cnode_valid_pdpt_objs",
+ "new_lemma": "lemma invoke_cnode_valid_pdpt_objs_min:\n  \"\\<lbrace>valid_pdpt_objs\\<rbrace> invoke_cnode i \\<lbrace>\\<lambda>rv. valid_pdpt_objs\\<rbrace>\"\n  apply (simp add: invoke_cnode_def)\n  apply (rule hoare_pre)\n   apply (wp get_cap_wp | wpc | simp split del: if_split)+\n  done",
+ "rationale": "An independent drop of valid_cnode_inv i from invoke_cnode_valid_pdpt_objs. Since the [wp] lemmas for all component operations (cap_insert, cap_swap, empty_slot, cap_revoke, etc. — L92, L418, L604, L607) carry only valid_pdpt_objs as their precondition for this postcondition, the wp chain needs nothing from valid_cnode_inv. Neither invs nor valid_cnode_inv is textually consumed; the proof body is verbatim delegation. If this verifies it subsumes both hint 10 and hint 11 in a single, maximally-strong proposal.",
+ "strengthening_claim": "(valid_pdpt_objs and invs and valid_cnode_inv i) ==> (valid_pdpt_objs) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `invs`; `valid_cnode_inv i`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

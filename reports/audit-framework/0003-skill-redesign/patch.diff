@@ -1,0 +1,971 @@
+diff --git a/.claude/skills/isabelle_prover/references/spec-strengthen-patterns.md b/.claude/skills/isabelle_prover/references/spec-strengthen-patterns.md
+new file mode 100644
+index 0000000..2b73fa2
+--- /dev/null
++++ b/.claude/skills/isabelle_prover/references/spec-strengthen-patterns.md
+@@ -0,0 +1,550 @@
++# Spec strengthening — pattern catalog with worked examples
++
++Companion to `isabelle_prover_spec/SKILL.md`. Each pattern lists:
++- the textual shape to look for,
++- a real example from this codebase,
++- the strengthening move,
++- the expected downstream impact.
++
++All examples are file:line citations into
++`verification/l4v/proof/invariant-abstract/` or
++`verification/l4v/spec/abstract/`. Verified on the current branch.
++
++---
++
++## Pattern A — Paired weak/strong postcondition
++
++**Shape.** Two lemmas about the same operation differ only in the
++postcondition, and one postcondition implies the other via a known lemma
++(e.g. `real_cte_at_cte : real_cte_at p s ⟹ cte_at p s`).
++
++**Example 1 — `cte_at` vs `real_cte_at`**
++
++```isabelle
++(* proof/invariant-abstract/CSpace_AI.thy:237 *)
++lemma lookup_slot_real_cte_at_wp [wp]:
++  "\<lbrace>valid_objs\<rbrace> lookup_slot_for_thread t addr \<lbrace>\<lambda>rv. real_cte_at (fst rv)\<rbrace>,-"
++  ...
++
++(* proof/invariant-abstract/CSpace_AI.thy:246 *)
++lemma lookup_slot_cte_at_wp[wp]:
++  "\<lbrace>valid_objs\<rbrace> lookup_slot_for_thread t addr \<lbrace>\<lambda>rv. cte_at (fst rv)\<rbrace>,-"
++  by (strengthen real_cte_at_cte, wp)
++```
++
++The second lemma's *body* is a one-line redirection through
++`real_cte_at_cte`. It exists only because some downstream `wp` pattern-
++matches against the weaker `cte_at`.
++
++**Move.** Either:
++- (Aggressive) Delete `lookup_slot_cte_at_wp`; fix consumers by adding
++  `wp (once) lookup_slot_real_cte_at_wp` + a manual
++  `hoare_strengthen_post`.
++- (Conservative) Keep both but tag the weak one `[wp del]` so it stops
++  being the default match, forcing consumers to consciously pick.
++
++Same shape appears at `CSpace_AI.thy:185 / 226` for
++`resolve_address_bits_real_cte_at` vs `_cte_at`.
++
++**Example 2 — `valid_pspace` vs `valid_objs`**
++
++```isabelle
++(* proof/invariant-abstract/CSpace_AI.thy:3295 (approx) *)
++lemma set_cdt_valid_pspace : "\<lbrace>valid_pspace\<rbrace> set_cdt m \<lbrace>\<lambda>_. valid_pspace\<rbrace>"
++
++(* proof/invariant-abstract/CSpace_AI.thy:3913 *)
++lemma set_cdt_valid_objs : "\<lbrace>valid_objs\<rbrace> set_cdt m \<lbrace>\<lambda>_. valid_objs\<rbrace>"
++```
++
++Direction here is *opposite* to Example 1: `set_cdt_valid_objs` is the
++finer-grained statement about one component of `valid_pspace`. It is the
++right building block for proofs that don't need full `valid_pspace`.
++**Don't delete**. The scanner flags both directions — read the proofs
++before acting.
++
++**Verifying direction — and a scanner caveat.** The scanner pairs by
++*operation in the Hoare body* (e.g. both lemmas call `set_cap`). But
++two lemmas with the same body op can still have **incomparable
++preconditions** — one may require `invs`, the other `valid_objs and
++valid_cap cap`, with neither implying the other. In that case the
++postconditions chain (`invs ⟹ valid_objs`) but the lemmas aren't
++substitutable; both stay. Confirm comparability before acting:
++
++```
++grep -A4 '^lemma <weak_name>:' <file>
++grep -A4 '^lemma <strong_name>:' <file>
++```
++
++If the strong lemma's precondition is strictly *stronger* (or equal) to
++the weak's, deletion / inlining is sound. If preconditions are
++incomparable, the weak lemma is providing a different entry point and
++should remain.
++
++**Verifying direction (downstream).** Before deleting either lemma, run:
++
++```
++grep -rn '\b<weak_lemma_name>\b' verification/l4v/proof/<session_root>/
++```
++
++If the weak lemma is referenced *outside* its own file in `wp` rule sets,
++prefer the conservative move (tag `[wp del]` or strengthen statement
++in-place) over deletion.
++
++---
++
++## Pattern B — `set_*`/`update_*` missing functional postcondition
++
++**Shape.** An operation `set_X y` only has invariant-preservation lemmas
++(`\<lbrace>P\<rbrace> set_X y \<lbrace>\<lambda>_. P\<rbrace>`), never a functional
++lemma stating *what changed* (`\<lambda>_ s. X s = y`).
++
++**Example — `set_original`**
++
++```isabelle
++(* spec/abstract/CSpaceAcc_A.thy:99 *)
++definition set_original :: "cslot_ptr ⇒ bool ⇒ (unit, 'z::state_ext) s_monad" where
++  "set_original slot v ≡ do
++     s ← get;
++     put (s\<lparr>is_original_cap := (is_original_cap s) (slot := v)\<rparr>)
++   od"
++
++(* proof/invariant-abstract/CSpace_AI.thy:3805 *)
++lemma set_original_valid_ioc[wp]:
++  "\<lbrace>valid_ioc\<rbrace> set_original slot v \<lbrace>\<lambda>_. valid_ioc\<rbrace>"
++```
++
++The definition makes the functional behaviour explicit: after
++`set_original slot v`, `is_original_cap s slot = v`. But no lemma in
++the invariant-abstract layer states this — every consumer that needs to
++reason "did the bit actually flip?" has to unfold `set_original_def`
++itself.
++
++**Move.** Add a new lemma immediately below
++`set_original_valid_ioc`:
++
++```isabelle
++lemma set_original_is_original_cap:
++  "\<lbrace>\<top>\<rbrace> set_original slot v \<lbrace>\<lambda>_ s. is_original_cap s slot = v\<rbrace>"
++  by (wpsimp simp: set_original_def)
++```
++
++**Downstream impact.** Existing proofs that unfolded `set_original_def`
++manually can now `wp set_original_is_original_cap`. The functional lemma
++also composes with `hoare_post_conj` to give a strengthened compound
++postcondition for free.
++
++**Other ops in the same shape (from scanner output on CSpace_AI.thy):**
++`update_cdt`, `set_cdt`, `set_cap`, `set_untyped_cap_as_full`.
++
++---
++
++## Pattern C — Unused precondition
++
++**Shape.** Hoare triple mentions `valid_objs` / `invs` / `valid_pspace`
++in the precondition, but the postcondition is purely structural
++(`cte_at p`, `obj_at P p`, type-cast properties) — the operation itself
++doesn't *need* the precondition to establish the postcondition.
++
++**Example — `get_cap_cte_wp_at`**
++
++```isabelle
++(* proof/invariant-abstract/CSpace_AI.thy:393 (approx) *)
++lemma get_cap_cte_wp_at:
++  "\<lbrace>\<top>\<rbrace> get_cap p \<lbrace>\<lambda>rv. cte_wp_at (\<lambda>c. c = rv) p\<rbrace>"
++```
++
++This one is already correct (precondition `\<top>`). It exists as the
++"clean" version to motivate why other `get_cap_*` lemmas with
++`valid_objs` preconditions are weaker than they need to be.
++
++**Counter-example (does not strengthen).**
++
++```isabelle
++lemma resolve_address_bits_real_cte_at:
++  "\<lbrace>valid_objs and valid_cap (fst args)\<rbrace>
++   resolve_address_bits args \<lbrace>\<lambda>rv. real_cte_at (fst rv)\<rbrace>, -"
++```
++
++The scanner flags this (Pattern C, low severity) but the precondition
++*is* load-bearing: `resolve_address_bits` walks the capability tree, and
++`real_cte_at` of the final slot requires `valid_objs` for the walk to
++make sense. **Don't try to remove**.
++
++**Move.** Write the patch removing the suspect conjunct from the
++precondition, run `check-theory.sh --patch`. If `OK` — great, apply.
++If the proof fails — the precondition was load-bearing; revert and
++move on. Cheap to test, no need to reason in advance.
++
++**Pattern C is a "try and see" pattern.** Don't burn budget reasoning
++about whether the premise is used; the prover answers in seconds.
++
++---
++
++## Pattern D — Loose bound that's actually exact
++
++**Shape.** Postcondition contains `≤`, `\<subseteq>`, or `\<longrightarrow>`
++where the operation's definition forces equality / equivalence.
++
++**Example — argument decoding**
++
++```isabelle
++(* spec/abstract/CSpace_A.thy:163 *)
++whenE (\<not> guard \<le> cref) ...
++```
++
++Here `guard \<le> cref` is part of an `if`/`whenE` guard, not a
++postcondition — not a strengthening target. **Look at definitions of
++postconditions of `decode_*` operations** in `Decode_A.thy` and check
++whether they assert `≤` on bit-widths / array indices that the
++definition actually pins to `=`.
++
++**Move.** Replace the inequality with the equality form in the lemma
++statement; `check-theory.sh --patch`; if `OK`, downstream might need
++small fixes (`wp (once) <strong_lemma>` insertions).
++
++**Caveat.** Equality postconditions can be too strong if the operation
++admits multiple outcomes (non-determinism). Read the definition before
++acting.
++
++---
++
++## Pattern G — Frame preservation (NEW, Exp 4a 2026-05-31)
++
++**Shape.** Op `f` doesn't touch state accessor `acc`, but no lemma of
++the form `⟨λs. P (acc s)⟩ f _ ⟨λ_ s. P (acc s)⟩` exists. The frame
++is missing — every downstream proof that wants to lift a property of
++`acc` across `f` has to either unfold `f`'s definition or manually
++piece together the lift.
++
++**Why this is Tier 1 (post-strengthen).** Adding the frame lemma adds
++a logical fact (`P (acc) is preserved`) to the set of things provable
++about `f`. It's not a packaging move — it expands what consumers can
++prove without unfolding.
++
++**Example — `set_cdt_machine_state` (verified 2026-05-31)**
++
++Inspection:
++
++```isabelle
++(* spec/abstract/CSpaceAcc_A.thy:81 *)
++definition set_cdt :: "cdt ⇒ (unit, 'z::state_ext) s_monad" where
++  "set_cdt t ≡ do s ← get; put $ s\<lparr>cdt := t\<rparr> od"
++```
++
++`set_cdt` clearly doesn't touch `machine_state`. But:
++
++```bash
++$ grep -rn "set_cdt_machine_state" verification/l4v/proof/invariant-abstract/
++(empty — frame lemma missing)
++```
++
++**Patch added** (Untyped_AI.thy, after the existing
++`set_cdt_state_hyp_refs_of[wp]`):
++
++```isabelle
++lemma set_cdt_machine_state[wp]:
++  "⟨λs. P (machine_state s)⟩
++     set_cdt m
++   ⟨λrv s. P (machine_state s)⟩"
++  by (wpsimp simp: set_cdt_def)
++```
++
++Verified: `check-theory.sh --patch Untyped_AI.thy AInvs` returned
++`OK` in 74,463 ms.
++
++**Derivability check (Tier 1 post-strengthen)**: there is no `_old`
++form to derive — Pattern G adds a frame lemma that didn't exist
++before. Technically this looks like Tier 2 additive, BUT it's
++information-adding (not just automation-restructuring), so Tier 1
++classification with `additive` verdict + SKIP §4.5 is the operational
++treatment.
++
++**Lesson — Pattern G is a scanner blind spot.** `spec_strengthen_scan.py`
++doesn't currently detect missing frame lemmas — they have a
++non-obvious shape (`P (accessor)` both before and after, instead of
++the set-then-equate shape Pattern B catches). Manual detection
++recipe:
++
++1. Pick an op `f`. Read its definition. Note which state fields it
++   updates.
++2. Enumerate state accessors NOT in (1).
++3. For each missing-frame candidate, grep `f_<accessor>` in
++   `verification/l4v/proof/`. If empty, candidate is real.
++
++Real l4v examples of Pattern G coverage being healthy (don't
++duplicate, just illustrating shape):
++- `set_cdt_state_refs_of[wp]` (`Untyped_AI.thy:2862`)
++- `cap_move_typ_at` (`CSpace_AI.thy:3302`)
++- `cap_swap_typ_at` (`CSpace_AI.thy:3946`)
++- `crunch update_cdt caps_of_state` (`CSpace_AI.thy:3624`)
++
++---
++
++## Pattern E — Missing co-preserved invariant
++
++**Shape.** An operation has several separate preservation lemmas
++(`f_valid_pspace`, `f_valid_mdb`, `f_valid_idle`, …) but no compound
++`f_invs` lemma. Or it has `f_invs` but its proof shows it actually
++preserves more (e.g. `valid_arch_state` plus everything in `invs`).
++
++**Example — `cap_insert`'s compound invariant**
++
++```isabelle
++(* proof/invariant-abstract/CSpace_AI.thy:3860 (approx) *)
++lemma cap_insert_invs[wp]:
++  "\<lbrace>invs and cte_wp_at (\<lambda>c. c = NullCap) dest and valid_cap cap
++        and tcb_cap_valid cap dest and …\<rbrace>
++   cap_insert cap src dest \<lbrace>\<lambda>rv. invs\<rbrace>"
++```
++
++The proof composes ~7 separate lemmas (`cap_insert_valid_pspace`,
++`cap_insert_ifunsafe`, `cap_insert_idle`, `cap_insert_mdb_cte_at`,
++`cap_insert_valid_irq_node`, …). These all coexist with the compound
++lemma — that's correct (the building blocks are useful on their own).
++
++The *anti-pattern* would be: an operation has all the building blocks
++but no compound `_invs` lemma, forcing every caller to manually
++`hoare_post_conj` the components together. The scanner doesn't detect
++this directly — find it by inspection: in any `_AI.thy` file, search for
++`crunches <op>` blocks with many `for` lines but no
++`lemma <op>_invs` nearby.
++
++**Move.** State the missing compound lemma:
++
++```isabelle
++lemma <op>_invs[wp]:
++  "\<lbrace>invs and <op-specific premises>\<rbrace> <op> args \<lbrace>\<lambda>_. invs\<rbrace>"
++  by (wpsimp wp: <op>_valid_pspace <op>_valid_mdb <op>_valid_idle …
++                 simp: invs_def)
++```
++
++**Downstream impact.** Largest among the five patterns. Every consumer
++that previously assembled the compound by hand can collapse to a single
++`wp <op>_invs`. Build wall may go *up* slightly in the AI file (one more
++lemma to verify) but goes *down* in every downstream session that uses
++it.
++
++---
++
++## Anti-pattern — don't strengthen the spec by tightening the definition
++
++If the strengthening involves changing the *definition* of a kernel
++operation in `spec/abstract/**`, you're no longer strengthening — you're
++modifying the kernel's observable behaviour. That belongs to the
++`isabelle_prover_haskell` or `isabelle_prover_c` flow, not here. This
++sub-skill only changes **statements about** existing definitions, not
++the definitions themselves.
++
++The only exception: adding a *derived* `definition` (e.g. naming an
++expression that already appears unfolded throughout the file) is fine —
++it's a renaming, not a behaviour change.
++
++---
++
++# Case studies — distilled from past sessions
++
++Curated record of strengthenings that proved illustrative — either as
++**success templates** (re-usable patterns) or as **failure modes**
++(traps to avoid). Sweeping / repetitive patches (e.g. 8× `real_cte_at`
++companion additions in a single session) are NOT recorded here; only
++load-bearing examples.
++
++Source logs: [AInvs-20260525.md](../../../../reports/spec-strengthen/AInvs-20260525.md),
++[AInvs-20260526.md](../../../../reports/spec-strengthen/AInvs-20260526.md).
++
++Add new entries here when you encounter a case that *teaches* something
++new about a pattern — not just another instance of an already-documented
++shape.
++
++## ★ Case 1 (Pattern A, success) — `lookup_slot_cte_at_wp` cte_at → real_cte_at
++
++**File:** `proof/invariant-abstract/CSpace_AI.thy`
++**Wall delta:** −47.7% file wall (single-lemma change)
++**What changed:**
++
++```isabelle
++(* before *)
++lemma lookup_slot_cte_at_wp[wp]:
++  "\<lbrace>valid_objs\<rbrace> lookup_slot_for_thread t addr \<lbrace>\<lambda>rv. cte_at (fst rv)\<rbrace>,-"
++  by (strengthen real_cte_at_cte, wp)
++
++(* after — postcond strengthened, body redirects to existing strong form *)
++lemma lookup_slot_cte_at_wp[wp]:
++  "\<lbrace>valid_objs\<rbrace> lookup_slot_for_thread t addr \<lbrace>\<lambda>rv. real_cte_at (fst rv)\<rbrace>,-"
++  by (rule lookup_slot_real_cte_at_wp)
++```
++
++**Why the dramatic wall drop:** downstream same-file lemmas were each
++re-running `strengthen real_cte_at_cte` after each `wp` step. Strengthening
++the rule at source eliminated that conversion across every consumer in
++the same file.
++
++**Lesson — when Pattern A genuinely wins:** the weak form's *proof body*
++is `(strengthen <weakening_lemma>, wp)` — a literal one-line redirect to
++the strong companion. That means the weak lemma is **strictly redundant**
++once consumers can absorb the stronger postcond. Look for this shape
++before any A patch.
++
++**Derivability check** (A' ⟹ A):
++```isabelle
++lemma lookup_slot_cte_at_wp_old: "\<lbrace>valid_objs\<rbrace> lookup_slot_for_thread t addr \<lbrace>\<lambda>rv. cte_at (fst rv)\<rbrace>,-"
++  by (rule hoare_strengthen_postE_R[OF lookup_slot_cte_at_wp])
++     (rule real_cte_at_cte)
++```
++
++---
++
++## ★ Case 2 (Pattern C, success) — `unbind_maybe_notification_not_bound` drop unused premises
++
++**File:** `proof/invariant-abstract/Finalise_AI.thy`
++**Wall delta:** −6.8% file wall
++**Downstream consumers:** 6 (across all 5 arch dirs)
++**What changed:**
++
++```isabelle
++(* before *)
++lemma unbind_maybe_notification_not_bound:
++  "\<lbrace>\<lambda>s. ntfn_at ntfnptr s \<and> valid_objs s \<and> sym_refs (state_refs_of s)\<rbrace>
++     unbind_maybe_notification ntfnptr
++   \<lbrace>\<lambda>_. obj_at (\<lambda>ko. \<exists>ntfn. ko = Notification ntfn \<and> ntfn_bound_tcb ntfn = None) ntfnptr\<rbrace>"
++  ...
++
++(* after — valid_objs and sym_refs dropped *)
++lemma unbind_maybe_notification_not_bound:
++  "\<lbrace>\<lambda>s. ntfn_at ntfnptr s\<rbrace>
++     unbind_maybe_notification ntfnptr
++   \<lbrace>\<lambda>_. obj_at (\<lambda>ko. \<exists>ntfn. ko = Notification ntfn \<and> ntfn_bound_tcb ntfn = None) ntfnptr\<rbrace>"
++```
++
++**Proof body unchanged.** Original body uses only `get_simple_ko_wp`,
++`sbn_obj_at_impossible`, `simple_obj_set_prop_at` + `clarsimp simp: obj_at_def` —
++none reference `valid_objs` or `sym_refs`. The premises were copied
++from sibling `unbind_notification_not_bound` (which DOES use both)
++without re-examining the actual proof body.
++
++**Lesson — Pattern C green flag:** when a lemma's proof body is short
++(≤5 lines) and uses only `wp` rules + `clarsimp` (no `valid_objsE`,
++no `sym_refs_*` consumers), the precondition is suspect. Try removing
++each non-structural conjunct; `check-theory.sh --patch` answers in ~60s.
++
++**Derivability check** (A' ⟹ A):
++```isabelle
++lemma unbind_maybe_notification_not_bound_old:
++  "\<lbrace>\<lambda>s. ntfn_at ntfnptr s \<and> valid_objs s \<and> sym_refs (state_refs_of s)\<rbrace>
++     unbind_maybe_notification ntfnptr \<lbrace>\<lambda>_. ...\<rbrace>"
++  by (rule hoare_pre[OF unbind_maybe_notification_not_bound]) simp
++```
++
++---
++
++## ★ Case 3 (Pattern C, failure) — `suspend_unlive` premise is load-bearing
++
++**File:** `proof/invariant-abstract/IpcCancel_AI.thy`
++**Attempted:** Drop `valid_mdb ∧ valid_objs` from precondition.
++**Result:** FAILED — proof left goal
++`bound_tcb_at ((=) None) t s ⟹ valid_mdb s ∧ valid_objs s`.
++
++**Lesson:** Pattern C is "try and see" but ~50% fail. The proof body
++matters: even when it looks like it doesn't use `valid_mdb`, internal
++wp rules may invoke `valid_objsE` or `valid_mdb_lift`-style intermediaries.
++Always check via `check-theory.sh --patch` — never reason about premise
++necessity in advance.
++
++---
++
++## ★ Case 4 (Pattern A, wrong-direction trap) — `set_cdt_valid_objs` is not redundant
++
++**Where scanner says:** `set_cdt_valid_objs` (CSpace_AI.thy:3927) is paired
++with stronger `set_cdt_pspace` (line 3309). `valid_pspace ⟹ valid_objs`,
++so prima facie A "delete weak".
++
++**Why it's wrong:** preconditions are *incomparable*:
++```
++set_cdt_valid_objs : \<lbrace>valid_objs\<rbrace> set_cdt m \<lbrace>\<lambda>_. valid_objs\<rbrace>
++set_cdt_pspace    : \<lbrace>valid_pspace\<rbrace> set_cdt m \<lbrace>\<lambda>_. valid_pspace\<rbrace>
++```
++A caller with `valid_objs` but NOT `valid_pspace` (e.g. mid-proof state
++where pspace_distinct is being rebuilt) can use the first but not the
++second. The weak lemma is the granular building block; deleting it
++breaks ~9 downstream files.
++
++**Lesson — Pattern A direction rule:** check that the strong companion's
++**precondition is at least as strong** (more restrictive) as the weak's.
++If not, the lemmas are incomparable entry points and both stay. The
++scanner pairs by postcond chain only; the human checks the precondition.
++
++---
++
++## ★ Case 5 (Pattern B, additive) — `set_cdt_cdt_update` new functional postcond
++
++**File:** `proof/invariant-abstract/CSpace_AI.thy` (post `set_cdt_valid_pspace`)
++**What added:**
++
++```isabelle
++lemma set_cdt_cdt_update:
++  "\<lbrace>\<top>\<rbrace> set_cdt t \<lbrace>\<lambda>_ s. cdt s = t\<rbrace>"
++  by (wpsimp simp: set_cdt_def)
++```
++
++**Why no immediate downstream win:** existing proofs that need
++`cdt s = t` after a `set_cdt t` had **already worked around the absence**
++by unfolding `set_cdt_def` manually (e.g. `update_cdt_cdt`,
++`cap_move_typ_at`). They don't refactor automatically just because the
++new lemma exists — Pattern B is *opt-in*.
++
++**Lesson — Pattern B ROI is delayed:** the immediate verification cost
++is small (one new lemma, seconds to verify), but ROI accrues only when
++future proofs are written *or* a separate refactor pass replaces manual
++`unfold *_def` with `wp <op>_<functional>`.
++
++**Derivability check:** Pattern B has no "old form" — the lemma is
++brand new. Derivability gate is **skipped** for additive patterns.
++
++---
++
++## ★ Case 6 (Pattern E, failure) — `set_cdt_invs` blocked by missing preservation rules
++
++**Attempted:** Add compound
++
++```isabelle
++lemma set_cdt_invs:
++  "\<lbrace>\<lambda>s. invs s \<and> valid_mdb (s\<lparr>cdt := m\<rparr>)\<rbrace> set_cdt m \<lbrace>\<lambda>_. invs\<rbrace>"
++```
++
++**Result:** 5 proof-tactic variants all FAILED. Root cause:
++`set_cdt` lacks `[wp]` preservation rules for many of `invs`'s 25
++components — particularly arch-specific ones:
++`valid_arch_state`, `valid_machine_state`, `valid_vspace_objs`,
++`valid_arch_caps`, `valid_global_objs`, `valid_kernel_mappings`,
++`equal_kernel_mappings`, `valid_asid_map`,
++`valid_global_vspace_mappings`, `pspace_in_kernel_window`,
++`cap_refs_in_kernel_window`, `pspace_respects_device_region`,
++`cap_refs_respects_device_region`, `valid_irq_handlers`,
++`valid_ioports`, `only_idle`, `valid_global_refs`.
++
++Error signature on each failed attempt: `Unification bound exceeded`
++or `Failed to finish proof` with the conjunctive postcondition still
++holding 20+ unfolded components.
++
++**Lesson — Pattern E preflight is mandatory:** before composing
++`op_invs`, run a per-component check (the coverage matrix from
++`spec_coverage_matrix.py`). If any `invs` component lacks
++`op_<component>[wp]`, the compound proof cannot close. Filling those
++gaps is base plumbing (a separate multi-step project), not a
++strengthening patch.
++
++**Workaround pattern when E is infeasible:** stop at the building-block
++level. Add the missing `op_<component>[wp]` rules one by one, each as
++its own Pattern B/E-precursor patch. Compound `op_invs` becomes
++possible only after the matrix shows ≥95% coverage.
++
++---
++
++## ★ Case 7 (Pattern A, success — historic) — `set_original_is_original_cap` from 20260525
++
++(Now superseded by Case 5 as the canonical Pattern B example. The
++20260525 entry showed a slightly different shape — `set_original` modifies
++a boolean flag, while Case 5's `set_cdt` modifies a record field. The
++proof tactic `by (wpsimp simp: set_X_def)` works identically.)
++
++Use Case 5 as the template. This case is referenced only for completeness.
+diff --git a/.claude/skills/isabelle_prover_spec/SKILL.md b/.claude/skills/isabelle_prover_spec/SKILL.md
+new file mode 100644
+index 0000000..3f3e074
+--- /dev/null
++++ b/.claude/skills/isabelle_prover_spec/SKILL.md
+@@ -0,0 +1,409 @@
++---
++name: isabelle-prover-spec
++description: "Strengthen seL4 Abstract Spec postconditions and invariant-abstract guarantees. Use when adding stronger statements to spec/abstract/ or proof/invariant-abstract/."
++---
++
++# Spec type — strengthen the specification
++
++This sub-skill strengthens **statements about** existing kernel
++operations — not the definitions themselves. The goal isn't faster
++build; it's a specification that catches more real bugs, exposes more
++usable postconditions, and removes redundant noise.
++
++Inherits the common contract from `isabelle_prover` (5 hard rules,
++common tools, patch format, session mapping). The text below is
++structured **theory first, then patterns, then workflow** — that order
++matters: Patterns are instances of the Taxonomy, not first-class
++concepts.
++
++## §1 — What is a Stronger Spec?
++
++For a Hoare triple `⟨P_old⟩ f ⟨Q_old⟩`, a new triple `⟨P_new⟩ f ⟨Q_new⟩`
++is **strictly stronger** iff both:
++
++```
++  P_old  ⟹  P_new     (new accepts every old precondition; pre is weaker)
++  Q_new  ⟹  Q_old     (new yields every old postcondition fact; post is stronger)
++```
++
++Equivalent statement: any consumer that used `_old` can substitute
++`_new` and still get what they needed.
++
++This is mechanically witnessed in Step 4.5 (Derivability check) by
++constructing an aux lemma `<name>_old` whose body uses `<name>_new`
++plus a monotonicity rule. If derivability fails to construct, the
++change is **not a strengthening** — it's an alternative statement.
++
++The §10 anti-pattern boundary (no spec-definition changes here) is
++unchanged.
++
++## §2 — Strengthening Taxonomy
++
++The taxonomy classifies WHAT changed; Patterns (§3) classify HOW we
++found the opportunity. Acceptance gates attach to the taxonomy tier,
++not to the Pattern.
++
++### Tier 1 — Logical Strengthening
++
++The new statement is logically stronger. Information content changes.
++
++| Move | Direction |
++|---|---|
++| **Premise Weakening** | `P_old ⟹ P_new`, `Q_old = Q_new` |
++| **Postcondition Strengthening** | `P_old = P_new`, `Q_new ⟹ Q_old` |
++| **Monotone Strengthening** | both directions strictly |
++
++**Derivability check (§4.5) is mandatory.** A Tier 1 change without a
++working derivability witness is not actually a strengthening.
++
++### Tier 2 — Automation Strengthening
++
++The statement is **additive** — a brand-new lemma whose existence
++doesn't logically subsume any old lemma. Information is reorganized;
++wp surface area grows. Example: a compound `op_invs` lemma that
++composes existing per-component preservation lemmas.
++
++**Derivability check (§4.5) is SKIPPED** — there is no `_old` form
++that the new lemma replaces. Verified by Exp 2 (2026-05-31):
++building-block lemmas with weak preconditions and compound `_invs`
++with strong preconditions are mutually independent surfaces; neither
++derives the other.
++
++### Tier 3 — Packaging Strengthening
++
++Knowledge reorganization, **not a true strengthening**. Example: a
++weak-form alias whose body is `(strengthen <weak>, wp)` — purely a
++unification helper.
++
++**Pattern A is here, not in Tier 1.** Promote to Tier 1 only when
++consumer analysis proves the weak form has no users. Otherwise the
++move is API cleanup at most.
++
++### Why this matters operationally
++
++The §4.5 gate, §6 acceptance criteria, and §5 ROI weighting all key
++off this tier label. Misclassifying a change (e.g. treating a
++Pattern A "dedup" as Tier 1) makes the gate misfire.
++
++## §3 — Pattern Index (positional heuristics)
++
++Patterns are *how the scanner finds the opportunity*. Each maps to a
++Tier so the workflow knows which gates apply.
++
++| Pattern | Tier | What it finds | Detector |
++|---|---|---|---|
++| **C** Premise removal | T1 pre-weak | `valid_objs`/`invs`/`sym_refs` conjunct in precondition that proof body doesn't actually use | `spec_strengthen_scan.py --pattern C` |
++| **B** Functional postcond | T1 post-strg | `set_X v` op has only preservation lemmas, no `⟨⊤⟩ set_X v ⟨λ_ s. X s = v⟩` | `spec_strengthen_scan.py --pattern B` |
++| **D** Loose bound → exact | T1 post-strg | `≤` / `⊆` in postcond where operation forces `=` | manual |
++| **G** Frame preservation | T1 post-strg | Op doesn't touch accessor X, but lemma `⟨λs. P (X s)⟩ op _ ⟨λ_ s. P (X s)⟩` is missing | manual; future scanner |
++| **E** Compound `_invs` | T2 auto | Op has many `op_<inv>` preservation lemmas, no compound `op_invs` | `spec_coverage_matrix.py` (Pattern E preflight) |
++| **A** Paired weak/strong | T3 pkg | Two lemmas about same op with `Q' ⟹ Q` chain; weak may be redundant | `spec_strengthen_scan.py --pattern A` |
++
++### Pattern F note (state delta) — empirically rejected
++
++User-proposed Pattern F was: combine `changed-fact ∧ unchanged-facts`
++in one triple. Exp 3 (2026-05-31) confirmed l4v idiom keeps these
++**decomposed** as B (one functional lemma) + G (one+ frame lemma) per
++accessor. Theoretically same family; ergonomically separate. The
++SKILL keeps B and G distinct.
++
++### ⚠ Pattern A false-positive warning (Tier 3)
++
++Scanner-flagged Pattern A pairs are wrong ~70-80% of the time. Two
++failure modes:
++
++1. **Wrong direction** — the "weak" lemma is the granular building
++   block, the "strong" lemma is a compound built FROM it. Deleting
++   building blocks breaks the compound.
++2. **Cross-op incomparable preconditions** — two lemmas share a
++   Hoare-body identifier but have incomparable preconditions
++   (`valid_pspace` vs `valid_objs`+extras). Not substitutable.
++
++Always read both lemmas + grep cross-file usages before acting on A.
++Pattern A is the LAST pattern to try.
++
++### ⚠ Pattern E preflight checklist (Tier 2)
++
++Before attempting `op_invs`:
++
++1. Does `op_invs_minor`, `op_invs_<variant>`, or `op_<state>_invs`
++   already exist? Check `grep '^lemma op.*invs' verification/l4v/proof/`.
++   If yes, skip — the gap is filled.
++2. Does `op` have a `[wp]` preservation rule for **every** component
++   of `invs`? Roughly 25 components including arch-specific ones
++   (`valid_arch_state`, `valid_machine_state`, `valid_vspace_objs`,
++   `valid_global_refs`, `valid_irq_handlers`,
++   `pspace_in_kernel_window`, …). Missing any single component blocks
++   the compound proof. Verified by `set_cdt_invs` failure (Exp 2,
++   2026-05-26 log).
++
++## §4 — Targeting (read the candidates file)
++
++```
++python3 tools/critical_path/rank_candidates.py --limit 30 \
++  --out reports/spec-strengthen/candidates-<YYYYMMDD>.md
++```
++
++The candidates file is grouped by Tier order (T1: C → G → D → B; T2: E;
++T3: A) and within each group ranked by **ROI** = consumer_count ×
++tier_weight, with `[done]` deduplication against past
++`reports/spec-strengthen/AInvs-*.md` logs.
++
++### ROI weights (rank_candidates.py default)
++
++```
++pre-weak (C)            = 5
++monotone-strengthen     = 5
++frame preservation (G)  = 4
++state-delta (B / D)     = 3
++compound (E)            = 2
++packaging (A)           = 1
++```
++
++Weights are constants at the head of `rank_candidates.py`; move them
++to `tools/critical_path/roi_weights.json` if more tuning becomes
++needed.
++
++### Scanner reliability (calibration from 2026-05-25/26/30 sessions)
++
++| Pattern | Scanner accuracy | Recommended validation |
++|---|---|---|
++| C | ~50% (premise may be load-bearing) | `check-theory.sh --patch` ~60s |
++| B | ~95% detect, low downstream ROI | Manual review of consumer proofs |
++| A | ~20-30% real | Read both lemmas + grep cross-file |
++| G | scanner doesn't detect; manual only | Inspect op definition vs missing accessor frames |
++| E | preflight matrix gates | `spec_coverage_matrix.py` |
++
++The scanner ranks; the human judges; `check-theory.sh` is the only
++acceptance gate. Treat scanner output as a work queue, not a verdict.
++
++## §5 — Workflow (per candidate)
++
++### Step 1 — pick from candidates file
++
++Open the dated candidates file. Default = top un-done T1 entry. Read
++±20 lines around `file:line`.
++
++For Pattern A: also `grep -rln 'name' proof/` on both names; confirm
++the pairing is real and direction is right (see §3 A warning).
++
++For Pattern E: run the preflight checklist (§3 E warning) FIRST.
++
++### Step 2 — draft the patch
++
++Patch goes under `logs/spec-strengthen-<file>-<pattern>-<YYYYMMDD>.patch`.
++Format described in `isabelle_prover` SKILL.md.
++
++| Pattern | Move |
++|---|---|
++| C | Edit lemma; remove suspect conjunct from precondition. Proof body usually unchanged. |
++| B | Insert new lemma below the existing preservation lemma. |
++| D | Replace `≤` / `\<subseteq>` with `=` in postcondition. |
++| G | Insert frame lemma `⟨λs. P (acc s)⟩ op _ ⟨λ_ s. P (acc s)⟩` next to existing `op_*` lemmas. |
++| E | Add compound lemma below the last preservation lemma. |
++| A | Inline strong form, OR tag weak `[wp del]` (conservative), OR delete weak (only if `grep` confirmed no cross-file users). |
++
++### Step 2.5 — REPL Preflight (Pattern C only, currently grep-based)
++
++**Why**: Pattern C false-positives waste ~60s per `check-theory.sh
++--patch` cycle. A static analysis can predict load-bearing premises.
++
++**Initial heuristic (current)**: grep the lemma's proof body for the
++target premise name. If `valid_objs` appears as an argument to any
++`wp`/`rule`/`dest`/`elim` tactic, the premise is likely load-bearing.
++If it doesn't appear at all, premise is likely-removable.
++
++**Future enhancement** (verified feasible — Exp 4b, 2026-05-31):
++connect to Isa-REPL via `tools/seL4-proof-search/Isa-Repl/`, init the
++target `.thy` file, step through the existing proof, and capture the
++subgoal at each step. If `valid_objs` appears in no subgoal of any
++step, it's strongly removable. The `_compile(snippet)` API hit
++"context too complex" for AInvs — production integration needs
++`_step()` over the existing theory, not isolated `_compile` of a
++fragment. Effort estimate: ~200 lines wrapping
++`tools/seL4-proof-search/Isa-Repl/run.sh` + py4j client.
++
++This step is **optional today, mandatory once the REPL wrapper
++lands**.
++
++### Step 3 — verify in isolation
++
++```
++bash $ISA_SCRIPTS/check-theory.sh <file.thy> <session>                  # baseline
++bash $ISA_SCRIPTS/check-theory.sh <file.thy> <session> --patch <patch>  # trial
++```
++
++Patch must reach `OK`. **No `sorry` / `oops` / `axiomatization`.**
++
++Wall times: baseline/trial differ ±5% from noise (JVM, disk cache).
++Single-run timing is informational only.
++
++### Step 4 — measure impact (MANDATORY)
++
++```
++python3 tools/critical_path/spec_impact.py <patch> <file.thy> \
++  --baseline-wall <ms> --trial-wall <ms> \
++  --tree verification/l4v/proof \
++  --append-to reports/spec-strengthen/<session>-<YYYYMMDD>.md
++```
++
++Report auto-appends to the dated strengthen-log. Hard gates:
++
++| Gate | Required |
++|---|---|
++| No `weakening` verdict | HARD STOP |
++| ≥ 1 lemma with `premise-weaken` / `monotone-strengthen` / `postcond-strengthen` / `additive` | yes |
++| Trial wall ≤ baseline × 1.30 | yes (noise tolerance) |
++
++**Verdict → Tier mapping (drives §4.5 gate applicability):**
++
++| Verdict | Tier | Tactic for §4.5 |
++|---|---|---|
++| `premise-weaken` | T1 | per §4.5 table |
++| `monotone-strengthen` | T1 | per §4.5 table |
++| `postcond-strengthen` | T1 | per §4.5 table |
++| `additive` | T2 | **SKIP §4.5** (no old to derive) |
++| `rewrite` | manual | escalate to human |
++| `removal` | T3 | manual derivability proof (trivial) |
++| `weakening` | — | **abandon** |
++
++### Step 4.5 — Derivability check (Tier 1 only)
++
++A Tier 1 strengthening is only consumable in place of the old form if
++A_new ⟹ A_old can be machine-proven. Construct a `<name>_old` aux
++lemma whose statement is the **verbatim old triple** and whose body
++uses the new lemma + monotonicity. Place the aux *immediately after*
++the strengthened lemma in the patch so it's verified in the same
++`check-theory.sh --patch` pass.
++
++Tactic table (use the column matching the triple shape):
++
++| Triple shape | Old → New | Derivability tactic |
++|---|---|---|
++| Plain valid `⟨P⟩ f ⟨Q⟩` | premise weakened | `by (rule hoare_weaken_pre[OF <new>]) simp` |
++| ValidE `⟨P⟩ f ⟨Q⟩,⟨E⟩` | premise weakened | `by (rule hoare_pre[OF <new>]) simp` |
++| ValidE_R `⟨P⟩ f ⟨Q⟩,-` | premise weakened | `by (rule hoare_pre[OF <new>]) simp` |
++| Plain valid | post strengthened | `by (rule hoare_strengthen_post[OF <new>]) <Q_new→Q_old rule>` |
++| ValidE_R | post strengthened | `by (rule hoare_strengthen_postE_R[OF <new>]) <rule>` |
++| Plain valid | `≤` → `=` (D) | `by (rule hoare_strengthen_post[OF <new>]) simp` |
++
++**`hoare_pre` vs `hoare_weaken_pre` distinction matters** (Exp 1,
++2026-05-31): l4v's `hoare_pre` is the validE version; using it on a
++plain valid triple errors with "type mismatch". Use the table.
++
++Acceptance: the patch with appended `<name>_old` must `check-theory.sh`
++to OK. Cost is ~+9% wall vs the patch alone (one extra simple
++proof). Verified on `unbind_maybe_notification_not_bound`:
++baseline 41s, with aux 45s — well within noise.
++
++### Step 5 — apply
++
++Both §4 and §4.5 (if Tier 1) must have passed.
++
++```
++bash $ISA_SCRIPTS/check-theory.sh <file.thy> <session> --apply <patch>
++```
++
++`--apply` writes the source file but does NOT rebuild the session heap.
++Downstream wp-engine work reduction (the real ROI) materializes only
++after the next full `isabelle build`. Don't measure single-patch
++downstream impact — batch 5-10 strengthenings, then one session
++rebuild, then compare session-total wall vs the pre-batch baseline.
++
++After `--apply`, prepend one short paragraph to the auto-appended impact
++block in the strengthen-log:
++- Pattern letter, Tier
++- One sentence on what the strengthening enables downstream
++- Session rebuild status (default: not yet)
++
++The `<name>_old` aux lemma stays in source as **permanent witness of
++strengthening**. Don't delete it later.
++
++### Step 6 — PR construction (parent SKILL rule 5)
++
++Every accepted patch produces a per-experiment record under
++`reports/experiments/<NNNN>-<short-name>/`. Skeleton at
++[`reports/experiments/_template/`](../../../reports/experiments/_template/):
++
++| File | Content |
++|---|---|
++| `patch.diff` | The exact source change (output of `git -C verification/l4v diff <file>`). Includes the `_old` witness lemma for Tier 1 changes. |
++| `derivability.thy` | Standalone snippet of the `<name>_old` lemma. Skipped for Tier 2 patches. |
++| `command.sh` | The exact `check-theory.sh --patch` / `--apply` / `spec_impact.py` invocation. Re-runnable. |
++| `measurement.json` | `{"baseline_wall_ms": …, "trial_wall_ms": …, "delta_pct": …, "baseline_ref": "reports/golden-baseline/walls.json#<session>", "tier": "T1\|T2\|T3", "consumers": …, "verdict": "…", "strength_score": …}` |
++
++PR template at
++[`.github/PULL_REQUEST_TEMPLATE/spec-strengthen.md`](../../../.github/PULL_REQUEST_TEMPLATE/spec-strengthen.md).
++
++**Bundling rule**: one PR may cover multiple experiments if all are in
++the same session and the batch is logically coherent (e.g. "all
++`cte_at → real_cte_at` ports").
++
++## §6 — Acceptance Gates
++
++Apply iff **all** of the following hold:
++
++1. **Step 3 — `check-theory.sh --patch` returns `OK`** on the
++   strengthened lemma.
++2. **Step 4 — impact verdict** is `premise-weaken`,
++   `monotone-strengthen`, `postcond-strengthen`, or `additive`. **No
++   `weakening` verdict.**
++3. **Step 4.5 — derivability check passes** (Tier 1 only; skip for
++   T2 additive lemmas).
++4. Statement is strictly more informative (matches §1 definition).
++5. The 5 hard rules from `isabelle_prover` are inherited.
++
++**Semantic Strength Score (SSS) is NOT a gate.** It's a ranking
++metric reported by `spec_impact.py` to drive the candidate file's
++sort order. SSS = `#removed_premises + #added_post_facts + 0.5 ×
++#added_frame_facts`. A high SSS without a passing verdict means
++nothing; a verdict with low SSS still passes if all gates do.
++
++Spec strengthening trades build time for verification strength —
++slightly slower build with stronger spec is the intended direction.
++
++## §7 — Tools
++
++| Tool | Status | Purpose |
++|---|---|---|
++| `$ISA_SCRIPTS/check-theory.sh` | ✓ existing | Only verification gate. |
++| `$ISA_SCRIPTS/goal-at.sh` | ✓ existing | Inspect proof state at line. |
++| `$ISA_SCRIPTS/sledgehammer.sh` | ✓ existing | Find `by (metis …)` reconstruction. |
++| `tools/critical_path/spec_strengthen_scan.py` | new | Pattern A/B/C scanner. |
++| `tools/critical_path/spec_impact.py` | new | MANDATORY Step 4. Verdict + SSS. |
++| `tools/critical_path/rank_candidates.py` | new | Ranked candidates file via ROI = consumers × tier_weight. |
++| `tools/critical_path/spec_coverage_matrix.py` | future | Pattern E preflight matrix. |
++| `tools/critical_path/repl_premise_probe.py` | TODO | Step 2.5 REPL-driven preflight; see §5 Step 2.5. |
++| `verification/l4v/tools/proofcount/` (upstream) | ✓ existing | Heavyweight ground-truth metrics (full session rebuild). |
++
++## §8 — References (read on demand)
++
++| When | Read |
++|---|---|
++| Current candidates | [`reports/spec-strengthen/candidates-<YYYYMMDD>.md`](../../../reports/spec-strengthen/) |
++| Worked case studies per pattern | [`references/spec-strengthen-patterns.md`](../isabelle_prover/references/spec-strengthen-patterns.md) |
++| Session dependency map | [`references/spec-downstream-map.md`](../isabelle_prover/references/spec-downstream-map.md) |
++| Refinement (corres/ccorres) | [`references/refinement-proofs.md`](../isabelle_prover/references/refinement-proofs.md) |
++| Past strengthen logs (precedents) | [`reports/spec-strengthen/AInvs-*.md`](../../../reports/spec-strengthen/) |
++
++## §9 — Experiment Calibration (2026-05-31)
++
++| Exp | Question | Result | SKILL impact |
++|---|---|---|---|
++| 1 | Pattern C derivability cost mandatory feasible? | ✓ +9% wall on `unbind_maybe_notification_not_bound` | §4.5 mandatory for T1, tactic table by triple shape |
++| 2 | Pattern E derivability proves _component from compound? | ✗ Building blocks NOT derivable from compound — mutually independent surfaces | §4.5 SKIPPED for T2; Pattern E lives in Tier 2, not Tier 1 |
++| 3 | Is Pattern F (composite changed ∧ unchanged) used in l4v? | ✗ Rarely; idiom decomposes into separate B and G lemmas | Keep B and G distinct; Pattern F not added |
++| 4a | Is Pattern G a real gap? | ✓ `set_cdt_machine_state[wp]` is genuinely missing and verifies | Pattern G is a first-class Tier 1 entry |
++| 4b | REPL preflight feasible? | ✓ Partial: init/load works; `_compile(snippet)` errors on complex sessions; `_step()` path TBD | §5 Step 2.5: future REPL path scoped, current uses grep heuristic |
++
++## §10 — Anti-pattern (unchanged from prior versions)
++
++If the strengthening involves changing the **definition** of a kernel
++operation in `spec/abstract/**`, you're no longer strengthening —
++you're modifying observable kernel behaviour. That belongs to the
++`isabelle_prover_haskell` or `isabelle_prover_c` flow, not here. This
++sub-skill changes **statements about** existing definitions only.
++
++The only exception: adding a *derived* `definition` (e.g. naming an
++expression that already appears unfolded throughout the file) is fine
++— it's a renaming, not a behaviour change.

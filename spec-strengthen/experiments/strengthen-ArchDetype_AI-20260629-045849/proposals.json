@@ -1,0 +1,44 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future consumer of tcb_arch_detype' in detype_invs or related proofs that prove valid_arch_tcb preservation without a concrete ko_at witness",
+  "hint_lemma": "tcb_arch_detype",
+  "lemma_name": "tcb_arch_detype'",
+  "anchor_line": 191,
+  "new_lemma": "lemma tcb_arch_detype'[detype_invs_proofs]:\n  \"valid_arch_tcb (tcb_arch t) s\n      \\<Longrightarrow> valid_arch_tcb (tcb_arch t) (detype (untyped_range cap) s)\"\n  apply (clarsimp simp: valid_arch_tcb_def)\n  done",
+  "rationale": "The original proof body `apply (clarsimp simp: valid_arch_tcb_def)` never mentions ko_at, erule, frule, drule or any rule that consumes `ko_at (TCB t) p s`. The simplification of valid_arch_tcb_def on ARM expands to a trivially-true condition (ARM valid_arch_tcb holds unconditionally or depends only on the tcb_arch field), so the ko_at witness is structurally unused.",
+  "strengthening_claim": "valid_arch_tcb (tcb_arch t) s ==> (ko_at (TCB t) p s \\<and> valid_arch_tcb (tcb_arch t) s)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  done"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "valid_vspace_obj_detype or any caller that can supply a vs_lookup witness but not a concrete ko_at for the page-structure object",
+  "hint_lemma": "valid_vspace_obj",
+  "lemma_name": "valid_vspace_obj'",
+  "anchor_line": 310,
+  "new_lemma": "lemma valid_vspace_obj':\n  \"\\<And>ao p. \\<lbrakk> valid_vspace_obj ao s; (\\<exists>\\<rhd>p) s \\<rbrakk> \\<Longrightarrow>\n       valid_vspace_obj ao (detype (untyped_range cap) s)\"\n  apply (case_tac ao; simp; erule allEI ballEI; clarsimp simp: ran_def;\n         drule vs_lookup_pages_vs_lookupI)\n  subgoal for p t r ref i by (crush i)\n  subgoal for p t i ref by (cases \"t i\"; crush i)\n  subgoal for p t i ref by (cases \"t i\"; crush i)\n  done",
+  "rationale": "The scanner reports ko_at never appears in the proof body. The proof drives entirely through vs_lookup_pages_preserved via the crush private method, which consumes the `(\\<exists>\\<rhd>p) s` witness; ko_at is not passed to any rule in the tactic chain. The new lemma is placed inside the same `context begin` block (L285–312) so the private `crush` method is still in scope.",
+  "strengthening_claim": "(valid_vspace_obj ao s \\<and> (\\<exists>\\<rhd>p) s) ==> (valid_vspace_obj ao s \\<and> ko_at (ArchObj ao) p s \\<and> (\\<exists>\\<rhd>p) s)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  done"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Any caller of delete_objects_invs that holds invs and the untyped cte_wp_at/descendants_range witnesses but not ct_active (e.g. non-active-thread delete paths)",
+  "hint_lemma": "delete_objects_invs",
+  "lemma_name": "delete_objects_invs'",
+  "anchor_line": 586,
+  "new_lemma": "lemma delete_objects_invs'[wp]:\n  \"\\<lbrace>(\\<lambda>s. \\<exists>slot. cte_wp_at ((=) (cap.UntypedCap dev ptr bits f)) slot s\n    \\<and> descendants_range (cap.UntypedCap dev ptr bits f) slot s) and\n    invs\\<rbrace>\n    delete_objects ptr bits \\<lbrace>\\<lambda>_. invs\\<rbrace>\"\n  apply (simp add: delete_objects_def)\n  apply (simp add: freeMemory_def word_size_def bind_assoc\n                   empty_fail_mapM_x ef_storeWord)\n   apply (rule hoare_pre)\n   apply (rule_tac G=\"is_aligned ptr bits \\<and> word_size_bits \\<le> bits \\<and> bits \\<le> word_bits\"\n                in hoare_grab_asm)\n   apply (simp add: mapM_storeWord_clear_um[unfolded word_size_def]\n                    intvl_range_conv[where 'a=machine_word_len, folded word_bits_def])\n   apply wp\n  apply clarsimp\n  apply (frule invs_untyped_children)\n  apply (frule detype_invariants, clarsimp+)\n  apply (drule invs_valid_objs)\n  apply (drule (1) cte_wp_valid_cap)\n  apply (simp add: valid_cap_def cap_aligned_def word_size_bits_def untyped_min_bits_def)\n  done",
+  "rationale": "The proof body of the original `delete_objects_invs` never references `ct_active` — no `rule ct_active`, no `simp add: ct_active_def`, no `drule ct_active`. The detype_invariants frule needs the `detype_locale` hypotheses (invs + untyped cap witnesses), not ct_active specifically. If the trial succeeds, this gives a strictly weaker precondition usable in paths where the current thread is not active.",
+  "strengthening_claim": "((\\<lambda>s. \\<exists>slot. cte_wp_at ((=) (cap.UntypedCap dev ptr bits f)) slot s \\<and> descendants_range (cap.UntypedCap dev ptr bits f) slot s) and invs) ==> ((\\<lambda>s. \\<exists>slot. cte_wp_at ((=) (cap.UntypedCap dev ptr bits f)) slot s \\<and> descendants_range (cap.UntypedCap dev ptr bits f) slot s) and invs and ct_active)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  done"
+ }
+]

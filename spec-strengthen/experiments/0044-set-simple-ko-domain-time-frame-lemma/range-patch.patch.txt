@@ -1,0 +1,6 @@
+2154 2154
+  by (wp hoare_drop_imps valid_sched_action_lift | simp add: set_simple_ko_def)+
+
+lemma set_simple_ko_domain_time[wp]:
+  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_simple_ko f ptr ep \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
+  by (wpsimp simp: set_simple_ko_def)

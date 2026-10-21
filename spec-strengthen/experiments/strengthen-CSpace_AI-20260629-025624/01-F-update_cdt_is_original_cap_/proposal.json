@@ -1,0 +1,12 @@
+{
+ "slot": "F",
+ "delivery": "wp",
+ "delivery_substate": null,
+ "delivery_target": null,
+ "lemma_name": "update_cdt_is_original_cap",
+ "anchor_line": 138,
+ "new_lemma": "lemma update_cdt_is_original_cap[wp]:\n  \"\\<lbrace>\\<lambda>s. P (is_original_cap s)\\<rbrace> update_cdt f \\<lbrace>\\<lambda>_ s. P (is_original_cap s)\\<rbrace>\"\n  by (wpsimp simp: update_cdt_def)",
+ "rationale": "update_cdt is defined as set_cdt applied to a modified cdt; it touches only the cdt field. The file proves update_cdt_cdt[wp] at line 136 for the cdt field; is_original_cap is the natural sibling frame to add.",
+ "strengthening_claim": "Adds an explicit wp-registered frame for is_original_cap over update_cdt where none existed.",
+ "anchor_text": "  by (simp add: update_cdt_def set_cdt_def) wp"
+}

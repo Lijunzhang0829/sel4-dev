@@ -1,0 +1,21 @@
+FAILED (41224ms)
+*** Failed to apply proof method (line 355 of "/tmp/tmp.NVOUAusSaA/Tmp_011d944d338de15c.thy"):
+*** goal (1 subgoal):
+***  1. \<And>dev r bits f y.
+***        \<lbrakk>caps_of_state s p = Some cap; valid_objs s;
+***         cap = UntypedCap dev r bits f; y \<in> descendants_of p (cdt s);
+***         cte_wp_at (\<lambda>c. cap_range c \<inter> untyped_range cap = {})
+***          y s;
+***         cap_class (the (caps_of_state s y)) =
+***         cap_class (the (caps_of_state s p)) \<and>
+***         cap_range (the (caps_of_state s y))
+***         \<subseteq> cap_range (the (caps_of_state s p))\<rbrakk>
+***        \<Longrightarrow> False
+*** At command "apply" (line 355 of "/tmp/tmp.NVOUAusSaA/Tmp_011d944d338de15c.thy")
+*** Failed to apply proof method (line 355 of "/tmp/tmp.NVOUAusSaA/Tmp_011d944d338de15c.thy"):
+*** goal (1 subgoal):
+***  1. \<And>dev r bits f y.
+***        \<lbrakk>caps_of_state s p = Some cap; valid_objs s;
+***         cap = UntypedCap dev r bits f; y \<in> descendants_of p (cdt s);
+***         cte_wp_at (\<lambda>c. cap_range c \<inter> untyped_range cap = {})
+***          y s;

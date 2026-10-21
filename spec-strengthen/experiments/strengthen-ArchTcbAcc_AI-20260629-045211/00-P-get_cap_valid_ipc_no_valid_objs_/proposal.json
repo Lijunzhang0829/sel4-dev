@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future consumers of get_cap_valid_ipc that do not hold valid_objs",
+ "lemma_name": "get_cap_valid_ipc_no_valid_objs",
+ "hint_lemma": "get_cap_valid_ipc",
+ "anchor_line": 122,
+ "new_lemma": "lemma get_cap_valid_ipc_no_valid_objs [TcbAcc_AI_assms]:\n  \"\\<lbrace>obj_at (\\<lambda>ko. \\<exists>tcb. ko = TCB tcb \\<and> tcb_ipc_buffer tcb = v) t\\<rbrace>\n     get_cap (t, tcb_cnode_index 4)\n   \\<lbrace>\\<lambda>rv s. valid_ipc_buffer_cap rv v\\<rbrace>\"\n  apply (wp get_cap_wp)\n  apply clarsimp\n  apply (drule(1) cte_wp_tcb_cap_valid)\n  apply (clarsimp simp add: tcb_cap_valid_def obj_at_def)\n  apply (simp add: valid_ipc_buffer_cap_def mask_cap_def cap_rights_update_def\n                   acap_rights_update_def is_tcb\n             split: cap.split_asm arch_cap.split_asm)\n  done",
+ "rationale": "get_cap is a read-only op; the scanner flags valid_objs as never appearing in the proof text. The only explicit consumer of a context fact is drule(1) cte_wp_tcb_cap_valid, whose first argument after clarsimp is the obj_at assumption, not valid_objs. Worth a trial.",
+ "strengthening_claim": "(valid_objs and obj_at (\\<lambda>ko. \\<exists>tcb. ko = TCB tcb \\<and> tcb_ipc_buffer tcb = v) t) ==> (obj_at (\\<lambda>ko. \\<exists>tcb. ko = TCB tcb \\<and> tcb_ipc_buffer tcb = v) t) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `valid_objs`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

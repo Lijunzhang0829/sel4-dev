@@ -1,0 +1,6 @@
+2397 2397
+
+
+lemma valid_arch_tcb_pspaceI_no_kheap:
+  "valid_arch_tcb t s \<Longrightarrow> valid_arch_tcb t s'"
+  by (simp add: valid_arch_tcb_def)

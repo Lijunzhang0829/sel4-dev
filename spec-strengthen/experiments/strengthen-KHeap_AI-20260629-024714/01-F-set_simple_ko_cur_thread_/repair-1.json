@@ -1,0 +1,17 @@
+[
+ {
+  "slot": "F",
+  "delivery": "wp",
+  "delivery_substate": null,
+  "delivery_target": null,
+  "lemma_name": "set_simple_ko_cur_thread",
+  "anchor_line": 1287,
+  "new_lemma": "lemma set_simple_ko_cur_thread[wp]:\n  \"set_simple_ko f ptr val \\<lbrace>\\<lambda>s. P (cur_thread s)\\<rbrace>\"\n  by (set_simple_ko_method wp_thm: set_object_cur_thread[THEN hoare_set_object_weaken_pre] get_object_wp)",
+  "rationale": "set_object_cur_thread[wp] exists at line 1285. The set_simple_ko_method macro requires get_object_wp to discharge the get_object subgoal; the original proposal omitted it, causing 2 residual subgoals. Pattern matches set_simple_ko_valid_ioc at line 1271.",
+  "strengthening_claim": "Adds a new wp frame lemma not present in the file; downstream wp proofs involving cur_thread and set_simple_ko previously had to solve this goal manually.",
+  "grace_period_weeks": null,
+  "block_dependency_evidence": null,
+  "consumer_hunks": null,
+  "anchor_text": "  by (wpsimp wp: set_object_wp_strong)"
+ }
+]

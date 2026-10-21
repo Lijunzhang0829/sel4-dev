@@ -1,0 +1,12 @@
+{
+ "slot": "F",
+ "delivery": "wp",
+ "delivery_substate": null,
+ "delivery_target": null,
+ "lemma_name": "set_cdt_is_original_cap",
+ "anchor_line": 434,
+ "new_lemma": "lemma set_cdt_is_original_cap[wp]:\n  \"\\<lbrace>\\<lambda>s. P (is_original_cap s)\\<rbrace> set_cdt m \\<lbrace>\\<lambda>_ s. P (is_original_cap s)\\<rbrace>\"\n  by (wpsimp simp: set_cdt_def)",
+ "rationale": "set_cdt only updates the cdt field via modify; is_original_cap is unaffected. The file already has set_cdt_cdt_update[wp] at line 432 mirroring this pattern; is_original_cap is a natural sibling field to frame.",
+ "strengthening_claim": "Strictly stronger than any implicit top-precondition invariance; adds an explicit wp-registered frame for is_original_cap over set_cdt where none existed.",
+ "anchor_text": "  by (wpsimp simp: set_cdt_def)"
+}

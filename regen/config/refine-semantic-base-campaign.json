@@ -1,0 +1,257 @@
+{
+  "architecture": "ARM",
+  "budgets": {
+    "graph_revisions_per_generation": 16,
+    "model_call_timeout_seconds": 1800,
+    "repository_planner_context_chars": 500000,
+    "whole_proof_attempts_per_logical_round": 5
+  },
+  "campaign_name": "sel4-refine-semantic-base",
+  "command_necessity_policy": {
+    "baseline_rule": "The semantic-core seed and every exact fixed contract shell must pass together. A passing baseline proves all excluded mixed/certificate candidates unnecessary as a group for this frozen contract set.",
+    "fixed_point_rule": "Optional diagnostic: apply single-occurrence deletion in reverse source order until stable; production does not claim command minimality.",
+    "mixed_or_certificate_candidates_excluded_from_seed": [
+      "axiomatization",
+      "bundle",
+      "class",
+      "function",
+      "global_interpretation",
+      "instance",
+      "instantiation",
+      "interpretation",
+      "local_setup",
+      "ML",
+      "ML_file",
+      "quotient_type",
+      "requalify_facts",
+      "requalify_types",
+      "setup",
+      "sublocale",
+      "termination",
+      "typedef"
+    ],
+    "necessity_rule": "For each retained core command occurrence, remove it and rerun the exact Isabelle gate. PASS means REMOVE, semantic/elaboration FAIL means KEEP, and timeout or infrastructure failure means UNRESOLVED.",
+    "ordinary_proof_commands": [
+      "add_upd_simps",
+      "corollary",
+      "crunch",
+      "crunches",
+      "crunch_ignore",
+      "declare",
+      "lemma",
+      "lemmas",
+      "method",
+      "notes",
+      "proposition",
+      "schematic_goal",
+      "theorem"
+    ],
+    "production_acceptance_rule": "Accept the proof-syntax-free deterministic semantic core when all mixed/certificate candidates are absent and all exact contract shells clean-build; record command_minimality_claimed=false.",
+    "proof_body_keywords_removed_with_owner": [
+      "by",
+      "apply",
+      "proof",
+      "qed",
+      "done",
+      "using",
+      "including",
+      "unfolding",
+      "supply"
+    ],
+    "retained_command_effects": "A retained command is trusted verbatim. Its exported facts and automation effects are legal semantic-substrate effects and are quantified later; they are not generated proof output.",
+    "semantic_core_seed": [
+      "abbreviation",
+      "coinductive",
+      "coinductive_set",
+      "constants",
+      "consts",
+      "datatype",
+      "definition",
+      "defs",
+      "fun",
+      "inductive",
+      "inductive_set",
+      "locale",
+      "named_theorems",
+      "no_notation",
+      "no_syntax",
+      "notation",
+      "primrec",
+      "record",
+      "syntax",
+      "translations",
+      "type_synonym",
+      "unbundle"
+    ]
+  },
+  "completion_criteria": {
+    "partial_campaign": "any unsealed required theory or RED required contract produces only a partial report",
+    "refine": "all selected contracts are generated, assembled, sealed, and clean-built from frozen parents plus the sealed Semantic Base and sealed generated predecessors"
+  },
+  "contract_selection_policy": {
+    "id": "operation-corres-v1",
+    "implementation": "regen/preparation/regen_extract.py:is_contract",
+    "rule": "select the fixed operation-style corres/connect contracts used by the existing Refine experiment"
+  },
+  "experimental_claim": "Erase the ordinary Refine contract/helper proof layer and regenerate the selected contracts and supporting theorems over a command-level semantic substrate. Commands whose removal breaks the exact contract semantic/elaboration gate are retained verbatim; their residual human-certified proof power is disclosed and measured.",
+  "forbidden_path_policy": {
+    "id": "semantic-base-refine-theorem-and-heap-deny-v1",
+    "runtime_rule": "raw Refine sources are readable only by trusted environment preparation; model and proof modules receive fixed contract packages, legal premise records, and the sealed Semantic Base heap",
+    "static_forbidden_path_patterns": [
+      "verification/l4v/proof/refine/**/*.thy",
+      "/root/.isabelle*/heaps/*/Refine"
+    ]
+  },
+  "frozen_input_files": [
+    "regen/docs/design/REPO-LEVEL-PROOF-HARNESS.md",
+    "regen/preparation/environment_freeze.py",
+    "regen/preparation/environment_preparation.py",
+    "regen/preparation/environment_pipeline.py",
+    "regen/preparation/upstream_heaps.py",
+    "regen/preparation/environment_journal.py",
+    "regen/preparation/environment_dataflow.py",
+    "regen/preparation/contract_extractor.py",
+    "regen/infrastructure/retrieval_utils.py",
+    "regen/preparation/contract_command_inventory.py",
+    "regen/preparation/command_necessity.py",
+    "regen/preparation/semantic_base_builder.py",
+    "regen/preparation/environment_gate.py",
+    "regen/preparation/premise_export.py",
+    "regen/preparation/premise_catalog.py",
+    "regen/planning/repository_planner.py",
+    "regen/planning/planner_io.py",
+    "regen/infrastructure/llm_transcript.py",
+    "regen/infrastructure/audited_llm.py",
+    "regen/config/repository-planning-policy.json",
+    "regen/planning/file_planner.py",
+    "regen/planning/proof_graph.py",
+    "regen/infrastructure/module_run_log.py",
+    "regen/infrastructure/progress_events.py",
+    "regen/execution/isabelle_node_checker.py",
+    "regen/execution/proof_session_runner.py",
+    "regen/planning/premise_retrieval.py",
+    "regen/execution/proof_outline_salvage.py",
+    "regen/execution/lemma_prover.py",
+    "regen/execution/graph_revision_agent.py",
+    "regen/config/refine-semantic-base-campaign.json",
+    "regen/preparation/refine_campaign.py",
+    "regen/preparation/regen_extract.py",
+    "tools/lemma_inventory/parse_roots.py",
+    "verification/l4v/proof/ROOT",
+    "regen/execution/repository_execution.py",
+    "regen/execution/proof_commits.py",
+    "regen/execution/fact_context.py",
+    "regen/planning/theory_plan.py",
+    "regen/planning/planning_freeze.py"
+  ],
+  "harness": {
+    "architecture_document": "regen/docs/design/REPO-LEVEL-PROOF-HARNESS.md",
+    "command_inventory": "regen/preparation/contract_command_inventory.py",
+    "command_necessity": "regen/preparation/command_necessity.py",
+    "environment_entry": "regen/preparation/environment_preparation.py",
+    "environment_gate": "regen/preparation/environment_gate.py",
+    "premise_catalog": "regen/preparation/premise_catalog.py",
+    "premise_exporter": "regen/preparation/premise_export.py",
+    "semantic_base_builder": "regen/preparation/semantic_base_builder.py",
+    "environment_pipeline": "regen/preparation/environment_pipeline.py",
+    "upstream_heaps": "regen/preparation/upstream_heaps.py",
+    "downstream_dataflow": "regen/preparation/environment_dataflow.py",
+    "repository_planner": "regen/planning/repository_planner.py"
+  },
+  "initial_premise_policy": {
+    "allow": [
+      "frozen parent-session declarations",
+      "declarations and disclosed facts exported by necessity-retained Semantic Base commands"
+    ],
+    "deny": [
+      "ordinary human-written contract/helper theorem facts removed from the Refine target scope",
+      "ordinary human-written Refine automation registrations outside retained semantic commands",
+      "the stock human Refine heap"
+    ]
+  },
+  "model_backends": [
+    {
+      "model": "gpt-5.6-sol",
+      "role": "Repository Planner, File Planner, Graph Revision Agent"
+    },
+    {
+      "model": "gpt-5.5",
+      "role": "Lemma Prover whole-proof generation and local salvage baseline"
+    }
+  ],
+  "node_proof_policy": {
+    "backend": "whole-proof-with-salvage-v1",
+    "gra_retry_material_change_required": true,
+    "gra_retry_single_consumption": true,
+    "logical_rounds_per_node": 5,
+    "proof_candidates_per_round": 5,
+    "provider_failures_consume_candidate_budget": false,
+    "salvage_after_each_isabelle_red": true,
+    "graph_revision_after_each_red_round": true
+  },
+  "runner_state_policy": {
+    "interrupted_red_recovery": "Recover only checker-bound RED attempts whose source contains the active graph statement, dependency statements, and candidate proof.",
+    "mutation_lock": "Serialize init, plan-file, run-file, and full run-session traversal with one non-blocking run-level lock because all theories share the canonical repository execution ledger.",
+    "retry_feedback_recovery": "Revalidate an unconsumed RETRY_PROOF against the active graph and consume it in exactly one subsequent logical round."
+  },
+  "pilot": {
+    "first_theory": "KHeap_R",
+    "purpose": "re-run the existing generated KHeap_R workload without ordinary human Refine theorem facts and measure which prior successes depended on removed proof-layer knowledge"
+  },
+  "predecessor_campaign_id": "sel4-refine-semantic-base-681a310d148d8b00",
+  "schema_version": 1,
+  "setting": "Semantic-Base",
+  "source_scope": {
+    "erase_theorems_from": "the ordinary contract/helper proof layer of all theories owned by the Refine target scope",
+    "parents": [
+      "BaseRefine",
+      "AInvs",
+      "Lib",
+      "CorresK"
+    ],
+    "target_session": "Refine"
+  },
+  "stage": "Refine",
+  "success_gate": [
+    "the deterministic semantic-core selection is complete and its exact contract-shell baseline is GREEN",
+    "the Semantic Base clean-builds and all exact contract shells elaborate",
+    "every selected Refine contract is Isabelle-green",
+    "every required Refine theory is assembled and sealed from legal inputs"
+  ],
+  "target_stages": [
+    {
+      "order": 1,
+      "parent_sessions": [
+        "BaseRefine",
+        "AInvs",
+        "Lib",
+        "CorresK"
+      ],
+      "stage": "Refine",
+      "target_session": "Refine"
+    }
+  ],
+  "trust_boundary": {
+    "allowed_source_classes": [
+      "frozen parent-session declarations",
+      "necessity-retained Semantic Base commands and their disclosed exports",
+      "sealed generated theorem declarations"
+    ],
+    "forbidden_source_classes": [
+      "ordinary human-written Refine theorem and automation facts outside the retained command-level semantic substrate",
+      "stock human Refine heap",
+      "unsealed generated declarations"
+    ]
+  },
+  "trusted_source_repositories": [
+    {
+      "id": "l4v",
+      "path": "verification/l4v",
+      "require_clean": true,
+      "required_clean_paths": [
+        "proof/ROOT",
+        "proof/refine"
+      ]
+    }
+  ]
+}

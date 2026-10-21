@@ -1,0 +1,2 @@
+FAILED (600438ms)
+*** check-theory.sh: killed after 600s wall-time ceiling (CHECK_THEORY_TIMEOUT_S). Search-explosion guard.

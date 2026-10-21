@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "weak_derived_vs_cap_ref and any consumer of vs_cap_ref_master that already has cap_master_cap and cap_asid equal but not necessarily cap_asid_base equal.",
+ "hint_lemma": "vs_cap_ref_master",
+ "lemma_name": "vs_cap_ref_master_no_base",
+ "anchor_line": 296,
+ "new_lemma": "lemma vs_cap_ref_master_no_base [CNodeInv_AI_assms]:\n  \"\\<lbrakk> cap_master_cap cap = cap_master_cap cap';\n           cap_asid cap = cap_asid cap';\n           cap_vptr cap = cap_vptr cap' \\<rbrakk>\n       \\<Longrightarrow> vs_cap_ref cap = vs_cap_ref cap'\"\n  apply (rule ccontr)\n  apply (clarsimp simp: vs_cap_ref_def cap_master_cap_def\n                 split: cap.split_asm)\n  apply (clarsimp simp: cap_asid_def split: arch_cap.split_asm option.split_asm)\n  done",
+ "rationale": "The proof of vs_cap_ref_master only unfolds vs_cap_ref_def, cap_master_cap_def, and cap_asid_def. The term cap_asid_base never appears in any simp set or split used by the proof. The proof reaches a contradiction purely from cap_master_cap and cap_asid equality, making cap_asid_base = cap_asid_base' superfluous.",
+ "strengthening_claim": "(cap_master_cap cap = cap_master_cap cap' \\<and> cap_asid cap = cap_asid cap' \\<and> cap_vptr cap = cap_vptr cap') ==> (cap_master_cap cap = cap_master_cap cap' \\<and> cap_asid cap = cap_asid cap' \\<and> cap_asid_base cap = cap_asid_base cap' \\<and> cap_vptr cap = cap_vptr cap')",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

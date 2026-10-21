@@ -1,0 +1,4 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-P-tcb_arch_detype__,tcb_arch_detype',P,named,IMPACT-FAILED,noop,4.81
+01-P-valid_vspace_obj__,valid_vspace_obj',P,named,TRIAL-FAILED,,
+02-P-delete_objects_invs__,delete_objects_invs',P,named,TRIAL-FAILED,,

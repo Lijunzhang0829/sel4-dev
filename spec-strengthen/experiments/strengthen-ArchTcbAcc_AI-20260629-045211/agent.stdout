@@ -1,0 +1,41 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future consumers of get_cap_valid_ipc that do not hold valid_objs",
+  "lemma_name": "get_cap_valid_ipc_no_valid_objs",
+  "hint_lemma": "get_cap_valid_ipc",
+  "anchor_line": 122,
+  "new_lemma": "lemma get_cap_valid_ipc_no_valid_objs [TcbAcc_AI_assms]:\n  \"\\<lbrace>obj_at (\\<lambda>ko. \\<exists>tcb. ko = TCB tcb \\<and> tcb_ipc_buffer tcb = v) t\\<rbrace>\n     get_cap (t, tcb_cnode_index 4)\n   \\<lbrace>\\<lambda>rv s. valid_ipc_buffer_cap rv v\\<rbrace>\"\n  apply (wp get_cap_wp)\n  apply clarsimp\n  apply (drule(1) cte_wp_tcb_cap_valid)\n  apply (clarsimp simp add: tcb_cap_valid_def obj_at_def)\n  apply (simp add: valid_ipc_buffer_cap_def mask_cap_def cap_rights_update_def\n                   acap_rights_update_def is_tcb\n             split: cap.split_asm arch_cap.split_asm)\n  done",
+  "rationale": "get_cap is a read-only op; the scanner flags valid_objs as never appearing in the proof text. The only explicit consumer of a context fact is drule(1) cte_wp_tcb_cap_valid, whose first argument after clarsimp is the obj_at assumption, not valid_objs. Worth a trial.",
+  "strengthening_claim": "(obj_at (...) t) <= (valid_objs and obj_at (...) t)",
+  "grace_period_weeks": 8
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future callers of cap_master_cap_tcb_cap_valid_arch that lack is_arch_cap witness",
+  "lemma_name": "cap_master_cap_tcb_cap_valid_arch_no_is_arch_cap",
+  "hint_lemma": "cap_master_cap_tcb_cap_valid_arch",
+  "anchor_line": 55,
+  "new_lemma": "lemma cap_master_cap_tcb_cap_valid_arch_no_is_arch_cap:\n  \"\\<lbrakk> cap_master_cap c = cap_master_cap c';\n     is_valid_vtable_root c \\<Longrightarrow> is_valid_vtable_root c' ; tcb_cap_valid c p s \\<rbrakk> \\<Longrightarrow>\n   tcb_cap_valid c' p s\"\n  (* slow: 5 to 10s *)\n  by (auto simp: cap_master_cap_def tcb_cap_valid_def tcb_cap_cases_def\n                 valid_ipc_buffer_cap_def  is_cap_simps\n                 is_nondevice_page_cap_simps is_nondevice_page_cap_arch_def\n           elim: pred_tcb_weakenE\n          split: option.splits cap.splits arch_cap.splits\n                 Structures_A.thread_state.splits)",
+  "rationale": "is_arch_cap never appears textually in the proof body; the big auto with cap_master_cap_def and arch_cap.splits likely derives the arch-cap structure from cap_master_cap equality alone, making is_arch_cap redundant.",
+  "strengthening_claim": "(cap_master_cap c = cap_master_cap c' and (is_valid_vtable_root c => is_valid_vtable_root c') and tcb_cap_valid c p s) <= (cap_master_cap c = cap_master_cap c' and is_arch_cap c' and (is_valid_vtable_root c => is_valid_vtable_root c') and tcb_cap_valid c p s)",
+  "grace_period_weeks": 8
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future callers that cannot supply the vtable-root transfer hypothesis",
+  "lemma_name": "cap_master_cap_tcb_cap_valid_arch_no_vtable_hyp",
+  "hint_lemma": "cap_master_cap_tcb_cap_valid_arch",
+  "anchor_line": 55,
+  "new_lemma": "lemma cap_master_cap_tcb_cap_valid_arch_no_vtable_hyp:\n  \"\\<lbrakk> cap_master_cap c = cap_master_cap c'; is_arch_cap c' ; tcb_cap_valid c p s \\<rbrakk> \\<Longrightarrow>\n   tcb_cap_valid c' p s\"\n  (* slow: 5 to 10s *)\n  by (auto simp: cap_master_cap_def tcb_cap_valid_def tcb_cap_cases_def\n                 valid_ipc_buffer_cap_def  is_cap_simps\n                 is_nondevice_page_cap_simps is_nondevice_page_cap_arch_def\n           elim: pred_tcb_weakenE\n          split: option.splits cap.splits arch_cap.splits\n                 Structures_A.thread_state.splits)",
+  "rationale": "is_valid_vtable_root never appears textually in the proof body; the auto tactic with arch_cap.splits and cap_master_cap_def likely resolves the vtable slot via structural case analysis without needing the explicit transfer hypothesis.",
+  "strengthening_claim": "(cap_master_cap c = cap_master_cap c' and is_arch_cap c' and tcb_cap_valid c p s) <= (cap_master_cap c = cap_master_cap c' and is_arch_cap c' and (is_valid_vtable_root c => is_valid_vtable_root c') and tcb_cap_valid c p s)",
+  "grace_period_weeks": 8
+ }
+]

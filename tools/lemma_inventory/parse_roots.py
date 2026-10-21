@@ -76,8 +76,11 @@ _SESSION_HEADER_RE = re.compile(
 )
 
 
-# A run of quoted strings (theory paths). Used inside `theories ...` and `directories ...`.
-_QSTRING_RE = re.compile(r'"([^"]*)"')
+# ROOT list items may be quoted or bare. Quoting is required for names such as
+# `HOL-Library`, while most l4v theory entries are ordinary bare identifiers.
+_LIST_ITEM_RE = re.compile(
+    r'"(?P<quoted>[^"]*)"|(?P<bare>(?:\$[A-Z_]+|[A-Za-z_])[A-Za-z0-9_.$/\'-]*)'
+)
 
 
 def _split_sessions(clean_root: str) -> list[tuple[int, re.Match]]:
@@ -89,11 +92,10 @@ def _section_text(clean_root: str, header_end: int, next_session_start: int) -> 
     return clean_root[header_end:next_session_start]
 
 
-# Find each `<keyword> [optional [...]] <quoted strings>` block within a session body.
+# Find each `<keyword> [optional [...]] <list items>` block within a session body.
 # kw is one of `theories`, `directories`, `sessions`.
 def _collect_blocks(body: str, kw: str) -> list[tuple[bool, list[str]]]:
-    """Return list of (has_condition, items). For `sessions` block, items are bare names
-    (not quoted), so we handle that specially."""
+    """Return list of (has_condition, items), preserving quoted item names."""
     out = []
     pos = 0
     pat = re.compile(r"\b" + kw + r"\b")
@@ -128,15 +130,10 @@ def _collect_blocks(body: str, kw: str) -> list[tuple[bool, list[str]]]:
         end = end_match.start() if end_match else len(body)
         chunk = body[i:end]
 
-        items: list[str] = []
-        if kw == "sessions":
-            # strip Isabelle \<open>...\<close> just in case
-            chunk_clean = re.sub(r"\\<open>.*?\\<close>", " ", chunk, flags=re.DOTALL)
-            for tok in re.findall(r"[A-Za-z_][A-Za-z0-9_']*", chunk_clean):
-                items.append(tok)
-        else:
-            for sm in _QSTRING_RE.finditer(chunk):
-                items.append(sm.group(1))
+        # Strip cartouches just in case a description-like fragment occurs in a
+        # malformed/extended ROOT block. Isabelle comments were removed earlier.
+        chunk_clean = re.sub(r"\\<open>.*?\\<close>", " ", chunk, flags=re.DOTALL)
+        items = [m.group("quoted") or m.group("bare") for m in _LIST_ITEM_RE.finditer(chunk_clean)]
         out.append((has_condition, items))
         pos = end
     return out
@@ -249,11 +246,14 @@ def assign_session_for_thy(thy_path: Path, parsed: dict) -> str | None:
     for d, names in parsed["theory_search_paths"].items():
         try:
             d_path = Path(d)
-            if abs_p.is_relative_to(d_path):
-                depth = len(d_path.parts)
-                if best is None or depth > best[0]:
-                    # If multiple sessions share same dir, just pick the first deterministically.
-                    best = (depth, sorted(names)[0])
+            # py3.8-safe containment test: relative_to raises ValueError when
+            # not contained, which the enclosing except already treats as skip
+            # (Path.is_relative_to needs 3.9+; server B runs 3.8).
+            abs_p.relative_to(d_path)
+            depth = len(d_path.parts)
+            if best is None or depth > best[0]:
+                # If multiple sessions share same dir, just pick the first deterministically.
+                best = (depth, sorted(names)[0])
         except ValueError:
             continue
     return best[1] if best else None

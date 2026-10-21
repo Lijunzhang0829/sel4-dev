@@ -1,0 +1,10 @@
+FAILED (29330ms)
+*** Type unification failed: Variable 'state_ext::type not of sort state_ext
+*** 
+*** Failed to meet type constraint:
+*** 
+*** Term:  \<lambda>s. \<forall>r\<in>zobj_refs cap. ex_nonz_cap_to r s ::
+***   ??'b state \<Rightarrow> bool
+*** Type:  'state_ext state \<Rightarrow> ??'a
+*** 
+*** At command "lemma" (line 670 of "/tmp/tmp.XF52D71DkM/Tmp_08b5c2d1e0b92d68.thy")

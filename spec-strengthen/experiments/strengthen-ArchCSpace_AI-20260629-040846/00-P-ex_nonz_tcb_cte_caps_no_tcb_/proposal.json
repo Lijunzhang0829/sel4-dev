@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future callers of ex_nonz_tcb_cte_caps that lack tcb_at evidence; e.g. sites in CSpace_AI that construct ex_cte_cap_wp_to from nonz caps without a separate tcb_at witness.",
+ "grace_period_weeks": 8,
+ "lemma_name": "ex_nonz_tcb_cte_caps_no_tcb",
+ "hint_lemma": "ex_nonz_tcb_cte_caps",
+ "anchor_line": 439,
+ "new_lemma": "lemma ex_nonz_tcb_cte_caps_no_tcb [CSpace_AI_assms]:\n  \"\\<lbrakk>ex_nonz_cap_to t s; valid_objs s; ref \\<in> dom tcb_cap_cases\\<rbrakk>\n   \\<Longrightarrow> ex_cte_cap_wp_to (appropriate_cte_cap cp) (t, ref) s\"\n  apply (clarsimp simp: ex_nonz_cap_to_def ex_cte_cap_wp_to_def\n                        cte_wp_at_caps_of_state)\n  apply (subgoal_tac \"s \\<turnstile> cap\")\n   apply (rule_tac x=a in exI, rule_tac x=ba in exI)\n   apply (clarsimp simp: valid_cap_def obj_at_def\n                         is_obj_defs dom_def\n                         appropriate_cte_cap_def\n                  split: cap.splits arch_cap.split_asm if_splits)\n  apply (clarsimp simp: caps_of_state_valid_cap)\n  done",
+ "rationale": "The proof body of ex_nonz_tcb_cte_caps never mentions tcb_at: it derives 's ⊢ cap' purely via caps_of_state_valid_cap (which needs valid_objs, not tcb_at) and then unfolds valid_cap_def/obj_at_def. The tcb_at conjunct is never referenced by name or via a rule that would pull it in. Dropping it yields a strictly stronger implication lemma.",
+ "strengthening_claim": "(ex_nonz_cap_to t s \\<and> valid_objs s \\<and> ref \\<in> dom tcb_cap_cases) ==> (ex_nonz_cap_to t s \\<and> tcb_at t s \\<and> valid_objs s \\<and> ref \\<in> dom tcb_cap_cases)",
+ "anchor_text": "  done"
+}

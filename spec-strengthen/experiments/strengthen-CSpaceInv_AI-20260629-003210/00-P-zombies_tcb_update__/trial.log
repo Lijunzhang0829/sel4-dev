@@ -1,0 +1,21 @@
+FAILED (45110ms)
+*** Failed to finish proof:
+*** goal (1 subgoal):
+***  1. \<And>a b.
+***        \<lbrakk>cte_wp_at is_zombie (a, b) s \<longrightarrow>
+***                 cte_wp_at
+***                  (\<lambda>cap.
+***                      \<exists>a b.
+***                         \<forall>aa ba.
+***                            cte_wp_at
+***                             (\<lambda>c.
+***                                 gen_obj_refs cap \<inter>
+***                                 gen_obj_refs c \<noteq>
+***                                 {})
+***                             (aa, ba) s =
+***                            (aa = a \<and> ba = b))
+***                  (a, b) s;
+***         cte_wp_at is_zombie (a, b)
+***          (s\<lparr>kheap :=
+***                      \<lambda>x.
+***                         if x = t then Some (TCB tcb)

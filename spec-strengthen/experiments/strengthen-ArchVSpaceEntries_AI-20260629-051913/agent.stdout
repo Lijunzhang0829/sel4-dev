@@ -1,0 +1,41 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Any consumer of shift_0x3C_set that can drop the len_of constraint; likely mapM_x_store_invalid_pte_valid_pdpt or mapM_x_store_pde_valid_pdpt_objs call sites",
+  "lemma_name": "shift_0x3C_set_no_len",
+  "anchor_line": 126,
+  "hint_lemma": "shift_0x3C_set",
+  "new_lemma": "lemma shift_0x3C_set_no_len:\n  \"\\<lbrakk> is_aligned p 6; 8 \\<le> bits; bits < 32 \\<rbrakk> \\<Longrightarrow>\n   (\\<lambda>x. ucast (x + p && mask bits >> 2) :: ('a :: len) word) ` set [0 :: word32 , 4 .e. 0x3C]\n        = {x. x && ~~ mask 4 = ucast (p && mask bits >> 2)}\"\n  apply (clarsimp simp: upto_enum_step_def word_shift_by_2 image_image)\n  apply (subst image_cong[where N=\"{x. x < 2 ^ 4}\"])\n    apply (safe, simp_all)[1]\n     apply (drule plus_one_helper2, simp_all)[1]\n    apply (drule word_le_minus_one_leq, simp_all)[1]\n   apply (rule_tac f=\"\\<lambda>x. ucast (x && mask bits >> 2)\" in arg_cong)\n   apply (rule trans[OF add.commute is_aligned_add_or], assumption)\n   apply (rule shiftl_less_t2n, simp_all)[1]\n  apply safe\n   apply (frule upper_bits_unset_is_l2p_32[THEN iffD2, rotated])\n    apply (simp add: word_bits_conv)\n   apply (rule word_eqI)\n   apply (simp add: word_ops_nth_size word_size nth_ucast nth_shiftr\n                    nth_shiftl neg_mask_test_bit\n                    word_bits_conv)\n   apply (safe, simp_all add: is_aligned_nth)[1]\n  apply (rule_tac x=\"ucast x && mask 4\" in image_eqI)\n   apply (rule word_eqI[rule_format])\n   apply (drule_tac x=n in word_eqD)\n   apply (simp add: word_ops_nth_size word_size nth_ucast nth_shiftr\n                    nth_shiftl)\n   apply (safe, simp_all)\n  apply (rule order_less_le_trans, rule and_mask_less_size)\n   apply (simp_all add: word_size)\n  done",
+  "rationale": "The proof body of shift_0x3C_set never mentions len_of or any tactic that explicitly consumes the 'len_of TYPE('a) = bits - 2' hypothesis. The two other conjuncts (is_aligned p 6 and 8 <= bits) are textually consumed via is_aligned_add_or and shiftl_less_t2n respectively. The high-priority differential signal (0023 shape) strongly suggests this conjunct is dropped implicitly. The proof is verbatim from the original.",
+  "strengthening_claim": "(is_aligned p 6 \\<and> 8 \\<le> bits \\<and> bits < 32) \\<Longrightarrow> (is_aligned p 6 \\<and> 8 \\<le> bits \\<and> bits < 32 \\<and> len_of TYPE('a) = bits - 2)",
+  "grace_period_weeks": 8
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "A strengthened version of invoke_cnode_valid_pdpt_objs usable wherever valid_pdpt_objs preservation is needed without an invs requirement; e.g. future refactors of handle_invocation callers",
+  "lemma_name": "invoke_cnode_valid_pdpt_objs_no_invs",
+  "anchor_line": 614,
+  "hint_lemma": "invoke_cnode_valid_pdpt_objs",
+  "new_lemma": "lemma invoke_cnode_valid_pdpt_objs_no_invs:\n  \"\\<lbrace>valid_pdpt_objs and valid_cnode_inv i\\<rbrace> invoke_cnode i \\<lbrace>\\<lambda>rv. valid_pdpt_objs\\<rbrace>\"\n  apply (simp add: invoke_cnode_def)\n  apply (rule hoare_pre)\n   apply (wp get_cap_wp | wpc | simp split del: if_split)+\n  done",
+  "rationale": "All operations invoked inside invoke_cnode (cap_insert, cap_swap_for_delete, empty_slot, cap_delete, cap_move, etc.) are already proven [wp] for valid_pdpt_objs with only valid_pdpt_objs in their preconditions (L92, L607, L418). The proof fully delegates to those [wp] lemmas via a crunch-style wp chain; invs never appears in the proof text and no consumed conjunct is identified, making it a pure opaque delegation. The decode op classification (read/decode shape) further supports droppability.",
+  "strengthening_claim": "(valid_pdpt_objs and valid_cnode_inv i) \\<Longrightarrow> (valid_pdpt_objs and invs and valid_cnode_inv i)",
+  "grace_period_weeks": 8
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "A maximally-weak precondition for invoke_cnode valid_pdpt_objs preservation; useful in contexts where no cnode validity is available",
+  "lemma_name": "invoke_cnode_valid_pdpt_objs_min",
+  "anchor_line": 614,
+  "hint_lemma": "invoke_cnode_valid_pdpt_objs",
+  "new_lemma": "lemma invoke_cnode_valid_pdpt_objs_min:\n  \"\\<lbrace>valid_pdpt_objs\\<rbrace> invoke_cnode i \\<lbrace>\\<lambda>rv. valid_pdpt_objs\\<rbrace>\"\n  apply (simp add: invoke_cnode_def)\n  apply (rule hoare_pre)\n   apply (wp get_cap_wp | wpc | simp split del: if_split)+\n  done",
+  "rationale": "An independent drop of valid_cnode_inv i from invoke_cnode_valid_pdpt_objs. Since the [wp] lemmas for all component operations (cap_insert, cap_swap, empty_slot, cap_revoke, etc. — L92, L418, L604, L607) carry only valid_pdpt_objs as their precondition for this postcondition, the wp chain needs nothing from valid_cnode_inv. Neither invs nor valid_cnode_inv is textually consumed; the proof body is verbatim delegation. If this verifies it subsumes both hint 10 and hint 11 in a single, maximally-strong proposal.",
+  "strengthening_claim": "valid_pdpt_objs \\<Longrightarrow> (valid_pdpt_objs and invs and valid_cnode_inv i)",
+  "grace_period_weeks": 8
+ }
+]

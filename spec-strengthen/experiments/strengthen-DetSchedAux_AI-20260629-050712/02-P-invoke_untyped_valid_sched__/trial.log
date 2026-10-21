@@ -1,0 +1,17 @@
+FAILED (44203ms)
+*** Failed to finish proof:
+*** goal (1 subgoal):
+***  1. \<And>s.
+***        invs s \<and>
+***        valid_untyped_inv ui s \<and>
+***        ct_active s \<and> valid_sched s \<Longrightarrow>
+***        valid_idle s
+*** At command "done" (line 342 of "/tmp/tmp.avaJfr3r9S/Tmp_d69250bdf541c10f.thy")
+*** Failed to finish proof:
+*** goal (1 subgoal):
+***  1. \<And>s.
+***        invs s \<and>
+***        valid_untyped_inv ui s \<and>
+***        ct_active s \<and> valid_sched s \<Longrightarrow>
+***        valid_idle s
+*** At command "done" (line 342 of "/tmp/tmp.avaJfr3r9S/Tmp_d69250bdf541c10f.thy")

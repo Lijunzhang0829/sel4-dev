@@ -1,0 +1,44 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Any caller of lsfco_real_cte_at that holds only valid_cap cn but not valid_objs can switch to this stronger variant",
+  "lemma_name": "lsfco_real_cte_at_no_valid_objs",
+  "hint_lemma": "lsfco_real_cte_at",
+  "anchor_line": 60,
+  "new_lemma": "lemma lsfco_real_cte_at_no_valid_objs:\n  \"\\\\<lbrace>valid_cap cn\\\\<rbrace>\n  lookup_slot_for_cnode_op f cn idx depth\n  \\\\<lbrace>\\\\<lambda>rv. real_cte_at rv\\\\<rbrace>,-\"\n  by (rule lookup_cnode_slot_real_cte)",
+  "rationale": "The proof is a single rule application of lookup_cnode_slot_real_cte, whose own precondition is valid_cap cn. The valid_objs conjunct is structurally unreachable; lookup_slot_for_cnode_op is a read/decode op so premises are typically droppable. Dropping valid_objs yields a strictly stronger precondition.",
+  "strengthening_claim": "(valid_cap cn) ==> (valid_objs and valid_cap cn)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  by (rule lookup_cnode_slot_real_cte)"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Any caller of lsfco_cte_at that holds only valid_cap cn but not valid_objs can switch to this stronger variant; lsfco_cte_wp_at_univ could also be re-based on this",
+  "lemma_name": "lsfco_cte_at_no_valid_objs",
+  "hint_lemma": "lsfco_cte_at",
+  "anchor_line": 54,
+  "new_lemma": "lemma lsfco_cte_at_no_valid_objs:\n  \"\\\\<lbrace>valid_cap cn\\\\<rbrace>\n  lookup_slot_for_cnode_op f cn idx depth\n  \\\\<lbrace>\\\\<lambda>rv. cte_at rv\\\\<rbrace>,-\"\n  by (rule hoare_strengthen_postE_R, rule lookup_cnode_slot_real_cte, simp add: real_cte_at_cte)",
+  "rationale": "The proof delegates entirely to lookup_cnode_slot_real_cte (via hoare_strengthen_postE_R) and then a simp step; valid_objs never appears in either step. The read/decode op class makes the premise droppable. Statement is strictly stronger: weaker precondition, same postcondition.",
+  "strengthening_claim": "(valid_cap cn) ==> (valid_objs and valid_cap cn)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  by (rule hoare_strengthen_postE_R, rule lookup_cnode_slot_real_cte, simp add: real_cte_at_cte)"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Any caller of complete_signal_invs that does not independently hold tcb_at tcb can switch to this variant; handle_recv and receive_ipc proofs are likely consumers",
+  "lemma_name": "complete_signal_invs_no_tcb_at",
+  "hint_lemma": "complete_signal_invs",
+  "anchor_line": 2687,
+  "new_lemma": "lemma complete_signal_invs_no_tcb_at:\n  \"\\\\<lbrace>invs\\\\<rbrace>\n     complete_signal ntfnptr tcb\n   \\\\<lbrace>\\\\<lambda>_. invs\\\\<rbrace>\"\n  by (wpsimp simp: complete_signal_def invs_def valid_state_def valid_pspace_def\n            wp: get_simple_ko_wp set_simple_ko_valid_objs set_simple_ko_refs_of\n                hoare_vcg_all_lift valid_irq_node_typ set_ntfn_minor_invs)",
+  "rationale": "High-priority hint (differential signal: invs IS consumed, tcb_at is not). complete_signal reads and updates the notification object; tcb_at is never structurally required because any assertion on a missing TCB makes the triple vacuously true on the failure path. Dropping tcb_at gives a strictly stronger precondition.",
+  "strengthening_claim": "(invs) ==> (invs and tcb_at tcb)",
+  "grace_period_weeks": 8,
+  "anchor_text": "   \\<lbrace>\\<lambda>_. invs\\<rbrace>\""
+ }
+]

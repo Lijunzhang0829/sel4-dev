@@ -1,0 +1,20 @@
+diff --git a/proof/invariant-abstract/Tcb_AI.thy b/proof/invariant-abstract/Tcb_AI.thy
+--- a/proof/invariant-abstract/Tcb_AI.thy
++++ b/proof/invariant-abstract/Tcb_AI.thy
+@@ -1214,6 +1214,16 @@
+   apply clarsimp
+   done
+ 
++lemma decode_unbind_notification_wf_strong:
++  "\<lbrace>tcb_at t and ex_nonz_cap_to t\<rbrace>
++     decode_unbind_notification (cap.ThreadCap t)
++   \<lbrace>tcb_inv_wf\<rbrace>,-"
++  apply (simp add: decode_unbind_notification_def)
++  apply (rule hoare_pre)
++   apply (wp gbn_wp | wpc)+
++  apply clarsimp
++  done
++
+ lemma decode_tcb_inv_wf:
+   "\<lbrace>invs and tcb_at t and ex_nonz_cap_to t
+          and cte_at slot and ex_cte_cap_to slot

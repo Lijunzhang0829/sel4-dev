@@ -1,0 +1,16 @@
+743 751
+ lemma unbind_maybe_notification_not_bound:
+   "\<lbrace>\<lambda>s. ntfn_at ntfnptr s \<and> sym_refs (state_refs_of s)\<rbrace>
+      unbind_maybe_notification ntfnptr
+    \<lbrace>\<lambda>_. obj_at (\<lambda>ko. \<exists>ntfn. ko = Notification ntfn \<and> ntfn_bound_tcb ntfn = None) ntfnptr\<rbrace>"
+  apply (simp add: unbind_maybe_notification_def)
+  apply (rule hoare_pre)
+   apply (wp get_simple_ko_wp sbn_obj_at_impossible simple_obj_set_prop_at | wpc | simp)+
+  apply (clarsimp simp: obj_at_def)
+  done
+
+lemma unbind_maybe_notification_not_bound_old:
+  "\<lbrace>\<lambda>s. ntfn_at ntfnptr s \<and> valid_objs s \<and> sym_refs (state_refs_of s)\<rbrace>
+      unbind_maybe_notification ntfnptr
+    \<lbrace>\<lambda>_. obj_at (\<lambda>ko. \<exists>ntfn. ko = Notification ntfn \<and> ntfn_bound_tcb ntfn = None) ntfnptr\<rbrace>"
+  by (rule hoare_weaken_pre[OF unbind_maybe_notification_not_bound]) simp

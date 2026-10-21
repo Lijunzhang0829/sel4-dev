@@ -1,0 +1,21 @@
+FAILED (196142ms)
+*** Failed to finish proof (line 67 of "/tmp/tmp.ldOEbImYQE/Tmp_d36de4f1c0e57850.thy"):
+*** goal (4 subgoals):
+***  1. \<And>x51 x52 x53 x52a x53a.
+***        \<lbrakk>c' = ReplyCap x51 x52 x53; c = ReplyCap x51 x52a x53a;
+***         st_tcb_at
+***          (\<lambda>st. x52a \<and> x51 = fst p \<and> AllowGrant \<in> x53a)
+***          (fst p) s;
+***         snd p = tcb_cnode_index 2; tcb_at (fst p) s\<rbrakk>
+***        \<Longrightarrow> st_tcb_at
+***                           (\<lambda>st.
+***                               x52 \<and>
+***                               x51 = fst p \<and> AllowGrant \<in> x53)
+***                           (fst p) s
+***  2. \<And>x51 x52 x53 x52a x53a.
+***        \<lbrakk>st_tcb_at
+***                  (\<lambda>st.
+***                      (st = Running \<longrightarrow> \<not> x52a) \<and>
+***                      (inactive st \<longrightarrow> \<not> x52a) \<and>
+***                      (st = Restart \<longrightarrow> \<not> x52a) \<and>
+***                      (\<forall>x41 x42.

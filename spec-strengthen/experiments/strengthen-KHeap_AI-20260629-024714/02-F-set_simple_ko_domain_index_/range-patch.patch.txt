@@ -1,0 +1,7 @@
+1437 1437
+  by (wpsimp wp: get_object_wp simp: set_object_def)
+
+lemma set_simple_ko_domain_index[wp]:
+  "set_simple_ko f ptr val \<lbrace>\<lambda>s. P (domain_index s)\<rbrace>"
+  unfolding set_simple_ko_def
+  by (wpsimp wp: set_object_domain_index)

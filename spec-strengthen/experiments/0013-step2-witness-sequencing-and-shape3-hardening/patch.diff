@@ -1,0 +1,45 @@
+diff --git a/.claude/skills/isabelle_prover_spec/SKILL.md b/.claude/skills/isabelle_prover_spec/SKILL.md
+index 4dc1695..4940b2a 100644
+--- a/.claude/skills/isabelle_prover_spec/SKILL.md
++++ b/.claude/skills/isabelle_prover_spec/SKILL.md
+@@ -82,8 +82,23 @@ with a separate cleanup PR.
+    - **Delete or disable an existing lemma** (shape 3) — only
+      after a `grep` proves no consumer, OR after adding a
+      `lemmas <name> = ...` compatibility alias in the same
+-     patch. No `_old` witness; this is a refactor, not a
+-     strengthening.
++     patch. No `_old` witness. **Shape 3 is a refactor, NOT a
++     spec strengthening** — `spec_impact.py` will emit a
++     `removal` verdict, which **fails this sub-skill's
++     Acceptance gate #2** (a strengthening verdict is required).
++     Routes out:
++       (a) **Bundle with a shape-1 strengthening of the same
++           lemma family** in one patch — the strengthening
++           carries Acceptance; the cleanup rides along, recorded
++           as a non-gating component in `decision.md`.
++       (b) **Ship the deletion as a standalone refactor PR
++           outside this sub-skill** — still a seL4-source PR
++           per parent rule 5 (it touches `verification/l4v/`),
++           but the acceptance criteria are the refactor's own
++           (no behavioral change, no consumer broken); this
++           sub-skill's strengthening gate does not apply.
++     Do NOT submit a pure shape-3 patch through the
++     spec-strengthening workflow expecting it to pass.
+ 
+    Place patches under `logs/spec-strengthen-<file>-<YYYYMMDD>.patch`.
+ 
+@@ -99,6 +114,14 @@ with a separate cleanup PR.
+    a guard against picking the wrong rule by name-pattern, not a
+    mandatory step.
+ 
++   **The patch handed to `check-theory.sh --patch` in Step 3 MUST
++   contain both the strengthened lemma AND its `<name>_old`
++   witness** (shape 1). Do not verify the partial patch alone —
++   a partial patch can pass Step 3 while leaving the soundness
++   gate unenforced. The witness must sit immediately after the
++   strengthened lemma in the patch hunk so Isabelle parses both
++   in the same theory pass.
++
+ 3. **Verify the patch.** `$ISA_SCRIPTS/check-theory.sh <file>
+    <session> --patch <patch>` must reach `OK`. This single run
+    verifies both the strengthened lemma and the witness — failure

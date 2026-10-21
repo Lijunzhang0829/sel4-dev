@@ -1,0 +1,15 @@
+FAILED (45127ms)
+*** Failed to apply proof method (line 46 of "/tmp/tmp.2Q4DABEhld/Tmp_ec909b4eaf79135e.thy"):
+*** goal (1 subgoal):
+***  1. \<And>r bits g.
+***        \<lbrakk>s \<turnstile> CNodeCap r bits g; valid_objs s;
+***         cap = CNodeCap r bits g\<rbrakk>
+***        \<Longrightarrow> 32 - (32 - bits) = bits
+*** At command "apply" (line 46 of "/tmp/tmp.2Q4DABEhld/Tmp_ec909b4eaf79135e.thy")
+*** Failed to apply proof method (line 46 of "/tmp/tmp.2Q4DABEhld/Tmp_ec909b4eaf79135e.thy"):
+*** goal (1 subgoal):
+***  1. \<And>r bits g.
+***        \<lbrakk>s \<turnstile> CNodeCap r bits g; valid_objs s;
+***         cap = CNodeCap r bits g\<rbrakk>
+***        \<Longrightarrow> 32 - (32 - bits) = bits
+*** At command "apply" (line 46 of "/tmp/tmp.2Q4DABEhld/Tmp_ec909b4eaf79135e.thy")

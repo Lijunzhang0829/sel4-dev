@@ -1,0 +1,192 @@
+You are improving a DETERMINISTIC detector that flags candidate P-slot spec strengthenings (premise/assumption drops) for an expensive Isabelle trial. The detector already has these signals:
+  1. unused-premise (head absent from proof body, prefix match incl _def/_E)
+  2. differential (≥1 OTHER conjunct visibly consumed → high)
+  3. frame-premise (head also in post/conclusion → spared, never flagged)
+  4. op read/write class (write-op premise demoted, read-op kept)
+  5. implication scope (\<lbrakk>...\<rbrakk> ==> C assumption-weakening)
+  6. rule-precondition dependency (head feeds an INVOKED named rule's precondition → demoted)
+  7. compositional wp-chain idiom (Hoare proof: <op>_def unfold + hoare_pre + pure wp/wpc/clarsimp, no drule/frule/strengthen/rule_tac → BOOST)
+
+Already TRIED and REJECTED — do NOT propose these again:
+  - unconstrained automation tactic (blast/fastforce/auto in the proof → demote) — REGRESSES real wins (gts_wf' embedded blast, `apply (fastforce simp:)` wins); not cleanly separable from directed automation.
+
+Below are REAL labeled outcomes from past rounds. WINS built fine (the drop was sound); LOSSES failed the trial (the dropped premise was load-bearing) — these wasted build budget. Your job: find ONE NEW mechanical signal, NOT already in the list above, that separates LOSSES from WINS — i.e. a structural feature of the lemma/proof that predicts the drop will FAIL. The signal must be computable from the feature dict alone (keys: dropped_head, op, op_class, form, proof, stmt, invoked_rules), with NO Isabelle and NO semantic reasoning at scan time.
+
+=== WINS (15) — your signal must NOT fire on these ===
+- lemma some_get_page_info_umapsD_no_valid_objs | drop `valid_objs` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: get_page_info_def get_pd_entry_def get_arch_obj_def                         kernel_mappings_slots_eq                  split: option.splits Structures_A.kernel_object.splits                         arch_kernel_obj.split
+  agent-said: The premise `valid_objs s` does not appear anywhere in the proof body of some_get_page_info_umapsD (lines 118-164). The proof drives the result through valid_vs
+- lemma cap_swap_asid_map' | drop `cte_wp_at` | op cap_swap (unknown) | form hoare
+  proof: apply (simp add: cap_swap_def set_cdt_def valid_asid_map_def vspace_at_asid_def)   apply (rule hoare_pre)    apply (wp set_cap.vs_lookup|simp           |rule hoare_lift_Pf [where f=arch_state])+   done
+  agent-said: The proof of cap_swap_asid_map never mentions cte_wp_at, weak_derived, or either slot name: it unfolds cap_swap_def/set_cdt_def and then discharges everything v
+- lemma post_cap_delete_pre_is_final_cap'' | drop `` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: cap_cleanup_opt_def cte_wp_at_def post_cap_delete_pre_def arch_cap_cleanup_opt_def                       split: cap.split_asm if_split_asm                       elim!: ranE dest!: caps_of_state_cteD)    (* IRQHandlerCa
+  agent-said: The proof of post_cap_delete_pre_is_final_cap' never references valid_ioports: it unfolds cap_cleanup_opt_def/post_cap_delete_pre_def and dispatches the IRQHand
+- lemma arch_valid_obj_same_type' | drop `` | op  (unknown) | form impl
+  proof: by (induction ao rule: arch_kernel_obj.induct;          clarsimp simp: typ_at_same_type)
+  agent-said: The scanner flags 'NO conjunct visibly consumed' — the strongest signal. The proof uses only `induction ao` and `clarsimp simp: typ_at_same_type`. For all ARM a
+- lemma same_object_also_valid_no_asid_base | drop `asid_base` | op  (unknown) | form impl
+  proof: apply (cases cap,          (clarsimp simp: same_object_as_def is_cap_simps cap_asid_def                          wellformed_cap_def wellformed_acap_def                          valid_cap_def bits_of_def cap_aligned_def                    sp
+  agent-said: The proof body of same_object_also_valid never mentions cap_asid_base anywhere — not in any simp lemma name, frule, drule, or clarsimp hint. Dropping it yields 
+- lemma shift_0x3C_set_no_len | drop `len` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: upto_enum_step_def word_shift_by_2 image_image)   apply (subst image_cong[where N="{x. x < 2 ^ 4}"])     apply (safe, simp_all)[1]      apply (drule plus_one_helper2, simp_all)[1]     apply (drule word_le_minus_one_leq
+  agent-said: The proof body of shift_0x3C_set never mentions len_of or any tactic that explicitly consumes the 'len_of TYPE('a) = bits - 2' hypothesis. The two other conjunc
+- lemma invoke_cnode_valid_pdpt_objs_no_invs | drop `invs` | op invoke_cnode (write) | form hoare
+  proof: apply (simp add: invoke_cnode_def)   apply (rule hoare_pre)    apply (wp get_cap_wp | wpc | simp split del: if_split)+   done
+  agent-said: All operations invoked inside invoke_cnode (cap_insert, cap_swap_for_delete, empty_slot, cap_delete, cap_move, etc.) are already proven [wp] for valid_pdpt_objs
+- lemma invoke_cnode_valid_pdpt_objs_min | drop `invs` | op invoke_cnode (write) | form hoare
+  proof: apply (simp add: invoke_cnode_def)   apply (rule hoare_pre)    apply (wp get_cap_wp | wpc | simp split del: if_split)+   done
+  agent-said: An independent drop of valid_cnode_inv i from invoke_cnode_valid_pdpt_objs. Since the [wp] lemmas for all component operations (cap_insert, cap_swap, empty_slot
+- lemma pd_at_asid_unique_no_vspace_objs | drop `vspace_objs` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: vspace_at_asid_def)   apply (drule(1) valid_vs_lookupD[OF vs_lookup_pages_vs_lookupI])+   apply (clarsimp simp: table_cap_ref_ap_eq[symmetric])   apply (clarsimp simp: table_cap_ref_def                  split: cap.spli
+  agent-said: The proof body of pd_at_asid_unique uses only valid_vs_lookupD, unique_table_refsD, and asid_low_high_bits. None of these rules require valid_vspace_objs. The s
+- lemma pd_at_asid_unique_no_global_objs | drop `global_objs` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: vspace_at_asid_def)   apply (drule(1) valid_vs_lookupD[OF vs_lookup_pages_vs_lookupI])+   apply (clarsimp simp: table_cap_ref_ap_eq[symmetric])   apply (clarsimp simp: table_cap_ref_def                  split: cap.spli
+  agent-said: The proof body of pd_at_asid_unique never mentions valid_global_objs. The derivation goes through valid_vs_lookupD -> unique_table_refsD -> asid_low_high_bits, 
+- lemma retype_etcb_at_helper_no_valid_etcbs | drop `valid_etcbs` | op  (unknown) | form impl
+  proof: apply (induct ptrs)   apply simp   apply (case_tac d)   apply (clarsimp split: if_split_asm simp: default_tcb_def default_object_def default_ext_def etcb_at'_def)+   done
+  agent-said: The proof of retype_etcb_at_helper (L68-72) never mentions valid_etcbs_2: the induction and case_tac on d only use d ≠ Untyped, etcb_at', and the foldr-TCB equa
+- lemma get_simple_ko_valid_obj' | drop `obj_at` | op get_simple_ko (read) | form hoare
+  proof: apply (simp add: get_simple_ko_def)   apply (rule bind_wp)    prefer 2    apply (rule hoare_pre_imp [OF _ get_object_valid])    apply (simp add: invs_def valid_state_def valid_pspace_def)   apply (wpsimp simp: partial_inv_def the_equality v
+  agent-said: get_simple_ko is a read/decode operation. If the object at ep does not satisfy bound (partial_inv f ko) then get_simple_ko assert-fails, making the Hoare triple
+- lemma decode_inv_wf_no_real_cte | drop `real_cte_at` | op decode_invocation (read) | form hoare
+  proof: apply (simp add: decode_invocation_def cong: cap.case_cong if_cong split del: if_split)   apply (rule hoare_pre)    apply (wp Tcb_AI.decode_tcb_inv_wf decode_domain_inv_wf[simplified split_def] | wpc |           simp add: o_def uncurry_def 
+  agent-said: The conjunct `real_cte_at slot` does not appear in any tactic in the proof body (no `real_cte_at`, `real_cte_at_def`, etc.). The op is `decode_invocation`, a re
+- lemma decode_unbind_notification_wf_strong | drop `invs` | op decode_unbind_notification (read) | form hoare
+  proof: apply (simp add: decode_unbind_notification_def)   apply (rule hoare_pre)    apply (wp gbn_wp | wpc)+   apply clarsimp   done
+  agent-said: tcb_inv_wf (NotificationControl t None) unfolds to (tcb_at t and ex_nonz_cap_to t), so the only facts the proof needs are those two conjuncts. The wp chain uses
+- lemma gts_wf' | drop `` | op get_thread_state (read) | form hoare
+  proof: apply (simp add: get_thread_state_def thread_get_def)   apply wp   apply (clarsimp simp: invs_def valid_state_def valid_pspace_def                         valid_objs_def get_tcb_def dom_def                   split: option.splits Structures_
+  agent-said: (reconstructed from ledger; original-lemma proof)
+
+=== LOSSES (30) — your signal SHOULD fire on these ===
+- lemma some_get_page_info_umapsD_no_asid_table | drop `asid_table` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: get_page_info_def get_pd_entry_def get_arch_obj_def                         kernel_mappings_slots_eq                  split: option.splits Structures_A.kernel_object.splits                         arch_kernel_obj.split
+  TRIAL-ERR: 
+  agent-said: The premise `valid_asid_table (arm_asid_table (arch_state s)) s` does not appear anywhere in the proof body of some_get_page_info_umapsD (lines 118-164): no `va
+- lemma some_get_page_info_umapsD_minimal | drop `` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: get_page_info_def get_pd_entry_def get_arch_obj_def                         kernel_mappings_slots_eq                  split: option.splits Structures_A.kernel_object.splits                         arch_kernel_obj.split
+  TRIAL-ERR: *** Failed to apply proof method (line 191 of "/tmp/tmp.iHOdjFWTbd/Tmp_4046b2ed7f7c03f3.thy"):
+  agent-said: Combined drop of both `valid_asid_table (arm_asid_table (arch_state s)) s` and `valid_objs s`. Neither appears in the proof body. This is the maximally strength
+- lemma lookup_pt_slot_pte_no_pspace_aligned | drop `pspace_aligned` | op lookup_pt_slot (read) | form hoare
+  proof: apply (simp add: lookup_pt_slot_def)   apply (wp get_pde_wp|wpc)+   apply (clarsimp simp: lookup_pd_slot_def Let_def)   apply (simp add: pd_shifting_at)   apply (drule (2) valid_vspace_objsD)   apply (clarsimp simp: )   apply (bspec "ucast 
+  TRIAL-ERR: *** Failed to apply proof method (line 613 of "/tmp/tmp.9nS6L8omcO/Tmp_6d73b619a1653a73.thy"):
+  agent-said: The proof of lookup_pt_slot_pte uses pd_shifting_at (which needs page_directory_at pd and pspace_aligned) as a simp rule. However pspace_aligned may be derivabl
+- lemma lookup_pt_slot_pte_no_pd_at | drop `page_directory_at` | op lookup_pt_slot (read) | form hoare
+  proof: apply (simp add: lookup_pt_slot_def)   apply (wp get_pde_wp|wpc)+   apply (clarsimp simp: lookup_pd_slot_def Let_def)   apply (simp add: pd_shifting_at)   apply (drule (2) valid_vspace_objsD)   apply (clarsimp simp: )   apply (bspec "ucast 
+  TRIAL-ERR: *** Failed to apply proof method (line 613 of "/tmp/tmp.zIgh6h8Skw/Tmp_fa2cd60628e99683.thy"):
+  agent-said: page_directory_at pd does not appear textually in the proof body. It is consumed indirectly by pd_shifting_at, but pd_shifting_at may be derivable from pspace_a
+- lemma lookup_pt_slot_ptes_aligned_valid_no_ekm | drop `equal_kernel_mappings` | op lookup_pt_slot (read) | form hoare
+  proof: apply (simp add: lookup_pt_slot_def)   apply (wp get_pde_wp|wpc)+   apply (clarsimp simp: lookup_pd_slot_def Let_def)   apply (simp add: pd_shifting_at)   apply (frule (2) valid_vspace_objsD)   apply (clarsimp simp: )   subgoal for s _ _ x 
+  TRIAL-ERR: *** Failed to apply proof method (line 586 of "/tmp/tmp.SNgVou60l6/Tmp_f18a6c59062e4e56.thy"):
+  agent-said: equal_kernel_mappings does not appear textually in the proof body of lookup_pt_slot_ptes_aligned_valid; it is forwarded implicitly to kernel_mapping_slots_empty
+- lemma cap_insert_ap_invs_no_tcb_valid | drop `tcb_cap_valid` | op cap_insert (unknown) | form hoare
+  proof: apply (simp add: invs_def valid_state_def valid_pspace_def)   apply (strengthen valid_arch_state_strg                     valid_asid_map_asid_upd_strg valid_vspace_objs_asid_upd_strg )   apply (simp cong: conj_cong)   apply (rule hoare_pre)
+  TRIAL-ERR: *** Failed to apply proof method (line 652 of "/tmp/tmp.GaJrS8Zene/Tmp_a56e886f28ecf80a.thy"):
+  agent-said: The string `tcb_cap_valid` never appears in the proof body of cap_insert_ap_invs. None of the wp rules applied (cap_insert_simple_mdb, cap_insert_iflive, cap_in
+- lemma retype_region_no_cap_to_obj_no_mdb | drop `valid_mdb` | op retype_region (write) | form hoare
+  proof: apply (rule hoare_gen_asm)+   apply (simp add: no_cap_to_obj_with_diff_ref_null_filter)   apply (wp retype_region_caps_of | simp)+   apply fastforce   done
+  TRIAL-ERR: *** Failed to apply proof method (line 497 of "/tmp/tmp.1sEQbrluyd/Tmp_92b352b95e2dec25.thy"):
+  agent-said: The string `valid_mdb` never appears in the proof body of retype_region_no_cap_to_obj. The proof reduces to retype_region_caps_of (tracking null_filter changes 
+- lemma retype_region_no_cap_to_obj_no_pspace | drop `valid_pspace` | op retype_region (write) | form hoare
+  proof: apply (rule hoare_gen_asm)+   apply (simp add: no_cap_to_obj_with_diff_ref_null_filter)   apply (wp retype_region_caps_of | simp)+   apply fastforce   done
+  TRIAL-ERR: *** Failed to apply proof method (line 497 of "/tmp/tmp.TXImJVy2uU/Tmp_3beebf1ce88abb4e.thy"):
+  agent-said: Companion to retype_region_no_cap_to_obj_no_mdb: drops valid_pspace instead of valid_mdb. The string `valid_pspace` never appears in the proof body. The proof i
+- lemma vs_cap_ref_master_no_base | drop `base` | op  (unknown) | form impl
+  proof: apply (rule ccontr)   apply (clarsimp simp: vs_cap_ref_def cap_master_cap_def                  split: cap.split_asm)   apply (clarsimp simp: cap_asid_def split: arch_cap.split_asm option.split_asm)   done
+  TRIAL-ERR: *** Failed to finish proof:
+  agent-said: The proof of vs_cap_ref_master only unfolds vs_cap_ref_def, cap_master_cap_def, and cap_asid_def. The term cap_asid_base never appears in any simp set or split 
+- lemma unique_table_refsD_no_left_lookup | drop `left_lookup` | op  (unknown) | form impl
+  proof: unfolding unique_table_refs_def   by blast
+  TRIAL-ERR: *** Failed to apply initial proof method (line 115 of "/tmp/tmp.wsDwhAqSZB/Tmp_3c23bb8d67a91fb2.thy"):
+  agent-said: The scanner observed that the head `cps` does not appear in the proof body text beyond the unfolding directive. If unique_table_refs_def is symmetric or blast c
+- lemma valid_table_capsD_no_asid_hyp | drop `asid_hyp` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: cte_wp_at_caps_of_state valid_table_caps_def)   apply (cases ptr, fastforce)   done
+  TRIAL-ERR: *** Failed to apply proof method (line 256 of "/tmp/tmp.cZjgq6NrwU/Tmp_d228667788490dca.thy"):
+  agent-said: The scanner noted cap_asid head never appears in the proof body text. valid_table_caps_def internally quantifies over cap_asid conditions; if clarsimp/fastforce
+- lemma cap_refs_in_kernel_windowD_no_lookup | drop `lookup` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: cap_refs_in_kernel_window_def valid_refs_def                         cte_wp_at_caps_of_state)   apply (cases ptr, fastforce)   done
+  TRIAL-ERR: *** Failed to apply proof method (line 288 of "/tmp/tmp.mgB4fV5WBS/Tmp_06c69b01d9d94f71.thy"):
+  agent-said: The scanner flagged caps_of_state head as absent from the proof body text. cap_refs_in_kernel_window_def quantifies over all caps in the range; if clarsimp can 
+- lemma ex_nonz_tcb_cte_caps_no_tcb | drop `tcb` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: ex_nonz_cap_to_def ex_cte_cap_wp_to_def                         cte_wp_at_caps_of_state)   apply (subgoal_tac "s \<turnstile> cap")    apply (rule_tac x=a in exI, rule_tac x=ba in exI)    apply (clarsimp simp: valid_ca
+  TRIAL-ERR: *** Failed to apply proof method (line 452 of "/tmp/tmp.fiA86z7KBg/Tmp_9b4f3ec9c4040fe5.thy"):
+  agent-said: The proof body of ex_nonz_tcb_cte_caps never mentions tcb_at: it derives 's ⊢ cap' purely via caps_of_state_valid_cap (which needs valid_objs, not tcb_at) and t
+- lemma cap_insert_simple_invs_no_tcb_cap_valid | drop `tcb_cap_valid` | op cap_insert (unknown) | form hoare
+  proof: apply (simp add: invs_def valid_state_def valid_pspace_def)   apply (rule hoare_pre)    apply (wp cap_insert_simple_mdb cap_insert_iflive              cap_insert_zombies cap_insert_ifunsafe              cap_insert_valid_global_refs cap_inse
+  TRIAL-ERR: *** Failed to apply proof method (line 606 of "/tmp/tmp.YTHKMiIZsD/Tmp_2805ce907d7b8079.thy"):
+  agent-said: The proof body of cap_insert_simple_invs never references tcb_cap_valid textually. The wp chain uses cap_insert_simple_mdb, cap_insert_iflive, cap_insert_zombie
+- lemma cap_insert_simple_arch_caps_no_ap_no_diff_ref | drop `no_cap_to_obj_with_diff_ref` | op cap_insert (unknown) | form hoare
+  proof: apply (simp add: cap_insert_def)   apply (wp set_cap_valid_arch_caps set_untyped_cap_as_full_valid_arch_caps get_cap_wp     | simp split del: if_split)+   apply (wp hoare_vcg_all_lift hoare_vcg_conj_lift hoare_vcg_imp_lift hoare_vcg_ball_li
+  TRIAL-ERR: *** Failed to finish proof (line 536 of "/tmp/tmp.gAEwJBBt7q/Tmp_2c1cb396754e4fdc.thy"):
+  agent-said: The proof body of cap_insert_simple_arch_caps_no_ap never mentions no_cap_to_obj_with_diff_ref textually. The final auto tactic only discharges is_simple_cap/is
+- lemma tcb_arch_detype' | drop `` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: valid_arch_tcb_def)   done
+  TRIAL-ERR: 
+  agent-said: The original proof body `apply (clarsimp simp: valid_arch_tcb_def)` never mentions ko_at, erule, frule, drule or any rule that consumes `ko_at (TCB t) p s`. The
+- lemma valid_vspace_obj' | drop `` | op  (unknown) | form impl
+  proof: apply (case_tac ao; simp; erule allEI ballEI; clarsimp simp: ran_def;          drule vs_lookup_pages_vs_lookupI)   subgoal for p t r ref i by (crush i)   subgoal for p t i ref by (cases "t i"; crush i)   subgoal for p t i ref by (cases "t i
+  TRIAL-ERR: *** Failed to apply initial proof method (line 317 of "/tmp/tmp.8j4q07yeEG/Tmp_e45e2c12066aa171.thy"):
+  agent-said: The scanner reports ko_at never appears in the proof body. The proof drives entirely through vs_lookup_pages_preserved via the crush private method, which consu
+- lemma delete_objects_invs' | drop `ct_active` | op delete_objects (write) | form hoare
+  proof: apply (simp add: delete_objects_def)   apply (simp add: freeMemory_def word_size_def bind_assoc                    empty_fail_mapM_x ef_storeWord)    apply (rule hoare_pre)    apply (rule_tac G="is_aligned ptr bits \<and> word_size_bits \<l
+  TRIAL-ERR: *** Failed to finish proof:
+  agent-said: The proof body of the original `delete_objects_invs` never references `ct_active` — no `rule ct_active`, no `simp add: ct_active_def`, no `drule ct_active`. The
+- lemma suspend_unlive'_no_valid_mdb | drop `valid_mdb` | op suspend (unknown) | form hoare
+  proof: apply (simp add: suspend_def set_thread_state_def set_object_def get_object_def)   supply hoare_vcg_if_split[wp_split del] if_split[split del]   apply (wp | simp only: obj_at_exst_update)+      apply (simp add: obj_at_def live_def hyp_live_
+  TRIAL-ERR: *** Malformed command syntax
+  agent-said: The proof body of suspend_unlive' at L512-524 never references valid_mdb: it expands suspend_def then uses wp/simp to establish bound_tcb_at via hoare_strengthe
+- lemma suspend_unlive'_no_valid_objs | drop `valid_objs` | op suspend (unknown) | form hoare
+  proof: apply (simp add: suspend_def set_thread_state_def set_object_def get_object_def)   supply hoare_vcg_if_split[wp_split del] if_split[split del]   apply (wp | simp only: obj_at_exst_update)+      apply (simp add: obj_at_def live_def hyp_live_
+  TRIAL-ERR: *** Malformed command syntax
+  agent-said: The proof body of suspend_unlive' never mentions valid_objs. The wp chain uses hoare_strengthen_post with bound_tcb_at as the intermediate post; that derivation
+- lemma suspend_unlive'_no_tcb_at | drop `tcb_at` | op suspend (unknown) | form hoare
+  proof: apply (simp add: suspend_def set_thread_state_def set_object_def get_object_def)   supply hoare_vcg_if_split[wp_split del] if_split[split del]   apply (wp | simp only: obj_at_exst_update)+      apply (simp add: obj_at_def live_def hyp_live_
+  TRIAL-ERR: *** Malformed command syntax
+  agent-said: tcb_at t does not appear in the proof body at L512-524. The intermediate goal is bound_tcb_at ((=) None) t (which implies tcb_at by pred_tcb_at_tcb_at), so the 
+- lemma wellformed_arch_pspace_no_kheap | drop `kheap` | op  (unknown) | form impl
+  proof: by simp
+  TRIAL-ERR: 
+  agent-said: arch_valid_obj ao s unfolds to wellformed_vspace_obj ao (L326), which mentions no state component at all. The conclusion arch_valid_obj ao s' is identical in co
+- lemma valid_arch_tcb_pspaceI_no_kheap | drop `kheap` | op  (unknown) | form impl
+  proof: by (simp add: valid_arch_tcb_def)
+  TRIAL-ERR: 
+  agent-said: valid_arch_tcb is defined as \<lambda>a. \<top> (L251), so valid_arch_tcb t s = True for every t and s. The premise valid_arch_tcb t s and the conclusion valid_
+- lemma empty_table_is_valid_no_arch_state | drop `arch_state` | op  (unknown) | form impl
+  proof: by (cases ao; simp add: empty_table_def)
+  TRIAL-ERR: *** Bad context for command "lemma" (line 1945 of "/tmp/tmp.pXrmbY4A0M/Tmp_32303f2997e4c030.thy")
+  agent-said: For a PageDirectory, empty_table forces every non-kernel-slot pde to be InvalidPDE; valid_vspace_obj (PageDirectory pd) requires valid_pde on those entries, whi
+- lemma valid_table_caps_ptD' | drop `` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: valid_table_caps_def simp del: split_paired_All)   apply (erule allE)+   apply (erule (1) impE)   apply (clarsimp simp add: is_pt_cap_def cap_asid_def)   apply (erule impE, rule refl)   apply (clarsimp simp: obj_at_def
+  TRIAL-ERR: *** Failed to finish proof:
+  agent-said: The literal text `page_table_at` never appears in the proof body. The proof derives obj_at (empty_table S) p' s from valid_table_caps_def, then clarsimp with ob
+- lemma valid_table_caps_ptD_no_cap | drop `cap` | op  (unknown) | form impl
+  proof: apply (clarsimp simp: valid_table_caps_def simp del: split_paired_All)   apply (erule allE)+   apply (erule (1) impE)   apply (clarsimp simp add: is_pt_cap_def cap_asid_def)   apply (erule impE, rule refl)   apply (clarsimp simp: obj_at_def
+  TRIAL-ERR: *** Failed to apply proof method (line 721 of "/tmp/tmp.48scCQWWEi/Tmp_8e65e7223c09038d.thy"):
+  agent-said: The scanner notes `caps_of_state` never appears literally in the proof body; the expansion via valid_table_caps_def drives the argument. If valid_table_caps int
+- lemma store_pde_global_objs_no_global_refs | drop `global_refs` | op store_pde (write) | form hoare
+  proof: apply (simp add: store_pde_def)   apply wp   apply clarsimp   done
+  TRIAL-ERR: *** Malformed command syntax
+  agent-said: The proof of store_pde_global_objs is `apply (simp add: store_pde_def); apply wp; apply clarsimp; done` — extremely opaque, with NO conjunct visibly consumed. T
+- lemma store_pde_global_objs_no_arch_state | drop `arch_state` | op store_pde (write) | form hoare
+  proof: apply (simp add: store_pde_def)   apply wp   apply clarsimp   done
+  TRIAL-ERR: *** Malformed command syntax
+  agent-said: Same lemma and same proof body as hint 8: `valid_arch_state` never appears by name in the proof. The `second_level_tables (arch_state s)` is already threaded th
+- lemma store_pde_valid_kernel_mappings_map_global_no_arch_state | drop `arch_state` | op store_pde (write) | form hoare
+  proof: apply (simp add: store_pde_def)   apply (wp set_pd_valid_kernel_mappings_map)   apply (clarsimp simp: obj_at_def)   apply (rule conjI, rule glob_vs_refs_add_one')   apply (clarsimp simp: ucast_ucast_mask_shift_helper)   done
+  TRIAL-ERR: *** Malformed command syntax
+  agent-said: The proof of store_pde_valid_kernel_mappings_map_global never mentions `valid_arch_state` by name; the tactic chain is `wp set_pd_valid_kernel_mappings_map; cla
+- lemma get_cap_valid_ipc_no_valid_objs | drop `valid_objs` | op get_cap (read) | form hoare
+  proof: apply (wp get_cap_wp)   apply clarsimp   apply (drule(1) cte_wp_tcb_cap_valid)   apply (clarsimp simp add: tcb_cap_valid_def obj_at_def)   apply (simp add: valid_ipc_buffer_cap_def mask_cap_def cap_rights_update_def                    acap_
+  TRIAL-ERR: *** Failed to apply proof method (line 130 of "/tmp/tmp.fIhGkI4295/Tmp_2cbf0d31705464c2.thy"):
+  agent-said: get_cap is a read-only op; the scanner flags valid_objs as never appearing in the proof text. The only explicit consumer of a context fact is drule(1) cte_wp_tc
+
+
+Output ONLY a JSON object (no prose, no fence):
+{
+  "signature": "<one paragraph: the structural pattern + WHY it predicts load-bearing>",
+  "predicate_code": "def proposed_signal(feat):\n    # returns True to DEMOTE (predict loss)\n    ...",
+  "expected_effect": "<which losses it catches, why it spares the wins>",
+  "novelty": "<why this is NOT just one of the 6 existing signals>"
+}
+The predicate gets the feature dict and may use the `re` module. Keep it conservative: prefer missing some losses over firing on any win.

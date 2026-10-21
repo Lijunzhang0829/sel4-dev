@@ -1,0 +1,21 @@
+FAILED (41164ms)
+*** Failed to finish proof:
+*** goal (2 subgoals):
+***  1. \<And>s a b.
+***        \<lbrakk>descendants_range (UntypedCap dev ptr bits f) (a, b) s;
+***         untyped_children_in_mdb s; valid_objs s;
+***         is_aligned ptr bits \<and>
+***         bits < word_bits \<and>
+***         valid_untyped (UntypedCap dev ptr bits f) s \<and>
+***         4 \<le> bits \<and> f \<le> 2 ^ bits \<and> ptr \<noteq> 0\<rbrakk>
+***        \<Longrightarrow> ct_active s
+***  2. \<And>s a b.
+***        \<lbrakk>invs s;
+***         cte_wp_at ((=) (UntypedCap dev ptr bits f)) (a, b) s;
+***         descendants_range (UntypedCap dev ptr bits f) (a, b) s;
+***         untyped_children_in_mdb s;
+***         (invs and untyped_children_in_mdb)
+***          (detype (untyped_range (UntypedCap dev ptr bits f))
+***            (clear_um (untyped_range (UntypedCap dev ptr bits f))
+***              s))\<rbrakk>
+***        \<Longrightarrow> is_aligned ptr bits \<and>

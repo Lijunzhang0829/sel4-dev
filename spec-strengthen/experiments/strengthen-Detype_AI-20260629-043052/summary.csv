@@ -1,0 +1,4 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-P-descendants_range_imply_no_descendants_no_untyped_,descendants_range_imply_no_descendants_no_untyped,P,named,TRIAL-FAILED,,
+01-P-descendants_range_imply_no_descendants_no_valid_objs_,descendants_range_imply_no_descendants_no_valid_objs,P,named,TRIAL-FAILED,,
+02-P-descendants_range_imply_no_descendants_no_valid_mdb_,descendants_range_imply_no_descendants_no_valid_mdb,P,named,TRIAL-FAILED,,

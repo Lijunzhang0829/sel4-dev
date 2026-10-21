@@ -1,0 +1,38 @@
+1349 1349
+  done
+
+lemma lookup_pt_slot_is_aligned_no_global_objs:
+  "\<lbrace>(\<exists>\<rhd> pd) and K (vmsz_aligned vptr sz) and K (is_aligned pd pd_bits)
+    and valid_arch_state and valid_vspace_objs and equal_kernel_mappings
+    and pspace_aligned\<rbrace>
+     lookup_pt_slot pd vptr
+   \<lbrace>\<lambda>rv s. is_aligned rv (pg_entry_align sz)\<rbrace>,-"
+  apply (simp add: lookup_pt_slot_def)
+  apply (wp get_pde_wp | wpc)+
+  apply (clarsimp simp: lookup_pd_slot_pd)
+  apply (frule(2) valid_vspace_objsD[rotated])
+  apply simp
+  apply (rule is_aligned_add)
+   apply (case_tac "ucast (lookup_pd_slot pd vptr && mask pd_bits >> 2) \<in> kernel_mapping_slots")
+    apply (frule kernel_mapping_slots_empty_pdeI)
+      apply (simp add: obj_at_def)+
+    apply clarsimp
+    apply (erule_tac x="ptrFromPAddr x" in allE)
+    apply (simp add: pde_ref_def second_level_tables_def)
+    apply (erule is_aligned_weaken[OF is_aligned_global_pt])
+      apply ((simp add: invs_psp_aligned invs_vspace_objs invs_arch_state
+                        pg_entry_align_def pt_bits_def pageBits_def
+               split: vmpage_size.split)+)[3]
+   apply (drule_tac x="ucast (lookup_pd_slot pd vptr && mask pd_bits >> 2)" in bspec, simp)
+   apply (clarsimp simp: obj_at_def a_type_def)
+   apply (simp split: Structures_A.kernel_object.split_asm if_split_asm
+                     arch_kernel_obj.split_asm)
+   apply (erule is_aligned_weaken[OF pspace_alignedD], simp)
+   apply (simp add: obj_bits_def pg_entry_align_def  split: vmpage_size.splits)
+  apply (rule is_aligned_shiftl)
+  apply (rule is_aligned_andI1)
+  apply (rule is_aligned_shiftr)
+  apply (case_tac sz)
+     apply (clarsimp simp: vmsz_aligned_def pg_entry_align_def
+                    elim!: is_aligned_weaken  split: vmpage_size.splits)+
+  done

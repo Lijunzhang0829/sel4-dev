@@ -1,0 +1,18 @@
+{
+  "arm": "contract",
+  "theory": "Schedule_R",
+  "interface_total": 99,
+  "interface_locked": 71,
+  "CONTRACT": "14/26",
+  "EXPORTED": "57/73",
+  "machine_helpers_locked": 48,
+  "human_bodies": 0,
+  "human_hints": 0,
+  "stuck_total": 41,
+  "stuck_root_clusters": {
+    "bitmap(L1/L2位算术)": 3,
+    "sym_heap/tcbQueue/sched_pointers": 7,
+    "invs'/ct_activatable(lift电池)": 10
+  },
+  "verdict": "纯机器零人工重建接口层72/99(~73%);失败归因=2-3个同源深层能力簇(位算术/heap编排/lift电池),非harness/检索/反馈问题"
+}

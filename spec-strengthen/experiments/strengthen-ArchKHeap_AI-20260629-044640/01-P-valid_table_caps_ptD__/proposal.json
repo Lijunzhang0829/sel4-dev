@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Callers that hold a PageTableCap but lack an independent page_table_at witness",
+ "grace_period_weeks": 8,
+ "lemma_name": "valid_table_caps_ptD'",
+ "hint_lemma": "valid_table_caps_ptD",
+ "anchor_line": 714,
+ "new_lemma": "lemma valid_table_caps_ptD':\n  \"\\<lbrakk> (caps_of_state s) p = Some (ArchObjectCap (arch_cap.PageTableCap p' None));\n     valid_table_caps s \\<rbrakk> \\<Longrightarrow>\n    \\<exists>pt. ko_at (ArchObj (PageTable pt)) p' s \\<and> valid_vspace_obj (PageTable pt) s\"\n  apply (clarsimp simp: valid_table_caps_def simp del: split_paired_All)\n  apply (erule allE)+\n  apply (erule (1) impE)\n  apply (clarsimp simp add: is_pt_cap_def cap_asid_def)\n  apply (erule impE, rule refl)\n  apply (clarsimp simp: obj_at_def empty_table_def)\n  done",
+ "rationale": "The literal text `page_table_at` never appears in the proof body. The proof derives obj_at (empty_table S) p' s from valid_table_caps_def, then clarsimp with obj_at_def empty_table_def to extract the PageTable witness. The empty_table predicate on a non-PageTable ArchObj returns False, so the case-split implicit in the clarsimp already fixes the constructor to PageTable without a separate page_table_at hypothesis. Worth a trial since the literal absence is a real signal.",
+ "strengthening_claim": "(caps_of_state s p = Some (ArchObjectCap (arch_cap.PageTableCap p' None)) \\<and> valid_table_caps s) \\<Longrightarrow> (caps_of_state s p = Some (ArchObjectCap (arch_cap.PageTableCap p' None)) \\<and> page_table_at p' s \\<and> valid_table_caps s)",
+ "anchor_text": "  done"
+}

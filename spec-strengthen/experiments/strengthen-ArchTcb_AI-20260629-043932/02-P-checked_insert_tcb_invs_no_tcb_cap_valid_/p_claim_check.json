@@ -1,0 +1,8 @@
+{
+ "ok": true,
+ "reason": "pure premise-weakening verified (strict pre-conjunct subset, identical post)",
+ "claim": "(invs and cte_wp_at (\\<lambda>c. c = cap.NullCap) (target, ref)\n        and K (is_cnode_or_valid_arch new_cap) and valid_cap new_cap\n        and tcb_cap_valid new_cap (target, ref)\n        and K (is_pt_cap new_cap \\<or> is_pd_cap new_cap\n                         \\<longrightarrow> cap_asid new_cap \\<noteq> None)\n        and (cte_wp_at (\\<lambda>c. obj_refs c = obj_refs new_cap\n                              \\<longrightarrow> table_cap_ref c = table_cap_ref new_cap \\<and>\n                                 pt_pd_asid c = pt_pd_asid new_cap) src_slot)) ==> (invs and cte_wp_at (\\<lambda>c. c = cap.NullCap) (target, ref)\n        and K (is_cnode_or_valid_arch new_cap) and valid_cap new_cap\n        and K (is_pt_cap new_cap \\<or> is_pd_cap new_cap\n                         \\<longrightarrow> cap_asid new_cap \\<noteq> None)\n        and (cte_wp_at (\\<lambda>c. obj_refs c = obj_refs new_cap\n                              \\<longrightarrow> table_cap_ref c = table_cap_ref new_cap \\<and>\n                                 pt_pd_asid c = pt_pd_asid new_cap) src_slot)) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `tcb_cap_valid new_cap (target, ref)`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "dropped_conjuncts": [
+  "tcb_cap_valid new_cap (target, ref)"
+ ]
+}

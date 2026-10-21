@@ -1,0 +1,6 @@
+2882 2882
+  by (wpsimp simp: set_cdt_def)
+
+lemma set_cdt_domain_index[wp]:
+  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_cdt t \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
+  by (wpsimp simp: set_cdt_def)

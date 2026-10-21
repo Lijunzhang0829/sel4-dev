@@ -1,0 +1,9 @@
+614 614
+  done
+
+lemma invoke_cnode_valid_pdpt_objs_min:
+  "\<lbrace>valid_pdpt_objs\<rbrace> invoke_cnode i \<lbrace>\<lambda>rv. valid_pdpt_objs\<rbrace>"
+  apply (simp add: invoke_cnode_def)
+  apply (rule hoare_pre)
+   apply (wp get_cap_wp | wpc | simp split del: if_split)+
+  done

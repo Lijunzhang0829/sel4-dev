@@ -1,0 +1,17 @@
+{
+  "session": "AInvs",
+  "baseline_wall_ms": 76551,
+  "trial_wall_ms": 75993,
+  "delta_pct": -0.73,
+  "wall_gate_pass": true,
+  "baseline_ref": "reports/golden-baseline/walls.json#AInvs",
+  "session_rebuild_done": false,
+  "consumers_lines": 6,
+  "consumers_files": 5,
+  "impact_verdict": "weakening",
+  "strength_score": 1.0,
+  "witness_present": false,
+  "witness_advisory_pass": true,
+  "gate_pass": false,
+  "has_weakening": true
+}

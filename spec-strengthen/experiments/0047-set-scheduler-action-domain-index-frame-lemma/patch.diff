@@ -1,0 +1,14 @@
+diff --git a/proof/invariant-abstract/DetSchedSchedule_AI.thy b/proof/invariant-abstract/DetSchedSchedule_AI.thy
+--- a/proof/invariant-abstract/DetSchedSchedule_AI.thy
++++ b/proof/invariant-abstract/DetSchedSchedule_AI.thy
+@@ -3442,6 +3442,10 @@
+   "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_scheduler_action action \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+   by (wpsimp simp: set_scheduler_action_def)
+ 
++lemma set_scheduler_action_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_scheduler_action action \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wpsimp simp: set_scheduler_action_def)
++
+ lemma possible_switch_to_not_cur_thread [wp]:
+   "\<lbrace>not_cur_thread t\<rbrace> possible_switch_to target \<lbrace>\<lambda>_. not_cur_thread t\<rbrace>"
+   unfolding possible_switch_to_def

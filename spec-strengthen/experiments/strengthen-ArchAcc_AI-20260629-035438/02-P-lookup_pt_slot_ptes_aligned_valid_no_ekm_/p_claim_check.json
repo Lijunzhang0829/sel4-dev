@@ -1,0 +1,8 @@
+{
+ "ok": true,
+ "reason": "pure premise-weakening verified (strict pre-conjunct subset, identical post)",
+ "claim": "(valid_vspace_objs and valid_arch_state\n    and equal_kernel_mappings and pspace_aligned\n    and valid_global_objs\n    and \\<exists>\\<rhd> pd and page_directory_at pd\n    and K (is_aligned vptr 16)) ==> (valid_vspace_objs and valid_arch_state\n    and pspace_aligned\n    and valid_global_objs\n    and \\<exists>\\<rhd> pd and page_directory_at pd\n    and K (is_aligned vptr 16)) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `equal_kernel_mappings`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "dropped_conjuncts": [
+  "equal_kernel_mappings"
+ ]
+}

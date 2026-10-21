@@ -1,0 +1,21 @@
+FAILED (40437ms)
+*** Failed to apply proof method (line 721 of "/tmp/tmp.48scCQWWEi/Tmp_8e65e7223c09038d.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>typ_at (AArch APageTable) p' s;
+***      caps_of_state s ?p5 = Some ?cap7 \<longrightarrow>
+***      (is_pd_cap ?cap7 \<longrightarrow>
+***       cap_asid ?cap7 = None \<longrightarrow>
+***       ?r3 \<in> obj_refs ?cap7 \<longrightarrow>
+***       obj_at (empty_table (set (second_level_tables (arch_state s)))) ?r3
+***        s) \<and>
+***      (is_pt_cap ?cap7 \<longrightarrow>
+***       cap_asid ?cap7 = None \<longrightarrow>
+***       ?r3 \<in> obj_refs ?cap7 \<longrightarrow>
+***       obj_at (empty_table (set (second_level_tables (arch_state s)))) ?r3
+***        s)\<rbrakk>
+***     \<Longrightarrow> \<exists>pt.
+***                          ako_at (PageTable pt) p' s \<and>
+***                          (\<forall>x. valid_pte (pt x) s)
+*** At command "apply" (line 721 of "/tmp/tmp.48scCQWWEi/Tmp_8e65e7223c09038d.thy")
+*** Failed to apply proof method (line 721 of "/tmp/tmp.48scCQWWEi/Tmp_8e65e7223c09038d.thy"):
+*** goal (1 subgoal):

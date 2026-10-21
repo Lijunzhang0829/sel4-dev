@@ -1,0 +1,12 @@
+1215 1215
+  done
+
+lemma decode_unbind_notification_wf_strong:
+  "\<lbrace>tcb_at t and ex_nonz_cap_to t\<rbrace>
+     decode_unbind_notification (cap.ThreadCap t)
+   \<lbrace>tcb_inv_wf\<rbrace>,-"
+  apply (simp add: decode_unbind_notification_def)
+  apply (rule hoare_pre)
+   apply (wp gbn_wp | wpc)+
+  apply clarsimp
+  done

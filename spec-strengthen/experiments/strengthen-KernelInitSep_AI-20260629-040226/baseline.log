@@ -1,0 +1,3 @@
+*** Failed to parse type
+*** At command "type_synonym" (line 20 of "/sel4-project/verification/l4v/spec/abstract/KernelInit_A.thy")
+*** Failed to load theory "Draft.Tmp_145feaf251751ab5" (unresolved "ASpec.KernelInit_A")

@@ -1,0 +1,37 @@
+{
+  "schema_version": 3,
+  "limit_mode": "global-active-wall-budget-v1",
+  "active_wall_seconds": 172800,
+  "stop_condition": "Terminal stop when cumulative online active-wall time reaches 172800 seconds; successful repository integration may finish earlier",
+  "formal_model": "gpt-5.6-sol",
+  "formal_reasoning_effort": "medium",
+  "expected_contract_count": 287,
+  "token_limit": null,
+  "retry_limit": null,
+  "iteration_limit": null,
+  "inactivity_or_no_progress_limit": null,
+  "green_policy": "Authoritative fixed-contract GREEN is correctness evidence and reported progress only; it never resets or changes the active-wall limit",
+  "counted_online_phases": [
+    "Planning and accepted-plan preparation",
+    "Runtime, provider, theory, prefix and heap initialization or preparation",
+    "Model reasoning, retrieval, editing, helper work and retries",
+    "Candidate, contract and full native checks",
+    "Seal, seal diagnosis and repair, and integration",
+    "Ordinary waits while the experiment process is online"
+  ],
+  "excluded_intervals": [
+    "Explicitly recorded experiment pause",
+    "Process downtime between durable pause/checkpoint and explicit resume",
+    "Confirmed provider interruption and recovery after a provider failure"
+  ],
+  "poll_seconds": 1,
+  "checkpoint_seconds": 30,
+  "formal_entrypoint": "python -m regen.tools.vero_serial_application",
+  "continuation_mode": "explicit same-output workspace-level resume with a new model thread after abnormal interruption only",
+  "resume_policy": "Preserve cumulative active-wall time, usage, GREEN state, plan and workspace. The 172800-second limit is terminal, cannot be extended, and cannot be resumed or reset",
+  "allocation_policy": "Plan once before generation; after acceptance, theory membership, contract assignment, imports and execution order are immutable",
+  "workspace_policy": "All planned theories remain in one shared workspace; sharing storage does not authorize unsealed cross-theory premises",
+  "seal_policy": "When all contracts in a theory are GREEN, automatically attempt seal; use diagnostics to repair and retry without changing the frozen plan",
+  "token_accounting_policy": "Continue recording authoritative cumulative provider usage and shared-cost attribution for evaluation; token values never stop the experiment",
+  "binding_notice": "Fresh runs bind input, source, plan, model, active-wall policy and limit. Existing runs under any older budget policy are rejected without migration or clock reset"
+}

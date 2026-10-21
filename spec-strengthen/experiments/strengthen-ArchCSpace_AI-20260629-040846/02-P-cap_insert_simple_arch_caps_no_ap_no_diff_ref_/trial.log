@@ -1,0 +1,21 @@
+FAILED (46512ms)
+*** Failed to finish proof (line 536 of "/tmp/tmp.gAEwJBBt7q/Tmp_2c1cb396754e4fdc.thy"):
+*** goal (1 subgoal):
+***  1. \<And>s capa.
+***        \<lbrakk>valid_arch_caps s; \<not> is_ap_cap cap;
+***         safe_parent_for (cdt s) src cap capa;
+***         caps_of_state s src = Some capa;
+***         caps_of_state s dest = Some NullCap; cap \<noteq> NullCap;
+***         cap \<noteq> IRQControlCap;
+***         \<forall>dev r bits f. cap \<noteq> UntypedCap dev r bits f;
+***         \<forall>x R. cap \<noteq> ReplyCap x True R;
+***         \<forall>x R. cap \<noteq> ReplyCap x False R;
+***         \<forall>r b R. cap \<noteq> EndpointCap r b R;
+***         \<forall>r b R. cap \<noteq> NotificationCap r b R;
+***         \<forall>r. cap \<noteq> ThreadCap r;
+***         \<forall>r bits g. cap \<noteq> CNodeCap r bits g;
+***         \<forall>r b n. cap \<noteq> Zombie r b n;
+***         \<forall>p asid. cap \<noteq> ArchObjectCap (PageTableCap p asid);
+***         \<forall>p asid.
+***            cap \<noteq> ArchObjectCap (PageDirectoryCap p asid)\<rbrakk>
+***        \<Longrightarrow> no_cap_to_obj_with_diff_ref cap {dest} s

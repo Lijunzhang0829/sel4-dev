@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future callers of pd_shifting_gen that already have b <= a and is_aligned pd c but not the size bound",
+ "lemma_name": "pd_shifting_gen'",
+ "hint_lemma": "pd_shifting_gen",
+ "anchor_line": 305,
+ "new_lemma": "lemma pd_shifting_gen':\n  \"\\<lbrakk>b \\<le> a; is_aligned pd c \\<rbrakk> \\<Longrightarrow> pd + (vptr >> a << b) && ~~ mask c = pd\"\n  apply (subgoal_tac \"(vptr >> a << b) && ~~ mask c = 0\")\n   apply (subst word_plus_and_or_coroll)\n    apply (erule aligned_mask_disjoint)\n    apply (simp add: and_mask_0_iff_le_mask[symmetric])\n   apply (simp add: bit.conj_disj_distrib2)\n  apply (simp add: shiftr_shiftl1 neg_mask_twice word_bw_assocs)\n  apply (rule shiftr_not_mask_0)\n  apply (fastforce simp: max_def word_size)\n  done",
+ "rationale": "The scanner flagged `size pd - c <= a - b` as never appearing in the proof body. Branch 2 of the proof uses `fastforce simp: max_def word_size` to discharge the residual arithmetic; with `b <= a` still present, `word_size` unfolding may make the size-difference bound redundant. This is genuinely borderline — the trial build is the ground truth.",
+ "strengthening_claim": "(b <= a & is_aligned pd c) ==> (b <= a & size pd - c <= a - b & is_aligned pd c)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

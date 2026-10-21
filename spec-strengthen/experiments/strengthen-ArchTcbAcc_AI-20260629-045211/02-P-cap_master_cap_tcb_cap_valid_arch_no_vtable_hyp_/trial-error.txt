@@ -1,0 +1,21 @@
+FAILED (58850ms)
+*** Failed to finish proof (line 66 of "/tmp/tmp.Un3ihdqCOh/Tmp_6cca3f291516b15a.thy"):
+*** goal (8 subgoals):
+***  1. \<And>x11 x12a x12b.
+***        \<lbrakk>c' = ArchObjectCap (ASIDPoolCap x11 x12a);
+***         c = ArchObjectCap (ASIDPoolCap x11 x12b);
+***         st_tcb_at
+***          (\<lambda>st.
+***              is_valid_vtable_root (ArchObjectCap (ASIDPoolCap x11 x12b)))
+***          (fst p) s;
+***         snd p = tcb_cnode_index (Suc 0); tcb_at (fst p) s\<rbrakk>
+***        \<Longrightarrow> st_tcb_at
+***                           (\<lambda>st.
+***                               is_valid_vtable_root
+***                                (ArchObjectCap (ASIDPoolCap x11 x12a)))
+***                           (fst p) s
+***  2. \<And>x11 x12a x12b.
+***        \<lbrakk>c' = ArchObjectCap (ASIDPoolCap x11 x12a);
+***         c = ArchObjectCap (ASIDPoolCap x11 x12b);
+***         st_tcb_at
+***          (\<lambda>st.

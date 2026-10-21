@@ -1,0 +1,50 @@
+[
+ {
+  "slot": "P",
+  "kind": "unused-premise",
+  "lemma": "get_cap_valid_ipc",
+  "line": 111,
+  "statement": "\\<lbrace>valid_objs and obj_at (\\<lambda>ko. \\<exists>tcb. ko = TCB tcb \\<and> tcb_ipc_buffer tcb = v) t\\<rbrace>\n     get_cap (t, tcb_cnode_index 4)\n   \\<lbrace>\\<lambda>rv s. valid_ipc_buffer_cap rv v\\<rbrace>",
+  "op": "get_cap",
+  "op_class": "read",
+  "form": "hoare",
+  "evidence": "conjunct `valid_objs` head `valid_objs` never appears in the proof body (prefix match incl. _def/_E forms); 1 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `get_cap` is read (read/decode → premise often droppable); wp-chain implicit use is the trial's job",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": "valid_objs",
+  "position": null,
+  "priority": "high"
+ },
+ {
+  "slot": "P",
+  "kind": "unused-premise",
+  "lemma": "cap_master_cap_tcb_cap_valid_arch",
+  "line": 45,
+  "statement": "\\<lbrakk> cap_master_cap c = cap_master_cap c'; is_arch_cap c' ;\n     is_valid_vtable_root c \\<Longrightarrow> is_valid_vtable_root c' ; tcb_cap_valid c p s \\<rbrakk> \\<Longrightarrow>\n   tcb_cap_valid c' p s",
+  "op": "",
+  "op_class": "unknown",
+  "form": "impl",
+  "evidence": "[implication lemma — assumption-weakening] conjunct `is_arch_cap c'` head `is_arch_cap` never appears in the proof body (prefix match incl. _def/_E forms); 2 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `` is unknown; wp-chain implicit use is the trial's job",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": "is_arch_cap c'",
+  "position": null,
+  "priority": "high"
+ },
+ {
+  "slot": "P",
+  "kind": "unused-premise",
+  "lemma": "cap_master_cap_tcb_cap_valid_arch",
+  "line": 45,
+  "statement": "\\<lbrakk> cap_master_cap c = cap_master_cap c'; is_arch_cap c' ;\n     is_valid_vtable_root c \\<Longrightarrow> is_valid_vtable_root c' ; tcb_cap_valid c p s \\<rbrakk> \\<Longrightarrow>\n   tcb_cap_valid c' p s",
+  "op": "",
+  "op_class": "unknown",
+  "form": "impl",
+  "evidence": "[implication lemma — assumption-weakening] conjunct `is_valid_vtable_root c \\<Longrightarrow> is_valid_vtable_roo` head `is_valid_vtable_root` never appears in the proof body (prefix match incl. _def/_E forms); 2 other conjunct(s) ARE visibly consumed — differential signal (0023 shape); op `` is unknown; wp-chain implicit use is the trial's job",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": "is_valid_vtable_root c \\<Longrightarrow> is_valid_vtable_root c'",
+  "position": null,
+  "priority": "high"
+ }
+]

@@ -1,0 +1,18 @@
+{
+  "_comment_": "TEMPLATE — overwrite via `python3 spec-strengthen/scripts/spec_impact.py ... --measurement-out measurement.json`. Schema in reports/experiments/README.md.",
+  "session": "AInvs",
+  "baseline_wall_ms": 0,
+  "trial_wall_ms": 0,
+  "delta_pct": 0.0,
+  "wall_gate_pass": true,
+  "baseline_ref": "reports/golden-baseline/walls.json#AInvs",
+  "session_rebuild_done": false,
+  "consumers_lines": 0,
+  "consumers_files": 0,
+  "impact_verdict": "premise-weaken",
+  "strength_score": 0.0,
+  "witness_present": true,
+  "witness_advisory_pass": true,
+  "gate_pass": true,
+  "has_weakening": false
+}

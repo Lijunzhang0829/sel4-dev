@@ -1,0 +1,42 @@
+233 233
+qed
+
+lemma resolve_address_bits_real_cte_at':
+  "\<lbrace> valid_cap (fst args) \<rbrace>
+  resolve_address_bits args
+  \<lbrace>\<lambda>rv. real_cte_at (fst rv)\<rbrace>, -"
+unfolding resolve_address_bits_def
+proof (induct args rule: resolve_address_bits'.induct)
+  case (1 z cap cref)
+  show ?case
+    apply (clarsimp simp add: validE_R_def validE_def valid_def split: sum.split)
+    apply (subst (asm) resolve_address_bits'.simps)
+    apply (cases cap)
+              defer 6 (* cnode *)
+          apply (auto simp: in_monad)[11]
+    apply (rename_tac obj_ref nat list)
+    apply (simp only: cap.simps)
+    apply (case_tac "nat + length list = 0")
+     apply (simp add: fail_def)
+    apply (simp only: if_False)
+    apply (simp only: K_bind_def in_bindE_R)
+    apply (elim conjE exE)
+    apply (simp only: split: if_split_asm)
+     apply (clarsimp simp add: in_monad)
+     apply (clarsimp simp add: valid_cap_def)
+    apply (simp only: K_bind_def in_bindE_R)
+    apply (elim conjE exE)
+    apply (simp only: split: if_split_asm)
+     apply (frule (8) "1.hyps")
+     apply (clarsimp simp: in_monad validE_def validE_R_def valid_def)
+     apply (frule in_inv_by_hoareD [OF get_cap_inv])
+     apply simp
+     apply (frule (1) post_by_hoare [OF get_cap_valid])
+     apply (erule allE, erule impE, blast)
+     apply (clarsimp simp: in_monad split: cap.splits)
+     apply (drule (1) bspec, simp)+
+    apply (clarsimp simp: in_monad)
+    apply (frule in_inv_by_hoareD [OF get_cap_inv])
+    apply (clarsimp simp add: valid_cap_def)
+    done
+qed

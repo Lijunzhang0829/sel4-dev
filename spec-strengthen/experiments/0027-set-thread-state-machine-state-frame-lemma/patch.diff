@@ -1,0 +1,14 @@
+diff --git a/proof/invariant-abstract/TcbAcc_AI.thy b/proof/invariant-abstract/TcbAcc_AI.thy
+--- a/proof/invariant-abstract/TcbAcc_AI.thy
++++ b/proof/invariant-abstract/TcbAcc_AI.thy
+@@ -1473,6 +1473,10 @@
+                         if_split_asm)
+   done
+ 
++lemma set_thread_state_machine_state[wp]:
++  "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_thread_state t st \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
++  by (wpsimp simp: set_thread_state_def)
++
+ lemma set_bound_notification_valid_ioc[wp]:
+   "\<lbrace>valid_ioc\<rbrace> set_bound_notification t ntfn \<lbrace>\<lambda>_. valid_ioc\<rbrace>"
+   apply (simp add: set_bound_notification_def)

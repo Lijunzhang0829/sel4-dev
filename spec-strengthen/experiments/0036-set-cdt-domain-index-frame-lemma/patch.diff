@@ -1,0 +1,14 @@
+diff --git a/proof/invariant-abstract/Untyped_AI.thy b/proof/invariant-abstract/Untyped_AI.thy
+--- a/proof/invariant-abstract/Untyped_AI.thy
++++ b/proof/invariant-abstract/Untyped_AI.thy
+@@ -2881,6 +2881,10 @@
+   "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_cdt t \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+   by (wpsimp simp: set_cdt_def)
+ 
++lemma set_cdt_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_cdt t \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wpsimp simp: set_cdt_def)
++
+ lemma state_refs_of_rvk[simp]:
+   "state_refs_of (is_original_cap_update f s) = state_refs_of s"
+   by (simp add: state_refs_of_def)

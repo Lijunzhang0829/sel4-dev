@@ -1,0 +1,14 @@
+diff --git a/proof/invariant-abstract/DetSchedSchedule_AI.thy b/proof/invariant-abstract/DetSchedSchedule_AI.thy
+--- a/proof/invariant-abstract/DetSchedSchedule_AI.thy
++++ b/proof/invariant-abstract/DetSchedSchedule_AI.thy
+@@ -2165,6 +2165,10 @@
+   "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_simple_ko f ptr ep \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+   by (wpsimp wp: get_object_wp simp: set_simple_ko_def | clarsimp)+
+ 
++lemma set_simple_ko_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_simple_ko f ptr ep \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wpsimp wp: get_object_wp simp: set_simple_ko_def | clarsimp)+
++
+ crunch not_cur_thread[wp]: cap_insert_ext "not_cur_thread t"
+ 
+ crunch not_cur_thread[wp]: cap_insert, set_extra_badge "not_cur_thread t"

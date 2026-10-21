@@ -44,15 +44,8 @@ fi
 L4V_PATH="${SCRIPT_DIR}/verification/l4v"
 
 # Wrappers agent will call; cwd-relative because we chdir below.
-# This repo nests the skill under claude/.claude/ rather than at the repo root,
-# so the default points there. Override with $ISA_SCRIPTS if you've symlinked
-# .claude/ → claude/.claude at the project root.
 if [ -z "${ISA_SCRIPTS:-}" ]; then
-  if [ -d "${SCRIPT_DIR}/claude/.claude/skills/isabelle_prover/scripts" ]; then
-    export ISA_SCRIPTS="claude/.claude/skills/isabelle_prover/scripts"
-  else
-    export ISA_SCRIPTS=".claude/skills/isabelle_prover/scripts"
-  fi
+  export ISA_SCRIPTS=".claude/skills/isabelle_prover/scripts"
 fi
 
 # In-container paths.

@@ -1,0 +1,55 @@
+[spec_agent] note: source truncated to 1600 lines for the prompt (use --focus-lemma / --max-lines 0 for more)
+[spec_agent] 12 detector hint(s) injected
+[spec_agent] model=sonnet slot=all n=3 claude=/home/lijun/.vscode-server/extensions/anthropic.claude-code-2.1.195-linux-x64/resources/native-binary/claude
+[spec_agent] streaming claude -p (full process trace below; SPEC_AGENT_STREAM=0 to silence) ...
+  $ /home/lijun/.vscode-server/extensions/anthropic.claude-code-2.1.195-linux-x64/resources/native-binary/claude -p <prompt:93193 chars> --model sonnet --strict-mcp-config --mcp-config {"mcpServers":{}} --tools  --effort low --max-turns 6 --output-format stream-json --verbose
+  ● session init: model=claude-sonnet-4-6 cwd=/tmp tools=0
+  ◇ (thinking) Let me analyze the hints and the source code to propose the 3 best candidates.
+
+All hints are P-slot for `lookup_pt_slot` operations. Let me look at the actual lemmas:
+
+**Lemma `lookup_pt_slot_ptes_aligned_valid` (L536-566):**
+Precondition: `valid_vspace_objs and valid_arch_state and equal_kernel_ma
+  ▸ [
+  {
+    "slot": "P",
+    "delivery": "named",
+    "delivery_substate": "planned",
+    "delivery_target": "Future consumers of lookup_pt_slot_pte that currently require pspace_aligned in precondition can drop it once this lemma is wired in",
+    "grace_period_weeks": 8,
+    "hint_lemma": "lookup_pt_slot_pte",
+    "lemma_name": "lookup_pt_slot_pte_no_pspace_aligned",
+    "anchor_line": 603,
+    "new_lemma": "lemma lookup_pt_slot_pte_no_pspace_aligned [wp]:\n  \"\<lbrace>valid_vspace_objs and valid_arch_state\n   and equal_kernel_mappings and valid_global_objs\n   and \<exists>\<rhd> pd and page_directory_at pd\<rbrace>\n  lookup_pt_slot pd vptr \<lbrace>pte_at\<rbrace>,-\"\n  apply (simp add: lookup_pt_slot_def)\n  apply (wp get_pde_wp|wpc)+\n  apply (clarsimp simp: lookup_pd_slot_def Let_def)\n  apply (simp add: pd_shifting_at)\n  apply (drule (2) valid_vspace_objsD)\n  apply (clarsimp simp: )\n  apply (bspec \"ucast (pd + (vptr >> 20 << 2) && mask pd_bits >> 2)\")\n   apply clarsimp\n   apply (erule page_table_pte_atI, simp_all)\n   apply (simp add: pt_bits_def pageBits_def)\n   apply (rule order_le_less_trans, rule word_and_le1, simp)\n  apply (frule kernel_mapping_slots_empty_pdeI)\n    apply (simp add: obj_at_def)+\n  apply (clarsimp simp: pde_ref_def)\n  apply (rule page_table_pte_atI, simp_all)\n   apply (simp add: valid_arch_state_def valid_global_pts_def second_level_tables_def)\n  apply (simp add: pt_bits_def pageBits_def)\n  apply (rule order_le_less_trans, rule word_and_le1, simp)\n  done",
+    "rationale": "The proof of lookup_pt_slot_pte uses pd_shifting_at (which needs page_directory_at pd and pspace_aligned) as a simp rule. However pspace_aligned may be derivable from page_directory_at pd via the get_pde_wp unfolding context, making pspace_aligned in the precondition redundant. The op is a read/decode so premises are often droppable. Trial build is the judge.",
+    "strengthening_claim": "(valid_vspace_objs and valid_arch_state and equal_kernel_mappings and valid_global_objs and \<exists>\<rhd> pd and page_directory_at pd) ==> (pspace_aligned and valid_vspace_objs and valid_arch_state and equal_kernel_mappings and valid_global_objs and \<exists>\<rhd> pd and page_directory_at pd)"
+  },
+  {
+    "slot": "P",
+    "delivery": "named",
+    "delivery_substate": "planned",
+    "delivery_target": "Future consumers of lookup_pt_slot_pte that carry page_directory_at pd may drop it once this lemma is wired in",
+    "grace_period_weeks": 8,
+    "hint_lemma": "lookup_pt_slot_pte",
+    "lemma_name": "lookup_pt_slot_pte_no_pd_at",
+    "anchor_line": 603,
+    "new_lemma": "lemma lookup_pt_slot_pte_no_pd_at:\n  \"\<lbrace>pspace_aligned and valid_vspace_objs and valid_arch_state\n   and equal_kernel_mappings and valid_global_objs\n   and \<exists>\<rhd> pd\<rbrace>\n  lookup_pt_slot pd vptr \<lbrace>pte_at\<rbrace>,-\"\n  apply (simp add: lookup_pt_slot_def)\n  apply (wp get_pde_wp|wpc)+\n  apply (clarsimp simp: lookup_pd_slot_def Let_def)\n  apply (simp add: pd_shifting_at)\n  apply (drule (2) valid_vspace_objsD)\n  apply (clarsimp simp: )\n  apply (bspec \"ucast (pd + (vptr >> 20 << 2) && mask pd_bits >> 2)\")\n   apply clarsimp\n   apply (erule page_table_pte_atI, simp_all)\n   apply (simp add: pt_bits_def pageBits_def)\n   apply (rule order_le_less_trans, rule word_and_le1, simp)\n  apply (frule kernel_mapping_slots_empty_pdeI)\n    apply (simp add: obj_at_def)+\n  apply (clarsimp simp: pde_ref_def)\n  apply (rule page_table_pte_atI, simp_all)\n   apply (simp add: valid_arch_state_def valid_global_pts_def second_level_tables_def)\n  apply (simp add: pt_bits_def pageBits_def)\n  apply (rule order_le_less_trans, rule word_and_le1, simp)\n  done",
+    "rationale": "page_directory_at pd does not appear textually in the proof body. It is consumed indirectly by pd_shifting_at, but pd_shifting_at may be derivable from pspace_aligned alone together with the ko_at hypothesis produced by get_pde_wp (which establishes that kheap holds a PageDirectory at pd && ~~ mask pd_bits, implying alignment). Lookup ops on read paths are prime candidates. Trial is the judge.",
+    "strengthening_claim": "(pspace_aligned and valid_vspace_objs and valid_arch_state and equal_kernel_mappings and valid_global_objs and \<exists>\<rhd> pd) ==> (pspace_aligned and valid_vspace_objs and valid_arch_state and equal_kernel_mappings and valid_global_objs and \<exists>\<rhd> pd and page_directory_at pd)"
+  },
+  {
+    "slot": "P",
+    "delivery": "named",
+    "delivery_substate": "planned",
+    "delivery_target": "Future consumers of lookup_pt_slot_ptes_aligned_valid that do not carry equal_kernel_mappings",
+    "grace_period_weeks": 8,
+    "hint_lemma": "lookup_pt_slot_ptes_aligned_valid",
+    "lemma_name": "lookup_pt_slot_ptes_aligned_valid_no_ekm",
+    "anchor_line": 566,
+    "new_lemma": "lemma lookup_pt_slot_ptes_aligned_valid_no_ekm:\n  \"\<lbrace>valid_vspace_objs and valid_arch_state\n    and pspace_aligned\n    and valid_global_objs\n    and \<exists>\<rhd> pd and page_directory_at pd\n    and K (is_aligned vptr 16)\<rbrace>\n  lookup_pt_slot pd vptr\n  \<lbrace>\<lambda>r s. is_aligned r 6 \<and> (\<forall>x\<in>set [0 , 4 .e. 0x3C]. pte_at (x + r) s)\<rbrace>, -\"\n  apply (simp add: lookup_pt_slot_def)\n  apply (wp get_pde_wp|wpc)+\n  apply (clarsimp simp: lookup_pd_slot_def Let_def)\n  apply (simp add: pd_shifting_at)\n  apply (frule (2) valid_vspace_objsD)\n  apply (clarsimp simp: )\n  subgoal for s _ _ x\n    apply (prop_tac \"page_table_at (ptrFromPAddr x) s\")\n    subgoal\n      apply (bspec \"(ucast (pd + (vptr >> 20 << 2) && mask pd_bits >> 2))\";clarsimp)\n      apply (frule kernel_mapping_slots_empty_pdeI)\n      apply ((simp add: obj_at_def pte_at_def;fail)+)[4]\n      by (clarsimp simp: pde_ref_def valid_global_pts_def valid_arch_state_def second_level_tables_def)\n    apply (rule conjI)\n     apply (rule is_aligned_add)\n      apply (rule is_aligned_weaken, erule(1) is_aligned_pt)\n      apply (simp add: pt_bits_def pageBits_def)\n     apply (rule is_aligned_shiftl)\n     apply (rule is_aligned_andI1)\n     apply (rule is_aligned_shiftr, simp)\n    apply clarsimp\n    by (erule(1) pte_at_aligned_vptr, simp+)\n  done",
+    "rationale": "equal_kernel_mappings does not appear textually in the proof body of lookup_pt_slot_ptes_aligned_valid; it is forwarded implicitly to kernel_mapping_slots_empty_pdeI. However kernel_mapping_slots_empty_pdeI at L481 explicitly lists equal_kernel_mappings as a hypothesis, so this drop will likely fail — but the trial cost is one build minute, and lookup_pt_slot is a read op, making it worth the trial.",
+    "strengthening_claim": "(valid_vspace_objs and valid_arch_state and pspace_aligned and valid_global_objs and \<exists>\<rhd> pd and page_directory_at pd and K (is_aligned vptr 16)) ==> (valid_vspace_objs and valid_arch_state and equal_kernel_mappings and pspace_aligned and valid_global_objs and \<exists>\<rhd> pd and page_directory_at pd and K (is_aligned vptr 16))"
+  }
+]
+  ✓ result: 1 turn(s), 104459ms $0.3859
+[spec_agent] 3 proposal(s) emitted

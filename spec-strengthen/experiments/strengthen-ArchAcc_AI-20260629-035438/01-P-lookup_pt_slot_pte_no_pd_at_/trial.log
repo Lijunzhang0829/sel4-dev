@@ -1,0 +1,21 @@
+FAILED (36465ms)
+*** Failed to apply proof method (line 613 of "/tmp/tmp.zIgh6h8Skw/Tmp_fa2cd60628e99683.thy"):
+*** goal (1 subgoal):
+***  1. \<And>s pda ref x xa xb.
+***        \<lbrakk>pspace_aligned s; valid_vspace_objs s; valid_arch_state s;
+***         equal_kernel_mappings s; valid_global_objs s; (ref \<rhd> pd) s;
+***         ako_at (PageDirectory pda)
+***          (pd + (vptr >> 20 << 2) && ~~ mask pd_bits) s;
+***         pda (UCAST(32 \<rightarrow> 12)
+***               (pd + (vptr >> 20 << 2) && mask pd_bits >> 2)) =
+***         PageTablePDE x xa xb\<rbrakk>
+***        \<Longrightarrow> pte_at
+***                           (ptrFromPAddr x + ((vptr >> 12) && 0xFF << 2)) s
+*** At command "apply" (line 613 of "/tmp/tmp.zIgh6h8Skw/Tmp_fa2cd60628e99683.thy")
+*** Failed to apply proof method (line 613 of "/tmp/tmp.zIgh6h8Skw/Tmp_fa2cd60628e99683.thy"):
+*** goal (1 subgoal):
+***  1. \<And>s pda ref x xa xb.
+***        \<lbrakk>pspace_aligned s; valid_vspace_objs s; valid_arch_state s;
+***         equal_kernel_mappings s; valid_global_objs s; (ref \<rhd> pd) s;
+***         ako_at (PageDirectory pda)
+***          (pd + (vptr >> 20 << 2) && ~~ mask pd_bits) s;

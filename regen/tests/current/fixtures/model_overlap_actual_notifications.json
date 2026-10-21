@@ -1,0 +1,10 @@
+{
+  "source": "reports/regen/step-optimization-validation-20261006/closure/arms/baseline/parallel-sessions/42a4958947fb4a4fbed1b3fcc43c37fb/Scheduler_Dispatch/session-transcript.jsonl",
+  "notice": "Exact parsed notifications and host receipt timestamps; no model/prover execution in regression. Empty reasoning content is intentional.",
+  "rows": [
+    {"line": 51, "time_unix": 1791280558.0287068, "message": {"method": "item/started", "params": {"item": {"type": "reasoning", "id": "rs_018f595335e7fc96016ac4c5adbb10819393bdb877c1af8d3c", "summary": [], "content": []}, "threadId": "01a110a3-7093-77e3-b437-e2d386fafe25", "turnId": "01a110a3-70e5-7c23-babe-ba1faecf5c1c", "startedAtMs": 1791280558023}, "emittedAtMs": 1791280558024}},
+    {"line": 52, "time_unix": 1791280558.157093, "message": {"method": "item/completed", "params": {"item": {"type": "reasoning", "id": "rs_018f595335e7fc96016ac4c5adbb10819393bdb877c1af8d3c", "summary": [], "content": []}, "threadId": "01a110a3-7093-77e3-b437-e2d386fafe25", "turnId": "01a110a3-70e5-7c23-babe-ba1faecf5c1c", "completedAtMs": 1791280558023}, "emittedAtMs": 1791280558025}},
+    {"line": 57, "time_unix": 1791280570.866034, "message": {"method": "item/started", "params": {"item": {"type": "reasoning", "id": "rs_018f595335e7fc96016ac4c5baba6081939d0d35b6c4c82a99", "summary": [], "content": []}, "threadId": "01a110a3-7093-77e3-b437-e2d386fafe25", "turnId": "01a110a3-70e5-7c23-babe-ba1faecf5c1c", "startedAtMs": 1791280570864}, "emittedAtMs": 1791280570864}},
+    {"line": 58, "time_unix": 1791280570.86818, "message": {"method": "item/completed", "params": {"item": {"type": "reasoning", "id": "rs_018f595335e7fc96016ac4c5baba6081939d0d35b6c4c82a99", "summary": [], "content": []}, "threadId": "01a110a3-7093-77e3-b437-e2d386fafe25", "turnId": "01a110a3-70e5-7c23-babe-ba1faecf5c1c", "completedAtMs": 1791280570864}, "emittedAtMs": 1791280570864}}
+  ]
+}

@@ -1,0 +1,37 @@
+diff --git a/proof/invariant-abstract/TcbAcc_AI.thy b/proof/invariant-abstract/TcbAcc_AI.thy
+--- a/proof/invariant-abstract/TcbAcc_AI.thy
++++ b/proof/invariant-abstract/TcbAcc_AI.thy
+@@ -1477,6 +1477,10 @@
+   "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_thread_state t st \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+   by (wpsimp simp: set_thread_state_def)
+ 
++lemma set_thread_state_arch_state[wp]:
++  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_thread_state t st \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
++  by (wpsimp simp: set_thread_state_def)
++
+ lemma set_bound_notification_valid_ioc[wp]:
+   "\<lbrace>valid_ioc\<rbrace> set_bound_notification t ntfn \<lbrace>\<lambda>_. valid_ioc\<rbrace>"
+   apply (simp add: set_bound_notification_def)
+@@ -1490,6 +1494,22 @@
+                         if_split_asm)
+   done
+ 
++lemma set_bound_notification_machine_state[wp]:
++  "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_bound_notification t ntfn \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
++  by (wpsimp simp: set_bound_notification_def)
++
++lemma set_bound_notification_domain_index[wp]:
++  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_bound_notification t ntfn \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
++  by (wpsimp simp: set_bound_notification_def)
++
++lemma set_bound_notification_domain_time[wp]:
++  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_bound_notification t ntfn \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
++  by (wpsimp simp: set_bound_notification_def)
++
++lemma set_bound_notification_arch_state[wp]:
++  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_bound_notification t ntfn \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
++  by (wpsimp simp: set_bound_notification_def)
++
+ crunches set_thread_state, set_bound_notification
+   for valid_ioports[wp]: valid_ioports
+   (wp: valid_ioports_lift)

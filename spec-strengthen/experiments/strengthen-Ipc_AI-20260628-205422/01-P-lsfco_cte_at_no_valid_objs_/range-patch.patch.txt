@@ -1,0 +1,8 @@
+54 54
+  by (rule hoare_strengthen_postE_R, rule lookup_cnode_slot_real_cte, simp add: real_cte_at_cte)
+
+lemma lsfco_cte_at_no_valid_objs:
+  "\<lbrace>valid_cap cn\<rbrace>
+  lookup_slot_for_cnode_op f cn idx depth
+  \<lbrace>\<lambda>rv. cte_at rv\<rbrace>,-"
+  by (rule hoare_strengthen_postE_R, rule lookup_cnode_slot_real_cte, simp add: real_cte_at_cte)

@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "source_sha256": "7db650f30193c36b2e841c368623bdc840df0e17a83233262adcfc1f64198652",
+  "source_path": "reports/regen/green-contract-ab-20261007-001/workflow/arms/delete_objects--baseline/parallel-sessions/f5f7459de85642a680f37642d52e3b31/Untyped_Object_Lifecycle/session-transcript.jsonl",
+  "sanitization": "Only item kind/lifecycle/time and local callback boundaries; no model text, tool arguments or proof bodies. IDs pseudonymized.",
+  "rows": [
+    {
+      "source_line": 271,
+      "time_unix": 1791387753.6292467,
+      "message": {
+        "method": "item/started",
+        "params": {
+          "threadId": "thread",
+          "turnId": "turn",
+          "item": {
+            "id": "item-1",
+            "type": "agentMessage"
+          }
+        }
+      }
+    },
+    {
+      "source_line": 292,
+      "time_unix": 1791387825.298816,
+      "boundary": "tool_finished"
+    },
+    {
+      "source_line": 297,
+      "time_unix": 1791388059.5259573,
+      "message": {
+        "method": "item/started",
+        "params": {
+          "threadId": "thread",
+          "turnId": "turn",
+          "item": {
+            "id": "item-2",
+            "type": "agentMessage"
+          }
+        }
+      }
+    },
+    {
+      "source_line": 327,
+      "time_unix": 1791388060.1786811,
+      "message": {
+        "method": "item/completed",
+        "params": {
+          "threadId": "thread",
+          "turnId": "turn",
+          "item": {
+            "id": "item-2",
+            "type": "agentMessage"
+          }
+        }
+      }
+    },
+    {
+      "source_line": 338,
+      "time_unix": 1791388078.5692394,
+      "boundary": "tool_started"
+    },
+    {
+      "source_line": 339,
+      "time_unix": 1791388079.261142,
+      "boundary": "tool_finished"
+    },
+    {
+      "source_line": 344,
+      "time_unix": 1791388081.5964606,
+      "message": {
+        "method": "item/started",
+        "params": {
+          "threadId": "thread",
+          "turnId": "turn",
+          "item": {
+            "id": "item-3",
+            "type": "reasoning"
+          }
+        }
+      }
+    },
+    {
+      "source_line": 345,
+      "time_unix": 1791388081.6006448,
+      "message": {
+        "method": "item/completed",
+        "params": {
+          "threadId": "thread",
+          "turnId": "turn",
+          "item": {
+            "id": "item-3",
+            "type": "reasoning"
+          }
+        }
+      }
+    },
+    {
+      "source_line": 346,
+      "time_unix": 1791388089.011158,
+      "message": {
+        "method": "item/started",
+        "params": {
+          "threadId": "thread",
+          "turnId": "turn",
+          "item": {
+            "id": "item-4",
+            "type": "agentMessage"
+          }
+        }
+      }
+    },
+    {
+      "source_line": 390,
+      "time_unix": 1791388089.1299758,
+      "message": {
+        "method": "item/completed",
+        "params": {
+          "threadId": "thread",
+          "turnId": "turn",
+          "item": {
+            "id": "item-4",
+            "type": "agentMessage"
+          }
+        }
+      }
+    },
+    {
+      "source_line": 393,
+      "time_unix": 1791388089.1480117,
+      "boundary": "tool_started"
+    }
+  ]
+}

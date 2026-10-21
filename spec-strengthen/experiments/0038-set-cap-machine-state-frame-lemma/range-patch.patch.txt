@@ -1,0 +1,6 @@
+1637 1637
+  done
+
+lemma set_cap_machine_state[wp]:
+  "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_cap cap a \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+  by (wpsimp simp: set_cap_def)

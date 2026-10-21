@@ -1,0 +1,14 @@
+{
+ "slot": "Q",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future consumer proving stronger slot-specific postcondition about reply caps after cap_delete_one",
+ "hint_lemma": "cap_delete_one_deletes_reply",
+ "lemma_name": "cap_delete_one_deletes_reply_strong",
+ "anchor_line": 948,
+ "new_lemma": "lemma cap_delete_one_deletes_reply_strong:\n  \"\\<lbrace>cte_wp_at (is_reply_cap_to t) slot and valid_reply_caps\\<rbrace>\n    cap_delete_one slot\n   \\<lbrace>\\<lambda>rv s. \\<forall>sl' R. if (sl' = slot)\n       then cte_wp_at (\\<lambda>c. c = cap.NullCap) sl' s\n       else caps_of_state s sl' \\<noteq> Some (cap.ReplyCap t False R)\\<rbrace>\"\n  apply (simp add: cap_delete_one_def unless_def is_final_cap_def)\n  apply wp\n     apply (rule hoare_vcg_all_lift)\n     apply simp\n     apply (wp hoare_weak_lift_imp empty_slot_deletes empty_slot_caps_of_state get_cap_wp)+\n  apply (fastforce simp: cte_wp_at_caps_of_state valid_reply_caps_def\n                        is_cap_simps unique_reply_caps_def is_reply_cap_to_def\n              simp del: split_paired_All)\n  done",
+ "rationale": "The proof of cap_delete_one_deletes_reply (L929-948) internally establishes the stronger postcondition via rule_tac Q at L935-937, then immediately weakens it to \\<not> has_reply_cap t s via hoare_post_imp. Removing that weakening step yields a named lemma with the precise per-slot information: slot is NullCap, other slots lack the reply cap. The proof is the body of cap_delete_one_deletes_reply minus the hoare_post_imp bridge.",
+ "strengthening_claim": "(\\<forall>sl' R. if (sl' = slot) then cte_wp_at (\\<lambda>c. c = cap.NullCap) sl' s else caps_of_state s sl' \\<noteq> Some (cap.ReplyCap t False R)) \\<Longrightarrow> \\<not> has_reply_cap t s",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

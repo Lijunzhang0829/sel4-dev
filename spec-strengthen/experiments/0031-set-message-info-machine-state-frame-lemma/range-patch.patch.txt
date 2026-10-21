@@ -1,0 +1,6 @@
+2794 2794
+  by (rule valid_global_refs_cte_lift; wp)
+
+lemma set_message_info_machine_state[wp]:
+  "\<lbrace>\<lambda>s. P (machine_state s)\<rbrace> set_message_info thread info \<lbrace>\<lambda>_ s. P (machine_state s)\<rbrace>"
+  by (wpsimp simp: set_message_info_def)

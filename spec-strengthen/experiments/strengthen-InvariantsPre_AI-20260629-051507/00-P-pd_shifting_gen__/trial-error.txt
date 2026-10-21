@@ -1,0 +1,11 @@
+FAILED (61082ms)
+*** Failed to apply proof method (line 316 of "/tmp/tmp.BX3WLZEtCa/Tmp_595dc45afe4f2158.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>b \<le> a; is_aligned pd c\<rbrakk>
+***     \<Longrightarrow> LENGTH('a) \<le> a - b + max b c
+*** At command "apply" (line 316 of "/tmp/tmp.BX3WLZEtCa/Tmp_595dc45afe4f2158.thy")
+*** Failed to apply proof method (line 316 of "/tmp/tmp.BX3WLZEtCa/Tmp_595dc45afe4f2158.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>b \<le> a; is_aligned pd c\<rbrakk>
+***     \<Longrightarrow> LENGTH('a) \<le> a - b + max b c
+*** At command "apply" (line 316 of "/tmp/tmp.BX3WLZEtCa/Tmp_595dc45afe4f2158.thy")

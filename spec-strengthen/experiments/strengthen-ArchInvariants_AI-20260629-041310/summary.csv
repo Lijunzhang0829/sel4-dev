@@ -1,0 +1,4 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-P-wellformed_arch_pspace_no_kheap_,wellformed_arch_pspace_no_kheap,P,named,IMPACT-FAILED,weakening,-0.73
+01-P-valid_arch_tcb_pspaceI_no_kheap_,valid_arch_tcb_pspaceI_no_kheap,P,named,IMPACT-FAILED,noop,-0.51
+02-P-empty_table_is_valid_no_arch_state_,empty_table_is_valid_no_arch_state,P,named,TRIAL-FAILED,,

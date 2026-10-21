@@ -1,0 +1,4 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-P-decode_inv_wf_no_real_cte_,decode_inv_wf_no_real_cte,P,named,trial_passed,additive,-8.28
+01-P-decode_inv_wf_no_ex_cte_slot_,decode_inv_wf_no_ex_cte_slot,P,named,TRIAL-FAILED,,
+02-P-resolve_address_bits_valid_fault2_invs_,resolve_address_bits_valid_fault2_invs,P,named,TRIAL-FAILED,,

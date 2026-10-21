@@ -1,0 +1,21 @@
+FAILED (73335ms)
+*** Failed to apply proof method (line 154 of "/tmp/tmp.tBCrM3AtXZ/Tmp_aa1326a1f239ffcf.thy"):
+*** goal (1 subgoal):
+***  1. \<And>s capa capb.
+***        \<lbrakk>invs s; caps_of_state s (target, ref) = Some NullCap;
+***         is_cnode_or_valid_arch new_cap; s \<turnstile> new_cap;
+***         is_pt_cap new_cap \<longrightarrow>
+***         (\<exists>y. cap_asid new_cap = Some y);
+***         is_pd_cap new_cap \<longrightarrow>
+***         (\<exists>y. cap_asid new_cap = Some y);
+***         obj_refs capa = obj_refs new_cap \<longrightarrow>
+***         table_cap_ref capa = table_cap_ref new_cap \<and>
+***         pt_pd_asid capa = pt_pd_asid new_cap;
+***         same_object_as new_cap capa; caps_of_state s src_slot = Some capa;
+***         same_object_as (ThreadCap target) capb;
+***         caps_of_state s slot = Some capb; s \<turnstile> capa;
+***         s \<turnstile> capb\<rbrakk>
+***        \<Longrightarrow> tcb_cap_valid new_cap (target, ref) s \<and>
+***                          ex_cte_cap_wp_to (appropriate_cte_cap new_cap)
+***                           (target, ref) s \<and>
+***                          (\<forall>r\<in>obj_refs new_cap.

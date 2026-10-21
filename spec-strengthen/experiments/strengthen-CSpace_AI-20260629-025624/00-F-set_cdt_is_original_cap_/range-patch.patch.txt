@@ -1,0 +1,6 @@
+434 434
+  by (wpsimp simp: set_cdt_def)
+
+lemma set_cdt_is_original_cap[wp]:
+  "\<lbrace>\<lambda>s. P (is_original_cap s)\<rbrace> set_cdt m \<lbrace>\<lambda>_ s. P (is_original_cap s)\<rbrace>"
+  by (wpsimp simp: set_cdt_def)

@@ -1,0 +1,35 @@
+{
+  "schema_version": 2,
+  "artifact_type": "repository-planning-policy",
+  "stage": "Refine",
+  "mode": "repository-proof-planning",
+  "claim": "Plan generated theories and ordinary auxiliary proof nodes around immutable contracts over verified environment data streams.",
+  "model": {
+    "model": "gpt-5.6-sol",
+    "max_attempts": 3,
+    "role": "Propose generated theories, exact contract assignments, auxiliary intents and revisable ordering suggestions."
+  },
+  "allowed_planner_inputs": [
+    "verified public contracts with exact statements and contexts",
+    "original owner groups as provenance only",
+    "verified frozen-parent and retained-semantic premise records selected within the frozen context budget",
+    "environment gate and dataflow identities",
+    "previous structural validation diagnostics"
+  ],
+  "forbidden_planner_inputs": [
+    "raw human Refine theory sources or imports",
+    "deleted human helper names, statements, proof order or proof graph",
+    "stock human Refine heap",
+    "private preparation inventories, recovery journals and checkpoints"
+  ],
+  "rules": {
+    "fixed_contracts": "Every fixed contract occurs exactly once. Copy frozen statements/context/attributes; never accept model replacements.",
+    "theory_grouping": "Generated theory grouping is chosen by the planner. Auxiliary-only theories are allowed. Original owners are not output constraints.",
+    "auxiliary_nodes": "Ordinary unproved nodes serving contracts; may depend on other proposed nodes. No helper-leaf or cross-file commitment policy.",
+    "suggested_dependencies": "Revisable acyclic ordering hints, not certified dependencies or mandatory premise use. Theory grouping must also permit an acyclic order.",
+    "premises": "Cite only IDs in the visible legal premise input; no pending contract or auxiliary is usable as a premise.",
+    "failure": "The later proof stage may delete failed auxiliaries and their planning references; fixed contracts remain.",
+    "validation": "Structural planning validation only; precise statements and actual context/proof checking belong to file planning and Isabelle.",
+    "context_budget": "Preserve all contracts. Select premise records by deterministic lexical overlap then stable ID within the frozen total prompt budget; disclose omissions without claiming semantic symbol resolution."
+  }
+}

@@ -1,0 +1,19 @@
+114 114
+  done
+
+lemma pd_at_asid_unique_no_global_objs:
+  "\<lbrakk> vspace_at_asid asid pd s; vspace_at_asid asid' pd s;
+     unique_table_refs (caps_of_state s);
+     valid_vs_lookup s; valid_vspace_objs s;
+     valid_arch_state s; asid < 2 ^ asid_bits; asid' < 2 ^ asid_bits \<rbrakk>
+       \<Longrightarrow> asid = asid'"
+  apply (clarsimp simp: vspace_at_asid_def)
+  apply (drule(1) valid_vs_lookupD[OF vs_lookup_pages_vs_lookupI])+
+  apply (clarsimp simp: table_cap_ref_ap_eq[symmetric])
+  apply (clarsimp simp: table_cap_ref_def
+                 split: cap.split_asm arch_cap.split_asm option.split_asm)
+  apply (drule(2) unique_table_refsD,
+         simp+, clarsimp simp: table_cap_ref_def,
+         erule(1) asid_low_high_bits)
+   apply simp+
+  done

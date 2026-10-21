@@ -1,0 +1,4 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-P-arch_valid_obj_same_type__,arch_valid_obj_same_type',P,named,trial_passed,additive,-5.53
+01-P-valid_table_caps_ptD__,valid_table_caps_ptD',P,named,TRIAL-FAILED,,
+02-P-valid_table_caps_ptD_no_cap_,valid_table_caps_ptD_no_cap,P,named,TRIAL-FAILED,,

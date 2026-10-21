@@ -1,0 +1,6 @@
+3447 3447
+  by (wpsimp simp: set_scheduler_action_def)
+
+lemma set_scheduler_action_domain_time[wp]:
+  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_scheduler_action action \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
+  by (wpsimp simp: set_scheduler_action_def)

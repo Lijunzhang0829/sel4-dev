@@ -1,0 +1,21 @@
+FAILED (31166ms)
+*** Failed to apply proof method (line 256 of "/tmp/tmp.cZjgq6NrwU/Tmp_d228667788490dca.thy"):
+*** goal (1 subgoal):
+***  1. \<And>r.
+***        \<lbrakk>caps_of_state s ptr = Some cap;
+***         \<forall>r a b cap.
+***            caps_of_state s (a, b) = Some cap \<longrightarrow>
+***            (is_pd_cap cap \<longrightarrow>
+***             cap_asid cap = None \<longrightarrow>
+***             r \<in> obj_refs cap \<longrightarrow>
+***             obj_at (empty_table (set (second_level_tables (arch_state s))))
+***              r s) \<and>
+***            (is_pt_cap cap \<longrightarrow>
+***             cap_asid cap = None \<longrightarrow>
+***             r \<in> obj_refs cap \<longrightarrow>
+***             obj_at (empty_table (set (second_level_tables (arch_state s))))
+***              r s);
+***         is_pt_cap cap \<or> is_pd_cap cap; r \<in> obj_refs cap\<rbrakk>
+***        \<Longrightarrow> obj_at
+***                           (empty_table
+***                             (set (second_level_tables (arch_state s))))

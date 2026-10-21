@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Any consumer that previously required obj_at (same_caps (TCB tcb)) t s before calling zombies_tcb_update",
+ "grace_period_weeks": 8,
+ "hint_lemma": "zombies_tcb_update",
+ "lemma_name": "zombies_tcb_update'",
+ "anchor_line": 253,
+ "new_lemma": "lemma zombies_tcb_update':\n    \"\\<lbrakk> zombies_final s \\<rbrakk>\n     \\<Longrightarrow> zombies_final (s\\<lparr>kheap := (kheap s)(t \\<mapsto> TCB tcb)\\<rparr>)\"\n    apply (simp add: zombies_final_def is_final_cap'_def2, elim allEI)\n    apply (clarsimp simp: cte_wp_at_after_update fun_upd_def)\n    done",
+ "rationale": "The original proof body never textually references obj_at or same_caps — the only consumer of same_caps would be the conditional simp rule cte_wp_at_after_update. For TCB objects, same_caps holds structurally (TCBs always present the same cap slots regardless of field values), so cte_wp_at_after_update may discharge without the explicit obj_at premise. Trial decides.",
+ "strengthening_claim": "(zombies_final s) ==> (zombies_final s \\<and> obj_at (same_caps (TCB tcb)) t s)",
+ "anchor_text": "  done"
+}

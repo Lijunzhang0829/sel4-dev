@@ -1,0 +1,54 @@
+[
+ {
+  "slot": "Q",
+  "kind": "inline-redirect",
+  "lemma": "hoare_post_case_option_ext",
+  "line": 1271,
+  "statement": "\\<lbrace>R\\<rbrace> f \\<lbrace>\\<lambda>rv s. case_option (P s) (\\<lambda>rv'. Q rv' s) rv\\<rbrace> \\<Longrightarrow> \\<lbrace>R\\<rbrace> f \\<lbrace>case_option P Q\\<rbrace>",
+  "evidence": "bare strengthen-post followed by inline proof — stronger post proven but never named",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": null,
+  "position": "leading",
+  "priority": "high"
+ },
+ {
+  "slot": "Q",
+  "kind": "inline-redirect",
+  "lemma": "cancel_ipc_caps_of_state",
+  "line": 482,
+  "statement": "\\<lbrace>\\<lambda>s. (\\<forall>p. cte_wp_at can_fast_finalise p s\n           \\<longrightarrow> P ((caps_of_state s) (p \\<mapsto> cap.NullCap)))\n           \\<and> P (caps_of_state s)\\<rbrace>\n     cancel_ipc t\n   \\<lbrace>\\<lambda>rv s. P (caps_of_state s)\\<rbrace>",
+  "evidence": "explicit stronger post in rule_tac Q=\"...\" in hoare_post_imp [INTERIOR redirect — describes an inner Hoare step, not this lemma's post; verify which op it strengthens]",
+  "strong_rule": null,
+  "q_strong_text": "\\<lambda>_ s. (\\<forall>p. cte_wp_at can_fast_finalise p s\n                                \\<longrightarrow> P ((caps_of_state s) (p \\<mapsto> cap.NullCap)))\n                                \\<and> P (caps_of_state s)",
+  "premise": null,
+  "position": "interior",
+  "priority": "low"
+ },
+ {
+  "slot": "Q",
+  "kind": "inline-redirect",
+  "lemma": "unbind_notification_bound_tcb_at",
+  "line": 759,
+  "statement": "\\<lbrace>\\<top>\\<rbrace> unbind_notification tcbptr \\<lbrace>\\<lambda>_. bound_tcb_at ((=) None) tcbptr\\<rbrace>",
+  "evidence": "bare strengthen-post followed by inline proof — stronger post proven but never named [INTERIOR redirect — describes an inner Hoare step, not this lemma's post; verify which op it strengthens]",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": null,
+  "position": "interior",
+  "priority": "low"
+ },
+ {
+  "slot": "Q",
+  "kind": "inline-redirect",
+  "lemma": "cap_delete_one_deletes_reply",
+  "line": 929,
+  "statement": "\\<lbrace>cte_wp_at (is_reply_cap_to t) slot and valid_reply_caps\\<rbrace>\n    cap_delete_one slot\n   \\<lbrace>\\<lambda>rv s. \\<not> has_reply_cap t s\\<rbrace>",
+  "evidence": "explicit stronger post in rule_tac Q=\"...\" in hoare_post_imp [INTERIOR redirect — describes an inner Hoare step, not this lemma's post; verify which op it strengthens]",
+  "strong_rule": null,
+  "q_strong_text": "\\<lambda>rv s. \\<forall>sl' R. if (sl' = slot)\n                               then cte_wp_at (\\<lambda>c. c = cap.NullCap) sl' s\n                               else caps_of_state s sl' \\<noteq> Some (cap.ReplyCap t False R)",
+  "premise": null,
+  "position": "interior",
+  "priority": "low"
+ }
+]

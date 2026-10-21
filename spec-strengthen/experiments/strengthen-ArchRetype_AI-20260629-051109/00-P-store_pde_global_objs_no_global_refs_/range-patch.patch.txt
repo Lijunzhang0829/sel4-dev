@@ -1,0 +1,17 @@
+309 309
+  done
+
+lemma store_pde_global_objs_no_global_refs[wp]:
+  "\\<lbrace>valid_global_objs and
+    valid_arch_state and
+    (\\<lambda>s. (\\<forall>pd. (obj_at (empty_table (set (second_level_tables (arch_state s))))
+                     (p \\<and>\\<and> \\<not>\\<not> mask pd_bits) s
+             \\<and> ko_at (ArchObj (PageDirectory pd)) (p \\<and>\\<and> \\<not>\\<not> mask pd_bits) s
+               \\<longrightarrow> empty_table (set (second_level_tables (arch_state s)))
+                                   (ArchObj (PageDirectory (pd(ucast (p \\<and>\\<and> mask pd_bits >> 2) := pde)))))
+          \\<or> (\\<exists>slot. cte_wp_at (\\<lambda>cap. p \\<and>\\<and> \\<not>\\<not> mask pd_bits \\<in> obj_refs cap) slot s))\\<rbrace>
+     store_pde p pde \\<lbrace>\\<lambda>rv. valid_global_objs\\<rbrace>"
+  apply (simp add: store_pde_def)
+  apply wp
+  apply clarsimp
+  done

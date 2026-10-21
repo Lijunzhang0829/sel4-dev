@@ -1,0 +1,6 @@
+2878 2878
+  done
+
+lemma set_cdt_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_cdt t \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  by (wpsimp simp: set_cdt_def)

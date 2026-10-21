@@ -1,0 +1,13 @@
+823 823
+  done
+
+lemma resolve_address_bits_valid_fault2_invs:
+  "\<lbrace>invs\<rbrace>
+   resolve_address_bits param
+   -,\<lbrace>\<lambda>f s. valid_fault (ExceptionTypes_A.fault.CapFault x y f)\<rbrace>"
+  apply (cut_tac resolve_address_bits_valid_fault[of param x y])
+  apply (clarsimp simp add: validE_E_def validE_def valid_def
+                  split: sum.splits)
+  apply (drule invs_valid_objs)
+  apply fastforce
+  done

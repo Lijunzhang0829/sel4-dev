@@ -1,0 +1,14 @@
+diff --git a/proof/invariant-abstract/KHeap_AI.thy b/proof/invariant-abstract/KHeap_AI.thy
+--- a/proof/invariant-abstract/KHeap_AI.thy
++++ b/proof/invariant-abstract/KHeap_AI.thy
+@@ -1290,6 +1290,10 @@
+   "\<lbrace>\<lambda>s. P (cur_domain s)\<rbrace> set_object p ko \<lbrace>\<lambda>_ s. P (cur_domain s)\<rbrace>"
+   by (wpsimp wp: set_object_wp_strong)
+ 
++lemma set_object_arch_state[wp]:
++  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_object p ko \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
++  by (wpsimp wp: set_object_wp_strong)
++
+ lemma valid_irq_states_triv:
+   assumes irqs: "\<And>P. f \<lbrace>\<lambda>s. P (interrupt_states s)\<rbrace>"
+   assumes ms: "\<And>P. f \<lbrace>\<lambda>s. P (machine_state s)\<rbrace>"

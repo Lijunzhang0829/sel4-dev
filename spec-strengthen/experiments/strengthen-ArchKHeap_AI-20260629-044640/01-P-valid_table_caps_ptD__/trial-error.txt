@@ -1,0 +1,21 @@
+FAILED (41346ms)
+*** Failed to finish proof:
+*** goal (1 subgoal):
+***  1. \<And>ko.
+***        \<lbrakk>caps_of_state s p =
+***                 Some (ArchObjectCap (PageTableCap p' None));
+***         kheap s p' = Some ko;
+***         case ko of
+***         ArchObj (PageTable pt) \<Rightarrow> \<forall>x. pt x = InvalidPTE
+***         | ArchObj (PageDirectory pd) \<Rightarrow>
+***             \<forall>x.
+***                (\<forall>r.
+***                    pde_ref (pd x) = Some r \<longrightarrow>
+***                    r \<in> set (second_level_tables (arch_state s))) \<and>
+***                valid_pde_mappings (pd x) \<and>
+***                (x \<notin> kernel_mapping_slots \<longrightarrow>
+***                 pd x = InvalidPDE)
+***         | ArchObj _ \<Rightarrow> False | _ \<Rightarrow> False\<rbrakk>
+***        \<Longrightarrow> \<exists>pt.
+***                             ko = ArchObj (PageTable pt) \<and>
+***                             (\<forall>x. valid_pte (pt x) s)

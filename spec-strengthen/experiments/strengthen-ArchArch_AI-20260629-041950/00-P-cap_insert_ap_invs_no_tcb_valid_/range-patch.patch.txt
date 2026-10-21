@@ -1,0 +1,39 @@
+620 620
+  done
+
+lemma cap_insert_ap_invs_no_tcb_valid:
+  "\<lbrace>invs and valid_cap cap and
+    ex_cte_cap_wp_to (appropriate_cte_cap cap) dest and
+    cte_wp_at (\<lambda>c. c = cap.NullCap) dest and
+    no_cap_to_obj_with_diff_ref cap {dest} and
+    (\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s) and
+    K (cap = cap.ArchObjectCap (arch_cap.ASIDPoolCap ap asid)) and
+   (\<lambda>s. \<forall>irq \<in> cap_irqs cap. irq_issued irq s) and
+   ko_at (ArchObj (arch_kernel_obj.ASIDPool Map.empty)) ap and
+   (\<lambda>s. ap \<notin> ran (asid_table s) \<and>
+        asid_table s (asid_high_bits_of asid) = None)\<rbrace>
+  cap_insert cap src dest
+  \<lbrace>\<lambda>rv s. invs (s\<lparr>arch_state := arch_state s
+                       \<lparr>arm_asid_table := ((arm_asid_table \<circ> arch_state) s)(asid_high_bits_of asid \<mapsto> ap)\<rparr>\<rparr>)\<rbrace>"
+  apply (simp add: invs_def valid_state_def valid_pspace_def)
+  apply (strengthen valid_arch_state_strg
+                    valid_asid_map_asid_upd_strg valid_vspace_objs_asid_upd_strg )
+  apply (simp cong: conj_cong)
+  apply (rule hoare_pre)
+   apply (wp cap_insert_simple_mdb cap_insert_iflive
+             cap_insert_zombies cap_insert_ifunsafe cap_insert_vspace_objs
+             cap_insert_valid_global_refs cap_insert_idle
+             valid_irq_node_typ cap_insert_simple_arch_caps_ap)
+  apply (clarsimp simp: is_simple_cap_def cte_wp_at_caps_of_state is_cap_simps)
+  apply (frule safe_parent_cap_is_device)
+  apply (drule safe_parent_cap_range)
+  apply (simp add: cap_range_def)
+  apply (rule conjI)
+   prefer 2
+   apply (clarsimp simp: obj_at_def a_type_def)
+  apply (clarsimp simp: cte_wp_at_caps_of_state)
+  apply (drule_tac p="(a,b)" in caps_of_state_valid_cap, fastforce)
+  apply (auto simp: obj_at_def is_tcb_def is_cap_table_def
+                    valid_cap_def [where c="cap.Zombie a b x" for a b x]
+                dest: obj_ref_is_tcb obj_ref_is_cap_table split: option.splits)
+  done

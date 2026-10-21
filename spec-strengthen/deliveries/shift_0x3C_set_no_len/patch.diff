@@ -1,0 +1,40 @@
+diff --git a/proof/invariant-abstract/ARM/ArchVSpaceEntries_AI.thy b/proof/invariant-abstract/ARM/ArchVSpaceEntries_AI.thy
+--- a/proof/invariant-abstract/ARM/ArchVSpaceEntries_AI.thy
++++ b/proof/invariant-abstract/ARM/ArchVSpaceEntries_AI.thy
+@@ -125,6 +125,36 @@
+    apply (simp_all add: word_size)
+   done
+ 
++lemma shift_0x3C_set_no_len:
++  "\<lbrakk> is_aligned p 6; 8 \<le> bits; bits < 32 \<rbrakk> \<Longrightarrow>
++   (\<lambda>x. ucast (x + p && mask bits >> 2) :: ('a :: len) word) ` set [0 :: word32 , 4 .e. 0x3C]
++        = {x. x && ~~ mask 4 = ucast (p && mask bits >> 2)}"
++  apply (clarsimp simp: upto_enum_step_def word_shift_by_2 image_image)
++  apply (subst image_cong[where N="{x. x < 2 ^ 4}"])
++    apply (safe, simp_all)[1]
++     apply (drule plus_one_helper2, simp_all)[1]
++    apply (drule word_le_minus_one_leq, simp_all)[1]
++   apply (rule_tac f="\<lambda>x. ucast (x && mask bits >> 2)" in arg_cong)
++   apply (rule trans[OF add.commute is_aligned_add_or], assumption)
++   apply (rule shiftl_less_t2n, simp_all)[1]
++  apply safe
++   apply (frule upper_bits_unset_is_l2p_32[THEN iffD2, rotated])
++    apply (simp add: word_bits_conv)
++   apply (rule word_eqI)
++   apply (simp add: word_ops_nth_size word_size nth_ucast nth_shiftr
++                    nth_shiftl neg_mask_test_bit
++                    word_bits_conv)
++   apply (safe, simp_all add: is_aligned_nth)[1]
++  apply (rule_tac x="ucast x && mask 4" in image_eqI)
++   apply (rule word_eqI[rule_format])
++   apply (drule_tac x=n in word_eqD)
++   apply (simp add: word_ops_nth_size word_size nth_ucast nth_shiftr
++                    nth_shiftl)
++   apply (safe, simp_all)
++  apply (rule order_less_le_trans, rule and_mask_less_size)
++   apply (simp_all add: word_size)
++  done
++
+ lemma mapM_x_store_pte_updates:
+   "\<forall>x \<in> set xs. f x && ~~ mask pt_bits = p \<Longrightarrow>
+    \<lbrace>\<lambda>s. (\<not> page_table_at p s \<longrightarrow> Q s) \<and>

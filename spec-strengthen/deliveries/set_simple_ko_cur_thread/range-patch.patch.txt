@@ -1,0 +1,6 @@
+1287 1287
+  by (wpsimp wp: set_object_wp_strong)
+
+lemma set_simple_ko_cur_thread[wp]:
+  "set_simple_ko f ptr val \<lbrace>\<lambda>s. P (cur_thread s)\<rbrace>"
+  by (set_simple_ko_method wp_thm: set_object_cur_thread[THEN hoare_set_object_weaken_pre] get_object_wp)

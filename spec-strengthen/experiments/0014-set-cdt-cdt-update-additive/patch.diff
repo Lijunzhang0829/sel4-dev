@@ -1,0 +1,15 @@
+diff --git a/proof/invariant-abstract/CSpace_AI.thy b/proof/invariant-abstract/CSpace_AI.thy
+index f322353..6dc3fde 100644
+--- a/proof/invariant-abstract/CSpace_AI.thy
++++ b/proof/invariant-abstract/CSpace_AI.thy
+@@ -429,6 +429,10 @@ lemma set_cdt_valid_pspace:
+   apply clarsimp
+   done
+ 
++lemma set_cdt_cdt_update:
++  "\<lbrace>\<top>\<rbrace> set_cdt t \<lbrace>\<lambda>_ s. cdt s = t\<rbrace>"
++  by (wpsimp simp: set_cdt_def)
++
+ lemma cte_at_pspace:
+   "cte_wp_at P p s \<Longrightarrow> \<exists>ko. kheap s (fst p) = Some ko"
+   by (auto simp: cte_wp_at_cases)

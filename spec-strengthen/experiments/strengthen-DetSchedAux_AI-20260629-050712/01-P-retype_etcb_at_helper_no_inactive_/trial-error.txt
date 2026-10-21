@@ -1,0 +1,21 @@
+FAILED (44592ms)
+*** Failed to finish proof:
+*** goal (5 subgoals):
+***  1. \<And>ptrs.
+***        \<lbrakk>d = TCBObject;
+***         foldr
+***          (\<lambda>p kh. kh
+***              (p \<mapsto>
+***               TCB \<lparr>tcb_ctable = NullCap, tcb_vtable = NullCap,
+***                      tcb_reply = NullCap, tcb_caller = NullCap,
+***                      tcb_ipcframe = NullCap, tcb_state = Inactive,
+***                      tcb_fault_handler =
+***                        [False, False, False, False, False, False, False,
+***                         False, False, False, False, False, False, False,
+***                         False, False, False, False, False, False, False,
+***                         False, False, False, False, False, False, False,
+***                         False, False, False, False],
+***                      tcb_ipc_buffer = 0, tcb_fault = None,
+***                      tcb_bound_notification = None,
+***                      tcb_mcpriority = minBound,
+***                      tcb_arch = default_arch_tcb\<rparr>))

@@ -1,0 +1,41 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Future callers of arch_valid_obj_same_type that do not have a_type equality available",
+  "grace_period_weeks": 8,
+  "lemma_name": "arch_valid_obj_same_type'",
+  "hint_lemma": "arch_valid_obj_same_type",
+  "anchor_line": 834,
+  "new_lemma": "lemma arch_valid_obj_same_type':\n  \"\\<lbrakk> arch_valid_obj ao s; kheap s p = Some ko \\<rbrakk>\n   \\<Longrightarrow> arch_valid_obj ao (s\\<lparr>kheap := (kheap s)(p \\<mapsto> k)\\<rparr>)\"\n  by (induction ao rule: arch_kernel_obj.induct;\n         clarsimp simp: typ_at_same_type)",
+  "rationale": "The scanner flags 'NO conjunct visibly consumed' — the strongest signal. The proof uses only `induction ao` and `clarsimp simp: typ_at_same_type`. For all ARM arch_kernel_obj constructors (ASIDPool, PageTable, PageDirectory, DataPage), arch_valid_obj unfolds to conditions on entries that are independent of the type of the replacement object k. If typ_at_same_type is used purely as a rewrite to equate typ_at before/after the kheap update, it may fire without needing a_type equality as a hypothesis (relying instead on the kheap membership fact). The trial will confirm.",
+  "strengthening_claim": "(arch_valid_obj ao s \\<and> kheap s p = Some ko) \\<Longrightarrow> (arch_valid_obj ao s \\<and> kheap s p = Some ko \\<and> a_type k = a_type ko)"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Callers that hold a PageTableCap but lack an independent page_table_at witness",
+  "grace_period_weeks": 8,
+  "lemma_name": "valid_table_caps_ptD'",
+  "hint_lemma": "valid_table_caps_ptD",
+  "anchor_line": 714,
+  "new_lemma": "lemma valid_table_caps_ptD':\n  \"\\<lbrakk> (caps_of_state s) p = Some (ArchObjectCap (arch_cap.PageTableCap p' None));\n     valid_table_caps s \\<rbrakk> \\<Longrightarrow>\n    \\<exists>pt. ko_at (ArchObj (PageTable pt)) p' s \\<and> valid_vspace_obj (PageTable pt) s\"\n  apply (clarsimp simp: valid_table_caps_def simp del: split_paired_All)\n  apply (erule allE)+\n  apply (erule (1) impE)\n  apply (clarsimp simp add: is_pt_cap_def cap_asid_def)\n  apply (erule impE, rule refl)\n  apply (clarsimp simp: obj_at_def empty_table_def)\n  done",
+  "rationale": "The literal text `page_table_at` never appears in the proof body. The proof derives obj_at (empty_table S) p' s from valid_table_caps_def, then clarsimp with obj_at_def empty_table_def to extract the PageTable witness. The empty_table predicate on a non-PageTable ArchObj returns False, so the case-split implicit in the clarsimp already fixes the constructor to PageTable without a separate page_table_at hypothesis. Worth a trial since the literal absence is a real signal.",
+  "strengthening_claim": "(caps_of_state s p = Some (ArchObjectCap (arch_cap.PageTableCap p' None)) \\<and> valid_table_caps s) \\<Longrightarrow> (caps_of_state s p = Some (ArchObjectCap (arch_cap.PageTableCap p' None)) \\<and> page_table_at p' s \\<and> valid_table_caps s)"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Callers that hold valid_table_caps and page_table_at but not the specific cap equality",
+  "grace_period_weeks": 8,
+  "lemma_name": "valid_table_caps_ptD_no_cap",
+  "hint_lemma": "valid_table_caps_ptD",
+  "anchor_line": 714,
+  "new_lemma": "lemma valid_table_caps_ptD_no_cap:\n  \"\\<lbrakk> page_table_at p' s; valid_table_caps s \\<rbrakk> \\<Longrightarrow>\n    \\<exists>pt. ko_at (ArchObj (PageTable pt)) p' s \\<and> valid_vspace_obj (PageTable pt) s\"\n  apply (clarsimp simp: valid_table_caps_def simp del: split_paired_All)\n  apply (erule allE)+\n  apply (erule (1) impE)\n  apply (clarsimp simp add: is_pt_cap_def cap_asid_def)\n  apply (erule impE, rule refl)\n  apply (clarsimp simp: obj_at_def empty_table_def)\n  done",
+  "rationale": "The scanner notes `caps_of_state` never appears literally in the proof body; the expansion via valid_table_caps_def drives the argument. If valid_table_caps internally existentially quantifies over caps referencing p', the page_table_at witness alone may be enough to trigger the required obj_at (empty_table) fact without an explicit caps_of_state equality. Low confidence but costs only one trial.",
+  "strengthening_claim": "(page_table_at p' s \\<and> valid_table_caps s) \\<Longrightarrow> (caps_of_state s p = Some (ArchObjectCap (arch_cap.PageTableCap p' None)) \\<and> page_table_at p' s \\<and> valid_table_caps s)"
+ }
+]

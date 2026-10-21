@@ -1,0 +1,16 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Any caller of lsfco_real_cte_at that holds only valid_cap cn but not valid_objs can switch to this stronger variant",
+  "lemma_name": "lsfco_real_cte_at_no_valid_objs",
+  "hint_lemma": "lsfco_real_cte_at",
+  "anchor_line": 60,
+  "new_lemma": "lemma lsfco_real_cte_at_no_valid_objs:\n  \"\\<lbrace>valid_cap cn\\<rbrace>\n  lookup_slot_for_cnode_op f cn idx depth\n  \\<lbrace>\\<lambda>rv. real_cte_at rv\\<rbrace>,-\"\n  by (rule lookup_cnode_slot_real_cte)",
+  "rationale": "The proof is a single rule application of lookup_cnode_slot_real_cte, whose own precondition is valid_cap cn. Dropping valid_objs yields a strictly stronger precondition. The previous failure was purely a JSON escaping bug: \\\\< produced \\< in the file instead of \\<.",
+  "strengthening_claim": "(valid_cap cn) ==> (valid_objs and valid_cap cn)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  by (rule lookup_cnode_slot_real_cte)"
+ }
+]

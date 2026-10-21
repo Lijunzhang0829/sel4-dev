@@ -1,0 +1,43 @@
+135 135
+  done
+
+lemma checked_insert_tcb_invs_no_tcb_cap_valid[wp]:  (* arch specific *)
+  "\<lbrace>invs and cte_wp_at (\<lambda>c. c = cap.NullCap) (target, ref)
+        and K (is_cnode_or_valid_arch new_cap) and valid_cap new_cap
+        and K (is_pt_cap new_cap \<or> is_pd_cap new_cap
+                         \<longrightarrow> cap_asid new_cap \<noteq> None)
+        and (cte_wp_at (\<lambda>c. obj_refs c = obj_refs new_cap
+                              \<longrightarrow> table_cap_ref c = table_cap_ref new_cap \<and>
+                                 pt_pd_asid c = pt_pd_asid new_cap) src_slot)\<rbrace>
+     check_cap_at new_cap src_slot
+      (check_cap_at (cap.ThreadCap target) slot
+       (cap_insert new_cap src_slot (target, ref))) \<lbrace>\<lambda>rv. invs\<rbrace>"
+  apply (simp add: check_cap_at_def)
+  apply (rule hoare_pre)
+   apply (wp get_cap_wp)
+  apply (clarsimp simp: cte_wp_at_caps_of_state)
+  apply (frule caps_of_state_valid_cap[where p=src_slot], fastforce)
+  apply (frule caps_of_state_valid_cap[where p=slot], fastforce)
+  apply (rule conjI, simp only: ex_cte_cap_wp_to_def)
+   apply (rule_tac x=slot in exI)
+   apply (clarsimp simp: cte_wp_at_caps_of_state same_object_as_cte_refs)
+   apply (clarsimp simp: same_object_as_def2 cap_master_cap_simps
+                  dest!: cap_master_cap_eqDs)
+   apply (clarsimp simp: valid_cap_def[where c="cap.ThreadCap x" for x])
+   apply (erule cte_wp_atE[OF caps_of_state_cteD])
+    apply (fastforce simp: obj_at_def is_obj_defs)
+   apply clarsimp
+  apply (rule conjI)
+   apply clarsimp
+   apply (subgoal_tac "\<not> is_zombie new_cap")
+    apply (simp add: same_object_zombies same_object_obj_refs)
+    apply (erule(2) zombies_final_helperE)
+      apply fastforce
+     apply (fastforce simp add: cte_wp_at_caps_of_state)
+    apply assumption
+   apply (clarsimp simp: is_cnode_or_valid_arch_def is_cap_simps
+                         is_valid_vtable_root_def)
+  apply (rule conjI)
+   apply (erule(1) checked_insert_is_derived, simp+)
+  apply (auto simp: is_cnode_or_valid_arch_def is_cap_simps)
+  done

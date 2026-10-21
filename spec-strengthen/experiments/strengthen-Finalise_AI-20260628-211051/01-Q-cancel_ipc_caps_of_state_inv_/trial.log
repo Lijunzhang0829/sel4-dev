@@ -1,0 +1,21 @@
+FAILED (41610ms)
+*** Failed to apply proof method (line 525 of "/tmp/tmp.qBKKydlClb/Tmp_783148d8cf4ebc66.thy"):
+*** goal (8 subgoals):
+***  1. \<And>state x51 x52 a b.
+***        state = BlockedOnSend x51 x52 \<Longrightarrow>
+***        \<lbrace>?R88 state x51 x52 a b\<rbrace>
+***        blocked_cancel_ipc (BlockedOnSend x51 x52) t 
+***        \<lbrace>\<lambda>rv s.
+***                    P ((caps_of_state s)((a, b) \<mapsto> NullCap))\<rbrace>
+***  2. \<And>x51 x52 a b.
+***        \<lbrace>\<lambda>s.
+***                    \<not> ?P88 (BlockedOnSend x51 x52) x51 x52 a b
+***                            s\<rbrace>
+***        blocked_cancel_ipc (BlockedOnSend x51 x52) t 
+***        \<lbrace>\<lambda>rv s.
+***                    \<not> cte_wp_at can_fast_finalise (a, b) s\<rbrace>
+***  3. \<And>state x51 x52.
+***        state = BlockedOnSend x51 x52 \<Longrightarrow>
+***        \<lbrace>?P'85 state x51 x52\<rbrace>
+***        blocked_cancel_ipc (BlockedOnSend x51 x52) t 
+***        \<lbrace>\<lambda>rv s. P (caps_of_state s)\<rbrace>

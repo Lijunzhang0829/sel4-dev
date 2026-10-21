@@ -1,0 +1,15 @@
+--- /dev/null
++++ /dev/null
+@@ -0,0 +0,0 @@
+-- TEMPLATE: replace this file with the output of:
+--
+--   git -C verification/l4v diff <changed_file> > patch.diff
+--
+-- The diff must include both:
+--   (1) the strengthening (modified statement / new lemma)
+--   (2) the inline `<name>_old` witness lemma (A'⟹A; spec sub-skill
+--       Step 2), placed immediately after the strengthened lemma in
+--       the .thy file.
+--
+-- Purely additive companion lemmas are the only case without an `_old`
+-- witness — there is no old form to derive.

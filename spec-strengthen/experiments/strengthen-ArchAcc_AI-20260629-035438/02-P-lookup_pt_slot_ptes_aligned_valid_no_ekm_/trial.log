@@ -1,0 +1,21 @@
+FAILED (38241ms)
+*** Failed to apply proof method (line 586 of "/tmp/tmp.SNgVou60l6/Tmp_f18a6c59062e4e56.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>valid_vspace_objs s; valid_arch_state s; pspace_aligned s;
+***      valid_global_objs s; (ref_ \<rhd> pd) s;
+***      typ_at (AArch APageDirectory) pd s; is_aligned vptr 16;
+***      ako_at (PageDirectory pda_) pd s;
+***      pda_
+***       (UCAST(32 \<rightarrow> 12)
+***         (pd + (vptr >> 20 << 2) && mask pd_bits >> 2)) =
+***      PageTablePDE x xa_ xb_;
+***      UCAST(32 \<rightarrow> 12)
+***       (pd + (vptr >> 20 << 2) && mask pd_bits >> 2)
+***      \<in> kernel_mapping_slots\<rbrakk>
+***     \<Longrightarrow> typ_at (AArch APageTable) (ptrFromPAddr x) s
+*** At command "apply" (line 586 of "/tmp/tmp.SNgVou60l6/Tmp_f18a6c59062e4e56.thy")
+*** Failed to apply proof method (line 586 of "/tmp/tmp.SNgVou60l6/Tmp_f18a6c59062e4e56.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrakk>valid_vspace_objs s; valid_arch_state s; pspace_aligned s;
+***      valid_global_objs s; (ref_ \<rhd> pd) s;
+***      typ_at (AArch APageDirectory) pd s; is_aligned vptr 16;

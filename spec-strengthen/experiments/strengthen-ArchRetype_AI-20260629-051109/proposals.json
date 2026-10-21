@@ -1,0 +1,44 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "future consumer: callers of store_pde_global_objs can drop valid_global_refs from their own preconditions",
+  "hint_lemma": "store_pde_global_objs",
+  "lemma_name": "store_pde_global_objs_no_global_refs",
+  "anchor_line": 309,
+  "new_lemma": "lemma store_pde_global_objs_no_global_refs[wp]:\n  \"\\\\<lbrace>valid_global_objs and\n    valid_arch_state and\n    (\\\\<lambda>s. (\\\\<forall>pd. (obj_at (empty_table (set (second_level_tables (arch_state s))))\n                     (p \\\\<and>\\\\<and> \\\\<not>\\\\<not> mask pd_bits) s\n             \\\\<and> ko_at (ArchObj (PageDirectory pd)) (p \\\\<and>\\\\<and> \\\\<not>\\\\<not> mask pd_bits) s\n               \\\\<longrightarrow> empty_table (set (second_level_tables (arch_state s)))\n                                   (ArchObj (PageDirectory (pd(ucast (p \\\\<and>\\\\<and> mask pd_bits >> 2) := pde)))))\n          \\\\<or> (\\\\<exists>slot. cte_wp_at (\\\\<lambda>cap. p \\\\<and>\\\\<and> \\\\<not>\\\\<not> mask pd_bits \\\\<in> obj_refs cap) slot s))\\\\<rbrace>\n     store_pde p pde \\\\<lbrace>\\\\<lambda>rv. valid_global_objs\\\\<rbrace>\"\n  apply (simp add: store_pde_def)\n  apply wp\n  apply clarsimp\n  done",
+  "rationale": "The proof of store_pde_global_objs is `apply (simp add: store_pde_def); apply wp; apply clarsimp; done` — extremely opaque, with NO conjunct visibly consumed. The `valid_global_refs` conjunct head never appears in the proof body and `wp; clarsimp` does not name it. Dropping it yields a strictly stronger Hoare triple. A trial build is the cheap ground truth.",
+  "strengthening_claim": "(valid_global_objs and valid_arch_state and <lambda>) <= (valid_global_objs and valid_global_refs and valid_arch_state and <lambda>)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  done"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "future consumer: copy_global_invs_mappings_restricted and similar callers could drop valid_arch_state from store_pde_global_objs precondition",
+  "hint_lemma": "store_pde_global_objs",
+  "lemma_name": "store_pde_global_objs_no_arch_state",
+  "anchor_line": 309,
+  "new_lemma": "lemma store_pde_global_objs_no_arch_state[wp]:\n  \"\\\\<lbrace>valid_global_objs and valid_global_refs and\n    (\\\\<lambda>s. (\\\\<forall>pd. (obj_at (empty_table (set (second_level_tables (arch_state s))))\n                     (p \\\\<and>\\\\<and> \\\\<not>\\\\<not> mask pd_bits) s\n             \\\\<and> ko_at (ArchObj (PageDirectory pd)) (p \\\\<and>\\\\<and> \\\\<not>\\\\<not> mask pd_bits) s\n               \\\\<longrightarrow> empty_table (set (second_level_tables (arch_state s)))\n                                   (ArchObj (PageDirectory (pd(ucast (p \\\\<and>\\\\<and> mask pd_bits >> 2) := pde)))))\n          \\\\<or> (\\\\<exists>slot. cte_wp_at (\\\\<lambda>cap. p \\\\<and>\\\\<and> \\\\<not>\\\\<not> mask pd_bits \\\\<in> obj_refs cap) slot s))\\\\<rbrace>\n     store_pde p pde \\\\<lbrace>\\\\<lambda>rv. valid_global_objs\\\\<rbrace>\"\n  apply (simp add: store_pde_def)\n  apply wp\n  apply clarsimp\n  done",
+  "rationale": "Same lemma and same proof body as hint 8: `valid_arch_state` never appears by name in the proof. The `second_level_tables (arch_state s)` is already threaded through the complex lambda conjunct, so no separate `valid_arch_state` predicate is needed for the wp/clarsimp chain. Dropping it yields a stronger triple; trial build decides.",
+  "strengthening_claim": "(valid_global_objs and valid_global_refs and <lambda>) <= (valid_global_objs and valid_global_refs and valid_arch_state and <lambda>)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  done"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "future consumer: copy_global_invs_mappings_restricted wp chain for store_pde_valid_kernel_mappings_map_global",
+  "hint_lemma": "store_pde_valid_kernel_mappings_map_global",
+  "lemma_name": "store_pde_valid_kernel_mappings_map_global_no_arch_state",
+  "anchor_line": 325,
+  "new_lemma": "lemma store_pde_valid_kernel_mappings_map_global_no_arch_state:\n  \"\\\\<lbrace>valid_kernel_mappings and valid_global_objs\n       and K (VSRef (p \\\\<and>\\\\<and> mask pd_bits >> 2) (Some APageDirectory)\n                  \\\\<in> kernel_vsrefs)\n       and (\\\\<lambda>s. \\\\<forall>p. pde_ref pde = Some p\n               \\\\<longrightarrow> p \\\\<in> set (arm_global_pts (arch_state s)))\\\\<rbrace>\n       store_pde p pde\n     \\\\<lbrace>\\\\<lambda>rv. valid_kernel_mappings\\\\<rbrace>\"\n  apply (simp add: store_pde_def)\n  apply (wp set_pd_valid_kernel_mappings_map)\n  apply (clarsimp simp: obj_at_def)\n  apply (rule conjI, rule glob_vs_refs_add_one')\n  apply (clarsimp simp: ucast_ucast_mask_shift_helper)\n  done",
+  "rationale": "The proof of store_pde_valid_kernel_mappings_map_global never mentions `valid_arch_state` by name; the tactic chain is `wp set_pd_valid_kernel_mappings_map; clarsimp; rule glob_vs_refs_add_one'; clarsimp ucast_ucast_mask_shift_helper`. None of those steps reference `valid_arch_state`. The scanner notes NO conjunct visibly consumed and the op is a write-type (demoted priority), but the proof transparency here is higher than hints 8/9 — worth a trial.",
+  "strengthening_claim": "(valid_kernel_mappings and valid_global_objs and K (...) and <lambda>) <= (valid_kernel_mappings and valid_arch_state and valid_global_objs and K (...) and <lambda>)",
+  "grace_period_weeks": 8,
+  "anchor_text": "  done"
+ }
+]

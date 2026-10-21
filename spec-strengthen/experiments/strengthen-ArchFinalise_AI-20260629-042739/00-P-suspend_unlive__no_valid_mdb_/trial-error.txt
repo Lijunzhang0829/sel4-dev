@@ -1,0 +1,3 @@
+FAILED (22240ms)
+*** Malformed command syntax
+*** At command "<malformed>" (line 526 of "/tmp/tmp.BioXQNb6r9/Tmp_aac18bc726a3fabf.thy")

@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "callers of invoke_untyped_valid_sched that already hold invs (which subsumes valid_idle via invs_valid_idle)",
+ "hint_lemma": "invoke_untyped_valid_sched",
+ "lemma_name": "invoke_untyped_valid_sched'",
+ "anchor_line": 326,
+ "new_lemma": "lemma invoke_untyped_valid_sched':\n  \"\\<lbrace>invs and valid_untyped_inv ui and ct_active and valid_sched\\<rbrace>\n     invoke_untyped ui\n   \\<lbrace>\\<lambda>_. valid_sched\\<rbrace>\"\n  apply (rule hoare_pre)\n   apply (rule_tac I=\"invs and valid_untyped_inv ui and ct_active\"\n                in valid_sched_tcb_state_preservation)\n          apply (wpsimp wp: invoke_untyped_st_tcb_at invoke_untyped_etcb_at)+\n     apply (rule hoare_strengthen_postE, rule invoke_untyp_invs; simp add: invs_valid_idle)\n    apply simp\n   apply (rule_tac f=\"\\<lambda>s. P (scheduler_action s)\" in hoare_lift_Pf)\n    apply (rule_tac f=\"\\<lambda>s. x (ready_queues s)\" in hoare_lift_Pf)\n     apply wp+\n  apply simp+\n  done",
+ "rationale": "The proof at L320 already uses `invs_valid_idle` to derive valid_idle from invs inside valid_sched_tcb_state_preservation's assumption discharge. Therefore the outer precondition `valid_idle` is redundant: it is already entailed by `invs` which is a required conjunct. Dropping it gives a strictly stronger Hoare triple.",
+ "strengthening_claim": "(invs and valid_untyped_inv ui and ct_active and valid_sched and valid_idle) ==> (invs and valid_untyped_inv ui and ct_active and valid_sched) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `valid_idle`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

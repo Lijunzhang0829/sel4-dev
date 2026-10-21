@@ -1,0 +1,19 @@
+343 343
+  done
+
+lemma descendants_range_imply_no_descendants_no_valid_objs:
+    "\<lbrakk>descendants_range cap p s; descendants_inc (cdt s) (caps_of_state s);
+    is_untyped_cap cap; caps_of_state s p = Some cap; valid_mdb s\<rbrakk>
+    \<Longrightarrow> descendants_of p (cdt s) = {}"
+    apply (simp add:descendants_range_def is_cap_simps descendants_inc_def del:split_paired_All)
+    apply (elim exE)
+    apply (rule equals0I)
+    apply (drule(1) bspec)
+    apply (drule spec)+
+    apply (erule(1) impE)
+    apply (drule(1) descendants_of_cte_at)
+    apply (clarsimp simp:cte_wp_at_caps_of_state simp del:split_paired_All)
+    apply (drule(1) physical_valid_cap_not_empty_range[OF caps_of_state_valid_cap,rotated])
+     apply simp
+    apply auto
+    done

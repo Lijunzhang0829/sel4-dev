@@ -1,0 +1,68 @@
+[spec_agent] note: source truncated to 1600 lines for the prompt (use --focus-lemma / --max-lines 0 for more)
+[spec_agent] 12 detector hint(s) injected
+[spec_agent] model=sonnet slot=all n=3 claude=/home/lijun/.vscode-server/extensions/anthropic.claude-code-2.1.195-linux-x64/resources/native-binary/claude
+[spec_agent] streaming claude -p (full process trace below; SPEC_AGENT_STREAM=0 to silence) ...
+  $ /home/lijun/.vscode-server/extensions/anthropic.claude-code-2.1.195-linux-x64/resources/native-binary/claude -p <prompt:97286 chars> --model sonnet --strict-mcp-config --mcp-config {"mcpServers":{}} --tools  --effort low --max-turns 6 --output-format stream-json --verbose
+  ● session init: model=claude-sonnet-4-6 cwd=/tmp tools=0
+  ◇ (thinking) Let me analyze the hints and pick the 3 best candidates.
+
+Looking at the hints carefully:
+
+**Hint 0** - `page_directory_pde_atI` (L1411): Drop `page_directory_at p s`. The proof uses `pspace_alignedD` and simp with `a_type_def`, `obj_at_def`. The `page_directory_at` is `typ_at (AArch APageDirectory)
+  ▸ Reading the source file to verify proof bodies before drafting proposals.
+
+Looking at the three most promising hints based on semantic analysis:
+
+**Hint 6** (`wellformed_arch_pspace`, L344-345): `arch_valid_obj ao s = wellformed_vspace_obj ao` (L326) — the RHS contains no `s`, so the conclusion is state-independent. The `kheap s = kheap s'` premise is genuinely redundant; `by simp` closes the goal without it.
+
+**Hint 5** (`valid_arch_tcb_pspaceI`, L2394): `valid_arch_tcb = \<lambda>a. \<top>` (L251). Both `valid_arch_tcb t s` and `valid_arch_tcb t s'` are `True` regardless of state; `kheap s = kheap s'` is structurally irrelevant.
+
+**Hint 3** (`empty_table_is_valid`, L1940): For an `empty_table` PageDirectory every non-kernel-slot pde is `InvalidPDE` (valid by `\<top>`); for an empty PageTable every pte is `InvalidPTE` (valid by `\<top>`). `valid_vspace_obj ao s` follows purely from the `empty_table` fact without needing `valid_arch_state s`.
+
+Hints 0/1 are rejected — the `page_directory_at`/`page_table_at` premises ARE consumed: the `clarsimp simp: obj_at_def` tactic destructs them to get the kheap fact that feeds `pspace_alignedD`. Hints 2/4/7-11 are rejected on semantic grounds (premises essential to conclusions).
+
+```json
+[
+  {
+    "slot": "P",
+    "delivery": "named",
+    "delivery_substate": "planned",
+    "delivery_target": "Any consumer that currently calls wellformed_arch_pspace with a kheap-equality witness; the stronger form drops that witness entirely",
+    "grace_period_weeks": 8,
+    "hint_lemma": "wellformed_arch_pspace",
+    "lemma_name": "wellformed_arch_pspace_no_kheap",
+    "anchor_line": 345,
+    "new_lemma": "lemma wellformed_arch_pspace_no_kheap: \"\<And>ao. arch_valid_obj ao s \<Longrightarrow> arch_valid_obj ao s'\"\n  by simp",
+    "rationale": "arch_valid_obj ao s unfolds to wellformed_vspace_obj ao (L326), which mentions no state component at all. The conclusion arch_valid_obj ao s' is identical in content. The kheap s = kheap s' conjunct in the original is therefore never consumed: simp closes the goal purely by unfolding arch_valid_obj_def. Dropping it yields a strictly stronger implication lemma.",
+    "strengthening_claim": "(arch_valid_obj ao s) ==> (arch_valid_obj ao s \\<and> kheap s = kheap s')"
+  },
+  {
+    "slot": "P",
+    "delivery": "named",
+    "delivery_substate": "planned",
+    "delivery_target": "Any caller that passes a kheap-equality proof to valid_arch_tcb_pspaceI; the stronger form needs only the valid_arch_tcb hypothesis",
+    "grace_period_weeks": 8,
+    "hint_lemma": "valid_arch_tcb_pspaceI",
+    "lemma_name": "valid_arch_tcb_pspaceI_no_kheap",
+    "anchor_line": 2397,
+    "new_lemma": "lemma valid_arch_tcb_pspaceI_no_kheap:\n  \"valid_arch_tcb t s \<Longrightarrow> valid_arch_tcb t s'\"\n  by (simp add: valid_arch_tcb_def)",
+    "rationale": "valid_arch_tcb is defined as \\<lambda>a. \\<top> (L251), so valid_arch_tcb t s = True for every t and s. The premise valid_arch_tcb t s and the conclusion valid_arch_tcb t s' are both trivially True. The conjunct kheap s = kheap s' is therefore structurally irrelevant; simp add: valid_arch_tcb_def closes the stronger statement directly.",
+    "strengthening_claim": "(valid_arch_tcb t s) ==> (valid_arch_tcb t s \\<and> kheap s = kheap s')"
+  },
+  {
+    "slot": "P",
+    "delivery": "named",
+    "delivery_substate": "planned",
+    "delivery_target": "Callers of empty_table_is_valid that currently supply valid_arch_state s; the stronger form omits that witness",
+    "grace_period_weeks": 8,
+    "hint_lemma": "empty_table_is_valid",
+    "lemma_name": "empty_table_is_valid_no_arch_state",
+    "anchor_line": 1943,
+    "new_lemma": "lemma empty_table_is_valid_no_arch_state:\n  \"empty_table (set (arm_global_pts (arch_state s))) (ArchObj ao) \<Longrightarrow>\n   valid_vspace_obj ao s\"\n  by (cases ao; simp add: empty_table_def)",
+    "rationale": "For a PageDirectory, empty_table forces every non-kernel-slot pde to be InvalidPDE; valid_vspace_obj (PageDirectory pd) requires valid_pde on those entries, which holds trivially for InvalidPDE (\\<top>). For a PageTable, empty_table forces every pte to InvalidPTE; valid_vspace_obj (PageTable pt) holds trivially. DataPage and ASIDPool are ruled out by empty_table_arch False. In none of these cases is valid_arch_state s consulted, so it can be dropped.",
+    "strengthening_claim": "(empty_table (set (arm_global_pts (arch_state s))) (ArchObj ao)) ==> (empty_table (set (arm_global_pts (arch_state s))) (ArchObj ao) \\<and> valid_arch_state s)"
+  }
+]
+```
+  ✓ result: 1 turn(s), 89363ms $0.3699
+[spec_agent] 3 proposal(s) emitted

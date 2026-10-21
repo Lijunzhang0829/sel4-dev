@@ -1,0 +1,15 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Any future caller of decode_unbind_notification_wf that cannot supply invs (e.g., a context where only the thread's cap witness is available) can use decode_unbind_notification_wf_strong directly via `rule` or `wp`.",
+  "lemma_name": "decode_unbind_notification_wf_strong",
+  "hint_lemma": "decode_unbind_notification_wf",
+  "anchor_line": 1215,
+  "new_lemma": "lemma decode_unbind_notification_wf_strong:\n  \"\\<lbrace>tcb_at t and ex_nonz_cap_to t\\<rbrace>\n     decode_unbind_notification (cap.ThreadCap t)\n   \\<lbrace>tcb_inv_wf\\<rbrace>,-\"\n  apply (simp add: decode_unbind_notification_def)\n  apply (rule hoare_pre)\n   apply (wp gbn_wp | wpc)+\n  apply clarsimp\n  done",
+  "rationale": "tcb_inv_wf (NotificationControl t None) unfolds to (tcb_at t and ex_nonz_cap_to t), so the only facts the proof needs are those two conjuncts. The wp chain uses only gbn_wp (a pure read-wp rule with no invs dependency) and wpc for case splits; the final clarsimp discharges the residual goal purely from the tcb_at t and ex_nonz_cap_to t hypotheses. invs never appears in the proof body and is not reachable by any implicit wp-chain dependency here. Dropping it yields a strictly weaker precondition with the original proof verbatim.",
+  "strengthening_claim": "(invs and tcb_at t and ex_nonz_cap_to t) ==> (tcb_at t and ex_nonz_cap_to t)",
+  "grace_period_weeks": 8
+ }
+]

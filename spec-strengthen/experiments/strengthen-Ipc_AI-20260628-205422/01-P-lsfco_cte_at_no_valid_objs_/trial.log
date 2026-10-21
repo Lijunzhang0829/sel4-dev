@@ -1,0 +1,11 @@
+FAILED (129685ms)
+*** Failed to apply initial proof method (line 60 of "/tmp/tmp.rmVW8VAk6t/Tmp_f9725265ddabc1fa.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrace>valid_cap cn\<rbrace> lookup_slot_for_cnode_op f cn idx depth 
+***     \<lbrace>cte_wp_at (\<lambda>_. True)\<rbrace>, -
+*** At command "by" (line 60 of "/tmp/tmp.rmVW8VAk6t/Tmp_f9725265ddabc1fa.thy")
+*** Failed to apply initial proof method (line 60 of "/tmp/tmp.rmVW8VAk6t/Tmp_f9725265ddabc1fa.thy"):
+*** goal (1 subgoal):
+***  1. \<lbrace>valid_cap cn\<rbrace> lookup_slot_for_cnode_op f cn idx depth 
+***     \<lbrace>cte_wp_at (\<lambda>_. True)\<rbrace>, -
+*** At command "by" (line 60 of "/tmp/tmp.rmVW8VAk6t/Tmp_f9725265ddabc1fa.thy")

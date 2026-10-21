@@ -1,0 +1,56 @@
+[spec_agent] 17 detector hint(s) injected
+[spec_agent] model=sonnet slot=all n=3 claude=/home/lijun/.vscode-server/extensions/anthropic.claude-code-2.1.195-linux-x64/resources/native-binary/claude
+[spec_agent] streaming claude -p (full process trace below; SPEC_AGENT_STREAM=0 to silence) ...
+  $ /home/lijun/.vscode-server/extensions/anthropic.claude-code-2.1.195-linux-x64/resources/native-binary/claude -p <prompt:102713 chars> --model sonnet --strict-mcp-config --mcp-config {"mcpServers":{}} --tools  --effort low --max-turns 6 --output-format stream-json --verbose
+  ● session init: model=claude-sonnet-4-6 cwd=/tmp tools=0
+  ◇ (thinking) Let me analyze the hints and select the best 3 candidates.
+
+**Hint 5 (P-slot, high priority): `cap_insert_simple_arch_caps_ap` (L510)**
+- Premise to drop: `ko_at (ArchObj (ASIDPool Map.empty)) ap`
+- The proof body: looking at lines 519-545, I need to check if `ko_at` appears anywhere.
+- The proof us
+  ▸ ```json
+[
+  {
+    "slot": "P",
+    "delivery": "named",
+    "delivery_substate": "planned",
+    "delivery_target": "Future callers of cap_insert_ap_invs where tcb_cap_valid for an ASID-pool cap is not available or inconvenient to establish",
+    "lemma_name": "cap_insert_ap_invs_no_tcb_valid",
+    "hint_lemma": "cap_insert_ap_invs",
+    "anchor_line": 620,
+    "new_lemma": "lemma cap_insert_ap_invs_no_tcb_valid:\n  \"\<lbrace>invs and valid_cap cap and\n    ex_cte_cap_wp_to (appropriate_cte_cap cap) dest and\n    cte_wp_at (\<lambda>c. c = cap.NullCap) dest and\n    no_cap_to_obj_with_diff_ref cap {dest} and\n    (\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s) and\n    K (cap = cap.ArchObjectCap (arch_cap.ASIDPoolCap ap asid)) and\n   (\<lambda>s. \<forall>irq \<in> cap_irqs cap. irq_issued irq s) and\n   ko_at (ArchObj (arch_kernel_obj.ASIDPool Map.empty)) ap and\n   (\<lambda>s. ap \<notin> ran (asid_table s) \<and>\n        asid_table s (asid_high_bits_of asid) = None)\<rbrace>\n  cap_insert cap src dest\n  \<lbrace>\<lambda>rv s. invs (s\<lparr>arch_state := arch_state s\n                       \<lparr>arm_asid_table := ((arm_asid_table \<circ> arch_state) s)(asid_high_bits_of asid \<mapsto> ap)\<rparr>\<rparr>)\<rbrace>\"\n  apply (simp add: invs_def valid_state_def valid_pspace_def)\n  apply (strengthen valid_arch_state_strg\n                    valid_asid_map_asid_upd_strg valid_vspace_objs_asid_upd_strg )\n  apply (simp cong: conj_cong)\n  apply (rule hoare_pre)\n   apply (wp cap_insert_simple_mdb cap_insert_iflive\n             cap_insert_zombies cap_insert_ifunsafe cap_insert_vspace_objs\n             cap_insert_valid_global_refs cap_insert_idle\n             valid_irq_node_typ cap_insert_simple_arch_caps_ap)\n  apply (clarsimp simp: is_simple_cap_def cte_wp_at_caps_of_state is_cap_simps)\n  apply (frule safe_parent_cap_is_device)\n  apply (drule safe_parent_cap_range)\n  apply (simp add: cap_range_def)\n  apply (rule conjI)\n   prefer 2\n   apply (clarsimp simp: obj_at_def a_type_def)\n  apply (clarsimp simp: cte_wp_at_caps_of_state)\n  apply (drule_tac p=\"(a,b)\" in caps_of_state_valid_cap, fastforce)\n  apply (auto simp: obj_at_def is_tcb_def is_cap_table_def\n                    valid_cap_def [where c=\"cap.Zombie a b x\" for a b x]\n                dest: obj_ref_is_tcb obj_ref_is_cap_table split: option.splits)\n  done",
+    "rationale": "The string `tcb_cap_valid` never appears in the proof body of cap_insert_ap_invs. None of the wp rules applied (cap_insert_simple_mdb, cap_insert_iflive, cap_insert_zombies, cap_insert_ifunsafe, cap_insert_vspace_objs, cap_insert_valid_global_refs, cap_insert_idle, valid_irq_node_typ, cap_insert_simple_arch_caps_ap) take tcb_cap_valid as a required precondition for an ASID pool cap. The postcondition is invs of an arch-state update, which does not unfold to tcb_cap_valid. The final `auto` discharge with obj_at_def/is_tcb_def addresses zombie/tcb object shape goals that arise from valid_cap, not from tcb_cap_valid directly.",
+    "strengthening_claim": "(invs and valid_cap cap and ex_cte_cap_wp_to (appropriate_cte_cap cap) dest and cte_wp_at (\u03bbc. c = cap.NullCap) dest and no_cap_to_obj_with_diff_ref cap {dest} and ...) ==> (invs and valid_cap cap and tcb_cap_valid cap dest and ex_cte_cap_wp_to (appropriate_cte_cap cap) dest and ...)",
+    "grace_period_weeks": 8
+  },
+  {
+    "slot": "P",
+    "delivery": "named",
+    "delivery_substate": "planned",
+    "delivery_target": "Future callers of retype_region_no_cap_to_obj that do not separately have valid_mdb outside valid_pspace",
+    "lemma_name": "retype_region_no_cap_to_obj_no_mdb",
+    "hint_lemma": "retype_region_no_cap_to_obj",
+    "anchor_line": 481,
+    "new_lemma": "lemma retype_region_no_cap_to_obj_no_mdb:\n  \"\<lbrace>valid_pspace\n             and caps_overlap_reserved {ptr..ptr + 2 ^ obj_bits_api ty us - 1}\n             and caps_no_overlap ptr sz\n             and pspace_no_overlap_range_cover ptr sz\n             and no_cap_to_obj_with_diff_ref cap S\n             and (\<lambda>s. \<exists>slot. cte_wp_at (\<lambda>c. up_aligned_area ptr sz \<subseteq> cap_range c \<and> cap_is_device c = dev) slot s)\n             and K (ty = Structures_A.CapTableObject \<longrightarrow> 0 < us)\n             and K (range_cover ptr sz (obj_bits_api ty us) 1) \<rbrace>\n     retype_region ptr 1 us ty dev\n   \<lbrace>\<lambda>rv. no_cap_to_obj_with_diff_ref cap S\<rbrace>\"\n  apply (rule hoare_gen_asm)+\n  apply (simp add: no_cap_to_obj_with_diff_ref_null_filter)\n  apply (wp retype_region_caps_of | simp)+\n  apply fastforce\n  done",
+    "rationale": "The string `valid_mdb` never appears in the proof body of retype_region_no_cap_to_obj. The proof reduces to retype_region_caps_of (tracking null_filter changes to caps_of_state) plus fastforce. The retype_region_caps_of lemma concerns how retype changes caps_of_state, and requires pspace overlap properties (encapsulated in valid_pspace) but not MDB integrity. The `valid_mdb` conjunct is a write-op demoted hint but the proof is sufficiently short and opaque that a trial is warranted.",
+    "strengthening_claim": "(valid_pspace and caps_overlap_reserved ... and caps_no_overlap ... and pspace_no_overlap_range_cover ... and no_cap_to_obj_with_diff_ref cap S and ...) ==> (valid_pspace and valid_mdb and caps_overlap_reserved ... and ...)",
+    "grace_period_weeks": 8
+  },
+  {
+    "slot": "P",
+    "delivery": "named",
+    "delivery_substate": "planned",
+    "delivery_target": "Future callers of retype_region_no_cap_to_obj that have only pspace overlap and cap overlap properties without the full valid_pspace bundle",
+    "lemma_name": "retype_region_no_cap_to_obj_no_pspace",
+    "hint_lemma": "retype_region_no_cap_to_obj",
+    "anchor_line": 481,
+    "new_lemma": "lemma retype_region_no_cap_to_obj_no_pspace:\n  \"\<lbrace>valid_mdb\n             and caps_overlap_reserved {ptr..ptr + 2 ^ obj_bits_api ty us - 1}\n             and caps_no_overlap ptr sz\n             and pspace_no_overlap_range_cover ptr sz\n             and no_cap_to_obj_with_diff_ref cap S\n             and (\<lambda>s. \<exists>slot. cte_wp_at (\<lambda>c. up_aligned_area ptr sz \<subseteq> cap_range c \<and> cap_is_device c = dev) slot s)\n             and K (ty = Structures_A.CapTableObject \<longrightarrow> 0 < us)\n             and K (range_cover ptr sz (obj_bits_api ty us) 1) \<rbrace>\n     retype_region ptr 1 us ty dev\n   \<lbrace>\<lambda>rv. no_cap_to_obj_with_diff_ref cap S\<rbrace>\"\n  apply (rule hoare_gen_asm)+\n  apply (simp add: no_cap_to_obj_with_diff_ref_null_filter)\n  apply (wp retype_region_caps_of | simp)+\n  apply fastforce\n  done",
+    "rationale": "Companion to retype_region_no_cap_to_obj_no_mdb: drops valid_pspace instead of valid_mdb. The string `valid_pspace` never appears in the proof body. The proof is purely a reduction via retype_region_caps_of plus fastforce. If retype_region_caps_of's own preconditions are met by the remaining conjuncts (caps_overlap_reserved, caps_no_overlap, pspace_no_overlap_range_cover), valid_pspace may be unnecessary. The two proposals are independent trials testing which of the two bundled premises is truly load-bearing.",
+    "strengthening_claim": "(valid_mdb and caps_overlap_reserved ... and caps_no_overlap ... and pspace_no_overlap_range_cover ... and no_cap_to_obj_with_diff_ref cap S and ...) ==> (valid_pspace and valid_mdb and caps_overlap_reserved ... and ...)",
+    "grace_period_weeks": 8
+  }
+]
+```
+  ✓ result: 1 turn(s), 197380ms $0.5000
+[spec_agent] 3 proposal(s) emitted

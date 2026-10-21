@@ -1,0 +1,6 @@
+1641 1641
+  by (wpsimp simp: set_cap_def)
+
+lemma set_cap_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_cap cap a \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  by (wpsimp simp: set_cap_def)

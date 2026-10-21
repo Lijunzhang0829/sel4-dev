@@ -1,0 +1,27 @@
+503 503
+  done
+
+lemma cancel_ipc_caps_of_state_inv:
+  "\<lbrace>\<lambda>s. (\<forall>p. cte_wp_at can_fast_finalise p s
+           \<longrightarrow> P ((caps_of_state s) (p \<mapsto> cap.NullCap)))
+           \<and> P (caps_of_state s)\<rbrace>
+     cancel_ipc t
+   \<lbrace>\<lambda>rv s. (\<forall>p. cte_wp_at can_fast_finalise p s
+             \<longrightarrow> P ((caps_of_state s) (p \<mapsto> cap.NullCap)))
+             \<and> P (caps_of_state s)\<rbrace>"
+  apply (simp add: cancel_ipc_def reply_cancel_ipc_def
+             cong: Structures_A.thread_state.case_cong)
+  apply (wpsimp wp: cap_delete_one_caps_of_state)
+     apply (rule_tac Q="\<lambda>_ s. (\<forall>p. cte_wp_at can_fast_finalise p s
+                                \<longrightarrow> P ((caps_of_state s) (p \<mapsto> cap.NullCap)))
+                                \<and> P (caps_of_state s)"
+                  in hoare_post_imp)
+      apply (clarsimp simp: fun_upd_def[symmetric] split_paired_Ball)
+     apply (simp add: cte_wp_at_caps_of_state)
+     apply (wpsimp wp: hoare_vcg_all_lift hoare_convert_imp thread_set_caps_of_state_trivial
+                 simp: ran_tcb_cap_cases)+
+   prefer 2
+   apply assumption
+  apply (rule hoare_strengthen_post [OF gts_sp])
+  apply (clarsimp simp: fun_upd_def[symmetric] cte_wp_at_caps_of_state)
+  done

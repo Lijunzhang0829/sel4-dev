@@ -1,0 +1,13 @@
+714 714
+  done
+
+lemma valid_table_caps_ptD_no_cap:
+  "\<lbrakk> page_table_at p' s; valid_table_caps s \<rbrakk> \<Longrightarrow>
+    \<exists>pt. ko_at (ArchObj (PageTable pt)) p' s \<and> valid_vspace_obj (PageTable pt) s"
+  apply (clarsimp simp: valid_table_caps_def simp del: split_paired_All)
+  apply (erule allE)+
+  apply (erule (1) impE)
+  apply (clarsimp simp add: is_pt_cap_def cap_asid_def)
+  apply (erule impE, rule refl)
+  apply (clarsimp simp: obj_at_def empty_table_def)
+  done

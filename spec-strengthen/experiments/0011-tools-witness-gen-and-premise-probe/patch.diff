@@ -1,0 +1,926 @@
+diff --git a/.claude/skills/isabelle_prover_spec/SKILL.md b/.claude/skills/isabelle_prover_spec/SKILL.md
+index 85c3919..b558abe 100644
+--- a/.claude/skills/isabelle_prover_spec/SKILL.md
++++ b/.claude/skills/isabelle_prover_spec/SKILL.md
+@@ -171,6 +171,14 @@ not a behavior change.
+ | `tools/spec_strengthen/spec_candidates.py` | Step 1 entry. Flat ranked list of candidates with natural-language suggested moves. |
+ | `tools/spec_strengthen/spec_impact.py` | Step 4 entry. Verdict + wall gate + witness presence. With `--measurement-out FILE` emits a simplified JSON suitable for the rule-5 audit bundle. |
+ 
++**Optional helpers** (not required by the workflow — use when the
++trial-and-error cost on an unfamiliar candidate is high):
++
++| Tool | When to use |
++|---|---|
++| `tools/spec_strengthen/spec_witness_gen.py <patch> <thy>` | Step 2 aid — emits the `<name>_old` witness lemma the patch needs (shape 1) or explains why no witness applies (shape 2/3). Codifies the playbook's witness-rule-by-triple-shape table so you don't pick `hoare_pre` vs `hoare_strengthen_postE_R` by suffix-pattern. |
++| `tools/spec_strengthen/spec_premise_probe.sh <thy-rel> <lemma> <premise>` | Step 1.5 filter for `unused-premise` candidates — TRIAL-based probe (synthesizes a copy of the lemma with the premise dropped, runs the original proof in Isa-REPL). Ground-truth verdict `likely-unused` / `load-bearing`. Wall ≈ 60-200s per probe (preamble walk dominates). Cheaper than blind `check-theory.sh --patch` only when the marginal candidate is filtered cheaply — and gives diagnostic info on failure (the residual subgoal). |
++
+ Tool semantics are described in their own `--help`. The skill does
+ not enumerate detector internals — those live in the playbook.
+ 
+diff --git a/tools/spec_strengthen/spec_premise_probe.py b/tools/spec_strengthen/spec_premise_probe.py
+new file mode 100755
+index 0000000..6d38ad7
+--- /dev/null
++++ b/tools/spec_strengthen/spec_premise_probe.py
+@@ -0,0 +1,444 @@
++#!/usr/bin/env python3
++"""
++tools/spec_strengthen/spec_premise_probe.py
++
++Optional Step 1.5 helper: TRIAL-based premise-usage probe via
++Isa-REPL. Ground truth (not heuristic) — synthesizes a copy of
++the target lemma with the suspect premise removed from the
++precondition, then runs the ORIGINAL proof body against it
++inside a hot Isa-REPL session.
++
++  - If the proof closes        → premise is **unused** in the
++                                  proof; safe to drop.
++  - If any proof step fails    → premise is **load-bearing**;
++                                  the proof depended on it.
++
++This is the same correctness signal as `check-theory.sh --patch`,
++just driven through Isa-REPL so multiple probes on the same
++session can reuse the heap-loaded JVM (future work — current v1
++spins one JVM per invocation; per-probe wall ≈ 40-60s).
++
++v0 (substring goal-state heuristic) was rejected: differential
++test showed it could not distinguish unused from load-bearing
++premises because Isabelle keeps the full precondition visible in
++intermediate subgoals — see `reports/experiments/0011-*`.
++
++Verdicts:
++  likely-unused      — synthesized lemma's proof closes; premise
++                       can be dropped (CONFIRM with full
++                       check-theory.sh on the resulting patch).
++  load-bearing       — synthesized lemma's proof FAILS at some
++                       step; premise is consumed by tactic.
++  parse-error        — could not extract conjunct from precondition.
++  premise-not-found  — suspect premise NAME isn't in the precondition
++                       (candidate is stale).
++  uncertain          — Isa-REPL infrastructure error / unexpected
++                       failure mode; fall back to check-theory.sh.
++
++Invocation (inside sel4-l4v container):
++  python3 /workspace/tools/spec_strengthen/spec_premise_probe.py \\
++    --theory <abs-path>.thy --lemma <name> --premise <suspect>
++
++Or via the host wrapper:
++  bash tools/spec_strengthen/spec_premise_probe.sh \\
++    <relative-thy-path> <lemma_name> <suspect_premise>
++"""
++
++from __future__ import annotations
++import argparse
++import os
++import re
++import sys
++import time
++from pathlib import Path
++
++
++# Session mapping mirrors parent SKILL.md
++SESSION_MAP = [
++    ("spec/abstract/",            "ASpec"),
++    ("spec/cspec/",               "CSpec"),
++    ("proof/invariant-abstract/", "AInvs"),
++    ("proof/refine/",             "Refine"),
++    ("proof/crefine/",            "CRefine"),
++    ("proof/access-control/",     "Access"),
++    ("proof/infoflow/",           "InfoFlow"),
++    ("proof/drefine/",            "DRefine"),
++    ("proof/bisim/",              "Bisim"),
++]
++
++
++def detect_session(theory_path: Path) -> str | None:
++    p = str(theory_path)
++    for prefix, sess in SESSION_MAP:
++        if prefix in p:
++            return sess
++    return None
++
++
++# ---- Lemma block extraction (raw text) -------------------------------------
++
++LEMMA_HEADER_RE = re.compile(
++    r"^(?P<indent>\s*)(?P<kw>lemma|theorem|corollary)s?\s+"
++    r"(?P<name>[A-Za-z_][A-Za-z_0-9']*)\s*(?P<attrs>\[[^\]]*\])?\s*:",
++    re.MULTILINE,
++)
++
++PROOF_END_RE = re.compile(r"^\s*(?:done|qed|sorry|oops)\b", re.MULTILINE)
++
++
++def find_lemma_block(theory_text: str, lemma_name: str) -> dict | None:
++    """Locate the target lemma's text block and split it into
++    (header_text, statement_text, proof_text). Returns None if
++    structure can't be parsed."""
++    for m in LEMMA_HEADER_RE.finditer(theory_text):
++        if m.group("name") != lemma_name:
++            continue
++        header_start = m.start()
++        stmt_start = m.end()  # right after the colon
++        # Statement is everything from after the colon up to the
++        # first proof keyword
++        proof_kw = re.search(
++            r"^\s*(?:apply|by|proof|using|including)\b",
++            theory_text[stmt_start:], re.MULTILINE,
++        )
++        if not proof_kw:
++            return None
++        proof_start = stmt_start + proof_kw.start()
++        # Proof body is from proof_start to first end token
++        proof_end_m = PROOF_END_RE.search(theory_text, proof_start)
++        if not proof_end_m:
++            return None
++        # Include the end-token's full line
++        end_of_line = theory_text.find("\n", proof_end_m.end())
++        if end_of_line == -1:
++            end_of_line = len(theory_text)
++        return {
++            "indent":   m.group("indent"),
++            "attrs":    m.group("attrs") or "",
++            "header_start": header_start,
++            "stmt_start":   stmt_start,
++            "proof_start":  proof_start,
++            "block_end":    end_of_line,
++            "statement":    theory_text[stmt_start:proof_start].strip(),
++            "proof":        theory_text[proof_start:end_of_line],
++        }
++    return None
++
++
++# ---- Statement transformer: drop a conjunct from pre ----------------------
++
++# A statement looks like (after stripping quotes):
++#   "\<lbrace>P\<rbrace> body \<lbrace>Q\<rbrace>"
++# Pre/post may have lambda binders: `\<lambda>s. ...`. The conjunct
++# token to drop is matched by NAME boundary anywhere inside the
++# pre — and the surrounding " \<and> " / " and " is collapsed.
++
++PRE_RE = re.compile(
++    r'^(?P<lq>")\s*\\<lbrace>(?P<pre>.*?)\\<rbrace>(?P<rest>.*?)(?P<rq>")\s*$',
++    re.DOTALL,
++)
++
++
++def normalize_quotes(stmt: str) -> str:
++    """Strip whitespace and ensure the statement is one " "-quoted
++    string. l4v lemmas use the quote form `"..."` (no triple)."""
++    return stmt.strip()
++
++
++def drop_conjunct_from_pre(stmt: str, premise: str) -> tuple[str, str]:
++    """Return (new_stmt, status). status is "ok" if a conjunct
++    mentioning `premise` was dropped, "not-found" if no conjunct
++    matched, "ambiguous" if multiple conjuncts matched."""
++    stmt_norm = normalize_quotes(stmt)
++    m = PRE_RE.match(stmt_norm)
++    if not m:
++        return stmt, "parse-error"
++
++    pre_text = m.group("pre")
++    # Detect leading lambda binder; preserve it.
++    binder_m = re.match(r'\s*(\\<lambda>[^.]+\.\s*)(.*)$',
++                        pre_text, re.DOTALL)
++    if binder_m:
++        binder, body = binder_m.group(1), binder_m.group(2)
++    else:
++        binder, body = "", pre_text
++
++    # Split on top-level `\<and>` / ` and ` conjunctions.
++    # Naive: assume conjunctions are not nested under quantifiers.
++    # (Good enough for the common spec-strengthening case; if
++    # complex, fall back to "parse-error".)
++    parts = re.split(r'\s*\\<and>\s*|\s+and\s+', body)
++    parts = [p.strip() for p in parts if p.strip()]
++    if not parts:
++        return stmt, "parse-error"
++
++    # Find parts mentioning `premise` as a whole word.
++    pat = re.compile(rf'\b{re.escape(premise)}\b')
++    hits = [i for i, p in enumerate(parts) if pat.search(p)]
++    if not hits:
++        return stmt, "not-found"
++    if len(hits) > 1:
++        # Multiple conjuncts match — ambiguous; refuse to guess.
++        return stmt, "ambiguous"
++
++    drop_idx = hits[0]
++    kept = [p for i, p in enumerate(parts) if i != drop_idx]
++    if not kept:
++        # Dropping would leave an empty precondition — replace with
++        # `\<top>` (l4v idiom for "no precondition").
++        new_pre_body = "\\<top>"
++        binder = ""  # \<top> doesn't take a state binder
++    else:
++        new_pre_body = " \\<and> ".join(kept)
++    new_pre = binder + new_pre_body
++    new_stmt = (
++        f'{m.group("lq")}\\<lbrace>{new_pre}\\<rbrace>'
++        f'{m.group("rest")}{m.group("rq")}'
++    )
++    return new_stmt, "ok"
++
++
++# ---- Trial driver ---------------------------------------------------------
++
++def run_trial(theory_path: Path, lemma_name: str,
++              suspect_premise: str,
++              port: int = 25559,
++              startup_wait: float = 14.0) -> dict:
++    """Synthesize a probe lemma + run its proof. Verdict from
++    proof success/failure."""
++
++    sys.path.insert(0, "/workspace/tools/seL4-proof-search/Isa-Repl")
++    from isarepl_client import IsaRepl  # noqa: E402
++
++    session = detect_session(theory_path)
++    if session is None:
++        return {
++            "verdict": "uncertain",
++            "reason": f"could not derive session from path {theory_path}",
++        }
++
++    theory_text = theory_path.read_text(encoding="utf-8", errors="replace")
++    block = find_lemma_block(theory_text, lemma_name)
++    if block is None:
++        return {
++            "verdict": "uncertain",
++            "reason": f"lemma `{lemma_name}` not found or "
++                      f"structure unparseable",
++        }
++
++    # Synthesize the weakened statement.
++    new_stmt, status = drop_conjunct_from_pre(
++        block["statement"], suspect_premise
++    )
++    if status == "not-found":
++        return {
++            "verdict": "premise-not-found",
++            "reason": f"premise `{suspect_premise}` not in any "
++                      f"top-level conjunct of lemma's precondition "
++                      f"(candidate may be stale)",
++        }
++    if status == "ambiguous":
++        return {
++            "verdict": "uncertain",
++            "reason": f"premise `{suspect_premise}` appears in "
++                      f"multiple conjuncts — refusing to guess "
++                      f"which to drop",
++        }
++    if status != "ok":
++        return {
++            "verdict": "parse-error",
++            "reason": f"could not split precondition (status="
++                      f"{status})",
++        }
++
++    # Synthesized probe lemma command.
++    probe_header = (
++        f"lemma {lemma_name}_probe:\n"
++        f"  {new_stmt}\n"
++    )
++
++    # ---- Drive Isa-REPL ----
++    real_thy_path = str(theory_path)
++    t0 = time.monotonic()
++    try:
++        with IsaRepl(session=session, port=port,
++                     startup_wait=startup_wait) as r:
++            ok, msg = r.init(real_thy_path)
++            if not ok:
++                return {
++                    "verdict": "uncertain",
++                    "reason": f"Isa-REPL init failed: {msg[:200]}",
++                }
++            init_secs = time.monotonic() - t0
++
++            try:
++                steps = r.steps_of(real_thy_path)
++            except Exception as e:
++                return {
++                    "verdict": "uncertain",
++                    "reason": f"steps_of failed: {e!r}",
++                }
++            steps = [s for s in steps if s and s not in ("True", "False")]
++
++            # Find target lemma's step.
++            target_idx = None
++            for i, s in enumerate(steps):
++                if re.search(
++                    rf"\b(?:lemma|theorem|corollary)s?\s+"
++                    rf"{re.escape(lemma_name)}\b", s,
++                ):
++                    target_idx = i
++                    break
++            if target_idx is None:
++                return {
++                    "verdict": "uncertain",
++                    "reason": "target lemma step not found in parsed steps",
++                }
++
++            # Step the preamble (everything BEFORE the target lemma).
++            preamble_failures = 0
++            for s in steps[:target_idx]:
++                ok, _ = r.step(s)
++                if not ok:
++                    preamble_failures += 1
++            preamble_secs = time.monotonic() - t0
++
++            # Now in the right context. Step the synthesized
++            # probe lemma header — should enter proof mode.
++            ok, st = r.step(probe_header)
++            if not ok:
++                return {
++                    "verdict": "load-bearing",
++                    "reason": (
++                        f"synthesized lemma `{lemma_name}_probe` "
++                        f"with `{suspect_premise}` dropped failed "
++                        f"to TYPE-CHECK; the premise is part of the "
++                        f"type signature's well-formedness. "
++                        f"Isa-REPL msg: {st[:160]}"
++                    ),
++                    "preamble_failures": preamble_failures,
++                    "init_secs": round(init_secs, 1),
++                    "preamble_secs": round(preamble_secs, 1),
++                    "total_secs": round(time.monotonic() - t0, 1),
++                }
++
++            # Step the original proof body, one tactic at a time.
++            proof_steps = _split_proof_body(block["proof"])
++            failure_step = None
++            for i, s in enumerate(proof_steps):
++                ok, st = r.step(s)
++                if not ok:
++                    failure_step = (i, s.splitlines()[0][:120], st[:200])
++                    break
++
++            total_secs = time.monotonic() - t0
++            base_meta = {
++                "preamble_failures": preamble_failures,
++                "preamble_steps": target_idx,
++                "proof_steps": len(proof_steps),
++                "init_secs": round(init_secs, 1),
++                "preamble_secs": round(preamble_secs, 1),
++                "total_secs": round(total_secs, 1),
++                "synthesized_pre_preview": new_stmt[:200],
++            }
++
++            if failure_step is None:
++                return {
++                    "verdict": "likely-unused",
++                    "reason": (
++                        f"synthesized lemma's proof closed without "
++                        f"the `{suspect_premise}` premise — premise "
++                        f"is NOT load-bearing. Confirm with "
++                        f"check-theory.sh --patch."
++                    ),
++                    **base_meta,
++                }
++            return {
++                "verdict": "load-bearing",
++                "reason": (
++                    f"proof failed at step {failure_step[0]+1}/"
++                    f"{len(proof_steps)} (`{failure_step[1]}`) "
++                    f"after dropping `{suspect_premise}` — "
++                    f"premise is consumed by this tactic."
++                ),
++                "failure_msg": failure_step[2],
++                **base_meta,
++            }
++    except Exception as e:
++        return {
++            "verdict": "uncertain",
++            "reason": f"Isa-REPL session error: {e!r}",
++        }
++
++
++def _split_proof_body(proof_text: str) -> list[str]:
++    """Split a proof script into individual tactic commands.
++    Naive: split on lines starting with a top-level Isar keyword."""
++    lines = proof_text.splitlines()
++    steps: list[list[str]] = []
++    cur: list[str] = []
++    for ln in lines:
++        if re.match(r"^\s*(?:apply|by|proof|qed|done|sorry|oops|"
++                    r"using|including|moreover|ultimately|next|"
++                    r"fix|assume|then|hence|thus|show)\b", ln):
++            if cur:
++                steps.append(cur)
++            cur = [ln]
++        else:
++            if cur:
++                cur.append(ln)
++    if cur:
++        steps.append(cur)
++    return ["\n".join(s).rstrip() for s in steps if any(l.strip() for l in s)]
++
++
++# ---- CLI -------------------------------------------------------------------
++
++def main() -> int:
++    ap = argparse.ArgumentParser(
++        description="TRIAL-based premise-usage probe: drop a "
++                    "suspect premise from the lemma's pre, run the "
++                    "ORIGINAL proof, see if it still closes."
++    )
++    ap.add_argument("--theory", type=Path, required=True,
++                    help="Absolute path to .thy file (in-container path)")
++    ap.add_argument("--lemma", required=True,
++                    help="Target lemma name")
++    ap.add_argument("--premise", required=True,
++                    help="Suspect premise NAME (e.g. invs, valid_objs)")
++    ap.add_argument("--port", type=int, default=25559)
++    ap.add_argument("--startup-wait", type=float, default=14.0)
++    ap.add_argument("--json", action="store_true")
++    args = ap.parse_args()
++
++    if not args.theory.exists():
++        print(f"theory not found: {args.theory}", file=sys.stderr)
++        return 4
++
++    result = run_trial(
++        args.theory, args.lemma, args.premise,
++        port=args.port,
++        startup_wait=args.startup_wait,
++    )
++
++    if args.json:
++        import json
++        print(json.dumps(result, indent=2))
++    else:
++        print(f"# spec_premise_probe (TRIAL) — {args.lemma} / {args.premise}")
++        print(f"# Theory: {args.theory}")
++        for k, v in result.items():
++            print(f"{k}: {v}")
++
++    v = result["verdict"]
++    return {
++        "likely-unused":   0,
++        "load-bearing":    1,
++        "premise-not-found": 2,
++        "parse-error":     3,
++        "uncertain":       4,
++    }.get(v, 4)
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tools/spec_strengthen/spec_premise_probe.sh b/tools/spec_strengthen/spec_premise_probe.sh
+new file mode 100755
+index 0000000..667d131
+--- /dev/null
++++ b/tools/spec_strengthen/spec_premise_probe.sh
+@@ -0,0 +1,41 @@
++#!/usr/bin/env bash
++# Host wrapper for spec_premise_probe.py — runs inside sel4-l4v container.
++# Usage:
++#   bash tools/spec_strengthen/spec_premise_probe.sh \
++#     <relative-thy-path> <lemma_name> <suspect_premise> [extra py args...]
++#
++# Translates the host theory path to /workspace/... and execs the
++# probe inside the docker compose `l4v` service. Requires the
++# IsaREPL JAR to be built (tools/seL4-proof-search/Isa-Repl/target/
++# IsaREPL.jar) — see Isa-Repl/run.sh.
++
++set -euo pipefail
++
++if [ $# -lt 3 ]; then
++  echo "Usage: $0 <relative-thy-path> <lemma_name> <suspect_premise> [extra py args...]" >&2
++  exit 2
++fi
++
++THY_REL="$1"
++LEMMA="$2"
++PREMISE="$3"
++shift 3
++
++SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
++COMPOSE_FILE="${REPO_ROOT}/docker-compose.yml"
++
++# Build the in-container abs path.
++THY_ABS_HOST="${REPO_ROOT}/${THY_REL#./}"
++if [ ! -f "$THY_ABS_HOST" ]; then
++  echo "theory not found on host: $THY_ABS_HOST" >&2
++  exit 4
++fi
++THY_ABS_CONTAINER="/workspace/${THY_REL#./}"
++
++exec docker compose -f "$COMPOSE_FILE" exec -T l4v \
++  python3 /workspace/tools/spec_strengthen/spec_premise_probe.py \
++    --theory "$THY_ABS_CONTAINER" \
++    --lemma  "$LEMMA" \
++    --premise "$PREMISE" \
++    "$@"
+diff --git a/tools/spec_strengthen/spec_witness_gen.py b/tools/spec_strengthen/spec_witness_gen.py
+new file mode 100755
+index 0000000..7175daf
+--- /dev/null
++++ b/tools/spec_strengthen/spec_witness_gen.py
+@@ -0,0 +1,404 @@
++#!/usr/bin/env python3
++"""
++tools/spec_strengthen/spec_witness_gen.py
++
++Optional Step 2 helper: given a patch + the unmodified theory file,
++emit the `_old` witness lemma the SKILL contract requires for a
++shape-1 (modify) patch. Codifies the witness-rules-by-triple-shape
++table from references/spec-strengthen-playbook.md so the agent
++does not pick rules by name-matching alone.
++
++Usage:
++  python3 spec_witness_gen.py <patch> <theory.thy>
++    [--emit {snippet,patch-fragment}]   # default: snippet
++    [--no-warn-weakening]               # silence weakening warning
++
++Patch format is the check-theory.sh range-replace format (same as
++spec_impact.py consumes): `<start> <end>\n<replacement>\n---\n...`.
++
++Exit codes:
++  0  shape-1 (modify) — witness emitted to stdout
++  1  shape-2 (additive) — no witness needed; stdout explains
++  2  shape-3 (delete) — refactor, NOT a strengthening; stdout
++     explains required action (grep / compatibility alias)
++  3  weakening-direction detected — patch should be rejected
++  4  parse error / ambiguous shape — manual review required
++
++Design constraints:
++  - Falls back to "TODO" skeleton if it can't auto-pick the rule
++    (e.g. unrecognised triple shape, multi-hunk with different
++    shapes). Never emits a confidently-wrong witness.
++  - All discharge clauses default to `simp` per playbook table;
++    if the spec change has real semantic content beyond
++    monotonicity the agent reads the comment and extends.
++"""
++
++from __future__ import annotations
++import argparse
++import re
++import sys
++from pathlib import Path
++
++# Reuse parsers from sibling tools — internal library code.
++from spec_impact import parse_patch, apply_patch_in_memory, PatchHunk
++from spec_strengthen_scan import (
++    Lemma, parse_thy_lemmas, extract_predicate_body,
++)
++from spec_impact import split_conjuncts
++
++
++# ---------------- Witness-rules-by-triple-shape table -----------------------
++#
++# Cross-checked against verification/l4v/lib/Monads/ on 2026-06-02.
++# Mirrors `references/spec-strengthen-playbook.md` §"Witness rules
++# by Hoare triple shape". If you change this, change the playbook too.
++
++# Triple shape detected from the OLD lemma text:
++#   "valid"     — `\<lbrace>P\<rbrace> f \<lbrace>Q\<rbrace>`
++#   "validE"    — `\<lbrace>P\<rbrace> f \<lbrace>Q\<rbrace>,\<lbrace>E\<rbrace>`
++#   "validE_R"  — `\<lbrace>P\<rbrace> f \<lbrace>Q\<rbrace>,-`
++#   "validE_E"  — `\<lbrace>P\<rbrace> f -,\<lbrace>E\<rbrace>`
++
++WITNESS_RULES = {
++    # (shape, direction) -> rule
++    ("valid",    "pre-weaken"):       "hoare_weaken_pre",
++    ("valid",    "post-strengthen"):  "hoare_strengthen_post",
++    ("validE",   "pre-weaken"):       "hoare_pre",
++    ("validE",   "post-strengthen"):  "hoare_post_impE",
++    ("validE_R", "pre-weaken"):       "hoare_pre",
++    ("validE_R", "post-strengthen"):  "hoare_strengthen_postE_R",
++    ("validE_E", "pre-weaken"):       "hoare_pre",
++    ("validE_E", "post-strengthen"):  "hoare_strengthen_postE_E",
++}
++
++
++# Triple shape regexes — applied to the lemma's STATEMENT text only.
++# We look for the trailing exception-clause after the success
++# postcondition `\<lbrace>...\<rbrace>`.
++SHAPE_VALID_E_R = re.compile(r"\\<rbrace>\s*,\s*-(?:\s*$|\s*\n)")
++SHAPE_VALID_E_E = re.compile(r"\\<rbrace>\s*-\s*,\s*\\<lbrace>")
++SHAPE_VALID_E   = re.compile(r"\\<rbrace>\s*,\s*\\<lbrace>")
++
++
++def detect_triple_shape(stmt: str) -> str | None:
++    """Return one of {valid, validE, validE_R, validE_E, None}."""
++    if SHAPE_VALID_E_R.search(stmt):
++        return "validE_R"
++    if SHAPE_VALID_E_E.search(stmt):
++        return "validE_E"
++    if SHAPE_VALID_E.search(stmt):
++        return "validE"
++    if "\\<lbrace>" in stmt and "\\<rbrace>" in stmt:
++        return "valid"
++    return None
++
++
++# ---------------- Diff direction detection ----------------------------------
++
++def direction_from_pair(old: Lemma, new: Lemma) -> str:
++    """Return one of: pre-weaken, post-strengthen, weakening, noop, mixed.
++
++    The decision is structural — counts top-level conjuncts in pre/post.
++    'weakening' fires when pre adds more than it drops (pre got HARDER)
++    or post drops conjuncts (post got WEAKER) — caller should reject.
++    """
++    old_pre = set(split_conjuncts(extract_predicate_body(old.pre)))
++    new_pre = set(split_conjuncts(extract_predicate_body(new.pre)))
++    old_post = set(split_conjuncts(extract_predicate_body(old.post)))
++    new_post = set(split_conjuncts(extract_predicate_body(new.post)))
++
++    pre_dropped = len(old_pre - new_pre)
++    pre_added   = len(new_pre - old_pre)
++    post_dropped = len(old_post - new_post)
++    post_added   = len(new_post - old_post)
++
++    pre_weakened   = pre_dropped > pre_added
++    pre_hardened   = pre_added > pre_dropped
++    post_strengthened = post_added > post_dropped
++    post_weakened     = post_dropped > post_added
++
++    # Weakening = made the lemma less useful
++    if pre_hardened or post_weakened:
++        return "weakening"
++    if pre_weakened and not post_strengthened:
++        return "pre-weaken"
++    if post_strengthened and not pre_weakened:
++        return "post-strengthen"
++    if pre_weakened and post_strengthened:
++        # Both — prefer post-strengthen rule which preserves the
++        # weaker pre via hoare_pre/hoare_weaken_pre composition.
++        # Agent gets a comment to maybe split the patch.
++        return "mixed"
++    if pre_dropped == 0 and pre_added == 0 and post_dropped == 0 and post_added == 0:
++        return "noop"
++    return "mixed"
++
++
++# ---------------- Per-hunk lemma extraction ---------------------------------
++
++def lemmas_in_range(lemmas: list[Lemma], lo: int, hi: int) -> list[Lemma]:
++    """Lemmas whose header line is within [lo, hi] inclusive."""
++    return [l for l in lemmas if lo <= l.line <= hi]
++
++
++def lemma_by_name(lemmas: list[Lemma], name: str) -> Lemma | None:
++    for l in lemmas:
++        if l.name == name:
++            return l
++    return None
++
++
++# ---------------- Witness emission ------------------------------------------
++
++def render_witness(name: str, old_stmt: str, rule: str,
++                   discharge: str = "simp") -> str:
++    """Render the witness lemma snippet."""
++    return (
++        f"lemma {name}_old:\n"
++        f"  \"{old_stmt}\"\n"
++        f"  by (rule {rule}[OF {name}]) {discharge}\n"
++    )
++
++
++def render_todo_witness(name: str, old_stmt: str, reason: str) -> str:
++    return (
++        f"lemma {name}_old:\n"
++        f"  \"{old_stmt}\"\n"
++        f"  (* TODO: pick witness rule manually — {reason}.\n"
++        f"     See references/spec-strengthen-playbook.md §Witness rules\n"
++        f"     by Hoare triple shape. Expected: 1-line `by (rule\n"
++        f"     <hoare-monotonicity>[OF {name}]) simp` *)\n"
++        f"  sorry\n"
++    )
++
++
++def reconstruct_stmt_text(l: Lemma) -> str:
++    """Best-effort: assemble the Hoare-triple statement string from a
++    parsed Lemma. Loses some triple-shape suffix info (validE comma /
++    validE_R `,-`) — caller should regex-detect shape on the ORIGINAL
++    text window, not on this reconstruction."""
++    return f"\\<lbrace>{l.pre}\\<rbrace> {l.body} \\<lbrace>{l.post}\\<rbrace>"
++
++
++# ---------------- Triple-shape detection on raw text ------------------------
++
++def raw_stmt_window(theory_text: str, lemma_line: int) -> str:
++    """Read the lemma's statement window (from header to first proof
++    keyword) verbatim from theory_text. lemma_line is 1-based."""
++    lines = theory_text.splitlines(keepends=True)
++    start_idx = lemma_line - 1
++    chunk = []
++    for idx in range(start_idx, min(start_idx + 40, len(lines))):
++        chunk.append(lines[idx])
++        if re.match(r"^\s*(?:apply|by|proof|done|qed|sorry|oops)\b",
++                    lines[idx]):
++            break
++    return "".join(chunk)
++
++
++# ---------------- Main shape classification --------------------------------
++
++class Decision:
++    def __init__(self, shape: str, exit_code: int, message: str,
++                 witness: str = ""):
++        self.shape = shape          # "1-modify", "2-additive", "3-delete",
++                                    # "weakening", "ambiguous"
++        self.exit_code = exit_code
++        self.message = message
++        self.witness = witness
++
++
++def classify_and_emit(patch_path: Path, theory_path: Path,
++                      emit_mode: str = "snippet",
++                      warn_weakening: bool = True) -> Decision:
++    """Inspect the patch, decide patch shape, emit witness or
++    explanation.
++
++    Algorithm (line-agnostic — robust to whole-hunk vs per-line
++    matching):
++      1. Parse OLD lemma set from theory file.
++      2. Apply patch in memory and parse NEW lemma set.
++      3. Set arithmetic:
++           added    = NEW_names - OLD_names  (sans `_old` siblings)
++           removed  = OLD_names - NEW_names
++           common   = OLD_names ∩ NEW_names
++         For each name in `common`, compare structurally — that's the
++         shape-1 candidates with their direction.
++      4. Single shape rollup; emit witnesses for modify list.
++    """
++
++    # ---- Parse inputs ----
++    theory_text = theory_path.read_text(encoding="utf-8", errors="replace")
++    hunks = parse_patch(patch_path)
++    if not hunks:
++        return Decision("ambiguous", 4, "patch has no hunks")
++
++    # ---- Old / new lemma sets ----
++    old_lemmas = parse_thy_lemmas(theory_path)
++    new_text = apply_patch_in_memory(theory_text, hunks)
++    import tempfile, os
++    with tempfile.NamedTemporaryFile(
++        mode="w", suffix=".thy", delete=False, encoding="utf-8"
++    ) as tf:
++        tf.write(new_text)
++        new_path = Path(tf.name)
++    try:
++        new_lemmas = parse_thy_lemmas(new_path)
++    finally:
++        os.unlink(new_path)
++
++    old_by_name = {l.name: l for l in old_lemmas}
++    new_by_name = {l.name: l for l in new_lemmas}
++    old_names = set(old_by_name)
++    new_names = set(new_by_name)
++
++    # `<X>_old` lemmas in NEW that aren't in OLD: those are witnesses
++    # for sibling modifications — exclude from the "purely added" set.
++    raw_added   = new_names - old_names
++    added       = {n for n in raw_added
++                   if not (n.endswith("_old")
++                           and n[:-4] in old_names and n[:-4] in new_names)}
++    removed     = old_names - new_names
++    common      = old_names & new_names
++
++    decisions: list[tuple[str, str]] = []
++    witnesses: list[str] = []
++
++    # ---- Classify each common-name pair ----
++    for name in sorted(common):
++        old_l = old_by_name[name]
++        new_l = new_by_name[name]
++        direction = direction_from_pair(old_l, new_l)
++        if direction == "noop":
++            continue
++        if direction == "weakening":
++            decisions.append(("weakening", name))
++            continue
++
++        # Direction in {pre-weaken, post-strengthen, mixed}
++        old_raw = raw_stmt_window(theory_text, old_l.line)
++        shape = detect_triple_shape(old_raw)
++        old_stmt = reconstruct_stmt_text(old_l)
++
++        if direction == "mixed":
++            witnesses.append(render_todo_witness(
++                name, old_stmt,
++                f"mixed direction (both pre weakened and post "
++                f"strengthened); shape detected as {shape}"
++            ))
++            decisions.append(("1-modify", name))
++            continue
++
++        if shape is None:
++            witnesses.append(render_todo_witness(
++                name, old_stmt,
++                "could not detect triple shape from raw text"
++            ))
++            decisions.append(("1-modify", name))
++            continue
++
++        rule = WITNESS_RULES.get((shape, direction))
++        if rule is None:
++            witnesses.append(render_todo_witness(
++                name, old_stmt,
++                f"no rule mapping for ({shape}, {direction})"
++            ))
++            decisions.append(("1-modify", name))
++            continue
++
++        witnesses.append(render_witness(name, old_stmt, rule))
++        decisions.append(("1-modify", name))
++
++    # ---- Purely-added (shape 2) and removed (shape 3) ----
++    for name in sorted(added):
++        decisions.append(("2-additive", name))
++    for name in sorted(removed):
++        decisions.append(("3-delete", name))
++
++    # ---- Roll up to a single shape decision ----
++    shapes = {d[0] for d in decisions}
++    if "weakening" in shapes:
++        names = ", ".join(n for s, n in decisions if s == "weakening")
++        msg = (
++            f"WEAKENING DETECTED in lemma(s): {names}\n"
++            f"The patch makes the lemma less useful (pre hardened or "
++            f"post weakened). This is not a spec strengthening; "
++            f"reject or rework. No witness emitted."
++        )
++        return Decision("weakening", 3, msg)
++
++    if "3-delete" in shapes and "1-modify" not in shapes \
++            and "2-additive" not in shapes:
++        names = ", ".join(n for s, n in decisions if s == "3-delete")
++        msg = (
++            f"SHAPE 3 (deletion) — lemma(s) {names} removed.\n"
++            f"This is a refactor, not a strengthening. Required:\n"
++            f"  (a) `grep -rn '\\b{names}\\b' verification/l4v` "
++            f"returns no consumer site, OR\n"
++            f"  (b) the same patch adds `lemmas {names} = "
++            f"<new-or-replacement>` to keep the name resolvable.\n"
++            f"No `_old` witness; see SKILL Step 2."
++        )
++        return Decision("3-delete", 2, msg)
++
++    if "1-modify" in shapes:
++        msg = "# Shape 1 (modify) — witness lemma(s) below:\n\n"
++        msg += "\n".join(witnesses)
++        if emit_mode == "patch-fragment":
++            msg = (
++                "# Append these lines to your patch immediately after "
++                "the modified lemma(s)\n# (inside the same hunk so "
++                "check-theory.sh --patch verifies them together):\n\n"
++            ) + msg
++        return Decision("1-modify", 0, msg, witness="\n".join(witnesses))
++
++    if "2-additive" in shapes:
++        names = ", ".join(n for s, n in decisions if s == "2-additive")
++        return Decision(
++            "2-additive", 1,
++            f"SHAPE 2 (additive) — new lemma(s) {names} added; no old\n"
++            f"form to derive. No witness required. Run `check-theory.sh\n"
++            f"--patch` to verify; impact verdict should be `additive`."
++        )
++
++    return Decision(
++        "ambiguous", 4,
++        "Could not classify patch (no shape detected). Inspect manually."
++    )
++
++
++# ---------------- CLI -------------------------------------------------------
++
++def main() -> int:
++    ap = argparse.ArgumentParser(
++        description="Emit `_old` witness lemma for a spec-strengthening patch"
++    )
++    ap.add_argument("patch", type=Path,
++                    help="Patch file (check-theory.sh range-replace format)")
++    ap.add_argument("theory", type=Path,
++                    help="Unmodified theory file the patch applies to")
++    ap.add_argument("--emit", choices=["snippet", "patch-fragment"],
++                    default="snippet",
++                    help="Output mode (default: snippet)")
++    ap.add_argument("--no-warn-weakening", action="store_true",
++                    help="Suppress weakening warning text (still exits 3)")
++    args = ap.parse_args()
++
++    if not args.patch.exists():
++        print(f"patch not found: {args.patch}", file=sys.stderr)
++        return 4
++    if not args.theory.exists():
++        print(f"theory not found: {args.theory}", file=sys.stderr)
++        return 4
++
++    d = classify_and_emit(
++        args.patch, args.theory,
++        emit_mode=args.emit,
++        warn_weakening=not args.no_warn_weakening,
++    )
++    print(d.message)
++    return d.exit_code
++
++
++if __name__ == "__main__":
++    sys.exit(main())

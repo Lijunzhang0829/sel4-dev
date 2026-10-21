@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future consumers of cnode_cap_ex_cte that do not have pspace_aligned in scope",
+ "hint_lemma": "cnode_cap_ex_cte",
+ "lemma_name": "cnode_cap_ex_cte_no_pspace_aligned",
+ "anchor_line": 35,
+ "new_lemma": "lemma cnode_cap_ex_cte_no_pspace_aligned[Untyped_AI_assms]:\n  \"\\<lbrakk> is_cnode_cap cap; cte_wp_at (\\<lambda>c. \\<exists>m. cap = mask_cap m c) p s;\n     (s::'state_ext::state_ext state) \\<turnstile> cap; valid_objs s \\<rbrakk> \\<Longrightarrow>\n    ex_cte_cap_wp_to is_cnode_cap (obj_ref_of cap, nat_to_cref (bits_of cap) x) s\"\n  apply (simp only: ex_cte_cap_wp_to_def)\n  apply (rule exI, erule cte_wp_at_weakenE)\n  apply (clarsimp simp: is_cap_simps bits_of_def)\n  apply (case_tac c, simp_all add: mask_cap_def cap_rights_update_def split:bool.splits)\n  apply (clarsimp simp: nat_to_cref_def word_bits_def)\n  apply (erule(2) valid_CNodeCapE)\n  apply (simp add: word_bits_def cte_level_bits_def)\n  done",
+ "rationale": "The conjunct `pspace_aligned s` never appears textually in the proof body. `pspace_aligned` does not appear in any simp lemma names or explicit rule applications in the proof. This is an implication lemma on a read/lookup operation making it a strong P-slot candidate. Trial decides implicit dependency via valid_CNodeCapE.",
+ "strengthening_claim": "(is_cnode_cap cap \\<and> cte_wp_at (\\<lambda>c. \\<exists>m. cap = mask_cap m c) p s \\<and> s \\<turnstile> cap \\<and> valid_objs s) ==> (is_cnode_cap cap \\<and> cte_wp_at (\\<lambda>c. \\<exists>m. cap = mask_cap m c) p s \\<and> s \\<turnstile> cap \\<and> valid_objs s \\<and> pspace_aligned s)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

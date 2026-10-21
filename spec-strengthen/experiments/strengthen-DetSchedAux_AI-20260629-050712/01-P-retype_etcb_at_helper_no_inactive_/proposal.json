@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "retype_region_etcb_at or any future consumer of retype_etcb_at_helper where tcb_state is not known",
+ "hint_lemma": "retype_etcb_at_helper",
+ "lemma_name": "retype_etcb_at_helper_no_inactive",
+ "anchor_line": 72,
+ "new_lemma": "lemma retype_etcb_at_helper_no_inactive: \"\\<lbrakk>etcb_at' P t ekh; valid_etcbs_2 ekh kh; d \\<noteq> apiobject_type.Untyped;\n        foldr (\\<lambda>p kh. kh(p \\<mapsto> default_object d dev c))\n         ptrs\n         kh t =\n        Some (TCB tcb)\\<rbrakk>\n       \\<Longrightarrow> etcb_at' P t\n           ((foldr (\\<lambda>p ekh. ekh(p := default_ext d cdom))\n             ptrs)\n             ekh)\"\n  apply (induct ptrs)\n  apply simp\n  apply (case_tac d)\n  apply (clarsimp split: if_split_asm simp: default_tcb_def default_object_def default_ext_def etcb_at'_def)+\n  done",
+ "rationale": "The proof of retype_etcb_at_helper (L68-72) never references tcb_state: the induction and clarsimp only inspect d and etcb_at'. The tcb_state ≠ Inactive conjunct is therefore not consumed by the proof.",
+ "strengthening_claim": "(etcb_at' P t ekh ∧ valid_etcbs_2 ekh kh ∧ d ≠ Untyped ∧ foldr...t = Some(TCB tcb)) ==> (etcb_at' P t ekh ∧ valid_etcbs_2 ekh kh ∧ d ≠ Untyped ∧ foldr...t = Some(TCB tcb) ∧ tcb_state tcb ≠ Inactive)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

@@ -1,0 +1,6 @@
+138 138
+  by (simp add: update_cdt_def set_cdt_def) wp
+
+lemma update_cdt_is_original_cap[wp]:
+  "\<lbrace>\<lambda>s. P (is_original_cap s)\<rbrace> update_cdt f \<lbrace>\<lambda>_ s. P (is_original_cap s)\<rbrace>"
+  by (wpsimp simp: update_cdt_def)

@@ -1,0 +1,54 @@
+[
+ {
+  "slot": "Q",
+  "kind": "inline-redirect",
+  "lemma": "get_cap_cte_wp_at3",
+  "line": 4175,
+  "statement": "\\<lbrace>not cte_wp_at (not P) p\\<rbrace> get_cap p \\<lbrace>\\<lambda>rv s. P rv\\<rbrace>",
+  "evidence": "bare strengthen-post followed by inline proof — stronger post proven but never named",
+  "strong_rule": null,
+  "q_strong_text": null,
+  "premise": null,
+  "position": "leading",
+  "priority": "high"
+ },
+ {
+  "slot": "Q",
+  "kind": "named-redirect",
+  "lemma": "preemption_point_inv",
+  "line": 113,
+  "statement": "'state_ext state \\<Rightarrow> bool",
+  "evidence": "redirects to existing named rule `_` — slot already filled",
+  "strong_rule": "_",
+  "q_strong_text": null,
+  "premise": null,
+  "position": "interior",
+  "priority": "low"
+ },
+ {
+  "slot": "Q",
+  "kind": "named-redirect",
+  "lemma": "get_cap_wellformed",
+  "line": 130,
+  "statement": "\\<lbrace>valid_objs\\<rbrace> get_cap slot \\<lbrace>\\<lambda>cap s. wellformed_cap cap\\<rbrace>",
+  "evidence": "redirects to existing named rule `get_cap_valid` — slot already filled",
+  "strong_rule": "get_cap_valid",
+  "q_strong_text": null,
+  "premise": null,
+  "position": "leading",
+  "priority": "low"
+ },
+ {
+  "slot": "Q",
+  "kind": "named-redirect",
+  "lemma": "resolve_address_bits_cte_at",
+  "line": 236,
+  "statement": "\\<lbrace> valid_objs and valid_cap (fst args) \\<rbrace>\n  resolve_address_bits args\n  \\<lbrace>\\<lambda>rv. cte_at (fst rv)\\<rbrace>, -",
+  "evidence": "redirects to existing named rule `resolve_address_bits_real_cte_at` — slot already filled",
+  "strong_rule": "resolve_address_bits_real_cte_at",
+  "q_strong_text": null,
+  "premise": null,
+  "position": "leading",
+  "priority": "low"
+ }
+]

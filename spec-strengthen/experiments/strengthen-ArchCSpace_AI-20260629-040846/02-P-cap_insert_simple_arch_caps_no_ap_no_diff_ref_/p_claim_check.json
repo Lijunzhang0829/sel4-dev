@@ -1,0 +1,8 @@
+{
+ "ok": true,
+ "reason": "pure premise-weakening verified (strict pre-conjunct subset, identical post)",
+ "claim": "(valid_arch_caps and (\\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s)\n             and no_cap_to_obj_with_diff_ref cap {dest} and K (is_simple_cap cap \\<and> \\<not>is_ap_cap cap)) ==> (valid_arch_caps and (\\<lambda>s. cte_wp_at (safe_parent_for (cdt s) src cap) src s)\n              and K (is_simple_cap cap \\<and> \\<not>is_ap_cap cap)) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `no_cap_to_obj_with_diff_ref cap {dest}`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "dropped_conjuncts": [
+  "no_cap_to_obj_with_diff_ref cap {dest}"
+ ]
+}

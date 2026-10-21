@@ -1,0 +1,6 @@
+2886 2886
+  by (wpsimp simp: set_cdt_def)
+
+lemma set_cdt_domain_time[wp]:
+  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_cdt t \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
+  by (wpsimp simp: set_cdt_def)

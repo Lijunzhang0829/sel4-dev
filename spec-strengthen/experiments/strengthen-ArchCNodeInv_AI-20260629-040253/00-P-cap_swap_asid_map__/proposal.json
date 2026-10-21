@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future consumers of cap_swap_asid_map that currently carry the cte_wp_at preconditions can be simplified to call cap_swap_asid_map' instead.",
+ "hint_lemma": "cap_swap_asid_map",
+ "lemma_name": "cap_swap_asid_map'",
+ "anchor_line": 409,
+ "new_lemma": "lemma cap_swap_asid_map'[CNodeInv_AI_assms]:\n  \"\\<lbrace>valid_asid_map\\<rbrace>\n     cap_swap c a c' b \\<lbrace>\\<lambda>rv. valid_asid_map\\<rbrace>\"\n  apply (simp add: cap_swap_def set_cdt_def valid_asid_map_def vspace_at_asid_def)\n  apply (rule hoare_pre)\n   apply (wp set_cap.vs_lookup|simp\n          |rule hoare_lift_Pf [where f=arch_state])+\n  done",
+ "rationale": "The proof of cap_swap_asid_map never mentions cte_wp_at, weak_derived, or either slot name: it unfolds cap_swap_def/set_cdt_def and then discharges everything via set_cap.vs_lookup and hoare_lift_Pf on arch_state. Both cte_wp_at conjuncts are therefore inert to the proof. Dropping them both in one step yields the strongest additive strengthening.",
+ "strengthening_claim": "(valid_asid_map and\n    cte_wp_at (weak_derived c) a and\n    cte_wp_at (weak_derived c') b) ==> (valid_asid_map) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `cte_wp_at (weak_derived c) a`; `cte_wp_at (weak_derived c') b`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

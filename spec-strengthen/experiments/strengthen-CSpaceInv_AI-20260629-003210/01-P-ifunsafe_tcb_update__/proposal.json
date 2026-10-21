@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Any consumer that previously required obj_at (same_caps (TCB tcb)) t s before calling ifunsafe_tcb_update",
+ "grace_period_weeks": 8,
+ "hint_lemma": "ifunsafe_tcb_update",
+ "lemma_name": "ifunsafe_tcb_update'",
+ "anchor_line": 245,
+ "new_lemma": "lemma ifunsafe_tcb_update':\n    \"\\<lbrakk> if_unsafe_then_cap s \\<rbrakk>\n    \\<Longrightarrow> if_unsafe_then_cap (s\\<lparr>kheap := (kheap s)(t \\<mapsto> TCB tcb)\\<rparr>)\"\n    apply (simp add: if_unsafe_then_cap_def, elim allEI)\n    apply (clarsimp dest!: caps_of_state_cteD\n                     simp: cte_wp_at_after_update fun_upd_def)\n    apply (clarsimp simp: cte_wp_at_caps_of_state\n                          ex_cte_cap_to_after_update)\n    done",
+ "rationale": "The original proof body never textually mentions obj_at or same_caps. The same_caps premise would only be needed if cte_wp_at_after_update is conditional on it. For TCB heap updates, if cte_wp_at_after_update fires unconditionally (or discharges same_caps automatically from TCB structure), the premise is droppable. Trial decides.",
+ "strengthening_claim": "(if_unsafe_then_cap s) ==> (if_unsafe_then_cap s \\<and> obj_at (same_caps (TCB tcb)) t s)",
+ "anchor_text": "  done"
+}

@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Any consumer that currently calls wellformed_arch_pspace with a kheap-equality witness; the stronger form drops that witness entirely",
+ "grace_period_weeks": 8,
+ "hint_lemma": "wellformed_arch_pspace",
+ "lemma_name": "wellformed_arch_pspace_no_kheap",
+ "anchor_line": 345,
+ "new_lemma": "lemma wellformed_arch_pspace_no_kheap: \"\\<And>ao. arch_valid_obj ao s \\<Longrightarrow> arch_valid_obj ao s'\"\n  by simp",
+ "rationale": "arch_valid_obj ao s unfolds to wellformed_vspace_obj ao (L326), which mentions no state component at all. The conclusion arch_valid_obj ao s' is identical in content. The kheap s = kheap s' conjunct in the original is therefore never consumed: simp closes the goal purely by unfolding arch_valid_obj_def. Dropping it yields a strictly stronger implication lemma.",
+ "strengthening_claim": "(arch_valid_obj ao s) ==> (arch_valid_obj ao s \\<and> kheap s = kheap s')",
+ "anchor_text": "          \\<Longrightarrow> arch_valid_obj ao s'\" by simp"
+}

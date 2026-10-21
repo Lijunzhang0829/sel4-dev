@@ -1,0 +1,34 @@
+566 566
+  done
+
+lemma lookup_pt_slot_ptes_aligned_valid_no_ekm:
+  "\<lbrace>valid_vspace_objs and valid_arch_state
+    and pspace_aligned
+    and valid_global_objs
+    and \<exists>\<rhd> pd and page_directory_at pd
+    and K (is_aligned vptr 16)\<rbrace>
+  lookup_pt_slot pd vptr
+  \<lbrace>\<lambda>r s. is_aligned r 6 \<and> (\<forall>x\<in>set [0 , 4 .e. 0x3C]. pte_at (x + r) s)\<rbrace>, -"
+  apply (simp add: lookup_pt_slot_def)
+  apply (wp get_pde_wp|wpc)+
+  apply (clarsimp simp: lookup_pd_slot_def Let_def)
+  apply (simp add: pd_shifting_at)
+  apply (frule (2) valid_vspace_objsD)
+  apply (clarsimp simp: )
+  subgoal for s _ _ x
+    apply (prop_tac "page_table_at (ptrFromPAddr x) s")
+    subgoal
+      apply (bspec "(ucast (pd + (vptr >> 20 << 2) && mask pd_bits >> 2))";clarsimp)
+      apply (frule kernel_mapping_slots_empty_pdeI)
+      apply ((simp add: obj_at_def pte_at_def;fail)+)[4]
+      by (clarsimp simp: pde_ref_def valid_global_pts_def valid_arch_state_def second_level_tables_def)
+    apply (rule conjI)
+     apply (rule is_aligned_add)
+      apply (rule is_aligned_weaken, erule(1) is_aligned_pt)
+      apply (simp add: pt_bits_def pageBits_def)
+     apply (rule is_aligned_shiftl)
+     apply (rule is_aligned_andI1)
+     apply (rule is_aligned_shiftr, simp)
+    apply clarsimp
+    by (erule(1) pte_at_aligned_vptr, simp+)
+  done

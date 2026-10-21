@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "Future consumers of unique_table_refsD that already hold cps p' = Some cap' and obj_refs eq but not necessarily cps p = Some cap",
+ "hint_lemma": "unique_table_refsD",
+ "lemma_name": "unique_table_refsD_no_left_lookup",
+ "anchor_line": 108,
+ "new_lemma": "lemma unique_table_refsD_no_left_lookup:\n  \"\\<lbrakk> unique_table_refs cps; cps p' = Some cap';\n     obj_refs cap = obj_refs cap'\\<rbrakk>\n     \\<Longrightarrow> table_cap_ref cap = table_cap_ref cap'\"\n  unfolding unique_table_refs_def\n  by blast",
+ "rationale": "The scanner observed that the head `cps` does not appear in the proof body text beyond the unfolding directive. If unique_table_refs_def is symmetric or blast can derive table_cap_ref cap = table_cap_ref cap' knowing only the right-hand lookup cps p' = Some cap' and the obj_refs equality, the left-hand lookup cps p = Some cap would be droppable. Trial determines whether blast can close the goal without it.",
+ "strengthening_claim": "(unique_table_refs cps \\<and> cps p' = Some cap' \\<and> obj_refs cap = obj_refs cap') ==> (unique_table_refs cps \\<and> cps p = Some cap \\<and> cps p' = Some cap' \\<and> obj_refs cap = obj_refs cap')",
+ "grace_period_weeks": 8,
+ "anchor_text": "  by blast"
+}

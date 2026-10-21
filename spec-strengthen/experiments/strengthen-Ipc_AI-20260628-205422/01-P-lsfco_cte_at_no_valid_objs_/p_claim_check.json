@@ -1,0 +1,6 @@
+{
+ "ok": false,
+ "reason": "post differs from the hinted lemma — not a pure premise-weakening",
+ "claim": null,
+ "dropped_conjuncts": []
+}

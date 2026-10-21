@@ -1,0 +1,8 @@
+{
+ "ok": true,
+ "reason": "pure premise-weakening verified (strict pre-conjunct subset, identical post)",
+ "claim": "(valid_pspace and valid_mdb\n             and caps_overlap_reserved {ptr..ptr + 2 ^ obj_bits_api ty us - 1}\n             and caps_no_overlap ptr sz\n             and pspace_no_overlap_range_cover ptr sz\n             and no_cap_to_obj_with_diff_ref cap S\n             and (\\<lambda>s. \\<exists>slot. cte_wp_at (\\<lambda>c. up_aligned_area ptr sz \\<subseteq> cap_range c \\<and> cap_is_device c = dev) slot s)\n             and K (ty = Structures_A.CapTableObject \\<longrightarrow> 0 < us)\n             and K (range_cover ptr sz (obj_bits_api ty us) 1)) ==> (valid_mdb\n             and caps_overlap_reserved {ptr..ptr + 2 ^ obj_bits_api ty us - 1}\n             and caps_no_overlap ptr sz\n             and pspace_no_overlap_range_cover ptr sz\n             and no_cap_to_obj_with_diff_ref cap S\n             and (\\<lambda>s. \\<exists>slot. cte_wp_at (\\<lambda>c. up_aligned_area ptr sz \\<subseteq> cap_range c \\<and> cap_is_device c = dev) slot s)\n             and K (ty = Structures_A.CapTableObject \\<longrightarrow> 0 < us)\n             and K (range_cover ptr sz (obj_bits_api ty us) 1)) — the OLD pre strictly implies the NEW (weaker) pre; dropped conjunct(s): `valid_pspace`. Reverse direction fails, making the weakening strict. [claim mechanically derived by spec_slot_hints --check-p-claim]",
+ "dropped_conjuncts": [
+  "valid_pspace"
+ ]
+}

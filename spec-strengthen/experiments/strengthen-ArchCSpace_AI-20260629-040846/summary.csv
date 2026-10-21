@@ -1,0 +1,4 @@
+dir,name,slot,delivery,verdict,impact,delta_pct
+00-P-ex_nonz_tcb_cte_caps_no_tcb_,ex_nonz_tcb_cte_caps_no_tcb,P,named,TRIAL-FAILED,,
+01-P-cap_insert_simple_invs_no_tcb_cap_valid_,cap_insert_simple_invs_no_tcb_cap_valid,P,named,TRIAL-FAILED,,
+02-P-cap_insert_simple_arch_caps_no_ap_no_diff_ref_,cap_insert_simple_arch_caps_no_ap_no_diff_ref,P,named,TRIAL-FAILED,,

@@ -1,0 +1,41 @@
+[
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Any consumer that previously required obj_at (same_caps (TCB tcb)) t s before calling zombies_tcb_update",
+  "grace_period_weeks": 8,
+  "hint_lemma": "zombies_tcb_update",
+  "lemma_name": "zombies_tcb_update'",
+  "anchor_line": 253,
+  "new_lemma": "lemma zombies_tcb_update':\n    \"\\<lbrakk> zombies_final s \\<rbrakk>\n     \\<Longrightarrow> zombies_final (s\\<lparr>kheap := (kheap s)(t \\<mapsto> TCB tcb)\\<rparr>)\"\n    apply (simp add: zombies_final_def is_final_cap'_def2, elim allEI)\n    apply (clarsimp simp: cte_wp_at_after_update fun_upd_def)\n    done",
+  "rationale": "The original proof body never textually references obj_at or same_caps — the only consumer of same_caps would be the conditional simp rule cte_wp_at_after_update. For TCB objects, same_caps holds structurally (TCBs always present the same cap slots regardless of field values), so cte_wp_at_after_update may discharge without the explicit obj_at premise. Trial decides.",
+  "strengthening_claim": "(zombies_final s) ==> (zombies_final s \\<and> obj_at (same_caps (TCB tcb)) t s)"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Any consumer that previously required obj_at (same_caps (TCB tcb)) t s before calling ifunsafe_tcb_update",
+  "grace_period_weeks": 8,
+  "hint_lemma": "ifunsafe_tcb_update",
+  "lemma_name": "ifunsafe_tcb_update'",
+  "anchor_line": 245,
+  "new_lemma": "lemma ifunsafe_tcb_update':\n    \"\\<lbrakk> if_unsafe_then_cap s \\<rbrakk>\n    \\<Longrightarrow> if_unsafe_then_cap (s\\<lparr>kheap := (kheap s)(t \\<mapsto> TCB tcb)\\<rparr>)\"\n    apply (simp add: if_unsafe_then_cap_def, elim allEI)\n    apply (clarsimp dest!: caps_of_state_cteD\n                     simp: cte_wp_at_after_update fun_upd_def)\n    apply (clarsimp simp: cte_wp_at_caps_of_state\n                          ex_cte_cap_to_after_update)\n    done",
+  "rationale": "The original proof body never textually mentions obj_at or same_caps. The same_caps premise would only be needed if cte_wp_at_after_update is conditional on it. For TCB heap updates, if cte_wp_at_after_update fires unconditionally (or discharges same_caps automatically from TCB structure), the premise is droppable. Trial decides.",
+  "strengthening_claim": "(if_unsafe_then_cap s) ==> (if_unsafe_then_cap s \\<and> obj_at (same_caps (TCB tcb)) t s)"
+ },
+ {
+  "slot": "P",
+  "delivery": "named",
+  "delivery_substate": "planned",
+  "delivery_target": "Any consumer that previously required tcb_at t s before calling valid_objs_tcb_update",
+  "grace_period_weeks": 8,
+  "hint_lemma": "valid_objs_tcb_update",
+  "lemma_name": "valid_objs_tcb_update'",
+  "anchor_line": 216,
+  "new_lemma": "lemma valid_objs_tcb_update':\n    \"\\<lbrakk>valid_tcb t tcb s; valid_objs s \\<rbrakk>\n    \\<Longrightarrow> valid_objs (s\\<lparr>kheap := (kheap s)(t \\<mapsto> TCB tcb)\\<rparr>)\"\n    apply (clarsimp simp: valid_objs_def dom_def\n                   elim!: obj_atE)\n    apply (intro conjI impI)\n     apply (rule valid_obj_same_type)\n        apply (simp add: valid_obj_def)+\n     apply (clarsimp simp: a_type_def is_tcb)\n    apply clarsimp\n    apply (rule valid_obj_same_type)\n       apply (drule_tac x=ptr in spec, simp)\n      apply (simp add: valid_obj_def)\n     apply assumption\n    apply (clarsimp simp add: a_type_def is_tcb)\n    done",
+  "rationale": "The scanner shows tcb_at head never appears in the proof body despite the differential signal. The clarsimp with elim!: obj_atE eliminates obj_at hypotheses, but valid_tcb t tcb s already implies the new object is a TCB. If valid_obj_same_type can prove the a_type equality using only the valid_tcb hypothesis (which carries TCB-ness implicitly), then tcb_at may be redundant. Borderline — trial decides.",
+  "strengthening_claim": "(valid_tcb t tcb s \\<and> valid_objs s) ==> (tcb_at t s \\<and> valid_tcb t tcb s \\<and> valid_objs s)"
+ }
+]

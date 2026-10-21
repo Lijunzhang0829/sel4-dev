@@ -1,0 +1,14 @@
+{
+ "slot": "P",
+ "delivery": "named",
+ "delivery_substate": "planned",
+ "delivery_target": "finalise_cap_replaceable — the call site at L548 passes suspend_unlive'[unfolded o_def]; dropping tcb_at would allow callers without a tcb_at hypothesis to invoke it",
+ "lemma_name": "suspend_unlive'_no_tcb_at",
+ "anchor_line": 524,
+ "hint_lemma": "suspend_unlive'",
+ "new_lemma": "lemma suspend_unlive'_no_tcb_at:\n  \"\\\\<lbrace>bound_tcb_at ((=) None) t and valid_mdb and valid_objs\\\\<rbrace>\n      suspend t\n   \\\\<lbrace>\\\\<lambda>rv. obj_at (Not \\\\<circ> live) t\\\\<rbrace>\"\n  apply (simp add: suspend_def set_thread_state_def set_object_def get_object_def)\n  supply hoare_vcg_if_split[wp_split del] if_split[split del]\n  apply (wp | simp only: obj_at_exst_update)+\n     apply (simp add: obj_at_def live_def hyp_live_def)\n     apply (rule_tac Q=\"\\<lambda>_. bound_tcb_at ((=) None) t\" in hoare_strengthen_post)\n      supply hoare_vcg_if_split[wp_split]\n      apply wp\n     apply (auto simp: pred_tcb_def2)[1]\n    apply (simp flip: if_split)\n    apply wp\n   apply wp\n  apply simp\n  done",
+ "rationale": "tcb_at t does not appear in the proof body at L512-524. The intermediate goal is bound_tcb_at ((=) None) t (which implies tcb_at by pred_tcb_at_tcb_at), so the explicit tcb_at conjunct in the precondition is redundant. The trial will determine whether any wp lemma in the chain implicitly requires it.",
+ "strengthening_claim": "(bound_tcb_at ((=) None) t and valid_mdb and valid_objs) ==> (bound_tcb_at ((=) None) t and valid_mdb and valid_objs and tcb_at t)",
+ "grace_period_weeks": 8,
+ "anchor_text": "  done"
+}

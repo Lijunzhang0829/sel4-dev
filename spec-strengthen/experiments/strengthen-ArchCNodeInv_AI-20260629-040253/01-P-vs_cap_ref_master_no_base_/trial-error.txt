@@ -1,0 +1,19 @@
+FAILED (48058ms)
+*** Failed to finish proof:
+*** goal (1 subgoal):
+***  1. \<And>x11 x12b x12c.
+***        \<lbrakk>cap = ArchObjectCap (ASIDPoolCap x11 x12c);
+***         UCAST(7 \<rightarrow> 32) (asid_high_bits_of x12c) \<noteq>
+***         UCAST(7 \<rightarrow> 32) (asid_high_bits_of x12b);
+***         cap' = ArchObjectCap (ASIDPoolCap x11 x12b)\<rbrakk>
+***        \<Longrightarrow> False
+*** At command "done" (line 307 of "/tmp/tmp.TLRoJiya2O/Tmp_5902eb1fb519b230.thy")
+*** Failed to finish proof:
+*** goal (1 subgoal):
+***  1. \<And>x11 x12b x12c.
+***        \<lbrakk>cap = ArchObjectCap (ASIDPoolCap x11 x12c);
+***         UCAST(7 \<rightarrow> 32) (asid_high_bits_of x12c) \<noteq>
+***         UCAST(7 \<rightarrow> 32) (asid_high_bits_of x12b);
+***         cap' = ArchObjectCap (ASIDPoolCap x11 x12b)\<rbrakk>
+***        \<Longrightarrow> False
+*** At command "done" (line 307 of "/tmp/tmp.TLRoJiya2O/Tmp_5902eb1fb519b230.thy")

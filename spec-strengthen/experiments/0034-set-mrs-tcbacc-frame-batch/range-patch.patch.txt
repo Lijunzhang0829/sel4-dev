@@ -1,0 +1,23 @@
+1835 1835
+  done
+
+lemma set_mrs_domain_index[wp]:
+  "\<lbrace>\<lambda>s. P (domain_index s)\<rbrace> set_mrs t b m \<lbrace>\<lambda>_ s. P (domain_index s)\<rbrace>"
+  apply (rule set_mrs_thread_set_dmo)
+   apply (wpsimp simp: thread_set_def)
+  apply (wpsimp simp: do_machine_op_def)
+  done
+
+lemma set_mrs_domain_time[wp]:
+  "\<lbrace>\<lambda>s. P (domain_time s)\<rbrace> set_mrs t b m \<lbrace>\<lambda>_ s. P (domain_time s)\<rbrace>"
+  apply (rule set_mrs_thread_set_dmo)
+   apply (wpsimp simp: thread_set_def)
+  apply (wpsimp simp: do_machine_op_def)
+  done
+
+lemma set_mrs_arch_state[wp]:
+  "\<lbrace>\<lambda>s. P (arch_state s)\<rbrace> set_mrs t b m \<lbrace>\<lambda>_ s. P (arch_state s)\<rbrace>"
+  apply (rule set_mrs_thread_set_dmo)
+   apply (wpsimp simp: thread_set_def)
+  apply (wpsimp simp: do_machine_op_def)
+  done

@@ -1,0 +1,17 @@
+[
+ {
+  "slot": "F",
+  "delivery": "wp",
+  "delivery_substate": null,
+  "delivery_target": null,
+  "lemma_name": "set_simple_ko_machine_state",
+  "anchor_line": 1279,
+  "new_lemma": "lemma set_simple_ko_machine_state[wp]:\n  \"set_simple_ko f ptr val \\<lbrace>\\<lambda>s. P (machine_state s)\\<rbrace>\"\n  unfolding set_simple_ko_def\n  by (wpsimp wp: set_object_machine_state get_object_wp)",
+  "rationale": "Previous proof used set_simple_ko_method but omitted get_object_wp, causing the internal get_object call to leave an unresolved subgoal. Unfolding set_simple_ko_def and using wpsimp with both set_object_machine_state and get_object_wp mirrors the standard pattern for set_simple_ko frame lemmas.",
+  "strengthening_claim": "set_simple_ko_machine_state[wp] is strictly stronger than the trivial True precondition; it adds a new promise not previously registered in the wp set.",
+  "grace_period_weeks": null,
+  "block_dependency_evidence": null,
+  "consumer_hunks": null,
+  "anchor_text": "  by (wpsimp wp: set_object_wp_strong)"
+ }
+]

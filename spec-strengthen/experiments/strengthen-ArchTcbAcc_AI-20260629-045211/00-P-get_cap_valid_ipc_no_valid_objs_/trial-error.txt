@@ -1,0 +1,21 @@
+FAILED (43256ms)
+*** Failed to apply proof method (line 130 of "/tmp/tmp.fIhGkI4295/Tmp_2cbf0d31705464c2.thy"):
+*** goal (1 subgoal):
+***  1. \<And>s cap.
+***        \<lbrakk>obj_at
+***                  (\<lambda>ko.
+***                      \<exists>tcb.
+***                         ko = TCB tcb \<and> tcb_ipc_buffer tcb = v)
+***                  t s;
+***         cte_wp_at ((=) cap) (t, tcb_cnode_index 4) s\<rbrakk>
+***        \<Longrightarrow> valid_ipc_buffer_cap cap v
+*** At command "apply" (line 130 of "/tmp/tmp.fIhGkI4295/Tmp_2cbf0d31705464c2.thy")
+*** Failed to apply proof method (line 130 of "/tmp/tmp.fIhGkI4295/Tmp_2cbf0d31705464c2.thy"):
+*** goal (1 subgoal):
+***  1. \<And>s cap.
+***        \<lbrakk>obj_at
+***                  (\<lambda>ko.
+***                      \<exists>tcb.
+***                         ko = TCB tcb \<and> tcb_ipc_buffer tcb = v)
+***                  t s;
+***         cte_wp_at ((=) cap) (t, tcb_cnode_index 4) s\<rbrakk>

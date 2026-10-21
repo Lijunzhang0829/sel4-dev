@@ -1,0 +1,7 @@
+1943 1943
+   \<Longrightarrow> valid_vspace_obj ao s"
+
+lemma empty_table_is_valid_no_arch_state:
+  "empty_table (set (arm_global_pts (arch_state s))) (ArchObj ao) \<Longrightarrow>
+   valid_vspace_obj ao s"
+  by (cases ao; simp add: empty_table_def)
