@@ -10,6 +10,11 @@
 
 ## 文档与代码入口
 
+研究贡献的问题定义、重要性、实现方式与验证边界，见
+[Repository-level 证明生成贡献说明](docs/design/REPO-LEVEL-CONTRIBUTIONS.md)。
+方法与基线的同生成时间比较、原划分消融及 helper/token 分析，见
+[Repository-level 证明生成实验设计](docs/design/REPO-LEVEL-EVALUATION.md)。
+
 当前应用层职责、协议／调度／检查／恢复全链路、版本化 Arch 策略与验收边界，统一见
 [Harness 应用层逻辑框架](docs/implementation/HARNESS-APPLICATION-FRAMEWORK.md)。
 关键修复已整合不等于新版双真实 Planner／全仓实验已经通过。
