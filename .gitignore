@@ -92,3 +92,9 @@ spec-strengthen/logs/
 .venv-stepwise-codex/
 # Local upstream/reference checkout; maintained as its own Git repository.
 vero-isabelle/
+
+# Local agent scratch work, pinned CLI copies, and generated prelaunch snapshots.
+/.agent-staging/
+/regen/config/codex-runtime/
+/FORMAL-PRELAUNCH-*.json
+/TEST-PRELAUNCH-*.json
