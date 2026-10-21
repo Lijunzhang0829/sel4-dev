@@ -37,6 +37,38 @@ class VeroActiveWallBudgetTests(unittest.TestCase):
         self.assertIn('cannot be extended',text)
         self.assertIn('no token stopping limit',text)
 
+    def test_crefine_uses_immutable_effective_generation_budget(self):
+        args=self.args(expected_contracts=309,budget_mode='effective-time',
+            effective_seconds=172800)
+        binding=entry.formal_configuration_binding(args)
+        self.assertEqual(binding['effective_seconds_limit'],172800)
+        self.assertEqual(binding['budget_mode'],'effective-time')
+        self.assertNotIn('active_wall_seconds_limit',binding)
+        config=entry.expected_runtime_config('/tmp/vero-crefine-test',
+            {'client_path':'/fixed/codex',**binding},{})
+        self.assertEqual(config['exploration_policy'],
+            entry.EFFECTIVE_BUDGET_POLICY)
+        self.assertEqual(config['exploration_limits']['combination'],
+            'effective-time-only')
+        for field,value in (('expected_contracts',287),('effective_seconds',3600),
+                ('reasoning','high')):
+            bad=self.args(**vars(args));setattr(bad,field,value)
+            with self.assertRaisesRegex(ValueError,'formal VERO experiment requires'):
+                entry.formal_configuration_binding(bad)
+        with tempfile.TemporaryDirectory() as tmp:
+            tick=[0.];ledger=Ledger(tmp,'crefine')
+            stop=entry.TerminalEffectiveTimeBudget(ledger,10,
+                monotonic=lambda:tick[0])
+            stop.register({'T':['c']});stop.select('T')
+            tick[0]=4
+            handle=stop.begin_exclusion('seal');tick[0]=100
+            stop.end_exclusion(handle)
+            self.assertEqual(stop.snapshot()['effective_seconds'],4)
+            tick[0]=106
+            with self.assertRaises(CheckCancelled):stop.check()
+            self.assertTrue(stop.snapshot()['finished'])
+            stop.close()
+
     def test_all_normal_phases_count_but_confirmed_recovery_does_not(self):
         with tempfile.TemporaryDirectory() as tmp:
             tick=[0.];ledger=Ledger(tmp,'wall')

@@ -28,10 +28,38 @@ from regen.infrastructure.resource_budget import clone_heaps
 from regen.preparation.checker_context import load_context
 
 MAX_EXACT_GREEN_CHECKS = 128
+_PROOF_START = re.compile(rb'\(\* VERO START ([ch]\d{4}) (prove|disprove) \*\)')
+
+
+def _accepted_proof_prefix(source, end, ignored_slots=None):
+    """Hash a checked prefix with only its originally open proof slots masked.
+
+    This is a versioned accepted-source projection, not a claim that the
+    current draft was checked. Helpers, declarations and accepted proof bodies
+    remain byte-bound. Missing or malformed old slots cannot be projected.
+    """
+    selected=None if ignored_slots is None else set(ignored_slots)
+    if selected is not None and len(selected)!=len(ignored_slots):return None,[]
+    pieces=[];cursor=0;masked=[]
+    for marker in _PROOF_START.finditer(source[:end]):
+        uid,polarity=(part.decode('ascii') for part in marker.groups())
+        key=uid+':'+polarity
+        closing=f'(* VERO END {uid} {polarity} *)'.encode()
+        body_start=marker.end();body_end=source.find(closing,body_start,end)
+        if body_end<0:return None,[]
+        body=source[body_start:body_end].strip()
+        if (selected is None and body in (b'',b'oops')) or (
+                selected is not None and key in selected):
+            pieces.extend((source[cursor:body_start],b'\noops\n'))
+            cursor=body_end;masked.append(key)
+    if selected is not None and set(masked)!=selected:return None,[]
+    pieces.append(source[cursor:end])
+    return hashlib.sha256(b''.join(pieces)).hexdigest(),masked
 
 
 class VeroCheckerAdapter:
     def __init__(self, dataset, output, *, timeout=900, observer=None,
+                 native_slots=1,
                  shared_host_lock_dir=None, shared_host_slots=1,
                  shared_host_cleanup_timeout=30):
         self.root = Path(output).resolve()
@@ -39,7 +67,9 @@ class VeroCheckerAdapter:
         self.context = load_context(Path(dataset))
         self.timeout = timeout
         self.observer = observer
-        self.resources = NativeResources(1, 4, 1,
+        if native_slots not in (1,2):
+            raise ValueError('VERO native_slots must be 1 or 2')
+        self.resources = NativeResources(native_slots, 4, native_slots,
             shared_host_lock_dir=shared_host_lock_dir,
             shared_host_slots=shared_host_slots,
             shared_host_cleanup_timeout=shared_host_cleanup_timeout)
@@ -377,12 +407,21 @@ class VeroCheckerAdapter:
             # candidates in the rendered source, but do not invent a receipt.
             if len(filled)>1:continue
             polarity,begin,prefix_end,body=(filled[0] if filled else candidates[0])
+            accepted_prefix,open_slots=_accepted_proof_prefix(source,begin)
+            if accepted_prefix is None:
+                raise ValueError('malformed prior proof slot before '+uid)
             receipts[uid]={'polarity':polarity,
                 'filled':bool(filled),
                 'pre_proof_sha256':hashlib.sha256(source[:begin]).hexdigest(),
                 'proof_body_sha256':hashlib.sha256(body.encode()).hexdigest(),
                 'prefix_sha256':hashlib.sha256(source[:prefix_end]).hexdigest(),
-                'context_identity':context_identity}
+                'context_identity':context_identity,
+                'accepted_prefix_sha256':accepted_prefix,
+                'open_prefix_slots':open_slots}
+            old=getattr(observer,'accepted_receipts',{}).get(uid)
+            if isinstance(old,dict) and isinstance(old.get('open_prefix_slots'),list):
+                projected,_=_accepted_proof_prefix(source,begin,old['open_prefix_slots'])
+                receipts[uid]['prior_accepted_prefix_sha256']=projected
         return receipts
 
     def _exact_green_key(self,theory,snapshot,source_identity,effective_timeout):

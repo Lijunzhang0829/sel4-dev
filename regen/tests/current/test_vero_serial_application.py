@@ -14,13 +14,18 @@ from regen.execution.vero_checker_adapter import VeroCheckerAdapter
 from regen.execution.vero_import_graph import effective_generated_imports
 from regen.tools.vero_serial_application import (
     FORMAL_ACTIVE_WALL_SECONDS,FORMAL_EXPECTED_CONTRACTS,
-    ACTIVE_WALL_BUDGET_POLICY,CHECKPOINT_KIND,
+    ACTIVE_WALL_BUDGET_POLICY,EFFECTIVE_BUDGET_POLICY,CHECKPOINT_KIND,
     RecoverableAgentFailure,ProviderRecoveryPause,create_fresh_plan,
     expected_runtime_config,run_with_agent_takeover,interrupted_result,
     classify_agent_invocation,provider_auth_binding,
     Service,snapshot,bind_runner,fixed_inventory_binding,formal_configuration_binding,
     frozen_plan_binding,validate_resume_artifacts,validate_resume_ledger,
     SEAL_MIGRATION_FROM,SEAL_MIGRATION_ID,record_seal_migration,
+    CHECKER_LIFECYCLE_MIGRATION_FROM,CHECKER_LIFECYCLE_MIGRATION_ID,
+    record_checker_lifecycle_migration,RESOURCE_POOL_MIGRATION_FROM,
+    record_resource_pool_migration,record_provider_auth_migration,
+    record_runner_reopen_migration,
+    PROVIDER_AUTH_MIGRATION_SEED,PROVIDER_AUTH_MIGRATION_BASE,
 )
 
 VERO_SOURCE=Path(__file__).resolve().parents[3]/'vero-isabelle'/'src'
@@ -690,6 +695,34 @@ class VeroSerialTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'binding or frozen plan changed'):
                 validate_resume_artifacts(root,changed,seal_migration=True)
 
+    def test_checker_lifecycle_migration_preserves_frozen_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'workspace').mkdir();(root/'run').mkdir()
+            planned={'benchmark_id':'b','contracts':[{'id':'c1','module':'Vero_A'}]}
+            plan={'modules':[{'name':'Vero_A','contracts':['c1'],'imports':[]}],
+                'execution_order':['Vero_A']}
+            frozen=frozen_plan_binding(planned,plan)
+            current={'client_path':'/fixed/codex',
+                'activity_policy':ACTIVE_WALL_BUDGET_POLICY,
+                'application_sha256':'checker-fixed-version'}
+            original={**current,'application_sha256':CHECKER_LIFECYCLE_MIGRATION_FROM}
+            files={'binding.json':{**original,'frozen_plan':frozen},
+                'accepted-plan.json':plan,'planned-benchmark.json':planned,
+                'config.json':expected_runtime_config(root,original,frozen)}
+            for name,value in files.items():(root/name).write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError,'binding or frozen plan changed'):
+                validate_resume_artifacts(root,current)
+            self.assertEqual(validate_resume_artifacts(root,current,
+                checker_lifecycle_migration=True)[3],frozen)
+            ledger=Ledger(root,'checker-migration')
+            first=record_checker_lifecycle_migration(ledger)
+            self.assertEqual(record_checker_lifecycle_migration(ledger)['event_id'],first['event_id'])
+            self.assertEqual(first['data']['migration_id'],CHECKER_LIFECYCLE_MIGRATION_ID)
+            self.assertEqual(len(ledger.rows),1)
+            with self.assertRaisesRegex(ValueError,'binding or frozen plan changed'):
+                validate_resume_artifacts(root,{**current,'model':'wrong'},
+                    checker_lifecycle_migration=True)
+
     def test_agent_error_and_interruption_use_runner_owned_takeover(self):
         class Stop:
             def check(self):pass
@@ -751,6 +784,40 @@ class VeroSerialTests(unittest.TestCase):
                 self.assertEqual(load(journal)['status'],'agent_error')
                 self.assertFalse(any(row['kind']=='agent_provider_takeover'
                     for row in ledger.rows))
+
+    def test_explicit_resume_reopens_closed_agent_error_without_replay(self):
+        class Stop:
+            def check(self):pass
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);journal=root/'iterations.json';ledger=Ledger(root/'ledger','reopen')
+            old={'status':'agent_error','iterations':[{'index':0,'agent':{
+                'ok':False,'provider_failure':{'category':'unknown',
+                    'failure':None,'evidence':'turn.failed'},'elapsed_seconds':12}}]}
+            journal.write_text(json.dumps(old));calls=[]
+            def load(path):return json.loads(Path(path).read_text())
+            def save(path,value):Path(path).write_text(json.dumps(value))
+            def run_once(recovering):
+                calls.append(recovering)
+                self.assertEqual(load(journal)['status'],'running')
+                self.assertEqual(len(load(journal)['iterations']),1)
+                return {'status':'complete'}
+            with patch('regen.tools.vero_serial_application._agent_checkpoint_verified',
+                    return_value=True):
+                result=run_with_agent_takeover(run_once,journal_path=journal,
+                    ledger=ledger,stop=Stop(),load=load,save=save,resume=True,
+                    reopen_agent_error=True)
+            self.assertEqual(result['status'],'complete')
+            self.assertEqual(calls,[True])
+            self.assertEqual(load(journal)['iterations'][0]['agent']['elapsed_seconds'],12)
+            self.assertEqual(sum(r['kind']=='operator_agent_error_reopened'
+                for r in ledger.rows),1)
+            journal.write_text(json.dumps(old))
+            with patch('regen.tools.vero_serial_application._agent_checkpoint_verified',
+                    return_value=False):
+                with self.assertRaisesRegex(ValueError,'verified terminated call'):
+                    run_with_agent_takeover(run_once,journal_path=journal,
+                        ledger=ledger,stop=Stop(),load=load,save=save,resume=True,
+                        reopen_agent_error=True)
 
     def test_transient_recovery_exclusion_closes_at_next_generation_boundary(self):
         class Stop:
@@ -891,6 +958,108 @@ class VeroSerialTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'binding or frozen plan changed'):
                 validate_resume_artifacts(root,{**base,'shared_host_slots':1})
 
+    def test_two_native_slots_are_frozen_for_new_run_only(self):
+        args=SimpleNamespace(model='gpt-5.6-sol',reasoning='medium',
+            expected_contracts=309,effective_seconds=172800,
+            budget_mode='effective-time',native_slots=2)
+        binding=formal_configuration_binding(args)
+        self.assertEqual(binding['native_slots'],2)
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            base={'client_path':'/fixed/codex',**binding}
+            self.assertEqual(expected_runtime_config(root,base,{})['checker'],
+                {'native_slots':2})
+            (root/'workspace').mkdir();(root/'run').mkdir()
+            plan={'modules':[{'name':'Vero_A','contracts':['c1'],'imports':[]}],
+                'execution_order':['Vero_A']}
+            planned={'benchmark_id':'b','contracts':[{'id':'c1','module':'Vero_A'}]}
+            frozen=frozen_plan_binding(planned,plan)
+            base['activity_policy']=EFFECTIVE_BUDGET_POLICY
+            for name,value in {'binding.json':{**base,'frozen_plan':frozen},
+                    'accepted-plan.json':plan,'planned-benchmark.json':planned,
+                    'config.json':expected_runtime_config(root,base,frozen)}.items():
+                (root/name).write_text(json.dumps(value))
+            self.assertEqual(validate_resume_artifacts(root,base)[3],frozen)
+            with self.assertRaisesRegex(ValueError,'binding or frozen plan changed'):
+                validate_resume_artifacts(root,{**base,'native_slots':1})
+        args.native_slots=1
+        self.assertNotIn('native_slots',formal_configuration_binding(args))
+        args.native_slots=3
+        with self.assertRaisesRegex(ValueError,'native_slots'):
+            formal_configuration_binding(args)
+
+    def test_audited_resource_pool_migration_preserves_old_binding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'workspace').mkdir();(root/'run').mkdir()
+            plan={'modules':[{'name':'Vero_A','contracts':['c1'],'imports':[]}],
+                'execution_order':['Vero_A']}
+            planned={'benchmark_id':'b','contracts':[{'id':'c1','module':'Vero_A'}]}
+            frozen=frozen_plan_binding(planned,plan)
+            old={'client_path':'/fixed/codex','activity_policy':EFFECTIVE_BUDGET_POLICY,
+                'budget_mode':'effective-time','effective_seconds_limit':172800,
+                'application_sha256':RESOURCE_POOL_MIGRATION_FROM,
+                'native_slots':2,'shared_host_lock_dir':str(root/'pool'),
+                'shared_host_slots':2,'shared_host_cleanup_timeout':30}
+            new={k:v for k,v in old.items() if k!='native_slots'}
+            new['application_sha256']='new-application'
+            for name,value in {'binding.json':{**old,'frozen_plan':frozen},
+                    'accepted-plan.json':plan,'planned-benchmark.json':planned,
+                    'config.json':expected_runtime_config(root,old,frozen)}.items():
+                (root/name).write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError,'binding or frozen plan changed'):
+                validate_resume_artifacts(root,new)
+            self.assertEqual(validate_resume_artifacts(root,new,
+                resource_pool_migration=True)[3],frozen)
+            ledger=Ledger(root,'resource-migration')
+            first=record_resource_pool_migration(ledger,{**old,'frozen_plan':frozen},new)
+            self.assertEqual(record_resource_pool_migration(ledger,
+                {**old,'frozen_plan':frozen},new)['event_id'],first['event_id'])
+            self.assertEqual(first['data']['new_resources']['native_slots'],1)
+            self.assertEqual(len(ledger.rows),1)
+            with self.assertRaisesRegex(ValueError,'two-to-one slot binding'):
+                validate_resume_artifacts(root,{**new,'shared_host_slots':1},
+                    resource_pool_migration=True)
+
+    def test_audited_auth_migration_preserves_old_state_and_budget(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'workspace').mkdir();(root/'run').mkdir()
+            plan={'modules':[{'name':'Vero_A','contracts':['c1'],'imports':[]}],
+                'execution_order':['Vero_A']}
+            planned={'benchmark_id':'b','contracts':[{'id':'c1','module':'Vero_A'}]}
+            frozen=frozen_plan_binding(planned,plan)
+            old={'client_path':'/fixed/codex','activity_policy':EFFECTIVE_BUDGET_POLICY,
+                'budget_mode':'effective-time','effective_seconds_limit':172800,
+                'application_sha256':RESOURCE_POOL_MIGRATION_FROM,
+                'native_slots':2,'shared_host_lock_dir':str(root/'pool'),
+                'shared_host_slots':2,'shared_host_cleanup_timeout':30,
+                'auth_seed_path_sha256':'old-seed','auth_state_base':str(root/'old-auth'),
+                'auth_lease_dir':str(root/'leases')}
+            new={k:v for k,v in old.items() if k!='native_slots'}
+            new.update(application_sha256='new-application',
+                auth_seed_path_sha256=hashlib.sha256(str(
+                    Path(PROVIDER_AUTH_MIGRATION_SEED).resolve()).encode()).hexdigest(),
+                auth_state_base=PROVIDER_AUTH_MIGRATION_BASE)
+            for name,value in {'binding.json':{**old,'frozen_plan':frozen},
+                    'accepted-plan.json':plan,'planned-benchmark.json':planned,
+                    'config.json':expected_runtime_config(root,old,frozen)}.items():
+                (root/name).write_text(json.dumps(value))
+            self.assertEqual(validate_resume_artifacts(root,new,
+                resource_pool_migration=True,provider_auth_migration=True)[3],frozen)
+            with self.assertRaisesRegex(ValueError,'audited independent VERO login'):
+                validate_resume_artifacts(root,{**new,'auth_state_base':'/wrong'},
+                    resource_pool_migration=True,provider_auth_migration=True)
+            ledger=Ledger(root,'auth-migration')
+            source={**old,'frozen_plan':frozen}
+            resource=record_resource_pool_migration(ledger,source,new)
+            event=record_provider_auth_migration(ledger,source,new,resource)
+            self.assertEqual(record_provider_auth_migration(ledger,source,new,
+                resource)['event_id'],event['event_id'])
+            self.assertTrue(event['data']['old_auth_state_preserved'])
+            reopened=record_runner_reopen_migration(ledger,source,new,event)
+            self.assertEqual(record_runner_reopen_migration(ledger,source,new,
+                event)['event_id'],reopened['event_id'])
+            self.assertEqual(len(ledger.rows),3)
+
     def test_scope_supports_shared_theories_and_rejects_false_attribution(self):
         observer=SimpleNamespace(stop=SimpleNamespace(check=lambda:None),scope=None,
             ledger=SimpleNamespace(append=lambda *args,**kwargs:None),selected=[])
@@ -988,12 +1157,24 @@ class VeroSerialTests(unittest.TestCase):
         checker=object();agent=object()
         with self.assertRaisesRegex(ValueError,'test'):
             with bind_runner(runner,checker,agent):
-                self.assertIs(runner.Checker({}),checker)
+                self.assertIs(runner.Checker({}).native,checker)
                 self.assertIs(runner.CodexAgent,agent)
                 with self.assertRaises(RuntimeError):
                     with bind_runner(runner,checker,agent):pass
                 raise ValueError('test')
         self.assertEqual((runner.Checker,runner.CodexAgent),original)
+
+    def test_runner_close_does_not_close_host_owned_checker(self):
+        runner=SimpleNamespace(Checker=object(),CodexAgent=object())
+        checker=Mock()
+        with bind_runner(runner,checker,object()):
+            first=runner.Checker({})
+            first.close()
+            checker.close.assert_not_called()
+            second=runner.Checker({})
+            self.assertIs(second.native,checker)
+            second.check('workspace','Vero_A')
+            checker.check.assert_called_once_with('workspace','Vero_A')
 
     def test_successful_seal_is_validated_and_marks_clock_sealed(self):
         class Stop:

@@ -30,6 +30,10 @@ from regen.infrastructure.active_wall_budget import (
     ActiveWallBudget, POLICY as ACTIVE_WALL_BUDGET_POLICY,
     LIMIT_REASON as ACTIVE_WALL_LIMIT_REASON,
 )
+from regen.infrastructure.effective_time_budget import (
+    EffectiveTimeBudget, POLICY as EFFECTIVE_BUDGET_POLICY,
+    LIMIT_REASON as EFFECTIVE_LIMIT_REASON,
+)
 from regen.infrastructure.vero_experiment_observer import VeroObserver
 from regen.infrastructure.vero_auth_state import (
     existing_vero_auth_source,prepare_vero_auth_state,rotate_vero_auth_state,
@@ -54,6 +58,7 @@ FORMAL_MODEL='gpt-5.6-sol'
 FORMAL_REASONING='medium'
 FORMAL_EXPECTED_CONTRACTS=287
 FORMAL_ACTIVE_WALL_SECONDS=172800
+FORMAL_CREFINE_CONTRACTS=309
 FORMAL_POLL_SECONDS=1
 FORMAL_CHECKPOINT_SECONDS=30
 RUNTIME_HOME_SENTINEL='<fresh-private-runtime-home>'
@@ -65,6 +70,35 @@ SEAL_MIGRATION_FILES=(
     'regen/infrastructure/vero_experiment_observer.py',
     'regen/infrastructure/effective_time_budget.py',
 )
+CHECKER_LIFECYCLE_MIGRATION_ID='vero-checker-takeover-lifecycle-20261018-v1'
+CHECKER_LIFECYCLE_MIGRATION_FROM='380ede9ef4d8e903da975af3e276e9ffb1f065061a89e9b7cc7a04033bb4d9e9'
+RESOURCE_POOL_MIGRATION_ID='vero-crefine-one-of-two-native-slots-20261020-v1'
+RESOURCE_POOL_MIGRATION_FROM='7b777dd629e71745fdc019b415f5250b4ab56393f1f69c0b50e1f860b61982e7'
+RESOURCE_POOL_MIGRATION_APPLICATION='74ad48757933f27fb94575087d9a78d97a266980376f513b2d583926d68cc910'
+PROVIDER_AUTH_MIGRATION_ID='vero-crefine-independent-auth-chain-20261021-v1'
+PROVIDER_AUTH_MIGRATION_SEED='/data/zljj/vero-private/vero-crefine-login-20261017-001/auth.json'
+PROVIDER_AUTH_MIGRATION_BASE=('/data/zljj/vero-private/vero-crefine-login-20261017-001/'
+    '.regen-vero-auth-state-pool2-20261021')
+PROVIDER_AUTH_MIGRATION_APPLICATION='a74f8534b90d0ebe426380bd01ed61469f366ab9e15b42132674179b93eaa9c3'
+RUNNER_REOPEN_MIGRATION_ID='vero-crefine-paused-agent-error-reopen-20261021-v1'
+
+
+class TerminalEffectiveTimeBudget(EffectiveTimeBudget):
+    """Treat the frozen CRefine 48-hour effective allowance as a final stop."""
+
+    def _cancel_locked(self, reason):
+        if reason != self.limit_reason:
+            return super()._cancel_locked(reason)
+        if self.event.is_set():return
+        self.reason=reason;self.event.set()
+        self._append('termination',reason=reason,disposition='stop',
+            activity_policy=self.policy,effective_seconds=self.effective_seconds,
+            worker_seconds=self.worker_seconds,theory_seconds=dict(self._theory_seconds),
+            seconds=self.seconds,token_limit=None)
+        self._append('time_budget_finished',reason=reason,
+            effective_seconds=self.effective_seconds)
+        self.finished=True;self.finish_reason=reason
+        self._write_state('finished')
 
 
 class RecoverableAgentFailure(RuntimeError):
@@ -155,7 +189,9 @@ def _source_binding(source):
 
 
 def expected_runtime_config(root, base_binding, frozen_plan):
-    host_keys=('shared_host_lock_dir','shared_host_slots','shared_host_cleanup_timeout')
+    host_keys=('native_slots','shared_host_lock_dir','shared_host_slots',
+        'shared_host_cleanup_timeout')
+    effective=base_binding.get('budget_mode')=='effective-time'
     return {'sandbox':str((Path(root)/'workspace').resolve()),
         'total_agent_seconds':None,'max_iterations':None,
         'external_activity_supervisor':True,'completion_metric':'positive',
@@ -163,11 +199,13 @@ def expected_runtime_config(root, base_binding, frozen_plan):
         'checker':{key:base_binding[key] for key in host_keys if key in base_binding},
         'activity_poll_seconds':FORMAL_POLL_SECONDS,
         'activity_checkpoint_seconds':FORMAL_CHECKPOINT_SECONDS,
-        'exploration_policy':ACTIVE_WALL_BUDGET_POLICY,
+        'exploration_policy':EFFECTIVE_BUDGET_POLICY if effective else ACTIVE_WALL_BUDGET_POLICY,
         'exploration_limits':{'token_limit':None,
-            'active_wall_seconds_limit':base_binding.get(
-                'active_wall_seconds_limit',FORMAL_ACTIVE_WALL_SECONDS),
-            'combination':'active-wall-only'},
+            **({'effective_seconds_limit':base_binding['effective_seconds_limit'],
+                'combination':'effective-time-only'} if effective else {
+                'active_wall_seconds_limit':base_binding.get(
+                    'active_wall_seconds_limit',FORMAL_ACTIVE_WALL_SECONDS),
+                'combination':'active-wall-only'})},
         'recovery_mode':'workspace-level-new-agent-thread-v1',
         'provider':{'recovery_policy':'provider-recovery-v2',
             'recovery_window_seconds':RECOVERY_WINDOW_SECONDS,
@@ -181,7 +219,10 @@ def expected_runtime_config(root, base_binding, frozen_plan):
         'frozen_plan':frozen_plan}
 
 
-def validate_resume_artifacts(root, base_binding, *, seal_migration=False):
+def validate_resume_artifacts(root, base_binding, *, seal_migration=False,
+                              checker_lifecycle_migration=False,
+                              resource_pool_migration=False,
+                              provider_auth_migration=False):
     """Authenticate the complete frozen hand-off before mutating its ledger."""
     root=Path(root)
     required=('binding.json','accepted-plan.json','planned-benchmark.json','config.json')
@@ -190,13 +231,36 @@ def validate_resume_artifacts(root, base_binding, *, seal_migration=False):
     artifacts={name:_read_json(root/name) for name in required}
     binding=artifacts['binding.json'];plan=artifacts['accepted-plan.json']
     planned=artifacts['planned-benchmark.json'];config=artifacts['config.json']
-    if (binding.get('activity_policy') != ACTIVE_WALL_BUDGET_POLICY or
-            config.get('exploration_limits',{}).get('combination') !=
-            'active-wall-only'):
-        raise ValueError('non-active-wall VERO run cannot resume under the '
-            '48-hour active-wall policy; no implicit migration or clock reset')
+    effective=base_binding.get('budget_mode')=='effective-time'
+    expected_policy=EFFECTIVE_BUDGET_POLICY if effective else ACTIVE_WALL_BUDGET_POLICY
+    expected_combination='effective-time-only' if effective else 'active-wall-only'
+    if (binding.get('activity_policy') != expected_policy or
+            config.get('exploration_limits',{}).get('combination') != expected_combination):
+        raise ValueError('VERO continuation budget policy changed; no implicit migration or clock reset')
     frozen=frozen_plan_binding(planned,plan)
     expected={**base_binding,'frozen_plan':frozen}
+    if resource_pool_migration:
+        if (binding.get('application_sha256')!=RESOURCE_POOL_MIGRATION_FROM
+                or binding.get('native_slots')!=2
+                or binding.get('shared_host_slots')!=2
+                or base_binding.get('native_slots',1)!=1
+                or base_binding.get('shared_host_slots')!=2
+                or base_binding.get('shared_host_lock_dir')!=binding.get('shared_host_lock_dir')):
+            raise ValueError('resource pool migration requires the audited VERO two-to-one slot binding')
+        expected['application_sha256']=RESOURCE_POOL_MIGRATION_FROM
+        expected['native_slots']=2
+    if provider_auth_migration:
+        seed_hash=hashlib.sha256(str(Path(PROVIDER_AUTH_MIGRATION_SEED).resolve()).encode()).hexdigest()
+        if (not resource_pool_migration or base_binding.get('auth_seed_path_sha256')!=seed_hash
+                or base_binding.get('auth_state_base')!=PROVIDER_AUTH_MIGRATION_BASE
+                or base_binding.get('auth_lease_dir')!=binding.get('auth_lease_dir')):
+            raise ValueError('provider auth migration requires the audited independent VERO login')
+        expected['auth_seed_path_sha256']=binding['auth_seed_path_sha256']
+        expected['auth_state_base']=binding['auth_state_base']
+    if checker_lifecycle_migration:
+        if binding.get('application_sha256')!=CHECKER_LIFECYCLE_MIGRATION_FROM:
+            raise ValueError('checker lifecycle migration is limited to the audited original application')
+        expected['application_sha256']=CHECKER_LIFECYCLE_MIGRATION_FROM
     if seal_migration:
         if binding.get('application_sha256')!=SEAL_MIGRATION_FROM:
             raise ValueError('seal migration is limited to the audited original application')
@@ -210,6 +274,76 @@ def validate_resume_artifacts(root, base_binding, *, seal_migration=False):
         if path.is_symlink() or not path.is_dir():
             raise ValueError('continuation '+name+' is absent or unsafe')
     return plan,planned,config,frozen
+
+
+def record_resource_pool_migration(ledger, old_binding, new_binding):
+    """Append a one-time admission-only change; never rewrite frozen inputs."""
+    old={key:old_binding.get(key,1 if key=='native_slots' else None)
+        for key in ('native_slots','shared_host_lock_dir','shared_host_slots')}
+    new={key:new_binding.get(key,1 if key=='native_slots' else None)
+        for key in ('native_slots','shared_host_lock_dir','shared_host_slots')}
+    if (old['native_slots']!=2 or new['native_slots']!=1
+            or old['shared_host_slots']!=2 or new['shared_host_slots']!=2
+            or old['shared_host_lock_dir']!=new['shared_host_lock_dir']):
+        raise ValueError('resource pool migration must only reduce VERO local capacity')
+    event=dict(migration_id=RESOURCE_POOL_MIGRATION_ID,
+        frozen_binding_sha256=digest(old_binding),old_resources=old,new_resources=new,
+        original_application_sha256=RESOURCE_POOL_MIGRATION_FROM,
+        new_application_sha256=RESOURCE_POOL_MIGRATION_APPLICATION,
+        frozen_binding_unchanged=True,clock_and_usage_preserved=True)
+    previous=[row for row in ledger.rows if row['kind']=='resource_policy_migration']
+    if previous:
+        if len(previous)!=1 or previous[0]['data']!=event:
+            raise ValueError('resource pool migration differs from audited event')
+        return previous[0]
+    return ledger.append('resource_policy_migration',**event)
+
+
+def record_provider_auth_migration(ledger, old_binding, new_binding,
+                                   resource_event):
+    """Bind a separate login chain without changing proof, clock or old auth state."""
+    if (resource_event['data'].get('migration_id')!=RESOURCE_POOL_MIGRATION_ID
+            or old_binding.get('auth_seed_path_sha256')==new_binding.get('auth_seed_path_sha256')
+            or new_binding.get('auth_state_base')!=PROVIDER_AUTH_MIGRATION_BASE):
+        raise ValueError('provider auth migration requires the prior resource migration')
+    event=dict(migration_id=PROVIDER_AUTH_MIGRATION_ID,
+        frozen_binding_sha256=digest(old_binding),
+        resource_migration_event_id=resource_event['event_id'],
+        old_auth_seed_path_sha256=old_binding['auth_seed_path_sha256'],
+        new_auth_seed_path_sha256=new_binding['auth_seed_path_sha256'],
+        old_auth_state_base=old_binding['auth_state_base'],
+        new_auth_state_base=new_binding['auth_state_base'],
+        prior_application_sha256=RESOURCE_POOL_MIGRATION_APPLICATION,
+        new_application_sha256=PROVIDER_AUTH_MIGRATION_APPLICATION,
+        frozen_binding_unchanged=True,old_auth_state_preserved=True,
+        clock_and_usage_preserved=True)
+    previous=[row for row in ledger.rows if row['kind']=='provider_auth_migration'
+        and row['data'].get('migration_id')==PROVIDER_AUTH_MIGRATION_ID]
+    if previous:
+        if len(previous)!=1 or previous[0]['data']!=event:
+            raise ValueError('provider auth migration differs from audited event')
+        return previous[0]
+    return ledger.append('provider_auth_migration',**event)
+
+
+def record_runner_reopen_migration(ledger, old_binding, new_binding, auth_event):
+    """Audit the code change that permits a new turn after a closed agent error."""
+    if auth_event['data'].get('migration_id')!=PROVIDER_AUTH_MIGRATION_ID:
+        raise ValueError('runner reopen requires the audited independent auth migration')
+    event=dict(migration_id=RUNNER_REOPEN_MIGRATION_ID,
+        frozen_binding_sha256=digest(old_binding),
+        provider_auth_migration_event_id=auth_event['event_id'],
+        prior_application_sha256=PROVIDER_AUTH_MIGRATION_APPLICATION,
+        new_application_sha256=new_binding['application_sha256'],
+        purpose='explicitly reopen a closed agent_error checkpoint without replaying its call',
+        frozen_binding_unchanged=True,clock_and_usage_preserved=True)
+    previous=[row for row in ledger.rows if row['kind']=='implementation_migration'
+        and row['data'].get('migration_id')==RUNNER_REOPEN_MIGRATION_ID]
+    if previous:
+        if len(previous)!=1 or previous[0]['data']!=event:
+            raise ValueError('runner reopen implementation differs from audited event')
+        return previous[0]
+    return ledger.append('implementation_migration',**event)
 
 
 def seal_migration_hashes():
@@ -233,19 +367,36 @@ def record_seal_migration(ledger):
         frozen_binding_unchanged=True,clock_and_usage_preserved=True)
 
 
-def validate_resume_ledger(ledger):
+def record_checker_lifecycle_migration(ledger):
+    """Authorize a borrowed runner checker without changing frozen task inputs."""
+    application_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    prior=[row for row in ledger.rows if row['kind']=='implementation_migration'
+        and row['data'].get('migration_id')==CHECKER_LIFECYCLE_MIGRATION_ID]
+    if prior:
+        if len(prior)!=1 or prior[0]['data'].get('new_application_sha256')!=application_sha256:
+            raise ValueError('checker lifecycle migration implementation changed')
+        return prior[0]
+    return ledger.append('implementation_migration',
+        migration_id=CHECKER_LIFECYCLE_MIGRATION_ID,
+        original_application_sha256=CHECKER_LIFECYCLE_MIGRATION_FROM,
+        new_application_sha256=application_sha256,
+        purpose='keep host-owned checker open across runner provider takeovers',
+        frozen_binding_unchanged=True,clock_and_usage_preserved=True)
+
+
+def validate_resume_ledger(ledger, *, effective=False):
     if any(r['kind']=='global_exploration_state' for r in ledger.rows):
         raise ValueError('legacy VERO run cannot resume under the active-wall '
             'policy; no implicit migration or clock reset')
     states=[r for r in ledger.rows if r['kind']==CHECKPOINT_KIND]
     if not states:raise ValueError('resume requires persisted active-wall budget state')
     state=states[-1]['data']['state']
-    if state.get('policy')!=ACTIVE_WALL_BUDGET_POLICY:
+    if state.get('policy')!=(EFFECTIVE_BUDGET_POLICY if effective else ACTIVE_WALL_BUDGET_POLICY):
         raise ValueError('continuation active-wall budget policy changed')
     if state.get('finished'):
         raise ValueError('completed VERO experiment cannot be resumed')
-    if state.get('reason')==ACTIVE_WALL_LIMIT_REASON:
-        raise ValueError('48-hour active-wall limit is terminal and cannot be resumed')
+    if state.get('reason')==(EFFECTIVE_LIMIT_REASON if effective else ACTIVE_WALL_LIMIT_REASON):
+        raise ValueError('48-hour time limit is terminal and cannot be resumed')
     return state
 
 
@@ -257,12 +408,13 @@ class ProviderRecoveryGate:
 
     def begin(self, reason):
         if reason not in self.handles:
-            if reason == 'provider_recovery':
+            if reason == 'provider_recovery' and hasattr(self.stop,'note_provider_failure'):
                 self.stop.note_provider_failure()
             self.handles[reason]=self.stop.begin_exclusion(reason)
 
     def generation_started(self):
-        self.stop.note_provider_started()
+        if hasattr(self.stop,'note_provider_started'):
+            self.stop.note_provider_started()
         if not self.handles:return
         self.close()
         self.ledger.append('provider_generation_started',boundary='before original Agent.run',
@@ -276,10 +428,33 @@ class ProviderRecoveryGate:
 
 def run_with_agent_takeover(run_once, *, journal_path, ledger, stop, load, save,
                             resume=False, recovery_gate=None,
+                            reopen_agent_error=False,
                             clock=time.monotonic, sleep=time.sleep):
     """Continue a trusted checkpoint only for a bounded transient CLI failure."""
     recovering=bool(resume);takeovers=0
     first_failure_at=None;prior_failures=0
+
+    if reopen_agent_error:
+        if not resume:
+            raise ValueError('agent error reopen requires an explicit resume')
+        journal=load(journal_path)
+        if journal.get('status')!='agent_error' or not journal.get('iterations'):
+            raise ValueError('agent error reopen requires a closed failed runner checkpoint')
+        previous=journal['iterations'][-1]
+        if (previous.get('agent',{}).get('ok') is not False
+                or not _agent_checkpoint_verified(Path(journal_path).parent/
+                    f"iter-{previous['index']:03d}"/'agent')):
+            raise ValueError('agent error reopen lacks a verified terminated call')
+        stop.check()
+        event=ledger.append('operator_agent_error_reopened',
+            previous_iteration=previous['index'],
+            previous_agent_error=previous['agent'].get('provider_failure'),
+            prior_journal_sha256=digest(journal),
+            recovery='new model thread; retain prior iteration and cost; no pending call replay')
+        journal['status']='running'
+        journal['formal_takeover_count']=int(journal.get('formal_takeover_count',0))+1
+        journal['operator_reopen_event_id']=event['event_id']
+        save(journal_path,journal)
 
     def schedule(classification, *, checkpoint_verified):
         nonlocal first_failure_at,prior_failures
@@ -406,7 +581,7 @@ def create_fresh_plan(*, root, bench, config, Agent, stop, ledger, compile_plan,
                 incident_elapsed_seconds=now-first_failure_at,
                 retry_policy=decision['retry_policy'],
                 recovery='new CLI invocation over planning workspace; no tool replay')
-            stop.note_provider_failure()
+            if hasattr(stop,'note_provider_failure'):stop.note_provider_failure()
             handle=stop.begin_exclusion('provider_recovery')
             try:
                 deadline=clock()+decision['delay_seconds']
@@ -425,19 +600,29 @@ def create_fresh_plan(*, root, bench, config, Agent, stop, ledger, compile_plan,
 
 def formal_configuration_binding(args):
     """Validate and persist the immutable formal-experiment controls."""
+    effective=getattr(args,'budget_mode','active-wall')=='effective-time'
+    native_slots=getattr(args,'native_slots',1)
+    if native_slots not in (1,2):
+        raise ValueError('formal VERO native_slots must be 1 or 2')
     values={'model':args.model,'reasoning_effort':args.reasoning,
         'expected_contract_count':args.expected_contracts,
         'token_limit':None,
-        'active_wall_seconds_limit':args.active_wall_seconds,
+        **({'native_slots':native_slots} if native_slots!=1 else {}),
+        **({'budget_mode':'effective-time',
+            'effective_seconds_limit':args.effective_seconds} if effective else {
+            'active_wall_seconds_limit':args.active_wall_seconds}),
         **shared_host_binding(getattr(args,'shared_host_lock_dir',None),
             getattr(args,'shared_host_slots',1),
             getattr(args,'shared_host_cleanup_timeout',30))}
-    if (args.model!=FORMAL_MODEL or args.reasoning!=FORMAL_REASONING or
-            args.expected_contracts!=FORMAL_EXPECTED_CONTRACTS or
-            args.active_wall_seconds!=FORMAL_ACTIVE_WALL_SECONDS):
-        raise ValueError('formal VERO experiment requires gpt-5.6-sol/medium, '
-            'exactly 287 contracts and an immutable 172800-second active-wall '
-            'limit; there is no token stopping limit')
+    valid_budget=((effective and args.expected_contracts==FORMAL_CREFINE_CONTRACTS
+            and args.effective_seconds==FORMAL_ACTIVE_WALL_SECONDS)
+        or (not effective and args.expected_contracts==FORMAL_EXPECTED_CONTRACTS
+            and args.active_wall_seconds==FORMAL_ACTIVE_WALL_SECONDS
+            and getattr(args,'effective_seconds',None) is None))
+    if (args.model!=FORMAL_MODEL or args.reasoning!=FORMAL_REASONING or not valid_budget):
+        raise ValueError('formal VERO experiment requires gpt-5.6-sol/medium and either '
+            '287 Refine contracts with 172800 active-wall seconds, or '
+            '309 CRefine contracts with 172800 effective-generation seconds')
     if getattr(args,'token_limit',None) is not None:
         raise ValueError('legacy token-limit is unsupported: VERO now uses '
             'only the active-wall time limit')
@@ -491,13 +676,26 @@ def active_wall_budget_instruction(seconds):
         'seal it, and do not change the frozen plan.\n')
 
 
+def effective_budget_instruction(seconds):
+    return ('\nThe experiment has one shared-workspace effective-generation budget of '
+        f'{seconds:g} seconds. It does not reset for a new GREEN contract or a theory switch. '
+        'Planning, initialization, trusted native seal/build, integration, recorded pauses, '
+        'and confirmed provider recovery do not consume this budget; ordinary proof '
+        'generation, model reasoning, edits, helper work, retrieval, and native candidate '
+        'checks do. Model-driven diagnosis or repair after a failed seal is generation. '
+        'There is no token, retry, or no-progress stopping threshold. The accepted '
+        'contract allocation, theory imports and declarations are frozen. All theories '
+        'share one workspace. Only native evidence can publish GREEN; seal every complete '
+        'theory and perform final repository integration.\n')
+
+
 def interrupted_result(stop, error):
     """Stop a run segment without declaring an unfinished experiment complete."""
     already_paused=stop.event.is_set()
     if not already_paused:
         stop.cancel(error.reason if isinstance(error,ProviderRecoveryPause)
             else 'infrastructure_error')
-    terminal=stop.reason==ACTIVE_WALL_LIMIT_REASON
+    terminal=stop.reason==getattr(stop,'limit_reason',ACTIVE_WALL_LIMIT_REASON)
     classified_pause=isinstance(error,ProviderRecoveryPause)
     return {'status':'stopped' if terminal else ('paused' if already_paused or classified_pause
         else 'infrastructure_error'),
@@ -792,8 +990,9 @@ class Service(socketserver.UnixStreamServer):
             _,_,receipts=self.canonical_receipts(artifact,attempt)
             ids={c['id'] for c in self.bench['contracts']
                 if c['module']==request['module']}
-            if any(receipts[request['module']].get(uid)
-                    != observer.accepted_receipts.get(uid) for uid in ids):
+            if any(not isinstance(receipts[request['module']].get(uid),dict)
+                    or observer._native_receipt(receipts[request['module']][uid])
+                        != observer.accepted_receipts.get(uid) for uid in ids):
                 raise ValueError('restore accepted GREEN proofs and checked context before abort')
             observer.abort_seal_transaction(request['module'],transaction,artifact,
                 snapshot_dir=attempt/'snapshot')
@@ -908,7 +1107,12 @@ def bind_runner(runner,checker,agent_class):
     old_checker,old_agent=runner.Checker,runner.CodexAgent
     old_evaluate=getattr(runner,'evaluate',None)
     try:
-        runner.Checker=lambda config:checker
+        class BorrowedChecker:
+            """The runner may close its lease; the host owns the real checker."""
+            def __init__(self,native):self.native=native
+            def __getattr__(self,name):return getattr(self.native,name)
+            def close(self):pass
+        runner.Checker=lambda config:BorrowedChecker(checker)
         runner.CodexAgent=agent_class
         observer=getattr(checker,'observer',None)
         if observer and old_evaluate:
@@ -1009,7 +1213,14 @@ def run(args):
     workspace=root/'workspace'
     client=str(Path(args.client).resolve())
     source=Path(runner.__file__).parent
-    checker_context_id=load_context(Path(args.dataset))['checker_context_id']
+    checker_context=load_context(Path(args.dataset))
+    expected_session=('CRefine' if getattr(args,'budget_mode','active-wall')=='effective-time'
+        else 'Refine')
+    if checker_context['target_session']!=expected_session:
+        raise ValueError('VERO benchmark profile and checker target session disagree')
+    if bench['base_import']!=checker_context['base_import']:
+        raise ValueError('VERO benchmark and checker semantic base disagree')
+    checker_context_id=checker_context['checker_context_id']
     base_binding={'entry':'original-vero-runner-common-application-v2',
         'benchmark_id':bench['benchmark_id'],'dataset':str(Path(args.dataset).resolve()),
         'checker_context_id':checker_context_id,
@@ -1025,23 +1236,33 @@ def run(args):
         'activity_poll_seconds':FORMAL_POLL_SECONDS,
         'activity_checkpoint_seconds':FORMAL_CHECKPOINT_SECONDS,
         'shutdown_tail_policy':'unknown crash tail; checkpoint cadence is not a guaranteed bound',
-        'activity_policy':ACTIVE_WALL_BUDGET_POLICY,
+        'activity_policy':(EFFECTIVE_BUDGET_POLICY if
+            getattr(args,'budget_mode','active-wall')=='effective-time'
+            else ACTIVE_WALL_BUDGET_POLICY),
         **inventory_binding}
     plan=planned=config=plan_binding=None
     if resume:
         try:plan,planned,config,plan_binding=validate_resume_artifacts(root,base_binding,
-            seal_migration=bool(getattr(args,'seal_dependency_migration',False)))
+            seal_migration=bool(getattr(args,'seal_dependency_migration',False)),
+            checker_lifecycle_migration=bool(getattr(args,'checker_lifecycle_migration',False)),
+            resource_pool_migration=bool(getattr(args,'resource_pool_migration',False)),
+            provider_auth_migration=bool(getattr(args,'provider_auth_migration',False)))
         except Exception:
             formal_lock.close()
             raise
     try:
         sources=[args.auth]
-        if resume:
+        auth_migration=bool(getattr(args,'provider_auth_migration',False))
+        migrated_auth=existing_vero_auth_source(root,args.auth,
+            state_base=base_binding['auth_state_base']) if auth_migration else None
+        migrated_auth_exists=bool(migrated_auth and migrated_auth.is_file())
+        if resume and (not auth_migration or migrated_auth_exists):
             sources.append(existing_vero_auth_source(root,args.auth,
                 state_base=base_binding['auth_state_base']))
         with provider_auth_lease(root,*sources,
                 lease_dir=base_binding['auth_lease_dir']):
-            auth_state=prepare_vero_auth_state(root,args.auth,resume=resume,
+            auth_state=prepare_vero_auth_state(root,args.auth,
+                resume=resume and (not auth_migration or migrated_auth_exists),
                 state_base=base_binding['auth_state_base'])
             if not resume:durable(root/'binding.json',base_binding)
             return _run_segment(args,root=root,bench=bench,planned=planned,
@@ -1067,13 +1288,36 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
                  auth_state):
     """Run only while the output and host-wide provider auth leases are held."""
     ledger=Ledger(root,root.name)
+    effective=getattr(args,'budget_mode','active-wall')=='effective-time'
     if resume:
-        try:validate_resume_ledger(ledger)
+        try:validate_resume_ledger(ledger,effective=effective)
         except Exception:
             formal_lock.close()
             raise
+        if getattr(args,'resource_pool_migration',False):
+            try:
+                old_binding=_read_json(root/'binding.json')
+                resource_event=record_resource_pool_migration(ledger,old_binding,base_binding)
+                if getattr(args,'provider_auth_migration',False):
+                    auth_event=record_provider_auth_migration(ledger,old_binding,base_binding,
+                        resource_event)
+                    if getattr(args,'runner_reopen_migration',False):
+                        record_runner_reopen_migration(ledger,old_binding,base_binding,
+                            auth_event)
+                config={**config,'checker':expected_runtime_config(
+                    root,base_binding,plan_binding)['checker'],
+                    'provider':expected_runtime_config(root,base_binding,
+                        plan_binding)['provider']}
+            except Exception:
+                formal_lock.close()
+                raise
         if getattr(args,'seal_dependency_migration',False):
             try:record_seal_migration(ledger)
+            except Exception:
+                formal_lock.close()
+                raise
+        if getattr(args,'checker_lifecycle_migration',False):
+            try:record_checker_lifecycle_migration(ledger)
             except Exception:
                 formal_lock.close()
                 raise
@@ -1084,7 +1328,9 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
         authorization=None
         ledger.append('experiment_started',continuation_mode=base_binding['continuation_mode'])
     try:
-        stop=ActiveWallBudget(ledger,seconds=args.active_wall_seconds,
+        budget_class=TerminalEffectiveTimeBudget if effective else ActiveWallBudget
+        budget_seconds=args.effective_seconds if effective else args.active_wall_seconds
+        stop=budget_class(ledger,seconds=budget_seconds,
             poll_seconds=FORMAL_POLL_SECONDS,checkpoint_seconds=FORMAL_CHECKPOINT_SECONDS,
             resume_authorization=authorization['event_id'] if authorization else None)
     except Exception as error:
@@ -1118,6 +1364,7 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
         native_segment=root/'native-segments'/('segment-'+uuid4().hex)
         with VeroCheckerAdapter(args.dataset,native_segment,timeout=args.check_timeout,
                 observer=observer,
+                native_slots=base_binding.get('native_slots',1),
                 shared_host_lock_dir=base_binding.get('shared_host_lock_dir'),
                 shared_host_slots=base_binding.get('shared_host_slots',1),
                 shared_host_cleanup_timeout=base_binding.get('shared_host_cleanup_timeout',30)) as checker:
@@ -1156,7 +1403,8 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
                     with instruction.open('a') as stream:
                         stream.write('\n# Common application transport\nThe check/search/progress commands above use the host-owned common Isabelle backend. Legal parent facts are available via tool.py search; host source directories and heaps are intentionally not mounted. Checks return diagnostics. Before editing or reasoning, call tool.py scope TARGET_ID ... --theory THEORY [--theory THEORY ...] --phase proof (or helper/retrieval/seal) for cost attribution. Include every intended target and theory; use an empty scope when work is genuinely unattributed. Multi-target or multi-theory cost remains shared and is never duplicated as precise single-target cost. Scope labels do not control the shared global exploration limits and do not grant proof authority. Do not attempt to install Isabelle or replace the checker.\n')
                     with instruction.open('a') as stream:
-                        stream.write(active_wall_budget_instruction(stop.snapshot()['seconds']))
+                        stream.write((effective_budget_instruction if effective else
+                            active_wall_budget_instruction)(stop.snapshot()['seconds']))
                     previous=kwargs.pop('monitor',None)
                     def monitor():
                         observer.usage_events(self.log_dir/'agent_events.jsonl',self.log_dir.parent.name)
@@ -1213,14 +1461,15 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
                                 root/'config.json',root/'run',resume=recovering),
                             journal_path=root/'run'/'iterations.json',ledger=ledger,
                             stop=stop,load=read,save=save,resume=resume,
-                            recovery_gate=recovery_gate)
+                            recovery_gate=recovery_gate,
+                            reopen_agent_error=bool(getattr(args,'runner_reopen_migration',False)))
                 finally:
                     checker.check=original_check
                     recovery_gate.close()
                 if result.get('status')=='complete':stop.finish()
                 else:
                     stop.cancel('runner_returned_without_completion')
-                    terminal=stop.reason==ACTIVE_WALL_LIMIT_REASON
+                    terminal=stop.reason==stop.limit_reason
                     result={**result,'runner_status':result.get('status'),
                         'status':'stopped' if terminal else 'paused',
                         'disposition':'stop' if terminal else 'pause',
@@ -1242,9 +1491,11 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
                     summary['generation_clock']=clock
                     summary['time_dimensions']={
                         'operation_time':'elapsed_seconds excludes recorded experiment pause/downtime only',
-                        'active_wall':'one shared-workspace cumulative online wall clock; all normal phases count',
+                        'budget_clock':('effective generation excludes trusted preparation, seal and integration'
+                            if effective else 'active online wall clock; all normal phases count'),
                         'excluded_time':'explicit pause, offline process time, or confirmed provider interruption/recovery only',
-                        'budget_stop':'terminal stop at 172800 cumulative active-wall seconds; no token, retry, iteration, or no-progress limit',
+                        'budget_stop':('terminal stop at 172800 cumulative effective-generation seconds'
+                            if effective else 'terminal stop at 172800 cumulative active-wall seconds'),
                         'poll_seconds':FORMAL_POLL_SECONDS,
                         'checkpoint_seconds':FORMAL_CHECKPOINT_SECONDS,
                         'shutdown_tail_policy':'unknown crash tail; checkpoint cadence is not a guaranteed bound',
@@ -1263,11 +1514,18 @@ def main():
     parser.add_argument('--model',default=FORMAL_MODEL,choices=[FORMAL_MODEL])
     parser.add_argument('--reasoning',default=FORMAL_REASONING,choices=[FORMAL_REASONING])
     parser.add_argument('--expected-contracts',type=int,required=True,
-        choices=[FORMAL_EXPECTED_CONTRACTS])
+        choices=[FORMAL_EXPECTED_CONTRACTS,FORMAL_CREFINE_CONTRACTS])
+    parser.add_argument('--budget-mode',choices=['active-wall','effective-time'],
+        default='active-wall')
     parser.add_argument('--active-wall-seconds',type=int,
         default=FORMAL_ACTIVE_WALL_SECONDS,choices=[FORMAL_ACTIVE_WALL_SECONDS],
         help='immutable cumulative online wall-clock limit (fixed at 48 hours)')
+    parser.add_argument('--effective-seconds',type=int,
+        choices=[FORMAL_ACTIVE_WALL_SECONDS],
+        help='immutable cumulative effective-generation limit (fixed at 48 hours)')
     parser.add_argument('--check-timeout',type=int,default=900)
+    parser.add_argument('--native-slots',type=int,default=1,choices=[1,2],
+        help='frozen per-run native capacity; the serial VERO runner still issues one check at a time')
     parser.add_argument('--auth-state-base',
         help='Private durable VERO auth directory outside output (same path on resume)')
     parser.add_argument('--auth-lease-dir',
@@ -1280,9 +1538,25 @@ def main():
         help='explicitly continue the same frozen output with a new model thread')
     parser.add_argument('--seal-dependency-migration',action='store_true',
         help='audit and apply the bounded import-seal correction to the original paused run')
+    parser.add_argument('--checker-lifecycle-migration',action='store_true',
+        help='audit and repair host-owned checker lifetime across model transport takeover')
+    parser.add_argument('--resource-pool-migration',action='store_true',
+        help='explicit audited migration of the paused CRefine run from two local native slots to one')
+    parser.add_argument('--provider-auth-migration',action='store_true',
+        help='explicit audited migration to the separate VERO CRefine login chain')
+    parser.add_argument('--runner-reopen-migration',action='store_true',
+        help='explicitly reopen the verified paused agent_error as a new model turn')
     args=parser.parse_args()
     if args.seal_dependency_migration and not args.resume:
         parser.error('--seal-dependency-migration requires --resume')
+    if args.checker_lifecycle_migration and not args.resume:
+        parser.error('--checker-lifecycle-migration requires --resume')
+    if args.resource_pool_migration and not args.resume:
+        parser.error('--resource-pool-migration requires --resume')
+    if args.provider_auth_migration and not (args.resume and args.resource_pool_migration):
+        parser.error('--provider-auth-migration requires --resume and --resource-pool-migration')
+    if args.runner_reopen_migration and not (args.resume and args.provider_auth_migration):
+        parser.error('--runner-reopen-migration requires --resume and --provider-auth-migration')
     if min(args.expected_contracts,args.active_wall_seconds,args.check_timeout)<=0:
         parser.error('budgets and expected contract count must be positive')
     try:shared_host_binding(args.shared_host_lock_dir,args.shared_host_slots,args.shared_host_cleanup_timeout)

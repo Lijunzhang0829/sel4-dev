@@ -347,7 +347,9 @@ def _run(args,ownership):
                 restore_before_revision=getattr(args,'restore_before_revision',None),
                 effective_seconds=budget_seconds if budget_mode=='effective-time' else None,
                 wall_seconds=budget_seconds if budget_mode=='active-wall' else None,
-                resume_authorization=resume_authorization,_source_locked=source_ownership is not None)
+                resume_authorization=resume_authorization,_source_locked=source_ownership is not None,
+                resource_pool_migration=getattr(args,'resource_pool_migration',False),
+                source_application_root=getattr(args,'source_application_root',None))
         from regen.infrastructure.generic_continuation import prompt as continuation_prompt
         prompt_options=({'wall_seconds':budget_seconds} if budget_mode=='active-wall' else
                         {'effective_seconds':budget_seconds} if budgeted else {})
@@ -575,6 +577,10 @@ def main():
     for name in ('dataset','output','model-config','auth'):
         parser.add_argument('--'+name,required=True)
     parser.add_argument('--continue-from',help='Explicit continuation into a fresh output directory; validates and forks existing proof state')
+    parser.add_argument('--resource-pool-migration',action='store_true',
+        help='audit an explicit one-slot-per-run migration into a shared two-slot host pool')
+    parser.add_argument('--source-application-root',
+        help='frozen source application tree for auditing --resource-pool-migration')
     parser.add_argument('--restore-before-revision',type=int,help='Restore the accepted plan/workspace immediately before this revision; requires --continue-from')
     parser.add_argument('--model',required=True)
     parser.add_argument('--reasoning',required=True)
@@ -607,6 +613,10 @@ def main():
     if min(args.expected_contracts,args.inactivity_seconds,args.idle_timeout,args.preflight_seconds,args.check_timeout,args.candidate_timeout)<=0:parser.error('budgets and expected contract count must be positive')
     if args.provider_retry_limit<0 or args.provider_retry_limit>3:parser.error('provider retry limit must be between 0 and 3')
     if args.restore_before_revision is not None and not args.continue_from:parser.error('--restore-before-revision requires --continue-from')
+    if args.resource_pool_migration and not (args.continue_from and args.resume_authorization and args.source_application_root):
+        parser.error('--resource-pool-migration requires --continue-from, --resume-authorization and --source-application-root')
+    if args.source_application_root and not args.resource_pool_migration:
+        parser.error('--source-application-root requires --resource-pool-migration')
     report=run(args)
     display={k:report[k] for k in ('status','passed','resumable','recovery_requires_reconciliation',
         'stop_reason','elapsed_seconds','error','cleanup_error','clock_persistence_error','clock_snapshot_error') if k in report}

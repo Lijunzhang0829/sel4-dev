@@ -136,12 +136,42 @@ class VeroObserver:
 
     @staticmethod
     def _valid_receipt(receipt):
-        return (isinstance(receipt,dict) and receipt.get('polarity')=='prove'
+        base=(isinstance(receipt,dict) and receipt.get('polarity')=='prove'
             and receipt.get('filled') is True and all(
                 isinstance(receipt.get(key),str) and
                 re.fullmatch(r'[0-9a-f]{64}',receipt[key]) is not None
                 for key in ('pre_proof_sha256','proof_body_sha256',
                     'prefix_sha256','context_identity')))
+        if not base:return False
+        if 'accepted_prefix_sha256' not in receipt and 'open_prefix_slots' not in receipt:
+            return True  # Replaying a receipt from an older frozen release.
+        slots=receipt.get('open_prefix_slots')
+        return (isinstance(receipt.get('accepted_prefix_sha256'),str)
+            and re.fullmatch(r'[0-9a-f]{64}',receipt['accepted_prefix_sha256']) is not None
+            and isinstance(slots,list) and all(isinstance(slot,str) and
+                re.fullmatch(r'[ch]\d{4}:(?:prove|disprove)',slot) is not None
+                for slot in slots) and len(slots)==len(set(slots)))
+
+    @staticmethod
+    def _same_accepted_proof(old,candidate):
+        if not isinstance(old,dict) or not isinstance(candidate,dict):return False
+        if any(candidate.get(key)!=old.get(key) for key in
+                ('polarity','filled','proof_body_sha256','context_identity')):
+            return False
+        if (candidate.get('pre_proof_sha256')==old.get('pre_proof_sha256')
+                and candidate.get('prefix_sha256')==old.get('prefix_sha256')):
+            return True
+        # The old proof remains certified against its immutable accepted
+        # source, even while earlier OPEN proof slots contain failed drafts.
+        return (isinstance(old.get('accepted_prefix_sha256'),str)
+            and candidate.get('prior_accepted_prefix_sha256')==
+                old['accepted_prefix_sha256'])
+
+    @staticmethod
+    def _native_receipt(candidate):
+        receipt=deepcopy(candidate)
+        receipt.pop('prior_accepted_prefix_sha256',None)
+        return receipt
 
     @staticmethod
     def _valid_source_manifest(manifest):
@@ -300,12 +330,13 @@ class VeroObserver:
         return commit
 
     def reconcile_contracts(self, requested_theory, receipts_by_theory):
-        """Revoke only certificates whose actual checked prefix/context changed.
+        """Revoke certificates only when their accepted-source projection changes.
 
         The adapter supplies candidates from the canonically rendered original
         workspace, not its local check's masked siblings. A seal transaction
         may temporarily change the target's own body while preserving its old
-        independently accepted version for a failed candidate.
+        independently accepted version for a failed candidate. Earlier OPEN
+        proof slots are drafts, never facts in the accepted version.
         """
         if not isinstance(receipts_by_theory,dict):
             raise ValueError('canonical contract receipts absent')
@@ -323,10 +354,18 @@ class VeroObserver:
                 # failed candidate; checked() replaces it only on new native
                 # evidence. External imports/support are never speculative.
                 continue
+            elif self._same_accepted_proof(old,candidate):
+                continue
+            elif (candidate.get('proof_body_sha256')!=old.get('proof_body_sha256')
+                    or candidate.get('polarity')!=old.get('polarity')
+                    or candidate.get('filled')!=old.get('filled')):
+                self.ledger.append('green_proof_edit_rejected',target_ids=[uid],
+                    theory=theory,requested_theory=requested_theory,
+                    reason='accepted proof body changed outside trusted seal transaction')
+                raise ValueError('accepted GREEN proof body changed outside seal: '+uid)
             elif candidate.get('pre_proof_sha256')!=old.get('pre_proof_sha256'):
                 reason='checked_prefix_before_proof_changed'
-            elif (candidate.get('proof_body_sha256')!=old.get('proof_body_sha256')
-                    or candidate.get('prefix_sha256')!=old.get('prefix_sha256')):
+            elif candidate.get('prefix_sha256')!=old.get('prefix_sha256'):
                 self.ledger.append('green_proof_edit_rejected',target_ids=[uid],
                     theory=theory,requested_theory=requested_theory,
                     reason='accepted proof body changed outside trusted seal transaction')
@@ -756,8 +795,7 @@ class VeroObserver:
             prior=self.accepted_receipts.get(uid)
             same_external=(prior is not None and isinstance(candidate,dict) and
                 candidate.get('context_identity')==prior.get('context_identity'))
-            exact=same_external and all(candidate.get(key)==prior.get(key) for key in
-                ('pre_proof_sha256','prefix_sha256','proof_body_sha256'))
+            exact=same_external and self._same_accepted_proof(prior,candidate)
             seal_draft=same_external and theory in self.seal_transactions
             retained=not native_green and (exact or seal_draft)
             status='green' if native_green or retained else 'open'
@@ -767,10 +805,10 @@ class VeroObserver:
             if staged:
                 node.update(accepted_receipt=deepcopy(prior),
                     accepted_evidence_event_id=self.accepted_origins[uid],
-                    seal_candidate_receipt=deepcopy(candidate),
+                    seal_candidate_receipt=self._native_receipt(candidate),
                     disposition='native_green_pending_theory_seal')
             elif native_green and isinstance(candidate,dict):
-                node.update(accepted_receipt=deepcopy(candidate),
+                node.update(accepted_receipt=self._native_receipt(candidate),
                     disposition='accepted_native_green')
             elif retained:
                 node.update(accepted_receipt=deepcopy(prior),

@@ -24,12 +24,18 @@ _OVERLOAD_007_MIGRATION = {
     'source_clock_error_event_id': '88ed0f0731525baadd57d1bae6bfeaa75b0bcd359e9f80fb4b21b447bec8f5c0',
 }
 
+_CREFINE_POOL_MIGRATION_ID='codex-crefine-one-of-two-native-slots-20261020-v1'
+_CREFINE_POOL_SOURCE_APPLICATION='77a7c514ad7e0b06a604cc662df43a2fc5b599e18864eaed6b8d74b5cd3fd304'
 
-def _implementation_files(project):
+
+def _implementation_files(project, *, include_preparation=False):
     package=Path(project)/'regen'
     files=[p for folder in ('execution','planning','infrastructure','analysis')
         for p in (package/folder).iterdir() if p.suffix in {'.py','.ML','.sh'}]
     files.append(package/'tools/generic_serial_application.py')
+    if include_preparation:
+        files.extend([package/'preparation'/'checker_context.py',
+                      package/'preparation'/'planning_input.py'])
     return {str(p.relative_to(package)):hashlib.sha256(p.read_bytes()).hexdigest()
         for p in files}
 
@@ -75,6 +81,45 @@ def _audited_overload_migration(source, old_config, config, history):
         'source_clock_error_event_id':expected['source_clock_error_event_id'],
         'changed_files':sorted(changed),
         'policy':'retain all old events, proofs, tokens and 105895.31 charged seconds; new thread; no pending call replay'}
+
+
+def _audited_crefine_pool_migration(source, old_config, config, history,
+                                   source_application_root):
+    """Permit only the authorized 004 admission change in a new continuation."""
+    old_dir='/data/zljj/vero-a-unified/experiment-stability-20261015-005/shared-native-slots'
+    new_dir=('/data/zljj/vero-a-unified/crefine-preparation-20261017-001/'
+             'runtime/shared-native-slots-2-20261019')
+    if (Path(source).name!='codex-crefine-sol-medium-effective48h-004'
+            or old_config.get('application_sha256')!=_CREFINE_POOL_SOURCE_APPLICATION
+            or old_config.get('budget_mode')!='effective-time'
+            or history.rows[-1]['kind']!='experiment_paused'
+            or not source_application_root):
+        raise ValueError('not the audited paused CRefine resource migration source')
+    expected_old={'native_slots':1,'shared_host_lock_dir':old_dir,
+        'shared_host_slots':1,'shared_host_cleanup_timeout':30}
+    expected_new={**expected_old,'shared_host_lock_dir':new_dir,'shared_host_slots':2}
+    if (any(old_config.get(k)!=v for k,v in expected_old.items())
+            or any(config.get(k)!=v for k,v in expected_new.items())):
+        raise ValueError('resource migration must only move Codex into the shared two-slot pool')
+    old_files=_implementation_files(source_application_root,include_preparation=True)
+    new_files=_implementation_files(Path(__file__).resolve().parents[2],include_preparation=True)
+    if (set(old_files)!=set(new_files)
+            or digest(old_files)!=old_config['application_sha256']
+            or digest(new_files)!=config['application_sha256']):
+        raise ValueError('resource migration application manifest mismatch')
+    changed={name for name in old_files if old_files[name]!=new_files[name]}
+    if changed!={'tools/generic_serial_application.py',
+                 'infrastructure/generic_continuation.py'}:
+        raise ValueError('resource migration changed unrelated executable code')
+    return {'migration_id':_CREFINE_POOL_MIGRATION_ID,
+        'source_application_sha256':old_config['application_sha256'],
+        'new_application_sha256':config['application_sha256'],
+        'source_last_event_id':history.rows[-1]['event_id'],
+        'changed_files':sorted(changed),
+        'old_resources':expected_old,'new_resources':expected_new,
+        'source_files':{name:old_files[name] for name in sorted(changed)},
+        'new_files':{name:new_files[name] for name in sorted(changed)},
+        'policy':'preserve source proofs, effective clock and token ledger; new provider thread'}
 
 
 @contextmanager
@@ -124,7 +169,8 @@ def continuation_ownership(source):
 
 
 def prepare(root, source, dataset, config, inactivity_seconds, *, restore_before_revision=None,
-            effective_seconds=None, wall_seconds=None, resume_authorization=None, _source_locked=False):
+            effective_seconds=None, wall_seconds=None, resume_authorization=None, _source_locked=False,
+            resource_pool_migration=False, source_application_root=None):
     effective=config.get('budget_mode') in ('effective-time','active-wall')
     if effective and (not isinstance(resume_authorization,str) or not resume_authorization.strip()):
         raise ValueError('effective-time continuation requires explicit resume authorization')
@@ -136,11 +182,14 @@ def prepare(root, source, dataset, config, inactivity_seconds, *, restore_before
     with continuation_ownership(source) if effective and not _source_locked else nullcontext():
         return _prepare(root,source,dataset,config,inactivity_seconds,
             restore_before_revision=restore_before_revision,effective_seconds=effective_seconds,
-            wall_seconds=wall_seconds,resume_authorization=resume_authorization)
+            wall_seconds=wall_seconds,resume_authorization=resume_authorization,
+            resource_pool_migration=resource_pool_migration,
+            source_application_root=source_application_root)
 
 
 def _prepare(root, source, dataset, config, inactivity_seconds, *, restore_before_revision=None,
-             effective_seconds=None, wall_seconds=None, resume_authorization=None):
+             effective_seconds=None, wall_seconds=None, resume_authorization=None,
+             resource_pool_migration=False, source_application_root=None):
     root,source,dataset=Path(root).resolve(),Path(source).resolve(),Path(dataset).resolve()
     if root==source or root.is_relative_to(source):raise ValueError('continuation needs a separate output root')
     launch=read_artifact(source/'launch.json');old_config=launch['config']
@@ -161,6 +210,8 @@ def _prepare(root, source, dataset, config, inactivity_seconds, *, restore_befor
     for key in ('inactivity_policy','provider_retry_limit','native_slots','resident_limit',
                 'native_cpus','native_memory_mb','native_pids_limit','provider_build_timeout',
                 'shared_host_lock_dir','shared_host_slots','shared_host_cleanup_timeout'):
+        if resource_pool_migration and key in ('shared_host_lock_dir','shared_host_slots'):
+            continue
         if config.get(key)!=old_config.get(key):
             raise ValueError('continuation policy differs: '+key)
     result=(read_artifact(source/'result.json') if (source/'result.json').exists() else
@@ -169,7 +220,12 @@ def _prepare(root, source, dataset, config, inactivity_seconds, *, restore_befor
     first=read_artifact(next(iter(sorted((source/'events').glob('*.json')))))
     history=Ledger(source,first['run_id'])
     migration=None
-    if effective and config.get('application_sha256')!=old_config.get('application_sha256'):
+    if resource_pool_migration:
+        if not effective or not resume_authorization:
+            raise ValueError('resource pool migration requires authorized effective-time continuation')
+        migration=_audited_crefine_pool_migration(source,old_config,config,history,
+            source_application_root)
+    elif effective and config.get('application_sha256')!=old_config.get('application_sha256'):
         migration=_audited_overload_migration(source,old_config,config,history)
     if not history.rows or (not effective and history.rows[-1]['kind']!='experiment_finished'):
         raise ValueError('source experiment has no terminal ledger event')

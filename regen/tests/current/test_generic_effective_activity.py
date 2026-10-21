@@ -205,6 +205,36 @@ class GenericEffectiveActivityTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'continuation policy differs: ' + key):
                 prepare(self.root / 'continued', source, self.root, config, 100)
 
+    def test_audited_crefine_pool_migration_only_changes_admission(self):
+        from regen.infrastructure import generic_continuation as migration
+        from regen.execution.proof_commits import digest
+        old_files={'tools/generic_serial_application.py':'old-tool',
+            'infrastructure/generic_continuation.py':'old-continuation',
+            'execution/check_executor.py':'unchanged'}
+        new_files={**old_files,'tools/generic_serial_application.py':'new-tool',
+            'infrastructure/generic_continuation.py':'new-continuation'}
+        old_dir='/data/zljj/vero-a-unified/experiment-stability-20261015-005/shared-native-slots'
+        new_dir=('/data/zljj/vero-a-unified/crefine-preparation-20261017-001/'
+            'runtime/shared-native-slots-2-20261019')
+        old={'application_sha256':digest(old_files),'budget_mode':'effective-time',
+            'native_slots':1,'shared_host_lock_dir':old_dir,'shared_host_slots':1,
+            'shared_host_cleanup_timeout':30}
+        new={**old,'application_sha256':digest(new_files),
+            'shared_host_lock_dir':new_dir,'shared_host_slots':2}
+        history=SimpleNamespace(rows=[{'kind':'experiment_paused','event_id':'last'}])
+        source=self.root/'codex-crefine-sol-medium-effective48h-004'
+        with patch.object(migration,'_CREFINE_POOL_SOURCE_APPLICATION',digest(old_files)), \
+             patch.object(migration,'_implementation_files',side_effect=[old_files,new_files]):
+            event=migration._audited_crefine_pool_migration(source,old,new,history,
+                self.root/'frozen-application')
+        self.assertEqual(event['old_resources']['shared_host_slots'],1)
+        self.assertEqual(event['new_resources']['shared_host_slots'],2)
+        self.assertEqual(len(event['changed_files']),2)
+        with patch.object(migration,'_CREFINE_POOL_SOURCE_APPLICATION',digest(old_files)):
+            with self.assertRaisesRegex(ValueError,'must only move Codex'):
+                migration._audited_crefine_pool_migration(source,old,
+                    {**new,'native_slots':2},history,self.root/'frozen-application')
+
     def test_continuation_requires_clean_clock_close_before_copying(self):
         from regen.infrastructure.generic_continuation import prepare
         source=self.root/'unclean';source.mkdir()

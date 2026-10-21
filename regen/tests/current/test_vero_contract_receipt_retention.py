@@ -67,6 +67,78 @@ class VeroContractReceiptRetentionTests(unittest.TestCase):
         self.observer.checked('A',result,source_text)
         return receipts
 
+    def projected_check(self, source_text, *, audited=(), status='ok'):
+        """Exercise the actual checker receipt projection without Isabelle."""
+        from regen.execution.vero_checker_adapter import VeroCheckerAdapter
+        checker=object.__new__(VeroCheckerAdapter)
+        checker.context={'checker_context_id':'test-context'}
+        checker.frozen_plan=None
+        checker.observer=self.observer
+        (self.workspace/'A.thy').write_text(source_text)
+        receipts=checker._contract_receipts('A',{'A.thy':source_text.encode()},
+            {'A':()})
+        result={'status':status,'contract_status':status,
+            'audited':[uid+':prove' for uid in audited],
+            'contract_receipts':receipts,
+            'native_evidence':{'returncode':0 if status=='ok' else 1},
+            'elapsed_seconds':.1,'source_identity':'a'*64}
+        self.observer.checked('A',result,source_text)
+        return receipts
+
+    @staticmethod
+    def projected_source(bodies, *, before_second=''):
+        return ('theory A imports Main begin\n'+''.join(
+            (before_second if uid=='c0002' else '')+
+            f'(* VERO START {uid} prove *)\n{body}\n(* VERO END {uid} prove *)\n'
+            f'(* VERO START {uid} disprove *)\noops\n'
+            f'(* VERO END {uid} disprove *)\n'
+            for uid,body in bodies.items())+'end\n')
+
+    def test_earlier_open_draft_does_not_revoke_accepted_later_proof(self):
+        first=self.projected_source({'c0001':'oops','c0002':'by simp',
+            'c0003':'oops'})
+        initial=self.projected_check(first,audited=['c0002'])
+        old=self.observer.accepted_receipts['c0002']
+        origin=self.observer.accepted_origins['c0002']
+        self.assertIn('c0001:prove',old['open_prefix_slots'])
+        draft=first.replace('(* VERO START c0001 prove *)\noops',
+            '(* VERO START c0001 prove *)\napply simp')
+        candidate=self.projected_check(draft,status='build_error')
+        self.assertNotEqual(initial['c0002']['pre_proof_sha256'],
+            candidate['c0002']['pre_proof_sha256'])
+        self.assertEqual(candidate['c0002']['prior_accepted_prefix_sha256'],
+            old['accepted_prefix_sha256'])
+        self.assertEqual(self.observer.accepted_receipts['c0002'],old)
+        self.assertEqual(self.observer.accepted_origins['c0002'],origin)
+        self.assertEqual(experiment_summary(self.ledger)['current_valid_contract_ids'],
+            ['c0002'])
+        self.assertFalse(any(row['kind']=='contract_green_invalidated'
+            for row in self.ledger.rows))
+        replay=VeroObserver(Ledger(self.root/'ledger','scoped-receipts'),
+            Stop(),self.workspace,self.bench)
+        self.assertEqual(replay.accepted_receipts['c0002'],old)
+
+        # Publication of the earlier proof binds the successor to the newly
+        # certified source; it cannot keep claiming its old oops context.
+        completed=draft.replace('apply simp','by simp')
+        self.projected_check(completed,audited=['c0001','c0002'])
+        refreshed=self.observer.accepted_receipts['c0002']
+        self.assertNotEqual(refreshed['pre_proof_sha256'],old['pre_proof_sha256'])
+        self.assertNotIn('c0001:prove',refreshed['open_prefix_slots'])
+        self.assertNotEqual(self.observer.accepted_origins['c0002'],origin)
+
+    def test_changed_earlier_helper_still_revokes_later_green(self):
+        first=self.projected_source({'c0001':'oops','c0002':'by simp',
+            'c0003':'oops'})
+        self.projected_check(first,audited=['c0002'])
+        changed=self.projected_source({'c0001':'apply simp','c0002':'by simp',
+            'c0003':'oops'},before_second='lemma vero_aux_new: True by simp\n')
+        self.projected_check(changed,status='build_error')
+        self.assertNotIn('c0002',self.observer.accepted_receipts)
+        reasons=[row['data']['reason'] for row in self.ledger.rows
+            if row['kind']=='contract_green_invalidated']
+        self.assertEqual(reasons,['checked_prefix_before_proof_changed'])
+
     def test_later_red_draft_retains_prior_green_and_cannot_create_new_green(self):
         initial=source({'c0001':'by simp','c0002':'by auto','c0003':'oops'})
         original=self.check(initial,audited=self.ids[:2])
