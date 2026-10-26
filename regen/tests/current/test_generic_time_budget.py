@@ -210,6 +210,11 @@ class GenericTimeBudgetTests(unittest.TestCase):
         self.assertEqual(args.effective_seconds,172800)
         self.assertFalse(hasattr(args,'token_budget'))
 
+    def test_effective_prompt_can_charge_repository_planning(self):
+        value=instructions(3600,effective_seconds=172800,include_planning=True)
+        self.assertIn('Repository planning also counts',value)
+        self.assertNotIn('Trusted harness planning does not count',value)
+
     def test_resume_restores_last_theory_attribution_from_small_transition(self):
         from regen.infrastructure.effective_time_budget import EffectiveTimeBudget
         from regen.planning.generic_codex_agent import Controller

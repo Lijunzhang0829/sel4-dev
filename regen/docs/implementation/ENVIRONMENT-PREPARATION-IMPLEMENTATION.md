@@ -1,6 +1,6 @@
 # 环境准备与冻结：实现说明
 
-状态：基于本分支 Semantic Base 代码的静态核对；本次未重新运行 Isabelle 或 campaign。
+状态：主体为本分支 Semantic Base 代码的静态核对；第 2.1 节补充 2026-10-21 对机器 B 独立 CRefine 产物的核对。本次未重新运行 Isabelle 或 campaign。
 目标设计见 [总体设计](../design/REPO-LEVEL-PROOF-HARNESS.md)，总体入口见 [README](../../README.md)。
 历史运行数字统一保存在 [实验记录](../history/REFINE-CREFINE-EXPERIMENT.md)，不作为当前分支已通过验收的证据。
 
@@ -65,6 +65,83 @@ environment gate 要求 disclosure 完整并绑定 raw exports 与 catalog。生
 facts 的使用在 theory 完成时按当前代码审计，不能把 pool membership 本身当作实际使用。
 目标政策不要求完整恢复 `simp/wp` 等 tactic 的全部 premise 引用；现有审计的阻断条件与
 该政策是否一致仍需按代码核对，不在本次直接移除审计。
+
+## 2.1 独立 CRefine 抽取与 Refine 对照（2026-10-21）
+
+机器 B 数据根为 `/data/zljj/vero-a-unified/crefine-preparation-20261017-001/`。
+它是独立 benchmark `crefine-independent-arm-20261017-001`，不是
+`refine_campaign.py` 的 setting B；可信父为原版 Refine/CBaseRefine，不使用生成的 Refine。
+
+### 选择与净化
+
+可信准备脚本 `preparation/crefine-static-prep.py` 调用共享的 `slice_decls()`、
+`is_contract()` 和 `extract_theory()`。B 端部署的 `regen_extract.py`、
+`contract_extractor.py`、`semantic_base_builder.py` 与本地核对时文件 SHA-256 一致。
+
+`operation-corres-v1` 是基于声明文本和命名的启发式规则：
+
+1. 声明类型为 `lemma/theorem/corollary`。
+2. 名称以 `_corres/_ccorres/_corresK` 结尾（允许末尾一个 `'`），且不以 `corres_` 或 `ccorres_` 开头。
+3. statement 含独立的 `corres/ccorres/corresK` token；按 `PLUMBING_RE` 及额外的 `corres` 检测排除框架 plumbing。
+4. CRefine 在此基础上额外选入 `Refine_C` 的六个 theorem：`refinement2`、`fp_refinement`、
+   `seL4_refinement`、`seL4_fastpath_refinement`、`true_refinement`、`true_fp_refinement`。
+
+共享 extractor 保留净化后的命题、`fixes/assumes/shows/for` 等声明子句、最小 enclosing
+context 及 contract-owned attributes；移除注释、`is` proof patterns、`notes/includes`
+证明上下文和证明命令。contract ID 同时绑定规范化 statement 与 context。
+这不是原始声明逐字复制，也不是 Isabelle 内部 proposition 的完整导出。
+
+### 实际规模与边界
+
+| 项目 | Refine 测试输入 | 独立 CRefine 输入 |
+|---|---|---|
+| 固定目标 | 287 个 lemma | 303 个 operation lemma + 6 个顶层 theorem |
+| 原 owner 分组 | 21 | 25 |
+| 目标层范围 | Refine | `CRefine.Refine_C` 的 45-theory ARM 局部闭包 |
+| 可信父 | Refine 下层 sessions | 原版 Refine、CBaseRefine 及其父 sessions |
+| 证明删除 | 目标层普通 proofs/helpers 移除 | 2,661 个 ordinary-proof commands 移除 |
+| 特殊保留 | 按该运行冻结的 Semantic Base | 额外披露原公理 `init_refinement_C`、两个 `value_type`、三个父定义直接 aliases |
+
+Refine 数量核自 B 端 `20260928-001/environment/dataset/repository-planning-input.json`；
+它被 `experiment-stability-20261015-005` 的 Codex smoke 绑定。不同历史 Refine campaign
+的 premise 计数不可互换。
+
+CRefine selector audit 另记录 391 条名称含 corres 的普通证明未入选；它们作为原人类
+辅助知识被移除，不能直接作为生成 premises。该数不是全部漏选操作 contracts 的数量，
+也不证明这些排除项全部只是 plumbing。`Refine_nondet_C` 未被根引用且标记 broken，
+后继 sessions 也不属于当前范围。因此完成 309 个目标不等于重建全部原始 CRefine 证明层。
+
+语义基础修订 002/003 恢复 `num_tcb_queues`、`num_domains` 的 `value_type`；004 恢复
+`return_C_def`、`return_void_C_def`、`breakk_C_def` 三个父定义 aliases。
+这些修订不是补入目标证明，但说明 CRefine 不是无差异套用 Refine 默认 core 白名单；
+原始公理及 retained facts/automation 均属于可信基础，不能计为生成成果。
+
+### 核对证据与实验解释
+
+2026-10-21 重算 planning input、checker context、premise DB、frozen contracts 和 theory graph
+五项哈希，均与 `preparation/FORMAL-PRELAUNCH-002.json` 一致；72 个 semantic workspace
+文件与冻结清单一致。309 个 ID 唯一，规划输入与 VERO benchmark 的 statement/context
+逐项相同，45-theory graph 完整唯一覆盖目标。语义文件含 309 个 `oops`、0 个 `sorry`、
+1 个披露公理；Refine/CBaseRefine/Semantic Base 构建及 premise export/evidence 的既有
+退出码均为 0。本次未重跑这些构建。premise DB 有 131,654 条记录，其中原始
+`CRefine.*` owner theory 为 0；数据库核对不能代替运行时全通道访问隔离审计。
+
+该输入足以支持在同一冻结环境下比较目标生成覆盖和成本；词法 selector、同一 seL4
+项目来源、较强可信父环境及原公理限制了外推范围。应分别报告 303 个 operation 目标
+和六个 endpoint 的结果；总数或 helper 数不能替代端点证明与完整 repository integration。
+若要主张选择器覆盖了全部操作接口，还需对排除项作语义分类审计，当前未建立该结论。
+
+实际运行的架构可见性也需单独记录：
+`codex-crefine-sol-medium-effective48h-pool2-fresh-20261021-002/plans/0001/agent-input.json`
+为 `source-theory-visible-v1`，提供 `owner_theory`；
+`vero-crefine-sol-medium-effective48h-pool2-fresh-20261021-001/planning-workspace/benchmark.json`
+提供含原 theory 的 `source_id/module`，其 accepted plan 保留全部 25 个原 owner 分组。
+这是 owner 可见条件下的运行，不是 owner-blind 主实验；原归属可见也不表示提供了原证明。
+不能仅由允许重新划分或调用了 planner，就称其为没有原架构先验的自主规划。
+
+B 端 `launch-gate.json` 已通过 adapter gate，早期 `final-preparation-validation.json`、
+`frozen-dataset.json`、`task-policy.json` 中的 pending 状态描述的是历史阶段，不能用作
+当前启动状态。历史验收 JSON 保持原样，当前说明以 README 的更新与具体 run binding 为准。
 
 ## 3. 代码定位
 

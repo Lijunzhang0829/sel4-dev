@@ -26,6 +26,9 @@ _OVERLOAD_007_MIGRATION = {
 
 _CREFINE_POOL_MIGRATION_ID='codex-crefine-one-of-two-native-slots-20261020-v1'
 _CREFINE_POOL_SOURCE_APPLICATION='77a7c514ad7e0b06a604cc662df43a2fc5b599e18864eaed6b8d74b5cd3fd304'
+_CREFINE_WORKSPACE_REPAIR_SOURCE_APPLICATION='7ddfd53d00750a1350f5b6d918aec438dea7bcaf1d5293560b3d84504e1a1c28'
+_CREFINE_LOCALE_REPAIR_SOURCE_APPLICATION='df4d70a453eec87eae8514cab736f8de6207c196d0e7fd008854b75bfa219d26'
+_CREFINE_LOCALE_REPAIR_CHECKER='2e5d99c6c0e670ff8c7375a04189c0d0aa85338e450c05cafdd670af38d10372'
 
 
 def _implementation_files(project, *, include_preparation=False):
@@ -38,6 +41,44 @@ def _implementation_files(project, *, include_preparation=False):
                       package/'preparation'/'planning_input.py'])
     return {str(p.relative_to(package)):hashlib.sha256(p.read_bytes()).hexdigest()
         for p in files}
+
+
+def _audited_locale_audit_repair(source, old_config, config, history, source_application_root):
+    """Allow this audited native fact-name repair, preserving every old result."""
+    if (Path(source).name != 'codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001'
+            or old_config.get('application_sha256') != _CREFINE_LOCALE_REPAIR_SOURCE_APPLICATION
+            or old_config.get('budget_mode') != 'effective-time'
+            or not source_application_root or not history.rows
+            or history.rows[-1]['kind'] != 'experiment_paused'):
+        raise ValueError('not the audited paused owner-blind Codex locale repair source')
+    old_files=_implementation_files(source_application_root)
+    new_files=_implementation_files(Path(__file__).resolve().parents[2])
+    if (set(old_files) != set(new_files)
+            or digest(old_files) != old_config['application_sha256']
+            or digest(new_files) != config['application_sha256']):
+        raise ValueError('locale repair application manifest mismatch')
+    changed={name for name in old_files if old_files[name] != new_files[name]}
+    if (changed != {'execution/batch_checker.ML', 'infrastructure/incremental_log.py', 'infrastructure/generic_continuation.py',
+                    'tools/generic_serial_application.py'}
+            or old_files['execution/batch_checker.ML'] != '58b3287e0dce172e3bc43ad9968094c43fc3546f855eac2431f16f7b4394f2ec'
+            or new_files['execution/batch_checker.ML'] != _CREFINE_LOCALE_REPAIR_CHECKER
+            or old_files['infrastructure/incremental_log.py'] != 'aceca00294facc7338df06cabc4603441824509de1ebce8de430d16e408e5218'
+            or new_files['infrastructure/incremental_log.py'] != '100b827467855dbfb29977d23a2ec27521f7143ab15b0628807376ad9b65a8e3'):
+        raise ValueError('locale repair changed unrelated or unaudited executable code')
+    excluded={'run_id','application_sha256'}
+    if ({k:v for k,v in old_config.items() if k not in excluded}
+            != {k:v for k,v in config.items() if k not in excluded}):
+        raise ValueError('locale repair changed frozen experiment settings')
+    return {'migration_id':'codex-crefine-native-locale-audit-20261025-v4',
+        'source_application_sha256':old_config['application_sha256'],
+        'new_application_sha256':config['application_sha256'],
+        'source_last_event_id':history.rows[-1]['event_id'],
+        'changed_files':sorted(changed),
+        'source_files':{name:old_files[name] for name in sorted(changed)},
+        'new_files':{name:new_files[name] for name in sorted(changed)},
+        'policy':'resolve only newly generated native facts; preserve exact plan, drafts, '
+                 'proof journals, charged planning/generation time and costs; '
+                 'new provider thread; no pending call replay; no GREEN without full recheck'}
 
 
 def _audited_overload_migration(source, old_config, config, history):
@@ -122,6 +163,47 @@ def _audited_crefine_pool_migration(source, old_config, config, history,
         'policy':'preserve source proofs, effective clock and token ledger; new provider thread'}
 
 
+def _audited_crefine_workspace_repair(source, old_config, config, history,
+                                     source_application_root):
+    """One infrastructure repair; never rewrite prior evidence or costs."""
+    if (Path(source).name!='codex-crefine-sol-xhigh-effective48h-planning-included-fresh-20261024-001'
+            or old_config.get('application_sha256')!=_CREFINE_WORKSPACE_REPAIR_SOURCE_APPLICATION
+            or old_config.get('budget_mode')!='effective-time'
+            or not source_application_root or not history.rows
+            or history.rows[-1]['kind']!='experiment_paused'
+            or history.rows[-1]['data'].get('reason')!='infrastructure_error'):
+        raise ValueError('not the audited paused CRefine workspace repair source')
+    old_files=_implementation_files(source_application_root)
+    new_files=_implementation_files(Path(__file__).resolve().parents[2])
+    if (set(old_files)!=set(new_files)
+            or digest(old_files)!=old_config['application_sha256']
+            or digest(new_files)!=config['application_sha256']):
+        raise ValueError('workspace repair application manifest mismatch')
+    changed={name for name in old_files if old_files[name]!=new_files[name]}
+    expected={'tools/generic_serial_application.py',
+              'infrastructure/generic_continuation.py',
+              'infrastructure/codex_workspace_session.py'}
+    if changed!=expected:
+        raise ValueError('workspace repair changed unrelated executable code')
+    excluded={'run_id','application_sha256','workspace_progress_policy'}
+    if (config.get('workspace_progress_policy')!='disabled-global-time-budget-v1'
+            or {k:v for k,v in old_config.items() if k not in excluded}
+                !={k:v for k,v in config.items() if k not in excluded}):
+        raise ValueError('workspace repair changed frozen experiment settings')
+    return {'migration_id':'codex-crefine-xhigh-workspace-recovery-20261024-v1',
+        'source_application_sha256':old_config['application_sha256'],
+        'new_application_sha256':config['application_sha256'],
+        'source_last_event_id':history.rows[-1]['event_id'],
+        'changed_files':sorted(changed),
+        'source_files':{name:old_files[name] for name in sorted(changed)},
+        'new_files':{name:new_files[name] for name in sorted(changed)},
+        'workspace_progress_policy':config['workspace_progress_policy'],
+        'policy':'disable progress and duplicate-result stopping in global time budgets; '
+                 'surface ResourceBudgetError as infrastructure failure; preserve all '
+                 'historical costs, accepted plan and verified workspace; new provider '
+                 'thread; no pending tool replay'}
+
+
 @contextmanager
 def exclusive_run(root, *, source=False):
     """One writer, or one stable recovery reader, per time-budget run."""
@@ -170,7 +252,8 @@ def continuation_ownership(source):
 
 def prepare(root, source, dataset, config, inactivity_seconds, *, restore_before_revision=None,
             effective_seconds=None, wall_seconds=None, resume_authorization=None, _source_locked=False,
-            resource_pool_migration=False, source_application_root=None):
+            resource_pool_migration=False, source_application_root=None, workspace_recovery_repair=False,
+            native_audit_repair=False):
     effective=config.get('budget_mode') in ('effective-time','active-wall')
     if effective and (not isinstance(resume_authorization,str) or not resume_authorization.strip()):
         raise ValueError('effective-time continuation requires explicit resume authorization')
@@ -184,12 +267,15 @@ def prepare(root, source, dataset, config, inactivity_seconds, *, restore_before
             restore_before_revision=restore_before_revision,effective_seconds=effective_seconds,
             wall_seconds=wall_seconds,resume_authorization=resume_authorization,
             resource_pool_migration=resource_pool_migration,
+            workspace_recovery_repair=workspace_recovery_repair,
+            native_audit_repair=native_audit_repair,
             source_application_root=source_application_root)
 
 
 def _prepare(root, source, dataset, config, inactivity_seconds, *, restore_before_revision=None,
              effective_seconds=None, wall_seconds=None, resume_authorization=None,
-             resource_pool_migration=False, source_application_root=None):
+             resource_pool_migration=False, source_application_root=None, workspace_recovery_repair=False,
+             native_audit_repair=False):
     root,source,dataset=Path(root).resolve(),Path(source).resolve(),Path(dataset).resolve()
     if root==source or root.is_relative_to(source):raise ValueError('continuation needs a separate output root')
     launch=read_artifact(source/'launch.json');old_config=launch['config']
@@ -205,6 +291,9 @@ def _prepare(root, source, dataset, config, inactivity_seconds, *, restore_befor
         for key in ('budget_mode','time_budget_policy','model_config_sha256','planning_input_sha256'):
             if not config.get(key) or config[key]!=old_config.get(key):
                 raise ValueError('continuation binding differs: '+key)
+        if bool(config.get('include_planning_time',False)) != bool(
+                old_config.get('include_planning_time',False)):
+            raise ValueError('continuation binding differs: include_planning_time')
     elif launch['inactivity_seconds']!=inactivity_seconds:
         raise ValueError('continuation inactivity policy differs')
     for key in ('inactivity_policy','provider_retry_limit','native_slots','resident_limit',
@@ -220,7 +309,17 @@ def _prepare(root, source, dataset, config, inactivity_seconds, *, restore_befor
     first=read_artifact(next(iter(sorted((source/'events').glob('*.json')))))
     history=Ledger(source,first['run_id'])
     migration=None
-    if resource_pool_migration:
+    if native_audit_repair:
+        if (not effective or not resume_authorization or resource_pool_migration
+                or workspace_recovery_repair or restore_before_revision is not None):
+            raise ValueError('native audit repair requires a separate authorized latest-state continuation')
+        migration=_audited_locale_audit_repair(source,old_config,config,history,source_application_root)
+    elif workspace_recovery_repair:
+        if not effective or not resume_authorization or resource_pool_migration:
+            raise ValueError('workspace repair requires a separate authorized effective-time continuation')
+        migration=_audited_crefine_workspace_repair(source,old_config,config,history,
+            source_application_root)
+    elif resource_pool_migration:
         if not effective or not resume_authorization:
             raise ValueError('resource pool migration requires authorized effective-time continuation')
         migration=_audited_crefine_pool_migration(source,old_config,config,history,
@@ -299,8 +398,10 @@ def _prepare(root, source, dataset, config, inactivity_seconds, *, restore_befor
         durable(root/'planning-draft.json',{'epoch':current['epoch'],'reason':'user-authorized restore; accepted plan locked'})
     from regen.execution.repository_execution import fork_workspace_continuation
     destination=root/'proof-runs'/f"{current['epoch']:04d}"
-    if checkpoint is None:fork_workspace_continuation(proof_source,destination)
-    else:fork_workspace_continuation(proof_source,destination,checkpoint=checkpoint)
+    from regen.infrastructure.incremental_log import logged_copy_batch
+    with logged_copy_batch() if native_audit_repair else nullcontext():
+        if checkpoint is None:fork_workspace_continuation(proof_source,destination)
+        else:fork_workspace_continuation(proof_source,destination,checkpoint=checkpoint)
     durable(root/'current-plan.json',{**current,'run':str(destination)},immutable=True)
     # Source epochs are references only, read at their original validated paths.
     references={str(r['data']['epoch']):r['data']['run'] for r in visible if r['kind']=='plan_accepted'}
@@ -323,6 +424,8 @@ def _prepare(root, source, dataset, config, inactivity_seconds, *, restore_befor
     if restore_before_revision is not None:
         binding['source_error']=['User requested rollback before replanning; no post-cutoff proof content supplied.']
         durable(root/'restore-checkpoint.json',checkpoint,immutable=True)
+    if migration:
+        binding['implementation_migration']=migration['migration_id']
     durable(root/'continuation-origin.json',binding,immutable=True)
     if migration:
         ledger.append('implementation_migration',**migration)
@@ -355,6 +458,16 @@ def prompt(binding):
         return ('\nThis is an authorized continuation. No repository plan was accepted. '
             'Restart repository planning from the frozen inputs; do not resume incomplete '
             'planning or replay pending tools. Prior time/token costs remain charged.\n')
+    repair_notice=('\nThe native fact-name audit was repaired for named locales. '
+        'Prior completed_uncommitted results remain unaccepted. Inspect saved drafts '
+        'and recheck candidates through the ordinary proof tools; only a fresh complete '
+        'native audit may publish GREEN. No mathematical statements or proofs were '
+        'changed by this infrastructure repair.\n'
+        if binding.get('implementation_migration') in {
+            'codex-crefine-native-locale-audit-20261025-v1',
+            'codex-crefine-native-locale-audit-20261025-v2',
+            'codex-crefine-native-locale-audit-20261025-v3',
+            'codex-crefine-native-locale-audit-20261025-v4'} else '')
     return ('\nThis is an explicitly authorized continuation of the SAME experiment. '
         'Its accepted allocation, drafts, verified proofs, seals, notes and costs are retained. '
         'The previous ephemeral model thread ended and cannot be resumed; this is a new thread. '
@@ -365,7 +478,7 @@ def prompt(binding):
         'only within their existing theories. Historical costs remain charged. '
         'Previous error: '+json.dumps(binding['source_error'])+'. '
         'No pending tool was replayed. Search limit remains 1..50 as in the shared A interface; '
-        'invalid arguments now receive nonexecution feedback that you can correct.\n')
+        'invalid arguments now receive nonexecution feedback that you can correct.\n')+repair_notice
 
 
 def rollback_checkpoint(proof_source,current,visible,cut_time):

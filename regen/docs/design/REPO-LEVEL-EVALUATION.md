@@ -15,6 +15,8 @@
 
 数据集覆盖 Refine、CRefine，以及待选定的初始无项目特定证明库的项目。Refine 和 CRefine 分别冻结目标集合和语义基础，CRefine 不依赖另一实验运行临时生成的 Refine。新项目仍保留解释目标所需的实现语义、定义和合法基础库。“无证明库”不意味着缺少目标的语义上下文。
 
+2026-10-21 核对的独立 CRefine/ARM 输入包含 303 个 operation correspondence lemma 和额外六个顶层 refinement theorem；与 Refine 287 个目标共用 operation selector 和 statement/context 净化实现，但可信父、原公理和语义保留补充不同。选择范围、冻结证据与限制见 [CRefine 抽取对照](../implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md#21-独立-crefine-抽取与-refine-对照2026-10-21)。同一数据集内比较方法；跨 Refine/CRefine 的覆盖差异不能直接解释为方法提升。CRefine 同时报 operation 与六个 endpoint 的完成情况，不把它称为全部 CRefine 普通证明的覆盖率。
+
 正式矩阵需要冻结具体模型配置、项目清单、每个数据集的生成时长与重复次数。相同数据集内使用相同生成时长；如果不同数据集采用不同预算，分别报告，不能直接比较原始证明数量。每次运行从干净的任务状态开始，不复用其他运行的生成 helpers、证明或模型记忆。
 
 ## 主实验的输入与方法边界
@@ -24,6 +26,8 @@
 检查能力、合法事实访问边界、生成目标和验收规则应对齐；适配层不能额外提供从原证明提取的目标专用提示。方法间不同的批量编辑、检索决策和检查策略属于系统差异，记录其开销。实现或资源差异可能影响结果时，应在对应配置旁说明。
 
 当前 [Codex 入口](../../planning/generic_codex_agent.py) 和 [VERO 入口](../../tools/vero_serial_application.py) 均包含自主分组后冻结的流程。Codex 控制器默认采用 `sketch-reviewed-v1`，提示还要求在策略触发时检查 helper sketch。因此必须冻结并披露共享 harness 的策略，不能把该配置称为完全没有本方法机制的 plain agent。它可以作为较强的共享工具基线，但其差异主要体现整体控制与组织；不能用这一对照单独归因 helper 条件检查的效果。
+
+入口支持重新分组不代表已运行的实验满足 owner-blind 输入政策。B 端 CRefine `codex-crefine-sol-medium-effective48h-pool2-fresh-20261021-002` 的实际规划视图为 `source-theory-visible-v1`；`vero-crefine-sol-medium-effective48h-pool2-fresh-20261021-001` 的规划 benchmark 保留原始 `source_id/module`，最终沿用全部 25 个原分组。这些运行应标为“原 theory 归属可见”，其结果不能直接填入上述 owner-blind 主实验单元，也不能仅据此评价无原架构先验的划分能力。后续主实验须在运行前对各方法实际模型输入、ID、查询响应及可读文件统一检查归属信息是否移除；不能事后修改既有运行输入来重新命名实验。
 
 如果某个基线入口必须接收外部划分，应明确标记为“给定规划的基线”，记录规划来源，不把该结果解释为其自主组织仓库的能力。不能只向某个方法额外提供原始人工划分，却仍将该单元称为输入相同的主实验。
 

@@ -64,8 +64,22 @@ local
         val theory = Toplevel.end_theory Position.none finished;
         val _ = if forall (member (op =) baseline) (map #1 (Thm.all_axioms_of theory))
                 then () else error "New axioms in batch";
+        (* A named locale exports kernel.foo, not the short name foo that was
+           visible while its proof ran. Resolve against this generated theory's
+           new exports, never by guessing a locale or borrowing a parent fact.
+           Prefer Isabelle's normal namespace resolution when it names a new
+           export; otherwise require a unique qualified export. *)
+        val facts = Global_Theory.facts_of theory;
+        val exports = map #1 (Facts.dest_static true (map Global_Theory.facts_of parents) facts);
+        fun exported name =
+          if member (op =) exports (Facts.intern facts name)
+          then Facts.intern facts name
+          else (case filter (fn full => Long_Name.base_name full = name) exports of
+                  [full] => full
+                | [] => error ("Missing generated fact: " ^ quote name)
+                | _ => error ("Ambiguous generated fact: " ^ quote name));
         fun fact name =
-          let val thms = Global_Theory.get_thms theory name;
+          let val thms = Global_Theory.get_thms theory (exported name);
               val _ = if null thms then error "Empty audited fact" else ();
               val _ = Thm.consolidate thms;
               val _ = if Thm_Deps.has_skip_proof thms then error "skip_proof dependency" else ();

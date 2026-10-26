@@ -165,7 +165,7 @@ def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=I
         **({'checker_context_root':str(input_root),
             'checker_context_id':checker_context['checker_context_id']} if direct
            else {'environment_run':str(input_root)}),
-        'target':'Refine', 'state':'ready',
+        'target':checker_context.get('target_session', 'Refine') if direct else 'Refine', 'state':'ready',
         'execution_models':models,
         'model_config_path':str(MODEL_CONFIG),
         **({'execution_model_overrides':dict(execution_models)} if execution_models is not None else {}),

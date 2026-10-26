@@ -84,7 +84,7 @@ def _manifest(root):
               '--native-cpus', '--native-memory-mb', '--native-pids-limit',
               '--provider-build-timeout', '--build-ml-heap-mb', '--generation-strategy',
               '--focus-contract-id', '--effective-seconds', '--resume-authorization',
-              '--extend-effective-seconds'}
+              '--extend-effective-seconds', '--planning-budget'}
     switches = {'--allow-external-call'}
     arguments = command[5:] if command[1] == '-u' else command[4:]
     options = {}
@@ -251,7 +251,7 @@ def start(run_dir, *, stop_timeout=45):
                    '--property=StandardError=append:'+str(log), '--property=UMask=0077']
         # Preserve explicit operational overrides without capturing credentials
         # or the caller's terminal/IDE environment in the receipt.
-        for key in ('CODEX_HOME', 'REGEN_CODEX_BIN'):
+        for key in ('CODEX_HOME', 'REGEN_CODEX_BIN', 'REGEN_MODEL_CONFIG'):
             if key in os.environ:
                 command.append('--setenv='+key+'='+os.environ[key])
         # systemd 245 lacks --expand-environment. Encode argv rather than let

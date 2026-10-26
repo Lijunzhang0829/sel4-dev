@@ -51,14 +51,24 @@ from regen.execution.vero_import_graph import (
     effective_generated_imports,
 )
 from regen.planning.premise_retrieval import retrieve_premises
+from regen.planning.vero_plan_audit import POLICY as VERO_PLAN_POLICY, audit_vero_plan
 from regen.preparation.checker_context import load_context
+from regen.tools.vero_tool_protocol import preview_diagnostic, read_diagnostic_chunk
 
 _BINDING_LOCK=threading.Lock()
+PREFIX_REVALIDATION_MIGRATION_ID='vero-independent-prefix-revalidation-20261025-v3'
+PREFIX_REVALIDATION_MIGRATION_FROM='b2f45cc58b55df0f71388c83a8567e12a3e013f15f255b46b9994ec5e44e5bdd'
+TOOL_TRANSPORT_MIGRATION_ID='vero-bounded-diagnostic-transport-20261026-v1'
+TOOL_TRANSPORT_MIGRATION_FROM='01edd0f4260da6113bd94b87781804623f76fa5924b20b1d8e684951f0688bfa'
+TOOL_RUNTIME_MIGRATION_ID='vero-tool-runtime-binding-20261027-v2'
+TOOL_RUNTIME_MIGRATION_FROM='e50170d01720cc3628ec3b60069f4ae13fde5676bbd016143ad6525382885bde'
 FORMAL_MODEL='gpt-5.6-sol'
 FORMAL_REASONING='medium'
+FORMAL_REASONINGS=('medium','xhigh')
 FORMAL_EXPECTED_CONTRACTS=287
 FORMAL_ACTIVE_WALL_SECONDS=172800
 FORMAL_CREFINE_CONTRACTS=309
+VALIDATION_EFFECTIVE_SECONDS=7200
 FORMAL_POLL_SECONDS=1
 FORMAL_CHECKPOINT_SECONDS=30
 RUNTIME_HOME_SENTINEL='<fresh-private-runtime-home>'
@@ -188,6 +198,17 @@ def _source_binding(source):
         for p in source.iterdir() if p.suffix in {'.py','.thy'}}
 
 
+def runtime_agent_environment(config):
+    """Launch the audited transport even when a resume keeps its frozen config.
+
+    The original agent applies config.env after inheriting the launcher's env.
+    A migrated run therefore needs this runtime-only override; otherwise the
+    frozen PYTHONPATH silently mounts the original release's tool client.
+    """
+    return {**config.get('env',{}),
+        'PYTHONPATH':str(Path(__file__).resolve().parents[2])}
+
+
 def expected_runtime_config(root, base_binding, frozen_plan):
     host_keys=('native_slots','shared_host_lock_dir','shared_host_slots',
         'shared_host_cleanup_timeout')
@@ -213,16 +234,20 @@ def expected_runtime_config(root, base_binding, frozen_plan):
             'auth_state_base':base_binding.get('auth_state_base'),
             'auth_lease_dir':base_binding.get('auth_lease_dir')},
         'agent':{'codex':base_binding['client_path'],'home':RUNTIME_HOME_SENTINEL,
-            'model':FORMAL_MODEL,'reasoning_effort':FORMAL_REASONING,
+            'model':base_binding.get('model',FORMAL_MODEL),
+            'reasoning_effort':base_binding.get('reasoning_effort',FORMAL_REASONING),
             'timeout_seconds':None,'sandbox_mode':'workspace-write',
-            'env':{'PYTHONPATH':str(Path(__file__).resolve().parents[2])}},
+            'env':{'PYTHONPATH':str(Path(base_binding.get('application',__file__)).resolve().parents[2])}},
         'frozen_plan':frozen_plan}
 
 
 def validate_resume_artifacts(root, base_binding, *, seal_migration=False,
                               checker_lifecycle_migration=False,
                               resource_pool_migration=False,
-                              provider_auth_migration=False):
+                              provider_auth_migration=False,
+                              prefix_revalidation_migration=False,
+                              tool_transport_migration=False,
+                              tool_runtime_migration=False):
     """Authenticate the complete frozen hand-off before mutating its ledger."""
     root=Path(root)
     required=('binding.json','accepted-plan.json','planned-benchmark.json','config.json')
@@ -239,6 +264,29 @@ def validate_resume_artifacts(root, base_binding, *, seal_migration=False,
         raise ValueError('VERO continuation budget policy changed; no implicit migration or clock reset')
     frozen=frozen_plan_binding(planned,plan)
     expected={**base_binding,'frozen_plan':frozen}
+    if tool_runtime_migration:
+        if any((seal_migration,checker_lifecycle_migration,resource_pool_migration,
+                provider_auth_migration,prefix_revalidation_migration,
+                tool_transport_migration)):
+            raise ValueError('tool runtime migration cannot combine other migrations')
+        validate_tool_runtime_migration(Ledger(root,root.name),binding,base_binding)
+        for key in ('application','application_sha256','application_dependencies'):
+            expected[key]=binding[key]
+    if tool_transport_migration:
+        if any((seal_migration,checker_lifecycle_migration,resource_pool_migration,
+                provider_auth_migration,prefix_revalidation_migration)):
+            raise ValueError('tool transport migration cannot combine other migrations')
+        tool_transport_migration_binding(binding,base_binding,
+            prior_prefix_migration(Ledger(root,root.name)))
+        for key in ('application','application_sha256','application_dependencies'):
+            expected[key]=binding[key]
+    if prefix_revalidation_migration:
+        if any((seal_migration,checker_lifecycle_migration,resource_pool_migration,
+                provider_auth_migration)):
+            raise ValueError('prefix revalidation migration cannot combine other migrations')
+        prefix_revalidation_migration_binding(binding,base_binding)
+        for key in ('application','application_sha256','application_dependencies'):
+            expected[key]=binding[key]
     if resource_pool_migration:
         if (binding.get('application_sha256')!=RESOURCE_POOL_MIGRATION_FROM
                 or binding.get('native_slots')!=2
@@ -274,6 +322,136 @@ def validate_resume_artifacts(root, base_binding, *, seal_migration=False,
         if path.is_symlink() or not path.is_dir():
             raise ValueError('continuation '+name+' is absent or unsafe')
     return plan,planned,config,frozen
+
+
+def prefix_revalidation_migration_binding(old, new):
+    """Permit only this audited checker correction, preserving frozen inputs."""
+    old_deps=old.get('application_dependencies',{})
+    new_deps=new.get('application_dependencies',{})
+    added='execution/vero_prefix_revalidation.py'
+    changed={name for name in old_deps if old_deps[name]!=new_deps.get(name)}
+    if (old.get('application_sha256')!=PREFIX_REVALIDATION_MIGRATION_FROM
+            or set(new_deps)!=set(old_deps)|{added}
+            or changed!={'execution/vero_checker_adapter.py',
+                'infrastructure/vero_experiment_observer.py'}):
+        raise ValueError('prefix revalidation migration changed unaudited application dependencies')
+    return {'migration_id':PREFIX_REVALIDATION_MIGRATION_ID,
+        'original_application_sha256':old['application_sha256'],
+        'new_application_sha256':new['application_sha256'],
+        'new_application':new['application'],
+        'original_application_dependencies':old_deps,
+        'new_application_dependencies':new_deps,
+        'frozen_binding_sha256':digest(old),
+        'purpose':'native independent prefix revalidation; no proof edits or receipt promotion without fresh evidence',
+        'clock_and_usage_preserved':True,'frozen_inputs_and_plan_preserved':True}
+
+
+def record_prefix_revalidation_migration(ledger, old, new):
+    event=prefix_revalidation_migration_binding(old,new)
+    previous=[row for row in ledger.rows if row['kind']=='implementation_migration'
+        and row['data'].get('migration_id')==PREFIX_REVALIDATION_MIGRATION_ID]
+    if previous:
+        if len(previous)!=1 or previous[0]['data']!=event:
+            raise ValueError('prefix revalidation migration differs from its audited event')
+        return previous[0]
+    return ledger.append('implementation_migration',**event)
+
+
+def prior_prefix_migration(ledger):
+    matches=[row['data'] for row in ledger.rows
+        if row['kind']=='implementation_migration'
+        and row['data'].get('migration_id')==PREFIX_REVALIDATION_MIGRATION_ID]
+    if len(matches)!=1:raise ValueError('tool transport repair requires the audited prefix repair')
+    return matches[0]
+
+
+def tool_transport_migration_binding(old, new, prior):
+    """Extend the recorded prefix repair solely with diagnostic transport code."""
+    old_deps=prior.get('new_application_dependencies',{})
+    new_deps=new.get('application_dependencies',{})
+    additions={'tools/vero_application_tool.py','tools/vero_tool_protocol.py'}
+    if (prior.get('migration_id')!=PREFIX_REVALIDATION_MIGRATION_ID
+            or prior.get('frozen_binding_sha256')!=digest(old)
+            or prior.get('original_application_sha256')!=old.get('application_sha256')
+            or old.get('application_sha256')!=PREFIX_REVALIDATION_MIGRATION_FROM
+            or prior.get('new_application_sha256')!=TOOL_TRANSPORT_MIGRATION_FROM
+            or set(new_deps)!=set(old_deps)|additions
+            or any(new_deps.get(k)!=v for k,v in old_deps.items())):
+        raise ValueError('tool transport migration changed unaudited application dependencies')
+    return {'migration_id':TOOL_TRANSPORT_MIGRATION_ID,
+        'predecessor_migration_sha256':digest(prior),
+        'original_application_sha256':TOOL_TRANSPORT_MIGRATION_FROM,
+        'new_application_sha256':new['application_sha256'],
+        'new_application':new['application'],
+        'original_application_dependencies':old_deps,
+        'new_application_dependencies':new_deps,
+        'frozen_binding_sha256':digest(old),
+        'purpose':'bounded diagnostic previews and read-only log paging; complete JSON framing',
+        'clock_and_usage_preserved':True,'frozen_inputs_and_plan_preserved':True}
+
+
+def record_tool_transport_migration(ledger, old, new):
+    event=tool_transport_migration_binding(old,new,prior_prefix_migration(ledger))
+    previous=[row for row in ledger.rows if row['kind']=='implementation_migration'
+        and row['data'].get('migration_id')==TOOL_TRANSPORT_MIGRATION_ID]
+    if previous:
+        if len(previous)!=1 or previous[0]['data']!=event:
+            raise ValueError('tool transport migration differs from its audited event')
+        return previous[0]
+    return ledger.append('implementation_migration',**event)
+
+
+def prior_tool_transport_migration(ledger):
+    prefix=[row for row in ledger.rows if row['kind']=='implementation_migration'
+        and row['data'].get('migration_id')==PREFIX_REVALIDATION_MIGRATION_ID]
+    transport=[row for row in ledger.rows if row['kind']=='implementation_migration'
+        and row['data'].get('migration_id')==TOOL_TRANSPORT_MIGRATION_ID]
+    if (len(prefix)!=1 or len(transport)!=1
+            or prefix[0]['sequence']>=transport[0]['sequence']):
+        raise ValueError('tool runtime repair requires the unique audited prefix and transport repairs')
+    return prefix[0]['data'],transport[0]['data']
+
+
+def tool_runtime_migration_binding(old, new, prefix, transport):
+    """Change only the server after authenticating both recorded predecessors."""
+    def predecessor_binding(event):
+        return {**old,'application':event.get('new_application'),
+            'application_sha256':event.get('new_application_sha256'),
+            'application_dependencies':event.get('new_application_dependencies',{})}
+    if (prefix_revalidation_migration_binding(old,predecessor_binding(prefix))!=prefix
+            or tool_transport_migration_binding(old,predecessor_binding(transport),prefix)!=transport
+            or transport.get('new_application_sha256')!=TOOL_RUNTIME_MIGRATION_FROM
+            or new.get('application_dependencies')!=transport.get('new_application_dependencies')):
+        raise ValueError('tool runtime migration changed its audited predecessor or application dependencies')
+    preserved={**new,'frozen_plan':old.get('frozen_plan')}
+    for key in ('application','application_sha256','application_dependencies'):
+        preserved[key]=old.get(key)
+    if (preserved!=old or ('frozen_plan' in new and new['frozen_plan']!=old.get('frozen_plan'))):
+        raise ValueError('tool runtime migration changed frozen inputs, plan, configuration or budget')
+    return {'migration_id':TOOL_RUNTIME_MIGRATION_ID,
+        'predecessor_migration_sha256':digest(transport),
+        'original_application_sha256':TOOL_RUNTIME_MIGRATION_FROM,
+        'new_application_sha256':new['application_sha256'],
+        'new_application':new['application'],
+        'original_application_dependencies':transport['new_application_dependencies'],
+        'new_application_dependencies':new['application_dependencies'],
+        'frozen_binding_sha256':digest(old),
+        'purpose':'bind model runtime transport and mounted client to the audited current application',
+        'clock_and_usage_preserved':True,'frozen_inputs_and_plan_preserved':True}
+
+
+def validate_tool_runtime_migration(ledger, old, new):
+    event=tool_runtime_migration_binding(old,new,*prior_tool_transport_migration(ledger))
+    previous=[row for row in ledger.rows if row['kind']=='implementation_migration'
+        and row['data'].get('migration_id')==TOOL_RUNTIME_MIGRATION_ID]
+    if previous and (len(previous)!=1 or previous[0]['data']!=event):
+        raise ValueError('tool runtime migration differs from its audited event')
+    return event,previous
+
+
+def record_tool_runtime_migration(ledger, old, new):
+    event,previous=validate_tool_runtime_migration(ledger,old,new)
+    return previous[0] if previous else ledger.append('implementation_migration',**event)
 
 
 def record_resource_pool_migration(ledger, old_binding, new_binding):
@@ -539,6 +717,12 @@ def create_fresh_plan(*, root, bench, config, Agent, stop, ledger, compile_plan,
         'Write PLAN.json with version=1, source_benchmark_id from benchmark.json, modules and execution_order. '
         'Each module has name (Vero_ prefix, excluding Vero_All/Vero_Support), contracts (IDs), imports (other generated modules), '
         'and a nonempty rationale. Assign every contract exactly once. Imports must precede their consumers in execution_order. '
+        f'For this schema-v2 run also set architecture_policy="{VERO_PLAN_POLICY}" and add helper_provider_intents. '
+        'Each intent has exactly id, provider, consumers, contract_ids and rationale. It reserves an anticipated domain-level '
+        'shared-helper role in the provider global_aux area; every listed consumer must already import that provider directly or '
+        'transitively, and every listed contract must belong to a listed consumer. The list may be empty only when no cross-theory '
+        'helper role is justified. This metadata never creates imports, facts, helper statements or a proof route. Avoid one universal '
+        'provider; prefer a few semantic-domain providers with bounded fan-out. '
         'Choose the division and order yourself. This is the only allocation pass: after acceptance, theories, contracts and imports are immutable. Do not generate proof bodies in this planning phase. '
         'Parent search is available through python3 /backend/tool.py search QUERY. Read PLAN-FEEDBACK.json if present.')
     attempt=0;first_failure_at=None;prior_failures=0
@@ -592,21 +776,34 @@ def create_fresh_plan(*, root, bench, config, Agent, stop, ledger, compile_plan,
         try:
             plan=_read_json(planning/'PLAN.json',limit=4*1024*1024)
             planned=compile_plan(bench,plan)
+            audit=(audit_vero_plan(bench,plan,require_policy=True)
+                if bench.get('schema_version')==2 else None)
         except (ValueError,OSError,KeyError,TypeError) as error:
             durable(planning/'PLAN-FEEDBACK.json',{'error':str(error)})
             ledger.append('plan_rejected',error=str(error));continue
+        if audit is not None:
+            durable(planning/'PLAN-AUDIT.json',audit)
+            ledger.append('plan_architecture_audited',plan_sha256=audit['plan_sha256'],
+                helper_provider_intents=len(audit['helper_provider_intents']),
+                critical_path_edges=audit['critical_path']['edges'],
+                warnings=len(audit['warnings']),model_called=False,mutates_plan=False)
         return plan,planned
 
 
 def formal_configuration_binding(args):
     """Validate and persist the immutable formal-experiment controls."""
     effective=getattr(args,'budget_mode','active-wall')=='effective-time'
+    validation=bool(getattr(args,'validation_run',False))
     native_slots=getattr(args,'native_slots',1)
     if native_slots not in (1,2):
         raise ValueError('formal VERO native_slots must be 1 or 2')
     values={'model':args.model,'reasoning_effort':args.reasoning,
         'expected_contract_count':args.expected_contracts,
         'token_limit':None,
+        **({'include_planning_time':True}
+           if getattr(args,'include_planning_time',False) else {}),
+        **({'experiment_profile':'crefine-effective-2h-validation-v1'}
+            if validation else {}),
         **({'native_slots':native_slots} if native_slots!=1 else {}),
         **({'budget_mode':'effective-time',
             'effective_seconds_limit':args.effective_seconds} if effective else {
@@ -615,14 +812,16 @@ def formal_configuration_binding(args):
             getattr(args,'shared_host_slots',1),
             getattr(args,'shared_host_cleanup_timeout',30))}
     valid_budget=((effective and args.expected_contracts==FORMAL_CREFINE_CONTRACTS
-            and args.effective_seconds==FORMAL_ACTIVE_WALL_SECONDS)
+            and args.effective_seconds==(VALIDATION_EFFECTIVE_SECONDS if validation
+                else FORMAL_ACTIVE_WALL_SECONDS))
         or (not effective and args.expected_contracts==FORMAL_EXPECTED_CONTRACTS
             and args.active_wall_seconds==FORMAL_ACTIVE_WALL_SECONDS
-            and getattr(args,'effective_seconds',None) is None))
-    if (args.model!=FORMAL_MODEL or args.reasoning!=FORMAL_REASONING or not valid_budget):
-        raise ValueError('formal VERO experiment requires gpt-5.6-sol/medium and either '
+            and getattr(args,'effective_seconds',None) is None and not validation))
+    if (args.model!=FORMAL_MODEL or args.reasoning not in FORMAL_REASONINGS or not valid_budget):
+        raise ValueError('formal VERO experiment requires gpt-5.6-sol with medium or xhigh reasoning and either '
             '287 Refine contracts with 172800 active-wall seconds, or '
-            '309 CRefine contracts with 172800 effective-generation seconds')
+            '309 CRefine contracts with 172800 effective-generation seconds, or an explicit '
+            '--validation-run with 309 CRefine contracts and 7200 effective-generation seconds')
     if getattr(args,'token_limit',None) is not None:
         raise ValueError('legacy token-limit is unsupported: VERO now uses '
             'only the active-wall time limit')
@@ -658,9 +857,11 @@ def active_wall_budget_instruction(seconds):
         'unrecoverable infrastructure invariant fails. '
         'The accepted theory allocation and imports are frozen: never split or merge theories, move '
         'contracts, change imports or replan. All theories remain one shared workspace, but unsealed '
-        'sibling facts are not legal imported premises. A theory may be drafted in any order, but its '
-        'contracts cannot be certified GREEN and its seal cannot be published until every frozen imported '
-        'theory is sealed. When every contract and helper in a theory has passed the current '
+        'sibling facts are not legal imported premises. A theory may be drafted in any order. A contract '
+        'that passes its current native check may be certified GREEN even while an imported theory is '
+        'unsealed; the evidence remains bound to the exact imported source and is reconciled if that source '
+        'changes. The theory seal cannot be published until every frozen imported theory is sealed. When '
+        'every contract and helper in a theory has passed the current '
         'native theory check, request seal immediately; if imports '
         'are not yet sealed, the harness records a deferred seal and you must finish those imports first. '
         'A contract proof body accepted GREEN by a native check is frozen during ordinary '
@@ -676,10 +877,12 @@ def active_wall_budget_instruction(seconds):
         'seal it, and do not change the frozen plan.\n')
 
 
-def effective_budget_instruction(seconds):
+def effective_budget_instruction(seconds, *, include_planning=False):
     return ('\nThe experiment has one shared-workspace effective-generation budget of '
         f'{seconds:g} seconds. It does not reset for a new GREEN contract or a theory switch. '
-        'Planning, initialization, trusted native seal/build, integration, recorded pauses, '
+        + ('Repository planning consumes this budget. ' if include_planning else
+           'Repository planning does not consume this budget. ') +
+        'Initialization, trusted native seal/build, integration, recorded pauses, '
         'and confirmed provider recovery do not consume this budget; ordinary proof '
         'generation, model reasoning, edits, helper work, retrieval, and native candidate '
         'checks do. Model-driven diagnosis or repair after a failed seal is generation. '
@@ -734,6 +937,23 @@ def fixed_inventory_binding(bench, expected_contracts):
             for c in bench['contracts']])}
 
 
+def application_dependency_binding():
+    """Bind host-side modules that can change proof acceptance or plan admission."""
+    regen_root=Path(__file__).resolve().parents[1]
+    relative=(
+        'execution/vero_checker_adapter.py',
+        'execution/vero_prefix_revalidation.py',
+        'execution/vero_import_graph.py',
+        'infrastructure/effective_time_budget.py',
+        'infrastructure/vero_experiment_observer.py',
+        'planning/vero_plan_audit.py',
+        'tools/vero_application_tool.py',
+        'tools/vero_tool_protocol.py',
+    )
+    return {name:hashlib.sha256((regen_root/name).read_bytes()).hexdigest()
+        for name in relative}
+
+
 def frozen_plan_binding(bench, plan):
     """Canonical identity shared by the entry, ledger and checker service."""
     allocation={m['name']:sorted(m['contracts']) for m in plan['modules']}
@@ -767,7 +987,8 @@ def snapshot(workspace, destination, modules):
         (destination/name).write_bytes(raw)
 
 
-def canonical_contract_receipts(bench, artifact, checker, frozen_imports, destination):
+def canonical_contract_receipts(bench, artifact, checker, frozen_imports, destination, *,
+                               raw_snapshot=None):
     """Fingerprint checked prefixes in the full, unmasked VERO render."""
     from vero.isabelle.benchmark import render
     if not all(callable(getattr(checker,name,None)) for name in
@@ -780,6 +1001,13 @@ def canonical_contract_receipts(bench, artifact, checker, frozen_imports, destin
         for path in sorted(Path(destination).glob('*.thy'))}
     effective=effective_generated_imports(canonical,frozen_imports,
         require_rendered=True)
+    revalidate=getattr(type(checker),'revalidate_contract_prefixes',None)
+    observer=getattr(checker,'observer',None)
+    if callable(revalidate) and observer is not None and raw_snapshot is not None:
+        prior=getattr(observer,'audit_workspace_snapshot',None)
+        observer.audit_workspace_snapshot=raw_snapshot
+        try:checker.revalidate_contract_prefixes(next(iter(effective)),canonical,effective)
+        finally:observer.audit_workspace_snapshot=prior
     receipts={theory:checker._contract_receipts(theory,canonical,effective)
         for theory in effective}
     return canonical,effective,receipts
@@ -840,13 +1068,33 @@ class Service(socketserver.UnixStreamServer):
     def canonical_receipts(self, artifact, attempt):
         """Recreate the same complete source fingerprints used by native checks."""
         return canonical_contract_receipts(self.bench,artifact,self.checker,
-            self.frozen_plan['imports'],attempt/'canonical')
+            self.frozen_plan['imports'],attempt/'canonical',raw_snapshot=attempt/'snapshot')
 
     def dispatch(self,request):
         if not isinstance(request,dict):raise ValueError('request must be an object')
         cmd=request.get('cmd')
         observer=getattr(self.checker,'observer',None)
         if observer:observer.stop.check()
+        if cmd=='diagnostic':
+            # Only completed, host-owned evaluation logs in this run are visible.
+            # Do not snapshot/reconcile the workspace or invoke the checker here.
+            import re
+            request_id=request.get('request_id')
+            module=request.get('module')
+            if (not isinstance(request_id,str)
+                    or re.fullmatch(r'[0-9a-f]{32}',request_id) is None
+                    or not isinstance(module,str) or module not in self.modules):
+                raise ValueError('invalid diagnostic reference')
+            attempt=self.output/request_id
+            evaluation=attempt/'evaluation'
+            completions=[attempt/'response.json',attempt/'response.json.gz']
+            if (attempt.is_symlink() or evaluation.is_symlink()
+                    or any(p.is_symlink() for p in completions)
+                    or not any(p.is_file() for p in completions)):
+                raise ValueError('diagnostic request is not complete')
+            return {**read_diagnostic_chunk(evaluation/(module+'.log'),
+                offset=request.get('offset',0),limit=request.get('limit',65536)),
+                'request_id':request_id,'module':module}
         if cmd=='scope':
             ids=request.get('target_ids',[])
             if not isinstance(ids,list) or any(not isinstance(k,str) or not k for k in ids):raise ValueError('invalid target scope')
@@ -1077,9 +1325,16 @@ class Service(socketserver.UnixStreamServer):
                         request['module'])
                 finally:
                     observer.audit_workspace_snapshot=prior_snapshot
-        # Include actual checker diagnostics rather than returning status alone.
-        result['diagnostics']={m:(attempt/'evaluation'/(m+'.log')).read_text()
-            for m in result['modules']}
+        # Preserve full logs on disk; never copy unbounded prover output into
+        # the RPC frame, persisted response, and model transcript.
+        result['diagnostics']={}
+        result['diagnostics_metadata']={}
+        for module in result['modules']:
+            preview,metadata=preview_diagnostic(attempt/'evaluation'/(module+'.log'))
+            result['diagnostics'][module]=preview
+            result['diagnostics_metadata'][module]={**metadata,
+                'request_id':attempt.name,'module':module,
+                'read_command':f'python3 /backend/tool.py diagnostic {attempt.name} {module} --offset 0'}
         durable(attempt/'response.json',result)
         if observer:
             audit_live_workspace_after_step(self.checker,observer,self.bench,
@@ -1156,7 +1411,7 @@ def bind_runner(runner,checker,agent_class):
                     if (observer.accepted_receipts and not invalid_reason
                             and not artifact.get('file_errors')):
                         canonical,effective,receipts=canonical_contract_receipts(observer.bench,
-                            artifact,checker,frozen,Path(tmp)/'canonical')
+                            artifact,checker,frozen,Path(tmp)/'canonical',raw_snapshot=raw_snapshot)
                         previous=getattr(observer,'audit_workspace_snapshot',None)
                         observer.audit_workspace_snapshot=raw_snapshot
                         try:
@@ -1230,6 +1485,7 @@ def run(args):
         'vero_sources':_source_binding(source),
         'application':str(Path(__file__).resolve()),
         'application_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        'application_dependencies':application_dependency_binding(),
         'image':args.image,'proxy':args.proxy,'check_timeout':args.check_timeout,
         'continuation_mode':'workspace-level-explicit-new-agent-thread-v1',
         'conversation_resume':False,
@@ -1246,7 +1502,10 @@ def run(args):
             seal_migration=bool(getattr(args,'seal_dependency_migration',False)),
             checker_lifecycle_migration=bool(getattr(args,'checker_lifecycle_migration',False)),
             resource_pool_migration=bool(getattr(args,'resource_pool_migration',False)),
-            provider_auth_migration=bool(getattr(args,'provider_auth_migration',False)))
+            provider_auth_migration=bool(getattr(args,'provider_auth_migration',False)),
+            prefix_revalidation_migration=bool(getattr(args,'prefix_revalidation_migration',False)),
+            tool_transport_migration=bool(getattr(args,'tool_transport_migration',False)),
+            tool_runtime_migration=bool(getattr(args,'tool_runtime_migration',False)))
         except Exception:
             formal_lock.close()
             raise
@@ -1321,6 +1580,21 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
             except Exception:
                 formal_lock.close()
                 raise
+        if getattr(args,'prefix_revalidation_migration',False):
+            try:record_prefix_revalidation_migration(ledger,_read_json(root/'binding.json'),base_binding)
+            except Exception:
+                formal_lock.close()
+                raise
+        if getattr(args,'tool_transport_migration',False):
+            try:record_tool_transport_migration(ledger,_read_json(root/'binding.json'),base_binding)
+            except Exception:
+                formal_lock.close()
+                raise
+        if getattr(args,'tool_runtime_migration',False):
+            try:record_tool_runtime_migration(ledger,_read_json(root/'binding.json'),base_binding)
+            except Exception:
+                formal_lock.close()
+                raise
         authorization=ledger.append('operator_resume_authorized',authorization='operator --resume',
             recovery='workspace-level; new private HOME and new model thread',
             conversation_restored=False)
@@ -1332,7 +1606,9 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
         budget_seconds=args.effective_seconds if effective else args.active_wall_seconds
         stop=budget_class(ledger,seconds=budget_seconds,
             poll_seconds=FORMAL_POLL_SECONDS,checkpoint_seconds=FORMAL_CHECKPOINT_SECONDS,
-            resume_authorization=authorization['event_id'] if authorization else None)
+            resume_authorization=authorization['event_id'] if authorization else None,
+            **({'include_planning':bool(base_binding.get('include_planning_time',False))}
+               if effective else {}))
     except Exception as error:
         if resume:ledger.append('resume_rejected',authorization_event_id=authorization['event_id'],
             error_type=type(error).__name__)
@@ -1386,7 +1662,8 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
                     durable(transport_config,{'transport_base':str(transport),'workspace':str(config.get('application_workspace',workspace)),
                         'auth_home':str(auth_home),'client':client,'image':args.image,'proxy':args.proxy,
                         'socket_dir':str(socket_dir)})
-                    config={**config,'home':home,'persistent_session':True,'resume_session':False,'command_prefix':[sys.executable,'-m','regen.tools.vero_isolated_exec',
+                    config={**config,'env':runtime_agent_environment(config),
+                        'home':home,'persistent_session':True,'resume_session':False,'command_prefix':[sys.executable,'-m','regen.tools.vero_isolated_exec',
                         '--config',str(transport_config),'--']}
                     ledger.append('agent_invocation_bound',invocation=str(log_dir),
                         conversation_restored=False,
@@ -1401,10 +1678,11 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
                         observer.drafts()
                     instruction=Path(kwargs['instruction_file'])
                     with instruction.open('a') as stream:
-                        stream.write('\n# Common application transport\nThe check/search/progress commands above use the host-owned common Isabelle backend. Legal parent facts are available via tool.py search; host source directories and heaps are intentionally not mounted. Checks return diagnostics. Before editing or reasoning, call tool.py scope TARGET_ID ... --theory THEORY [--theory THEORY ...] --phase proof (or helper/retrieval/seal) for cost attribution. Include every intended target and theory; use an empty scope when work is genuinely unattributed. Multi-target or multi-theory cost remains shared and is never duplicated as precise single-target cost. Scope labels do not control the shared global exploration limits and do not grant proof authority. Do not attempt to install Isabelle or replace the checker.\n')
+                        stream.write('\n# Common application transport\nThe check/search/progress commands above use the host-owned common Isabelle backend. Legal parent facts are available via tool.py search; host source directories and heaps are intentionally not mounted. Checks return bounded diagnostic previews and diagnostics_metadata. Read complete logs with tool.py diagnostic REQUEST_ID MODULE --offset BYTE_OFFSET --limit 65536; follow next_offset until eof. Truncated previews are not complete evidence. Before editing or reasoning, call tool.py scope TARGET_ID ... --theory THEORY [--theory THEORY ...] --phase proof (or helper/retrieval/seal) for cost attribution. Include every intended target and theory; use an empty scope when work is genuinely unattributed. Multi-target or multi-theory cost remains shared and is never duplicated as precise single-target cost. Scope labels do not control the shared global exploration limits and do not grant proof authority. Do not attempt to install Isabelle or replace the checker.\n')
                     with instruction.open('a') as stream:
-                        stream.write((effective_budget_instruction if effective else
-                            active_wall_budget_instruction)(stop.snapshot()['seconds']))
+                        stream.write(effective_budget_instruction(stop.snapshot()['seconds'],
+                            include_planning=bool(base_binding.get('include_planning_time',False)))
+                            if effective else active_wall_budget_instruction(stop.snapshot()['seconds']))
                     previous=kwargs.pop('monitor',None)
                     def monitor():
                         observer.usage_events(self.log_dir/'agent_events.jsonl',self.log_dir.parent.name)
@@ -1428,8 +1706,13 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
             try:
                 if not resume:
                     from vero.isabelle.planning import compile_plan
-                    plan,planned=create_fresh_plan(root=root,bench=bench,config=config,
-                        Agent=Agent,stop=stop,ledger=ledger,compile_plan=compile_plan)
+                    planning_charged=bool(base_binding.get('include_planning_time',False))
+                    if planning_charged:stop.begin_planning()
+                    try:
+                        plan,planned=create_fresh_plan(root=root,bench=bench,config=config,
+                            Agent=Agent,stop=stop,ledger=ledger,compile_plan=compile_plan)
+                    finally:
+                        if planning_charged and stop.planning_active:stop.end_planning()
                     plan_binding=frozen_plan_binding(planned,plan)
                     config=expected_runtime_config(root,base_binding,plan_binding)
                     durable(root/'accepted-plan.json',plan)
@@ -1494,8 +1777,9 @@ def _run_segment(args, *, root,bench,planned,plan,config,plan_binding,
                         'budget_clock':('effective generation excludes trusted preparation, seal and integration'
                             if effective else 'active online wall clock; all normal phases count'),
                         'excluded_time':'explicit pause, offline process time, or confirmed provider interruption/recovery only',
-                        'budget_stop':('terminal stop at 172800 cumulative effective-generation seconds'
-                            if effective else 'terminal stop at 172800 cumulative active-wall seconds'),
+                        'budget_stop':(f'terminal stop at {budget_seconds:g} cumulative '
+                            'effective-generation seconds' if effective else
+                            f'terminal stop at {budget_seconds:g} cumulative active-wall seconds'),
                         'poll_seconds':FORMAL_POLL_SECONDS,
                         'checkpoint_seconds':FORMAL_CHECKPOINT_SECONDS,
                         'shutdown_tail_policy':'unknown crash tail; checkpoint cadence is not a guaranteed bound',
@@ -1512,7 +1796,7 @@ def main():
         parser.add_argument('--'+name,required=True)
     parser.add_argument('--proxy')
     parser.add_argument('--model',default=FORMAL_MODEL,choices=[FORMAL_MODEL])
-    parser.add_argument('--reasoning',default=FORMAL_REASONING,choices=[FORMAL_REASONING])
+    parser.add_argument('--reasoning',default=FORMAL_REASONING,choices=FORMAL_REASONINGS)
     parser.add_argument('--expected-contracts',type=int,required=True,
         choices=[FORMAL_EXPECTED_CONTRACTS,FORMAL_CREFINE_CONTRACTS])
     parser.add_argument('--budget-mode',choices=['active-wall','effective-time'],
@@ -1521,8 +1805,12 @@ def main():
         default=FORMAL_ACTIVE_WALL_SECONDS,choices=[FORMAL_ACTIVE_WALL_SECONDS],
         help='immutable cumulative online wall-clock limit (fixed at 48 hours)')
     parser.add_argument('--effective-seconds',type=int,
-        choices=[FORMAL_ACTIVE_WALL_SECONDS],
-        help='immutable cumulative effective-generation limit (fixed at 48 hours)')
+        choices=[VALIDATION_EFFECTIVE_SECONDS,FORMAL_ACTIVE_WALL_SECONDS],
+        help='immutable cumulative effective-generation limit (48 hours formal; 2 hours validation)')
+    parser.add_argument('--include-planning-time',action='store_true',
+        help='charge repository planning to the cumulative effective-time budget')
+    parser.add_argument('--validation-run',action='store_true',
+        help='fresh/resumable CRefine validation profile with a frozen 7200-second effective budget')
     parser.add_argument('--check-timeout',type=int,default=900)
     parser.add_argument('--native-slots',type=int,default=1,choices=[1,2],
         help='frozen per-run native capacity; the serial VERO runner still issues one check at a time')
@@ -1536,6 +1824,12 @@ def main():
     parser.add_argument('--shared-host-cleanup-timeout',type=float,default=30)
     parser.add_argument('--resume',action='store_true',
         help='explicitly continue the same frozen output with a new model thread')
+    parser.add_argument('--prefix-revalidation-migration',action='store_true',
+        help='audit the bounded native prefix revalidation repair without changing frozen inputs or budget')
+    parser.add_argument('--tool-transport-migration',action='store_true',
+        help='audit bounded diagnostic transport after the recorded prefix repair')
+    parser.add_argument('--tool-runtime-migration',action='store_true',
+        help='audit the runtime client binding after the recorded diagnostic transport repair')
     parser.add_argument('--seal-dependency-migration',action='store_true',
         help='audit and apply the bounded import-seal correction to the original paused run')
     parser.add_argument('--checker-lifecycle-migration',action='store_true',
@@ -1547,6 +1841,17 @@ def main():
     parser.add_argument('--runner-reopen-migration',action='store_true',
         help='explicitly reopen the verified paused agent_error as a new model turn')
     args=parser.parse_args()
+    if args.prefix_revalidation_migration and not args.resume:
+        parser.error('--prefix-revalidation-migration requires --resume')
+    if args.tool_transport_migration and not args.resume:
+        parser.error('--tool-transport-migration requires --resume')
+    if args.tool_runtime_migration:
+        if not args.resume:parser.error('--tool-runtime-migration requires --resume')
+        if any((args.prefix_revalidation_migration,args.tool_transport_migration,
+                args.seal_dependency_migration,args.checker_lifecycle_migration,
+                args.resource_pool_migration,args.provider_auth_migration,
+                args.runner_reopen_migration)):
+            parser.error('--tool-runtime-migration cannot combine other migrations')
     if args.seal_dependency_migration and not args.resume:
         parser.error('--seal-dependency-migration requires --resume')
     if args.checker_lifecycle_migration and not args.resume:

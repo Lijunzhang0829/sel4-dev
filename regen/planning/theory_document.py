@@ -18,6 +18,15 @@ PROOF = '(* REGEN-PROOF *)'
 END = '(* REGEN-END *)'
 
 
+class DocumentEditError(ValueError):
+    """A rejected edit with JSON-safe details; the saved draft is unchanged."""
+
+    def __init__(self, message, *, code, **details):
+        super().__init__(message)
+        self.code = code
+        self.details = {'code': code, **details}
+
+
 def source_hash(source):
     return hashlib.sha256(source.encode()).hexdigest()
 
@@ -41,16 +50,19 @@ def render(package, state, imports):
     return header(package['theory'],imports)+''.join(block(entries[k],state['proofs'].get(k)) for k in order)+'end\n'
 
 
-def parse(source, package, imports):
+def parse(source, package, imports, *, locations=None):
     from regen.execution.proof_batches import _safe_text
     if not isinstance(source,str) or not source.startswith(header(package['theory'],imports)) or not source.endswith('end\n'):
         raise ValueError('preserve the theory header, planned imports, and final end')
-    body = source[len(header(package['theory'],imports)):-len('end\n')]
+    cursor = len(header(package['theory'],imports))
+    body = source[cursor:-len('end\n')]
     fixed = {c['contract_id']:c for c in package['contracts']}
     contexts = {tuple(c.get('contract_owned_context',[])) for c in [*package['contracts'],*package.get('support_contracts',[])]}|{()}
     entries, proofs, seen = [], {}, set()
     while body.strip():
+        cursor += len(body) - len(body.lstrip('\n'))
         body = body.lstrip('\n')
+        entry_start = cursor
         first, sep, rest = body.partition('\n')
         if not sep or not first.startswith(START) or not first.endswith(' *)'):
             raise ValueError('each declaration must have a REGEN-BEGIN identity marker')
@@ -63,15 +75,18 @@ def parse(source, package, imports):
         if not isinstance(context,list) or any(not isinstance(x,str) for x in context) or tuple(context) not in contexts:
             raise ValueError('entry context must be an available fixed/support context')
         seen.add(key)
+        rest_start = cursor + len(first) + 1
         chunk, sep, body = rest.partition('\n'+END+'\n')
         if not sep:
             raise ValueError('entry lacks REGEN-END')
+        cursor = rest_start + len(chunk) + len('\n'+END+'\n')
         declaration, sep, proof = chunk.partition('\n'+PROOF+'\n')
         prefix, suffix = ''.join(x+'\n' for x in context), '\nend'*len(context)
         if not sep or not declaration.startswith(prefix) or (suffix and not proof.endswith(suffix)):
             raise ValueError('preserve proof marker and entry context boundaries')
         statement = declaration[len(prefix):]
         if suffix: proof = proof[:-len(suffix)]
+        proof_start = rest_start + len(declaration) + len('\n'+PROOF+'\n')
         match = DECLARATION.match(statement)
         if not match: raise ValueError('entry must contain one named lemma/theorem declaration')
         if role=='contract':
@@ -87,6 +102,9 @@ def parse(source, package, imports):
             if not proof.strip(): raise ValueError('use oops for an open proof slot')
             _safe_text(proof)
             proofs[key]=proof
+        if locations is not None:
+            locations[key] = {'entry_start':entry_start, 'entry_end':cursor,
+                              'proof_start':proof_start, 'proof_end':proof_start+len(proof)}
     if {n['id'] for n in entries if n['role']=='contract'} != set(fixed):
         raise ValueError('document must contain every fixed contract exactly once')
     if len({n['name'] for n in entries}) != len(entries):
@@ -261,6 +279,39 @@ class DocumentStore:
                 'open_ids':[n['id'] for n in entries if n['id'] not in proofs],
                 'notice':'Draft source, separate from accepted_source_sha256. Only check feedback status=accepted publishes this version; draft_checked is diagnostic only. oops slots are not premises.'}
 
+    def _entry(self, source, entry_id):
+        locations = {}
+        entries, proofs = parse(source, self.package, self.imports, locations=locations)
+        if not isinstance(entry_id, str) or entry_id not in locations:
+            raise DocumentEditError('unknown document entry; read_theory for current entry IDs',
+                code='unknown_entry', current_sha256=source_hash(source), entry_id=entry_id,
+                available_entry_ids=[entry['id'] for entry in entries], draft_unchanged=True)
+        entry = next(entry for entry in entries if entry['id'] == entry_id)
+        return entry, locations[entry_id], proofs
+
+    @staticmethod
+    def _position(source, start, end):
+        return {'start_offset':start, 'end_offset':end,
+                'offset_unit':'unicode_codepoints',
+                'start_line':source.count('\n', 0, start)+1,
+                'end_line':source.count('\n', 0, max(start, end-1))+1}
+
+    def read_entry(self, entry_id):
+        """Read one exact editable proof, without exposing the other draft bodies."""
+        source = self.path.read_text()
+        entry, location, proofs = self._entry(source, entry_id)
+        proof = source[location['proof_start']:location['proof_end']]
+        sha = source_hash(source)
+        return {'entry_id':entry_id, 'name':entry['name'], 'role':entry['role'],
+                'statement':entry['statement'], 'context':entry['context'],
+                'proof_body':proof, 'proof_sha256':source_hash(proof),
+                'source_sha256':sha, 'expected_hash':sha, 'hash_scope':'document_source',
+                'open_proof_slot':entry_id not in proofs,
+                'accepted_proof_matches_draft':self.state['proofs'].get(entry_id) == proof,
+                'entry_location':self._position(source, location['entry_start'], location['entry_end']),
+                'proof_location':self._position(source, location['proof_start'], location['proof_end']),
+                'notice':'Only proof_body is editable with edit_proof. expected_hash binds the entire current document, not proof_sha256. Saving a draft never accepts a proof.'}
+
     def _purposes(self, sha):
         pointer=self.root/'last-edit.json'
         if not pointer.exists(): return {}
@@ -293,15 +344,83 @@ class DocumentStore:
             raise ValueError('edit_theory accepts base_sha256 and either source or exact-text edits')
         current=self.read()
         if proposal.get('base_sha256')!=current['source_sha256']:
-            raise ValueError('stale document; read_theory and apply edits to the current source hash')
+            raise DocumentEditError('stale document; read_theory and apply edits to the current source hash',
+                code='stale_document', current_sha256=current['source_sha256'],
+                expected_hash=proposal.get('base_sha256'), hash_scope='document_source', draft_unchanged=True)
         if ('source' in proposal)==('edits' in proposal): raise ValueError('provide source OR edits')
         source=proposal.get('source',current['source'])
         if 'edits' in proposal:
             if not isinstance(proposal['edits'],list) or not proposal['edits']: raise ValueError('edits must be a nonempty list')
-            for edit in proposal['edits']:
-                if not isinstance(edit,dict) or set(edit)!={'old','new'} or not all(isinstance(x,str) for x in edit.values()) or not edit['old'] or source.count(edit['old'])!=1:
-                    raise ValueError('each edit needs a unique nonempty exact old string and replacement')
+            for edit_index, edit in enumerate(proposal['edits']):
+                valid_shape = (isinstance(edit,dict) and set(edit)=={'old','new'}
+                               and all(isinstance(x,str) for x in edit.values()))
+                match_count = source.count(edit['old']) if valid_shape and edit['old'] else None
+                if not valid_shape or not edit['old'] or match_count != 1:
+                    reason = ('invalid_edit_shape' if not valid_shape else 'empty_old' if not edit['old']
+                              else 'old_not_found' if match_count == 0 else 'old_not_unique')
+                    locations = {}
+                    try:
+                        parse(source, self.package, self.imports, locations=locations)
+                    except ValueError:
+                        locations = {}  # Earlier sequential edits may temporarily break framing.
+                    matches, start = [], 0
+                    while match_count and len(matches) < min(match_count, 10):
+                        start = source.find(edit['old'], start)
+                        end = start + len(edit['old'])
+                        entry_ids = [key for key, loc in locations.items()
+                                     if start < loc['entry_end'] and end > loc['entry_start']]
+                        matches.append({**self._position(source,start,end), 'entry_ids':entry_ids})
+                        start = end
+                    raise DocumentEditError('each edit needs a unique nonempty exact old string and replacement',
+                        code='exact_edit_rejected', current_sha256=current['source_sha256'],
+                        edit_index=edit_index, edit_index_base=0, match_count=match_count,
+                        reason=reason, matches=matches, matches_truncated=bool(match_count and match_count>10),
+                        working_source_sha256=source_hash(source),
+                        positions_basis='candidate after earlier edits in this request; none were saved',
+                        draft_unchanged=True)
                 source=source.replace(edit['old'],edit['new'],1)
+        return self._save_edit(source, current, proposal, origin)
+
+    def edit_proof(self, proposal, origin):
+        """Replace only one proof span; framework-owned declaration bytes stay fixed."""
+        required = {'action','entry_id','proof_body','expected_hash'}
+        if (not required <= set(proposal) or proposal.get('action') != 'edit_proof'
+                or set(proposal)-required-{'notes','helper_purposes','sketches'}):
+            raise DocumentEditError('edit_proof requires entry_id, proof_body and expected_hash',
+                                    code='invalid_proof_edit', draft_unchanged=True)
+        current = self.read()
+        sha = current['source_sha256']
+        if proposal['expected_hash'] != sha:
+            raise DocumentEditError('stale document; read_entry again before editing its proof',
+                code='stale_document', current_sha256=sha, expected_hash=proposal['expected_hash'],
+                hash_scope='document_source', entry_id=proposal['entry_id'], draft_unchanged=True)
+        proof = proposal['proof_body']
+        if not isinstance(proof, str):
+            raise DocumentEditError('proof_body must be a string', code='invalid_proof_body',
+                current_sha256=sha, entry_id=proposal['entry_id'], draft_unchanged=True)
+        if any(marker in proof for marker in (START, PROOF, END)):
+            raise DocumentEditError('proof_body cannot contain document identity or proof markers',
+                code='reserved_document_marker', current_sha256=sha,
+                entry_id=proposal['entry_id'], draft_unchanged=True)
+        _, location, _ = self._entry(current['source'], proposal['entry_id'])
+        source = (current['source'][:location['proof_start']] + proof
+                  + current['source'][location['proof_end']:])
+        saved = self._save_edit(source, current, proposal, origin)
+        return {**saved, 'entry_id':proposal['entry_id'], 'proof_sha256':source_hash(proof),
+                'expected_hash':saved['source_sha256'], 'hash_scope':'document_source'}
+
+    def _save_edit(self, source, current, proposal, origin):
+        # Both editing interfaces use exactly the same validation/workflow gates.
+        try:
+            return self._validate_and_save(source, current, proposal, origin)
+        except DocumentEditError:
+            raise
+        except ValueError as error:
+            raise DocumentEditError(str(error), code='document_validation_failed',
+                current_sha256=current['source_sha256'], entry_id=proposal.get('entry_id'),
+                draft_unchanged=True) from error
+
+    def _validate_and_save(self, source, current, proposal, origin):
         entries,proofs=parse(source,self.package,self.imports)
         if self.require_sketch:
             accepted = {n['id']:n for n in self.state['graph']['nodes'] if n['id'] in self.state['proofs']}

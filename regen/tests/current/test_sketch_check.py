@@ -71,6 +71,45 @@ class SketchGroupTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             read_receipt(self.store,'../receipt')
 
+    def test_old_audit_policy_expires_without_changing_proofs_and_can_recheck(self):
+        import json
+        from regen.execution.proof_commits import digest
+        saved = self.save()
+        before = deepcopy(self.state)
+        first = check_groups(self.checker, self.store, saved['source_sha256'])
+        group = first['groups'][0]
+        cache = self.store.root/'sketch-certificates'/(group['sketch_sha256']+'.json')
+        legacy = json.loads(cache.read_text())
+        legacy.pop('audit_policy')
+        legacy.pop('receipt_sha256')
+        legacy['receipt_sha256'] = digest(legacy)
+        cache.write_text(json.dumps(legacy))
+        self.assertEqual(self.store.read()['sketch_groups'][0]['status'], 'needs_sketch_check')
+        with self.assertRaisesRegex(ValueError, 'successful current check_sketch'):
+            authorize(self.store, self.group_source.replace('oops','by simp'), ['helper'])
+        second = check_groups(self.checker, self.store, saved['source_sha256'])
+        self.assertEqual(second['status'], 'conditional_closed')
+        self.assertFalse(second['groups'][0].get('reused_sketch_check', False))
+        self.assertNotEqual(second['groups'][0]['receipt_id'], group['receipt_id'])
+        self.assertTrue((self.store.root/'sketch-checks'/group['receipt_id']/'receipt.json').is_file())
+        self.assertEqual(self.state, before)
+        self.assertEqual(second['new_green'], [])
+
+    def test_current_audit_policy_still_rejects_different_rendered_source(self):
+        import json
+        from regen.execution.proof_commits import digest
+        saved = self.save()
+        result = check_groups(self.checker, self.store, saved['source_sha256'])
+        cache = self.store.root/'sketch-certificates'/(result['groups'][0]['sketch_sha256']+'.json')
+        record = json.loads(cache.read_text())
+        record['check']['source_content'] += '\n(* altered source *)\n'
+        record['check']['source_sha256'] = hashlib.sha256(record['check']['source_content'].encode()).hexdigest()
+        record.pop('receipt_sha256')
+        record['receipt_sha256'] = digest(record)
+        cache.write_text(json.dumps(record))
+        with self.assertRaisesRegex(ValueError, 'exact conditional rendering'):
+            self.store.read()
+
     def test_statement_or_consumer_change_expires_but_proof_filling_does_not(self):
         saved = self.save()
         check_groups(self.checker, self.store, saved['source_sha256'])

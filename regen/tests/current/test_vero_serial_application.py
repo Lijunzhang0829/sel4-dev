@@ -19,6 +19,7 @@ from regen.tools.vero_serial_application import (
     expected_runtime_config,run_with_agent_takeover,interrupted_result,
     classify_agent_invocation,provider_auth_binding,
     Service,snapshot,bind_runner,fixed_inventory_binding,formal_configuration_binding,
+    application_dependency_binding,
     frozen_plan_binding,validate_resume_artifacts,validate_resume_ledger,
     SEAL_MIGRATION_FROM,SEAL_MIGRATION_ID,record_seal_migration,
     CHECKER_LIFECYCLE_MIGRATION_FROM,CHECKER_LIFECYCLE_MIGRATION_ID,
@@ -27,6 +28,7 @@ from regen.tools.vero_serial_application import (
     record_runner_reopen_migration,
     PROVIDER_AUTH_MIGRATION_SEED,PROVIDER_AUTH_MIGRATION_BASE,
 )
+from regen.planning.vero_plan_audit import POLICY as VERO_PLAN_POLICY
 
 VERO_SOURCE=Path(__file__).resolve().parents[3]/'vero-isabelle'/'src'
 sys.path.insert(0,str(VERO_SOURCE))
@@ -77,6 +79,10 @@ class VeroSerialTests(unittest.TestCase):
         adapter.frozen_plan=service.frozen_plan
         adapter.root=root/'adapter';adapter.root.mkdir()
         adapter.context={'checker_context_id':'fixture-checker-context'}
+        # These guard/seal-admission fixtures supply no fresh native outcome.
+        # Keep their conservative reconciliation path; independent native
+        # revalidation has its own positive and negative integration fixtures.
+        adapter.revalidate_contract_prefixes=lambda *args,**kwargs:None
         service.checker=adapter
         service.extract=extract
         return service,observer,source,write
@@ -516,6 +522,44 @@ class VeroSerialTests(unittest.TestCase):
             self.assertEqual(stop.events,[])
             self.assertEqual(sum(r['kind']=='plan_rejected' for r in ledger.rows),1)
 
+    def test_schema_v2_fresh_plan_requires_and_persists_helper_provider_audit(self):
+        class Stop:
+            def check(self):pass
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);ledger=Ledger(root/'ledger','provider-plan');calls=[]
+            bench={'schema_version':2,'benchmark_id':'b','contracts':[
+                {'id':'c1','module':'Original'},{'id':'c2','module':'Original'}]}
+            class Agent:
+                def __init__(self,config,log_dir):self.log_dir=Path(log_dir)
+                def run(self,*,sandbox_dir,instruction_file):
+                    calls.append(1)
+                    plan={'version':1,'source_benchmark_id':'b',
+                        'modules':[{'name':'Vero_A','contracts':['c1'],'imports':[],
+                            'rationale':'provider'},
+                            {'name':'Vero_B','contracts':['c2'],'imports':['Vero_A'],
+                            'rationale':'consumer'}],
+                        'execution_order':['Vero_A','Vero_B']}
+                    if len(calls)>1:
+                        plan.update(architecture_policy=VERO_PLAN_POLICY,
+                            helper_provider_intents=[{'id':'SharedState','provider':'Vero_A',
+                                'consumers':['Vero_B'],'contract_ids':['c2'],
+                                'rationale':'A shared state fact may serve the consumer.'}])
+                    (Path(sandbox_dir)/'PLAN.json').write_text(json.dumps(plan))
+                    return {'ok':True}
+            def compile_plan(input_bench,plan):
+                return {'schema_version':2,'benchmark_id':'planned',
+                    'contracts':[{'id':'c1','module':'Vero_A'},
+                        {'id':'c2','module':'Vero_B'}]}
+            plan,_=create_fresh_plan(root=root,bench=bench,config={'agent':{}},
+                Agent=Agent,stop=Stop(),ledger=ledger,compile_plan=compile_plan)
+            self.assertEqual(len(calls),2)
+            self.assertEqual(plan['architecture_policy'],VERO_PLAN_POLICY)
+            audit=json.loads((root/'planning-workspace/PLAN-AUDIT.json').read_text())
+            self.assertEqual(audit['helper_provider_intents'][0]['id'],'SharedState')
+            self.assertFalse(audit['model_called'])
+            self.assertEqual(sum(r['kind']=='plan_architecture_audited'
+                for r in ledger.rows),1)
+
     def test_planning_provider_transient_retries_but_auth_pauses(self):
         class Stop:
             def begin_exclusion(self,reason):return reason
@@ -903,6 +947,17 @@ class VeroSerialTests(unittest.TestCase):
         binding=fixed_inventory_binding(bench,1)
         self.assertEqual(binding['fixed_contract_count'],1)
         self.assertEqual(len(binding['fixed_contract_inventory_sha256']),64)
+
+    def test_application_dependency_binding_covers_plan_and_green_authorities(self):
+        binding=application_dependency_binding()
+        self.assertEqual(set(binding),{
+            'execution/vero_checker_adapter.py','execution/vero_import_graph.py',
+            'execution/vero_prefix_revalidation.py',
+            'infrastructure/effective_time_budget.py',
+            'infrastructure/vero_experiment_observer.py',
+            'planning/vero_plan_audit.py',
+            'tools/vero_application_tool.py','tools/vero_tool_protocol.py'})
+        self.assertTrue(all(len(value)==64 for value in binding.values()))
 
     def test_formal_configuration_binding_is_exact_and_persistable(self):
         args=SimpleNamespace(model='gpt-5.6-sol',reasoning='medium',

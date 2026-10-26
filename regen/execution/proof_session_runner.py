@@ -2328,6 +2328,8 @@ def main() -> int:
                           help="Prioritize one unproved fixed contract ID without adding mathematical guidance")
     parallel.add_argument("--effective-seconds", type=float, default=172800,
                           help="Global effective generation allowance (default 48h); union of parallel worker activity")
+    parallel.add_argument("--planning-budget", type=Path, default=None,
+                          help="Completed reviewed-planning directory whose charged time belongs to this same allowance")
     parallel.add_argument("--resume-authorization", default=None,
                           help="Explicit authorization reference to resume a persisted effective-time budget")
     parallel.add_argument("--extend-effective-seconds", type=float, default=None,
@@ -2361,6 +2363,7 @@ def main() -> int:
                 generation_strategy_name=args.generation_strategy,
                 focus_contract_id=args.focus_contract_id,
                 effective_seconds=args.effective_seconds,
+                planning_budget=args.planning_budget,
                 resume_authorization=args.resume_authorization,
                 extend_effective_seconds=args.extend_effective_seconds,
                 execution_policy=json.loads(args.execution_policy.read_text()) if args.execution_policy else None,

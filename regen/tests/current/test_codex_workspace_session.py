@@ -102,6 +102,24 @@ class CodexWorkspaceSessionTest(unittest.TestCase):
         return CodexWorkspaceSession(tools=TOOLS, command=[sys.executable,'-u','-c',SERVER,mode],
                                      allow_external_call=True, **kwargs)
 
+    def test_disabled_progress_watch_allows_repeated_results_beyond_legacy_limit(self):
+        with tempfile.TemporaryDirectory() as tmp, self.session(progress_timeout=0) as session:
+            for _ in range(12):
+                result=session.run('x',lambda *args: {'same':1},artifact_dir=tmp,model='test',timeout=2)
+                self.assertEqual(result['status'],'completed')
+                self.assertIsNone(session._progress)
+
+    def test_resource_budget_failure_stops_session_without_model_retry_feedback(self):
+        from regen.infrastructure.resource_budget import ResourceBudgetError
+        def fail(*args):
+            raise ResourceBudgetError('heap copy disk budget insufficient')
+        with tempfile.TemporaryDirectory() as tmp, self.session(progress_timeout=0) as session:
+            with self.assertRaisesRegex(ResourceBudgetError,'heap copy disk budget'):
+                session.run('x',fail,artifact_dir=tmp,model='test',timeout=2)
+            self.assertIsNotNone(session.process.poll())
+            events=[json.loads(line) for line in (Path(tmp)/'session-transcript.jsonl').read_text().splitlines()]
+            self.assertFalse(any(row['message'].get('event')=='tool_finished' for row in events))
+
     def test_sleep_is_audited_without_host_sleep_or_callback(self):
         calls=[]
         with tempfile.TemporaryDirectory() as tmp, self.session('sleep') as session:

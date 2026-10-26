@@ -135,6 +135,8 @@ class GenericContractTests(unittest.TestCase):
         for configured,expected in [(None,900),(777,777)]:
             c.config={'check_timeout':120,'threads':4}
             if configured is not None:c.config['preflight_seconds']=configured
-            with patch('regen.planning.generic_codex_agent.native_checker') as native,patch('regen.planning.generic_codex_agent.WorkspaceHarness'):
+            with patch('regen.planning.generic_codex_agent.native_checker') as native, \
+                 patch('regen.planning.generic_codex_agent.WorkspaceHarness'), \
+                 patch('regen.planning.generic_codex_agent.read', return_value={}):
                 c._planner()
                 native.assert_called_once_with(c.dataset,expected,threads=4)

@@ -24,12 +24,17 @@ Before generating proofs, inspect the fixed contracts and submit a complete, val
 contract-to-theory allocation. Assign each contract exactly once; preserve its exact
 statement and context. Theory imports must be acyclic. You choose the number of
 theories, their grouping, proof order, helper lemmas, batch sizes, proof methods,
-retrieval, check frequency and how to use feedback. The original theory attribution
-is reference metadata and does not prescribe your grouping.
+retrieval, check frequency and how to use feedback. Input metadata does not
+prescribe your grouping.
 
 Use the registered tools and their schemas. repository_plan exposes planning,
 validation and preflight operations; proof_action exposes document editing,
 checking, observations and finish/seal. Saving a draft is not proof acceptance.
+For proof-only edits, read_entry returns the stable entry ID, proof_body and
+expected_hash of the current document. Use edit_proof with that ID, hash and the
+complete replacement proof; the harness retains declaration/context/markers.
+Use edit_theory for helper declarations and structural changes. Edit errors give
+matching counts and source positions; fix the indicated edit against current text.
 One check can include multiple contracts and helpers. Unproved entries are never
 premises. If all active entries of a theory are GREEN, attempt its seal before
 further proof generation. A failed seal returns feedback. Once every theory is
@@ -118,7 +123,8 @@ apply the failure categories above.
 Use proof_tool_help for shared proof/read schemas and examples, and repository_plan action=schema for the planning contract. Retrieval uses request.values, a list of strings.
 """
 
-def instructions(inactivity_seconds=3600, *, effective_seconds=None, wall_seconds=None):
+def instructions(inactivity_seconds=3600, *, effective_seconds=None, wall_seconds=None,
+                 include_planning=False):
     prompt = PROMPT_TEMPLATE.replace('{inactivity_seconds}', str(inactivity_seconds))
     if effective_seconds is not None and wall_seconds is not None:
         raise ValueError('select one experiment time basis')
@@ -146,7 +152,10 @@ def instructions(inactivity_seconds=3600, *, effective_seconds=None, wall_second
             'proof failure or completion. Switching theories, new GREEN contracts, helpers '
             'and provider retries never reset or extend the budget. Normal reasoning, '
             'retrieval, editing, helper work and candidate checks (including proof failures '
-            'and candidate timeouts) count. Only trusted harness planning, initialization, '
+            'and candidate timeouts) count. '
+            + ('Repository planning also counts. ' if include_planning else
+               'Trusted harness planning does not count. ') +
+            'Only initialization, '
             'native context preparation, seal, integration and confirmed recovery phases '
             'close the clock. Unexplained waiting remains counted. Model phase labels '
             'cannot stop the clock. All token usage and total runtime remain recorded. '
@@ -168,10 +177,11 @@ def registry():
                           'read_context_index']}},
         'required':['action'],'additionalProperties':True}
     proof_action['inputSchema']['properties']['proposal']={
-        'description':('Source-changing actions use the exact edit_theory/check_theory/finish schemas. '
+        'description':('Read a stable entry with read_entry; change its proof with edit_proof. '
+                       'Source-changing actions use the exact edit_proof/edit_theory/check_theory/finish schemas. '
                        'The enumerated observation actions remain read-only and receive their detailed '
                        'runtime contracts from proof_tool_help.'),
-        'oneOf':[deepcopy(source_actions[action]) for action in ('edit_theory','check_theory','check_sketch','read_sketch','probe_helpers','transition_proof','assess_sketch','read_failure','review_sketch','diagnose_failure','finish')]
+        'oneOf':[deepcopy(source_actions[action]) for action in ('read_entry','edit_proof','edit_theory','check_theory','check_sketch','read_sketch','probe_helpers','transition_proof','assess_sketch','read_failure','review_sketch','diagnose_failure','finish')]
                 +[observation]}
     return tools+[
         _tool('repository_plan','Inspect fixed contracts/parents or validate, preflight and submit one immutable initial plan. action=schema returns operation contracts and proposal format. Retrieval uses values (a list of strings). Inspect valid/errors: a returned result is not necessarily accepted.',{'request':request_schema(allow_revision=False)},('request',)),
@@ -237,6 +247,9 @@ class Controller:
         self.observed_drafts={}
         self.observed_commit_paths=set()
         self.observed_draft_nodes={}
+        if (not self.current and getattr(self.stage, 'include_planning', False)
+                and not self.stage.planning_active):
+            self.stage.begin_planning()
         self.register_activity_plan()
     def register_activity_plan(self):
         if not self.current or not hasattr(self.stage,'register'):return
@@ -275,8 +288,10 @@ class Controller:
         if theory not in states:raise ValueError('unknown theory scope')
         if not states[theory]['sealed']:self.stage.select(theory)
     def _planner(self):
-        return WorkspaceHarness(self.dataset/'repository-planning-input.json',self.planning_root,
-            native_checker(self.dataset,self.config.get('preflight_seconds',900),threads=self.config['threads']),visibility='source-theory-visible-v1')
+        planning_input=self.dataset/'repository-planning-input.json'
+        visibility=read(planning_input).get('contract_visibility','source-theory-visible-v1')
+        return WorkspaceHarness(planning_input,self.planning_root,
+            native_checker(self.dataset,self.config.get('preflight_seconds',900),threads=self.config['threads']),visibility=visibility)
     def committed(self,record,*,recovered=False,evidence_path=None):
         if self.current is None:raise ValueError('proof commit before accepted repository plan')
         self.ledger.append('proof_commit',epoch=self.current['epoch'],theory=record['state']['graph']['theory'],
@@ -358,6 +373,8 @@ class Controller:
             for c in self.controllers.values():c.close()
             self.controllers={};durable(self.current_path,info);self.current=info
             self.scope={'target_ids':[],'theory_ids':[],'phase':'analysis','basis':'unattributed'}
+            if getattr(self.stage, 'planning_active', False):
+                self.stage.end_planning()
             self.register_activity_plan()
         return {'accepted':True,**info,'notice':'All previous revision proofs are reference-only until rechecked here.'}
     def plan(self,request,metadata):
@@ -493,7 +510,7 @@ class Controller:
                 finally:c.selected=selected
             if name=='proof_action':
                 due=self.seal_due()
-                if due and args['proposal'].get('action') not in ('finish','observe','query','read_facts','read_diagnostic','read_attempts','read_proofs','read_queries','read_proof_state','resolve_symbols'):
+                if due and args['proposal'].get('action') not in ('finish','observe','query','read_facts','read_diagnostic','read_attempts','read_proofs','read_queries','read_proof_state','resolve_symbols','read_entry'):
                     raise ValueError('Complete GREEN drafts must attempt seal first: '+', '.join(due))
             from contextlib import nullcontext
             sealing=name=='proof_action' and args['proposal'].get('action')=='finish'

@@ -363,7 +363,9 @@ class VeroAdapterTests(unittest.TestCase):
                 result=c.check(root,'T')
                 factory.return_value.build_generated_session.assert_not_called()
             self.assertEqual(result['seal_status'],'waiting_for_imports')
-            self.assertEqual(result['status'],'blocked_dependency')
+            self.assertEqual(result['status'],'ok')
+            self.assertEqual(result['contract_status'],'ok')
+            self.assertEqual(result['seal_blocked_by'],['A'])
             self.assertEqual(result['certification_blocked_by'],['A'])
             invalid=[r for r in ledger.rows if r['kind']=='seal_invalidated']
             self.assertEqual(len(invalid),1)

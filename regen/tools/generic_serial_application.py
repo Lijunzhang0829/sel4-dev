@@ -330,6 +330,8 @@ def _run(args,ownership):
             else:
                 from regen.infrastructure.effective_time_budget import EffectiveTimeBudget as TimeBudget, POLICY as TIME_POLICY
             config.update(budget_mode=budget_mode,time_budget_policy=TIME_POLICY,
+                include_planning_time=bool(getattr(args,'include_planning_time',False)),
+                workspace_progress_policy='disabled-global-time-budget-v1',
                 application_sha256=application_signature(),planning_input_sha256=planning_input_sha256,
                 model_config_sha256=hashlib.sha256(Path(args.model_config).read_bytes()).hexdigest())
         if getattr(args,'continue_from',None):
@@ -349,17 +351,23 @@ def _run(args,ownership):
                 wall_seconds=budget_seconds if budget_mode=='active-wall' else None,
                 resume_authorization=resume_authorization,_source_locked=source_ownership is not None,
                 resource_pool_migration=getattr(args,'resource_pool_migration',False),
+                workspace_recovery_repair=getattr(args,'workspace_recovery_repair',False),
+                native_audit_repair=getattr(args,'native_audit_repair',False),
                 source_application_root=getattr(args,'source_application_root',None))
         from regen.infrastructure.generic_continuation import prompt as continuation_prompt
         prompt_options=({'wall_seconds':budget_seconds} if budget_mode=='active-wall' else
                         {'effective_seconds':budget_seconds} if budgeted else {})
         stage=(TimeBudget(ledger,budget_seconds,resume_authorization=resume_authorization,
-            extension_seconds=extension_seconds) if budgeted else
+            extension_seconds=extension_seconds,
+            **({'include_planning':bool(getattr(args,'include_planning_time',False))}
+               if budget_mode=='effective-time' else {})) if budgeted else
             TheoryActivityStop(ledger,args.inactivity_seconds))
         if budgeted:
             # Extensions alter the authorized cap, not the frozen base binding.
             prompt_options['wall_seconds' if budget_mode=='active-wall' else 'effective_seconds']=stage.snapshot()['seconds']
-        initial_prompt=instructions(args.inactivity_seconds,**prompt_options)+(continuation_prompt(continuation) if continuation else '')
+        initial_prompt=instructions(args.inactivity_seconds,
+            include_planning=bool(getattr(args,'include_planning_time',False)),
+            **prompt_options)+(continuation_prompt(continuation) if continuation else '')
         report['preparation_elapsed_seconds']=time.monotonic()-started
         report['continuation']=continuation
         started=time.monotonic()
@@ -406,7 +414,8 @@ def _run(args,ownership):
                 try:
                     bridge.recovering()
                     with fresh_provider_home(auth) as attempt_home:
-                        with CodexWorkspaceSession(tools=registry(),codex_bin=str(client),codex_home=attempt_home,allow_external_call=True,http_retry_mode=True) as session:
+                        with CodexWorkspaceSession(tools=registry(),codex_bin=str(client),codex_home=attempt_home,allow_external_call=True,http_retry_mode=True,
+                                progress_timeout=0 if budgeted else None) as session:
                                 turn=0
                                 binding={}
                                 rollout=RolloutUsageReader(attempt_home,binding,ledger,snapshots=usage)
@@ -579,8 +588,12 @@ def main():
     parser.add_argument('--continue-from',help='Explicit continuation into a fresh output directory; validates and forks existing proof state')
     parser.add_argument('--resource-pool-migration',action='store_true',
         help='audit an explicit one-slot-per-run migration into a shared two-slot host pool')
+    parser.add_argument('--workspace-recovery-repair',action='store_true',
+        help='audit the CRefine xhigh disk-failure/progress-watch recovery repair')
+    parser.add_argument('--native-audit-repair',action='store_true',
+        help='audit the owner-blind CRefine native locale fact-name repair; preserve all charged work')
     parser.add_argument('--source-application-root',
-        help='frozen source application tree for auditing --resource-pool-migration')
+        help='frozen source application tree for auditing an explicit migration or repair')
     parser.add_argument('--restore-before-revision',type=int,help='Restore the accepted plan/workspace immediately before this revision; requires --continue-from')
     parser.add_argument('--model',required=True)
     parser.add_argument('--reasoning',required=True)
@@ -588,6 +601,8 @@ def main():
     parser.add_argument('--inactivity-seconds',type=int,default=3600)
     parser.add_argument('--budget-mode',choices=('effective-time','active-wall','theory-inactivity'),default='effective-time',help='Select cumulative effective generation or active wall time; inactivity mode is legacy')
     parser.add_argument('--effective-seconds',type=float,default=172800,help='Frozen base effective-generation allowance; default 48 hours, no token cap')
+    parser.add_argument('--include-planning-time',action='store_true',
+        help='charge repository planning to the cumulative effective-time budget')
     parser.add_argument('--wall-seconds',type=float,default=172800,help='Frozen active wall-clock allowance; used with --budget-mode active-wall')
     parser.add_argument('--resume-authorization',help='Explicit authorization/reason for continuing an existing time-budget experiment')
     parser.add_argument('--extend-effective-seconds',type=float,help='Authorized additional effective seconds; requires --continue-from and --resume-authorization')
@@ -615,8 +630,16 @@ def main():
     if args.restore_before_revision is not None and not args.continue_from:parser.error('--restore-before-revision requires --continue-from')
     if args.resource_pool_migration and not (args.continue_from and args.resume_authorization and args.source_application_root):
         parser.error('--resource-pool-migration requires --continue-from, --resume-authorization and --source-application-root')
-    if args.source_application_root and not args.resource_pool_migration:
-        parser.error('--source-application-root requires --resource-pool-migration')
+    if args.workspace_recovery_repair and not (args.continue_from and args.resume_authorization and args.source_application_root):
+        parser.error('--workspace-recovery-repair requires --continue-from, --resume-authorization and --source-application-root')
+    if args.workspace_recovery_repair and args.resource_pool_migration:
+        parser.error('workspace recovery repair and resource pool migration are separate operations')
+    if args.native_audit_repair and not (args.continue_from and args.resume_authorization and args.source_application_root):
+        parser.error('--native-audit-repair requires --continue-from, --resume-authorization and --source-application-root')
+    if args.native_audit_repair and (args.resource_pool_migration or args.workspace_recovery_repair or args.restore_before_revision is not None):
+        parser.error('native audit repair requires a separate latest-state continuation')
+    if args.source_application_root and not (args.resource_pool_migration or args.workspace_recovery_repair or args.native_audit_repair):
+        parser.error('--source-application-root requires an explicit migration or repair')
     report=run(args)
     display={k:report[k] for k in ('status','passed','resumable','recovery_requires_reconciliation',
         'stop_reason','elapsed_seconds','error','cleanup_error','clock_persistence_error','clock_snapshot_error') if k in report}

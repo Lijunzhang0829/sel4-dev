@@ -13,15 +13,15 @@
 | S4 | 统一 native 资源边界 | 新启动可选择共同宿主槽、冻结配额，崩溃释放锁；检查容器清理与驻留内存 | 完成活动检查仲裁；B 双方法共享槽原生验收完整退出。空闲驻留容器内存不受共享槽限制 |
 | S5 | 可重建实验统计 | 首次 GREEN、当前有效 GREEN、seal、集成、共享/未归属 token、暂停时间分列 | 旧统计回归通过；B005 显示 theory 级失效会低估逐 contract 当前 GREEN，需修正投影并新增实战回归 |
 | S6 | 双方法发布前验收 | 完整回归、模型免费原生正反例、seal/build、provider 故障注入、断点恢复和清理通过 | 完成无模型验收；A 全量 2014 项，B 最终发布 93 项聚焦及原生四组通过；正式 48 小时运行未启动 |
-| S7 | 验证 VERO 增量路径 | 只复用审计完备且源码、导入、上下文完全相同的 GREEN 收据；变更时重新原生检查 | 同源复用完成并经 B 原生验收；一般变更后缀增量未启用，仍需影子等价测试 |
+| S7 | 验证 VERO 增量路径 | 只复用审计完备且源码、导入、上下文完全相同的 GREEN 收据；候选使用内容绑定 prefix，seal 使用完整 theory | 2026-10-22 本地接入并通过回归；机器 B 原生影子等价验收待新发布执行 |
 
 ## 编辑与检查范围
 
-VERO 的共享工作区允许一次改多个 lemma 和多个 `.thy`。`check MODULE` 快照所有规划的 theory，抽取并渲染原始 VERO slot，然后对请求 theory 及其导入闭包中需要验证的模块逐个调用完整 theory native check。`VERO_RESULT` 标记是 contract 接受依据；每个完成 theory 还须独立 seal/build。一次 VERO 请求可以触发多个完整检查。
+VERO 的共享工作区允许一次改多个 lemma 和多个 `.thy`。`check MODULE` 快照所有规划的 theory，抽取并渲染原始 VERO slot；普通候选检查只保留请求 theory 到最后一个已填 contract 的内容绑定前缀，正常加载其导入闭包并关闭当前 context。`VERO_RESULT` 标记是 contract 接受依据；完整 theory 仍须在 seal 阶段独立检查/build。一次 VERO 请求仍可能包含多个 contract 的原生结果。
 
 通用 Codex 的 `edit_theory` 可以提交整个 theory 文本或多个精确替换，`check_theory` 可以选择多个 `entry_ids`；harness 没有强制逐 lemma。`theory_document.baseline` 找到与已接受源码相同的最长 proof 前缀，驻留 `BatchWorker` 验证受影响后缀。实际是否一次只更新一个 lemma，是 agent 的行为，应从日志观察，不作为额外约束。比较 token/时间时记录 `check_scope`、冷检查数、前缀准备及候选执行时间；不得把 VERO 全 theory 冷检和 Codex 后缀检查视为相同工作量。
 
-VERO 源码另有 `IncrementalChecks`，但机器 B 的共同应用层入口目前没有使用它；其完整源码键缓存与截断 prefix 检查也不等同于 Codex 已接受前缀上的变更后缀执行。当前 S7 只实现进程内、严格同源的 GREEN 收据复用：必需的 `VERO_RESULT` 齐全且已发布、导入已认证，缓存命中前复核原始源码、日志和 manifest；证明体或导入改变就冷检，seal 仍独立执行。真正的 VERO 后缀增量需要专用 worker、失败候选隔离、完整审计和与冷检的影子等价测试，不能直接接 Codex worker。
+2026-10-22 起，共同应用层恢复原 `IncrementalChecks` 的 owner-prefix 边界，但不直接复用 Codex worker：候选源码在独立目录截断，完整渲染快照不被覆盖；导入仍由 Isabelle 加载，收据绑定完整 import/source manifest；只有严格同源、日志和 manifest 均完整的成功结果可复用。imports 尚未 seal 不再阻止 contract GREEN，只阻止 theory seal；新结果使用 `seal_blocked_by`，并暂时保留旧 `certification_blocked_by` 作为冻结读取器兼容别名。import 源码变化仍撤销受影响证据。该路径仍是一次冷的 prefix native invocation，不等同于 Codex 驻留 worker 的变更后缀执行。新发布前仍需机器 B 原生影子等价验收。
 
 ## 成本与发布原则
 

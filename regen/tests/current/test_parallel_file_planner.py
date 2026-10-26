@@ -302,7 +302,7 @@ class SchedulerTests(unittest.TestCase):
         self.assertIn('previous model turn ended',Session.prompts[1])
 
     def _empty_turn_scenario(self, temporary, *, progress_field=False,
-                             focus=False, on_turn=None, cancel_event=None):
+                             focus=False, on_turn=None, cancel_event=None, effective_budget=False):
         """Synthetic provider; never claim these fixtures establish live GREEN."""
         from types import SimpleNamespace
         from regen.planning.parallel_file_planner import run_theory_session
@@ -327,6 +327,7 @@ class SchedulerTests(unittest.TestCase):
             # No tool_call_count: continuation must not depend on this counter.
             def __init__(self,**kwargs):
                 test.empty_session=self
+                self.options=kwargs
                 self.turns=0;self.closed=False;self.prompts=[]
             def __enter__(self):return self
             def __exit__(self,*args):self.closed=True
@@ -351,7 +352,8 @@ class SchedulerTests(unittest.TestCase):
                 resources=type('Resources',(),{'policy':{}})(),executor=object(),
                 settings={'codex_bin':'codex','reasoning_effort':'medium'},
                 directory=Path(temporary)/'session',cancel_event=cancel_event,
-                focus_contract_id='goal' if focus else None,stop_at_focus_contract=focus)
+                focus_contract_id='goal' if focus else None,stop_at_focus_contract=focus,
+                effective_budget=effective_budget)
             self.assertEqual(audit.call_args.kwargs['require_terminal'],not focus)
             return result
 
@@ -378,6 +380,27 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(result['theory_status'],'generating')
         self.assertEqual(result['continuation_turns'],5)
         self.assertEqual(result['target_authority']['journal_commit_id'],'synthetic-green')
+
+    def test_effective_budget_disables_information_stops_without_changing_transport_timeout(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temporary:
+            result=self._empty_turn_scenario(temporary,progress_field=True,effective_budget=True)
+            policy=json.loads((Path(temporary)/'session'/'policy.json').read_text())
+        self.assertEqual(result['status'],'sealed')
+        self.assertEqual(self.empty_session.options['progress_timeout'],0)
+        self.assertIsNone(policy['progress_policy']['repeated_result_limit'])
+        self.assertIsNone(policy['progress_policy']['no_information_timeout_seconds'])
+        self.assertEqual(policy['progress_policy']['policy'],'disabled-global-time-budget-v1')
+
+    def test_budgeted_coordinator_always_uses_global_budget_session_policy(self):
+        from contextlib import nullcontext
+        from unittest.mock import Mock
+        from regen.planning.parallel_file_planner import _run_budgeted_theory_session
+        bridge=Mock();bridge.worker.return_value=nullcontext()
+        with patch('regen.planning.parallel_file_planner.run_theory_session',return_value='done') as run:
+            self.assertEqual(_run_budgeted_theory_session(bridge,Path('/run'),'Target'),'done')
+        run.assert_called_once_with(Path('/run'),'Target',effective_budget=True)
+        bridge.worker.assert_called_once_with('Target')
 
     def test_many_no_progress_turns_remain_externally_cancellable(self):
         import tempfile

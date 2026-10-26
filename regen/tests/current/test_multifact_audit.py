@@ -11,7 +11,8 @@ class MultiFactAuditTests(unittest.TestCase):
         for emit in (automation_audit_ml, proof_dependency_audit_ml):
             with self.subTest(emitter=emit.__name__):
                 source=emit('pair',dependency_filename='pair.tsv')
-                self.assertIn('Proof_Context.get_thms ctxt "pair"',source)
+                self.assertIn('Global_Theory.get_thms thy target_name',source)
+                self.assertIn('Binding.qualified_name "pair"',source)
                 self.assertIn('Thm.consolidate targets',source)
                 self.assertIn('Thm_Deps.thm_deps thy targets',source)
                 self.assertIn('Thm_Deps.has_skip_proof targets',source)

@@ -53,6 +53,17 @@ def fixture(side):
         "cross": (f'\nlemma cross_context: "(x::nat) = {other} \\<Longrightarrow> '
                   f'x + 1 = {other + 1}" by (rule shared_fact)\n'),
         "recovery": f'\nlemma recovered: {statement} by (rule shared_fact)\n',
+        "named_locale": ('\nlocale audit_locale = fixes y :: nat\n'
+                         f'context audit_locale begin\n'
+                         'lemma scoped_fact: "y = y" by simp\nend\n'),
+        "locale_consumer": ('\ncontext audit_locale begin\n'
+                            'lemma scoped_consumer: "y = y" by (rule scoped_fact)\nend\n'),
+        "borrowed_fact": '\nlemma unrelated: "True" by simp\n',
+        "ambiguous_locale": ('\nlocale audit_left = fixes z :: nat\n'
+                             'locale audit_right = fixes z :: nat\n'
+                             'context audit_left begin\nlemma collision: "z = z" by simp\nend\n'
+                             'context audit_right begin\nlemma collision: "z = z" by simp\nend\n'),
+        "admitted_locale": '\ncontext audit_locale begin\nlemma admitted: "False" sorry\nend\n',
     }
 
 
@@ -240,9 +251,15 @@ def exercise_worker(ctx, output, side, timeout, limits, ready):
                     raise AssertionError(f'{name}: timeout/infrastructure failure is not a negative proof test')
                 missing = {'pending-fact-invisible': 'shared_fact',
                            'failed-helper-invisible': 'leaked_helper'}.get(name)
+                audit_error = {'parent-fact-cannot-certify-candidate': 'Missing generated fact',
+                               'ambiguous-locale-export-rejected': 'Ambiguous generated fact',
+                               'admitted-locale-export-rejected': 'skip_proof dependency'}.get(name)
                 if missing:
                     if 'Undefined fact' not in diagnostic or missing not in diagnostic:
                         raise AssertionError(f'{name}: not the expected missing-fact rejection: {diagnostic}')
+                elif audit_error:
+                    if audit_error not in diagnostic:
+                        raise AssertionError(f'{name}: not the expected audit rejection: {diagnostic}')
                 elif not proof_rejected(result['returncode'], diagnostic):
                     raise AssertionError(f'{name}: not an expected proof-method rejection: {diagnostic}')
             if worker.base != before:
@@ -277,6 +294,13 @@ def exercise_worker(ctx, output, side, timeout, limits, ready):
         cross, bad_source = check('cross-context-rejected', pieces['cross'], ['cross_context'], 'red')
         check('valid-after-failure', pieces['recovery'], ['recovered'], 'green')
         worker.align(worker.pending)
+        check('named-locale-export', pieces['named_locale'], ['scoped_fact'], 'green')
+        worker.align(worker.pending)
+        check('locale-consumer-after-prefix-commit', pieces['locale_consumer'], ['scoped_consumer'], 'green')
+        worker.align(worker.pending)
+        check('parent-fact-cannot-certify-candidate', pieces['borrowed_fact'], ['TrueI'], 'red')
+        check('ambiguous-locale-export-rejected', pieces['ambiguous_locale'], ['collision'], 'red')
+        check('admitted-locale-export-rejected', pieces['admitted_locale'], ['admitted'], 'red')
         exact = source(ctx['base_import'], worker.base)
         (root / (LABEL + '.thy')).write_text(exact)
         negative = root / 'negative'

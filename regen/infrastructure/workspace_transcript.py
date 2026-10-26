@@ -70,6 +70,48 @@ def _pre_sketch_registry(registry):
     return previous
 
 
+def _pre_proof_edit_registry(registry):
+    """Exact generic registry before entry reads and proof-only source edits."""
+    previous = deepcopy(registry)
+    for tool in previous:
+        if tool['name'] != 'proof_action':
+            continue
+        proposal = tool['inputSchema']['properties'].get('proposal', {})
+        if 'oneOf' not in proposal:
+            continue
+        proposal['oneOf'] = [action for action in proposal['oneOf']
+                            if action.get('properties', {}).get('action', {}).get('const')
+                            not in {'read_entry', 'edit_proof'}]
+        proposal['description'] = (
+            'Source-changing actions use the exact edit_theory/check_theory/finish schemas. '
+            'The enumerated observation actions remain read-only and receive their detailed '
+            'runtime contracts from proof_tool_help.')
+    return previous
+
+
+def _approved_generic_registry(tools, current):
+    """Compare against a trusted registry and its exact historical shapes."""
+    if tools == current or tools == _pre_history_registry(current):return True
+    before_sketch = _pre_sketch_registry(current)
+    for previous_sketch in (before_sketch, _pre_delta_registry(before_sketch)):
+        if tools == previous_sketch or tools == _pre_history_registry(previous_sketch):
+            return True
+    previous = _pre_delta_registry(current)
+    if tools == previous or tools == _pre_history_registry(previous):return True
+    # Replay the exact previously exported generic registry; never launch it anew.
+    legacy=deepcopy([t for t in current if t['name']!='proof_tool_help'])
+    for tool in legacy:
+        if tool['name']=='experiment_status':
+            tool['description']='Read deadline, accounting, plan and previous revision identities; optional notes persist across resume.'
+    previous = _pre_delta_registry(legacy)
+    return (tools == legacy or tools == _pre_history_registry(legacy)
+            or tools == previous or tools == _pre_history_registry(previous)
+            or tools == _pre_sketch_registry(legacy)
+            or tools == _pre_history_registry(_pre_sketch_registry(legacy))
+            or tools == _pre_delta_registry(_pre_sketch_registry(legacy))
+            or tools == _pre_history_registry(_pre_delta_registry(_pre_sketch_registry(legacy))))
+
+
 def approved_registry(tools):
     names = [t.get('name') for t in tools]
     if not names or len(set(names)) != len(names) or any(t.get('type') != 'function' for t in tools):
@@ -90,28 +132,12 @@ def approved_registry(tools):
     if tools == before_delta or tools == _pre_history_registry(before_delta):
         return True
     # A general repository agent has additional planning/integration tools.
-    # Accept only its complete reviewed registry, never a union of name strings.
+    # Accept only complete reviewed registries, including the pre-proof-edit
+    # schema used by frozen transcripts; never approve by a union of tool names.
     from regen.planning.generic_codex_agent import registry
-    current=[{'type':'function', **tool} for tool in registry()]
-    if tools == current or tools == _pre_history_registry(current):return True
-    before_sketch = _pre_sketch_registry(current)
-    for previous_sketch in (before_sketch, _pre_delta_registry(before_sketch)):
-        if tools == previous_sketch or tools == _pre_history_registry(previous_sketch):
-            return True
-    previous = _pre_delta_registry(current)
-    if tools == previous or tools == _pre_history_registry(previous):return True
-    # Replay the exact previously exported generic registry; never launch it anew.
-    legacy=deepcopy([t for t in current if t['name']!='proof_tool_help'])
-    for tool in legacy:
-        if tool['name']=='experiment_status':
-            tool['description']='Read deadline, accounting, plan and previous revision identities; optional notes persist across resume.'
-    previous = _pre_delta_registry(legacy)
-    return (tools == legacy or tools == _pre_history_registry(legacy)
-            or tools == previous or tools == _pre_history_registry(previous)
-            or tools == _pre_sketch_registry(legacy)
-            or tools == _pre_history_registry(_pre_sketch_registry(legacy))
-            or tools == _pre_delta_registry(_pre_sketch_registry(legacy))
-            or tools == _pre_history_registry(_pre_delta_registry(_pre_sketch_registry(legacy))))
+    current = [{'type':'function', **tool} for tool in registry()]
+    return any(_approved_generic_registry(tools, candidate)
+               for candidate in (current, _pre_proof_edit_registry(current)))
 
 
 def _hash(raw):

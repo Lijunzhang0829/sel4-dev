@@ -54,6 +54,40 @@ class BudgetTests(unittest.TestCase):
         self.assertEqual(snap['theories']['A']['effective_seconds'], 40)
         self.assertEqual(snap['theories']['B']['effective_seconds'], 50)
 
+    def test_planning_is_global_charged_time_without_theory_attribution(self):
+        ledger = MemoryLedger()
+        stage = EffectiveTimeBudget(ledger, 100, include_planning=True,
+            monotonic=lambda: self.now)
+        stage.begin_planning(); self.advance(25)
+        snap = stage.snapshot()
+        self.assertEqual(snap['effective_seconds'], 25)
+        self.assertEqual(snap['planning_seconds'], 25)
+        self.assertEqual(snap['worker_seconds'], 0)
+        self.assertEqual(snap['theories'], {})
+        self.assertTrue(snap['gate_open'])
+        self.assertEqual(snap['gate_state'], 'OPEN')
+        stage.end_planning()
+        self.assertEqual(stage.snapshot()['gate_state'], 'CLOSED')
+        stage.register({'A':['a']}); stage.select('A')
+        self.advance(10)
+        self.assertEqual(stage.snapshot()['effective_seconds'], 35)
+
+    def test_planning_binding_and_cost_survive_resume_but_offline_time_does_not(self):
+        ledger = MemoryLedger()
+        stage = EffectiveTimeBudget(ledger, 100, include_planning=True,
+            monotonic=lambda: self.now)
+        stage.begin_planning(); self.advance(20); stage.close()
+        self.advance(1000)
+        with self.assertRaisesRegex(ValueError, 'binding changed'):
+            EffectiveTimeBudget(ledger, 100, resume_authorization='wrong',
+                monotonic=lambda: self.now)
+        resumed = EffectiveTimeBudget(ledger, 100, include_planning=True,
+            resume_authorization='resume', monotonic=lambda: self.now)
+        self.assertEqual(resumed.snapshot()['effective_seconds'], 20)
+        self.assertFalse(resumed.snapshot()['planning_active'])
+        resumed.begin_planning(); self.advance(5)
+        self.assertEqual(resumed.snapshot()['planning_seconds'], 25)
+
     def test_nested_exclusions_and_model_overlap(self):
         s = self.stage; s.select('A')
         one = s.begin_exclusion('prefix_preparation')

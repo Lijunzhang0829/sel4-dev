@@ -11,6 +11,53 @@ from regen.infrastructure.experiment_activity import UsageSnapshots
 from regen.infrastructure.experiment_ledger import RolloutUsageReader
 
 
+def _helper_proofs_in_checked_source(source):
+    """Conservative helper accounting inside the actual native source boundary.
+
+    Exit zero permits ``oops`` declarations. Do not count those as theorems, or
+    read apparent commands from propositions, comments or nested cartouches.
+    Native success remains mandatory; these tokens never establish a proof.
+    """
+    from vero.isabelle.checker import strip_comments
+    text=strip_comments(source)
+    words=[];index=0;cartouches=0
+    outer_word=re.compile(r"[A-Za-z_][A-Za-z0-9_']*")
+    while index<len(text):
+        opening=next((token for token in ('\\<open>','‹') if text.startswith(token,index)),None)
+        closing=next((token for token in ('\\<close>','›') if text.startswith(token,index)),None)
+        if opening:
+            cartouches+=1;index+=len(opening);continue
+        if closing and cartouches:
+            cartouches-=1;index+=len(closing);continue
+        if cartouches:
+            index+=1;continue
+        if text[index]=='"':
+            index+=1;closed=False
+            while index<len(text):
+                if text[index]=='\\':index+=2
+                elif text[index]=='"':index+=1;closed=True;break
+                else:index+=1
+            if not closed:raise ValueError('unterminated string in checked helper source')
+            continue
+        word=outer_word.match(text,index)
+        if word:
+            words.append(word[0]);index+=len(word[0])
+        else:index+=1
+    if cartouches:raise ValueError('unterminated cartouche in checked helper source')
+    declarations={'lemma','theorem','corollary','proposition','definition','vero_prove','vero_disprove'}
+    boundaries=[i for i,word in enumerate(words) if word in declarations]+[len(words)]
+    helpers={}
+    for start,end in zip(boundaries,boundaries[1:]):
+        if (words[start] not in {'lemma','theorem','corollary','proposition'}
+                or start+1>=end or not re.fullmatch(r'vero_aux_[A-Za-z0-9_]+',words[start+1])):
+            continue
+        body=set(words[start+2:end])
+        complete=bool(body & {'by','qed','done'}) and not body & {'oops','sorry'}
+        name=words[start+1]
+        helpers[name]=helpers.get(name,True) and complete
+    return helpers
+
+
 class VeroObserver:
     def __init__(self, ledger, stop, workspace, bench):
         self.ledger,self.stop,self.workspace,self.bench=ledger,stop,Path(workspace),bench
@@ -21,6 +68,11 @@ class VeroObserver:
         # survive a later failed check of an unrelated sibling declaration.
         self.accepted_receipts={}
         self.accepted_origins={}
+        # Historical native versions are recheck inputs, never current GREEN
+        # authority. Keep them after invalidation so recovery can revalidate an
+        # unchanged proof independently of a later broken draft.
+        self.certified_receipts={}
+        self.certified_origins={}
         self.pending_seal_receipts={}
         self.seal_transactions=set()
         self._seal_transaction_ids={}
@@ -47,6 +99,8 @@ class VeroObserver:
                         self.accepted_receipts[uid]=deepcopy(receipt)
                         self.accepted_origins[uid]=(node.get('accepted_evidence_event_id')
                             or row['event_id'])
+                        self.certified_receipts[uid]=deepcopy(receipt)
+                        self.certified_origins[uid]=self.accepted_origins[uid]
                     elif node.get('status') not in ('green','sealed'):
                         self.accepted_receipts.pop(uid,None)
                         self.accepted_origins.pop(uid,None)
@@ -62,6 +116,7 @@ class VeroObserver:
                         self.accepted_origins.pop(uid,None)
             elif kind in ('plan_accepted','plan_restored'):
                 self.accepted_receipts.clear();self.accepted_origins.clear();self.nodes.clear()
+                self.certified_receipts.clear();self.certified_origins.clear()
             elif kind=='seal_edit_begin':
                 theory=data.get('theory');transaction=data.get('transaction_id')
                 if theory in self.seal_transactions or not isinstance(transaction,str):
@@ -326,6 +381,8 @@ class VeroObserver:
         for uid in ids:
             self.accepted_receipts[uid]=deepcopy(staged[uid]['receipt'])
             self.accepted_origins[uid]=staged[uid]['evidence_event_id']
+            self.certified_receipts[uid]=deepcopy(staged[uid]['receipt'])
+            self.certified_origins[uid]=staged[uid]['evidence_event_id']
         self.pending_seal_receipts[theory]={}
         return commit
 
@@ -788,8 +845,7 @@ class VeroObserver:
             candidate=candidates.get(uid)
             native_green=(uid+':prove' in audited and
                 result.get('contract_status',result['status'])=='ok' and
-                isinstance(native_evidence,dict) and native_evidence.get('returncode')==0 and
-                not result.get('certification_blocked_by'))
+                isinstance(native_evidence,dict) and native_evidence.get('returncode')==0)
             if strict and native_green and not self._valid_receipt(candidate):
                 raise ValueError('audited GREEN lacks a filled, scoped proof receipt: '+uid)
             prior=self.accepted_receipts.get(uid)
@@ -810,20 +866,30 @@ class VeroObserver:
             elif native_green and isinstance(candidate,dict):
                 node.update(accepted_receipt=self._native_receipt(candidate),
                     disposition='accepted_native_green')
+                if native_evidence.get('source'):
+                    node['accepted_source_version']={
+                        'native_source':native_evidence['source'],
+                        'native_log':native_evidence.get('log'),
+                        'prefix_sha256':candidate['prefix_sha256'],
+                        'context_identity':candidate['context_identity']}
             elif retained:
                 node.update(accepted_receipt=deepcopy(prior),
                     accepted_evidence_event_id=self.accepted_origins[uid],
                     disposition=('retained_prior_native_green_during_seal' if seal_draft and not exact
                         else 'retained_prior_native_green'))
+                previous=next((n for n in self.nodes.get(theory,())
+                    if n.get('uid')==uid),{})
+                if 'accepted_source_version' in previous:
+                    node['accepted_source_version']=deepcopy(previous['accepted_source_version'])
             rows.append(node)
-        # Every auxiliary declaration has been kernel checked when its module succeeds.
-        from vero.isabelle.checker import strip_comments
-        declarations=re.sub(r'"(?:\\.|[^"\\])*"', '""', strip_comments(source))
-        names=re.findall(r'\b(?:lemma|theorem|corollary|proposition)\s+(vero_aux_[A-Za-z0-9_]+)', declarations)
+        # The adapter supplies the exact checked prefix, not the full draft.
+        # Successful loading can include intentionally abandoned oops proofs.
+        helpers=_helper_proofs_in_checked_source(source)
         rows.extend({'uid':'helper:'+theory+':'+n,'kind':'helper','theory':theory,
             'status':'green' if result.get('contract_status',result['status'])=='ok'
-                and not result.get('certification_blocked_by') else 'open'}
-            for n in sorted(set(names)))
+                and isinstance(native_evidence,dict) and native_evidence.get('returncode')==0 and helpers[n]
+                else 'open'}
+            for n in sorted(helpers))
         if not rows:return
         commit_id=digest(result)
         native_elapsed=result.get('native_elapsed_seconds',result['elapsed_seconds'])
@@ -844,6 +910,8 @@ class VeroObserver:
                 if node.get('disposition')=='accepted_native_green':
                     self.accepted_receipts[uid]=deepcopy(node['accepted_receipt'])
                     self.accepted_origins[uid]=commit['event_id']
+                    self.certified_receipts[uid]=deepcopy(node['accepted_receipt'])
+                    self.certified_origins[uid]=commit['event_id']
                 elif node['status']=='open':
                     self.accepted_receipts.pop(uid,None)
                     self.accepted_origins.pop(uid,None)
@@ -861,6 +929,58 @@ class VeroObserver:
                 else result.get('contract_status',result['status']),
             native_elapsed_seconds=native_elapsed,seal_elapsed_seconds=0,
             timing_basis='native cold contract check only; automatic seal is a separate seal_result event')
+
+    def revalidated_contracts(self, theory, result):
+        """Atomically replace only freshly rechecked historical certificates.
+
+        The adapter checks a complete isolated prefix with exit status zero.
+        Nothing in a failed later draft, a dependency name, or a historical
+        receipt alone grants this publication authority.
+        """
+        evidence=result.get('native_evidence')
+        candidates=result.get('contract_receipts')
+        audited=set(result.get('audited',()))
+        if (theory in self.seal_transactions or not isinstance(evidence,dict)
+                or evidence.get('returncode')!=0 or not isinstance(candidates,dict)
+                or not candidates or result.get('status')!='ok'):
+            raise ValueError('independent revalidation lacks successful native evidence')
+        for uid,candidate in candidates.items():
+            old=self.certified_receipts.get(uid)
+            if (self._owner(uid)!=theory or uid+':prove' not in audited
+                    or not self._valid_receipt(candidate) or not isinstance(old,dict)
+                    or any(candidate.get(k)!=old.get(k) for k in
+                        ('polarity','filled','proof_body_sha256'))):
+                raise ValueError('independent revalidation changed a certified proof body')
+        previous={n['uid']:deepcopy(n) for n in self.nodes.get(theory,())}
+        for contract in self.bench['contracts']:
+            if contract['module']==theory:
+                uid=contract['id']
+                previous.setdefault(uid,dict(uid=uid,kind='contract',theory=theory,status='open'))
+        for uid,candidate in candidates.items():
+            previous[uid]={'uid':uid,'kind':'contract','theory':theory,'status':'green',
+                'accepted_receipt':self._native_receipt(candidate),
+                'accepted_source_version':deepcopy(result['source_version']),
+                'disposition':'accepted_independent_prefix_revalidation'}
+        rows=list(previous.values())
+        with self._publication(theory,rows):
+            commit=self.ledger.append('proof_commit',theory=theory,nodes=rows,
+                commit_id=digest(result),source_identity=result['source_identity'],
+                evidence=evidence,seal_evidence=None,
+                authority='native-independent-prefix-revalidation',
+                prior_evidence_event_ids={uid:self.certified_origins[uid] for uid in candidates})
+            for uid in candidates:
+                receipt=deepcopy(previous[uid]['accepted_receipt'])
+                self.accepted_receipts[uid]=receipt
+                self.accepted_origins[uid]=commit['event_id']
+                self.certified_receipts[uid]=deepcopy(receipt)
+                self.certified_origins[uid]=commit['event_id']
+            self._observe_published(theory,rows)
+        self.ledger.append('check_completed',theory=theory,target_ids=sorted(candidates),
+            outcome='accepted_independent_prefix_revalidation',
+            elapsed_seconds=result['elapsed_seconds'],
+            native_elapsed_seconds=result['elapsed_seconds'],seal_elapsed_seconds=0,
+            timing_basis='independent native prefix revalidation; no seal or integration')
+        return commit
 
     def evaluated(self, report, modules=None, *, preflight_source_invalidated=False):
         """Report draft status without overwriting native accepted GREEN proofs."""

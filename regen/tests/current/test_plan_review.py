@@ -1,5 +1,11 @@
 import unittest
+import hashlib
+import json
+from pathlib import Path
+import tempfile
+from unittest.mock import patch
 from copy import deepcopy
+from regen.planning import plan_review
 from regen.planning.plan_review import analyze, review_input, validate_review, history_comparison
 
 
@@ -52,6 +58,101 @@ class ReviewTests(unittest.TestCase):
     def test_unknown_issue_is_rejected(self):
         self.review['issues']=[{'id':'I','kind':'grouping','theories':['A'],'contract_ids':['unknown']}]
         with self.assertRaises(ValueError): validate_review(self.review,self.plan,self.contracts)
+
+    def run_cli(self, root, responses, *, audited=True):
+        root = Path(root)
+        (root/'plan.json').write_text(json.dumps(self.plan))
+        (root/'input.json').write_text(json.dumps({'contracts':self.contracts}))
+        output = root/'review'
+        prompts = []
+        def call(prompt, prefix, **options):
+            self.assertFalse((output/'review.json').exists())
+            self.assertFalse((output/'review-commit.json').exists())
+            self.assertNotIn('owner_file_slot', prompt)
+            prompts.append(prompt)
+            result = responses[len(prompts)-1]
+            if isinstance(result, BaseException): raise result
+            Path(str(prefix)+'.final.txt').write_text(result)
+            return result
+        argv = ['plan_review', '--plan', str(root/'plan.json'), '--input', str(root/'input.json'),
+                '--output', str(output), '--model', 'gpt-5.6-sol', '--reasoning-effort', 'medium',
+                '--allow-external-call']
+        with patch('sys.argv', argv), \
+                patch('regen.infrastructure.llm_transcript.call_codex', side_effect=call) as calls, \
+                patch('regen.infrastructure.llm_transcript.validate_call_artifact',
+                      return_value={'sealable_generation':audited}):
+            try:
+                plan_review.main()
+            finally:
+                self.last_calls = calls.call_count
+                self.last_prompts = prompts
+        return output
+
+    def test_invalid_external_reference_is_repaired_before_commit(self):
+        bad = deepcopy(self.review)
+        bad['theory_reviews'][0]['consumed_contract_ids'] = ['a']
+        good = deepcopy(self.review)
+        good['theory_reviews'][1]['consumed_contract_ids'] = ['a']
+        first, second = json.dumps(bad), json.dumps(good)
+        with tempfile.TemporaryDirectory() as tmp:
+            output = self.run_cli(tmp, [first, second])
+            self.assertEqual(json.loads((output/'review.json').read_text()), good)
+            self.assertEqual((output/'review.final.txt').read_text(), first)
+            self.assertEqual((output/'review-repair-0001.final.txt').read_text(), second)
+            self.assertIn('theory_reviews[A].consumed_contract_ids', self.last_prompts[1])
+            self.assertIn('belongs to this theory', self.last_prompts[1])
+            feedback = json.loads(self.last_prompts[1].split('OUTPUT REPAIR REQUEST:\n')[1])
+            self.assertEqual(feedback['previous_response'], first)
+            self.assertFalse(json.loads((output/'validation-0001.json').read_text())['valid'])
+            commit = json.loads((output/'review-commit.json').read_text())
+            self.assertEqual(commit['model'], 'gpt-5.6-sol')
+            self.assertEqual(commit['accepted_call']['attempt'], 2)
+            self.assertEqual(commit['accepted_call']['response_sha256'], hashlib.sha256(second.encode()).hexdigest())
+            self.assertEqual(json.loads((output/'status.json').read_text())['state'], 'complete')
+
+    def test_repeated_invalid_output_can_repair_beyond_former_round_limit(self):
+        bad = deepcopy(self.review)
+        bad['theory_reviews'][0]['consumed_contract_ids'] = ['a']
+        with tempfile.TemporaryDirectory() as tmp:
+            output = self.run_cli(tmp, [json.dumps(bad)]*5 + [json.dumps(self.review)])
+            self.assertEqual(self.last_calls, 6)
+            self.assertEqual(json.loads((output/'review.json').read_text()), self.review)
+            self.assertEqual(len(list(output.glob('validation-*.json'))), 6)
+            for index in range(1, 6):
+                self.assertFalse(json.loads((output/f'validation-{index:04d}.json').read_text())['valid'])
+            commit = json.loads((output/'review-commit.json').read_text())
+            self.assertIsNone(commit['max_repairs'])
+            self.assertEqual(commit['accepted_call']['attempt'], 6)
+            self.assertEqual(commit['output_repair_policy'], plan_review.OUTPUT_REPAIR_POLICY)
+
+    def test_operator_interrupt_stops_repair_without_publishing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(KeyboardInterrupt):
+                self.run_cli(tmp, ['not JSON']*4 + [KeyboardInterrupt()])
+            output = Path(tmp)/'review'
+            self.assertEqual(self.last_calls, 5)
+            self.assertFalse((output/'review.json').exists())
+            self.assertFalse((output/'review-commit.json').exists())
+            self.assertEqual(len(list(output.glob('validation-*.json'))), 4)
+            self.assertEqual(json.loads((output/'status.json').read_text())['state'], 'interrupted')
+
+    def test_malformed_json_and_missing_or_wrong_type_fields_receive_feedback(self):
+        missing = deepcopy(self.review); del missing['theory_reviews'][0]['assessment']
+        wrong_type = deepcopy(self.review); wrong_type['issues'] = [{'id':'I', 'kind':[]}]
+        for bad in ['not JSON', json.dumps(missing), json.dumps(wrong_type)]:
+            with self.subTest(response=bad), tempfile.TemporaryDirectory() as tmp:
+                output = self.run_cli(tmp, [bad, json.dumps(self.review)])
+                self.assertEqual(self.last_calls, 2)
+                self.assertTrue((output/'review-commit.json').exists())
+
+    def test_provider_or_audit_failure_is_not_retried_as_schema_repair(self):
+        for responses, audited, exception in [
+                ([RuntimeError('provider failed')], True, RuntimeError),
+                ([json.dumps(self.review)], False, ValueError)]:
+            with self.subTest(audited=audited), tempfile.TemporaryDirectory() as tmp:
+                with self.assertRaises(exception): self.run_cli(tmp, responses, audited=audited)
+                self.assertEqual(self.last_calls, 1)
+                self.assertFalse((Path(tmp)/'review/review-commit.json').exists())
 
 
 if __name__=='__main__': unittest.main()

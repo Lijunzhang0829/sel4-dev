@@ -13,6 +13,7 @@ import time
 from regen.execution.check_tasks import CheckCancelled
 from regen.execution.proof_commits import digest
 from regen.infrastructure.theory_activity import EXCLUDED_PHASES, MODEL_OVERLAP_EXCLUSIONS
+from regen.infrastructure.provider_request_accounting import ProviderRequestAccounting
 
 POLICY = 'global-effective-generation-budget-v1'
 EFFECTIVE_TIME_BUDGET_POLICY = POLICY
@@ -78,7 +79,8 @@ class EffectiveTimeBudget:
     """
     def __init__(self, ledger, seconds=DEFAULT_SECONDS, *, poll_seconds=1,
                  checkpoint_seconds=30, resume_authorization=None,
-                 extension_seconds=None, monotonic=time.monotonic):
+                 extension_seconds=None, include_planning=False,
+                 monotonic=time.monotonic):
         self.base_seconds = _positive(seconds, 'effective time budget')
         self.seconds = self.base_seconds
         self.poll_seconds = _positive(poll_seconds, 'watchdog interval')
@@ -91,6 +93,9 @@ class EffectiveTimeBudget:
             if resume_authorization is None:
                 raise ValueError('extension requires explicit resume authorization')
         self.ledger = ledger
+        if type(include_planning) is not bool:
+            raise ValueError('include_planning must be boolean')
+        self.include_planning = include_planning
         self.monotonic = monotonic
         self.lock = threading.RLock()
         self.event = threading.Event()
@@ -101,6 +106,8 @@ class EffectiveTimeBudget:
         self.finish_reason = None
         self.effective_seconds = 0.
         self.worker_seconds = 0.
+        self.planning_seconds = 0.
+        self.planning_active = False
         self.theories = {}
         self.contract_owners = {}
         self.green_contract_ids = set()
@@ -148,7 +155,8 @@ class EffectiveTimeBudget:
             raise ValueError('completed experiment cannot be resumed')
         if prior:
             state = prior['data']['state']
-            if state['policy'] != self.policy or state['base_seconds'] != self.base_seconds:
+            if (state['policy'] != self.policy or state['base_seconds'] != self.base_seconds
+                    or bool(state.get('include_planning', False)) != self.include_planning):
                 raise ValueError('time budget binding changed; use an explicit audited migration')
             if state['finished']:
                 raise ValueError('completed experiment cannot be resumed')
@@ -157,6 +165,8 @@ class EffectiveTimeBudget:
             self.seconds = _positive(state['seconds'], 'persisted budget')
             self.effective_seconds = _nonnegative(state['effective_seconds'], 'persisted time')
             self.worker_seconds = _nonnegative(state['worker_seconds'], 'persisted worker time')
+            self.planning_seconds = _nonnegative(
+                state.get('planning_seconds', 0.), 'persisted planning time')
             self._theory_seconds = {key: _nonnegative(value, 'persisted theory time')
                 for key, value in state.get('theory_seconds', {}).items()}
             self._next_exclusion = state.get('next_exclusion', 0)
@@ -196,12 +206,37 @@ class EffectiveTimeBudget:
                     'theory_activity_state', 'global_activity_state',
                     'global_exploration_state', 'proof_commit'} for r in history):
                 raise ValueError('legacy history lacks time budget; audited migration required')
+        request_state = prior['data']['state'].get('provider_request_accounting') if prior else None
+        if request_state is not None:
+            original = prior['data']['state']
+            correction = (prior['data']['correction']['adjustment']
+                if prior['data'].get('boundary') == 'audited_runtime_infrastructure_correction' else None)
+            self.provider_requests = ProviderRequestAccounting.restore(request_state,
+                effective_seconds=original['effective_seconds'], worker_seconds=original['worker_seconds'],
+                theory_seconds=original.get('theory_seconds', {}), infrastructure_correction=correction)
+            # A durable cutoff may precede its checkpoint. Preserve that charged
+            # tail as permanent work; it lacks request-level segment evidence.
+            self.provider_requests.raw_effective_seconds += self.effective_seconds-original['effective_seconds']
+            self.provider_requests.raw_worker_seconds += self.worker_seconds-original['worker_seconds']
+            for theory, seconds in self._theory_seconds.items():
+                self.provider_requests.raw_theory_seconds[theory] = (
+                    self.provider_requests.raw_theory_seconds.get(theory, 0.)
+                    + seconds-original.get('theory_seconds', {}).get(theory, 0.))
+            recovered_requests = self.provider_requests.restore_unfinished()
+        else:
+            self.provider_requests = ProviderRequestAccounting(self.effective_seconds,
+                self.worker_seconds, self._theory_seconds)
+            recovered_requests = []
+        self._provider_request_ids = set(self.provider_requests.requests)
+        self._provider_request_ids.update(row['data']['request_id'] for row in history
+            if row['kind'] == CHECKPOINT_KIND and row['data'].get('boundary') == 'provider_request_started')
         self.stage_id = self._append('time_budget_started', policy=self.policy,
             base_seconds=self.base_seconds, seconds=self.seconds,
             resumed_from=prior['event_id'] if prior else None,
             authorization=resume_authorization, recovered_gate='CLOSED',
             unobserved_shutdown_tail=self.unobserved_shutdown_tail,
-            unobserved_tail_seconds=None if self.unclean_recoveries else 0)['event_id']
+            unobserved_tail_seconds=None if self.unclean_recoveries else 0,
+            unresolved_provider_request_ids=recovered_requests)['event_id']
         self._write_state('started')
 
     @staticmethod
@@ -237,27 +272,86 @@ class EffectiveTimeBudget:
                 result.append(worker)
         return result
 
+    def _planning_open(self):
+        if (not self.include_planning or not self.planning_active or self.event.is_set()
+                or self.closed.is_set() or self.finished):
+            return False
+        return not any(p['worker_id'] is None for p in self.exclusions.values())
+
+    def _gate_open(self):
+        return self._planning_open() or bool(self._open_workers())
+
     def _settle(self):
         now = self.monotonic()
         if not math.isfinite(now) or now < self._last_tick:
             self.event.set(); self.reason = 'effective_time_clock_error'
             raise ValueError('effective generation monotonic clock moved backwards')
         workers = self._open_workers()
+        planning = self._planning_open()
         elapsed = now-self._last_tick
-        if workers:
+        self.provider_requests.record(elapsed, {w:self.workers[w] for w in workers}, planning)
+        if workers or planning:
             self.effective_seconds += elapsed
+            if planning:
+                self.planning_seconds += elapsed
             self.worker_seconds += elapsed*len(workers)
             for theory in {self.workers[w] for w in workers}:
                 self._theory_seconds[theory] = self._theory_seconds.get(theory, 0.)+elapsed
         self._last_tick = now
 
     def _compact(self):
-        return dict(policy=self.policy, base_seconds=self.base_seconds, seconds=self.seconds,
+        value = dict(policy=self.policy, base_seconds=self.base_seconds, seconds=self.seconds,
             effective_seconds=self.effective_seconds, worker_seconds=self.worker_seconds,
+            planning_seconds=self.planning_seconds,
             theory_seconds=dict(self._theory_seconds), next_exclusion=self._next_exclusion,
             reason=self.reason, paused=self.event.is_set() and not self.finished, finished=self.finished,
-            finish_reason=self.finish_reason, gate_open=bool(self._open_workers()),
+            finish_reason=self.finish_reason, gate_open=self._gate_open(),
+            include_planning=self.include_planning, planning_active=self.planning_active,
             checkpoint_seconds=self.checkpoint_seconds, unclean_recoveries=self.unclean_recoveries)
+        # Legacy/non-provider runs need no duplicated counters or empty request
+        # metadata in thousands of checkpoints. Their raw cost equals net cost.
+        if self.provider_requests.requests:
+            value.update(provider_request_accounting=self.provider_requests.state(),
+                         **self.provider_requests.summary())
+        return value
+
+    def begin_provider_request(self, worker_id, request_id):
+        """Trusted harness boundary: a response is now awaited in this lane."""
+        with self.lock:
+            self._settle(); self._check_locked()
+            if worker_id not in self.workers:
+                raise ValueError('provider request requires an active worker lane')
+            if request_id in self._provider_request_ids:
+                raise ValueError('provider request identity already used in this experiment')
+            self.provider_requests.begin(worker_id, self.workers[worker_id], request_id)
+            self._provider_request_ids.add(request_id)
+            self._write_state('provider_request_started', worker_id=worker_id, request_id=request_id)
+
+    def finish_provider_request(self, worker_id, request_id, *, outcome='success', failure=None):
+        """A complete response succeeds even when its later proof check fails."""
+        with self.lock:
+            self._settle()
+            self.provider_requests.finish(worker_id, request_id, outcome, failure)
+            self._write_state('provider_request_finished', worker_id=worker_id,
+                request_id=request_id, outcome=outcome, failure=failure)
+
+    def credit_provider_request(self, failed_request_id, successful_request_id):
+        """Atomically exclude only a failed request after its retry succeeds."""
+        with self.lock:
+            self._settle()
+            previous = self.provider_requests.existing_credit(failed_request_id, successful_request_id)
+            if previous is not None:
+                return previous
+            self._check_locked()  # A hoped-for refund never bypasses the cutoff.
+            receipt = self.provider_requests.credit(failed_request_id, successful_request_id)
+            self.effective_seconds = max(0., self.effective_seconds-receipt['effective_seconds'])
+            self.worker_seconds = max(0., self.worker_seconds-receipt['worker_seconds'])
+            for theory, seconds in receipt['theory_seconds'].items():
+                self._theory_seconds[theory] = max(0., self._theory_seconds.get(theory, 0.)-seconds)
+            self.provider_requests.validate(self.effective_seconds, self.worker_seconds, self._theory_seconds)
+            # Receipt and adjusted counters share one immutable publication.
+            self._write_state('provider_request_retry_credit', correction=receipt)
+            return receipt
 
     def _write_state(self, boundary, **transition):
         self._append(CHECKPOINT_KIND, boundary=boundary, state=self._compact(), **transition)
@@ -267,9 +361,10 @@ class EffectiveTimeBudget:
         with self.lock:
             self._settle()
             value = self._compact()
+            value.update(self.provider_requests.summary())
             value.update(effective_seconds_limit=self.seconds, token_limit=None,
                 remaining_seconds=max(0., self.seconds-self.effective_seconds),
-                gate_state='OPEN' if self._open_workers() else 'CLOSED',
+                gate_state='OPEN' if self._gate_open() else 'CLOSED',
                 active_theory=self.active_theory, active_workers=dict(self.workers),
                 exclusions=deepcopy(self.exclusions), terminal_reason=self.reason,
                 closed=self.closed.is_set(), green_contract_ids=sorted(self.green_contract_ids),
@@ -289,7 +384,28 @@ class EffectiveTimeBudget:
         with self.lock:
             self._settle()
             return (self.ledger.clock()+max(0., self.seconds-self.effective_seconds)
-                    if self._open_workers() else None)
+                    if self._gate_open() else None)
+
+    def begin_planning(self):
+        """Open the global planning clock without inventing theory attribution."""
+        if not self.include_planning:
+            raise ValueError('planning time is not enabled by this frozen budget binding')
+        with self.lock:
+            self._settle(); self._check_locked()
+            if self.planning_active:
+                raise ValueError('planning clock already active')
+            if self._registered:
+                raise ValueError('planning clock cannot start after allocation is frozen')
+            self.planning_active = True
+            self._write_state('planning_started')
+
+    def end_planning(self):
+        with self.lock:
+            self._settle()
+            if not self.planning_active:
+                raise ValueError('planning clock is not active')
+            self.planning_active = False
+            self._write_state('planning_finished')
 
     def register(self, theories, *, baseline_green=()):
         owners = {}
@@ -479,6 +595,11 @@ class EffectiveTimeBudget:
                     self.check()
                     if sample:sample()
             except Exception:
+                # close() can win after wait() returns but before check()
+                # acquires the clock lock. That is normal shutdown, not a
+                # monitor failure, and must not append a pause after closure.
+                if self.closed.is_set():
+                    return
                 try:
                     if not self.event.is_set():
                         self.cancel(self.monitor_error_reason)

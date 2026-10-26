@@ -29,7 +29,13 @@ File Planner 不再因连续两个模型回合没有信息进展而抛出 `Theor
 
 部署使用新的冻结应用和完整 workspace continuation：保留失败 theory 的最后提交及独立草稿，同时保留其他 theory 的最新证明、历史请求、累计时间和已消耗 HTTP 重试额度；停机与恢复准备不计入有效生成时间。不就地修改正在运行的冻结代码，也不从零重置预算。
 
-## 2026-10-10 新实验 HTTP 一次重试策略
+## 2026-10-25 无反馈重发与成功后的请求计时排除
+
+新发布的 `parallel-workspace` 默认启用 `provider_feedback_retries=1`：无真实模型反馈超时、连接关闭或明确短暂传输故障后，清理旧 owner 并重发一次；连续第二次失败暂停。只有重发收到完整有效响应后，才从有效时间扣除原失败请求的等待区间。原始消耗、此前已完成工作及并行健康会话时间保留；重试和退款均持久化，跨恢复不重复执行或重复扣费。该规则替代下述旧并行入口对这些故障默认不重试、失败请求耗时始终保留的行为。
+
+适用范围、完整响应边界及旧运行迁移见 [PROVIDER-FEEDBACK-RETRY.md](PROVIDER-FEEDBACK-RETRY.md)。仓库规划和通用基线仍须检查各自入口，不能据此宣称已经统一。
+
+## 2026-10-10 新实验 HTTP 一次重试策略（历史绑定）
 
 新运行可在冻结 `execution_policy` 中显式设置 `provider_http_retries: 1`；旧配置省略此字段时仍保留原来的网络暂停行为。此额度独立于 `session_stall_retries`，每个 theory 在该运行中最多使用一次，写入预算 ledger，重启协调器不会重新获赠。
 
@@ -433,10 +439,13 @@ are recorded as `shared`, while an empty scope remains `unattributed`. Labels gr
 no proof authority. Rollout accounting is restricted to the current private home
 and bound thread. No old experiment is exposed.
 
-The cold VERO evaluator and incremental generic checker retain their respective
-execution paths. Their timeout scopes and caching policies must be disclosed in
-system comparisons; common resource limits do not make these execution strategies
-identical. This policy measures complete systems by actual token and wall cost.
+VERO candidate checks use a content-bound owner-theory prefix and exact-source
+receipt reuse; complete theory source is still checked/built for seal.  The generic
+checker uses its accepted-prefix worker.  Their timeout scopes and caching policies
+must be disclosed in system comparisons: VERO's prefix is a cold native invocation,
+not the generic checker's resident suffix execution.  Common resource limits do not
+make these execution strategies identical. This policy measures complete systems by
+actual token and wall cost.
 
 ### 有效生成总预算：可恢复的状态门（2026-10-08 更新）
 
@@ -525,6 +534,19 @@ proof generation and assigns every fixed contract to exactly one theory. Once
 accepted, the theory split, contract allocation, imports and execution order are
 hash-bound and cannot be revised during generation. The theories still share one
 workspace; that storage choice does not make unsealed sibling facts legal premises.
+
+For a fresh schema-v2 VERO plan, acceptance also requires
+`architecture_policy=frozen-helper-providers-v1` and a
+`helper_provider_intents` array. Each intent names one already planned provider,
+its consumers and the affected fixed contracts. The pre-freeze audit verifies
+that every consumer can already reach the provider through the proposed imports,
+and records the longest seal path plus direct/transitive fan-out. It never adds an
+import, contract, helper statement or proof route. Every schema-v2 theory already
+has one flexible `global_aux` region, so the intent reserves a placement role, not
+a fixed number of lemma slots. Empty intent lists remain legal when cross-theory
+reuse is not justified; topology risk warnings are evidence for review rather
+than a claim of mathematical dependence. Older accepted plans remain readable
+and are explicitly reported as legacy instead of being silently upgraded.
 
 The shared workspace has one cumulative budget: 48 hours (172,800 seconds) of
 effective generation by default. Reaching it pauses unfinished generation and

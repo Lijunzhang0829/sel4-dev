@@ -36,6 +36,8 @@ class VeroActiveWallBudgetTests(unittest.TestCase):
         self.assertIn('seal, integration and ordinary waits all count',text)
         self.assertIn('cannot be extended',text)
         self.assertIn('no token stopping limit',text)
+        self.assertIn('may be certified GREEN even while an imported theory is unsealed',text)
+        self.assertIn('seal cannot be published until every frozen imported theory is sealed',text)
 
     def test_crefine_uses_immutable_effective_generation_budget(self):
         args=self.args(expected_contracts=309,budget_mode='effective-time',
@@ -68,6 +70,34 @@ class VeroActiveWallBudgetTests(unittest.TestCase):
             with self.assertRaises(CheckCancelled):stop.check()
             self.assertTrue(stop.snapshot()['finished'])
             stop.close()
+
+    def test_xhigh_and_planning_time_are_bound_into_new_crefine_run(self):
+        args=self.args(expected_contracts=309,budget_mode='effective-time',
+            effective_seconds=172800,reasoning='xhigh',include_planning_time=True)
+        binding=entry.formal_configuration_binding(args)
+        self.assertEqual(binding['reasoning_effort'],'xhigh')
+        self.assertTrue(binding['include_planning_time'])
+        config=entry.expected_runtime_config('/tmp/vero-crefine-xhigh',
+            {'client_path':'/fixed/codex',**binding},{})
+        self.assertEqual(config['agent']['reasoning_effort'],'xhigh')
+        text=entry.effective_budget_instruction(172800,include_planning=True)
+        self.assertIn('Repository planning consumes this budget',text)
+
+    def test_crefine_two_hour_validation_profile_is_explicit_and_frozen(self):
+        args=self.args(expected_contracts=309,budget_mode='effective-time',
+            effective_seconds=7200,validation_run=True)
+        binding=entry.formal_configuration_binding(args)
+        self.assertEqual(binding['effective_seconds_limit'],7200)
+        self.assertEqual(binding['experiment_profile'],
+            'crefine-effective-2h-validation-v1')
+        missing=self.args(expected_contracts=309,budget_mode='effective-time',
+            effective_seconds=7200)
+        with self.assertRaisesRegex(ValueError,'validation-run'):
+            entry.formal_configuration_binding(missing)
+        wrong=self.args(expected_contracts=309,budget_mode='effective-time',
+            effective_seconds=172800,validation_run=True)
+        with self.assertRaisesRegex(ValueError,'validation-run'):
+            entry.formal_configuration_binding(wrong)
 
     def test_all_normal_phases_count_but_confirmed_recovery_does_not(self):
         with tempfile.TemporaryDirectory() as tmp:

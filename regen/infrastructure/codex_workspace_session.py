@@ -4,8 +4,8 @@ Local protocol source: `codex app-server generate-json-schema --experimental`.
 Dynamic tools are additive, not an exclusive OS sandbox. Real providers require
 a pinned minimal OS-isolation container; synthetic protocol tests retain the
 audited-tool-allowlist label. Explicit provider authorization is still required.
-The harness never replays a
-provider call; app-server may reconnect a response stream when it explicitly
+The session never replays an executed callback. Its coordinator may resend a
+failed provider request from retained workspace state; app-server may reconnect a response stream when it explicitly
 reports that the same turn will be retried. A callback owns its native/action
 deadline and worker cleanup. The session timeout measures inactivity while
 waiting for protocol events, excluding callback time; cancellation cleans up the
@@ -42,6 +42,18 @@ class SessionCancelled(KeyboardInterrupt):
 
 class SessionStalled(SessionProtocolError):
     """Protocol is live but the planner is not obtaining new information."""
+
+
+class SessionProgressDeadline(SessionStalled):
+    """No complete useful response before the progress deadline (not a read loop)."""
+
+
+class ProviderFeedbackError(SessionProtocolError):
+    """A trusted local/transport interruption eligible for one fresh resend."""
+    def __init__(self, failure, failed_request_id):
+        self.failure = deepcopy(failure)
+        self.failed_request_id = failed_request_id
+        super().__init__('provider feedback interrupted: '+json.dumps(failure, sort_keys=True))
 
 
 class ProviderOverloaded(SessionProtocolError):
@@ -100,7 +112,7 @@ class ProgressWatch:
 
     def check(self):
         if self.clock() - self.last_progress >= self.timeout:
-            raise SessionStalled('no new tool information or proof action within progress deadline')
+            raise SessionProgressDeadline('no new tool information or proof action within progress deadline')
 
     def observe(self, name, arguments, value, elapsed):
         # Waiting inside an authorized callback is governed by the native/action
@@ -124,10 +136,23 @@ class ProgressWatch:
 class CodexWorkspaceSession:
     def __init__(self, *, tools, codex_bin='codex', codex_home=None,
                  allow_external_call=False, command=None, progress_timeout=None,
-                 http_retry_mode=False):
+                 http_retry_mode=False, feedback_retry_mode=False,
+                 retry_failed_request_id=None):
         if type(http_retry_mode) is not bool:
             raise ValueError('http_retry_mode must be boolean')
         self._http_retry_mode = http_retry_mode
+        if type(feedback_retry_mode) is not bool:
+            raise ValueError('feedback_retry_mode must be boolean')
+        if retry_failed_request_id is not None and (
+                not feedback_retry_mode or not isinstance(retry_failed_request_id, str)
+                or not retry_failed_request_id):
+            raise ValueError('a failed request identity requires feedback retry mode')
+        self._feedback_retry_mode = feedback_retry_mode
+        self._retry_failed_request_id = retry_failed_request_id
+        self._provider_request_id = None
+        self._provider_request_since = None
+        self._provider_feedback_at = None
+        self._feedback_interrupted = False
         self._http_interrupted = False
         self._overload_interrupted = False
         self._http_failure = None
@@ -179,6 +204,8 @@ class CodexWorkspaceSession:
         self._request_offsets = {}
         self._notification_receipts = {}
         self.last_notification_receipt = None
+        # Zero disables both elapsed-progress and duplicate-result termination.
+        # Global time-budget experiments own their complete stopping policy.
         self._progress_timeout = progress_timeout
         self._progress = None
         self._sleep_state = {}
@@ -226,11 +253,15 @@ class CodexWorkspaceSession:
             self._generation_active = False
             self._finish_stream_retry()
             from regen.infrastructure.progress_events import emit_event
-            if (self._http_interrupted or self._overload_interrupted
+            if self._provider_request_id is not None:
+                # Cancellation/protocol errors do not authorize a refund. Close
+                # the pending attribution interval as retained work instead.
+                self._provider_request_finish('retained', reason=reason)
+            if (self._http_interrupted or self._overload_interrupted or self._feedback_interrupted
                     or (self._cancel_event is not None and self._cancel_event.is_set())):
                 # An explicit local pause is a known interruption, not a claim
-                # that the provider completed its open items. Never refund the
-                # work charged before this cancellation boundary.
+                # that the provider completed its open items. A later successful
+                # resend may exclude only its explicitly failed request interval.
                 emit_event('generation_items_interrupted', generation_id=self._generation_id,
                            thread_id=self.thread_id, turn_id=self.turn_id, reason=reason,
                            item_ids=sorted(str(key[-1]) for key in self._model_work_items))
@@ -239,6 +270,53 @@ class CodexWorkspaceSession:
                 self._model_work_boundary('session_stopped_with_open_model_item')
             emit_event('theory_generation_stopped', generation_id=self._generation_id,
                        clock_schema='theory_effective_v1', reason=reason)
+
+    def _provider_request_begin(self, source):
+        if not self._feedback_retry_mode or self._provider_request_id is not None:
+            return
+        from regen.infrastructure.progress_events import emit_event
+        self._provider_request_id = uuid4().hex
+        self._provider_request_since = time.monotonic()
+        self._provider_feedback_at = self._provider_request_since
+        fields = dict(request_id=self._provider_request_id, source=source,
+            generation_id=self._generation_id, thread_id=self.thread_id, turn_id=self.turn_id)
+        self._event('local', {'event':'provider_request_started', **fields})
+        emit_event('generation_provider_request_started', **fields)
+
+    def _provider_request_finish(self, outcome, **evidence):
+        if self._provider_request_id is None:
+            return None
+        from regen.infrastructure.progress_events import emit_event
+        request_id, self._provider_request_id = self._provider_request_id, None
+        self._provider_request_since = None
+        self._provider_feedback_at = None
+        fields = dict(request_id=request_id, generation_id=self._generation_id,
+            thread_id=self.thread_id, turn_id=self.turn_id, outcome=outcome, **evidence)
+        self._event('local', {'event':'provider_request_finished', **fields})
+        emit_event('generation_provider_request_finished', **fields)
+        if outcome == 'success' and self._retry_failed_request_id is not None:
+            old, self._retry_failed_request_id = self._retry_failed_request_id, None
+            emit_event('provider_feedback_retry_succeeded', failed_request_id=old,
+                successful_request_id=request_id, generation_id=self._generation_id)
+        return request_id
+
+    def _raise_feedback_failure(self, failure, *, source):
+        # Only trusted call sites invoke this: a local response deadline, EOF,
+        # or an ownership-checked provider transport error. Never classify a
+        # model's prose or a mathematical tool failure as infrastructure.
+        self._feedback_interrupted = True
+        self._generation_start()
+        if self._provider_request_id is None:
+            # A failure during an executing callback cannot refund its work.
+            # Attribute only the detection boundary, not the whole session.
+            self._provider_request_begin('failure_without_pending_response')
+        request_id = self._provider_request_finish('failed', failure=deepcopy(failure),
+            protocol_source=source, active_request_id=self._active_request_id,
+            callback_executing=self._callback_executing)
+        from regen.infrastructure.progress_events import emit_event
+        emit_event('generation_provider_request_failed', request_id=request_id,
+            generation_id=self._generation_id, failure=deepcopy(failure))
+        raise ProviderFeedbackError(failure, request_id)
 
     def _finish_stream_retry(self):
         self._stream_retry_since = None
@@ -343,6 +421,12 @@ class CodexWorkspaceSession:
         deltas = {'item/reasoning/textDelta':'reasoning',
                   'item/reasoning/summaryTextDelta':'reasoning',
                   'item/agentMessage/delta':'agentMessage'}
+        if self._provider_request_id is not None and (
+                method in deltas or (method in ('item/started', 'item/completed')
+                                    and item.get('type') in kinds)):
+            # Partial model feedback keeps a long reasoning response alive.
+            # Quota/token metadata alone must not extend a silent connection.
+            self._provider_feedback_at = time.monotonic()
         if method in ('item/started', 'item/completed') and item.get('type') in kinds:
             key = (self.thread_id, self.turn_id, item['type'], item.get('id'))
             if method == 'item/started':
@@ -376,7 +460,7 @@ class CodexWorkspaceSession:
 
     def _raise_http_failure(self, error, *, source, request_id=None):
         """Classify only after the caller validates notification/RPC ownership."""
-        if not self._http_retry_mode:
+        if not (self._http_retry_mode or self._feedback_retry_mode):
             return
         from regen.infrastructure.provider_http_failure import classify_provider_http_failure
         failure = classify_provider_http_failure(error)
@@ -384,6 +468,12 @@ class CodexWorkspaceSession:
             # JSON-RPC errors may carry structured provider details under data.
             failure = classify_provider_http_failure(error.get('data'))
         if failure is None:
+            return
+        status = failure.get('http_status')
+        if self._feedback_retry_mode and (
+                status is None or status >= 500 or status in (408, 409, 425, 429)):
+            self._raise_feedback_failure(failure, source=source)
+        if not self._http_retry_mode:
             return
         if self._http_failure is None:
             from regen.infrastructure.progress_events import emit_event
@@ -417,8 +507,14 @@ class CodexWorkspaceSession:
 
     def _send(self, message):
         self._event('out', message)
-        self.process.stdin.write((json.dumps(message, ensure_ascii=False)+'\n').encode())
-        self.process.stdin.flush()
+        try:
+            self.process.stdin.write((json.dumps(message, ensure_ascii=False)+'\n').encode())
+            self.process.stdin.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            if self._feedback_retry_mode:
+                self._raise_feedback_failure({'kind':'app_server_pipe_closed', 'http_status':None},
+                    source='stdin_write')
+            raise
 
     def _request(self, method, params):
         self._serial += 1
@@ -437,7 +533,12 @@ class CodexWorkspaceSession:
                 return None
             if self._cancel_event is not None and self._cancel_event.is_set():
                 raise SessionCancelled('workspace coordinator cancelled')
-            if self._stream_retry_since is not None and self._http_retry_mode:
+            if (callback_stop is None and self._feedback_retry_mode
+                    and self._provider_feedback_at is not None
+                    and time.monotonic() - self._provider_feedback_at >= self._timeout):
+                self._raise_feedback_failure({'kind':'no_complete_response', 'http_status':None},
+                    source='provider_feedback_deadline')
+            if self._stream_retry_since is not None and (self._http_retry_mode or self._feedback_retry_mode):
                 # Bound a stuck reconnect even if it keeps sending heartbeats.
                 # Native callbacks retain their own deadline and are not aborted
                 # merely because the provider is reconnecting in parallel.
@@ -446,7 +547,10 @@ class CodexWorkspaceSession:
             if callback_stop is None and self._progress is not None and self._stream_retry_since is None:
                 try:
                     self._progress.check()
-                except SessionStalled as error:
+                except SessionProgressDeadline as error:
+                    if self._feedback_retry_mode and self._provider_request_id is not None:
+                        self._raise_feedback_failure({'kind':'no_complete_response', 'http_status':None},
+                            source='progress_deadline')
                     if self._progress_timeout is None:
                         raise TimeoutError('workspace session deadline expired without tool progress') from error
                     raise
@@ -456,6 +560,9 @@ class CodexWorkspaceSession:
             if self._expired.is_set() or remaining <= 0:
                 if self._stream_retry_since is not None:
                     self._raise_http_failure(self._stream_retry_error, source='reconnect_timeout')
+                if self._feedback_retry_mode:
+                    self._raise_feedback_failure({'kind':'no_complete_response', 'http_status':None},
+                        source='response_deadline')
                 raise TimeoutError('workspace session deadline expired')
             if not self._selector.select(0 if available_only else min(remaining, .05)):
                 if available_only:
@@ -465,6 +572,9 @@ class CodexWorkspaceSession:
             if not chunk:
                 if self._stream_retry_since is not None:
                     self._raise_http_failure(self._stream_retry_error, source='reconnect_eof')
+                if self._feedback_retry_mode:
+                    self._raise_feedback_failure({'kind':'app_server_eof', 'http_status':None},
+                        source='stdout_eof')
                 raise SessionProtocolError('app-server closed before terminal response')
             self._buffer += chunk
         raw, self._buffer = self._buffer.split(b'\n', 1)
@@ -524,6 +634,8 @@ class CodexWorkspaceSession:
         if len(self._deferred) >= MAX_DEFERRED_TOOL_CALLS:
             raise SessionProtocolError('too many queued serial tool requests')
         self._finish_stream_retry()
+        self._provider_request_finish('success', response_kind='tool_request',
+            call_id=message['params']['callId'])
         self._deferred.append(message)
 
     def _pump_callback_events(self):
@@ -560,6 +672,7 @@ class CodexWorkspaceSession:
             # call. Preserve the raw ordering, finish already accepted callbacks
             # exactly once, and only then let the owner consume this terminal.
             self._deferred_terminal = message
+            self._provider_request_finish('success', response_kind='turn_completed')
             self._finish_stream_retry()
             self._finish_model_work(clear_items=True)
             self._event('local', {'event':'terminal_deferred_until_tool_results',
@@ -691,12 +804,15 @@ class CodexWorkspaceSession:
                 # A terminal capacity rejection can leave an unfinished model
                 # item in the stream. Charge work to this boundary and retry a
                 # new thread; the missing item/completed is expected here.
+                if self._feedback_retry_mode:
+                    self._raise_feedback_failure({'kind':'provider_capacity', 'http_status':None},
+                        source='error_notification')
                 self._overload_interrupted = True
                 # Keep provider diagnostics in the private transcript. The
                 # coordinator's events/results must never serialize raw error
                 # objects, which may contain credential or endpoint details.
                 raise ProviderOverloaded('provider capacity rejection')
-            if (self._http_retry_mode and params.get('threadId') == self.thread_id
+            if ((self._http_retry_mode or self._feedback_retry_mode) and params.get('threadId') == self.thread_id
                     and params.get('turnId') == self.turn_id
                     and self.thread_id is not None and self.turn_id is not None):
                 self._raise_http_failure(error, source='error_notification')
@@ -783,6 +899,7 @@ class CodexWorkspaceSession:
                               'sleep_policy_version':SLEEP_POLICY_VERSION,
                               'callback_event_reader':'serial-owner-with-reader-v1',
                               'pending_terminal_policy_version':2,
+                              'progress_watch_timeout':self._progress_timeout,
                               'tool_argument_policy_version':2,
                               'assurance':'os-isolated-tool-allowlist' if isolation else 'audited-tool-allowlist',
                               'exclusive_os_isolation':bool(isolation), 'isolation':isolation})
@@ -806,6 +923,7 @@ class CodexWorkspaceSession:
         name, arguments, call_id = params['tool'], params['arguments'], params['callId']
         if key in self._calls:
             raise SessionProtocolError('duplicate call ID; callback is never automatically replayed')
+        self._provider_request_finish('success', response_kind='tool_request', call_id=call_id)
         metadata = {'thread_id':self.thread_id, 'turn_id':self.turn_id, 'call_id':call_id,
                     'raw_request':deepcopy(message),
                     'transcript_path':str(self._artifact_dir/'session-transcript.jsonl'),
@@ -848,10 +966,15 @@ class CodexWorkspaceSession:
                     response = {'success':True, 'contentItems':[{'type':'inputText','text':json.dumps(value, ensure_ascii=False)}]}
             except Exception as error:
                 from regen.execution.check_tasks import NativePreparationError
-                if isinstance(error, (NativePreparationError, CodexRuntimeError)):
+                from regen.infrastructure.resource_budget import ResourceBudgetError
+                if isinstance(error, (NativePreparationError, CodexRuntimeError, ResourceBudgetError)):
                     raise  # Preparation failure is not a candidate proof failure.
+                rejection = {'error_type':type(error).__name__, 'message':str(error)}
+                from regen.planning.theory_document import DocumentEditError
+                if isinstance(error, DocumentEditError):
+                    rejection.update(code=error.code, details=deepcopy(error.details))
                 response = {'success':False, 'contentItems':[{'type':'inputText','text':json.dumps(
-                    {'error_type':type(error).__name__, 'message':str(error)}, ensure_ascii=False)}]}
+                    rejection, ensure_ascii=False)}]}
         except BaseException as error:
             self._runtime_failed(error)
             self._notify_abort()
@@ -864,6 +987,8 @@ class CodexWorkspaceSession:
         self._calls[key] = 'finished'
         self._event('local', {'event':'tool_finished', 'call_id':call_id, 'response':response})
         self._send({'id':message['id'], 'result':response})
+        if self._deferred_terminal is None:
+            self._provider_request_begin('tool_result_sent')
         if self._http_retry_mode and not self._transport_progress_reported:
             from regen.infrastructure.progress_events import emit_event
             emit_event('provider_transport_progress', generation_id=self._generation_id,
@@ -884,7 +1009,7 @@ class CodexWorkspaceSession:
         if timeout <= 0:
             raise ValueError('timeout must be positive')
         self._timeout = timeout
-        if self._progress is None:
+        if self._progress is None and self._progress_timeout != 0:
             progress_timeout = self._progress_timeout if self._progress_timeout is not None else timeout
             if progress_timeout <= 0:
                 raise ValueError('progress timeout must be positive')
@@ -910,6 +1035,7 @@ class CodexWorkspaceSession:
             self._awaiting_turn_response = True
             try:
                 self._generation_start()
+                self._provider_request_begin('turn_start')
                 turn = self._await(self._request('turn/start', {'threadId':self.thread_id,
                     'input':[{'type':'text','text':prompt}], 'model':model, 'effort':reasoning_effort,
                     'approvalPolicy':'never', 'environments':[]}), deadline)
@@ -972,6 +1098,7 @@ class CodexWorkspaceSession:
                     if any(key[:2] == (self.thread_id, self.turn_id)
                            for key in self._sleep_state.get('pending', {})):
                         raise SessionProtocolError('turn completed with unfinished sleep item')
+                    self._provider_request_finish('success', response_kind='turn_completed')
                     result = {'thread_id':self.thread_id, 'turn_id':self.turn_id, 'turn':params['turn'],
                               'status':params['turn']['status'], 'usage':deepcopy(self._usage),
                               'assurance':'os-isolated-tool-allowlist' if self._isolation else 'audited-tool-allowlist',

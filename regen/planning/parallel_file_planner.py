@@ -62,9 +62,20 @@ Use explicit sketches groups, without legacy proof-DAG, route or scheduling JSON
 which earlier proven declarations are available; oops slots export no theorem.
 
 Use proof_action(theory, proposal):
+{"action":"read_entry","entry_id":"stable entry ID"}
+Read one entry's proof_body and expected_hash without rereading the complete draft.
+For proof-only changes prefer:
+{"action":"edit_proof","entry_id":"stable entry ID","proof_body":"complete replacement proof","expected_hash":"hash from read_entry or current source_sha256"}
+expected_hash binds the whole current document. The harness preserves the entry's
+declaration, context and markers. Read the current entry again after a stale-hash
+rejection. Saving a proof body is not acceptance; check the returned source hash.
+For helper declarations, ordering or other structural changes use:
 {"action":"edit_theory","base_sha256":"hash from read_theory","edits":[{"old":"unique exact text","new":"replacement"}]}
 Or replace the complete file using source instead of edits. Edits are sequential. Saving
 performs boundary/hygiene checks, not Isabelle validation. Failed proof drafts persist.
+Edit rejections report details with the failing zero-based edit_index, match_count
+and source positions where available. Correct the indicated edit against the current
+entry instead of repeating an ambiguous replacement or changing fixed declarations.
 {"action":"check_theory","source_sha256":"current saved hash","reason":"what changed"}
 Optional entry_ids selects several proof updates while retaining every accepted proof.
 {"action":"check_sketch","source_sha256":"current saved hash","target_entry_ids":["parent ID"]}
@@ -516,6 +527,11 @@ class TheoryController(WorkspaceController):
             if proposal.get('action') == 'select_helpers':
                 raise ValueError('select_helpers was removed; edit any needed helpers and check '
                                  'one or more proof bodies directly with check_theory')
+            if proposal.get('action') == 'read_entry':
+                if set(proposal) != {'action','entry_id'}:
+                    raise ValueError('read_entry accepts entry_id only')
+                store, _ = self._document()
+                return store.read_entry(proposal['entry_id'])
             if proposal.get('action') == 'read_sketch':
                 from regen.planning.sketch_check import read_receipt
                 if set(proposal)-{'action','receipt_id','view'}:
@@ -559,16 +575,16 @@ class TheoryController(WorkspaceController):
                 from regen.planning.document_recall import context_index_page
                 package,state = self._state(self.theory)
                 return context_index_page(planner_input(package,state),proposal)
-            if proposal.get('action') not in {'edit_theory','check_theory','check_sketch','probe_helpers','assess_sketch','finish'}:
+            if proposal.get('action') not in {'edit_theory','edit_proof','check_theory','check_sketch','probe_helpers','assess_sketch','finish'}:
                 from regen.planning.document_interface import internal_request
                 proposal = internal_request(proposal)
                 arguments = {**arguments, 'proposal':proposal}
-            allowed = {'edit_theory','check_theory','check_sketch','probe_helpers','assess_sketch','finish','observe','query','read_facts',
+            allowed = {'edit_theory','edit_proof','check_theory','check_sketch','probe_helpers','assess_sketch','finish','observe','query','read_facts',
                        'read_proofs','read_attempts','read_queries','read_diagnostic',
                        'read_proof_state','resolve_symbols'}
             if proposal.get('action') not in allowed:
                 raise ValueError('document mode requires source edits/checks, not legacy graph actions')
-            if proposal.get('action')=='edit_theory':
+            if proposal.get('action') in {'edit_theory','edit_proof'}:
                 from regen.infrastructure.workspace_transcript import record_workspace_action
                 store,state=self._document()
                 if state['status'] in {'sealed','retired'}:
@@ -576,7 +592,8 @@ class TheoryController(WorkspaceController):
                 prefix=store.root/'edits'/uuid4().hex/'call'
                 record_workspace_action(prefix,'Persistent theory source edit',proposal,metadata,
                                         theory=self.theory,model=self.model)
-                return store.edit(proposal,{'transcript_prefix':str(prefix)})
+                edit = store.edit_proof if proposal['action'] == 'edit_proof' else store.edit
+                return edit(proposal,{'transcript_prefix':str(prefix)})
             if proposal.get('action')=='finish':
                 store,state=self._document()
                 current=store.read()
@@ -826,7 +843,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                        codex_home=None, cancel_event=None, document_mode=True,
                        generation_strategy_name='baseline', focus_contract_id=None,
                        stop_at_focus_contract=False, and_or_control=None, retry_context=None,
-                       http_retry_mode=False):
+                       http_retry_mode=False, effective_budget=False,
+                       feedback_retry_mode=True, retry_failed_request_id=None):
     from regen.infrastructure.codex_workspace_session import CodexWorkspaceSession
     from regen.infrastructure.workspace_transcript import audit_workspace_session
     from regen.planning.batch_file_planner import INSTRUCTIONS as FORMATS
@@ -858,12 +876,17 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                     'focus_contract_id':focus_contract_id,
                     'stop_at_focus_contract':stop_at_focus_contract,
                     'http_retry_mode':http_retry_mode,
+                    'feedback_retry_mode':feedback_retry_mode,
+                    'retry_failed_request_id':retry_failed_request_id,
                     **resources.policy,'mode':'parallel-file-planner-v1','theory_tool_execution':'serial',
-                    'progress_policy':{'repeated_result_limit':8,
-                        'no_information_timeout_seconds':call_timeout,'callback_time_excluded':True,
+                    'progress_policy':{'repeated_result_limit':None if effective_budget else 8,
+                        'no_information_timeout_seconds':None if effective_budget else call_timeout,
+                        'policy':'disabled-global-time-budget-v1' if effective_budget else 'information-progress-v1',
+                        'callback_time_excluded':True,
                         'sleep_policy_version':2,'sleep_item_max_ms':60000,
                         'sleep_semantics':'protocol-display-only; not proof progress',
-                        'deadline_authority':'no-information deadline and repeated-result limit; native/action deadlines govern callbacks'},
+                        'deadline_authority':('global effective budget; native/action and transport deadlines remain active'
+                            if effective_budget else 'no-information deadline and repeated-result limit; native/action deadlines govern callbacks')},
                     'file_planner_interface':'document' if document_mode else 'graph'},immutable=True)
             with tempfile.TemporaryDirectory(prefix='regen-theory-auth-') as temp:
                 home = Path(temp)
@@ -889,8 +912,10 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                 target_completed = controller.target_contract_green()
                 if not target_completed:
                     with CodexWorkspaceSession(tools=tools(document_mode),codex_bin=settings['codex_bin'],codex_home=home,
-                                               allow_external_call=True,progress_timeout=call_timeout,
-                                               http_retry_mode=http_retry_mode) as session:
+                                               allow_external_call=True,progress_timeout=0 if effective_budget else call_timeout,
+                                               http_retry_mode=http_retry_mode,
+                                               feedback_retry_mode=feedback_retry_mode,
+                                               retry_failed_request_id=retry_failed_request_id) as session:
                         next_prompt = prompt
                         while True:
                             try:
@@ -982,7 +1007,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
 
 def _execution_policy(value, selected):
     value = {} if value is None else deepcopy(value)
-    if not isinstance(value, dict) or set(value) - {'stages', 'session_stall_retries', 'provider_http_retries'}:
+    if not isinstance(value, dict) or set(value) - {
+            'stages', 'session_stall_retries', 'provider_http_retries', 'provider_feedback_retries'}:
         raise ValueError('invalid execution policy keys')
     stages = value.get('stages', [])
     retries = value.get('session_stall_retries', 0)
@@ -998,7 +1024,11 @@ def _execution_policy(value, selected):
             if not isinstance(theory, str) or theory not in selected or theory in seen:
                 raise ValueError('stage contains an unknown or repeated theory')
             seen.add(theory)
-    out = {'stages':stages, 'session_stall_retries':retries}
+    feedback_retries = value.get('provider_feedback_retries', 1)
+    if type(feedback_retries) is not int or feedback_retries not in (0, 1):
+        raise ValueError('provider_feedback_retries must be 0 or 1')
+    out = {'stages':stages, 'session_stall_retries':retries,
+           'provider_feedback_retries':feedback_retries}
     if 'provider_http_retries' in value:
         http_retries = value['provider_http_retries']
         if type(http_retries) is not int or http_retries not in (0, 1):
@@ -1022,9 +1052,53 @@ def _retry_stalled(error, attempt, retries):
             and not getattr(error, '__notes__', ()))
 
 
+FEEDBACK_RETRY_POLICY = 'provider-feedback-retry-v1'
+
+
+def _feedback_recovery_state(rows, theory):
+    """One durable replacement per incident; only its bound response resets it.
+
+    A reserved but unstarted replacement can survive a coordinator restart. Once
+    started, a missing success/failure receipt is an uncertain attempt, never an
+    extra retry allowance. Completed tools and proof commits are not replayed.
+    """
+    from regen.infrastructure.effective_time_budget import CHECKPOINT_KIND
+    from regen.infrastructure.provider_request_accounting import POLICY as CREDIT_POLICY
+    state = {'retries':0, 'failed_request_id':None, 'started':False, 'stopped':None}
+    for row in rows:
+        data = row['data']
+        kind = row['kind']
+        if (kind == CHECKPOINT_KIND
+                and data.get('boundary') == 'provider_request_retry_credit'):
+            # Credit and adjusted counters are atomic; its derived success
+            # event may be absent after a crash between the two publications.
+            correction = data.get('correction', {})
+            if correction.get('policy') != CREDIT_POLICY:
+                continue
+            data = correction
+            kind = 'provider_feedback_retry_succeeded'
+        if data.get('theory') != theory:
+            continue
+        if kind == 'provider_feedback_retry_succeeded':
+            if (state['failed_request_id'] is not None
+                    and data.get('failed_request_id') == state['failed_request_id']):
+                state = {'retries':0, 'failed_request_id':None,
+                         'started':False, 'stopped':None}
+        elif data.get('retry_policy') == FEEDBACK_RETRY_POLICY:
+            if kind == 'provider_feedback_retry_scheduled':
+                state.update(retries=state['retries']+1,
+                    failed_request_id=data['failed_request_id'], started=False, stopped=None)
+            elif (kind == 'provider_feedback_retry_started'
+                  and data.get('failed_request_id') == state['failed_request_id']):
+                state['started'] = True
+            elif kind == 'provider_feedback_retry_stopped':
+                state['stopped'] = data['reason']
+    return state
+
+
 def _run_budgeted_theory_session(bridge, *args, **kwargs):
     with bridge.worker(args[1]):
-        return run_theory_session(*args, **kwargs)
+        return run_theory_session(*args, effective_budget=True, **kwargs)
 
 
 def _pause_budget_for_exit(budget, error=None):
@@ -1055,7 +1129,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                            native_pids_limit=1024, provider_build_timeout=1800,
                            build_ml_heap_mb=None, generation_strategy_name='sketch-reviewed-v1', focus_contract_id=None,
                            effective_seconds=172800, resume_authorization=None,
-                           extend_effective_seconds=None):
+                           extend_effective_seconds=None, planning_budget=None):
     from regen.execution.proof_session_runner import acquire_run_mutation_lock, release_run_mutation_lock
     from regen.infrastructure.audited_llm import model_settings
     if not allow_external_call:
@@ -1116,7 +1190,8 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
         rows = overview.list_workspace()['theories']
         budget, bridge = initialize_parallel_budget(root, overview, workspace_policy,
             seconds=effective_seconds, resume_authorization=resume_authorization,
-            extension_seconds=extend_effective_seconds, rows=rows)
+            extension_seconds=extend_effective_seconds, rows=rows,
+            planning_budget=planning_budget)
         budget.ledger.append('parallel_budget_invocation',
             service_invocation_id=os.environ.get('INVOCATION_ID'), pid=os.getpid())
         durable(root/'parallel-workspace-policy.json', workspace_policy, immutable=True)
@@ -1147,6 +1222,12 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                     or not row['ready_for_proof_action']
                                     or retry_not_before.get(theory, 0) > monotonic()):
                                 continue
+                            feedback_state = _feedback_recovery_state(budget.ledger.rows, theory)
+                            if feedback_state['stopped'] or feedback_state['started']:
+                                # A previous coordinator already spent this replacement.
+                                # Do not turn explicit run resume into another request.
+                                budget.cancel(feedback_state['stopped'] or 'provider_feedback_retry_interrupted')
+                                budget.check()
                             retry_not_before.pop(theory, None)
                             attempt = attempts.get(theory, 0) + 1
                             attempts[theory] = attempt
@@ -1158,12 +1239,19 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                 'call_timeout':call_timeout}, immutable=True)
                             context = copy_context()
                             from regen.planning.document_recall import retry_summary
+                            if feedback_state['failed_request_id'] is not None:
+                                budget.ledger.append('provider_feedback_retry_started', theory=theory,
+                                    failed_request_id=feedback_state['failed_request_id'],
+                                    retry_policy=FEEDBACK_RETRY_POLICY,
+                                    attempt_directory=str(directory), accepted_state_preserved=True)
                             future = agents.submit(context.run,_run_budgeted_theory_session,bridge,root,theory,
                                 resources=resources,executor=executor,settings=settings,directory=directory,
                                 generation_strategy_name=generation_strategy_name,
                                 focus_contract_id=focus_contract_id,
                                 retry_context=retry_summary(results,theory),
                                 http_retry_mode=bool(policy.get('provider_http_retries', 0)),
+                                feedback_retry_mode=bool(policy['provider_feedback_retries']),
+                                retry_failed_request_id=feedback_state['failed_request_id'],
                                 codex_home=codex_home,cancel_event=cancel_event,document_mode=file_planner_interface=='document',**overview.options)
                             active[future] = theory
                         if not active:
@@ -1201,9 +1289,40 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                     failures[theory] = {'reason':'session_returned_unsealed',
                                                         'status':completed.get('status')}
                             except Exception as error:
-                                from regen.infrastructure.codex_workspace_session import ProviderHTTPError
+                                from regen.infrastructure.codex_workspace_session import ProviderHTTPError, ProviderFeedbackError
                                 result = {'theory':theory,'status':'infrastructure_error',
                                           'error_type':type(error).__name__,'diagnostic':str(error)}
+                                if isinstance(error, ProviderFeedbackError):
+                                    recovery = _feedback_recovery_state(budget.ledger.rows, theory)
+                                    if not isinstance(error.failed_request_id, str) or not error.failed_request_id:
+                                        budget.cancel('provider_feedback_missing_request_identity')
+                                        raise
+                                    reason = (
+                                        'provider_feedback_cleanup_failed' if getattr(error, '__notes__', ())
+                                        else 'provider_feedback_retry_disabled' if not policy['provider_feedback_retries']
+                                        else 'provider_feedback_retry_exhausted' if recovery['retries'] >= 1
+                                        else None)
+                                    result.update(attempt=attempts[theory], retry_scheduled=reason is None,
+                                        failed_request_id=error.failed_request_id, failure=error.failure)
+                                    durable(directories[theory]/'failure.json', result, immutable=True)
+                                    results.append(result)
+                                    receipt = dict(theory=theory, failed_request_id=error.failed_request_id,
+                                        failure=error.failure, retry_policy=FEEDBACK_RETRY_POLICY,
+                                        prior_attempt_directory=str(directories[theory]),
+                                        accepted_state_preserved=True, replay_executed_tools=False)
+                                    if reason is not None:
+                                        budget.ledger.append('provider_feedback_retry_stopped', **receipt,
+                                            reason=reason, retries_used=recovery['retries'])
+                                        budget.cancel(reason)
+                                        raise
+                                    # The future has joined its session/controller cleanup.
+                                    # Reserve before any replacement can issue provider work.
+                                    budget.ledger.append('provider_feedback_retry_scheduled', **receipt,
+                                        retry_number=1, next_attempt=attempts[theory]+1)
+                                    emit_event('provider_feedback_retry_scheduled', theory=theory,
+                                        failed_request_id=error.failed_request_id,
+                                        next_attempt=attempts[theory]+1)
+                                    continue
                                 http_error = isinstance(error, ProviderHTTPError)
                                 if not http_error:
                                     stall_attempts[theory] = stall_attempts.get(theory, 0) + 1

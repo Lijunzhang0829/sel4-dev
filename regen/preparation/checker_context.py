@@ -118,12 +118,13 @@ def load_context(dataset_root: Path) -> dict[str, Any]:
     dataset_root = dataset_root.resolve()
     context = _read(dataset_root / "checker-context.json")
     if (
-        context.get("artifact_type") != "refine-checker-context"
-        or context.get("target_session") != "Refine"
+        context.get("artifact_type") not in ("refine-checker-context", "crefine-checker-context")
+        or context.get("target_session") not in ("Refine", "CRefine")
+        or context.get("artifact_type") != context.get("target_session", "").lower() + "-checker-context"
         or "environment_gate_id" in context
         or "environment_run" in context
     ):
-        raise ValueError("invalid independent Refine checker context")
+        raise ValueError("invalid independent Refine/CRefine checker context")
     core = {key: value for key, value in context.items()
             if key != "checker_context_id"}
     if context.get("checker_context_id") != "checker-context:" + sha256_json(core)[:20]:

@@ -4,6 +4,8 @@ Workers share one union clock. A native exclusion or failed provider affects onl
 its own lane; it must never stop charging another theory that is still working.
 """
 from contextlib import contextmanager
+import hashlib
+import math
 from pathlib import Path
 import threading
 
@@ -11,6 +13,153 @@ from regen.execution.proof_commits import digest
 from regen.infrastructure.experiment_ledger import Ledger
 from regen.infrastructure.progress_events import observe_events
 from regen.infrastructure.theory_activity import EXCLUDED_PHASES
+
+
+PLANNING_IMPORT_STARTED = 'planning_budget_import_started'
+PLANNING_IMPORT_COMPLETED = 'planning_budget_import_completed'
+
+
+def _file_sha256(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def _verify_planning_models(receipt, run, binding):
+    from regen.infrastructure.incremental_log import read_artifact
+    from regen.infrastructure.audited_llm import model_settings
+    model, effort = receipt.get('model'), receipt.get('reasoning_effort')
+    settings = model_settings()
+    frozen_settings = read_artifact(Path(run['model_config_path']))
+    if (not isinstance(model, str) or not model or not isinstance(effort, str) or not effort
+            or not run.get('execution_models')
+            or set(run['execution_models'].values()) != {model}
+            or binding.get('model') != model
+            or frozen_settings.get('reasoning_effort') != effort
+            or settings.get('reasoning_effort') != effort
+            or set(settings.get('role_models', {}).values()) != {model}):
+        raise ValueError('planning budget model or reasoning effort differs from proof generation')
+
+
+def _planning_budget_source(directory, overview, theories, binding, seconds):
+    """Verify a closed planning clock against the exact downstream experiment."""
+    from regen.infrastructure.effective_time_budget import CHECKPOINT_KIND, POLICY
+    from regen.infrastructure.incremental_log import read_artifact
+    directory = Path(directory).resolve()
+    receipt_path = directory/'budget-receipt.json'
+    receipt = read_artifact(receipt_path)
+    if (receipt.get('schema_version') != 1 or receipt.get('state') != 'complete'
+            or receipt.get('policy') != POLICY or receipt.get('include_planning') is not True
+            or receipt.get('ledger_run_id') != directory.name
+            or receipt.get('seconds') != seconds):
+        raise ValueError('planning budget receipt policy or allowance mismatch')
+    source = Ledger(directory/'budget', receipt['ledger_run_id'])
+    if not source.rows or source.rows[-1]['event_id'] != receipt.get('ledger_tail_event_id'):
+        raise ValueError('planning budget receipt does not bind the ledger tail')
+    last = source.rows[-1]
+    state = last['data'].get('state', {})
+    forbidden = {'time_budget_registered', 'time_budget_green', 'time_budget_sealed',
+        'time_budget_finished', 'time_budget_extended', 'proof_commit',
+        PLANNING_IMPORT_STARTED, PLANNING_IMPORT_COMPLETED, 'parallel_budget_binding'}
+    if (last['kind'] != CHECKPOINT_KIND or last['data'].get('boundary') != 'close'
+            or state.get('policy') != POLICY or state.get('include_planning') is not True
+            or state.get('base_seconds') != seconds or state.get('seconds') != seconds
+            or state.get('planning_active') is not False or state.get('gate_open') is not False
+            or state.get('finished') is not False or state.get('paused') is not False
+            or state.get('reason') is not None or state.get('unclean_recoveries') != 0
+            or state.get('worker_seconds') != 0 or state.get('theory_seconds') != {}
+            or any(row['kind'] in forbidden for row in source.rows)
+            or not any(row['kind'] == CHECKPOINT_KIND
+                and row['data'].get('boundary') == 'planning_finished' for row in source.rows)):
+        raise ValueError('planning budget requires a clean, unallocated completed planning clock')
+    spent = state.get('effective_seconds')
+    planning = state.get('planning_seconds')
+    if (type(spent) not in (int, float) or not math.isfinite(spent) or spent < 0
+            or type(planning) not in (int, float) or not math.isfinite(planning)
+            or not math.isclose(spent, planning, rel_tol=0, abs_tol=1e-9)
+            or spent >= seconds):
+        raise ValueError('planning budget accounting is invalid or allowance exhausted')
+
+    frozen_path = directory/'frozen-plan.json'
+    frozen = read_artifact(frozen_path)
+    if (frozen.get('state') != 'frozen'
+            or _file_sha256(frozen_path) != receipt.get('frozen_plan_sha256')):
+        raise ValueError('planning budget frozen-plan receipt mismatch')
+    def artifact(key):
+        path = Path(frozen[key])
+        path = (path if path.is_absolute() else directory/path).resolve()
+        if not path.is_relative_to(directory):
+            raise ValueError('planning budget plan artifacts escape their planning directory')
+        return path
+    plan_path, list_path = artifact('plan'), artifact('file_generation_list')
+    if (_file_sha256(plan_path) != receipt.get('repository_plan_sha256')
+            or frozen.get('plan_sha256') != receipt.get('repository_plan_sha256')
+            or _file_sha256(list_path) != receipt.get('file_generation_list_sha256')):
+        raise ValueError('planning budget plan or file-list hash mismatch')
+    plan, listing = read_artifact(plan_path), read_artifact(list_path)
+    run = overview.run
+    schedule = run.get('session_schedule', {})
+    if (Path(schedule.get('source', '')).resolve() != list_path
+            or schedule.get('file_list_sha256') != digest(listing)
+            or schedule.get('plan_id') != plan.get('plan_id')
+            or schedule.get('plan_revision') != plan.get('revision')
+            or listing.get('plan_id') != plan.get('plan_id')
+            or listing.get('plan_revision') != plan.get('revision')):
+        raise ValueError('planning budget source differs from the run-frozen plan')
+    planned = {row['name']: row['contract_ids'] for row in plan['theories']}
+    listed = {row['theory']: row['contract_ids'] for row in listing['files']}
+    if (len(planned) != len(plan['theories']) or len(listed) != len(listing['files'])
+            or planned != theories or listed != theories):
+        raise ValueError('planning budget contract allocation differs from the proof run')
+    if run.get('execution_input_kind') != 'refine-dataset':
+        raise ValueError('planning budget requires an independent dataset proof run')
+    source_input = Path(run['checker_context_root'])/'repository-planning-input.json'
+    if _file_sha256(source_input) != receipt.get('input_sha256'):
+        raise ValueError('planning budget input differs from the proof run dataset')
+    contracts = read_artifact(source_input)['contracts']
+    allocated = [uid for ids in theories.values() for uid in ids]
+    if (len(allocated) != len(set(allocated))
+            or sorted(allocated) != sorted(row['contract_id'] for row in contracts)):
+        raise ValueError('planning budget does not cover the exact fixed input contracts')
+    _verify_planning_models(receipt, run, binding)
+    identity = dict(source_planning_dir=str(directory),
+        receipt_sha256=_file_sha256(receipt_path),
+        source_ledger_run_id=source.run_id, source_tail_event_id=source.rows[-1]['event_id'],
+        source_rows_sha256=digest(source.rows), source_rows=len(source.rows),
+        input_sha256=receipt['input_sha256'], frozen_plan_sha256=receipt['frozen_plan_sha256'],
+        repository_plan_sha256=receipt['repository_plan_sha256'],
+        file_generation_list_sha256=receipt['file_generation_list_sha256'],
+        carried_effective_seconds=spent, carried_planning_seconds=planning,
+        total_limit_seconds=seconds, include_planning=True,
+        model=receipt['model'], reasoning_effort=receipt['reasoning_effort'])
+    return source, identity
+
+
+def _import_planning_budget(ledger, source, identity, root, run):
+    """Claim one destination and retain every source event without resetting time."""
+    import fcntl
+    from regen.execution.proof_commits import durable
+    from regen.infrastructure.incremental_log import read_artifact
+    directory = Path(identity['source_planning_dir'])
+    claim = {**identity, 'target_run_dir':str(Path(root).resolve()),
+             'target_run_id':run['run_id'], 'target_run_sha256':digest(run)}
+    with (directory/'budget-transfer.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        path = directory/'budget-transfer.json'
+        if path.exists():
+            if read_artifact(path) != claim:
+                raise ValueError('planning budget already transferred to another proof run')
+            raise ValueError('planning budget transfer already claimed; never replay an incomplete import')
+        durable(path, claim, immutable=True)
+        ledger.append(PLANNING_IMPORT_STARTED, **claim)
+        previous_clock = ledger.clock
+        try:
+            for row in source.rows:
+                ledger.clock = lambda row=row: row['time_unix']
+                ledger.append(row['kind'], **row['data'],
+                    planning_source_event_id=row['event_id'],
+                    planning_source_sequence=row['sequence'])
+        finally:
+            ledger.clock = previous_clock
+        ledger.append(PLANNING_IMPORT_COMPLETED, **claim, refund_seconds=0)
 
 
 class ParallelGenerationBudgetBridge:
@@ -79,6 +228,8 @@ class ParallelGenerationBudgetBridge:
 
     def handle(self, event, fields):
         relevant = {'provider_transport_progress', 'generation_network_pause_requested', 'generation_provider_http_failure', 'generation_items_interrupted',
+                    'generation_provider_request_started', 'generation_provider_request_finished',
+                    'generation_provider_request_failed', 'provider_feedback_retry_succeeded',
                     'generation_runtime_integrity_failure',
                     'generation_clock_untrusted', 'generation_exclusion_started',
                     'generation_exclusion_finished', 'theory_generation_started',
@@ -94,7 +245,23 @@ class ParallelGenerationBudgetBridge:
             if theory not in self.stage.theories and not global_native:
                 self.stage.cancel('effective_clock_missing_theory')
                 raise ValueError('parallel generation clock requires a registered theory lane')
-            if event == 'provider_transport_progress':
+            if event == 'generation_provider_request_started':
+                self.stage.begin_provider_request(theory, fields['request_id'])
+            elif event == 'generation_provider_request_finished':
+                self.stage.finish_provider_request(theory, fields['request_id'],
+                    outcome=fields['outcome'], failure=fields.get('failure'))
+            elif event == 'generation_provider_request_failed':
+                self.stage.deactivate(theory)
+                self.stage.ledger.append(event, theory=theory, evidence=dict(fields),
+                    disposition='one_resend_then_credit_only_after_complete_response')
+            elif event == 'provider_feedback_retry_succeeded':
+                self.stage.credit_provider_request(fields['failed_request_id'],
+                    fields['successful_request_id'])
+                self.stage.ledger.append(event, theory=theory,
+                    failed_request_id=fields['failed_request_id'],
+                    successful_request_id=fields['successful_request_id'],
+                    generation_id=fields.get('generation_id'))
+            elif event == 'provider_transport_progress':
                 self.stage.ledger.append(event, theory=theory,
                     generation_id=fields.get('generation_id'))
             elif event == 'generation_runtime_integrity_failure':
@@ -160,7 +327,8 @@ class ParallelGenerationBudgetBridge:
 
 
 def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
-                               resume_authorization=None, extension_seconds=None, rows=None):
+                               resume_authorization=None, extension_seconds=None, rows=None,
+                               planning_budget=None):
     """Bind the clock before launch; never give a legacy continuation zero cost."""
     from regen.infrastructure.effective_time_budget import EffectiveTimeBudget, POLICY, CHECKPOINT_KIND
     root = Path(root)
@@ -175,6 +343,13 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
     imports = [r for r in ledger.rows if r['kind'] == 'parallel_budget_continuation_started']
     if imports and not any(r['kind'] == 'parallel_budget_continuation_completed' for r in ledger.rows):
         raise ValueError('incomplete effective budget continuation import; do not start')
+    planning_started = [row for row in ledger.rows if row['kind'] == PLANNING_IMPORT_STARTED]
+    planning_completed = [row for row in ledger.rows if row['kind'] == PLANNING_IMPORT_COMPLETED]
+    if planning_started or planning_completed:
+        if (len(planning_started) != 1 or len(planning_completed) != 1
+                or planning_started[0]['sequence'] >= planning_completed[0]['sequence']
+                or planning_completed[0]['data'] != {**planning_started[0]['data'], 'refund_seconds':0}):
+            raise ValueError('incomplete or duplicate planning budget import; do not start or reset')
     rows = overview.list_workspace()['theories'] if rows is None else rows
     theories = {row['theory']: [c['id'] if isinstance(c, dict) else c
                                for c in row['contracts']] for row in rows}
@@ -188,6 +363,21 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
     if has_history and not prior_clock:
         raise ValueError('legacy experiment has generated work without the effective budget clock; '
                          'an audited accounting migration is required, never resume from zero')
+    source = source_identity = None
+    if planning_budget is not None:
+        source, source_identity = _planning_budget_source(
+            planning_budget, overview, theories, binding, seconds)
+        if planning_completed:
+            prior_import = planning_completed[0]['data']
+            if any(prior_import.get(key) != value for key, value in source_identity.items()):
+                raise ValueError('planning budget source changed after its one-time import')
+        elif ledger.rows or has_history:
+            raise ValueError('planning budget may only be imported into a fresh proof run')
+        elif extension_seconds is not None:
+            raise ValueError('fresh planning handoff cannot extend the experiment allowance')
+    elif planning_completed:
+        _verify_planning_models(planning_completed[0]['data'], overview.run, binding)
+    include_planning = bool(planning_completed or source_identity)
     identity = {'policy': POLICY, 'run_sha256': digest(overview.run),
                 'contracts_sha256': digest(theories), 'configuration_sha256': digest(binding)}
     prior = [row for row in ledger.rows if row['kind'] == 'parallel_budget_binding']
@@ -198,13 +388,21 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
         raise ValueError('parallel effective budget ledger is missing its source binding')
     else:
         ledger.append('parallel_budget_binding', **identity)
+    if source is not None and not planning_completed:
+        _import_planning_budget(ledger, source, source_identity, root, overview.run)
+        # This is a continuous, already-authorized experiment transition, not an
+        # operator resume after an interruption. Later resumes still need their
+        # ordinary explicit authorization and never import these rows again.
+        resume_authorization = resume_authorization or (
+            'planning-handoff:'+source_identity['source_tail_event_id'])
     if has_proofs:
         for row in rows:
             if row.get('green_count', 0):
                 _, state = overview._state(row['theory'])
                 baseline.update(set(theories[row['theory']]) & set(state['proofs']))
     stage = EffectiveTimeBudget(ledger, seconds=seconds,
-        resume_authorization=resume_authorization, extension_seconds=extension_seconds)
+        resume_authorization=resume_authorization, extension_seconds=extension_seconds,
+        include_planning=include_planning)
     try:
         stage.register(theories, baseline_green=baseline)
     except BaseException:
@@ -213,8 +411,110 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
     return stage, ParallelGenerationBudgetBridge(stage)
 
 
+def _review_parallel_budget_clock(source_dir, ledger, ancestors=()):
+    """Verify inherited shutdown evidence without importing or refunding it again."""
+    from regen.infrastructure.incremental_log import read_artifact
+    from regen.infrastructure.effective_time_budget import CHECKPOINT_KIND
+    source_dir = Path(source_dir).resolve()
+    if source_dir in ancestors:
+        raise ValueError('cyclic clock review continuation ancestry')
+    uncertain = [row for row in ledger.rows if row['kind'] == 'generation_clock_untrusted']
+    review = dict(source_tail_event_id=ledger.rows[-1]['event_id'],
+        resolved_event_ids=[row['event_id'] for row in uncertain],
+        disposition='retain_all_charged_time_no_step_refund')
+    unsupported = [row for row in uncertain if row['data'].get('evidence', {}).get('reason') not in {
+        'tool_callback_finished_with_open_model_item', 'tool_callback_started_with_open_model_item'}]
+    if not unsupported:
+        return dict(clock_review=review, inherited_reviews=[])
+    starts = [row for row in ledger.rows if row['kind'] == 'parallel_budget_continuation_started']
+    completions = [row for row in ledger.rows if row['kind'] == 'parallel_budget_continuation_completed']
+    if len(starts) != 1 or len(completions) != 1 or starts[0]['sequence'] >= completions[0]['sequence']:
+        raise ValueError('unsupported uncertainty requires separate accounting review')
+    start, complete = starts[0], completions[0]
+    previous_dir = Path(complete['data']['source_run']).resolve()
+    origin = read_artifact(source_dir/'workspace-continuation.json')
+    if (Path(origin['source_run']).resolve() != previous_dir
+            or Path(start['data']['source_run']).resolve() != previous_dir):
+        raise ValueError('inherited clock review source identity changed')
+    previous_run = read_artifact(previous_dir/'run.json')
+    previous = Ledger(previous_dir/'effective-generation-budget', previous_run['run_id'])
+    previous_uncertain = [row for row in previous.rows if row['kind'] == 'generation_clock_untrusted']
+    previous_review = dict(source_tail_event_id=previous.rows[-1]['event_id'],
+        resolved_event_ids=[row['event_id'] for row in previous_uncertain],
+        disposition='retain_all_charged_time_no_step_refund')
+    if (start['data'].get('source_run_sha256') != digest(previous_run)
+            or start['data'].get('source_tail_event_id') != previous_review['source_tail_event_id']
+            or complete['data'].get('source_tail_event_id') != previous_review['source_tail_event_id']
+            or complete['data'].get('source_rows') != len(previous.rows)
+            or start['data'].get('clock_review') != previous_review
+            or complete['data'].get('clock_review') != previous_review
+            or not isinstance(complete['data'].get('authorization'), str)
+            or not complete['data']['authorization'].strip()
+            or start['data'].get('authorization') != complete['data']['authorization']
+            or complete['data'].get('historical_uncertainty_retained') is not True
+            or complete['data'].get('refund_seconds') != 0):
+        raise ValueError('inherited clock review no longer binds the exact source history')
+    original = [row for row in previous.rows if row['kind'] != 'parallel_budget_binding'
+                and not row['kind'].startswith('parallel_budget_continuation_')]
+    region = ledger.rows[start['sequence']:complete['sequence']-1]
+    copied = region[-len(original):] if original else []
+    metadata = region[:-len(original)] if original else region
+    allowed_metadata = {'parallel_budget_strategy_update', 'parallel_budget_feedback_retry_policy_update',
+                        'parallel_budget_candidate_timeout_update', 'parallel_budget_clock_review_inherited'}
+    logical = lambda row: {key:row[key] for key in ('kind', 'time_unix', 'data')}
+    if (len(copied) != len(original) or any(row['kind'] not in allowed_metadata for row in metadata)
+            or any(logical(a) != logical(b) for a, b in zip(copied, original))):
+        raise ValueError('inherited clock review copied history changed')
+    mapping = {new['event_id']:old for new, old in zip(copied, original)}
+    if any(row['event_id'] not in mapping for row in unsupported):
+        raise ValueError('new unsupported uncertainty requires separate accounting review')
+    feedback_updates = [row for row in metadata if row['kind'] == 'parallel_budget_feedback_retry_policy_update']
+    inherited = []
+    legacy_review_id = None
+    if feedback_updates:
+        from regen.infrastructure.provider_feedback_continuation import plan_legacy_feedback_import, IMPORT_BOUNDARY
+        proposal = plan_legacy_feedback_import(previous_dir)
+        checkpoint = next(row for row in reversed(copied) if row['kind'] == CHECKPOINT_KIND)
+        expected = dict(**proposal, authorization=complete['data']['authorization'],
+            target_run=str(source_dir), target_run_id=ledger.run_id,
+            original_checkpoint_event_id=checkpoint['event_id'])
+        imports = [row for row in ledger.rows if row['kind'] == CHECKPOINT_KIND
+                   and row['data'].get('boundary') == IMPORT_BOUNDARY
+                   and row['data'].get('review_id') == proposal['review_id']]
+        if (len(feedback_updates) != 1 or feedback_updates[0]['data'].get('review_id') != proposal['review_id']
+                or read_artifact(source_dir/'provider-feedback-continuation.json') != expected
+                or len(imports) != 1 or imports[0]['sequence'] <= complete['sequence']
+                or imports[0]['data'].get('authorization') != complete['data']['authorization']
+                or imports[0]['data'].get('refund_seconds') != 0
+                or digest(checkpoint['data']['state']) != proposal['source_state_sha256']):
+            raise ValueError('inherited legacy feedback review receipt changed')
+        legacy_review_id = proposal['review_id']
+    else:
+        inherited = _review_parallel_budget_clock(previous_dir, previous, (*ancestors, source_dir))['inherited_reviews']
+    receipt = dict(policy='inherited-verified-clock-review-v1', source_run=str(source_dir),
+        source_tail_event_id=ledger.rows[-1]['event_id'],
+        continuation_completed_event_id=complete['event_id'], reviewed_source_run=str(previous_dir),
+        reviewed_source_tail_event_id=previous.rows[-1]['event_id'],
+        reviewed_source_rows_sha256=digest(previous.rows), legacy_provider_feedback_review_id=legacy_review_id,
+        event_mappings=[dict(event_id=row['event_id'], source_event_id=mapping[row['event_id']]['event_id'],
+            logical_record_sha256=digest(logical(row))) for row in unsupported], refund_seconds=0)
+    return dict(clock_review=review, inherited_reviews=[*inherited, receipt])
+
+
+def review_parallel_budget_clock(source_dir):
+    """Read-only review for a full continuation; caller establishes stopped liveness."""
+    from regen.infrastructure.incremental_log import read_artifact
+    source_dir = Path(source_dir).resolve()
+    run = read_artifact(source_dir/'run.json')
+    ledger = Ledger(source_dir/'effective-generation-budget', run['run_id'])
+    if not ledger.rows:
+        raise ValueError('source lacks effective-time history')
+    return _review_parallel_budget_clock(source_dir, ledger)
+
+
 def carry_parallel_budget(source_dir, destination, *, authorization, clock_review,
-                          target_strategy=None):
+                          target_strategy=None, provider_feedback_review=None,
+                          target_execution_policy=None, target_candidate_timeout=None):
     """Carry a stopped full-workspace continuation's ledger, never reset costs.
 
     Caller owns the source mutation lock and must establish stopped liveness.
@@ -249,6 +549,16 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
     if digest(source_policy) != bindings[0]['data']['configuration_sha256']:
         raise ValueError('source execution policy hash mismatch')
     target_policy = dict(source_policy)
+    if provider_feedback_review is not None:
+        from regen.infrastructure.provider_feedback_continuation import plan_legacy_feedback_import
+        if provider_feedback_review != plan_legacy_feedback_import(source_dir):
+            raise ValueError('legacy provider feedback review or source evidence changed')
+        expected_policy = {**source_policy['execution_policy'], 'provider_feedback_retries':1}
+        if target_execution_policy != expected_policy:
+            raise ValueError('legacy feedback migration permits only the explicit one-resend policy change')
+        target_policy['execution_policy'] = dict(target_execution_policy)
+    elif target_execution_policy is not None:
+        raise ValueError('execution policy change requires an audited feedback continuation')
     if target_strategy is not None:
         from regen.planning.parallel_file_planner import generation_strategy
         if (not isinstance(target_strategy, dict)
@@ -256,18 +566,60 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
                 or target_strategy != generation_strategy(target_strategy['name'])):
             raise ValueError('strategy update must match the new frozen implementation of the same strategy')
         target_policy['generation_strategy'] = target_strategy
+    candidate_timeout_change = None
+    if target_candidate_timeout is not None:
+        previous = source_policy.get('candidate_timeout')
+        if (type(previous) is not int or previous <= 0
+                or type(target_candidate_timeout) is not int
+                or target_candidate_timeout <= 0):
+            raise ValueError('candidate timeout migration requires positive integer seconds')
+        if target_candidate_timeout <= previous:
+            raise ValueError('candidate timeout migration must increase the frozen candidate timeout')
+        if state['effective_seconds'] >= state['seconds']:
+            raise ValueError('candidate timeout migration cannot extend an exhausted experiment budget')
+        # The typed option changes only this native candidate limit. The full
+        # resulting policy hash remains the launch-time authority, so another
+        # model, resource setting or total budget cannot ride on this migration.
+        target_policy['candidate_timeout'] = target_candidate_timeout
+        candidate_timeout_change = dict(
+            policy='authorized-candidate-timeout-increase-v1',
+            source_run=str(source_dir), source_tail_event_id=ledger.rows[-1]['event_id'],
+            authorization=authorization,
+            previous_candidate_timeout=previous,
+            target_candidate_timeout=target_candidate_timeout,
+            previous_configuration_sha256=digest(source_policy),
+            target_configuration_sha256=digest(target_policy),
+            effective_seconds_unchanged=state['effective_seconds'],
+            worker_seconds_unchanged=state['worker_seconds'],
+            planning_seconds_unchanged=state.get('planning_seconds', 0.),
+            seconds_unchanged=state['seconds'],
+            remaining_effective_seconds=state['seconds']-state['effective_seconds'],
+            provider_request_accounting_sha256=digest(state.get('provider_request_accounting')),
+            refund_seconds=0)
     uncertain = [r for r in ledger.rows if r['kind'] == 'generation_clock_untrusted']
     if (clock_review.get('source_tail_event_id') != ledger.rows[-1]['event_id']
             or clock_review.get('resolved_event_ids') != [r['event_id'] for r in uncertain]
             or clock_review.get('disposition') != 'retain_all_charged_time_no_step_refund'):
         raise ValueError('clock review does not bind exact source history')
-    if any(r['data'].get('evidence', {}).get('reason') not in {
-            'tool_callback_finished_with_open_model_item',
-            'tool_callback_started_with_open_model_item'} for r in uncertain):
-        raise ValueError('unsupported uncertainty requires separate accounting review')
+    inherited_clock_reviews = []
+    if provider_feedback_review is None:
+        inherited_clock_reviews = _review_parallel_budget_clock(source_dir, ledger)['inherited_reviews']
     target = Ledger(destination/'effective-generation-budget', target_run['run_id'])
     if target.rows:
         raise ValueError('target budget already exists; never overwrite or replay import')
+    if provider_feedback_review is not None:
+        # Claim once before copying. A failed partial import remains inspectable
+        # and cannot create multiple descendants spending the same pending tail.
+        import fcntl
+        from regen.execution.proof_commits import durable
+        with (source_dir/'provider-feedback-transfer.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            claim = source_dir/'provider-feedback-transfer.json'
+            if claim.exists():
+                raise ValueError('legacy provider feedback budget already claimed by a continuation')
+            durable(claim, dict(source_tail_event_id=ledger.rows[-1]['event_id'],
+                review_id=provider_feedback_review['review_id'], target_run=str(destination),
+                target_run_id=target_run['run_id'], authorization=authorization), immutable=True)
     # Preserve original wall timestamps and data. New envelopes bind the new run;
     # source event IDs and the tail remain auditable through the migration receipt.
     target.append('parallel_budget_binding', **{**bindings[0]['data'], 'run_sha256':digest(target_run),
@@ -281,6 +633,19 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
             previous_configuration_sha256=digest(source_policy),
             target_configuration_sha256=digest(target_policy),
             effective_seconds_unchanged=state['effective_seconds'], seconds_unchanged=state['seconds'])
+    if provider_feedback_review is not None:
+        target.append('parallel_budget_feedback_retry_policy_update', authorization=authorization,
+            review_id=provider_feedback_review['review_id'],
+            previous_execution_policy=source_policy['execution_policy'],
+            target_execution_policy=target_execution_policy,
+            previous_configuration_sha256=digest(source_policy),
+            target_configuration_sha256=digest(target_policy),
+            effective_seconds_unchanged=state['effective_seconds'], seconds_unchanged=state['seconds'])
+    if candidate_timeout_change is not None:
+        target.append('parallel_budget_candidate_timeout_update', **candidate_timeout_change)
+    if inherited_clock_reviews:
+        target.append('parallel_budget_clock_review_inherited', authorization=authorization,
+            clock_review=clock_review, reviews=inherited_clock_reviews, refund_seconds=0)
     import time
     try:
         for row in ledger.rows:
@@ -298,5 +663,16 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
         carried_effective_seconds=state['effective_seconds'],
         carried_worker_seconds=state['worker_seconds'], total_limit_seconds=state['seconds'],
         historical_uncertainty_retained=True, refund_seconds=0)
+    if candidate_timeout_change is not None:
+        receipt['candidate_timeout_update'] = candidate_timeout_change
+    if inherited_clock_reviews:
+        receipt['inherited_clock_reviews'] = inherited_clock_reviews
     target.append('parallel_budget_continuation_completed', **receipt)
+    if provider_feedback_review is not None:
+        from regen.infrastructure.provider_feedback_continuation import append_legacy_feedback_import
+        imported = append_legacy_feedback_import(source_dir, destination,
+            authorization=authorization, proposal=provider_feedback_review)
+        receipt.update(provider_feedback_review_id=imported['review_id'],
+            pending_failed_request_ids=[r['request_id'] for r in imported['requests']],
+            pending_retry_count=len(imported['requests']))
     return receipt

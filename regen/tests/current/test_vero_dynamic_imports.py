@@ -60,6 +60,7 @@ class Native:
     def _command(self,source,*,session):return []
     def _check(self,source,theory,*,timeout):
         type(self).checks.append(theory)
+        (self.work_dir/(theory+'.thy')).write_text(source)
         log=self.work_dir/(theory+'.log')
         cid='c0001' if theory==PARENT else 'c0002'
         log.write_text(f'VERO_RESULT {cid} prove clean\n')
@@ -274,8 +275,22 @@ class DynamicImportsTests(unittest.TestCase):
             with patch('regen.execution.vero_checker_adapter.IsabelleChecker',Native):
                 blocked=adapter.check(rendered,CHILD)
                 self.assertEqual(blocked['certification_blocked_by'],[PARENT])
+                self.assertEqual(blocked['seal_blocked_by'],[PARENT])
+                self.assertEqual(blocked['status'],'ok')
+                self.assertEqual(blocked['contract_status'],'ok')
                 self.assertEqual(blocked['seal_status'],'waiting_for_imports')
                 self.assertEqual(stop.sealed,set())
+                self.assertEqual(experiment_summary(ledger)['current_valid_contract_ids'],
+                    ['c0002'])
+                checked=Path(blocked['native_evidence']['source']).read_text()
+                self.assertIn('(* VERO END c0002 prove *)',checked)
+                self.assertNotIn('(* VERO START c0002 disprove *)',checked)
+                self.assertEqual(blocked['native_evidence']['incremental'],
+                    'vero-prefix-v1')
+                # Prefix checking must never overwrite the complete rendered
+                # theory that will later be sealed.
+                self.assertIn('(* VERO START c0002 disprove *)',
+                    (rendered/(CHILD+'.thy')).read_text())
                 adapter.check(rendered,PARENT)
                 first=adapter.check(rendered,CHILD)
                 same=adapter.check(rendered,CHILD)
@@ -291,7 +306,10 @@ class DynamicImportsTests(unittest.TestCase):
                 self.assertFalse(changed['seal_reused'])
                 self.assertEqual(changed['certification_blocked_by'],[PARENT])
                 self.assertEqual(changed['seal_status'],'waiting_for_imports')
-                self.assertEqual(len(Native.checks),previous_checks+1)
+                # Revalidate both the parent's changed prefix and the child's
+                # changed import context. Contracts receive fresh native
+                # evidence, while both old seals still expire.
+                self.assertEqual(len(Native.checks),previous_checks+3)
                 self.assertEqual(len(Native.seals),previous_seals)
                 self.assertEqual(stop.sealed,set())
                 invalid=[r['data'] for r in ledger.rows
@@ -301,7 +319,10 @@ class DynamicImportsTests(unittest.TestCase):
                 adapter.check(rendered,PARENT)
                 resealed=adapter.check(rendered,CHILD)
                 self.assertEqual(resealed['seal_status'],'sealed')
-                self.assertFalse(resealed['reused_exact_check'])
+                # The earlier native GREEN was bound to these exact parent
+                # bytes. Parent seal publication changes authority, not source,
+                # so the child need not repeat its candidate check.
+                self.assertTrue(resealed['reused_exact_check'])
                 self.assertEqual(stop.sealed,{PARENT,CHILD})
                 (rendered/(PARENT+'.thy')).unlink()
                 with self.assertRaisesRegex(ValueError,'closure source absent'):

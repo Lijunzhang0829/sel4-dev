@@ -36,6 +36,73 @@ _REFERENCE_BYTES = 0
 _MAX_REFERENCE_BYTES = 64 * 1024 * 1024
 _MAX_REFERENCE_ENTRIES = 50000
 _FINGERPRINT_BATCH = ContextVar('log_fingerprint_batch', default=None)
+_COPY_BATCH = ContextVar('log_copy_batch', default=None)
+
+
+@contextmanager
+def logged_copy_batch():
+    """Verify shared immutable objects once within ONE bounded recovery copy.
+
+    Every observed source and destination stamp is checked again before success.
+    Nothing is cached across operations: later copies and reads independently
+    reject missing, replaced, corrupt or symlinked objects.
+    """
+    if _COPY_BATCH.get() is not None:
+        yield
+        return
+    batch = {'objects': {}, 'sync_roots': set()}
+    token = _COPY_BATCH.set(batch)
+    try:
+        yield
+        # Only recovery COPY writes defer fsync. Flush each destination file
+        # system before returning; ordinary live journal publication retains
+        # its per-file/per-directory fsync below. A failed/crashed bootstrap
+        # never consumes the paused source or starts a proof provider.
+        import subprocess
+        devices = {}
+        for root in batch['sync_roots']:
+            devices.setdefault(root.stat().st_dev, root)
+        for root in devices.values():
+            subprocess.run(['sync', '-f', str(root)], check=True,
+                           capture_output=True, timeout=120)
+        for (root, key), stamp in batch['objects'].items():
+            if _stamp(ObjectStore(root).path(key)) != stamp:
+                raise ValueError('log object changed during recovery copy: ' + key)
+    finally:
+        _COPY_BATCH.reset(token)
+
+
+def _copy_object_graph(source, target, key, active):
+    batch = _COPY_BATCH.get()
+    observed = batch['objects']
+    batch['sync_roots'].add(target.root)
+    source_id, target_id = (source.root, key), (target.root, key)
+    if source_id in observed and target_id in observed:
+        return
+    if key in active:
+        raise ValueError('cyclic log object')
+    active.add(key)
+    try:
+        refs, source_stamp = source.references(key)
+        for child in refs:
+            _copy_object_graph(source, target, child, active)
+        path = target.path(key)
+        if not path.exists():
+            raw = source.path(key).read_bytes()
+            try:
+                unpacked = zlib.decompress(raw)
+            except zlib.error as error:
+                raise ValueError('corrupt compressed log object: ' + key) from error
+            if hashlib.sha256(unpacked).hexdigest() != key:
+                raise ValueError('log object hash mismatch: ' + key)
+            atomic_bytes(path, raw, immutable=True, _recovery_copy=True)
+        target_refs, target_stamp = target.references(key)
+        if target_refs != refs:
+            raise ValueError('copied log object references differ: ' + key)
+        observed[source_id] = source_stamp
+        observed[target_id] = target_stamp
+    finally:
+        active.remove(key)
 
 
 @contextmanager
@@ -65,13 +132,17 @@ def _stamp(path):
     return (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
 
 
-def atomic_bytes(path, raw, *, immutable=False):
+def atomic_bytes(path, raw, *, immutable=False, _recovery_copy=False):
+    if _recovery_copy and _COPY_BATCH.get() is None:
+        raise ValueError('deferred durability requires an active recovery copy batch')
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp = tempfile.mkstemp(prefix='.pending-', dir=path.parent)
     try:
         with os.fdopen(fd, 'wb') as stream:
-            stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+            stream.write(raw); stream.flush()
+            if not _recovery_copy:
+                os.fsync(stream.fileno())
         if immutable:
             try:
                 os.link(temp, path)
@@ -80,11 +151,12 @@ def atomic_bytes(path, raw, *, immutable=False):
                     raise ValueError('immutable log collision: ' + str(path))
         else:
             os.replace(temp, path)
-        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(directory)
-        finally:
-            os.close(directory)
+        if not _recovery_copy:
+            directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
     finally:
         if os.path.exists(temp):
             os.unlink(temp)
@@ -362,10 +434,18 @@ def copy_logged_file(source, destination):
     value, store = _manifest(source) if str(source).endswith('.json') else (None, None)
     if store is None:
         return shutil.copy2(source, destination)
-    decoded = store.decode(value['root'])
-    if find_root(destination) is not None:
-        write_artifact(destination, decoded, immutable=True)
+    destination_root = find_root(destination)
+    if destination_root is not None:
+        # Transfer the verified content-addressed graph, not its repeatedly
+        # expanded JSON value. Histories share large proof/query subtrees;
+        # decoding and re-encoding each request makes recovery quadratic.
+        # Keep independent bytes, verify both stores (including preexisting
+        # destination objects), and publish the manifest only after its closure.
+        with logged_copy_batch():
+            _copy_object_graph(store, ObjectStore(destination_root), value['root'], set())
+            atomic_bytes(destination, canonical(value) + b'\n', immutable=True, _recovery_copy=True)
     else:
+        decoded = store.decode(value['root'])
         atomic_bytes(destination, canonical(decoded) + b'\n', immutable=True)
     return str(destination)
 

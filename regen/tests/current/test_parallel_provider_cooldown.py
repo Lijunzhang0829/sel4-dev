@@ -26,6 +26,7 @@ class ProviderCooldownTests(unittest.TestCase):
         self.states = {}
         self.attempts = {}
         self.paths = {}
+        self.session_options = {}
         self.stages = []
         self.overview_reads = 0
         self.on_idle = None
@@ -37,7 +38,7 @@ class ProviderCooldownTests(unittest.TestCase):
         return {'theory':theory, 'status':'sealed'}
 
     def exercise(self, callback, names=('A',), *, retries=1, workers=2,
-                 http_retries=None, resume_authorization=None):
+                 http_retries=None, feedback_retries=None, resume_authorization=None):
         self.states = dict.fromkeys(names, 'pending')
         test = self
         root = self.root
@@ -66,6 +67,7 @@ class ProviderCooldownTests(unittest.TestCase):
             with self.lock:
                 self.attempts[theory] = self.attempts.get(theory, 0) + 1
                 self.paths.setdefault(theory, []).append(kwargs['directory'])
+                self.session_options.setdefault(theory, []).append(kwargs)
             return callback(theory)
 
         with ExitStack() as stack, redirect_stdout(io.StringIO()):
@@ -101,6 +103,8 @@ class ProviderCooldownTests(unittest.TestCase):
             policy = {'stages':self.stages, 'session_stall_retries':retries}
             if http_retries is not None:
                 policy['provider_http_retries'] = http_retries
+            if feedback_retries is not None:
+                policy['provider_feedback_retries'] = feedback_retries
             return planner.run_parallel_workspace(root, allow_external_call=True, integrate=False,
                 max_parallel_theories=workers,
                 execution_policy=policy, resume_authorization=resume_authorization)

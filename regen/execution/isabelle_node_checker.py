@@ -21,6 +21,7 @@ from regen.execution.checker_policy import (
     ISOLATED_CONTEXT, ARCH_REUSE_CONTEXT, validate_complete_context_policy,
 )
 from regen.execution.assembly_stabilizer import extract_last_node_marker
+from regen.execution.native_fact_audit import FACT_SNAPSHOT_ML, target_resolution_ml
 
 FORBIDDEN_PROOF = re.compile(r"\b(?:sorry|oops|axiomatization|admit)\b")
 DIAGNOSTIC_LINE = re.compile(r'\(line\s+(\d+)\s+of\s+"[^"]+"\)')
@@ -107,16 +108,17 @@ def parse_proof_dependencies(path: Path, *, node_id: str) -> dict[str, Any]:
 def automation_audit_ml(
     theorem_name: str, *, dependency_filename: str = "proof-dependencies.tsv",
 ) -> str:
-    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_'.]*", theorem_name):
-        raise ValueError(f"unsupported theorem name for audit: {theorem_name}")
-    if not re.fullmatch(r"[A-Za-z0-9_.-]+", dependency_filename):
-        raise ValueError(f"unsupported dependency audit filename: {dependency_filename}")
+    return (proof_dependency_audit_ml(theorem_name, dependency_filename=dependency_filename)
+            + '\n' + automation_context_audit_ml())
+
+
+def automation_context_audit_ml() -> str:
+    """Snapshot the final global automation context independently of local targets."""
     return rf'''ML \<open>
 local
-  val thy = @{{theory}};
+  val thy = \<^theory>;
   val ctxt = Proof_Context.init_global thy;
   val plain_ctxt = Config.put show_markup false ctxt;
-  val targets = Proof_Context.get_thms ctxt "{theorem_name}";
   val hex_digits = "0123456789abcdef";
   fun hex_char char =
     let val byte = Char.ord char
@@ -140,7 +142,6 @@ local
               (f (index, item); apply (index + 1) items)
     in apply 0 end;
   val context_stream = TextIO.openOut "/audit-output/automation-context.tsv";
-  val dependency_stream = TextIO.openOut "/audit-output/{dependency_filename}";
   val {{simps, procs, congs, weak_congs, loopers,
        unsafe_solvers, safe_solvers}} =
     Raw_Simplifier.dest_ss (simpset_of ctxt);
@@ -148,9 +149,6 @@ local
   val wp_rules = WeakestPre.dest_rules (#rules wp);
   val wp_trips = fst (#trips wp);
   val wp_pre = Named_Theorems.get ctxt @{{named_theorems wp_pre}};
-  val _ = if null targets then error "Audit target has no theorems" else ();
-  val _ = Thm.consolidate targets;
-  val dependencies = Thm_Deps.thm_deps thy targets;
 in
   val _ = List.app
     (fn (name, thm) => thm_row context_stream "SIMP_RULE" [name] thm) simps;
@@ -179,12 +177,6 @@ in
   val _ = List.app (thm_row context_stream "WP_UNSAFE" []) (#unsafe_rules wp);
   val _ = List.app (thm_row context_stream "WP_PRE" []) wp_pre;
   val _ = TextIO.closeOut context_stream;
-  val _ = List.app
-    (fn (_, (name, index)) =>
-      row dependency_stream "THM_DEP" [name, string_of_int index]) dependencies;
-  val _ = row dependency_stream "HAS_SKIP_PROOF"
-    [bool_text (Thm_Deps.has_skip_proof targets)];
-  val _ = TextIO.closeOut dependency_stream;
 end
 \<close>'''
 
@@ -192,15 +184,12 @@ end
 def proof_dependency_audit_ml(
     theorem_name: str, *, dependency_filename: str,
 ) -> str:
-    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_'.]*", theorem_name):
-        raise ValueError(f"unsupported theorem name for audit: {theorem_name}")
+    targets = target_resolution_ml(theorem_name)
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", dependency_filename):
         raise ValueError(f"unsupported dependency audit filename: {dependency_filename}")
     return rf'''ML \<open>
 local
-  val thy = @{{theory}};
-  val ctxt = Proof_Context.init_global thy;
-  val targets = Proof_Context.get_thms ctxt "{theorem_name}";
+{targets}
   val hex_digits = "0123456789abcdef";
   fun hex_char char =
     let val byte = Char.ord char
@@ -212,7 +201,6 @@ local
     TextIO.output (stream, space_implode "\t" (tag :: map enc fields) ^ "\n");
   fun bool_text value = if value then "true" else "false";
   val stream = TextIO.openOut "/audit-output/{dependency_filename}";
-  val _ = if null targets then error "Audit target has no theorems" else ();
   val _ = Thm.consolidate targets;
   val dependencies = Thm_Deps.thm_deps thy targets;
 in
@@ -348,6 +336,7 @@ class IsabelleChecker:
         theory_name: str, target: str | None = None, statements_only: bool = False,
         diagnostic_markers: bool = False, phase_timing: bool = False, arch_timing: bool = False,
         reuse_arch_context: bool = False, reuse_declaration_context: bool = False,
+        declaration_audits: dict[str, str] | None = None,
     ) -> str:
         if reuse_arch_context and (phase_timing or statements_only):
             raise ValueError('Arch reuse is an isolated proof-check experiment only')
@@ -355,6 +344,8 @@ class IsabelleChecker:
             raise ValueError('Declaration context reuse requires statements_only')
         if arch_timing and not phase_timing:
             raise ValueError('Arch profiling requires phase_timing')
+        if declaration_audits and (phase_timing or statements_only):
+            raise ValueError('Declaration audits require complete proof bodies')
         by_id = {node["id"]: node for node in graph["nodes"]}
         included = (
             dependency_closure(graph, target) | {target}
@@ -437,7 +428,13 @@ class IsabelleChecker:
                 blocks.append(timed_declaration(node, proof, split_arch=arch_timing))
             else:
                 rendered_node = dict(node, context=['context begin']) if reuse_node else node
-                blocks.append(declaration(rendered_node, proof))
+                if declaration_audits and node_id in declaration_audits:
+                    declaration(rendered_node, proof)  # Preserve the ordinary proof guard.
+                    blocks.append(wrap_context(rendered_node.get('context', []),
+                        FACT_SNAPSHOT_ML + '\n' + rendered_node['statement'] + '\n' + proof.strip()
+                        + '\n' + declaration_audits[node_id]))
+                else:
+                    blocks.append(declaration(rendered_node, proof))
             blocks.append(f'ML \\<open>writeln ("REGEN_TIMING_END {timing_id} " ^ Time.toString (Time.now ()))\\<close>')
             if reuse_node:
                 arch_prefix_names.append(node['name'])
@@ -757,9 +754,10 @@ class IsabelleChecker:
                 artifact = audit_dir / name
                 if artifact.exists():
                     artifact.unlink()
-            source = append_before_theory_end(
-                source, automation_audit_ml(by_id[node_id]["name"]),
-            )
+            source = self._source(graph, proofs, theory_name=label, target=node_id,
+                declaration_audits={node_id: proof_dependency_audit_ml(
+                    by_id[node_id]['name'], dependency_filename='proof-dependencies.tsv')})
+            source = append_before_theory_end(source, automation_context_audit_ml())
             writable_mounts = [(audit_dir, "/audit-output")]
 
         # One-shot reuse for the Runner's immediate acceptance recheck.  It is
@@ -870,16 +868,23 @@ class IsabelleChecker:
     def complete_audit_source(self, graph, proofs, *, theory_name=None):
         ordered = [next(n for n in graph['nodes'] if n['id'] == key)
                    for key in graph['execution_order']]
-        blocks = []
-        for index, node in enumerate(ordered):
+        if not ordered:
+            raise ValueError('complete-theory audit requires at least one node')
+        missing = [node['id'] for node in ordered if node['id'] not in proofs]
+        if missing:
+            raise ValueError('complete-theory audit requires every target proof: ' + ', '.join(missing))
+        audits = {}
+        for node in ordered:
             token = re.sub(r"[^A-Za-z0-9_.-]", "_", node['id'])[-48:]
             token += '-' + hashlib.sha256(node['id'].encode()).hexdigest()[:10]
             filename = 'proof-dependencies-' + token + '.tsv'
-            blocks.append(automation_audit_ml(node['name'], dependency_filename=filename)
-                          if index == 0 else proof_dependency_audit_ml(node['name'], dependency_filename=filename))
+            audits[node['id']] = proof_dependency_audit_ml(node['name'], dependency_filename=filename)
         label = theory_name or 'Complete_Audit_' + graph['file_slot'].removesuffix('.thy')
-        return append_before_theory_end(
-            self._complete_theory_source(graph, proofs, theory_name=label), '\n\n'.join(blocks))
+        policy = validate_complete_context_policy(
+            getattr(self, 'complete_context_policy', ISOLATED_CONTEXT))
+        source = self._source(graph, proofs, theory_name=label,
+            reuse_arch_context=policy == ARCH_REUSE_CONTEXT, declaration_audits=audits)
+        return append_before_theory_end(source, automation_context_audit_ml())
 
     def audit_complete_theory(
         self, graph: dict[str, Any], proofs: dict[str, str], *,

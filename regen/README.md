@@ -22,6 +22,13 @@
 新运行的日志格式、历史 step 中断恢复与空间／内存／耗时对照，见
 [增量实验日志](docs/implementation/INCREMENTAL-LOGGING.md)。旧实验不会自动迁移。
 
+新并行证明运行对无完整反馈和短暂网络故障默认重发一次；完整响应恢复后才扣除原失败
+请求的等待时间，保留原始日志和已完成工作。入口差异及并行计费边界见
+[模型反馈重发与时间核算](docs/implementation/PROVIDER-FEEDBACK-RETRY.md)。
+
+按 entry 编辑证明体、locale 导出事实审计及已有实验的 300 秒候选检查迁移，见
+[证明体编辑与事实审计](docs/implementation/PROOF-EDIT-AND-FACT-AUDIT.md)。
+
 | 文档 | 唯一职责 | 主要代码 |
 |---|---|---|
 | [Helper 分解评估与局部修复](docs/implementation/GUIDED-SKETCH-DECOMPOSITION.md) | `sketch-guided-v1` 原生结构评估、风险叶子准入、按需探测、泛化机制与测试边界 | sketch_assessment / sketch_workflow；独立实验策略，默认保持 reviewed |
@@ -82,6 +89,9 @@ python3 -m unittest discover -s regen/tests -t . -p 'test_*.py'
 证明执行的模型配置见 [proof-models.json](config/proof-models.json)：新 projection run
 默认 Lemma Prover 为 `gpt-6-astra medium`，并冻结配置及 Codex 二进制哈希。
 旧运行仍遵循原绑定；更换 CLI 或模型需要显式创建新的执行绑定。
+本机 CRefine 使用独立的 [Sol xhigh 配置入口](config/crefine-owner-blind-sol-xhigh-local.sh)，
+保持原始 contract→theory 归属隐藏，规划、消费评审、修订与证明共用 48 小时有效预算。
+配置、镜像核对和测试状态见[本机设置报告](../reports/regen/crefine-local-setup-20261024-002/REPORT.md)。
 配对诊断入口为 `python3 -m regen.tools.compare_proof_models --help`，
 [本次结果](../reports/regen/model-comparison-001/REPORT.md) 不属于 campaign 验收。
 

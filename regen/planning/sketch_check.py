@@ -11,6 +11,7 @@ from uuid import uuid4
 from regen.execution.proof_commits import digest, durable, freeze_evidence
 
 STRATEGY = 'sketch-groups-v1'
+AUDIT_POLICY = 'declaration-export-audit-v1'
 
 
 def strategy_options(name):
@@ -176,6 +177,10 @@ def certificate(store, nodes, proofs, group):
                 or len(uses) != len(group['use_sites'])
                 or {u['index'] for u in uses} != set(range(len(group['use_sites'])))):
             raise ValueError('sketch native use-site evidence differs')
+    # A changed native audit renderer requires a fresh conditional transaction.
+    # Old immutable receipts remain evidence, but cannot authorize new work.
+    if record.get('audit_policy') != AUDIT_POLICY:
+        return None
     historical = deepcopy(store.state)
     historical['accepted_order'] = [r['entry']['id'] for r in record['prefix']]
     historical['proofs'] = {r['entry']['id']: r['proof'] for r in record['prefix']}
@@ -256,17 +261,17 @@ def render_check(state, nodes, proofs, group, imports, signature):
     _safe_text(node['statement'], statement=True)
     _safe_text(proofs[target])
     from regen.planning.helper_use_sites import instrument
-    delta.append(wrap_context(node['context'], node['statement'] + '\n' +
-                              instrument(proofs[target], group, signature)))
+    from regen.execution.native_fact_audit import FACT_SNAPSHOT_ML, target_resolution_ml
     audit = '''ML \\<open> let
-      val regen_sketch_thms = Global_Theory.get_thms (Proof_Context.theory_of \\<^context>) %s;
-      val _ = if null regen_sketch_thms then error "Sketch has no result" else ();
+      %s
+      val regen_sketch_thms = targets;
       val _ = Thm.consolidate regen_sketch_thms;
       val _ = if forall (fn ((name, _), _) => name = "Pure.skip_proof")
           (Thm_Deps.all_oracles regen_sketch_thms) then () else error "Unexpected sketch oracle";
     in writeln %s end
-    \\<close>''' % (json.dumps(node['name']), json.dumps('REGEN_SKETCH_CLOSED ' + signature))
-    delta.append(audit)
+    \\<close>''' % (target_resolution_ml(node['name']), json.dumps('REGEN_SKETCH_CLOSED ' + signature))
+    delta.append(wrap_context(node['context'], FACT_SNAPSHOT_ML + '\n'
+        + node['statement'] + '\n' + instrument(proofs[target], group, signature) + '\n' + audit))
     source = prefix_source[:-len('end\n')] + '\n'.join(delta) + '\nend\n'
     return source, prefix_source, admitted
 
@@ -328,7 +333,8 @@ def check_groups(checker, store, source_sha256, target_entry_ids=None):
         receipt_id=uuid4().hex
         record = {'status': 'conditional_closed' if closed else 'sketch_rejected',
                   'receipt_id':receipt_id, 'run_id':store.state['graph']['run_id'],
-                  'evidence_kind': 'conditional-sketch-v1', 'publishable': False,
+                  'evidence_kind': 'conditional-sketch-v1', 'audit_policy': AUDIT_POLICY,
+                  'publishable': False,
                   'source_sha256': source_sha256, 'sketch_sha256': signature,
                   'interface': interface(nodes, proofs, group), 'imports': store.imports,
                   'prefix': prefix_binding(base), 'group': group,

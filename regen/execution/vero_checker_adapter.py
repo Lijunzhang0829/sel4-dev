@@ -424,6 +424,49 @@ class VeroCheckerAdapter:
                 receipts[uid]['prior_accepted_prefix_sha256']=projected
         return receipts
 
+    def _candidate_check_source(self,theory,snapshot,candidate_receipts):
+        """Return the VERO prefix that can certify the current candidates.
+
+        This mirrors VERO-Isabelle's ``IncrementalChecks`` boundary: imported
+        theories are loaded normally, while only the owner theory is truncated
+        after its last filled contract and its open contexts are closed.  A
+        complete source is still used for seal/build.  The returned prefix is
+        never written over the full rendered snapshot.
+        """
+        full=snapshot[theory+'.thy']
+        observer=getattr(self,'observer',None)
+        bench=getattr(observer,'bench',None)
+        if (theory=='Vero_All' or not isinstance(bench,dict)
+                or not bench.get('benchmark_id')):
+            return full,False
+        contracts=[c for c in bench.get('contracts',[])
+            if c.get('module')==theory]
+        if not contracts:
+            return full,False
+        filled=[c for c in contracts
+            if candidate_receipts.get(c.get('id'),{}).get('filled')]
+        if filled:
+            last=filled[-1]
+            polarity=candidate_receipts[last['id']]['polarity']
+            marker=f'(* VERO END {last["id"]} {polarity} *)'.encode()
+            if full.count(marker)!=1:
+                raise ValueError('rendered incremental boundary absent: '+last['id'])
+            end=full.index(marker)+len(marker)
+            depth=len(last.get('context',[]))
+        else:
+            first=contracts[0]
+            marker=f'(* VERO START {first["id"]} prove_aux *)'.encode()
+            if marker not in full:
+                marker=f'vero_prove "{first["id"]}"'.encode()
+            if full.count(marker)!=1:
+                # Legacy/non-standard rendered sources retain their existing
+                # cold-check behavior rather than guessing a proof boundary.
+                return full,False
+            end=full.index(marker)
+            depth=len(first.get('context',[]))
+        prefix=full[:end]+b'\n'+b'end\n'*(depth+1)
+        return prefix,True
+
     def _exact_green_key(self,theory,snapshot,source_identity,effective_timeout):
         """Permit native reuse only for a complete, frozen execution identity."""
         if (theory=='Vero_All' or self.frozen_plan is None
@@ -486,11 +529,14 @@ class VeroCheckerAdapter:
         except (KeyError,TypeError,ValueError,OSError,UnicodeError):
             return None
 
-    def _remember_exact_green(self,key,request,theory,snapshot,evidence,log):
+    def _remember_exact_green(self,key,request,theory,snapshot,evidence,log,
+                              *, checked_source=None):
         if key is None or evidence.get('returncode')!=0:
             return
-        source=request/(theory+'.thy')
-        native_log=request/(theory+'.log')
+        source=Path(evidence.get('source',''))
+        native_log=Path(evidence.get('log',''))
+        expected_source=(snapshot[theory+'.thy'] if checked_source is None
+            else checked_source)
         if (evidence.get('source')!=str(source) or evidence.get('log')!=str(native_log)
                 or not isinstance(evidence.get('wall_ms'),(int,float))):
             return
@@ -501,14 +547,14 @@ class VeroCheckerAdapter:
             log_bytes=native_log.read_bytes()
             snapshot_hashes={name:hashlib.sha256(data).hexdigest()
                 for name,data in snapshot.items()}
-            if (source.read_bytes()!=snapshot[theory+'.thy']
+            if (source.read_bytes()!=expected_source
                     or log_bytes.decode()!=log
                     or json.loads(manifest.read_text())!=snapshot_hashes):
                 return
         except (OSError,UnicodeError,ValueError):
             return
         receipt={'native_evidence':deepcopy(evidence),
-            'source_sha256':hashlib.sha256(snapshot[theory+'.thy']).hexdigest(),
+            'source_sha256':hashlib.sha256(expected_source).hexdigest(),
             'log_sha256':hashlib.sha256(log_bytes).hexdigest(),
             'source_manifest':str(manifest),
             'manifest_sha256':hashlib.sha256(manifest.read_bytes()).hexdigest(),
@@ -521,6 +567,24 @@ class VeroCheckerAdapter:
         cache.move_to_end(key)
         if len(cache)>MAX_EXACT_GREEN_CHECKS:
             cache.popitem(last=False)
+
+    def revalidate_contract_prefixes(self, theory, snapshot, imports):
+        """Share native prefix verification with progress and resume audits."""
+        with self.lock:
+            if self.closed:
+                raise RuntimeError('checker is closed')
+            from regen.execution.vero_prefix_revalidation import revalidate_accepted_prefixes
+            try:
+                revalidate_accepted_prefixes(self,theory,snapshot,imports,
+                    checker_factory=IsabelleChecker)
+            finally:
+                # Cancellation, a closed budget or a source race must not
+                # strand a changed old certificate as current GREEN. A fresh
+                # successful recheck already replaced its receipt atomically;
+                # every other changed receipt keeps the fail-closed rule.
+                observer=self.observer
+                observer.reconcile_contracts(theory,{name:self._contract_receipts(
+                    name,snapshot,imports) for name in imports if name+'.thy' in snapshot})
 
     def check(self, directory, theory, timeout=None):
         with self.lock:
@@ -607,7 +671,12 @@ class VeroCheckerAdapter:
                     # still allow the local check's own diagnostics to run.
                     audit_graph_valid=False
                     audit_snapshot=snapshot;audit_imports=imports
+            if (audit_graph_valid and observer is not None
+                    and hasattr(type(observer),'revalidated_contracts')):
+                self.revalidate_contract_prefixes(theory,audit_snapshot,audit_imports)
             candidate_receipts=self._contract_receipts(theory,snapshot,imports)
+            candidate_source,incremental_prefix=self._candidate_check_source(
+                theory,snapshot,candidate_receipts)
             reconcile_contracts=getattr(observer,'reconcile_contracts',None) if observer else None
             if (audit_graph_valid and callable(reconcile_contracts)
                     and hasattr(type(observer),'reconcile_contracts')):
@@ -634,8 +703,17 @@ class VeroCheckerAdapter:
                 (request/name).write_bytes(data)
             durable(request/'source-manifest.json', {
                 name:hashlib.sha256(data).hexdigest() for name,data in snapshot.items()})
+            check_dir=request
+            if incremental_prefix:
+                check_dir=request/'prefix';check_dir.mkdir()
+                # Isabelle resolves generated imports from /candidate for this
+                # direct theory check.  Give the isolated prefix candidate the
+                # same immutable closure, then let _check overwrite only the
+                # owner copy with the truncated source.
+                for name,data in snapshot.items():
+                    (check_dir/name).write_bytes(data)
             c=self.context
-            checker=IsabelleChecker(self.root,request,image=c['image'],generated_dir=request,
+            checker=IsabelleChecker(self.root,check_dir,image=c['image'],generated_dir=request,
                 heaps_dir=self.root/'heaps',l4v_dir=c['l4v'],
                 semantic_workspace=c['semantic_workspace'],isabelle_dir=c['isabelle'],
                 base_session=c['base_session'],base_import=c['base_import'],
@@ -650,12 +728,21 @@ class VeroCheckerAdapter:
                 exact_key=self._exact_green_key(theory,snapshot,source_identity,effective_timeout)
                 prior=self._reuse_exact_green(exact_key)
                 reused_exact_check=prior is not None
+                from regen.execution.vero_prefix_revalidation import cached_import_rejection
+                rejected_import=(cached_import_rejection(self,theory,candidate_receipts)
+                    if not reused_exact_check else None)
                 if reused_exact_check:
                     evidence=prior['native_evidence']
                     log=prior['log_content']
+                elif rejected_import is not None:
+                    evidence=rejected_import
+                    log=Path(evidence['log']).read_text()
                 else:
-                    evidence=checker._check(snapshot[theory+'.thy'].decode(),theory,
+                    evidence=checker._check(candidate_source.decode(),theory,
                         timeout=effective_timeout)
+                    if incremental_prefix:
+                        evidence={**evidence,'check_scope':'vero-content-bound-prefix',
+                            'incremental':'vero-prefix-v1'}
                     log=Path(evidence['log']).read_text()
                 if any((request/name).read_bytes()!=data for name,data in snapshot.items()):
                     raise ValueError('rendered snapshot mutated during native check')
@@ -664,7 +751,7 @@ class VeroCheckerAdapter:
                         theory,bench,frozen_imports,snapshot,
                         reason='source_changed_during_native_check')
                 native_rc=evidence['returncode']
-                native_elapsed=0 if reused_exact_check else evidence['wall_ms']/1000
+                native_elapsed=0 if reused_exact_check or rejected_import else evidence['wall_ms']/1000
                 reuse_receipt=({'original_source_manifest':prior['source_manifest'],
                     'original_manifest_sha256':prior['manifest_sha256'],
                     'original_source_sha256':prior['source_sha256'],
@@ -684,6 +771,10 @@ class VeroCheckerAdapter:
                     'seal_status':'not_attempted','returncode':native_rc,'seal_returncode':None,
                     'source_identity':source_identity,'seal_reused':False,
                     'reused_exact_check':reused_exact_check,'reuse_receipt':reuse_receipt,
+                    'reused_failed_import_check':rejected_import is not None,
+                    'seal_blocked_by':missing_imports,
+                    # Compatibility alias for frozen readers.  This blocks
+                    # seal publication, not contract certification.
                     'certification_blocked_by':missing_imports,
                     'native_elapsed_seconds':native_elapsed,
                     'seal_elapsed_seconds':0,'elapsed_seconds':native_elapsed,
@@ -703,15 +794,18 @@ class VeroCheckerAdapter:
                         observer.ledger.append('late_check_result',theory=theory,
                             phase='native',evidence=str(request/'source-manifest.json'))
                     else:
-                        observer.checked(theory,native_result,snapshot[theory+'.thy'].decode())
+                        observer.checked(theory,native_result,candidate_source.decode())
                         native_published=True
                 seal_ready=bool(ids) and ids<=audited
                 # A successful Isabelle process is not by itself a VERO
                 # contract GREEN. Cache only a published, fully audited native
-                # result whose fixed imported theories are available.
-                if (not reused_exact_check and native_rc==0 and seal_ready
-                        and not missing_imports and native_published):
-                    self._remember_exact_green(exact_key,request,theory,snapshot,evidence,log)
+                # result. Imported-theory seals gate only the later theory seal:
+                # the native check cannot use an unfinished `oops` theorem, and
+                # the cache key binds the exact imported source closure.
+                if (not reused_exact_check and native_rc==0 and audited_ids
+                        and native_published):
+                    self._remember_exact_green(exact_key,request,theory,snapshot,evidence,log,
+                        checked_source=candidate_source)
                 seal_requested=native_rc==0 and (theory=='Vero_All' or seal_ready)
                 reused_seal=bool(sealed_result) and seal_requested and not missing_imports
                 if seal_requested and missing_imports and observer:
@@ -743,14 +837,18 @@ class VeroCheckerAdapter:
                         reason='source_changed_after_native_publication')
                 # A failed seal must block dependent modules even though the
                 # already published native contract GREEN remains authoritative.
+                # Missing imported seals are a seal state, not a failed proof
+                # state. Keep contract_status authoritative and expose the
+                # dependency wait independently through seal_status.
                 status=('build_error' if build and build['returncode']!=0
-                    else 'blocked_dependency' if native_rc==0 and missing_imports
                     else contract_status)
                 result={'status':status,'contract_status':contract_status,'seal_status':seal_status,
                     'returncode':native_rc,
                     'seal_returncode':build['returncode'] if build else 0 if reused_seal else None,
                     'source_identity':source_identity,'seal_reused':reused_seal,
                     'reused_exact_check':reused_exact_check,'reuse_receipt':reuse_receipt,
+                    'reused_failed_import_check':rejected_import is not None,
+                    'seal_blocked_by':missing_imports,
                     'certification_blocked_by':missing_imports,
                     'source_manifest':str(request/'source-manifest.json'),
                     'native_elapsed_seconds':native_elapsed,
@@ -779,7 +877,7 @@ class VeroCheckerAdapter:
                             self._assert_workspace_current_or_reconcile(observer,
                                 source,theory,bench,frozen_imports,snapshot,
                                 reason='source_changed_before_proof_publication')
-                            observer.checked(theory,native_result,snapshot[theory+'.thy'].decode())
+                            observer.checked(theory,native_result,candidate_source.decode())
                         if build:
                             self._assert_workspace_current_or_reconcile(observer,
                                 source,theory,bench,frozen_imports,snapshot,

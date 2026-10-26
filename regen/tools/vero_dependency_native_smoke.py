@@ -64,7 +64,8 @@ class Stop:
         pass
 
 
-def theory_source(theory, contract, imports, proof='by simp', *, dynamic_imports=False):
+def theory_source(theory, contract, imports, proof='by simp', *, helper='',
+                  dynamic_imports=False):
     if dynamic_imports:
         extra=imports.replace('Vero_Support','').strip()
         header=(f'theory {theory}\nimports Vero_Support\n'
@@ -73,8 +74,14 @@ def theory_source(theory, contract, imports, proof='by simp', *, dynamic_imports
     else:
         header=f'theory {theory}\nimports {imports}\nbegin\n'
     return (header+
-        f'vero_prove "{contract}" {contract}_prove: "True"\n{proof}\n'
-        f'vero_disprove "{contract}" {contract}_disprove: "False"\noops\n'
+        f'(* VERO START {theory} global_aux *)\n{helper}\n'
+        f'(* VERO END {theory} global_aux *)\n'
+        f'vero_prove "{contract}" {contract}_prove: "True"\n'
+        f'(* VERO START {contract} prove *)\n{proof}\n'
+        f'(* VERO END {contract} prove *)\n'
+        f'vero_disprove "{contract}" {contract}_disprove: "False"\n'
+        f'(* VERO START {contract} disprove *)\noops\n'
+        f'(* VERO END {contract} disprove *)\n'
         'end\n')
 
 
@@ -91,7 +98,6 @@ def configure_vero_source(path):
 
 
 def verify_native(stage, result, rendered, theory, contract, *, blocked, sealed):
-    expected_source = (rendered / (theory + '.thy')).read_bytes()
     native = result['native_evidence']
     source = Path(native['source']).read_bytes()
     log = Path(native['log']).read_bytes()
@@ -109,7 +115,9 @@ def verify_native(stage, result, rendered, theory, contract, *, blocked, sealed)
     # marker while rejecting any ID outside the effective import closure.
     if (native['returncode'] != 0 or contract + ':prove' not in result['audited']
             or not set(result['audited'])<=allowed
-            or source != expected_source or marker not in log
+            or marker not in log
+            or native.get('incremental') != 'vero-prefix-v1'
+            or marker.replace(b'VERO_RESULT ',b'(* VERO END ').replace(b' clean',b' *)') not in source
             or not isinstance(receipt, dict)
             or receipt.get('check_scope') != 'cold-full-theory'
             or not isinstance(source_files,dict)
@@ -117,7 +125,7 @@ def verify_native(stage, result, rendered, theory, contract, *, blocked, sealed)
             or source_files.get('candidate/'+theory+'.thy') != hashlib.sha256(source).hexdigest()
             or any(source_files.get('generated/'+path.name)
                 != hashlib.sha256(path.read_bytes()).hexdigest()
-                for path in Path(native['source']).parent.glob('*.thy'))
+                for path in Path(result['source_manifest']).parent.glob('*.thy'))
             or receipt.get('log_sha256') != hashlib.sha256(log).hexdigest()):
         raise AssertionError(f'{stage}: native contract receipt/audit mismatch')
     manifest = json.loads(Path(result['source_manifest']).read_text())
@@ -135,13 +143,15 @@ def verify_native(stage, result, rendered, theory, contract, *, blocked, sealed)
                 or build_receipt.get('log_sha256') != hashlib.sha256(
                     Path(build['log']).read_bytes()).hexdigest()):
             raise AssertionError(f'{stage}: independent seal build mismatch')
-    elif (result['status'] != 'blocked_dependency'
+    elif (result['status'] != 'ok'
+            or result['contract_status'] != 'ok'
             or result['seal_status'] != 'waiting_for_imports'
             or result['certification_blocked_by'] != blocked
             or result['build_evidence'] is not None):
         raise AssertionError(f'{stage}: dependency block mismatch')
     return {'stage':stage, 'theory':theory, 'status':result['status'],
         'audited':result['audited'], 'seal_status':result['seal_status'],
+        'seal_blocked_by':result['seal_blocked_by'],
         'certification_blocked_by':result['certification_blocked_by'],
         'reused_exact_check':result['reused_exact_check'],
         'source_identity':result['source_identity'],
@@ -179,8 +189,10 @@ def run(dataset, support, vero_source, output, *, timeout=900,
     ledger = Ledger(output / 'ledger', 'vero-dependency-native-smoke')
     ledger.append('experiment_started',model_calls=0)
     benchmark = {'schema_version':2 if dynamic_imports else 1,
-        'contracts':[{'id':PARENT_ID,'module':PARENT},
-                              {'id':CHILD_ID,'module':CHILD}]}
+        'contracts':[{'id':PARENT_ID,'module':PARENT,'context':[]},
+                              {'id':CHILD_ID,'module':CHILD,'context':[]}]}
+    if dynamic_imports:
+        benchmark['benchmark_id']='b'*64
     stop = Stop(ledger)
     observer = VeroObserver(ledger,stop,rendered,benchmark)
     report = {'schema_version':1,'model_calls':0,'formal_experiment':False,
@@ -232,7 +244,8 @@ def run(dataset, support, vero_source, output, *, timeout=900,
                 stage(checker,'child_unsealed_dynamic_parent',CHILD,CHILD_ID,
                     blocked=[PARENT],sealed=False)
             stage(checker,'parent_initial',PARENT,PARENT_ID)
-            stage(checker,'child_initial',CHILD,CHILD_ID)
+            stage(checker,'child_initial',CHILD,CHILD_ID,
+                native_calls_expected=0 if dynamic_imports else 1)
             if dynamic_imports:
                 cached=stage(checker,'child_exact_reuse',CHILD,CHILD_ID,
                     native_calls_expected=0,seal_calls_expected=0)
@@ -242,7 +255,8 @@ def run(dataset, support, vero_source, output, *, timeout=900,
                 raise AssertionError('initial parent and child were not both sealed')
 
             (rendered / (PARENT+'.thy')).write_text(
-                theory_source(PARENT,PARENT_ID,'Vero_Support','by blast',
+                theory_source(PARENT,PARENT_ID,'Vero_Support',
+                    helper='lemma vero_aux_parent_changed: "True" by simp',
                     dynamic_imports=dynamic_imports))
             stage(checker,'child_after_parent_change',CHILD,CHILD_ID,
                   blocked=[PARENT],sealed=False)
@@ -256,7 +270,7 @@ def run(dataset, support, vero_source, output, *, timeout=900,
                     or stop.sealed):
                 raise AssertionError('parent edit did not invalidate both seals')
             blocked_summary=experiment_summary(ledger)
-            if (blocked_summary['current_valid_contract_ids']
+            if (blocked_summary['current_valid_contract_ids'] != [CHILD_ID]
                     or blocked_summary['current_valid_sealed_theories']
                     or blocked_summary['historical_first_green_contract_ids']
                        != sorted([PARENT_ID,CHILD_ID])):
@@ -276,10 +290,10 @@ def run(dataset, support, vero_source, output, *, timeout=900,
 
             stage(checker,'parent_resealed',PARENT,PARENT_ID)
             parent_summary=experiment_summary(ledger)
-            if (parent_summary['current_valid_contract_ids'] != [PARENT_ID]
+            if (parent_summary['current_valid_contract_ids'] != sorted([PARENT_ID,CHILD_ID])
                     or parent_summary['current_valid_sealed_theories'] != [PARENT]):
-                raise AssertionError('parent-only recertification mismatch')
-            stage(checker,'child_resealed',CHILD,CHILD_ID)
+                raise AssertionError('parent recertification or retained child GREEN mismatch')
+            stage(checker,'child_resealed',CHILD,CHILD_ID,native_calls_expected=0)
             final=experiment_summary(ledger)
             if (final['current_valid_contract_ids']!=sorted([PARENT_ID,CHILD_ID])
                     or final['current_valid_sealed_theories']!=sorted([PARENT,CHILD])
@@ -305,7 +319,7 @@ def run(dataset, support, vero_source, output, *, timeout=900,
                     absent['current_valid_sealed_theories']}
         report['native_calls']=len(native_calls)
         report['seal_build_calls']=len(seal_calls)
-        if (report['native_calls']!=(6 if dynamic_imports else 5)
+        if (report['native_calls']!=4
                 or report['seal_build_calls']!=4):
             raise AssertionError('aggregate native/build call count mismatch')
         report['passed']=True

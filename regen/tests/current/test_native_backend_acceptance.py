@@ -36,6 +36,15 @@ class NativeBackendAcceptanceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             native_window(text, 2)
 
+    def test_locale_fixtures_cover_export_resolution_and_unsafe_certificates(self):
+        item=fixture(1)
+        self.assertIn('context audit_locale begin',item['named_locale'])
+        self.assertIn('"y = y" by simp',item['named_locale'])
+        self.assertIn('by (rule scoped_fact)',item['locale_consumer'])
+        self.assertNotIn('TrueI',item['borrowed_fact'])
+        self.assertEqual(item['ambiguous_locale'].count('lemma collision:'),2)
+        self.assertIn('sorry',item['admitted_locale'])
+
     def test_every_structural_mutation_is_rejected_even_with_fresh_hash(self):
         root = ET.Element('batch_audit', version='2', worker='native-worker', request='1', theory=LABEL)
         for key, value in [('prefix', 'base'), ('delta', 'suffix')]:

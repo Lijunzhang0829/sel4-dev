@@ -235,6 +235,32 @@ class GenericEffectiveActivityTests(unittest.TestCase):
                 migration._audited_crefine_pool_migration(source,old,
                     {**new,'native_slots':2},history,self.root/'frozen-application')
 
+    def test_audited_workspace_repair_preserves_settings_and_rejects_unrelated_code(self):
+        from regen.infrastructure import generic_continuation as migration
+        from regen.execution.proof_commits import digest
+        changed=('tools/generic_serial_application.py','infrastructure/generic_continuation.py',
+                 'infrastructure/codex_workspace_session.py')
+        old_files={**{name:'old-'+name for name in changed},'execution/check_executor.py':'same'}
+        new_files={**old_files,**{name:'new-'+name for name in changed}}
+        old={'application_sha256':digest(old_files),'budget_mode':'effective-time',
+             'model':'gpt-5.6-sol','native_slots':1,'run_id':'old'}
+        new={**old,'application_sha256':digest(new_files),'run_id':'new',
+             'workspace_progress_policy':'disabled-global-time-budget-v1'}
+        history=SimpleNamespace(rows=[{'kind':'experiment_paused','event_id':'last',
+                                       'data':{'reason':'infrastructure_error'}}])
+        source=self.root/'codex-crefine-sol-xhigh-effective48h-planning-included-fresh-20261024-001'
+        with patch.object(migration,'_CREFINE_WORKSPACE_REPAIR_SOURCE_APPLICATION',digest(old_files)):
+            with patch.object(migration,'_implementation_files',side_effect=[old_files,new_files]):
+                event=migration._audited_crefine_workspace_repair(source,old,new,history,self.root/'frozen')
+            self.assertEqual(set(event['changed_files']),set(changed))
+            with patch.object(migration,'_implementation_files',side_effect=[old_files,new_files]):
+                with self.assertRaisesRegex(ValueError,'frozen experiment settings'):
+                    migration._audited_crefine_workspace_repair(source,old,{**new,'native_slots':2},history,self.root/'frozen')
+            unrelated={**new_files,'execution/check_executor.py':'changed'}
+            with patch.object(migration,'_implementation_files',side_effect=[old_files,unrelated]):
+                with self.assertRaisesRegex(ValueError,'unrelated executable code'):
+                    migration._audited_crefine_workspace_repair(source,old,{**new,'application_sha256':digest(unrelated)},history,self.root/'frozen')
+
     def test_continuation_requires_clean_clock_close_before_copying(self):
         from regen.infrastructure.generic_continuation import prepare
         source=self.root/'unclean';source.mkdir()
