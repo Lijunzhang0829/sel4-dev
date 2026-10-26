@@ -5,6 +5,8 @@ from regen.execution.proof_commits import digest
 from regen.execution.isabelle_node_checker import IsabelleChecker
 from regen.execution.checker_policy import resolve_complete_context_policy
 
+AUDIT_POLICY = 'declaration-export-audit-v1'
+
 
 def _bytes(row, key):
     value = row.get(key + '_content')
@@ -25,7 +27,9 @@ def state_binding(state):
 
 
 def validate_seal(state, evidence, *, expected_imports=None, base_session=None, runtime=None):
-    # Old releases replay their frozen code; do not silently certify weak legacy seals.
+    # Only v3 self-contained evidence can be replayed; older weak seals still
+    # require explicit re-sealing. Historical v3 renderer compatibility below
+    # never skips the ordinary source, native receipt or build checks.
     if evidence.get('seal_evidence_version') != 3:
         raise ValueError('seal needs v3 bound native evidence; legacy runs require explicit re-seal')
     if state['seal_id'] != 'theory-seal:' + digest(evidence)[:20]:
@@ -64,7 +68,18 @@ def validate_seal(state, evidence, *, expected_imports=None, base_session=None, 
     certificates = audit.get('proof_dependencies',{})
     if set(certificates) != set(proofs):
         raise ValueError('seal dependency certificate coverage mismatch')
-    if native_source != renderer.complete_audit_source(graph,proofs):
+    audit_policy = evidence.get('audit_policy')
+    if audit_policy == AUDIT_POLICY:
+        expected_audit = renderer.complete_audit_source(graph, proofs)
+    elif 'audit_policy' not in evidence:
+        # Existing v3 seals predate declaration-bound audits. Accept only the
+        # exact historical renderer; this branch also supports immutable seal
+        # reuse in a continuation without pretending it is new certification.
+        from regen.execution.legacy_seal_audit import legacy_complete_audit_source
+        expected_audit = legacy_complete_audit_source(renderer, graph, proofs)
+    else:
+        raise ValueError('unsupported seal audit policy')
+    if native_source != expected_audit:
         raise ValueError('dependency audit source mismatch')
     raw = evidence.get('dependency_receipts',{})
     if set(raw) != set(proofs):
@@ -108,7 +123,7 @@ def bind_seal(state, evidence, checker):
     from pathlib import Path
     from regen.execution.proof_commits import freeze_evidence
     evidence = freeze_evidence(evidence)
-    evidence.update(seal_evidence_version=3,
+    evidence.update(seal_evidence_version=3, audit_policy=AUDIT_POLICY,
                     complete_context_policy=resolve_complete_context_policy(vars(checker)), state_binding=state_binding(state),
                     imports=checker.imports(), base_session=checker.base_session,
                     dependency_receipts={})

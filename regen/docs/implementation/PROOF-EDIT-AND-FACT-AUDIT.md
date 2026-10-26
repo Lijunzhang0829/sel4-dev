@@ -28,6 +28,8 @@ document 接口提供 `read_entry` 和 `edit_proof`，并行 File Planner 和 ge
 
 `check_sketch` 使用相同解析器，但其 helper admission 仍只存在于隔离的 conditional transaction，不能发布 GREEN。新 receipt 标记 `audit_policy=declaration-export-audit-v1`；旧策略 certificate 在完整性校验后视为过期，触发重新检查，保留历史 receipt。当前策略的 source 不匹配仍报错。
 
+新封存凭据也绑定 `audit_policy=declaration-export-audit-v1`，只接受新审计源码。已有、完全不含该字段的 v3 封存凭据仅能按冻结旧 renderer 逐字回放；未知或空策略值拒绝，原有状态、imports、原生 source/log、依赖收据和 build 校验全部保留。这是复用历史验收证据，不代表重新运行了新审计。更早的弱格式凭据仍需显式重新封存。
+
 ## 300 秒候选检查及已有预算续接
 
 本机 CRefine 入口 `regen/config/crefine-owner-blind-sol-xhigh-local.sh` 的 `--candidate-timeout` 为 **300 秒**。外层 `--check-timeout` 仍为 900 秒，provider build 为 1800 秒；这些计时器对应不同阶段。

@@ -1,7 +1,7 @@
 """Synthetic, explicitly mocked v3 evidence for journal unit tests only."""
 import hashlib
 from regen.execution.proof_commits import digest
-from regen.execution.seal_evidence import state_binding
+from regen.execution.seal_evidence import state_binding, AUDIT_POLICY
 from regen.execution.isabelle_node_checker import IsabelleChecker
 from regen.execution.proof_session_runner import generated_checkpoint_theory
 
@@ -20,7 +20,7 @@ def evidence(state, imports=None, policy='isolated-v1'):
     source=renderer.complete_source(g,p,theory_name=name)
     deps=native(renderer.complete_audit_source(g,p));deps['complete_theory_audit']={'proof_dependencies':{k:{'node_id':k,'has_skip_proof':False,'dependencies':[]} for k in p}}
     build=native();build.update(session='Sealed_Refine',theories=[name],source_files={name:source},**bound('root','\n'.join(['session Sealed_Refine in "sealed-session" = Semantic_Base +','  sessions Lib CorresK AInvs','  theories','    '+name,''])))
-    return dict(seal_evidence_version=3,complete_context_policy=policy,state_binding=state_binding(state),imports=renderer.imports(),base_session='Semantic_Base',source_text=source,source_hash=digest(source),
+    return dict(seal_evidence_version=3,audit_policy=AUDIT_POLICY,complete_context_policy=policy,state_binding=state_binding(state),imports=renderer.imports(),base_session='Semantic_Base',source_text=source,source_hash=digest(source),
         complete=native(renderer._complete_theory_source(g,p,theory_name='Complete_'+stem,diagnostic_markers=True)),dependencies=deps,build=build,
         impact={'verdict':'pass','theory':g['theory'],'graph_revision':g['revision']},
         dependency_receipts={k:bound('raw','HAS_SKIP_PROOF\t'+b'false'.hex()+'\n') for k in p})
