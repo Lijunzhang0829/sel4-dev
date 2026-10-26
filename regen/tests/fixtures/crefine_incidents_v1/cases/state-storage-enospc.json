@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "state-storage-enospc",
+  "title": "诊断日志放大耗尽磁盘并中断持久化",
+  "component": "state",
+  "category": "storage",
+  "status": "mitigated_capacity_risk_remains",
+  "source_steps": [
+    {
+      "run": "vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+      "last_event": 27730,
+      "last_budget_checkpoint": 27725,
+      "iteration": "iter-004",
+      "item": "item_2196",
+      "request": "1880d4c341604e87918e1620cb19e252"
+    },
+    {
+      "operation": "lossless response archive",
+      "verified_archives": 31
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/state-storage-enospc.json",
+      "sha256": "7d2cdef05fddad0bb7e957b7d8b2c298ba8d8dbf7bae7e52155699920c0f03b2",
+      "source_path": "reports/regen/vero-rpc-repair-20261026-001/archive-receipts.jsonl",
+      "source_sha256": "9407f95b789b219d31bfa1056189ef267821c229e30dee4b96ee19744cff0258",
+      "selection": "all 31 JSONL records",
+      "sources": [
+        {
+          "source_path": "reports/regen/vero-rpc-repair-20261026-001/archive-receipts.jsonl",
+          "source_sha256": "9407f95b789b219d31bfa1056189ef267821c229e30dee4b96ee19744cff0258",
+          "selection": "all 31 JSONL records"
+        },
+        {
+          "source_path": "reports/regen/vero-rpc-repair-20261026-001/pause-audit.json",
+          "source_sha256": "f5d117c8b803268621ee2e91cf157420046a55f4afaa1f5f1970dea775816805",
+          "selection": "observed_at/service_status/ledger.vero.last_event/ledger.vero.last_clock/findings/disk.disk/disk.temporary_files"
+        }
+      ]
+    }
+  ],
+  "replays": [
+    {
+      "id": "enospc-atomic-publish",
+      "handler": "state.storage_atomicity",
+      "kind": "synthetic_regression",
+      "parameters": {
+        "evidence": "evidence/state-storage-enospc.json"
+      },
+      "oracle": "Injected fsync ENOSPC must not publish a partial response or change the previous checkpoint. Recorded 31 verified gzip receipts release 21773021413 bytes."
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_vero_tool_protocol"
+  ],
+  "limitations": [
+    "ENOSPC is injected in a temporary directory; the test never fills a disk.",
+    "Archive receipts are real, but archived multi-gigabyte payloads are not bundled or decompressed during this replay.",
+    "Archival mitigated capacity pressure; it did not bound all original native log growth."
+  ]
+}

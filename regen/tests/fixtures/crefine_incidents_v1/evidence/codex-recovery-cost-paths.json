@@ -1,0 +1,190 @@
+{
+  "frozen_application": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/codex-crefine-locale-audit-repair-release-20261025-004/application",
+  "source_run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-004",
+  "destination_run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261027-005",
+  "pre_encode_semantic_validation_passes": [
+    {
+      "ordinal": 1,
+      "phase": "preflight",
+      "path": "fork_workspace_continuation -> _preflight_workspace_continuation -> _workspace_continuation_input -> continuation_state",
+      "work": "Decode the source commit chain and validate all source commits, recursively including inherited continuation evidence.",
+      "locations": [
+        {
+          "path": "regen/execution/repository_execution.py",
+          "line": 1219,
+          "function": "fork_workspace_continuation"
+        },
+        {
+          "path": "regen/execution/repository_execution.py",
+          "line": 1171,
+          "function": "_preflight_workspace_continuation"
+        },
+        {
+          "path": "regen/execution/repository_execution.py",
+          "line": 974,
+          "function": "continuation_state"
+        }
+      ]
+    },
+    {
+      "ordinal": 2,
+      "phase": "carry",
+      "path": "_carry_workspace_continuation -> _workspace_continuation_input -> continuation_state",
+      "work": "Read and validate the source again, confirming that it still matches the preflight descriptor; then copy workspace artifacts.",
+      "locations": [
+        {
+          "path": "regen/execution/repository_execution.py",
+          "line": 1183,
+          "function": "_carry_workspace_continuation"
+        }
+      ]
+    },
+    {
+      "ordinal": 3,
+      "phase": "append initial",
+      "path": "ProofCommits._append -> validator -> validate_continuation -> continuation_state",
+      "work": "Validate the embedded source history already in memory before writing the target initial commit. The commit body is then hashed before ObjectStore.encode. This is not a third disk decoding of the whole origin.",
+      "locations": [
+        {
+          "path": "regen/execution/proof_commits.py",
+          "line": 346,
+          "function": "ProofCommits._append"
+        },
+        {
+          "path": "regen/execution/repository_execution.py",
+          "line": 223,
+          "function": "validator"
+        },
+        {
+          "path": "regen/execution/repository_execution.py",
+          "line": 1004,
+          "function": "validate_continuation"
+        }
+      ]
+    }
+  ],
+  "after_initial_head_before_first_provider": [
+    {
+      "order": 1,
+      "phase": "finish append",
+      "work": "HEAD is written, then _fingerprint walks all reachable Merkle objects and _remember records the verified prefix. Fingerprinting checks object stamps and references; cache misses can require decompression and content-hash verification.",
+      "locations": [
+        {
+          "path": "regen/execution/proof_commits.py",
+          "line": 379,
+          "function": "ProofCommits._append"
+        },
+        {
+          "path": "regen/infrastructure/incremental_log.py",
+          "line": 353,
+          "function": "ObjectStore.fingerprint"
+        }
+      ]
+    },
+    {
+      "order": 2,
+      "phase": "fork progress projection",
+      "work": "fork_workspace_continuation calls progress(destination). In the unchanged same-process path, journal.replay uses the shared verified-prefix cache and does not redo full semantic history validation.",
+      "locations": [
+        {
+          "path": "regen/execution/repository_execution.py",
+          "line": 1273,
+          "function": "fork_workspace_continuation"
+        },
+        {
+          "path": "regen/execution/repository_execution.py",
+          "line": 356,
+          "function": "journal"
+        },
+        {
+          "path": "regen/execution/proof_commits.py",
+          "line": 232,
+          "function": "ProofCommits.replay"
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "phase": "controller restoration",
+      "work": "Controller.observe_updates first requests a SharedProofWorkspace snapshot, which can reuse the same verified-prefix cache. It then directly calls read_artifact on the new initial commit, fully decoding the roughly 6 GB logical evidence. For the new, unobserved commit, committed computes a canonical digest of the entire evidence before appending its accounting event. Therefore HEAD publication does not imply that the first provider call is imminent.",
+      "full_decode_passes_expected": 1,
+      "full_evidence_hash_passes_expected": 1,
+      "locations": [
+        {
+          "path": "regen/tools/generic_serial_application.py",
+          "line": 391,
+          "function": "run recovery bridge and controller setup"
+        },
+        {
+          "path": "regen/planning/generic_codex_agent.py",
+          "line": 301,
+          "function": "Controller.observe_updates"
+        },
+        {
+          "path": "regen/planning/generic_codex_agent.py",
+          "line": 311,
+          "function": "direct read_artifact"
+        },
+        {
+          "path": "regen/planning/generic_codex_agent.py",
+          "line": 289,
+          "function": "Controller.committed"
+        },
+        {
+          "path": "regen/infrastructure/incremental_log.py",
+          "line": 332,
+          "function": "ObjectStore.decode"
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "phase": "provider startup",
+      "work": "After controller restoration, the coordinator starts the budget monitor, prepares provider state and starts a new session. Session startup does not replay proof history.",
+      "locations": [
+        {
+          "path": "regen/tools/generic_serial_application.py",
+          "line": 394,
+          "function": "controller.observe_updates"
+        },
+        {
+          "path": "regen/tools/generic_serial_application.py",
+          "line": 416,
+          "function": "fresh provider session"
+        },
+        {
+          "path": "regen/tools/generic_serial_application.py",
+          "line": 433,
+          "function": "session.run"
+        }
+      ]
+    }
+  ],
+  "cache_qualifications": [
+    "Shared-prefix reuse requires unchanged fingerprints, the same directory, semantic binding and validator namespace, and a retained cache entry.",
+    "Changed files, cache loss or a new process can force another complete semantic replay.",
+    "The cache stores verified state and metadata, not the whole decoded multi-gigabyte origin. Direct read_artifact calls are not covered by the proof-prefix cache."
+  ],
+  "after_first_provider_possible_additional_recovery": {
+    "trigger": "The first proof action entering the uncached batch controller runtime; not necessarily a read-only first tool.",
+    "work": "restore_batch_memory may invoke committed_batch_results, reread the initial commit and recursively visit its embedded source commits to restore acceptance feedback. This is an additional full logical decoding after the provider has started, not another native proof run.",
+    "locations": [
+      {
+        "path": "regen/planning/batch_file_planner.py",
+        "line": 1053,
+        "function": "initial restore_and_resume branch"
+      },
+      {
+        "path": "regen/planning/batch_file_planner.py",
+        "line": 486,
+        "function": "restore_batch_memory"
+      },
+      {
+        "path": "regen/planning/batch_file_planner.py",
+        "line": 445,
+        "function": "committed_batch_results"
+      }
+    ]
+  },
+  "interpretation": "The observed ObjectStore.encode phase occurs after three source-history semantic-validation passes. After HEAD, further reference fingerprinting plus a full decode and evidence hash remain before the first provider invocation. An elapsed-time ETA cannot be derived reliably from code alone."
+}

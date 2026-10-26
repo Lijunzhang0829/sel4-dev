@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "vero-runtime-explicit-migration",
+  "title": "Runtime repair must authenticate the prefix→transport→runtime migration chain",
+  "component": "vero_serial_application.validate_resume_artifacts",
+  "category": "recovery_integrity",
+  "status": "fixed",
+  "source_steps": [
+    {
+      "run_directory": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+      "transport_migration": "vero-bounded-diagnostic-transport-20261026-v1",
+      "runtime_migration": "vero-tool-runtime-binding-20261027-v2",
+      "runtime_preflight_ledger_head": 27873
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/vero_runtime_migration_chain.json",
+      "sha256": "90a908b07bcd9f0141a35fd58ff0f115e116d38c492e7296bc77db2fc2e46044",
+      "source_path": "reports/regen/dual-step-resume-validation-20261027-001/runtime-preflight-receipt.json",
+      "source_sha256": "48c1c290e1ef7a528840904d3cff90aa253b465703b49d10e8a956e816a22c0e",
+      "source_hash_scope": "complete file",
+      "selection": "planned_migration plus predecessor transport planned_migration; second source is hashed inside evidence"
+    }
+  ],
+  "replays": [
+    {
+      "id": "vero-runtime-explicit-migration-replay",
+      "handler": "transport.migration_chain",
+      "parameters": {},
+      "kind": "synthetic_regression",
+      "oracle": {
+        "correct_chain": "accepted idempotently",
+        "wrong_or_missing_predecessor": "rejected",
+        "frozen_budget_drift": "rejected",
+        "frozen_artifacts": "unchanged"
+      }
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_vero_tool_transport_migration",
+    "regen.tests.current.test_vero_tool_runtime_migration"
+  ],
+  "limitations": [
+    "Historical migration records and binding hashes are bundled; the executable replay uses a one-contract generated plan and synthetic original dependency hashes.",
+    "No live experiment ledger is written, no budget is reset, and accepted proof state is not reconstructed."
+  ]
+}

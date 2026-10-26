@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "codex-recovery-history-amplification",
+  "title": "991 条历史逻辑展开约6.07GB与逐文件 sync 造成恢复延迟",
+  "component": "codex",
+  "category": "recovery_performance",
+  "status": "open_observation",
+  "source_steps": [
+    {
+      "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261027-005",
+      "source_acceptance_sequence": 991,
+      "phase": "preflight/carry/copy/initial commit/controller restoration",
+      "batch_files": 10039,
+      "document_files": 11064
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/codex-recovery-amplification.json",
+      "sha256": "8f8320ae99b44a7df32fc6a1b99680a50016dcbb49a3adec026c834cb18544e2",
+      "source_path": "reports/regen/dual-step-resume-validation-20261027-001/codex-live-validation.json",
+      "source_sha256": "fb1ffc0dbd9844508746fbcd20410a6372c0e7a7b53a9e1f08c6655756d60495",
+      "selection": {
+        "json_keys": [
+          "progress_observations",
+          "acceptance_input_size_audit",
+          "copied_batch_files",
+          "copied_document_files",
+          "acceptance_publication_stage"
+        ]
+      }
+    },
+    {
+      "path": "evidence/codex-recovery-cost-paths.json",
+      "sha256": "71a2022cacc9cf6878b3faeb82716745e95f4b8700f13a00c4a8bac4942d31c5",
+      "source_path": "reports/regen/dual-step-resume-validation-20261027-001/codex-recovery-cost-audit.json",
+      "source_sha256": "5f4818938d55d235a6f289dea3717c8e6339be43aed5fccddbd4a09f9a3a977a",
+      "selection": {
+        "json_keys": [
+          "frozen_application",
+          "source_run",
+          "destination_run",
+          "pre_encode_semantic_validation_passes",
+          "after_initial_head_before_first_provider",
+          "cache_qualifications",
+          "after_first_provider_possible_additional_recovery",
+          "interpretation"
+        ]
+      }
+    }
+  ],
+  "replays": [
+    {
+      "id": "shared-object-operation-counts",
+      "handler": "codex.copy_operation_counts",
+      "kind": "performance_probe",
+      "parameters": {
+        "evidence": "evidence/codex-recovery-amplification.json",
+        "copies": 8
+      },
+      "oracle": "Report per-copy vs one-batch sync and reference traversal counts without a wall-clock threshold; copied payload and object identity must remain exact."
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_merkle_copy_repair"
+  ],
+  "limitations": [
+    "Small operation-count probe does not reproduce the 6.07GB acceptance chain, its semantic validation or memory pressure.",
+    "Generic non-migration continuation still lacks an outer logged_copy_batch in the audited implementation; this case records an open performance issue.",
+    "No latency improvement is claimed; recorded size is logical canonical JSON bytes, not on-disk heap usage."
+  ]
+}

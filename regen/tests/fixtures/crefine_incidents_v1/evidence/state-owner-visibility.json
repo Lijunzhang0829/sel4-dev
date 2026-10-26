@@ -1,0 +1,147 @@
+{
+  "historical_audit": {
+    "prepared_at": "2026-10-25T00:32:01.774983+08:00",
+    "status": "prepared-not-started",
+    "contract_count": 309,
+    "original_theory_count": 25,
+    "machine_a_anonymous_sha256": "ed996b3328b67f63a789a737e434d44e4052453274c0a62b62ae20b8539d94f1",
+    "anonymous_sha256": "ed996b3328b67f63a789a737e434d44e4052453274c0a62b62ae20b8539d94f1",
+    "matches_machine_a": true,
+    "semantics_context_attributes_preserved": true,
+    "public_views_scanned": [
+      "canonical",
+      "codex",
+      "vero"
+    ],
+    "original_owner_and_id_disclosures": 0,
+    "codex_owner_fields": 0,
+    "vero_placeholder_modules": [
+      "Vero_Fixed_Targets"
+    ],
+    "vero_contract_ids_follow_anonymous_semantic_order": true,
+    "original_groups_and_imports_removed": true,
+    "private_map_model_visible": false,
+    "old_sessions_imported": false,
+    "checker_context_id": "checker-context:cb2fcce551b7c8849e24",
+    "bench_sha256": "fe859a91893287913ac5fc7e8d1fac7c273c5da23d4826b81204a0bd968ccbee"
+  },
+  "synthetic_source": {
+    "artifact_type": "repository-planning-input",
+    "benchmark": {
+      "architecture": "ARM",
+      "cross_experiment_inputs": [],
+      "id": "sel4-refine-arm",
+      "independent_experiment": true,
+      "target_session": "Refine"
+    },
+    "context_profiles": [
+      {
+        "context_profile_id": "context:Refine:parents",
+        "generated_import": "Semantic_Base.Semantic_Root",
+        "target_session": "Refine",
+        "upstream_sessions": [
+          "BaseRefine",
+          "HOL",
+          "Lib"
+        ]
+      }
+    ],
+    "contract_cards": [
+      {
+        "contract_id": "contract:Refine.Demo_R:demo:1",
+        "logical_shape": {
+          "has_assumptions": true,
+          "has_equality": false,
+          "has_equivalence": false,
+          "implication_count": 1,
+          "quantifier_count": 0
+        },
+        "name": "demo",
+        "normalized_statement_sha256": "59420a335b839c935ba86fd3889e258a1a5db08b260c8d1db3f4d9805c0af811",
+        "owner_theory": "Refine.Demo_R",
+        "principal_symbols": [
+          "Longrightarrow",
+          "demo"
+        ]
+      }
+    ],
+    "contract_relation_candidates": [],
+    "contracts": [
+      {
+        "contract_id": "contract:Refine.Demo_R:demo:1",
+        "contract_owned_attributes": [],
+        "contract_owned_context": [],
+        "exact_statement": "lemma demo: \"P x \\<Longrightarrow> Q x\"",
+        "kind": "lemma",
+        "name": "demo",
+        "normalized_statement_sha256": "59420a335b839c935ba86fd3889e258a1a5db08b260c8d1db3f4d9805c0af811",
+        "owner_file_slot": "Demo_R.thy",
+        "owner_theory": "Refine.Demo_R"
+      }
+    ],
+    "owner_groups": {
+      "Refine.Demo_R": [
+        "contract:Refine.Demo_R:demo:1"
+      ]
+    },
+    "parent_premises": {
+      "database": "parent-premises.sqlite",
+      "manifest": "parent-premises-manifest.json",
+      "query_interface": "bounded-read-only-v1",
+      "record_count": 1,
+      "record_ids_sha256": "f6c123852ec25be6e429eabdb4c3e013ef797d57a7507ef5bc95d9fc98614c39",
+      "selection_audit": {
+        "excluded_non_upstream": 0,
+        "excluded_target_session": 0,
+        "excluded_unresolved_owner": 0,
+        "selected_records": 1,
+        "source_records": 1
+      }
+    },
+    "planner_interfaces": {
+      "inspect_contracts": {
+        "max_ids": 32
+      },
+      "inspect_parent_premises": {
+        "max_ids": 50
+      },
+      "resolve_symbols": {
+        "max_symbols": 64
+      },
+      "search_parent_premises": {
+        "max_results": 50
+      },
+      "validate_repository_plan": {}
+    },
+    "planning_input_id": "refine-planning-input:1565ec18df31562c04a8",
+    "schema_version": 1,
+    "session_graph": {
+      "BaseRefine": {
+        "imported_sessions": [],
+        "parent": "HOL"
+      },
+      "Lib": {
+        "imported_sessions": [],
+        "parent": "HOL"
+      },
+      "Refine": {
+        "imported_sessions": [
+          "Lib"
+        ],
+        "parent": "BaseRefine"
+      }
+    },
+    "theory_import_graph": {
+      "Refine.Demo_R": [
+        "BaseRefine.Base",
+        "Lib.Lib"
+      ]
+    },
+    "upstream_session_closure": [
+      "BaseRefine",
+      "HOL",
+      "Lib"
+    ]
+  },
+  "synthetic_source_note": "Existing one-contract fixture; temporary root normalized to /synthetic-owner-fixture. No production contract map read."
+}

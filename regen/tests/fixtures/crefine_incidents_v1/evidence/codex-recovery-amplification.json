@@ -1,0 +1,73 @@
+{
+  "progress_observations": [
+    {
+      "at": "2026-10-27T00:33:46+08:00",
+      "event_count": 33396,
+      "phase": "source chain preflight"
+    },
+    {
+      "at": "2026-10-27T00:39:09+08:00",
+      "cpu_seconds": 295,
+      "rss_kib": 5318992,
+      "phase": "source chain preflight"
+    },
+    {
+      "at": "2026-10-27T00:42:45+08:00",
+      "phase": "heap preparation started"
+    },
+    {
+      "at": "2026-10-27T00:42:47+08:00",
+      "phase": "heap preparation finished"
+    },
+    {
+      "at": "2026-10-27T00:45:00+08:00",
+      "cpu_seconds": 643,
+      "rss_kib": 4063676,
+      "phase": "workspace carry validation"
+    },
+    {
+      "at": "2026-10-27T00:51:00+08:00",
+      "phase": "second validation completed; copying batch files"
+    },
+    {
+      "at": "2026-10-27T01:18:53+08:00",
+      "phase": "batch files copied; document copying",
+      "batch_files": 10039,
+      "document_files": 6523
+    },
+    {
+      "at": "2026-10-27T01:19:50+08:00",
+      "phase": "all batch/document files copied; draft sha256 matches",
+      "batch_files": 10039,
+      "document_files": 11064
+    }
+  ],
+  "acceptance_input_size_audit": {
+    "commit_count": 991,
+    "logical_canonical_json_bytes_sum": 6073136932,
+    "first_commit_bytes": 815419115,
+    "last_commit_bytes": 6791391,
+    "distinct_merkle_objects_visited": 10355,
+    "acyclic": true,
+    "counting_seconds": 94.96143089607358,
+    "internal_unique_node_counts": {
+      "dict": 2198331,
+      "list": 1839134,
+      "value": 11775059
+    },
+    "method": "read-only Merkle DAG recursive size with memo; no full repeated proof tree expansion"
+  },
+  "copied_batch_files": 10039,
+  "copied_document_files": 11064,
+  "acceptance_publication_stage": {
+    "observed_boundary": "all copied theory files exist, acceptance directory absent",
+    "functions_before_first_durable_commit": [
+      "ProofCommits._append",
+      "validator.verify_embedded",
+      "validate_continuation",
+      "continuation_state",
+      "proof_commits.digest"
+    ],
+    "limitation": "No attached debugger; cannot distinguish exact currently executing function or prove absence of every possible loop from CPU activity alone."
+  }
+}

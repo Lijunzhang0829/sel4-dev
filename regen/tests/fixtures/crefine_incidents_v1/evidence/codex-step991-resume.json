@@ -1,0 +1,167 @@
+{
+  "source_run": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-004",
+  "destination_run": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261027-005",
+  "source_acceptance_sequence": 991,
+  "source_acceptance_commit": "fb3ef723446bbb4b816655a03c7d8e512e834b7b364f5155fe52c8ebd546cc15",
+  "source_batch_request": 628,
+  "source_last_check_event": 33376,
+  "source_last_check_verdict": "rejected_batch",
+  "source_native_failure": {
+    "command": "done",
+    "line": 2963,
+    "goal_count": 5,
+    "returncode": 1,
+    "timeout": null
+  },
+  "source_draft_sha256": "85b81a1532bf225193c30ff0f5b1c28d34e041d39ab1f4368ed55acf5a129bc8",
+  "source_valid_contracts": 11,
+  "source_last_event": 33396,
+  "source_close_checkpoint": 33395,
+  "source_clean_shutdown": true,
+  "inherited_event_count": 33396,
+  "inherited_effective_seconds": 162357.6057156995,
+  "remaining_seconds": 10442.394284300506,
+  "pending_tool_status": {
+    "call_id": "exec-ef5d5e50-5fc5-4b34-a6cc-d940d494a5b1",
+    "tool": "proof_action",
+    "action": "diagnose_failure",
+    "started_event": 33387,
+    "finished_event": 33388,
+    "provider_tool_outcome_recorded": false,
+    "policy": "do not replay automatically; new provider thread from verified workspace"
+  },
+  "initial_resume_clock": {
+    "seq": 33398,
+    "kind": "time_budget_checkpoint",
+    "time_unix": 1793037051.4129124,
+    "boundary": "started",
+    "state": {
+      "base_seconds": 172800,
+      "checkpoint_seconds": 30,
+      "effective_seconds": 162357.6057156995,
+      "finish_reason": null,
+      "finished": false,
+      "gate_open": false,
+      "include_planning": true,
+      "next_exclusion": 53,
+      "paused": false,
+      "planning_active": false,
+      "planning_seconds": 2208.6300144749694,
+      "policy": "global-effective-generation-budget-v1",
+      "reason": null,
+      "seconds": 172800,
+      "theory_seconds": {
+        "Generated_Kernel_Base": 160148.97570122452
+      },
+      "unclean_recoveries": 0,
+      "worker_seconds": 160148.97570122452
+    }
+  },
+  "first_gate_reopened_clock": {
+    "seq": 33407,
+    "kind": "time_budget_checkpoint",
+    "time_unix": 1793037588.5650127,
+    "boundary": "exclusion_finished",
+    "state": {
+      "base_seconds": 172800,
+      "checkpoint_seconds": 30,
+      "effective_seconds": 162357.6057156995,
+      "finish_reason": null,
+      "finished": false,
+      "gate_open": true,
+      "include_planning": true,
+      "next_exclusion": 54,
+      "paused": false,
+      "planning_active": false,
+      "planning_seconds": 2208.6300144749694,
+      "policy": "global-effective-generation-budget-v1",
+      "reason": null,
+      "seconds": 172800,
+      "theory_seconds": {
+        "Generated_Kernel_Base": 160148.97570122452
+      },
+      "unclean_recoveries": 0,
+      "worker_seconds": 160148.97570122452
+    }
+  },
+  "destination_head": {
+    "commit_id": "1f8afea47bacf0b375f49ba1e015e85d3b216e3f958a7f7412227dfc5d327778",
+    "sequence": 1
+  },
+  "destination_valid_contracts": 11,
+  "destination_accepted_order": [
+    "goal:b6b0c86e4105cb63c3fa",
+    "goal:0fe8eb2105af19a8ec8d",
+    "goal:d378bee93e6f0055f6f7",
+    "goal:47e9bbbbe8e0d46310e9",
+    "goal:301c1fa3a1a051f739f6",
+    "goal:3104e8dd5b61c5c33db7",
+    "goal:d8d5fd5b3086695c40fa",
+    "goal:ffae3fdff8f0b296c18f",
+    "goal:0c6bd1a5e060b1800c2f",
+    "goal:daec644774e038048e11",
+    "goal:26c9f96aeea202b130d7"
+  ],
+  "draft_inheritance_exact": true,
+  "destination_first_observed_draft_sha256": "85b81a1532bf225193c30ff0f5b1c28d34e041d39ab1f4368ed55acf5a129bc8",
+  "continuation_origin": {
+    "budget_mode": "effective-time",
+    "hidden_event_ranges": [],
+    "old_thread_restored": false,
+    "pending_tool_replayed": false,
+    "plan_policy": "locked-after-acceptance-v1",
+    "prior_proof_runs": {
+      "1": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/proof-runs/0001"
+    },
+    "reason": "explicit user authorization after infrastructure repair",
+    "recovery_mode": "new-provider-thread-from-verified-workspace",
+    "restored_before_revision": null,
+    "restored_epoch": 1,
+    "restored_scope": {
+      "basis": "agent-declared-intended-work",
+      "confidence": "declared-not-causal",
+      "phase": "analysis",
+      "target_ids": [
+        "goal:7babac5e87aaf23ac785"
+      ],
+      "theory_ids": [
+        "Generated_Kernel_Base"
+      ]
+    },
+    "resume_authorization": "user-authorized-paused-step-resume-20261027",
+    "source_checkpoint_event": "8d03966dd68148801520615d5c525df4e2654a0ad5f86e34249fc92aa18b9e27",
+    "source_clean_shutdown": true,
+    "source_current_plan_sha256": "ce34a705237f1ca8c8ffe3978b23609ca972cddcf3765e858315fbed9a9ddc1e",
+    "source_error": [
+      "workspace session cancelled by signal 15"
+    ],
+    "source_event_count": 33396,
+    "source_last_event_id": "1ed949c817442c2f5b4cc5783e66be4dbed6dd2f1c3380152a3a604005f3979d",
+    "source_ledger_run_id": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+    "source_root": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-004",
+    "time_budget_base_seconds": 172800,
+    "visible_history_cutoff": 33396
+  },
+  "workspace_continuation": {
+    "policy": "replay embedded source chains; preserve drafts, proofs, costs and seals",
+    "reason": "explicitly authorised repository continuation after harness repair",
+    "sealed_theories": [],
+    "source_run": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-004/proof-runs/0001",
+    "theories": [
+      {
+        "source_commit": "fb3ef723446bbb4b816655a03c7d8e512e834b7b364f5155fe52c8ebd546cc15",
+        "status": "generating",
+        "theory": "Generated_Kernel_Base"
+      }
+    ]
+  },
+  "new_provider_tool_round_trip": {
+    "tool": "experiment_status",
+    "started_event": 33408,
+    "finished_event": 33410,
+    "outcome_event": 33411,
+    "outcome": "returned",
+    "started_at": "2026-10-27T02:00:03.096238+08:00",
+    "returned_at": "2026-10-27T02:00:05.528343+08:00"
+  }
+}

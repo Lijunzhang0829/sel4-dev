@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "state-owner-visibility",
+  "title": "隐藏原始 contract 的 theory 归属且保留语义输入",
+  "component": "state",
+  "category": "input_visibility",
+  "status": "fixed_with_preparation_audit",
+  "source_steps": [
+    {
+      "preparation": "crefine-owner-blind-machine-b-20261025-001",
+      "prepared_at": "2026-10-25T00:32:01.774983+08:00",
+      "contract_count": 309
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/state-owner-visibility.json",
+      "sha256": "a6a5d4acf2de0233c50ab16050a25933190b5b1ba91fd5cf598fb6e08a19ed5a",
+      "source_path": "reports/regen/crefine-owner-blind-machine-b-20261025-001/privacy-audit.json",
+      "source_sha256": "58db90622c6a7d18b617eb7ed8830a6f934c01351bb67a37323660d8ee3f1ab0",
+      "selection": "allowlisted public audit fields; authentication/private filesystem paths excluded",
+      "sources": [
+        {
+          "source_path": "reports/regen/crefine-owner-blind-machine-b-20261025-001/privacy-audit.json",
+          "source_sha256": "58db90622c6a7d18b617eb7ed8830a6f934c01351bb67a37323660d8ee3f1ab0",
+          "selection": "allowlisted public audit fields; authentication/private filesystem paths excluded"
+        },
+        {
+          "source_path": "regen/tests/current/test_iterative_repository_planner.py",
+          "source_sha256": "4c7db2ce8b956db769a3e4f374fcf36bf79394d0505f131e8179096f39605c10",
+          "selection": "IterativeRepositoryPlannerTest.setUp -> repository-planning-input.json; synthetic"
+        },
+        {
+          "source_path": "regen/tests/current/test_planning_input.py",
+          "source_sha256": "1584990392f142a80ca75c624c98982c502dfd7f7d7467c93d38fdd36d9352ba",
+          "selection": "PlanningInputTest.setUp synthetic contract and parent premise"
+        }
+      ]
+    }
+  ],
+  "replays": [
+    {
+      "id": "owner-reassignment-invariance",
+      "handler": "state.owner_visibility",
+      "kind": "synthetic_regression",
+      "parameters": {
+        "evidence": "evidence/state-owner-visibility.json"
+      },
+      "oracle": "Changing only original owner theory/contract ID leaves anonymous payload identical, preserves exact statement, and discloses neither owner nor original ID. Historical audit covers 309 contracts."
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_owner_blind_dataset"
+  ],
+  "limitations": [
+    "One-contract synthetic runtime fixture does not replace auditing the full 309-contract production view.",
+    "Private contract-map paths and authentication directory fields are deliberately excluded."
+  ]
+}

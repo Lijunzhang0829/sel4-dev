@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "state-crash-clock",
+  "title": "恢复时保留累计有效时间和未观测 crash tail",
+  "component": "state",
+  "category": "budget_recovery",
+  "status": "guarded",
+  "source_steps": [
+    {
+      "run": "vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+      "event": 16454,
+      "boundary": "operator_framework_revalidation_credit_v1"
+    },
+    {
+      "run": "vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+      "event": 16884,
+      "boundary": "operator_rollback_branch_credit_v1"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/state-budget-credits.json",
+      "sha256": "9cb3bcb35268e0250d0f2a8827a2f16f6939be8643b4bf5d08a343ef33ad146b",
+      "source_path": "reports/regen/vero-budget-credit-20261026-001/credit-receipt.json",
+      "source_sha256": "f9630dc1bf1844b0427c9628a94e8f09a8bffab3703acbcf69bb80bd292a08fa",
+      "selection": "$",
+      "sources": [
+        {
+          "source_path": "reports/regen/vero-budget-credit-20261026-001/credit-receipt.json",
+          "source_sha256": "f9630dc1bf1844b0427c9628a94e8f09a8bffab3703acbcf69bb80bd292a08fa",
+          "selection": "$"
+        },
+        {
+          "source_path": "reports/regen/vero-branch-budget-credit-20261026-001/credit-receipt.json",
+          "source_sha256": "25151afe7543d96e2e9203893dbfd2e8b7110ac662d9bbcf00d423a461154e3d",
+          "selection": "$"
+        }
+      ]
+    }
+  ],
+  "replays": [
+    {
+      "id": "closed-gate-and-unknown-tail",
+      "handler": "state.restore_clock",
+      "kind": "synthetic_regression",
+      "parameters": {
+        "evidence": "evidence/state-budget-credits.json"
+      },
+      "oracle": "Use exact corrected clock state in a synthetic minimal ledger: 86400 offline seconds charge zero; prior event remains unchanged; unknown crash tail remains unknown."
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_vero_effective_time_budget"
+  ],
+  "limitations": [
+    "Clock state is extracted; its minimal ledger wrapper and one-day offline interval are synthetic.",
+    "This does not reconstruct the missing crash interval or claim that it cost zero online time."
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "observed_at": "2026-10-27T01:13:20.889307+08:00",
+  "inspection": "read-only docker inspect Mounts; SHA-256 computed from host mount source; docker exec diagnostic --help",
+  "container": {
+    "id": "48876d2e55d1",
+    "name": "regen-model-aaabb0aa40ab407fa144f5ac3dcf3fbf",
+    "status_at_inspection": "running"
+  },
+  "mount": {
+    "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/crefine-owner-blind-aligned-a-20261025-001/application/regen/tools/vero_application_tool.py",
+    "destination": "/backend/tool.py",
+    "read_write": false,
+    "sha256": "47f4154c551399c7a8c0203f092a09acc91f9986aea820e41d668230976b4907"
+  },
+  "expected_repaired_client_sha256": "9fbfa71861005cdb0add01b8785555fb6f4f4fa5dc58ee1a5e45844e71786bac",
+  "help_probe": {
+    "command": "docker exec 48876d2e55d1 python3 /backend/tool.py diagnostic --help",
+    "exit_code": 2,
+    "output": "usage: tool.py [-h] {check,begin-seal,abort-seal,search,progress,scope} ...\ntool.py: error: argument cmd: invalid choice: 'diagnostic' (choose from check, begin-seal, abort-seal, search, progress, scope)\n",
+    "native_checks_triggered": false
+  },
+  "conclusion": "iter-005 model container still mounted original client. Successful scope/progress roundtrips do not validate repaired client framing or diagnostic paging. VERO repaired-client deployment validation remains incomplete pending explicit subprocess runtime binding and actual container mount/CLI checks."
+}

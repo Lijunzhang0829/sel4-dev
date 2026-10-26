@@ -1,0 +1,40 @@
+{
+  "historical_step": "iter-004/item_1792",
+  "request_id": "1b7d94a880d24a169ca14ceb19eeb682",
+  "original_log_bytes": 785184572,
+  "running_socket": "/tmp/regen-vero-endpoint-d9135e1bd42f8c92c890/checker.sock",
+  "real_running_service": true,
+  "new_client_parser": true,
+  "pages": [
+    {
+      "offset": 0,
+      "next_offset": 65536,
+      "returned_bytes": 65536,
+      "total_bytes": 785184572,
+      "eof": false,
+      "encoding": "utf-8",
+      "decode_errors": "replace",
+      "request_id": "1b7d94a880d24a169ca14ceb19eeb682",
+      "module": "Vero_Capability_Core",
+      "returned_text_sha256": "4e0fb80ccf60428800ef3fbf02abbc56a15ae9f16d9d1fbd84a28e68c16928b2",
+      "wire_bytes": 67690,
+      "elapsed_seconds": 0.0024460419081151485
+    },
+    {
+      "offset": 785119036,
+      "next_offset": 785184572,
+      "returned_bytes": 65536,
+      "total_bytes": 785184572,
+      "eof": true,
+      "encoding": "utf-8",
+      "decode_errors": "replace",
+      "request_id": "1b7d94a880d24a169ca14ceb19eeb682",
+      "module": "Vero_Capability_Core",
+      "returned_text_sha256": "8dd98a8044ad9328dcd45dd2323bf61c830f6de35c8458c4aed967d85bbb2421",
+      "wire_bytes": 66865,
+      "elapsed_seconds": 0.05833310913294554
+    }
+  ],
+  "full_log_unchanged": true,
+  "native_or_model_invoked_by_probe": false
+}

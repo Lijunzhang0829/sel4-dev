@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "id": "state-artifact-reuse",
+  "title": "恢复时 artifact 已变化不能借用上一 iteration 的报告",
+  "component": "state",
+  "category": "recovery_cache",
+  "status": "expected_guard",
+  "source_steps": [
+    {
+      "run": "vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+      "previous_iteration": "iter-004",
+      "recovering_iteration": "iter-005",
+      "changed_slot": "c0236:prove"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/state-artifact-reuse.json",
+      "sha256": "96da0902f30cf1816f086c2dc5264ea381f5662a274302c7fe83a9abce5461b7",
+      "source_path": "reports/regen/dual-step-resume-validation-20261027-001/vero-resume-reuse-audit.json",
+      "source_sha256": "96da0902f30cf1816f086c2dc5264ea381f5662a274302c7fe83a9abce5461b7",
+      "selection": "$",
+      "sources": [
+        {
+          "source_path": "reports/regen/dual-step-resume-validation-20261027-001/vero-resume-reuse-audit.json",
+          "source_sha256": "96da0902f30cf1816f086c2dc5264ea381f5662a274302c7fe83a9abce5461b7",
+          "selection": "$"
+        }
+      ]
+    }
+  ],
+  "replays": [
+    {
+      "id": "cross-iteration-report-rejected",
+      "handler": "state.artifact_reuse",
+      "kind": "extracted_step",
+      "parameters": {
+        "evidence": "evidence/state-artifact-reuse.json",
+        "expected": {
+          "previous_sha256": "ca2237edb7b22ae04d59d4970afaa3b1ef7999c2687ba2ef2af0ff03f9190e4f",
+          "current_sha256": "a5b7c6e4607c94258b4f1602d85dce877a0290d55eb41a2f97f2f05c2c95d917"
+        }
+      },
+      "oracle": "Changed c0236 artifact SHA differs from iter004; missing same-iteration report requires normal evaluation. Previous 14 proved specs do not certify a changed candidate."
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_vero_prefix_revalidation"
+  ],
+  "limitations": [
+    "Historical report digest comparison is replayed; no full VERO runner or Isabelle recovery is invoked.",
+    "The changed unfinished proof body was intentionally not included in the original audit."
+  ]
+}

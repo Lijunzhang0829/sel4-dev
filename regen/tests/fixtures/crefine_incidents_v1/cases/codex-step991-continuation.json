@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "id": "codex-step991-continuation",
+  "title": "step991 / batch628 恢复保留预算和已验状态，未确认交付的调用不重放",
+  "component": "codex",
+  "category": "continuation",
+  "status": "fixed_with_live_validation",
+  "source_steps": [
+    {
+      "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-004",
+      "acceptance_sequence": 991,
+      "batch_request": 628,
+      "ledger_head": 33396,
+      "budget_checkpoint": 33395,
+      "pending_tool_events": [
+        33387,
+        33388
+      ]
+    },
+    {
+      "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261027-005",
+      "first_returned_tool_events": [
+        33408,
+        33410,
+        33411
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/codex-step991-resume.json",
+      "sha256": "98332acd7e85c059e0ef8a09e3930a7c45b5a963caf295f0509f25af2bc2a39d",
+      "source_path": "reports/regen/dual-step-resume-validation-20261027-001/codex-live-validation.json",
+      "source_sha256": "fb1ffc0dbd9844508746fbcd20410a6372c0e7a7b53a9e1f08c6655756d60495",
+      "selection": {
+        "json_keys": [
+          "source_run",
+          "destination_run",
+          "source_acceptance_sequence",
+          "source_acceptance_commit",
+          "source_batch_request",
+          "source_last_check_event",
+          "source_last_check_verdict",
+          "source_native_failure",
+          "source_draft_sha256",
+          "source_valid_contracts",
+          "source_last_event",
+          "source_close_checkpoint",
+          "source_clean_shutdown",
+          "inherited_event_count",
+          "inherited_effective_seconds",
+          "remaining_seconds",
+          "pending_tool_status",
+          "initial_resume_clock",
+          "first_gate_reopened_clock",
+          "destination_head",
+          "destination_valid_contracts",
+          "destination_accepted_order",
+          "draft_inheritance_exact",
+          "destination_first_observed_draft_sha256",
+          "continuation_origin",
+          "workspace_continuation",
+          "new_provider_tool_round_trip"
+        ]
+      }
+    }
+  ],
+  "replays": [
+    {
+      "id": "recorded-continuation-invariants",
+      "handler": "codex.resume_evidence",
+      "kind": "extracted_step",
+      "parameters": {
+        "evidence": "evidence/codex-step991-resume.json"
+      },
+      "oracle": "11 accepted contracts and draft hash preserved, origin binds source991, closed and reopened clocks have equal charged time, no pending call replay."
+    },
+    {
+      "id": "closed-clock-recovery",
+      "handler": "codex.resume_clock",
+      "kind": "synthetic_regression",
+      "parameters": {
+        "evidence": "evidence/codex-step991-resume.json",
+        "offline_seconds": 100000
+      },
+      "oracle": "Actual checkpoint state initializes production budget with a closed gate; large offline interval adds zero effective time."
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_generic_continuation_entry",
+    "regen.tests.current.test_experiment_continuation_accounting",
+    "regen.tests.current.test_parallel_budget_continuation"
+  ],
+  "limitations": [
+    "Receipt replay checks extracted facts, not the complete 991-commit acceptance proof.",
+    "Clock test reconstructs a small ledger around an exact recorded clock state; it does not forge production acceptance commits."
+  ]
+}

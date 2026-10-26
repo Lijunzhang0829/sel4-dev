@@ -1,0 +1,58 @@
+{
+  "inspection_only": true,
+  "run": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+  "frozen_runner": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/crefine-owner-blind-aligned-a-20261025-001/vero-src/vero/isabelle/runner.py",
+  "journal": {
+    "iterations_recorded": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "best_index": 4,
+    "status": "running",
+    "iter004_report_complete_file": true,
+    "iter004_proved_specs": 14,
+    "iter005_artifact_exists": false,
+    "iter005_eval_report_exists": false,
+    "iter005_state_status": "interrupted"
+  },
+  "resume_paths": {
+    "249-270": "Existing unrecorded iter-005 is passed to recover_iteration; on completion its result is appended before next iteration.",
+    "578-608": "Rejects a still-live agent; interrupted submitted call is accounted from persisted state and submission metadata.",
+    "609-624": "Archives attempts and extracts current workspace if artifact.json is absent.",
+    "625-629": "Only reuses the same iteration/eval/report.json; report artifact_sha256 must equal digest(artifact).",
+    "630-644": "Without that iteration report, calls full evaluate with Checker(cfg[checker]); incomplete eval directory is archived.",
+    "649-672": "Appends recovered iteration and updates journal without resetting prior cost."
+  },
+  "artifact_comparison": {
+    "iter004_sha256": "ca2237edb7b22ae04d59d4970afaa3b1ef7999c2687ba2ef2af0ff03f9190e4f",
+    "current_workspace_sha256": "a5b7c6e4607c94258b4f1602d85dce877a0290d55eb41a2f97f2f05c2c95d917",
+    "equal": false,
+    "changed_top_level_keys": [
+      "slots"
+    ],
+    "changed_slots": [
+      {
+        "slot": "c0236:prove",
+        "before": "oops",
+        "after": "new unfinished proof candidate produced by iter-005 agent",
+        "body_included": false
+      }
+    ],
+    "evaluation_source_byte_comparison": "All theory files match except Vero_Thread_Core.thy; extract() comparison correctly removes comment-only differences and identifies c0236 as the sole artifact slot change."
+  },
+  "cache_note": {
+    "file": "application/regen/execution/vero_checker_adapter.py",
+    "lines": [
+      471,
+      488,
+      502,
+      729
+    ],
+    "restriction": "Exact native GREEN reuse cache is bound to full frozen execution identity, includes process instance and is never serialized. It provides no existing safe cross-process whole-report reuse for iter-005."
+  },
+  "conclusion": "Normal resume must evaluate current iter-005 artifact. No existing cross-iteration report reuse entry point was found. Copying iter-004 report to iter-005 would fail artifact hash validation and would incorrectly claim the changed c0236 candidate was evaluated. Preserve all state and allow normal recovery checks; no remote proof, metadata, journal, or code changes were made.",
+  "recorded_at": "2026-10-27T01:23:18.296186+08:00"
+}

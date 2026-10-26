@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "id": "state-prefix-revocation",
+  "title": "无关辅助声明变更导致已证明 contracts 被撤销",
+  "component": "state",
+  "category": "acceptance_receipts",
+  "status": "fixed_with_native_validation",
+  "source_steps": [
+    {
+      "run": "vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+      "events": [
+        12396,
+        12397,
+        12469
+      ],
+      "targets": [
+        "c0022",
+        "c0057",
+        "c0016"
+      ],
+      "baseline_acceptance_event": 7607
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/state-prefix-before_first.thy",
+      "sha256": "04c006f6a83393c0d1ecc15d26ca0d2f0486db67777f897f437a24e32fe54a75",
+      "source_path": "reports/regen/vero-green-regression-audit-20261025-001/before_first.thy",
+      "source_sha256": "04c006f6a83393c0d1ecc15d26ca0d2f0486db67777f897f437a24e32fe54a75",
+      "selection": "$",
+      "sources": [
+        {
+          "source_path": "reports/regen/vero-green-regression-audit-20261025-001/before_first.thy",
+          "source_sha256": "04c006f6a83393c0d1ecc15d26ca0d2f0486db67777f897f437a24e32fe54a75",
+          "selection": "$"
+        }
+      ],
+      "original_native_check_path": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6323581dccee497087def10abcd7f041/checks/f4dc672930324043bd0bfd88ac03999a"
+    },
+    {
+      "path": "evidence/state-prefix-after_first.thy",
+      "sha256": "a3ac551a61a4a39e36079e547cd7206ccad9fa29b2b08c6764df5aa56ddd7601",
+      "source_path": "reports/regen/vero-green-regression-audit-20261025-001/after_first.thy",
+      "source_sha256": "a3ac551a61a4a39e36079e547cd7206ccad9fa29b2b08c6764df5aa56ddd7601",
+      "selection": "$",
+      "sources": [
+        {
+          "source_path": "reports/regen/vero-green-regression-audit-20261025-001/after_first.thy",
+          "source_sha256": "a3ac551a61a4a39e36079e547cd7206ccad9fa29b2b08c6764df5aa56ddd7601",
+          "selection": "$"
+        }
+      ],
+      "original_native_check_path": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6323581dccee497087def10abcd7f041/checks/a668ae87e46a42e48dce0b62175b8b88"
+    },
+    {
+      "path": "evidence/state-prefix-before_second.thy",
+      "sha256": "572e56e7d4ddf3c7383efab3e3bc3af52ec2f9efa45db9a7a8cbb9d9e63d3c8d",
+      "source_path": "reports/regen/vero-green-regression-audit-20261025-001/before_second.thy",
+      "source_sha256": "572e56e7d4ddf3c7383efab3e3bc3af52ec2f9efa45db9a7a8cbb9d9e63d3c8d",
+      "selection": "$",
+      "sources": [
+        {
+          "source_path": "reports/regen/vero-green-regression-audit-20261025-001/before_second.thy",
+          "source_sha256": "572e56e7d4ddf3c7383efab3e3bc3af52ec2f9efa45db9a7a8cbb9d9e63d3c8d",
+          "selection": "$"
+        }
+      ],
+      "original_native_check_path": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6323581dccee497087def10abcd7f041/checks/0cad1f207d174f6da192447b8cea99e6"
+    },
+    {
+      "path": "evidence/state-prefix-after_second.thy",
+      "sha256": "df001e7fba3e23602d0546a13d6f56e70ddfeb9878192c0013c934ab11a1dbd9",
+      "source_path": "reports/regen/vero-green-regression-audit-20261025-001/after_second.thy",
+      "source_sha256": "df001e7fba3e23602d0546a13d6f56e70ddfeb9878192c0013c934ab11a1dbd9",
+      "selection": "$",
+      "sources": [
+        {
+          "source_path": "reports/regen/vero-green-regression-audit-20261025-001/after_second.thy",
+          "source_sha256": "df001e7fba3e23602d0546a13d6f56e70ddfeb9878192c0013c934ab11a1dbd9",
+          "selection": "$"
+        }
+      ],
+      "original_native_check_path": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6323581dccee497087def10abcd7f041/checks/4633421ebc95412886a42d201e4791d6"
+    },
+    {
+      "path": "evidence/state-prefix-revocations.json",
+      "sha256": "fbc3fa639359cc280aa703a410589115e89059e7e33a3aa694c3dd3340bad052",
+      "source_path": "reports/regen/vero-green-regression-audit-20261025-001/evidence.json",
+      "source_sha256": "d6cdd77e21b9dfae84267ebcb774c2d79570bddc5f986039f48befbd628d74b4",
+      "selection": "$.events[kind=contract_green_invalidated] and $.run",
+      "sources": [
+        {
+          "source_path": "reports/regen/vero-green-regression-audit-20261025-001/evidence.json",
+          "source_sha256": "d6cdd77e21b9dfae84267ebcb774c2d79570bddc5f986039f48befbd628d74b4",
+          "selection": "$.events[kind=contract_green_invalidated] and $.run"
+        },
+        {
+          "source_path": "reports/regen/vero-green-regression-audit-20261025-001/audit-summary.json",
+          "source_sha256": "71f534f59bfe354f063900b84d47f8c135c1025f666407a1a8abc5eeeb25ce66",
+          "selection": "$"
+        }
+      ]
+    }
+  ],
+  "replays": [
+    {
+      "id": "recorded-prefix-changes",
+      "handler": "state.prefix_step",
+      "kind": "extracted_step",
+      "parameters": {
+        "evidence": "evidence/state-prefix-revocations.json"
+      },
+      "oracle": "Three real revocations reproduce unchanged proof bodies and changed pre-proof context; native dependency audit found no changed helper cited."
+    },
+    {
+      "id": "independent-revalidation-guards",
+      "handler": "state.unit_regressions",
+      "kind": "synthetic_regression",
+      "parameters": {
+        "tests": [
+          "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_unused_helper_removed_and_later_red_keeps_green",
+          "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_used_helper_removed_really_invalidates_proof",
+          "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_historical_invalidated_version_recovers_only_after_native_success",
+          "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_timeout_clean_markers_cannot_renew_certificate",
+          "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_zero_exit_without_audit_cannot_renew_certificate",
+          "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_changed_external_context_failure_invalidates_old_certificate",
+          "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_one_failed_import_is_not_rechecked_for_every_contract",
+          "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_partial_revalidation_cannot_authorize_a_full_theory_seal"
+        ]
+      },
+      "oracle": "Independent successful native evidence preserves unaffected acceptance; changed dependencies, timeout, missing audit and incomplete sealing never grant GREEN."
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_unused_helper_removed_and_later_red_keeps_green",
+    "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_used_helper_removed_really_invalidates_proof",
+    "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_historical_invalidated_version_recovers_only_after_native_success",
+    "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_timeout_clean_markers_cannot_renew_certificate",
+    "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_zero_exit_without_audit_cannot_renew_certificate",
+    "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_changed_external_context_failure_invalidates_old_certificate",
+    "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_one_failed_import_is_not_rechecked_for_every_contract",
+    "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_partial_revalidation_cannot_authorize_a_full_theory_seal"
+  ],
+  "limitations": [
+    "Four theory files and three ledger events are exact historical extracts; the whole event chain is not included.",
+    "Native dependency results are historical observations; offline replay does not rerun Isabelle.",
+    "Selected unit tests use stub native outcomes and do not establish contract proof success."
+  ]
+}

@@ -1,0 +1,828 @@
+{
+  "framework": {
+    "data": {
+      "audit_sha256": "85b8cea20aee4a2e5af6af0996b1a0bc0eecac5d39928380149ac626467c7101",
+      "authorization": "用户 2026-10-26 要求调整预算并清理对应日志；按已明确量化的框架重验开销冲正，保留其他探索、全部历史账本及成本",
+      "boundary": "operator_framework_revalidation_credit_v1",
+      "correction": {
+        "adjustment": {
+          "effective_seconds": 1362.444,
+          "theory_seconds": {
+            "Vero_Thread_Core": 1362.444
+          },
+          "worker_seconds": 1362.444
+        },
+        "branch_exploration_time_preserved": true,
+        "corrected_state": {
+          "base_seconds": 172800.0,
+          "checkpoint_seconds": 30.0,
+          "effective_seconds": 81881.02239145724,
+          "finish_reason": null,
+          "finished": false,
+          "gate_open": false,
+          "include_planning": true,
+          "next_exclusion": 5,
+          "paused": false,
+          "planning_active": false,
+          "planning_seconds": 295.43020781408995,
+          "policy": "global-effective-generation-budget-v1",
+          "reason": null,
+          "seconds": 172800.0,
+          "theory_seconds": {
+            "Vero_Cache_Maintenance": 304.31828202307224,
+            "Vero_IPC_Transfer": 1.9426182769238949,
+            "Vero_Thread_Core": 81279.33128334316
+          },
+          "unclean_recoveries": 1,
+          "worker_seconds": 81585.59218364315
+        },
+        "credit_id": "7cc0a9ba781eba0ee14806235e64c7a35301151ffa115b109e99fc16b137cff5",
+        "historical_uncertainty_preserved": true,
+        "interpretation": "user-authorized exclusion of completed framework revalidation time; not a claim that all these checks were erroneous",
+        "intervals": [
+          {
+            "brackets": [
+              [
+                "5fce5ccaa8314fe8c8701adac06a1ecd9e06567c8c093764b1da54c5d9302c71",
+                "96af5692d458a74fae70c7b741426ad111097e651cbf6183faaeb2bd26813f26"
+              ],
+              [
+                "96af5692d458a74fae70c7b741426ad111097e651cbf6183faaeb2bd26813f26",
+                "7dab503692656ce81f91f196b1a23d2ce7a038b5bbbf94f7dd8bac730489f2b7"
+              ],
+              [
+                "7dab503692656ce81f91f196b1a23d2ce7a038b5bbbf94f7dd8bac730489f2b7",
+                "1a1f98d1ca823b2713138e0642a41dacd51c492d82116e144513f0c7197f8fe9"
+              ],
+              [
+                "1a1f98d1ca823b2713138e0642a41dacd51c492d82116e144513f0c7197f8fe9",
+                "7b43e12791aa7f910d8a064c742787f8d0e81237e25aa0ad885f1dcbff557621"
+              ]
+            ],
+            "end_unix": 1792933605.647081,
+            "native_log_sha256": "08294f2dd458d5178b18aa8a75278ed1fa8c0d86ba59b0af6ee73a778fd09687",
+            "native_source_sha256": "108cb9a3985d5cbafa56a48233b5bfa1899ca845a4a0839f556033a6b16b14db",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/86f021ea92e848bfaeef42e237227d2a/result.json",
+            "result_sha256": "535394f7d1a67c0bdd79d2c8b58acce09b97a91b8cf750da6cd65ae3228c4935",
+            "seconds": 89.363,
+            "start_unix": 1792933516.284081,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "bc8657b1293998ec5fddcd6a6104ed09e06e5ff90d97fd95b9508c88b1317512",
+                "5a699fb2fcec3eb7609e22327b91c77ad5e0073b8eb8006ca378994b5abc81a7"
+              ],
+              [
+                "5a699fb2fcec3eb7609e22327b91c77ad5e0073b8eb8006ca378994b5abc81a7",
+                "5b31832afc51774cdfb57bae6f8e4d8d434cdf2db810a020eb6520ad56d07810"
+              ],
+              [
+                "5b31832afc51774cdfb57bae6f8e4d8d434cdf2db810a020eb6520ad56d07810",
+                "f664997dc9595cf3b77e1bd1f650b31ac98d81498c133f65fa842c1758e750fe"
+              ],
+              [
+                "f664997dc9595cf3b77e1bd1f650b31ac98d81498c133f65fa842c1758e750fe",
+                "b0dd1a1169a855bd12ccac52ca88f7d81198853075e9a742fd8c7ec7debb0bc9"
+              ],
+              [
+                "b0dd1a1169a855bd12ccac52ca88f7d81198853075e9a742fd8c7ec7debb0bc9",
+                "caf650d2c69207a641a6f9270113337b905ef592c7491669049633c2d275938a"
+              ],
+              [
+                "caf650d2c69207a641a6f9270113337b905ef592c7491669049633c2d275938a",
+                "a0a17192b8654b384a6d3204f9c561c78a35ad145b7c57a547003deba6978c94"
+              ],
+              [
+                "a0a17192b8654b384a6d3204f9c561c78a35ad145b7c57a547003deba6978c94",
+                "4bb5f62f37c5438a11a9e528f529245b958227d45bba2846c870fd21dc204ec6"
+              ],
+              [
+                "4bb5f62f37c5438a11a9e528f529245b958227d45bba2846c870fd21dc204ec6",
+                "4c9641b0b766197ce883dc7764ddf3758f50a953fe28609eccdf0ee2532fd96f"
+              ]
+            ],
+            "end_unix": 1792935211.797371,
+            "native_log_sha256": "c57045a12b1e5e5059774da153f9c404026356d9dd1be8e7c2b5e52a015ae33c",
+            "native_source_sha256": "5611000e510616da236d00116680f9b46949c333b9a07a5c35428cac691fe388",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/c169053244bf470aaa0d4b690789b501/result.json",
+            "result_sha256": "d15b8f7c3cc1bceeda216639aa07d319cba8b41448fd4684b6dcad096fcf8395",
+            "seconds": 221.786,
+            "start_unix": 1792934990.011371,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "4bb5f62f37c5438a11a9e528f529245b958227d45bba2846c870fd21dc204ec6",
+                "4c9641b0b766197ce883dc7764ddf3758f50a953fe28609eccdf0ee2532fd96f"
+              ],
+              [
+                "4c9641b0b766197ce883dc7764ddf3758f50a953fe28609eccdf0ee2532fd96f",
+                "b64d3ccc236d0c4047338b0cf6fe8e0884113d736efd513f7bce51ffc5c34131"
+              ],
+              [
+                "b64d3ccc236d0c4047338b0cf6fe8e0884113d736efd513f7bce51ffc5c34131",
+                "a9e560919a28f494014d7391a2058bc83ad86f51a52d91a893c558702390cbb3"
+              ],
+              [
+                "a9e560919a28f494014d7391a2058bc83ad86f51a52d91a893c558702390cbb3",
+                "522800b23075fe67517b3cdf8fc602936f4a907afbb6b2cee67376bd9be21c62"
+              ],
+              [
+                "522800b23075fe67517b3cdf8fc602936f4a907afbb6b2cee67376bd9be21c62",
+                "0abcb5b1947a4f5a7b0376a38aee8948a26b64d7a0991f957151d1d70cda8498"
+              ],
+              [
+                "0abcb5b1947a4f5a7b0376a38aee8948a26b64d7a0991f957151d1d70cda8498",
+                "6fa0588e2dd96f5682f7cf2f7292c78021eb8de6e9770d852c7198586ff34809"
+              ],
+              [
+                "6fa0588e2dd96f5682f7cf2f7292c78021eb8de6e9770d852c7198586ff34809",
+                "65c876a639f72db29b3e241d799679231674cd0ee96984f19c80a30c80c24975"
+              ]
+            ],
+            "end_unix": 1792935397.574343,
+            "native_log_sha256": "c9a24399bcfd3362fafb95b659a4b002103206ac7aa92ca856dc7e6a5fbb4da0",
+            "native_source_sha256": "b3dea5bf1d1cb74eedbe14d028e48d75b0bb330314028941b843ed6c8de8d54f",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/c9aad9a5fed94ea2a634d484d47c0581/result.json",
+            "result_sha256": "bf29d6471094a6db2919b0c30fa9c2134fa184026fbc7b912859bd95edae2c2f",
+            "seconds": 185.256,
+            "start_unix": 1792935212.318343,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "6fa0588e2dd96f5682f7cf2f7292c78021eb8de6e9770d852c7198586ff34809",
+                "65c876a639f72db29b3e241d799679231674cd0ee96984f19c80a30c80c24975"
+              ],
+              [
+                "65c876a639f72db29b3e241d799679231674cd0ee96984f19c80a30c80c24975",
+                "913dbf17c5dcf45cb0aa0e0b4251462e8aa4b0869ff09abb7e902b21d3147034"
+              ],
+              [
+                "913dbf17c5dcf45cb0aa0e0b4251462e8aa4b0869ff09abb7e902b21d3147034",
+                "a2ddff44f5687e58e28736d0bb4742b81cf00133fe0e86d8ec3ef624c9fbf2dc"
+              ],
+              [
+                "a2ddff44f5687e58e28736d0bb4742b81cf00133fe0e86d8ec3ef624c9fbf2dc",
+                "80caa592ce4663f7685831d1219a439b4461733898508d44d7dc25104a81dda6"
+              ],
+              [
+                "80caa592ce4663f7685831d1219a439b4461733898508d44d7dc25104a81dda6",
+                "f540c6c14b35df28e5b52ee55b43ab36e88e1787bf82e422ac17c2676f365567"
+              ],
+              [
+                "f540c6c14b35df28e5b52ee55b43ab36e88e1787bf82e422ac17c2676f365567",
+                "660fa15026bbef465859e3591be2dff8caf167f74b79d73b95c651b31ffddc8c"
+              ]
+            ],
+            "end_unix": 1792935531.755129,
+            "native_log_sha256": "69e280d12080e3e8776c7d4ad1334ea92a4c449a01316891a7984eaa61beda47",
+            "native_source_sha256": "70670e14d75259dfc64f2dc25cf81d41e419c76e248307976b672d24490371ea",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/c7214c94b6c04b7c8823a810b1a5f58f/result.json",
+            "result_sha256": "1a7a60fb21b5c953b2166cccd011fbeb9ea69dd600fbb32a7e6838291f767970",
+            "seconds": 132.852,
+            "start_unix": 1792935398.903129,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "f540c6c14b35df28e5b52ee55b43ab36e88e1787bf82e422ac17c2676f365567",
+                "660fa15026bbef465859e3591be2dff8caf167f74b79d73b95c651b31ffddc8c"
+              ],
+              [
+                "660fa15026bbef465859e3591be2dff8caf167f74b79d73b95c651b31ffddc8c",
+                "96ff659675d11c1b6a5b1513988b27267c23198c0b32bab5ac80ddbf2ff653f1"
+              ],
+              [
+                "96ff659675d11c1b6a5b1513988b27267c23198c0b32bab5ac80ddbf2ff653f1",
+                "ffff1b9499ed02f38c336a3d738a59fc294c0c20e9ff7a078b7d45669cc43d5c"
+              ],
+              [
+                "ffff1b9499ed02f38c336a3d738a59fc294c0c20e9ff7a078b7d45669cc43d5c",
+                "9467a00c7391c2759a1eb9c42d2a5309d0ec071ab36435831de0af19c0572a99"
+              ],
+              [
+                "9467a00c7391c2759a1eb9c42d2a5309d0ec071ab36435831de0af19c0572a99",
+                "cc1d1b4ae647cc638363521cad695833e2293d45c5bb369020bed591e57d5501"
+              ]
+            ],
+            "end_unix": 1792935668.954449,
+            "native_log_sha256": "ffcda20a7c0c606aac1594c019aac8423a5d058cfa8147e54384de9d6058308b",
+            "native_source_sha256": "313686fa4fdbd3c03baab23b34a900a80b65ce753911a5759210b586bc9a5a8c",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/e498a105fac44c11acf4ea90efb4d3af/result.json",
+            "result_sha256": "b5ffba408fd3921df8514548a16f2aaa0cbf5e5737c722c994039b1225c13f57",
+            "seconds": 136.687,
+            "start_unix": 1792935532.267449,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "9467a00c7391c2759a1eb9c42d2a5309d0ec071ab36435831de0af19c0572a99",
+                "cc1d1b4ae647cc638363521cad695833e2293d45c5bb369020bed591e57d5501"
+              ],
+              [
+                "cc1d1b4ae647cc638363521cad695833e2293d45c5bb369020bed591e57d5501",
+                "bc4f40e4aa1d25f9e420f2d355c31d5735c06591bb850854899ff7d6a8a0194b"
+              ],
+              [
+                "bc4f40e4aa1d25f9e420f2d355c31d5735c06591bb850854899ff7d6a8a0194b",
+                "89d46f72b81d3246c160d5d143495fffa8d9b246ed1439213bb8a4cddef3032f"
+              ],
+              [
+                "89d46f72b81d3246c160d5d143495fffa8d9b246ed1439213bb8a4cddef3032f",
+                "59c3f541854b75f138485fd83f252d36f625248e7281a2940f262c455f1fce09"
+              ],
+              [
+                "59c3f541854b75f138485fd83f252d36f625248e7281a2940f262c455f1fce09",
+                "1aab28e48704e312cc01aa2dca5d8af646064eaf36215e3583d4ff6c3a003c7a"
+              ],
+              [
+                "1aab28e48704e312cc01aa2dca5d8af646064eaf36215e3583d4ff6c3a003c7a",
+                "28c76629f369774e8a6385544ecdbfeb1ecf0396b757ca97e2978420778efe16"
+              ]
+            ],
+            "end_unix": 1792935809.442267,
+            "native_log_sha256": "3c2fca6f8dec40b6c10c80c98c12b0a892e0cfa1e6fc471a53dccf001585d9bc",
+            "native_source_sha256": "a8fd9ec458bc764a4a07975084d25ba4398e03e0c574f232188c899fc9b1ac76",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/d2032fd322ef43e28f6f7f3ac4c8bfa1/result.json",
+            "result_sha256": "c89c5ebde0dfaaf8bdbe22c9e21791e37d88832f27d4aea6469f5648d7586f83",
+            "seconds": 140.156,
+            "start_unix": 1792935669.286267,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "635251d2609cdaea4ea38a46bf71c802227ffd192db358be317d0bd378f6f4b2",
+                "52bfb88ae7c3dbd758dbd880d96958898b96b6ac22d03f4661509032bc154e27"
+              ],
+              [
+                "52bfb88ae7c3dbd758dbd880d96958898b96b6ac22d03f4661509032bc154e27",
+                "55f44b82a3a4787790d8710ad69d6460f53424dd2be0d84a7032c06f6a29b7b6"
+              ],
+              [
+                "55f44b82a3a4787790d8710ad69d6460f53424dd2be0d84a7032c06f6a29b7b6",
+                "ec46120ac3b01b6faa284407a09364e9637d9fe622426f14008b55b268769a14"
+              ],
+              [
+                "ec46120ac3b01b6faa284407a09364e9637d9fe622426f14008b55b268769a14",
+                "fbccbb74bcf35361d603106eee5c166d0e61e13cd94a1114ae4014fef685f03e"
+              ]
+            ],
+            "end_unix": 1792937869.789538,
+            "native_log_sha256": "47220b96a4ecb877e4f3e15be9ccd6d3cd89b3cad0a9c3219ba699c637e5550e",
+            "native_source_sha256": "1b13b051d2c54c94309a1a45202325e1bf62bca541b17bb31f25548806e78810",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-23cc84f881df4ea7a2e46fe98d28be79/prefix-revalidations/4747a3d599ec4cafb49b4f76e75dd975/result.json",
+            "result_sha256": "bb6e69061ffaf1f4f50d57ebf1d22bb22f6c68fa850e81a1895905cc0e903b69",
+            "seconds": 92.774,
+            "start_unix": 1792937777.015538,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "ec46120ac3b01b6faa284407a09364e9637d9fe622426f14008b55b268769a14",
+                "fbccbb74bcf35361d603106eee5c166d0e61e13cd94a1114ae4014fef685f03e"
+              ],
+              [
+                "fbccbb74bcf35361d603106eee5c166d0e61e13cd94a1114ae4014fef685f03e",
+                "efeccfd6bfe8b022c667f5aaf1c8a6eb8434bf440c619d158b1b557e7149e9db"
+              ],
+              [
+                "efeccfd6bfe8b022c667f5aaf1c8a6eb8434bf440c619d158b1b557e7149e9db",
+                "a55d7f6442be4ba6b0d26b4d39e8fbafa5ccb75d714d477c7ef741e67bafc05b"
+              ]
+            ],
+            "end_unix": 1792937948.125492,
+            "native_log_sha256": "36ae93cc98fc1e105dca3defde4d844de099b31725e7030e01860585db3a2f25",
+            "native_source_sha256": "9b3de1c94c6d1d8e54ce347332cefdaca01fccb839d66d8aac0783beaab561a4",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-23cc84f881df4ea7a2e46fe98d28be79/prefix-revalidations/82a855ddc53542e1877499a4f880dea5/result.json",
+            "result_sha256": "3831e0fe8593f41f7e2c42cbdcfaf56902ac9a090929cb9240a9b16d8fe8b0c9",
+            "seconds": 77.868,
+            "start_unix": 1792937870.257492,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "efeccfd6bfe8b022c667f5aaf1c8a6eb8434bf440c619d158b1b557e7149e9db",
+                "a55d7f6442be4ba6b0d26b4d39e8fbafa5ccb75d714d477c7ef741e67bafc05b"
+              ],
+              [
+                "a55d7f6442be4ba6b0d26b4d39e8fbafa5ccb75d714d477c7ef741e67bafc05b",
+                "b9d14a49d1e4fc1c743afc9f0941fc534a704cdf09ed402df9570fa27e1ab27c"
+              ],
+              [
+                "b9d14a49d1e4fc1c743afc9f0941fc534a704cdf09ed402df9570fa27e1ab27c",
+                "7adf2b02eeafe1cb43ccf44070854d680a2ace81afe20c84bb847ba0c1ebd50d"
+              ],
+              [
+                "7adf2b02eeafe1cb43ccf44070854d680a2ace81afe20c84bb847ba0c1ebd50d",
+                "1a29c23a6d8e5c55067b4bd482c43bd40657756cdc9b37024b0068213b78148a"
+              ]
+            ],
+            "end_unix": 1792938011.271121,
+            "native_log_sha256": "5ea3dba3d0b175e60969a367e77fbe12aee2a5281e4e498c518a00e314116763",
+            "native_source_sha256": "799d28e002c320eef6122181dc9e2c5de17bebbee58686b29e863368ebb2f1c3",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-23cc84f881df4ea7a2e46fe98d28be79/prefix-revalidations/b64529274ab649c59e03ea5553e490cc/result.json",
+            "result_sha256": "24c497b1817a49bae446159d191999a3bee55b422e43979eff0c906b409edcf8",
+            "seconds": 62.965,
+            "start_unix": 1792937948.306121,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "7adf2b02eeafe1cb43ccf44070854d680a2ace81afe20c84bb847ba0c1ebd50d",
+                "1a29c23a6d8e5c55067b4bd482c43bd40657756cdc9b37024b0068213b78148a"
+              ],
+              [
+                "1a29c23a6d8e5c55067b4bd482c43bd40657756cdc9b37024b0068213b78148a",
+                "89f8c1b15a53c4cd9e72e2af3b8e047a67e662b344b28b5cb9d4113784b03922"
+              ]
+            ],
+            "end_unix": 1792938050.141236,
+            "native_log_sha256": "66329629f85d74b873dd5f8e645391be35f94c3a9ef91d72e206f3708e8e20dd",
+            "native_source_sha256": "c4dbe45f911aa25a0be73db2885900e9f4cf75eb29ce2add9ded13c80c99c36b",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-23cc84f881df4ea7a2e46fe98d28be79/prefix-revalidations/4053e08724cf40e585040ec6cb5a6b83/result.json",
+            "result_sha256": "f8cb5ae5bdc635f769cdcb7356ca2c0cbcf978559c7aaed870ee326f5cf78266",
+            "seconds": 37.935,
+            "start_unix": 1792938012.2062361,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "12be06e96412ccb62c7f7d3352ead58f8031c6c52a03d36014e650104426e439",
+                "be2fde97beac13fd8b75d3fe3a782cdaf358a85b4ad08ca632f62a4eb2beeb0d"
+              ],
+              [
+                "be2fde97beac13fd8b75d3fe3a782cdaf358a85b4ad08ca632f62a4eb2beeb0d",
+                "e0d3bd634e3f3934af5ec974ac50f39b889076ad0da2f6ac34917ea840df14d7"
+              ],
+              [
+                "e0d3bd634e3f3934af5ec974ac50f39b889076ad0da2f6ac34917ea840df14d7",
+                "5f88c0bddd1210c6341ba20d1b199689816c44ee52de1f1d975d10b52bd9e139"
+              ],
+              [
+                "5f88c0bddd1210c6341ba20d1b199689816c44ee52de1f1d975d10b52bd9e139",
+                "2c90c38c1767da9035843f3375b33559629ed6e7a82c02936de70c8a77a7fa35"
+              ]
+            ],
+            "end_unix": 1792938256.871236,
+            "native_log_sha256": "e4f5177992c7fb26c9f6e89159ce33a9dddaf4ad0609c8c952b8478ac4ff93d4",
+            "native_source_sha256": "1c47b572ab205b00e34c129b5a55a1be7f8ec7b7c577547f3214272cc3fd9785",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-23cc84f881df4ea7a2e46fe98d28be79/prefix-revalidations/255274542b1b4d4dbfb42b85256018f0/result.json",
+            "result_sha256": "de704cf065e5ae56be36f08146fa57d9033ea3ddde8c8aad85756bdfd3c1e60e",
+            "seconds": 91.499,
+            "start_unix": 1792938165.372236,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "c64d17e881803e0365d539b5711d0ad8586d0b8dfe4262fddd138beb1319b2fe",
+                "8f53e562ff0161d9c57decd4b8c9c00bf836e60b65c4d820f59305703987623a"
+              ],
+              [
+                "8f53e562ff0161d9c57decd4b8c9c00bf836e60b65c4d820f59305703987623a",
+                "d6b410134bf21f5ac5142ea72ef7d2c3a54670806b37aa295fb023eace50fd17"
+              ],
+              [
+                "d6b410134bf21f5ac5142ea72ef7d2c3a54670806b37aa295fb023eace50fd17",
+                "3b15289813ecf2fb756fd969fa21c54241a62097a42517017d2b5358284c8458"
+              ],
+              [
+                "3b15289813ecf2fb756fd969fa21c54241a62097a42517017d2b5358284c8458",
+                "017d3c99e16b09601f0e4d253b813032c4c0e76ebba7e803b03b8684e3d9d501"
+              ],
+              [
+                "017d3c99e16b09601f0e4d253b813032c4c0e76ebba7e803b03b8684e3d9d501",
+                "16b441c8630fbfffbf97acc8980869af13689c66fbe3e33a0cbbd93563aa28a9"
+              ]
+            ],
+            "end_unix": 1792941931.711642,
+            "native_log_sha256": "1da74242925f2411e50ffaf929cacd9121407241cc3d9a8c406aa9e6a6c3df77",
+            "native_source_sha256": "8a1ab4a0089420e5e90c404aa312b1d9e001d91f3d68ac35fb48b077a2317fef",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-23cc84f881df4ea7a2e46fe98d28be79/prefix-revalidations/9e7a08fa367a45c981a67c34be1cbc2c/result.json",
+            "result_sha256": "7cda321562fa8bf6eae573fdf4526002d2753f8a71ffdedee1d37069b6dd7ba9",
+            "seconds": 93.303,
+            "start_unix": 1792941838.408642,
+            "theory": "Vero_Thread_Core"
+          }
+        ],
+        "original_checkpoint": "f6e3925540dc84911b3e526e831faf9edebe13e030a221097c92958eb891b7e5",
+        "original_state": {
+          "base_seconds": 172800.0,
+          "checkpoint_seconds": 30.0,
+          "effective_seconds": 83243.46639145724,
+          "finish_reason": null,
+          "finished": false,
+          "gate_open": false,
+          "include_planning": true,
+          "next_exclusion": 5,
+          "paused": false,
+          "planning_active": false,
+          "planning_seconds": 295.43020781408995,
+          "policy": "global-effective-generation-budget-v1",
+          "reason": null,
+          "seconds": 172800.0,
+          "theory_seconds": {
+            "Vero_Cache_Maintenance": 304.31828202307224,
+            "Vero_IPC_Transfer": 1.9426182769238949,
+            "Vero_Thread_Core": 82641.77528334316
+          },
+          "unclean_recoveries": 1,
+          "worker_seconds": 82948.03618364315
+        },
+        "planning_and_token_costs_preserved": true
+      },
+      "raw_history_preserved": true,
+      "state": {
+        "base_seconds": 172800.0,
+        "checkpoint_seconds": 30.0,
+        "effective_seconds": 81881.02239145724,
+        "finish_reason": null,
+        "finished": false,
+        "gate_open": false,
+        "include_planning": true,
+        "next_exclusion": 5,
+        "paused": false,
+        "planning_active": false,
+        "planning_seconds": 295.43020781408995,
+        "policy": "global-effective-generation-budget-v1",
+        "reason": null,
+        "seconds": 172800.0,
+        "theory_seconds": {
+          "Vero_Cache_Maintenance": 304.31828202307224,
+          "Vero_IPC_Transfer": 1.9426182769238949,
+          "Vero_Thread_Core": 81279.33128334316
+        },
+        "unclean_recoveries": 1,
+        "worker_seconds": 81585.59218364315
+      }
+    },
+    "event_id": "735898c73a92221b9551005875873cfce06b030a98c0296ea4ab89145c6302a5",
+    "kind": "time_budget_checkpoint",
+    "parent": "1b98df43769a1ff432893fafe8105293c2127f5dfd36cf479e67eabdd1d5e8fb",
+    "run_id": "vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+    "sequence": 16454,
+    "time_unix": 1792950192.5549824
+  },
+  "branch": {
+    "data": {
+      "authorization": "用户明确选择：同时返还已回滚分支用时及框架重验开销，按区间去重；保留原始账本、成本和当前有效证明",
+      "boundary": "operator_rollback_branch_credit_v1",
+      "correction": {
+        "adjustment": {
+          "effective_seconds": 9048.547329304629,
+          "theory_seconds": {
+            "Vero_Cache_Maintenance": 304.31828202307224,
+            "Vero_IPC_Transfer": 0.0,
+            "Vero_Thread_Core": 8744.229047281557
+          },
+          "worker_seconds": 9048.547329304629
+        },
+        "already_credited_overlap": {
+          "effective_seconds": 906.0999999999999,
+          "theory_seconds": {
+            "Vero_Cache_Maintenance": 0.0,
+            "Vero_IPC_Transfer": 0.0,
+            "Vero_Thread_Core": 906.0999999999999
+          },
+          "worker_seconds": 906.0999999999999
+        },
+        "branch_charged_time": {
+          "effective_seconds": 9954.64732930463,
+          "theory_seconds": {
+            "Vero_Cache_Maintenance": 304.31828202307224,
+            "Vero_IPC_Transfer": 0.0,
+            "Vero_Thread_Core": 9650.329047281557
+          },
+          "worker_seconds": 9954.64732930463
+        },
+        "branch_end_unix": 1792936224.0696795,
+        "branch_start_unix": 1792922393.716351,
+        "corrected_state": {
+          "base_seconds": 172800.0,
+          "checkpoint_seconds": 30.0,
+          "effective_seconds": 75272.35701274803,
+          "finish_reason": null,
+          "finished": false,
+          "gate_open": false,
+          "include_planning": true,
+          "next_exclusion": 6,
+          "paused": false,
+          "planning_active": false,
+          "planning_seconds": 295.43020781408995,
+          "policy": "global-effective-generation-budget-v1",
+          "reason": null,
+          "seconds": 172800.0,
+          "theory_seconds": {
+            "Vero_Cache_Maintenance": 0.0,
+            "Vero_IPC_Transfer": 1.9426182769238949,
+            "Vero_Thread_Core": 74974.98418665702
+          },
+          "unclean_recoveries": 1,
+          "worker_seconds": 74976.92680493394
+        },
+        "credit_id": "5ff703e65e4e2bf1b165f9679513e1b6be4f8fcc754079d923ff0b4f6c3fcb3f",
+        "interpretation": "user-selected return of abandoned branch time plus framework revalidation time; overlap credited once; unobserved crash tail remains unknown",
+        "original_checkpoint": "55f540b7b3954b9e51538eeb837f89a4c1943752b78ee8ba29b5c1d70cf3bb9c",
+        "original_state": {
+          "base_seconds": 172800.0,
+          "checkpoint_seconds": 30.0,
+          "effective_seconds": 84320.90434205266,
+          "finish_reason": null,
+          "finished": false,
+          "gate_open": false,
+          "include_planning": true,
+          "next_exclusion": 6,
+          "paused": false,
+          "planning_active": false,
+          "planning_seconds": 295.43020781408995,
+          "policy": "global-effective-generation-budget-v1",
+          "reason": null,
+          "seconds": 172800.0,
+          "theory_seconds": {
+            "Vero_Cache_Maintenance": 304.31828202307224,
+            "Vero_IPC_Transfer": 1.9426182769238949,
+            "Vero_Thread_Core": 83719.21323393857
+          },
+          "unclean_recoveries": 1,
+          "worker_seconds": 84025.47413423857
+        },
+        "overlap_intervals": [
+          {
+            "brackets": [
+              [
+                "5fce5ccaa8314fe8c8701adac06a1ecd9e06567c8c093764b1da54c5d9302c71",
+                "96af5692d458a74fae70c7b741426ad111097e651cbf6183faaeb2bd26813f26"
+              ],
+              [
+                "96af5692d458a74fae70c7b741426ad111097e651cbf6183faaeb2bd26813f26",
+                "7dab503692656ce81f91f196b1a23d2ce7a038b5bbbf94f7dd8bac730489f2b7"
+              ],
+              [
+                "7dab503692656ce81f91f196b1a23d2ce7a038b5bbbf94f7dd8bac730489f2b7",
+                "1a1f98d1ca823b2713138e0642a41dacd51c492d82116e144513f0c7197f8fe9"
+              ],
+              [
+                "1a1f98d1ca823b2713138e0642a41dacd51c492d82116e144513f0c7197f8fe9",
+                "7b43e12791aa7f910d8a064c742787f8d0e81237e25aa0ad885f1dcbff557621"
+              ]
+            ],
+            "end_unix": 1792933605.647081,
+            "native_log_sha256": "08294f2dd458d5178b18aa8a75278ed1fa8c0d86ba59b0af6ee73a778fd09687",
+            "native_source_sha256": "108cb9a3985d5cbafa56a48233b5bfa1899ca845a4a0839f556033a6b16b14db",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/86f021ea92e848bfaeef42e237227d2a/result.json",
+            "result_sha256": "535394f7d1a67c0bdd79d2c8b58acce09b97a91b8cf750da6cd65ae3228c4935",
+            "seconds": 89.363,
+            "start_unix": 1792933516.284081,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "bc8657b1293998ec5fddcd6a6104ed09e06e5ff90d97fd95b9508c88b1317512",
+                "5a699fb2fcec3eb7609e22327b91c77ad5e0073b8eb8006ca378994b5abc81a7"
+              ],
+              [
+                "5a699fb2fcec3eb7609e22327b91c77ad5e0073b8eb8006ca378994b5abc81a7",
+                "5b31832afc51774cdfb57bae6f8e4d8d434cdf2db810a020eb6520ad56d07810"
+              ],
+              [
+                "5b31832afc51774cdfb57bae6f8e4d8d434cdf2db810a020eb6520ad56d07810",
+                "f664997dc9595cf3b77e1bd1f650b31ac98d81498c133f65fa842c1758e750fe"
+              ],
+              [
+                "f664997dc9595cf3b77e1bd1f650b31ac98d81498c133f65fa842c1758e750fe",
+                "b0dd1a1169a855bd12ccac52ca88f7d81198853075e9a742fd8c7ec7debb0bc9"
+              ],
+              [
+                "b0dd1a1169a855bd12ccac52ca88f7d81198853075e9a742fd8c7ec7debb0bc9",
+                "caf650d2c69207a641a6f9270113337b905ef592c7491669049633c2d275938a"
+              ],
+              [
+                "caf650d2c69207a641a6f9270113337b905ef592c7491669049633c2d275938a",
+                "a0a17192b8654b384a6d3204f9c561c78a35ad145b7c57a547003deba6978c94"
+              ],
+              [
+                "a0a17192b8654b384a6d3204f9c561c78a35ad145b7c57a547003deba6978c94",
+                "4bb5f62f37c5438a11a9e528f529245b958227d45bba2846c870fd21dc204ec6"
+              ],
+              [
+                "4bb5f62f37c5438a11a9e528f529245b958227d45bba2846c870fd21dc204ec6",
+                "4c9641b0b766197ce883dc7764ddf3758f50a953fe28609eccdf0ee2532fd96f"
+              ]
+            ],
+            "end_unix": 1792935211.797371,
+            "native_log_sha256": "c57045a12b1e5e5059774da153f9c404026356d9dd1be8e7c2b5e52a015ae33c",
+            "native_source_sha256": "5611000e510616da236d00116680f9b46949c333b9a07a5c35428cac691fe388",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/c169053244bf470aaa0d4b690789b501/result.json",
+            "result_sha256": "d15b8f7c3cc1bceeda216639aa07d319cba8b41448fd4684b6dcad096fcf8395",
+            "seconds": 221.786,
+            "start_unix": 1792934990.011371,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "4bb5f62f37c5438a11a9e528f529245b958227d45bba2846c870fd21dc204ec6",
+                "4c9641b0b766197ce883dc7764ddf3758f50a953fe28609eccdf0ee2532fd96f"
+              ],
+              [
+                "4c9641b0b766197ce883dc7764ddf3758f50a953fe28609eccdf0ee2532fd96f",
+                "b64d3ccc236d0c4047338b0cf6fe8e0884113d736efd513f7bce51ffc5c34131"
+              ],
+              [
+                "b64d3ccc236d0c4047338b0cf6fe8e0884113d736efd513f7bce51ffc5c34131",
+                "a9e560919a28f494014d7391a2058bc83ad86f51a52d91a893c558702390cbb3"
+              ],
+              [
+                "a9e560919a28f494014d7391a2058bc83ad86f51a52d91a893c558702390cbb3",
+                "522800b23075fe67517b3cdf8fc602936f4a907afbb6b2cee67376bd9be21c62"
+              ],
+              [
+                "522800b23075fe67517b3cdf8fc602936f4a907afbb6b2cee67376bd9be21c62",
+                "0abcb5b1947a4f5a7b0376a38aee8948a26b64d7a0991f957151d1d70cda8498"
+              ],
+              [
+                "0abcb5b1947a4f5a7b0376a38aee8948a26b64d7a0991f957151d1d70cda8498",
+                "6fa0588e2dd96f5682f7cf2f7292c78021eb8de6e9770d852c7198586ff34809"
+              ],
+              [
+                "6fa0588e2dd96f5682f7cf2f7292c78021eb8de6e9770d852c7198586ff34809",
+                "65c876a639f72db29b3e241d799679231674cd0ee96984f19c80a30c80c24975"
+              ]
+            ],
+            "end_unix": 1792935397.574343,
+            "native_log_sha256": "c9a24399bcfd3362fafb95b659a4b002103206ac7aa92ca856dc7e6a5fbb4da0",
+            "native_source_sha256": "b3dea5bf1d1cb74eedbe14d028e48d75b0bb330314028941b843ed6c8de8d54f",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/c9aad9a5fed94ea2a634d484d47c0581/result.json",
+            "result_sha256": "bf29d6471094a6db2919b0c30fa9c2134fa184026fbc7b912859bd95edae2c2f",
+            "seconds": 185.256,
+            "start_unix": 1792935212.318343,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "6fa0588e2dd96f5682f7cf2f7292c78021eb8de6e9770d852c7198586ff34809",
+                "65c876a639f72db29b3e241d799679231674cd0ee96984f19c80a30c80c24975"
+              ],
+              [
+                "65c876a639f72db29b3e241d799679231674cd0ee96984f19c80a30c80c24975",
+                "913dbf17c5dcf45cb0aa0e0b4251462e8aa4b0869ff09abb7e902b21d3147034"
+              ],
+              [
+                "913dbf17c5dcf45cb0aa0e0b4251462e8aa4b0869ff09abb7e902b21d3147034",
+                "a2ddff44f5687e58e28736d0bb4742b81cf00133fe0e86d8ec3ef624c9fbf2dc"
+              ],
+              [
+                "a2ddff44f5687e58e28736d0bb4742b81cf00133fe0e86d8ec3ef624c9fbf2dc",
+                "80caa592ce4663f7685831d1219a439b4461733898508d44d7dc25104a81dda6"
+              ],
+              [
+                "80caa592ce4663f7685831d1219a439b4461733898508d44d7dc25104a81dda6",
+                "f540c6c14b35df28e5b52ee55b43ab36e88e1787bf82e422ac17c2676f365567"
+              ],
+              [
+                "f540c6c14b35df28e5b52ee55b43ab36e88e1787bf82e422ac17c2676f365567",
+                "660fa15026bbef465859e3591be2dff8caf167f74b79d73b95c651b31ffddc8c"
+              ]
+            ],
+            "end_unix": 1792935531.755129,
+            "native_log_sha256": "69e280d12080e3e8776c7d4ad1334ea92a4c449a01316891a7984eaa61beda47",
+            "native_source_sha256": "70670e14d75259dfc64f2dc25cf81d41e419c76e248307976b672d24490371ea",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/c7214c94b6c04b7c8823a810b1a5f58f/result.json",
+            "result_sha256": "1a7a60fb21b5c953b2166cccd011fbeb9ea69dd600fbb32a7e6838291f767970",
+            "seconds": 132.852,
+            "start_unix": 1792935398.903129,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "f540c6c14b35df28e5b52ee55b43ab36e88e1787bf82e422ac17c2676f365567",
+                "660fa15026bbef465859e3591be2dff8caf167f74b79d73b95c651b31ffddc8c"
+              ],
+              [
+                "660fa15026bbef465859e3591be2dff8caf167f74b79d73b95c651b31ffddc8c",
+                "96ff659675d11c1b6a5b1513988b27267c23198c0b32bab5ac80ddbf2ff653f1"
+              ],
+              [
+                "96ff659675d11c1b6a5b1513988b27267c23198c0b32bab5ac80ddbf2ff653f1",
+                "ffff1b9499ed02f38c336a3d738a59fc294c0c20e9ff7a078b7d45669cc43d5c"
+              ],
+              [
+                "ffff1b9499ed02f38c336a3d738a59fc294c0c20e9ff7a078b7d45669cc43d5c",
+                "9467a00c7391c2759a1eb9c42d2a5309d0ec071ab36435831de0af19c0572a99"
+              ],
+              [
+                "9467a00c7391c2759a1eb9c42d2a5309d0ec071ab36435831de0af19c0572a99",
+                "cc1d1b4ae647cc638363521cad695833e2293d45c5bb369020bed591e57d5501"
+              ]
+            ],
+            "end_unix": 1792935668.954449,
+            "native_log_sha256": "ffcda20a7c0c606aac1594c019aac8423a5d058cfa8147e54384de9d6058308b",
+            "native_source_sha256": "313686fa4fdbd3c03baab23b34a900a80b65ce753911a5759210b586bc9a5a8c",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/e498a105fac44c11acf4ea90efb4d3af/result.json",
+            "result_sha256": "b5ffba408fd3921df8514548a16f2aaa0cbf5e5737c722c994039b1225c13f57",
+            "seconds": 136.687,
+            "start_unix": 1792935532.267449,
+            "theory": "Vero_Thread_Core"
+          },
+          {
+            "brackets": [
+              [
+                "9467a00c7391c2759a1eb9c42d2a5309d0ec071ab36435831de0af19c0572a99",
+                "cc1d1b4ae647cc638363521cad695833e2293d45c5bb369020bed591e57d5501"
+              ],
+              [
+                "cc1d1b4ae647cc638363521cad695833e2293d45c5bb369020bed591e57d5501",
+                "bc4f40e4aa1d25f9e420f2d355c31d5735c06591bb850854899ff7d6a8a0194b"
+              ],
+              [
+                "bc4f40e4aa1d25f9e420f2d355c31d5735c06591bb850854899ff7d6a8a0194b",
+                "89d46f72b81d3246c160d5d143495fffa8d9b246ed1439213bb8a4cddef3032f"
+              ],
+              [
+                "89d46f72b81d3246c160d5d143495fffa8d9b246ed1439213bb8a4cddef3032f",
+                "59c3f541854b75f138485fd83f252d36f625248e7281a2940f262c455f1fce09"
+              ],
+              [
+                "59c3f541854b75f138485fd83f252d36f625248e7281a2940f262c455f1fce09",
+                "1aab28e48704e312cc01aa2dca5d8af646064eaf36215e3583d4ff6c3a003c7a"
+              ],
+              [
+                "1aab28e48704e312cc01aa2dca5d8af646064eaf36215e3583d4ff6c3a003c7a",
+                "28c76629f369774e8a6385544ecdbfeb1ecf0396b757ca97e2978420778efe16"
+              ]
+            ],
+            "end_unix": 1792935809.442267,
+            "native_log_sha256": "3c2fca6f8dec40b6c10c80c98c12b0a892e0cfa1e6fc471a53dccf001585d9bc",
+            "native_source_sha256": "a8fd9ec458bc764a4a07975084d25ba4398e03e0c574f232188c899fc9b1ac76",
+            "result": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/native-segments/segment-6b0839fd07ca41018c698eb87de25b54/prefix-revalidations/d2032fd322ef43e28f6f7f3ac4c8bfa1/result.json",
+            "result_sha256": "c89c5ebde0dfaaf8bdbe22c9e21791e37d88832f27d4aea6469f5648d7586f83",
+            "seconds": 140.156,
+            "start_unix": 1792935669.286267,
+            "theory": "Vero_Thread_Core"
+          }
+        ],
+        "preserve_tokens_proofs_frozen_inputs_and_original_events": true,
+        "prior_framework_credit_event_id": "735898c73a92221b9551005875873cfce06b030a98c0296ea4ab89145c6302a5",
+        "prior_framework_credit_seconds": 1362.444,
+        "restore_event_id": "5fff91fd7856a40d07cf329f22dab2f9c1b09a1ef2544fdde016f854d2580559",
+        "restore_sequence": 14300,
+        "source_clock_interpolation": {
+          "bracket_seconds": 30.269009828567505,
+          "fraction": 0.5454372347127477,
+          "left_event_id": "55d2ee67146542a6c3ea0d7311a55a32e4555961401f8163af3886188b663d7e",
+          "not_subsecond_exact": true,
+          "right_event_id": "d6a910a2cff0cdd4eb8b29abb8722afe55e20a7689c366db9a15b9adda305326",
+          "wall_monotonic_residual_seconds": 5.272217094898224e-06
+        },
+        "source_event_id": "5e59bfa05b825870e6b13d89f28a121617c3b7f036c509efa001f307cab09993",
+        "source_sequence": 12366,
+        "total_union_credit_seconds": 10410.991329304628
+      },
+      "raw_history_preserved": true,
+      "state": {
+        "base_seconds": 172800.0,
+        "checkpoint_seconds": 30.0,
+        "effective_seconds": 75272.35701274803,
+        "finish_reason": null,
+        "finished": false,
+        "gate_open": false,
+        "include_planning": true,
+        "next_exclusion": 6,
+        "paused": false,
+        "planning_active": false,
+        "planning_seconds": 295.43020781408995,
+        "policy": "global-effective-generation-budget-v1",
+        "reason": null,
+        "seconds": 172800.0,
+        "theory_seconds": {
+          "Vero_Cache_Maintenance": 0.0,
+          "Vero_IPC_Transfer": 1.9426182769238949,
+          "Vero_Thread_Core": 74974.98418665702
+        },
+        "unclean_recoveries": 1,
+        "worker_seconds": 74976.92680493394
+      }
+    },
+    "event_id": "e9542d8d5f0b5a93892d104b31163c5eff8d7ba0e40642c8d58cc1f1d6cc15c7",
+    "kind": "time_budget_checkpoint",
+    "parent": "e0fee10119827b0659300141e94214694b13082f64435ff35cf26e3882abf51a",
+    "run_id": "vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+    "sequence": 16884,
+    "time_unix": 1792952841.1777713
+  }
+}

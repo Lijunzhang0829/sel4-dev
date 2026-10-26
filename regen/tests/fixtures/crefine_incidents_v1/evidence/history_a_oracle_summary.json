@@ -1,0 +1,471 @@
+{
+  "scope": "Three audited >4-hour intervals ending at contract GREEN; retrospective, not continuous monitoring.",
+  "timezone": "Asia/Shanghai",
+  "counting": "One primary category per actual failed callback or provider request; successful retrieval callbacks >=60s are separate observations. Historical echoes are excluded.",
+  "timing": "Direct callback/request wall time clipped to exact GREEN receipt bounds. worker_sum adds parallel worker time; wall_union merges overlaps. Neither is causal wasted time. Category wall unions may overlap each other and must not be added.",
+  "queue_timing": "native_slot_acquired queue_seconds >=1s; a nested callback component, not additional failure cost.",
+  "normalization": "Preserve original category/signature; normalize exact-text edit format, invalid receipt, seal prerequisite, helper use-site prerequisite, and provider no-feedback names.",
+  "labels": {
+    "namespace_fact_lookup": "后置审计：节点短名与 locale fact 解析不匹配",
+    "audit_empty_target": "后置审计：目标未取得定理",
+    "native_timeout": "原生检查超时",
+    "proof_method_failure": "证明方法应用失败／自动化异常",
+    "open_goals": "存在未闭合的证明目标",
+    "type_or_binding": "类型／变量绑定错误",
+    "syntax_or_proof_mode": "语法／证明模式错误",
+    "unknown_fact": "证明正文 fact 查找／引用失败",
+    "unknown_method": "引用不存在的证明方法",
+    "edit_validation": "编辑格式／固定契约及结构校验拒绝",
+    "sketch_prerequisite": "草图前置条件／helper 使用要求未满足",
+    "seal_prerequisite": "封存前置检查未满足",
+    "invalid_tool_request": "无效工具参数／回执引用",
+    "unsupported_workflow": "请求当前模式不支持的阶段转换",
+    "provider_no_complete_response": "模型服务约 900 秒无完整反馈",
+    "slow_retrieval": "含检索的成功回调 ≥60 秒（性能观察）"
+  },
+  "by_category": {
+    "namespace_fact_lookup": {
+      "count": 19,
+      "worker_sum_seconds": 4386.05220246315,
+      "wall_union_seconds": 4386.05220246315
+    },
+    "audit_empty_target": {
+      "count": 2,
+      "worker_sum_seconds": 703.6392004489899,
+      "wall_union_seconds": 703.6392004489899
+    },
+    "native_timeout": {
+      "count": 73,
+      "worker_sum_seconds": 14317.532402992249,
+      "wall_union_seconds": 13718.31132888794
+    },
+    "proof_method_failure": {
+      "count": 179,
+      "worker_sum_seconds": 16709.2093937397,
+      "wall_union_seconds": 14834.737373828888
+    },
+    "open_goals": {
+      "count": 118,
+      "worker_sum_seconds": 10245.330373764038,
+      "wall_union_seconds": 9600.542561292648
+    },
+    "type_or_binding": {
+      "count": 43,
+      "worker_sum_seconds": 3566.6534423828125,
+      "wall_union_seconds": 3491.243434906006
+    },
+    "syntax_or_proof_mode": {
+      "count": 41,
+      "worker_sum_seconds": 5599.259501695633,
+      "wall_union_seconds": 5504.821085214615
+    },
+    "unknown_fact": {
+      "count": 18,
+      "worker_sum_seconds": 2451.8748910427094,
+      "wall_union_seconds": 2451.8748910427094
+    },
+    "unknown_method": {
+      "count": 8,
+      "worker_sum_seconds": 948.0458807945251,
+      "wall_union_seconds": 948.0458807945251
+    },
+    "edit_validation": {
+      "count": 92,
+      "worker_sum_seconds": 451.6625349521637,
+      "wall_union_seconds": 451.6625349521637
+    },
+    "sketch_prerequisite": {
+      "count": 40,
+      "worker_sum_seconds": 151.40653586387634,
+      "wall_union_seconds": 151.40653586387634
+    },
+    "seal_prerequisite": {
+      "count": 3,
+      "worker_sum_seconds": 4.797020196914673,
+      "wall_union_seconds": 4.797020196914673
+    },
+    "invalid_tool_request": {
+      "count": 19,
+      "worker_sum_seconds": 118.50031208992004,
+      "wall_union_seconds": 118.50031208992004
+    },
+    "unsupported_workflow": {
+      "count": 4,
+      "worker_sum_seconds": 16.106362342834473,
+      "wall_union_seconds": 16.106362342834473
+    },
+    "provider_no_complete_response": {
+      "count": 3,
+      "worker_sum_seconds": 2700.0517966747284,
+      "wall_union_seconds": 2700.0517966747284
+    },
+    "slow_retrieval": {
+      "count": 108,
+      "worker_sum_seconds": 14968.91372013092,
+      "wall_union_seconds": 13230.081764698029
+    }
+  },
+  "by_window": {
+    "1": {
+      "start_shanghai": "2026-10-25T17:45:01.117882+08:00",
+      "end_shanghai": "2026-10-25T23:39:30.372236+08:00",
+      "wall_seconds": 21269.25435447693,
+      "all_records": {
+        "count": 301,
+        "worker_sum_seconds": 28984.191825389862,
+        "wall_union_seconds": 19059.22854566574
+      },
+      "failures": {
+        "count": 258,
+        "worker_sum_seconds": 24020.942456245422,
+        "wall_union_seconds": 16795.220672607422
+      },
+      "slow_retrieval": {
+        "count": 43,
+        "worker_sum_seconds": 4963.24936914444,
+        "wall_union_seconds": 4388.711698055267
+      },
+      "native_queue_component": {
+        "count": 131,
+        "worker_sum_seconds": 6464.663997888565,
+        "wall_union_seconds": 6464.663997888565
+      },
+      "categories": {
+        "namespace_fact_lookup": {
+          "count": 6,
+          "worker_sum_seconds": 487.7334690093994,
+          "wall_union_seconds": 487.7334690093994
+        },
+        "audit_empty_target": {
+          "count": 0,
+          "worker_sum_seconds": 0,
+          "wall_union_seconds": 0.0
+        },
+        "native_timeout": {
+          "count": 20,
+          "worker_sum_seconds": 3488.0002324581146,
+          "wall_union_seconds": 3297.2134330272675
+        },
+        "proof_method_failure": {
+          "count": 92,
+          "worker_sum_seconds": 9367.691489934921,
+          "wall_union_seconds": 8191.847031354904
+        },
+        "open_goals": {
+          "count": 72,
+          "worker_sum_seconds": 7519.576699018478,
+          "wall_union_seconds": 6874.788886547089
+        },
+        "type_or_binding": {
+          "count": 12,
+          "worker_sum_seconds": 1009.9951858520508,
+          "wall_union_seconds": 1009.9951858520508
+        },
+        "syntax_or_proof_mode": {
+          "count": 9,
+          "worker_sum_seconds": 1077.6465737819672,
+          "wall_union_seconds": 1037.3386542797089
+        },
+        "unknown_fact": {
+          "count": 8,
+          "worker_sum_seconds": 699.5270340442657,
+          "wall_union_seconds": 699.5270340442657
+        },
+        "unknown_method": {
+          "count": 2,
+          "worker_sum_seconds": 218.0563530921936,
+          "wall_union_seconds": 218.0563530921936
+        },
+        "edit_validation": {
+          "count": 16,
+          "worker_sum_seconds": 70.3189971446991,
+          "wall_union_seconds": 70.3189971446991
+        },
+        "sketch_prerequisite": {
+          "count": 16,
+          "worker_sum_seconds": 65.10707879066467,
+          "wall_union_seconds": 65.10707879066467
+        },
+        "seal_prerequisite": {
+          "count": 0,
+          "worker_sum_seconds": 0,
+          "wall_union_seconds": 0.0
+        },
+        "invalid_tool_request": {
+          "count": 2,
+          "worker_sum_seconds": 3.511165142059326,
+          "wall_union_seconds": 3.511165142059326
+        },
+        "unsupported_workflow": {
+          "count": 3,
+          "worker_sum_seconds": 13.778177976608276,
+          "wall_union_seconds": 13.778177976608276
+        },
+        "provider_no_complete_response": {
+          "count": 0,
+          "worker_sum_seconds": 0,
+          "wall_union_seconds": 0.0
+        },
+        "slow_retrieval": {
+          "count": 43,
+          "worker_sum_seconds": 4963.24936914444,
+          "wall_union_seconds": 4388.711698055267
+        }
+      }
+    },
+    "2": {
+      "start_shanghai": "2026-10-26T03:16:13.822997+08:00",
+      "end_shanghai": "2026-10-26T09:49:39.916400+08:00",
+      "wall_seconds": 23606.093403100967,
+      "all_records": {
+        "count": 270,
+        "worker_sum_seconds": 29469.382132530212,
+        "wall_union_seconds": 19858.166593551636
+      },
+      "failures": {
+        "count": 252,
+        "worker_sum_seconds": 27422.346675157547,
+        "wall_union_seconds": 19063.148643016815
+      },
+      "slow_retrieval": {
+        "count": 18,
+        "worker_sum_seconds": 2047.0354573726654,
+        "wall_union_seconds": 2047.0354573726654
+      },
+      "native_queue_component": {
+        "count": 93,
+        "worker_sum_seconds": 8861.004999876022,
+        "wall_union_seconds": 8861.004999876022
+      },
+      "categories": {
+        "namespace_fact_lookup": {
+          "count": 13,
+          "worker_sum_seconds": 3898.3187334537506,
+          "wall_union_seconds": 3898.3187334537506
+        },
+        "audit_empty_target": {
+          "count": 2,
+          "worker_sum_seconds": 703.6392004489899,
+          "wall_union_seconds": 703.6392004489899
+        },
+        "native_timeout": {
+          "count": 30,
+          "worker_sum_seconds": 6681.132576704025,
+          "wall_union_seconds": 6681.132576704025
+        },
+        "proof_method_failure": {
+          "count": 34,
+          "worker_sum_seconds": 4433.242800712585,
+          "wall_union_seconds": 3901.6488077640533
+        },
+        "open_goals": {
+          "count": 14,
+          "worker_sum_seconds": 1448.3951320648193,
+          "wall_union_seconds": 1448.3951320648193
+        },
+        "type_or_binding": {
+          "count": 20,
+          "worker_sum_seconds": 1875.3966255187988,
+          "wall_union_seconds": 1799.9866180419922
+        },
+        "syntax_or_proof_mode": {
+          "count": 22,
+          "worker_sum_seconds": 3936.7075901031494,
+          "wall_union_seconds": 3936.7075901031494
+        },
+        "unknown_fact": {
+          "count": 8,
+          "worker_sum_seconds": 1586.5149853229523,
+          "wall_union_seconds": 1586.5149853229523
+        },
+        "unknown_method": {
+          "count": 3,
+          "worker_sum_seconds": 617.1055660247803,
+          "wall_union_seconds": 617.1055660247803
+        },
+        "edit_validation": {
+          "count": 70,
+          "worker_sum_seconds": 330.4528925418854,
+          "wall_union_seconds": 330.4528925418854
+        },
+        "sketch_prerequisite": {
+          "count": 24,
+          "worker_sum_seconds": 86.29945707321167,
+          "wall_union_seconds": 86.29945707321167
+        },
+        "seal_prerequisite": {
+          "count": 3,
+          "worker_sum_seconds": 4.797020196914673,
+          "wall_union_seconds": 4.797020196914673
+        },
+        "invalid_tool_request": {
+          "count": 6,
+          "worker_sum_seconds": 17.992236852645874,
+          "wall_union_seconds": 17.992236852645874
+        },
+        "unsupported_workflow": {
+          "count": 1,
+          "worker_sum_seconds": 2.3281843662261963,
+          "wall_union_seconds": 2.3281843662261963
+        },
+        "provider_no_complete_response": {
+          "count": 2,
+          "worker_sum_seconds": 1800.023673772812,
+          "wall_union_seconds": 1800.023673772812
+        },
+        "slow_retrieval": {
+          "count": 18,
+          "worker_sum_seconds": 2047.0354573726654,
+          "wall_union_seconds": 2047.0354573726654
+        }
+      }
+    },
+    "3": {
+      "start_shanghai": "2026-10-26T12:07:43.164574+08:00",
+      "end_shanghai": "2026-10-26T16:34:47.345971+08:00",
+      "wall_seconds": 16024.181396722794,
+      "all_records": {
+        "count": 199,
+        "worker_sum_seconds": 18885.46161365509,
+        "wall_union_seconds": 12866.205270051956
+      },
+      "failures": {
+        "count": 152,
+        "worker_sum_seconds": 10926.832720041275,
+        "wall_union_seconds": 8682.125535964966
+      },
+      "slow_retrieval": {
+        "count": 47,
+        "worker_sum_seconds": 7958.628893613815,
+        "wall_union_seconds": 6794.334609270096
+      },
+      "native_queue_component": {
+        "count": 25,
+        "worker_sum_seconds": 1478.3810002803802,
+        "wall_union_seconds": 1478.3810002803802
+      },
+      "categories": {
+        "namespace_fact_lookup": {
+          "count": 0,
+          "worker_sum_seconds": 0,
+          "wall_union_seconds": 0.0
+        },
+        "audit_empty_target": {
+          "count": 0,
+          "worker_sum_seconds": 0,
+          "wall_union_seconds": 0.0
+        },
+        "native_timeout": {
+          "count": 23,
+          "worker_sum_seconds": 4148.399593830109,
+          "wall_union_seconds": 3739.9653191566467
+        },
+        "proof_method_failure": {
+          "count": 53,
+          "worker_sum_seconds": 2908.2751030921936,
+          "wall_union_seconds": 2741.2415347099304
+        },
+        "open_goals": {
+          "count": 32,
+          "worker_sum_seconds": 1277.3585426807404,
+          "wall_union_seconds": 1277.3585426807404
+        },
+        "type_or_binding": {
+          "count": 11,
+          "worker_sum_seconds": 681.2616310119629,
+          "wall_union_seconds": 681.2616310119629
+        },
+        "syntax_or_proof_mode": {
+          "count": 10,
+          "worker_sum_seconds": 584.9053378105164,
+          "wall_union_seconds": 530.7748408317566
+        },
+        "unknown_fact": {
+          "count": 2,
+          "worker_sum_seconds": 165.83287167549133,
+          "wall_union_seconds": 165.83287167549133
+        },
+        "unknown_method": {
+          "count": 3,
+          "worker_sum_seconds": 112.88396167755127,
+          "wall_union_seconds": 112.88396167755127
+        },
+        "edit_validation": {
+          "count": 6,
+          "worker_sum_seconds": 50.890645265579224,
+          "wall_union_seconds": 50.890645265579224
+        },
+        "sketch_prerequisite": {
+          "count": 0,
+          "worker_sum_seconds": 0,
+          "wall_union_seconds": 0.0
+        },
+        "seal_prerequisite": {
+          "count": 0,
+          "worker_sum_seconds": 0,
+          "wall_union_seconds": 0.0
+        },
+        "invalid_tool_request": {
+          "count": 11,
+          "worker_sum_seconds": 96.99691009521484,
+          "wall_union_seconds": 96.99691009521484
+        },
+        "unsupported_workflow": {
+          "count": 0,
+          "worker_sum_seconds": 0,
+          "wall_union_seconds": 0.0
+        },
+        "provider_no_complete_response": {
+          "count": 1,
+          "worker_sum_seconds": 900.0281229019165,
+          "wall_union_seconds": 900.0281229019165
+        },
+        "slow_retrieval": {
+          "count": 47,
+          "worker_sum_seconds": 7958.628893613815,
+          "wall_union_seconds": 6794.334609270096
+        }
+      }
+    }
+  },
+  "totals": {
+    "count": 770,
+    "worker_sum_seconds": 77339.03557157516,
+    "wall_union_seconds": 51783.60040926933
+  },
+  "kind_counts": {
+    "performance_observation": 108,
+    "failed_callback": 659,
+    "provider_failure": 3
+  },
+  "failures": {
+    "count": 662,
+    "worker_sum_seconds": 62370.121851444244,
+    "wall_union_seconds": 44540.4948515892
+  },
+  "native_queue_component": {
+    "count": 249,
+    "worker_sum_seconds": 16804.049998044968,
+    "wall_union_seconds": 16804.049998044968
+  },
+  "blocked_state_count": 4,
+  "auto_continuation_observation_count": 4,
+  "inputs": [
+    {
+      "path": "issue-ledger/inputs/gap1.json",
+      "sha256": "81f1b7787bdaa6bfcfa1ebd0503ee5ad9bc9f79ab8e03bec67f6bbb6b0c35203"
+    },
+    {
+      "path": "issue-ledger/inputs/gap2.json",
+      "sha256": "6eff46fae65b6a0ada626a4252ace1faebed99d3fc46844397ea9fc2098a2ef9"
+    },
+    {
+      "path": "issue-ledger/inputs/gap3.json",
+      "sha256": "6e4da5abefa4971a57c82b48d5a2f32ae095b969f7d61fb5f773e61c062ece46"
+    },
+    {
+      "path": "issue-ledger/inputs/additional.json",
+      "sha256": "12d214e0cae80849d5809a6ac8b0113c4def6f0c1bb9a718079f93531d12211f"
+    }
+  ]
+}

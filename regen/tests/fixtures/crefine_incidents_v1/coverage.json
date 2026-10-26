@@ -1,0 +1,625 @@
+{
+  "schema_version": 1,
+  "inventory": "inventory.json",
+  "scope": "44 recorded incident classes; explicit coverage boundaries, not44 fully reproduced experiments",
+  "coverage_definitions": {
+    "offline_regression": "执行选定生产函数或受控回归；真实摘录和合成/stub部分由case限制逐一披露，不执行模型或native checker。",
+    "documentary_regression": "对历史证据关系执行一致性断言；不验证完整生产恢复/native行为。",
+    "historical_statistics_only": "重算已冻结公开事件的分类统计和区间口径；不测试A当前实现或重新归因根因。",
+    "documentary_only": "仅登记报告、证据和缺失边界；本套case没有该问题的可执行回放。"
+  },
+  "coverage_counts": {
+    "offline_regression": 13,
+    "documentary_only": 12,
+    "documentary_regression": 2,
+    "historical_statistics_only": 17
+  },
+  "incidents": [
+    {
+      "incident_id": "B-OWNER-VISIBILITY",
+      "machine": "B",
+      "inventory_category": "比较局限",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "state-owner-visibility"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "一条明确合成contract验证owner重新分配不改变公开payload；309条历史匿名化结论只核对收据。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-DELETED-OLD-RUNS",
+      "machine": "B",
+      "inventory_category": "比较局限",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "旧三运行与两发布已按授权删除；只有清理收据，不能重建原始timeout步骤或完整实验。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-CODEX-LOCALE-AUDIT",
+      "machine": "B",
+      "inventory_category": "框架bug",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "codex-locale-fact-audit"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "包含真实失败batch39和修复后的native fixture；离线验证audit绑定和反例，不重新执行ML/Isabelle。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-CODEX-RECOVERY-MERKLE-COPY",
+      "machine": "B",
+      "inventory_category": "性能",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "codex-merkle-recovery-copy"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "使用小型合成Merkle DAG调用生产复制路径，验证不展开重编码、独立性、损坏拒绝和同步失败；不复制整个旧运行。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-VERO-UNUSED-HELPER-REVOCATION",
+      "machine": "B",
+      "inventory_category": "框架bug",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "state-prefix-revocation"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "真实前后源码/receipt重现prefix变化并结合受控checker回归；历史native dependency证据不会生成新GREEN。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-VERO-LATER-RED-BLOCKS-REACCEPTANCE",
+      "machine": "B",
+      "inventory_category": "框架bug",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "state-prefix-revocation"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "生产prefix机制的受控checker单元回放覆盖later RED；不把失败全theory的clean marker当作独立原生验收。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-VERO-FAILED-IMPORT-RECHECK",
+      "machine": "B",
+      "inventory_category": "性能",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "state-prefix-revocation"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复用现有负缓存回归，覆盖同import少查、修改后重新检查、损坏receipt拒绝；不计真实原生性能收益。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-VERO-REAL-IMPORT-INVALIDATION",
+      "machine": "B",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "state-prefix-revocation"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "受控checker验证实际依赖变化必须新成功证据，否则失效；当前历史候选不重新运行Isabelle。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-VERO-BUDGET-BRANCH-OVERLAP",
+      "machine": "B",
+      "inventory_category": "比较局限",
+      "coverage_kind": "documentary_regression",
+      "case_ids": [
+        "state-budget-union"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "根据历史credit区间重算并集和不变式；不修改任何实验预算，原区间估计误差仍保留。",
+        "预算冲正为历史区间算术oracle；没有调用生产预算退款接口，生产时钟继承另由state-crash-clock验证。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-VERO-UNCLEAN-TAIL",
+      "machine": "B",
+      "inventory_category": "运行资源",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "state-crash-clock"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "以真实checkpoint状态包入临时账本，验证离线不计费和unknown tail保留；未知秒数不能由回放补造。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-VERO-RPC-TRUNCATION",
+      "machine": "B",
+      "inventory_category": "框架bug",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "vero-transport-frame-16m",
+        "vero-transport-bounded-diagnostics",
+        "vero-transport-archived-completion"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "大帧/断帧和分页使用离线socket/合成日志；真实step1792保留元数据及已验证页，未复制785MB原始日志。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-VERO-DISK-AMPLIFICATION",
+      "machine": "B",
+      "inventory_category": "运行资源",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "state-storage-enospc",
+        "vero-transport-bounded-diagnostics",
+        "vero-transport-archived-completion"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "注入ENOSPC验证原子发布、响应有界与归档读取；不实际填满磁盘，native日志长期增长风险未消除。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-VERO-STALE-RUNTIME-CLIENT",
+      "machine": "B",
+      "inventory_category": "框架bug",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "vero-runtime-stale-pythonpath",
+        "vero-runtime-explicit-migration"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "验证运行时模块解析与显式迁移链；历史实际容器mount/hash收据保留，本回放不启动Docker。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-CODEX-RECOVERY-COST",
+      "machine": "B",
+      "inventory_category": "性能",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "codex-recovery-history-amplification",
+        "codex-step991-continuation"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "小对象计数对比与恢复不变式；未重放6.07GB逻辑历史，不证明启动延迟已改善。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-CODEX-ORDINARY-PROOF-RED",
+      "machine": "B",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "offline_regression",
+      "case_ids": [
+        "codex-batch628-proof-not-timeout"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "真实native结果作为受控transaction返回，验证生产响应边界保持RED/5子目标/非timeout；不重新证明。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-VERO-RECOVERY-CHANGED-ARTIFACT",
+      "machine": "B",
+      "inventory_category": "比较局限",
+      "coverage_kind": "documentary_regression",
+      "case_ids": [
+        "state-artifact-reuse"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "核对历史artifact摘要不等及更改slot；未建立跨进程native缓存，也没有重新运行完整恢复评估。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "B-MEDIUM-XHIGH-COMPARISON",
+      "machine": "B+A historical",
+      "inventory_category": "比较局限",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "缺相同输入/实现/资源/预算的配对对照，旧运行有删除缺口；不能由测试集推出推理深度的因果收益。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-STALL-UNCLOSED-CLOCK",
+      "machine": "A historical",
+      "inventory_category": "框架bug",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "清单保留历史停机链及现有相关test IDs；本测试集未新增该A运行的完整协议回放。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-SILENCE-ROOT-CAUSE-UNKNOWN",
+      "machine": "A historical",
+      "inventory_category": "运行资源",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "最终静默的网络/provider/client根因未确定；仅保留证据限制，不能以现在的连通性补证。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-NATIVE-WORKER-READY",
+      "machine": "A historical",
+      "inventory_category": "运行资源",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "历史ready超时摘要可定位到commit001046；本集不创建或测试A native worker。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-AUDIT-EMPTY-TARGET",
+      "machine": "A historical",
+      "inventory_category": "框架bug",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-EDIT-VALIDATION",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-INVALID-TOOL-REQUEST",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-NAMESPACE-FACT-LOOKUP",
+      "machine": "A historical",
+      "inventory_category": "框架bug",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-NATIVE-TIMEOUT",
+      "machine": "A historical",
+      "inventory_category": "运行资源",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-OPEN-GOALS",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-PROOF-METHOD-FAILURE",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-PROVIDER-NO-COMPLETE-RESPONSE",
+      "machine": "A historical",
+      "inventory_category": "运行资源",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-SEAL-PREREQUISITE",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-SKETCH-PREREQUISITE",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-SLOW-RETRIEVAL",
+      "machine": "A historical",
+      "inventory_category": "性能",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-SYNTAX-OR-PROOF-MODE",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-TYPE-OR-BINDING",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-UNKNOWN-FACT",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-UNKNOWN-METHOD",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-GAP-UNSUPPORTED-WORKFLOW",
+      "machine": "A historical",
+      "inventory_category": "正常证明失败",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "复算对应类别所有公开occurrences、窗口并集和worker sums；分类沿用历史审计，非当前A实现测试或逐例native重跑。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-BLOCKED-AUTO-CONTINUE",
+      "machine": "A historical",
+      "inventory_category": "框架bug",
+      "coverage_kind": "historical_statistics_only",
+      "case_ids": [
+        "history-a-green-gap-observations"
+      ],
+      "replay_selection": "all replays of each referenced case",
+      "limitations": [
+        "保留4次公开控制观察、时间及行号；复算通知延迟不等于确认当前调度器仍有同一问题。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-PROGRESS-WATCH-DISABLED",
+      "machine": "A historical",
+      "inventory_category": "性能",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "只记录冻结progress_timeout=0的政策与观测边界；不修改或验证A当前设置，不暗加无进展上限。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-PLAN-REVIEW-SELF-REFERENCE",
+      "machine": "A historical planning",
+      "inventory_category": "框架bug",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "历史报告/模拟审计发现已登记；原medium运行证据按授权删除，本集未打包这些planning探针，也不声称当前代码状态已验证。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-PLAN-REVISION-DECISIONS-FEEDBACK",
+      "machine": "A historical planning",
+      "inventory_category": "框架bug",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "历史报告/模拟审计发现已登记；原medium运行证据按授权删除，本集未打包这些planning探针，也不声称当前代码状态已验证。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-PLAN-CORRUPT-TRANSCRIPT-AUDIT",
+      "machine": "A historical planning",
+      "inventory_category": "框架bug",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "历史报告/模拟审计发现已登记；原medium运行证据按授权删除，本集未打包这些planning探针，也不声称当前代码状态已验证。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-PLAN-FINAL-PLAN-REVIEW-GAP",
+      "machine": "A historical planning",
+      "inventory_category": "比较局限",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "历史报告/模拟审计发现已登记；原medium运行证据按授权删除，本集未打包这些planning探针，也不声称当前代码状态已验证。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-PLAN-PLANNING-FAILURE-RESUME",
+      "machine": "A historical planning",
+      "inventory_category": "框架bug",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "历史报告/模拟审计发现已登记；原medium运行证据按授权删除，本集未打包这些planning探针，也不声称当前代码状态已验证。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    },
+    {
+      "incident_id": "A-PLAN-REVIEW-SEMANTIC-BOUNDARY",
+      "machine": "A historical planning",
+      "inventory_category": "比较局限",
+      "coverage_kind": "documentary_only",
+      "case_ids": [],
+      "replay_selection": null,
+      "limitations": [
+        "历史报告/模拟审计发现已登记；原medium运行证据按授权删除，本集未打包这些planning探针，也不声称当前代码状态已验证。"
+      ],
+      "status_interpretation": "回放通过只验证所列边界；不自动把inventory中的open/unknown问题改为fixed。"
+    }
+  ],
+  "global_limits": [
+    "Existing test IDs in inventory are pointers, not a claim that all those tests ran in this fixture suite.",
+    "770 historical observations are indexed under16 issue categories, not770 independent bugs.",
+    "No original model private reasoning or credentials are included.",
+    "Deleted source runs cannot be restored from operator summaries.",
+    "Performance probes report counts/measurements; there is no hard wall-time pass threshold or inferred causal model benefit."
+  ]
+}

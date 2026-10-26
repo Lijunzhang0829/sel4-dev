@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "vero-runtime-stale-pythonpath",
+  "title": "iter-005 frozen PYTHONPATH mounted the original client after host repair",
+  "component": "vero_serial_application.runtime_agent_environment",
+  "category": "runtime_binding",
+  "status": "fixed",
+  "source_steps": [
+    {
+      "run_directory": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+      "iteration": "iter-005",
+      "observed_at": "2026-10-27T01:13:20.889307+08:00",
+      "container_id": "48876d2e55d1",
+      "recovered_iteration": "iter-006"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/vero_runtime_stale_mount.json",
+      "sha256": "494493fe66fde3db16d85624ad03cf25af6cf4dbf78ee193e1d3429076cd4dcd",
+      "source_path": "reports/regen/dual-step-resume-validation-20261027-001/vero-stale-client-mount-evidence.json",
+      "source_sha256": "494493fe66fde3db16d85624ad03cf25af6cf4dbf78ee193e1d3429076cd4dcd",
+      "source_hash_scope": "complete file",
+      "selection": "complete JSON object"
+    },
+    {
+      "path": "evidence/vero_runtime_container_probe.json",
+      "sha256": "39088ed2f39e951881052006e8aa3ee0527bb401506226f34724d7130979b368",
+      "source_path": "reports/regen/dual-step-resume-validation-20261027-001/runtime-container-probe.json",
+      "source_sha256": "39088ed2f39e951881052006e8aa3ee0527bb401506226f34724d7130979b368",
+      "source_hash_scope": "complete file",
+      "selection": "complete JSON object"
+    }
+  ],
+  "replays": [
+    {
+      "id": "vero-runtime-stale-pythonpath-replay",
+      "handler": "transport.runtime_binding",
+      "parameters": {},
+      "kind": "synthetic_regression",
+      "oracle": {
+        "old_env": "selects stale transport",
+        "runtime_override": "selects current transport and current client",
+        "frozen_config": "unchanged"
+      }
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_vero_runtime_binding"
+  ],
+  "limitations": [
+    "Real Docker mount paths, client hashes and diagnostic help failures/successes are bundled. The offline replay remaps release directories into scratch and uses a generated stale-module sentinel.",
+    "Docker is not started by this replay; the included live container probe is historical evidence."
+  ]
+}

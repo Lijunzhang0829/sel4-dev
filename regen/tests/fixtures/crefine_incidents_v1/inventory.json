@@ -1,0 +1,2951 @@
+{
+  "schema_version": 1,
+  "inventory_scope": "CRefine incidents recorded 2026-10-24 through 2026-10-27; machine B active experiment core plus separately tagged A historical/reference incidents. Not a claim to recover unrecorded/deleted history.",
+  "generated_from": "local preserved operator reports; no auth or private model reasoning read; no live experiment mutation",
+  "classification_notes": [
+    "confirmed does not imply every observed symptom has a known root cause",
+    "source_step null means not recorded or not a proof-step incident; never fabricate it",
+    "existing_test_ids are discovered AST identifiers, not results of tests run by this inventory",
+    "A history is reference evidence only; no A implementation modifications requested",
+    "native replay requires exact environment and preserved source; summary-only or synthetic cases cannot claim full historical replay",
+    "green-gap categories retain all770 indexed events including662failures and108performance observations; categories are not independent bugs"
+  ],
+  "counts": {
+    "比较局限": 7,
+    "框架bug": 13,
+    "性能": 5,
+    "正常证明失败": 13,
+    "运行资源": 6
+  },
+  "incidents": [
+    {
+      "id": "B-OWNER-VISIBILITY",
+      "title": "旧B输入暴露原contract到theory映射",
+      "category": "比较局限",
+      "machine": "B",
+      "root_cause": "旧Codex source-theory-visible-v1包含309条owner/25个原theory；VERO也有原source IDs/modules。目标语义相同不等于模型输入信息相同。",
+      "status": "20261025新实验已owner-blind对齐；旧运行按授权删除",
+      "certainty": "confirmed",
+      "source_step": {
+        "run_date": "2026-10-24",
+        "exact_step": null,
+        "reason": "input-level difference, not a proof-step failure"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-owner-blind-input-20261024-001/machine-b-comparison.json",
+          "sha256": "46c7ce211961d39babbc312993a8a037ca75277b0e34ab3c09be7595bbcfeabd",
+          "bytes": 10835,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-owner-blind-machine-b-20261025-001/privacy-audit.json",
+          "sha256": "58db90622c6a7d18b617eb7ed8830a6f934c01351bb67a37323660d8ee3f1ab0",
+          "bytes": 1301,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_owner_blind_dataset.AnonymousDatasetTests.test_canonical_review_and_projection_inputs_do_not_recover_original_owner",
+        "regen.tests.current.test_owner_blind_dataset.AnonymousDatasetTests.test_original_owner_reassignment_cannot_change_canonical_dataset",
+        "regen.tests.current.test_owner_blind_dataset.AnonymousDatasetTests.test_vero_export_removes_owner_identity_without_changing_target_content"
+      ],
+      "minimal_reproduction_input": "匿名payload与公开Codex/VERO投影视图；验证owner重分配不影响公开输入",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-DELETED-OLD-RUNS",
+      "title": "旧xhigh运行、日志和发布已删除，无法原目录完整回放",
+      "category": "比较局限",
+      "machine": "B",
+      "root_cause": "用户批准删除三旧运行和两旧发布；删除收据仅能证明范围，不能替代原始step。",
+      "status": "known irrecoverable evidence gap",
+      "certainty": "confirmed",
+      "source_step": {
+        "deleted_runs": [
+          "vero-crefine-sol-xhigh-effective48h-planning-included-fresh-20261024-001",
+          "codex-crefine-sol-xhigh-effective48h-planning-included-fresh-20261024-001",
+          "codex-crefine-sol-xhigh-effective48h-planning-included-cont-20261024-001"
+        ],
+        "exact_step": null
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-owner-blind-machine-b-20261025-001/full-directory-cleanup-receipt.json",
+          "sha256": "0d0b2ce4f83014207ff03427d8cc3c64f48da490f973addbabbdf401ae8e4f89",
+          "bytes": 2429,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-owner-blind-machine-b-20261025-001/cleanup-receipt.json",
+          "sha256": "c9d7c05d47249e45e2eb9d76f7694a5af12f953b9490a92217dabf22f4c5e5c7",
+          "bytes": 103033,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "保留删除收据及摘要；不得生成伪原始step",
+      "raw_data_availability": "original run/release directories explicitly deleted; receipt-only; original Codex timeout cause cannot be re-derived from these receipts alone"
+    },
+    {
+      "id": "B-CODEX-LOCALE-AUDIT",
+      "title": "Codex原生审计对locale导出事实解析错误",
+      "category": "框架bug",
+      "machine": "B",
+      "root_cause": "生成事实在locale中导出为限定名；旧后置审计按短名/全局context查找，合法候选无法取得审计证据。修复仅解析新生成native facts，拒绝歧义、父事实冒充和sorry。",
+      "status": "fixed in locale repair v4; native26 + independent6 checks; B81 tests",
+      "certainty": "confirmed",
+      "source_step": {
+        "original_failure_step": {
+          "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+          "batch_request": 39,
+          "relative_path": "proof-runs/0001/theories/Generated_Kernel_Base/batch-requests/000039/check.json",
+          "native_request": "regen-batch-5f839f029e4a4da7:51",
+          "native_source_sha256": "0c9b82aa57bd6b843622e0885d1aedd99a80a2500b2a960a2033ef759d03d8fd",
+          "returncode": 1,
+          "timeout_scope": null,
+          "candidate_execution_ms": 17199,
+          "diagnostic": "RED\nUndefined fact: \"get_tsType_ccorres\"",
+          "provenance": "read-only machine-B extraction by codex_replays agent; original file hash will be in extraction manifest"
+        },
+        "not_available_in_local_summary": false,
+        "implementation_migration_sequence": 9539,
+        "migration_id": "codex-crefine-native-locale-audit-20261025-v4"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/locale-audit-stability-20261025-001/recovery-receipt.json",
+          "sha256": "e4d265cfa0fee2562b7591748cb176aa834008718b0b3c6dd991baacf4ef9e3e",
+          "bytes": 2672,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/locale-audit-stability-20261025-001/machine-b-migration-receipt-v4.json",
+          "sha256": "a295dbbcd509d780af9033431e232d70dad6c3b7d855f65eb738df9c997c13ad",
+          "bytes": 2105,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/locale-audit-stability-20261025-001/native-v3/report.json",
+          "sha256": "46a655ee4432facd100feeeb7a64d66a5375fcdd4dc9a8b6d56548f1b835912f",
+          "bytes": 32428,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_native_backend_acceptance.NativeBackendAcceptanceTests.test_locale_fixtures_cover_export_resolution_and_unsafe_certificates",
+        "regen.tests.current.test_native_locale_repair.NativeLocaleRepairTests.test_receipt_binds_exact_source_tail_and_only_the_audited_changes",
+        "regen.tests.current.test_native_locale_repair.NativeLocaleRepairTests.test_repair_notice_requires_recorded_migration_and_never_declares_green"
+      ],
+      "minimal_reproduction_input": "现成native-v3两worker fixture：同名不同context、named locale导出/消费、父事实冒充、歧义导出、admitted导出",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-CODEX-RECOVERY-MERKLE-COPY",
+      "title": "Codex恢复对共享Merkle日志展开重编码，初始化过慢",
+      "category": "性能",
+      "machine": "B",
+      "root_cause": "旧copy对共享对象解码/重新编码；恢复应保留Merkle identity直接复制可达对象，并批量校验/同步而不弱化正常日志fsync。",
+      "status": "copy repair deployed v4; initial attempts001/002/003 stopped before provider",
+      "certainty": "confirmed",
+      "source_step": {
+        "runs": [
+          "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-001",
+          "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-002",
+          "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-003"
+        ],
+        "proof_step": null,
+        "phase": "continuation initialization"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/locale-audit-stability-20261025-001/recovery-receipt.json",
+          "sha256": "e4d265cfa0fee2562b7591748cb176aa834008718b0b3c6dd991baacf4ef9e3e",
+          "bytes": 2672,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_merkle_copy_repair.MerkleCopyRepairTests.test_copy_preserves_merkle_identity_without_expansion_or_reencoding",
+        "regen.tests.current.test_merkle_copy_repair.MerkleCopyRepairTests.test_recovery_must_complete_filesystem_sync_before_reporting_success",
+        "regen.tests.current.test_merkle_copy_repair.MerkleCopyRepairTests.test_source_mutation_during_batch_cannot_be_reported_as_success"
+      ],
+      "minimal_reproduction_input": "共享对象DAG+多manifest；assert无decode/re-encode、复制后源/目标stamp/哈希一致且sync完成",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-VERO-UNUSED-HELPER-REVOCATION",
+      "title": "未使用helper修改导致已证明contracts过度撤销",
+      "category": "框架bug",
+      "machine": "B",
+      "root_cause": "收据绑定整个proof前置文本；删除未被证明依赖使用的11个helper改变prefix hash。先前OPEN slot修复未覆盖辅助声明修改。独立native回放证明受影响正文和实际依赖均未变。",
+      "status": "fixed independent prefix revalidation v3; authorized workspace restored from12366 and rechecked",
+      "certainty": "confirmed",
+      "source_step": {
+        "before_revocation_sequence": 12366,
+        "revocation_sequences": [
+          12396,
+          12397,
+          12469
+        ],
+        "targets": [
+          "c0022",
+          "c0057",
+          "c0016"
+        ],
+        "snapshot": "f4dc672930324043bd0bfd88ac03999a"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/vero-green-regression-audit-20261025-001/audit-summary.json",
+          "sha256": "71f534f59bfe354f063900b84d47f8c135c1025f666407a1a8abc5eeeb25ce66",
+          "bytes": 4440,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/vero-green-regression-audit-20261025-001/receipt-reproduction.json",
+          "sha256": "ca3f53fd3210bb140450e8515e6f6cac3d24ae452ff3f2668eb22abebf2174f5",
+          "bytes": 1469,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/vero-green-regression-audit-20261025-001/native-report.json",
+          "sha256": "4211d30ed1ad7e9ac60a32968689647acc5f7addcc4aec90cf243134c951e87e",
+          "bytes": 40746,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/vero-prefix-revalidation-repair-20261025-001/pre-revocation-restore-receipt.json",
+          "sha256": "a9afa832e875c1286668c42836d6facbd85205f652d241853460895fcebb41f9",
+          "bytes": 4124,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_unused_helper_removed_and_later_red_keeps_green",
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_used_helper_removed_really_invalidates_proof",
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_historical_invalidated_version_recovers_only_after_native_success"
+      ],
+      "minimal_reproduction_input": "accepted/before_first/after_first/before_second/after_second snapshots + changed-helper diffs + native source/import context;最小fixture保留早期GREEN、无用helper删除、后续RED",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-VERO-LATER-RED-BLOCKS-REACCEPTANCE",
+      "title": "整份草稿RED阻止独立已证明前缀重新验收",
+      "category": "框架bug",
+      "machine": "B",
+      "root_cause": "native rc!=0会丢弃所有clean markers；后续c0088结束错误使不受影响的早期contracts不能重新accept。不能直接信任timeout/failed run的clean文字。",
+      "status": "fixed by independently checked prefix boundaries",
+      "certainty": "confirmed",
+      "source_step": {
+        "related_revocation_sequences": [
+          12396,
+          12397,
+          12469
+        ],
+        "later_failed_target": "c0088",
+        "exact_failed_check_sequence": null
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/vero-green-regression-audit-20261025-001/audit-summary.json",
+          "sha256": "71f534f59bfe354f063900b84d47f8c135c1025f666407a1a8abc5eeeb25ce66",
+          "bytes": 4440,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/vero-prefix-revalidation-repair-20261025-001/recovery-receipt-v3.json",
+          "sha256": "fdeef8c5692fe341e48da56b423bc0e4c05e26461c3837710b7b106c5c1f4f47",
+          "bytes": 8443,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_failed_later_revalidation_still_checks_earlier_boundary",
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_timeout_clean_markers_cannot_renew_certificate",
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_zero_exit_without_audit_cannot_renew_certificate",
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_partial_revalidation_cannot_authorize_a_full_theory_seal"
+      ],
+      "minimal_reproduction_input": "含已验收prefix+后续未完成proof的theory；独立prefix rc0+完整审计才可renew，whole-theory rc1不应抹掉独立证据",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-VERO-FAILED-IMPORT-RECHECK",
+      "title": "失败import对每个contract重复原生重验",
+      "category": "性能",
+      "machine": "B",
+      "root_cause": "同一失效import阻塞多个前缀；每contract重复native检查造成额外恢复/生成耗时。只允许精确源/日志/manifest绑定的负结果复用。",
+      "status": "fixed v3 failed-import reuse; changed imports force fresh check",
+      "certainty": "confirmed",
+      "source_step": {
+        "implementation_migration_sequence": 13799,
+        "observed_checks": [
+          "3dad0bdc2dec4f6595bb273bf8b6fd41",
+          "74d8faadb7e340c0948547d46b5df7ea"
+        ],
+        "segment": "segment-6b0839fd07ca41018c698eb87de25b54"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/vero-prefix-revalidation-repair-20261025-001/recovery-receipt-v3.json",
+          "sha256": "fdeef8c5692fe341e48da56b423bc0e4c05e26461c3837710b7b106c5c1f4f47",
+          "bytes": 8443,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_one_failed_import_is_not_rechecked_for_every_contract",
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_changed_import_source_invalidates_the_cached_rejection",
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_corrupt_cached_rejection_is_not_reused"
+      ],
+      "minimal_reproduction_input": "两个contract共享失败parent import；验证只查一次、修改parent或破坏receipt必须重查",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-VERO-REAL-IMPORT-INVALIDATION",
+      "title": "导入的当前辅助证明真的失败，旧证书不能直接恢复",
+      "category": "正常证明失败",
+      "machine": "B",
+      "root_cause": "当时Vero_Cache_Maintenance完整被导入theory内含失败aux；即使修复过度撤销逻辑，新的import context不成立时不能恢复历史5个GREEN。",
+      "status": "addressed via user-authorized archived workspace restoration then native revalidation; no manual GREEN promotion",
+      "certainty": "confirmed",
+      "source_step": {
+        "observation": "2026-10-25T21:05:30+08:00",
+        "implementation_migration_sequence": 13799,
+        "workspace_restore_sequence": 14300,
+        "restore_source_sequence": 12366
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/vero-prefix-revalidation-repair-20261025-001/recovery-receipt-v3.json",
+          "sha256": "fdeef8c5692fe341e48da56b423bc0e4c05e26461c3837710b7b106c5c1f4f47",
+          "bytes": 8443,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/vero-prefix-revalidation-repair-20261025-001/pre-revocation-restore-receipt.json",
+          "sha256": "a9afa832e875c1286668c42836d6facbd85205f652d241853460895fcebb41f9",
+          "bytes": 4124,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_changed_external_context_requires_fresh_successful_evidence",
+        "regen.tests.current.test_vero_prefix_revalidation.VeroPrefixRevalidationTests.test_changed_external_context_failure_invalidates_old_certificate"
+      ],
+      "minimal_reproduction_input": "accepted contract + changed imported theory with failed helper；oracle要求当前GREEN撤销/禁止复用直至新native成功",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-VERO-BUDGET-BRANCH-OVERLAP",
+      "title": "回滚分支与框架重验用时需按区间去重冲正",
+      "category": "比较局限",
+      "machine": "B",
+      "root_cause": "原计时连续且忠实保留已消费成本；用户选择退还弃用分支9954.647329s与重验1362.444s，重叠906.1s不能双退。该冲正是授权实验口径，不是全段均为框架错误的证明。",
+      "status": "credited1362.444 +9048.547329=10410.991329s; history/token/planning retained",
+      "certainty": "confirmed",
+      "source_step": {
+        "source_sequence": 12366,
+        "restore_sequence": 14300,
+        "credit_sequences": [
+          16454,
+          16884
+        ]
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/vero-effective-time-audit-20261026-001/audit.json",
+          "sha256": "85b8cea20aee4a2e5af6af0996b1a0bc0eecac5d39928380149ac626467c7101",
+          "bytes": 33689,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/vero-budget-credit-20261026-001/credit-receipt.json",
+          "sha256": "f9630dc1bf1844b0427c9628a94e8f09a8bffab3703acbcf69bb80bd292a08fa",
+          "bytes": 24599,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/vero-branch-budget-credit-20261026-001/credit-receipt.json",
+          "sha256": "25151afe7543d96e2e9203893dbfd2e8b7110ac662d9bbcf00d423a461154e3d",
+          "bytes": 17062,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_effective_time_budget.BudgetTests.test_union_and_separate_worker_cost",
+        "regen.tests.current.test_effective_time_budget.BudgetTests.test_planning_binding_and_cost_survive_resume_but_offline_time_does_not"
+      ],
+      "minimal_reproduction_input": "结构化checkpoint+重验区间+分支区间及旧credit；assert并集、不重复退款、不减token/规划",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-VERO-UNCLEAN-TAIL",
+      "title": "非正常退出留下未持久结算尾部，不能补算离线或猜测退款",
+      "category": "运行资源",
+      "machine": "B",
+      "root_cause": "checkpoint每约30s；进程非正常退出没有close边界，最后checkpoint至退出间有效用时未知。10/25约17.0025s；10/26 ENOSPC约28.384s。",
+      "status": "uncertainty retained across resume; no guessed charge/credit",
+      "certainty": "confirmed",
+      "source_step": {
+        "older_checkpoint": 13740,
+        "latest_checkpoint": 27725,
+        "ledger_head": 27730,
+        "latest_item": "iter-004/item_2196"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/vero-effective-time-audit-20261026-001/audit.json",
+          "sha256": "85b8cea20aee4a2e5af6af0996b1a0bc0eecac5d39928380149ac626467c7101",
+          "bytes": 33689,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/vero-rpc-repair-20261026-001/pause-audit.json",
+          "sha256": "f5d117c8b803268621ee2e91cf157420046a55f4afaa1f5f1970dea775816805",
+          "bytes": 84198,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_effective_time_budget.BudgetTests.test_unknown_crash_tail_not_erased_by_next_clean_resume",
+        "regen.tests.current.test_effective_time_budget.BudgetTests.test_summary_replays_cutoff_without_extrapolating_offline_time"
+      ],
+      "minimal_reproduction_input": "持久gate_open checkpoint +进程死亡+离线gap；重新启动继承累计值并保留unknown tail",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-VERO-RPC-TRUNCATION",
+      "title": "16MiB单次readline截断巨大JSON响应",
+      "category": "框架bug",
+      "machine": "B",
+      "root_cause": "客户端readline(16*1024*1024)把798033089-byte response切断后交给json.loads，模型看不到native诊断；失败还沿dependency链传播。",
+      "status": "fixed bounded diagnostic preview +64MiB complete frame + byte paging; historical785184572-byte log validated live",
+      "certainty": "confirmed",
+      "source_step": {
+        "iteration": "iter-004",
+        "item": "item_1792",
+        "scope_event": 25040,
+        "result_events": [
+          25143,
+          25144
+        ],
+        "request": "1b7d94a880d24a169ca14ceb19eeb682",
+        "dependency_chain": [
+          "Vero_Untyped_Objects",
+          "Vero_Capability_Mutation",
+          "Vero_Capability_Core"
+        ]
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/dual-token-stall-audit-20261026-001/protocol-and-targets.json",
+          "sha256": "cb1bd4f4774d4844164a916b441521cdaac32aaf8036f52ba1fd575dc75d6860",
+          "bytes": 2403,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/dual-token-stall-audit-20261026-001/vero-client-failures.json",
+          "sha256": "7c4a2d3fa5b513ff0f574f223142d50c1821e1d608cbad2093386f531e219b93",
+          "bytes": 12744,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/dual-step-resume-validation-20261027-001/vero-runtime-live-rpc-probe.json",
+          "sha256": "5b1d73f255752690bd531a9a9199d9615d773e6638e6012b78b53a18de926692",
+          "bytes": 2191,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_vero_tool_protocol.VeroToolProtocolTests.test_socket_frame_larger_than_old_16_mib_limit",
+        "regen.tests.current.test_vero_tool_protocol.VeroToolProtocolTests.test_incomplete_and_oversize_frames_fail_before_json_parse",
+        "regen.tests.current.test_vero_tool_protocol.VeroToolProtocolTests.test_pages_reconstruct_multibyte_text_at_every_small_limit",
+        "regen.tests.current.test_vero_diagnostic_service.VeroDiagnosticServiceTests.test_check_preserves_verdicts_and_large_native_log_but_bounds_response",
+        "regen.tests.current.test_vero_diagnostic_service.VeroDiagnosticServiceTests.test_archived_response_marker_retains_read_access_to_full_log"
+      ],
+      "minimal_reproduction_input": "实际失败request元数据+归档response/log引用；离线生成>16MiB newline JSON并断帧；分页UTF8边界/超大日志头尾",
+      "raw_data_availability": "historical response plaintext losslessly archived as response.json.gz after full SHA check; native original log retained on B; local operator probes preserved"
+    },
+    {
+      "id": "B-VERO-DISK-AMPLIFICATION",
+      "title": "日志/结果/响应复制放大导致ENOSPC",
+      "category": "运行资源",
+      "machine": "B",
+      "root_cause": "evaluation log、native prefix log、native result.json和response.json重复承载大诊断；47个>256MiB native result合计26.897GB，最大response1.254GB。旧heaps/历史产物也占盘；不能按大小盲目去重。",
+      "status": "31 responses losslessly gz archived,21.773GB reclaimed; new responses bounded; native-log growth remains resource risk",
+      "certainty": "confirmed",
+      "source_step": {
+        "failure_time_beijing": "2026-10-26T22:45:48+08:00",
+        "iteration": "iter-004",
+        "item": "item_2196",
+        "request": "1880d4c341604e87918e1620cb19eeb682",
+        "last_ledger": 27730,
+        "last_checkpoint": 27725
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/vero-rpc-repair-20261026-001/pause-audit.json",
+          "sha256": "f5d117c8b803268621ee2e91cf157420046a55f4afaa1f5f1970dea775816805",
+          "bytes": 84198,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/vero-rpc-repair-20261026-001/completion-receipt.json",
+          "sha256": "a15ee81ae43e53546830926874116a9298d5c2fd82398c5fc95333e5cbe3f57f",
+          "bytes": 821,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_vero_tool_protocol.VeroToolProtocolTests.test_large_sparse_log_reads_only_head_and_tail",
+        "regen.tests.current.test_vero_diagnostic_service.VeroDiagnosticServiceTests.test_check_preserves_verdicts_and_large_native_log_but_bounds_response",
+        "regen.tests.current.test_effective_time_budget.BudgetTests.test_watchdog_aborts_even_if_journal_persistence_fails"
+      ],
+      "minimal_reproduction_input": "巨型稀疏日志+bounded response；故障注入ENOSPC时原始日志/账本完整性、watchdog停止；压缩完整解压SHA后方可unlink",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-VERO-STALE-RUNTIME-CLIENT",
+      "title": "冻结PYTHONPATH导致新server仍挂载旧client",
+      "category": "框架bug",
+      "machine": "B",
+      "root_cause": "Agent配置合并保留冻结env.PYTHONPATH指原始release；python -m vero_isolated_exec从旧目录载入并将其旁旧tool.py挂入容器。scope/progress成功不能证明新版diagnostic可用。",
+      "status": "fixed runtime env override and explicit v2 migration; actual mount hash/help/RPC validated",
+      "certainty": "confirmed",
+      "source_step": {
+        "iteration": "iter-005",
+        "observation": "2026-10-27T01:13:20.889307+08:00",
+        "container": "48876d2e55d1",
+        "old_client_sha256": "47f4154c551399c7a8c0203f092a09acc91f9986aea820e41d668230976b4907",
+        "new_client_sha256": "9fbfa71861005cdb0add01b8785555fb6f4f4fa5dc58ee1a5e45844e71786bac",
+        "migration_id": "vero-tool-runtime-binding-20261027-v2"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/dual-step-resume-validation-20261027-001/vero-stale-client-mount-evidence.json",
+          "sha256": "494493fe66fde3db16d85624ad03cf25af6cf4dbf78ee193e1d3429076cd4dcd",
+          "bytes": 1470,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/dual-step-resume-validation-20261027-001/runtime-container-probe.json",
+          "sha256": "39088ed2f39e951881052006e8aa3ee0527bb401506226f34724d7130979b368",
+          "bytes": 1060,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/dual-step-resume-validation-20261027-001/vero-runtime-live-rpc-probe.json",
+          "sha256": "5b1d73f255752690bd531a9a9199d9615d773e6638e6012b78b53a18de926692",
+          "bytes": 2191,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_vero_runtime_binding.VeroRuntimeBindingTests.test_frozen_environment_cannot_select_old_transport_from_workspace",
+        "regen.tests.current.test_vero_tool_runtime_migration.VeroToolRuntimeMigrationTests.test_resume_preserves_frozen_artifacts_and_full_predecessor_chain",
+        "regen.tests.current.test_vero_tool_runtime_migration.VeroToolRuntimeMigrationTests.test_modified_transport_event_is_rejected"
+      ],
+      "minimal_reproduction_input": "旧PYTHONPATH frozen config +新release路径；从workspace cwd启动子进程，验证module来源与容器/backend/tool.py SHA、diagnostic --help",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-CODEX-RECOVERY-COST",
+      "title": "同应用continuation仍多次全历史解码校验并逐文件sync",
+      "category": "性能",
+      "machine": "B",
+      "root_cause": "991 commits嵌套约6.07GB逻辑证据；preflight/carry/append进行三次语义验证，HEAD后另需decode+hash；普通continuation不进入native_audit_repair的批量copy上下文，21000+小文件逐个sync。",
+      "status": "observed and audited; recovery completed without mutation; general optimization not deployed",
+      "certainty": "confirmed",
+      "source_step": {
+        "source_acceptance_sequence": 991,
+        "batch_request": 628,
+        "source_ledger_head": 33396,
+        "destination": "cont-20261027-005",
+        "batch_files": 10039,
+        "document_files": 11064
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/dual-step-resume-validation-20261027-001/codex-recovery-cost-audit.json",
+          "sha256": "5f4818938d55d235a6f289dea3717c8e6339be43aed5fccddbd4a09f9a3a977a",
+          "bytes": 11557,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/dual-step-resume-validation-20261027-001/codex-live-validation.json",
+          "sha256": "fb1ffc0dbd9844508746fbcd20410a6372c0e7a7b53a9e1f08c6655756d60495",
+          "bytes": 24262,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_merkle_copy_repair.MerkleCopyRepairTests.test_shared_objects_are_checked_once_per_batch_and_again_on_next_copy",
+        "regen.tests.current.test_merkle_copy_repair.MerkleCopyRepairTests.test_normal_journal_write_keeps_fsync_even_inside_copy_batch",
+        "regen.tests.current.test_continuation_memory.ContinuationMemoryTests.test_nested_workspace_forks_preserve_proofs_costs_seals_and_memory",
+        "regen.tests.current.test_continuation_memory.ContinuationMemoryTests.test_changed_commit_between_preflight_and_copy_is_rejected"
+      ],
+      "minimal_reproduction_input": "合成深度2 continuation+共享Merkle证据+多小文件；记录decode/hash/sync调用次数及耗时，验证篡改/竞态检测不变",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-CODEX-ORDINARY-PROOF-RED",
+      "title": "Codex batch628仍有5个未闭合目标，非timeout或传输故障",
+      "category": "正常证明失败",
+      "machine": "B",
+      "root_cause": "resolveAddressBits_ccorres候选执行到done仍余5个subgoals，returncode1、timeout=null；最近无GREEN不能自动归为基础设施停滞。",
+      "status": "normal proof exploration; continuation preserves11 accepted",
+      "certainty": "confirmed",
+      "source_step": {
+        "batch_request": 628,
+        "acceptance_sequence": 991,
+        "acceptance_commit": "fb3ef723446bbb4b816655a03c7d8e512e834b7b364f5155fe52c8ebd546cc15",
+        "check_started": 33362,
+        "check_completed": 33376,
+        "tool_outcome": 33380,
+        "native_error_line": 2963,
+        "draft_sha256": "85b81a1532bf225193c30ff0f5b1c28d34e041d39ab1f4368ed55acf5a129bc8"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/dual-step-resume-validation-20261027-001/codex-live-validation.json",
+          "sha256": "fb1ffc0dbd9844508746fbcd20410a6372c0e7a7b53a9e1f08c6655756d60495",
+          "bytes": 24262,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/dual-token-stall-audit-20261026-001/audit.json",
+          "sha256": "1b58aa763bf835fd16b8917e868735ec1cc4dded21f9b91f5c0fea2623ff4e53",
+          "bytes": 989075,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_proof_commits.ProofCommitsTest.test_green_binding_and_immutable_prefix",
+        "regen.tests.current.test_proof_commits.ProofCommitsTest.test_uncommitted_candidate_and_missing_commit"
+      ],
+      "minimal_reproduction_input": "batch628 request、候选源码、binding、native result/log；oracle rc1/open5，先前11GREEN不变",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-VERO-RECOVERY-CHANGED-ARTIFACT",
+      "title": "不同iteration源码不能复用旧完整评估报告",
+      "category": "比较局限",
+      "machine": "B",
+      "root_cause": "iter005模型已改变c0236:prove，artifact SHA不同于iter004；旧eval report即便14GREEN也未验证新候选。恢复全native检查有成本，但不能复制report伪装已验证。",
+      "status": "normal recovery re-evaluated iter005; no unsafe report reuse",
+      "certainty": "confirmed",
+      "source_step": {
+        "old_iteration": "iter-004",
+        "recovered_iteration": "iter-005",
+        "changed_slot": "c0236:prove",
+        "old_artifact_sha256": "ca2237edb7b22ae04d59d4970afaa3b1ef7999c2687ba2ef2af0ff03f9190e4f",
+        "new_artifact_sha256": "a5b7c6e4607c94258b4f1602d85dce877a0290d55eb41a2f97f2f05c2c95d917"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/dual-step-resume-validation-20261027-001/vero-resume-reuse-audit.json",
+          "sha256": "96da0902f30cf1816f086c2dc5264ea381f5662a274302c7fe83a9abce5461b7",
+          "bytes": 2986,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "same-iteration artifact/report digest match与cross-iteration changed slot反例；持久缓存必须完整绑定context，当前无安全whole-report跨进程复用",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "B-MEDIUM-XHIGH-COMPARISON",
+      "title": "medium/xhigh产出差距不能单独归因推理深度",
+      "category": "比较局限",
+      "machine": "B+A historical",
+      "root_cause": "原始归属信息、规划计费、分组/导入结构、框架修复、恢复开销、机器/槽位条件不同；长GREEN间隔混合正常探索与框架错误，缺配对对照。",
+      "status": "requires controlled comparison; no causal benefit/no-benefit claim established",
+      "certainty": "comparison limitation",
+      "source_step": {
+        "experiment_level": true,
+        "proof_step": null
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-owner-blind-input-20261024-001/README.md",
+          "sha256": "3bf67d72011962585d91ba1e9e100b98aa85a4b64b73b6c46a1cd64bce1a3391",
+          "bytes": 5650,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/REPORT.md",
+          "sha256": "205e78d09790ced4bdd8cb51c439f6a6c0cd6c3dbf9030dd181d78d6810e49c5",
+          "bytes": 12197,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/dual-token-stall-audit-20261026-001/audit.json",
+          "sha256": "1b58aa763bf835fd16b8917e868735ec1cc4dded21f9b91f5c0fea2623ff4e53",
+          "bytes": 989075,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "冻结相同dataset/model输入/预算/实现/资源，多个seed或轨迹；token去重口径与有效时间分开",
+      "raw_data_availability": "older deleted runs lack raw replay; retained summaries and current evidence only"
+    },
+    {
+      "id": "A-STALL-UNCLOSED-CLOCK",
+      "title": "SessionStalled遇未闭合item升级全局计时暂停",
+      "category": "框架bug",
+      "machine": "A historical",
+      "root_cause": "900s无有效工具/证明进展触发SessionStalled；本地停滞没标明确中断，_generation_stop进入未闭合agentMessage校验，generation_clock_untrusted关闭并行全局预算。底层最终静默是网络/provider/client哪层未证实。",
+      "status": "provider-feedback repair and once resend recorded; original cost retained",
+      "certainty": "confirmed",
+      "source_step": {
+        "session": "6d1a9458870c4677a50e69c1cac8a198",
+        "theory": "Thread_State_Primitives",
+        "transcript_started_line": 296,
+        "edit_error_line": 9532,
+        "stall_line": 9537,
+        "parallel_cancel_line": 9189,
+        "stopped_utc": "2026-10-24T22:41:03Z"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-pause-audit-20261024-001/REPORT.md",
+          "sha256": "4437152a2c38602ad62e2b0aa9a7760d9018b77967147f3aaa20e7ecf295ac44",
+          "bytes": 12790,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-pause-audit-20261024-001/evidence.json",
+          "sha256": "7374d73612c1fbe9baf89267ad5516ec06beddf7eba38fa19538075e776dba60",
+          "bytes": 13112,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-pause-audit-20261024-001/reproduce_parallel.json",
+          "sha256": "11449fa51f25890ac62213d5eee891e7ab10f720701ad87834ba98b4c78e8493",
+          "bytes": 845,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_provider_feedback_session.ProviderFeedbackSessionTests.test_silence_with_unclosed_item_has_explicit_interruption_not_clock_fault",
+        "regen.tests.current.test_provider_feedback_session.ProviderFeedbackSessionTests.test_repeated_tool_read_loop_is_not_misclassified_as_network_failure",
+        "regen.tests.current.test_parallel_feedback_retry.FeedbackRetryTests.test_default_once_replacement_preserves_work_and_passes_request_identity"
+      ],
+      "minimal_reproduction_input": "真实session+budget bridge模拟unclosed item / explicit interrupt / no-unclosed三分支；模型反馈超时与信息进展deadline分开",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "A-SILENCE-ROOT-CAUSE-UNKNOWN",
+      "title": "同时静默不构成已确认主机断网证据",
+      "category": "运行资源",
+      "machine": "A historical",
+      "root_cause": "TLS/SSE异常确实发生并恢复；最后两worker在0.317s内静默，但无连接生命周期/流量时间戳/部分缓冲区观测，无法区分网络、远端或app-server。",
+      "status": "unresolved underlying cause; do not assign network credit by assumption",
+      "certainty": "unresolved cause",
+      "source_step": {
+        "last_feedback_utc": [
+          "2026-10-24T22:26:18.923Z",
+          "2026-10-24T22:26:19.240Z"
+        ],
+        "last_sse_timeout_transcript_line": 9022
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-pause-audit-20261024-001/network-evidence.json",
+          "sha256": "14bacde9b97b45aeb0e733a261e173fc480339e4b3a2746979faf26b5d82d77f",
+          "bytes": 20825,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-pause-audit-20261024-001/REPORT.md",
+          "sha256": "4437152a2c38602ad62e2b0aa9a7760d9018b77967147f3aaa20e7ecf295ac44",
+          "bytes": 12790,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "协议事件尾部、连接状态非敏感metadata；不能用现在连通性补证历史断网",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "A-NATIVE-WORKER-READY",
+      "title": "Thread_State worker启动等待ready超时",
+      "category": "运行资源",
+      "machine": "A historical",
+      "root_cause": "NativePreparationError incremental batch worker timeout waiting for ready；已有18/18GREEN保留，无法从摘要单独定CPU、IO、进程哪层根因。",
+      "status": "historical snapshot: infrastructure_error/unsealed; current A not inspected",
+      "certainty": "confirmed symptom; root cause unresolved",
+      "source_step": {
+        "theory": "Thread_State_Primitives",
+        "acceptance_commit_filename": "001046.json",
+        "time_beijing": "2026-10-26T22:28:25+08:00"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/progress-20261027-0004.json",
+          "sha256": "40b343fa3240aa1cbf2118204b73096a9d56a1974b760317067461369ee04db8",
+          "bytes": 3438,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/README.md",
+          "sha256": "9d0b4263295fb3224df89e806cb77e0d85e8c059c2717dadf96960b6187732a1",
+          "bytes": 16932,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "worker ready协议+timeout receipt+prior accepted proofs；assert保留GREEN且区别candidate timeout",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "A-GAP-AUDIT-EMPTY-TARGET",
+      "title": "后置审计未取得目标定理",
+      "category": "框架bug",
+      "machine": "A historical",
+      "root_cause": "后置审计未取得目标定理这一症状已确认；它发生于seal后置检查，现有类别摘要不足以确认每个实例究竟是context解析还是候选未导出。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed audit symptom; specific root cause unresolved",
+      "source_step": {
+        "event_ids": [
+          "exec-28279107-b222-4083-a97a-d41dda2ea42c",
+          "exec-6e8cc4cf-013f-4511-ad03-97eaf63f559c"
+        ],
+        "count": 2,
+        "representative": {
+          "id": "exec-28279107-b222-4083-a97a-d41dda2ea42c",
+          "window": 2,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "finish",
+          "start_shanghai": "2026-10-26T08:03:40.831910+08:00",
+          "end_shanghai": "2026-10-26T08:09:26.404948+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/retry-001/session-transcript.jsonl",
+              "line": 9388
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/retry-001/session-transcript.jsonl",
+              "line": 9608
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/check-tasks/b31bdee4d25bacdec6d84d19e96db85bb8281ccc93add1d7faf6ee817dd68d3f/isabelle/Complete_Audit_CRefine_Capability_Transforms.log",
+              "line": null
+            }
+          ],
+          "details": {
+            "task_id": "b31bdee4d25bacdec6d84d19e96db85bb8281ccc93add1d7faf6ee817dd68d3f",
+            "request_number": 447,
+            "failure_identity": null,
+            "source_sha256": "0dff316baec8495addcea514494e0173d448724308ce94ec2fbd868b6d88c2b7"
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "audit_empty_target"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=audit_empty_target"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-EDIT-VALIDATION",
+      "title": "edit_validation",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Capability_Transforms:exec-1214fa42-7aa7-4541-932f-8d8dfa29f8c3",
+          "CRefine_Capability_Transforms:exec-dedf44f7-de08-4f9a-a2ba-9d0965f09a73",
+          "CRefine_Capability_Transforms:exec-548656c4-7ea2-4692-8e51-07dc098373b9",
+          "CRefine_Capability_Transforms:exec-d9461bec-c3a9-43eb-a6c7-ae6a7a748d49",
+          "CRefine_Capability_Transforms:exec-5258eb6c-91f3-49de-8b92-90089eaa79e2",
+          "CRefine_Capability_Transforms:exec-663edb18-4b7b-488c-857f-2f63e60eb2c1",
+          "CRefine_Capability_Transforms:exec-07fdc880-ca51-4a50-bd56-a73deae692df",
+          "CRefine_Capability_Transforms:exec-0dfd0f82-b66e-420d-adf4-02f103892b28",
+          "CRefine_Capability_Transforms:exec-cf41270a-e7e0-45e9-80ae-9d5d631634e2",
+          "CRefine_Capability_Transforms:exec-0424247d-d513-4d5e-8130-6396f9dc1e4f",
+          "CRefine_Capability_Transforms:exec-1314f614-28dc-48fc-9ed5-53ce9e3f9c01",
+          "CRefine_Capability_Transforms:exec-da9b147c-8d80-4991-ae0b-71ec47d37e2a",
+          "CRefine_Capability_Transforms:exec-fd1b5b0a-85af-4c4c-9c3d-8a34f056ff76",
+          "CRefine_Capability_Transforms:exec-42237fb3-4e78-4ab9-8638-f6e211d03266",
+          "CRefine_Capability_Transforms:exec-399dd000-b917-431d-a5cd-cadc37636d6f",
+          "CRefine_Thread_State_Primitives:exec-2ab09952-a973-4fe1-a936-a6c38d241fd2",
+          "exec-2b8d9865-127a-495e-b140-3d1a80b8be31",
+          "exec-271b621b-1b9f-40c8-94b3-5dc04e76487c",
+          "exec-6a08f82b-4d45-4b79-b2a8-c1b0aa93dd27",
+          "exec-1f6de999-1c49-4971-94c0-cb8a2cf694ab",
+          "exec-1ab38b90-1870-40a4-8ae6-996d67ebb030",
+          "exec-6ec60f09-77f3-4c84-a51a-9f787d227652",
+          "exec-b364309b-22a9-4391-bbfc-ba2937a9334d",
+          "exec-40201d20-45a6-4476-8646-4b3c7996cf6d",
+          "exec-32429f25-4c24-40b3-8039-db1d9e5462ad",
+          "exec-f5f38ab2-937b-449b-9bb2-d834e1df1a49",
+          "exec-6a116fba-4887-4bbc-9256-cfd4235f4ba3",
+          "exec-fa8dfe20-be28-4276-9d01-45e4ecb8ac75",
+          "exec-33e915e9-ac4c-4209-8cf7-dbdcfb525a0f",
+          "exec-e3b99690-9ee5-433f-953b-51ee50d1202f",
+          "exec-34bf6a09-1d71-4e33-9757-fe2a2827a551",
+          "exec-7b46c3cf-8624-4d5f-b17d-69c0ea20ea0e",
+          "exec-6810e576-06ab-4437-a1ee-1274a01b80fb",
+          "exec-3ad3b5ad-ead4-474c-af5e-f0d9ae53141b",
+          "exec-1812ab92-dd83-4913-9854-fb8192d08327",
+          "exec-8737ee6b-3817-480c-b566-b3b56495d889",
+          "exec-e1311b25-0fdf-4313-a597-69c677beff67",
+          "exec-2699af0d-c761-4f06-b5be-824293a6c511",
+          "exec-b0e1e977-c86a-4f42-83a0-94f6c0ad90ea",
+          "exec-361aa2dc-8e28-43d6-ba7f-fef55fb5b8a2",
+          "exec-d14d320b-5772-4594-8a1a-1e9d160c724a",
+          "exec-d14c9875-b532-4b7b-b82a-d893d365de97",
+          "exec-afd68747-2905-4ac0-afec-f8df909baba7",
+          "exec-26aba89a-ae38-4896-9f51-5d58fae5c4b9",
+          "exec-c7334baa-1c0d-4417-9581-08803a6bc2bc",
+          "exec-27ccddf4-2681-420a-91c3-258d429634a7",
+          "exec-f1c133b1-2bbe-48fc-bfc5-f0fe698a1dc2",
+          "exec-6ecf8f83-52d9-44a3-8ad0-da15cde4797d",
+          "exec-4b88d4fd-4f1f-4a00-821e-7464d92912ad",
+          "exec-d8343d2f-88d2-4a01-8204-bc67c5cc0bc0",
+          "exec-17bf290f-74e1-47c3-af1d-257dbbe01494",
+          "exec-f10eef38-804f-401b-bdb7-122bc30d1a3d",
+          "exec-143b28ab-50bc-4fa2-bd36-d51c0cdbe441",
+          "exec-1db88be3-8ba2-4988-bcc8-153a5df7334e",
+          "exec-4bca1dc3-6189-4880-a6b2-e59aeb61177d",
+          "exec-d6ef50f4-53fe-4652-913e-c0d413b8dfb4",
+          "exec-ca1ffacc-0a2a-4510-be92-0a5c871ea456",
+          "exec-28841e3d-a24b-4e9a-93c4-279ff8246c71",
+          "exec-348f1007-abb2-453a-a4cd-c5e2cbb8c035",
+          "exec-fd928659-c3d9-4713-b93b-fba7c9791a04",
+          "exec-a6fe04b2-bdcb-4a16-8238-8c3c46b5bc29",
+          "exec-b0253b0c-014a-43e8-b559-02cb815cc254",
+          "exec-255211ee-a526-423e-aca4-503a0f7a6283",
+          "exec-25aac078-bf85-4691-8abc-296898d22c15",
+          "exec-bf9416ef-7076-401f-bb56-85f598fe2df1",
+          "exec-a2ae29c5-d382-43e3-aee3-9007dcd0b826",
+          "exec-2be7100d-5753-4c55-a2d1-e8124d8b0c71",
+          "exec-b80e22d0-b301-4e81-aa9b-58030cf09137",
+          "exec-f75c0a1f-4868-43ec-b6e5-3653fb700a7d",
+          "exec-dc43bec3-7d4f-4f0b-b847-ebf4b661ea27",
+          "exec-b72e7771-bdb1-4436-bf32-329901a3afcf",
+          "exec-84aec607-2403-48a7-b702-09df68167f5f",
+          "exec-602681a4-493c-4e5a-92f3-69b1b79cdcc9",
+          "exec-10e1a354-8b8b-40e1-af2e-f3358a7db97e",
+          "exec-c335d654-fd3d-49ff-a564-b1a76d365216",
+          "exec-1a0ccf04-726f-477d-9887-3e76fa97dfa9",
+          "exec-f5d3fb30-7d6b-4ac4-b421-b81f5cd20632",
+          "exec-b1049cb1-2645-49ab-98bc-d96b0570acdd",
+          "exec-b8cb8afe-7a01-4cd7-8a92-0f92c3e9138c",
+          "exec-b9e0af3a-d684-4cca-829d-a8bf0399c272",
+          "exec-9990becd-c74d-4d66-861b-49682ff967ba",
+          "exec-e8483756-f2eb-461c-b3f4-16ba562088e1",
+          "exec-03844e4e-c950-4e73-96e5-ae12578c5ad8",
+          "exec-e2d46926-537f-4a19-aef0-02cb3d862fb6",
+          "exec-a1346f78-bbac-4a0f-98eb-408d0faf5f1e",
+          "exec-e2558462-4624-4a06-ba7c-553db887cbc7",
+          "exec-5763a028-8d95-400d-a94b-32e8d0bdeed7",
+          "exec-6e8554c6-efa5-4804-932e-df31492219b0",
+          "exec-b5131b2d-6608-4109-ad7b-c8047d006855",
+          "exec-5fa77bb9-3b42-4528-8d20-4f0b5396c754",
+          "exec-0f2ba989-30b6-4650-8a8f-7d1250360f62",
+          "exec-ff143f13-e9a3-458d-b893-7af798c9909f"
+        ],
+        "count": 92,
+        "representative": {
+          "id": "CRefine_Capability_Transforms:exec-1214fa42-7aa7-4541-932f-8d8dfa29f8c3",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "edit_theory",
+          "start_shanghai": "2026-10-25T19:12:01.316074+08:00",
+          "end_shanghai": "2026-10-25T19:12:03.073321+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 12806,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 12810,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": null,
+            "feedback_status": null,
+            "request_number": null,
+            "native_log": null,
+            "timeout_scope": null,
+            "timeout_seconds": null,
+            "source_sha256": null,
+            "native_diagnostic_sha256": null
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "edit_validation"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=edit_validation"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-INVALID-TOOL-REQUEST",
+      "title": "invalid_tool_request",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Capability_Transforms:exec-17d1587a-7525-48b1-9b4c-686a48130afa",
+          "CRefine_Capability_Transforms:exec-692548c7-fa1c-4aa0-a8f2-dae74c0708df",
+          "exec-e8bbda85-20ba-4f76-b331-030e64c535c3",
+          "exec-6b65b382-d5de-470b-88ec-8acd7b4dbad2",
+          "exec-e881cf20-e5f0-4f81-b958-28a0cc1b324b",
+          "exec-c749d487-0fd5-46c6-943f-9ec1a20cd5a8",
+          "exec-0a818ef0-ea44-4593-be26-1456d494c81b",
+          "exec-2cf29409-0f40-401e-8e16-20a8a49bfc58",
+          "exec-8ae27246-dd07-43b8-a97e-b1ee42658523",
+          "exec-06c98579-06e2-459e-aac9-901f4c6b8e04",
+          "exec-16cfbafa-b9d6-44e7-b126-ef2af42385db",
+          "exec-5c905491-8dc0-434d-b4d7-f14107e2bd37",
+          "exec-7ddb3aa3-91ff-474b-9db0-28d8c5653852",
+          "exec-1eac880f-4935-4ada-8c9d-3b9a0d23991e",
+          "exec-74386499-35cb-436b-98b4-2a976172c030",
+          "exec-c51be79c-68f4-4c17-9694-65a89778917e",
+          "exec-172ca553-174e-4a0e-8ef9-1df85bb0f567",
+          "exec-f5adf6cd-94ca-4c00-b113-b90b4ed9e430",
+          "exec-96560ac5-8ed4-4ac9-b5fd-5e6af2f7f994"
+        ],
+        "count": 19,
+        "representative": {
+          "id": "CRefine_Capability_Transforms:exec-17d1587a-7525-48b1-9b4c-686a48130afa",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "diagnose_failure",
+          "start_shanghai": "2026-10-25T20:55:54.805532+08:00",
+          "end_shanghai": "2026-10-25T20:55:54.916740+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 17924,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 17927,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": null,
+            "feedback_status": null,
+            "request_number": null,
+            "native_log": null,
+            "timeout_scope": null,
+            "timeout_seconds": null,
+            "source_sha256": null,
+            "native_diagnostic_sha256": null
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "invalid_tool_request"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=invalid_tool_request"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-NAMESPACE-FACT-LOOKUP",
+      "title": "后置审计locale短名查找失败",
+      "category": "框架bug",
+      "machine": "A historical",
+      "root_cause": "草图检查和seal后置审计在包装context之外/global context按节点短名查locale事实；19次与正文18次Undefined fact分开，不把前者归普通证明错误。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Capability_Transforms:exec-90a5e82c-f310-44b3-87cf-af3a08e5e6dd",
+          "CRefine_Capability_Transforms:exec-c0746e6d-3944-4960-8684-8b96f237404e",
+          "CRefine_Capability_Transforms:exec-0df616ed-7fdd-49c1-b1d4-05984cac83de",
+          "CRefine_Capability_Transforms:exec-3e4627c3-5eea-414c-ad55-f0af14b8c82e",
+          "CRefine_Capability_Transforms:exec-594ea789-ed6f-468c-a5c7-6cde9c1f5907",
+          "CRefine_Capability_Transforms:exec-66b5f303-50ba-4323-a19a-34ad843649f4",
+          "exec-9ff5ccc3-7b53-4f4c-b227-2b82577db11f",
+          "exec-2c451ac0-8593-4c7a-8954-21265c9655ec",
+          "exec-b2f87ec2-6de1-4daf-9b8f-f2dc1f424c93",
+          "exec-bb0361e5-1d2a-4668-9139-75a130ab37fe",
+          "exec-bdb3556f-d498-4d64-a4ef-33ad91d5dc8f",
+          "exec-11927ba3-b580-461b-ab64-94d675915254",
+          "exec-c7654214-a066-471c-9317-41a6c5b13acd",
+          "exec-1cc353cb-f5c3-44c3-affd-102f1cde0e26",
+          "exec-1bbfad71-6e60-44b3-bbab-056f8013047e",
+          "exec-91a75589-0814-4179-bbd8-f3ccc0123e99",
+          "exec-6ec6391c-04b2-4f60-9e4c-d9c9dba9497f",
+          "exec-650b56c3-df26-46f0-b4de-d5cc8cd1296e",
+          "exec-24986ad2-2ded-4e2a-bc89-f519745047c6"
+        ],
+        "count": 19,
+        "representative": {
+          "id": "CRefine_Capability_Transforms:exec-90a5e82c-f310-44b3-87cf-af3a08e5e6dd",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "check_sketch",
+          "start_shanghai": "2026-10-25T20:40:23.401312+08:00",
+          "end_shanghai": "2026-10-25T20:41:19.551465+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 17128,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 17134,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": null,
+            "feedback_status": null,
+            "request_number": null,
+            "native_log": null,
+            "timeout_scope": null,
+            "timeout_seconds": null,
+            "source_sha256": "00cb0dbdf13037470a735f2fbd6f8c96c52e463d97e3a07b9a4d20786f944bd9",
+            "native_diagnostic_sha256": null
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "namespace_fact_lookup"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=namespace_fact_lookup"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-NATIVE-TIMEOUT",
+      "title": "原生执行或审计超时",
+      "category": "运行资源",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Capability_Transforms:exec-ca76ed2d-c2cd-48fd-b2c3-c32ef9150e35",
+          "CRefine_Thread_State_Primitives:exec-53bdb375-784c-48a0-94f7-7e2c8d1df95b",
+          "CRefine_Capability_Transforms:exec-4227e7cf-573e-41e3-bcb0-e527c7e64886",
+          "CRefine_Thread_State_Primitives:exec-201346fb-c688-4021-810e-12e6908e4348",
+          "CRefine_Capability_Transforms:exec-cd39cd55-8948-45ca-8593-8cf5399ab5b3",
+          "CRefine_Capability_Transforms:exec-bc5c58b3-7ed2-462f-af66-38ecdf323532",
+          "CRefine_Capability_Transforms:exec-dd0136f9-c126-4177-baea-b71772e92eae",
+          "CRefine_Thread_State_Primitives:exec-47eb106f-76f6-4354-bd48-6492e521c72f",
+          "CRefine_Thread_State_Primitives:exec-9fdac285-a90b-49ec-850e-579609d1ba41",
+          "CRefine_Capability_Transforms:exec-6fb39548-63a3-48e4-bd67-85bc0db11bcb",
+          "CRefine_Capability_Transforms:exec-7bc892aa-549c-409b-9a9a-380032a41df8",
+          "CRefine_Capability_Transforms:exec-0643d339-4ab6-4b3d-8988-a6ac70b93b6f",
+          "CRefine_Capability_Transforms:exec-6af9a64e-282c-4db2-b464-a5b7180173b9",
+          "CRefine_Capability_Transforms:exec-d58d3107-ae22-4bda-b3c0-d7980db56918",
+          "CRefine_Thread_State_Primitives:exec-9cbbc18f-e7f7-44ee-8464-9883fa78e288",
+          "CRefine_Capability_Transforms:exec-f59c4d5f-17d9-4e59-833c-b269b352834e",
+          "CRefine_Capability_Transforms:exec-6eee859a-e808-4bdd-aa50-539ae3ad9463",
+          "CRefine_Capability_Transforms:exec-2d5696ad-d6dc-47d2-94b5-053d9a096aa3",
+          "CRefine_Thread_State_Primitives:exec-29f6047d-4028-47ad-9709-b27a2c6b130a",
+          "CRefine_Thread_State_Primitives:exec-b5be1198-8ecc-4d92-815b-c384cf91c23f",
+          "exec-2af84cc1-6770-401a-ac55-94d49db9ca6b",
+          "exec-f89db4ff-a334-483c-bb90-a41b743c1626",
+          "exec-0f7511dc-db41-425f-b0a3-35001e4486ef",
+          "exec-2f0992e4-23b8-46cf-b781-beda16f2caed",
+          "exec-cced6096-92da-4307-9284-ca6dd7502a53",
+          "exec-d9ca3305-df2e-41f4-ba55-114db8cb94e2",
+          "exec-2b180ed1-229d-4610-9e57-87e715277d6e",
+          "exec-f6b45ed0-a167-484d-80bd-dba97e99fbeb",
+          "exec-5fcb0d36-b13e-4df4-b80e-4ec36700070d",
+          "exec-632c7738-a481-478e-a8ec-31a375173f30",
+          "exec-12eefb63-4a01-4881-b662-1d4bfe444be0",
+          "exec-81f6455d-d53a-4187-8f40-3d2922115cb5",
+          "exec-1aa1723b-5dac-454a-bbaa-4afe58e6e475",
+          "exec-6f3e9734-a3f7-43b8-96d0-b8180560d29b",
+          "exec-2160347f-d1a0-4557-be77-95c589668781",
+          "exec-e5ee450c-7370-4d03-b58d-f87c96d984c8",
+          "exec-12ee294c-aeff-4385-b9be-44605dcd7e20",
+          "exec-8d98802f-c4d5-4f33-bf52-e686807e4199",
+          "exec-5713847f-a64b-4933-ae1a-f55f20d41454",
+          "exec-00a1b222-2907-4140-98b7-e44aa6e04fb9",
+          "exec-289e2ac1-6114-4a36-be25-b4386c88a91a",
+          "exec-066e9a0f-d7a8-4e0f-b698-f52518e326c0",
+          "exec-b82dcdbb-8b3f-466b-95c8-c4ebda8bae8b",
+          "exec-b75899b2-a4d3-401c-baa1-027f8cc47c42",
+          "exec-de16b750-fe4c-4cf1-a26c-c6d614c30911",
+          "exec-af7d9096-a918-4acd-8392-3680b6f661e4",
+          "exec-215d7894-1a02-4ad2-ba6c-ce1f2f1880cf",
+          "exec-751c5a8b-062d-4ffc-9e22-436f17c599aa",
+          "exec-c5d803c9-1971-4dca-be5c-0dadab947dc2",
+          "exec-b8aef892-2704-47ba-a4aa-158f694d8396",
+          "exec-9a9d597a-bea0-4c9c-ac1b-97d70f4c05d9",
+          "exec-eeb80648-9d76-4f2a-91e7-3a03caab76df",
+          "exec-987c5745-dc60-4726-b6ed-c1e0d023df8f",
+          "exec-4823723f-50af-4071-94ba-dae4187a5925",
+          "exec-26d773f9-e43f-4f70-88c4-f630e4d811bc",
+          "exec-a4309f70-f11c-4ad3-b531-312725f9dfbb",
+          "exec-655ce182-4e56-416b-9c3f-2693b8a92b10",
+          "exec-ef54b3ed-09c2-46f2-a51a-59761b1be38d",
+          "exec-6b5f68c6-eb09-4d70-bf34-4d3a906c7eae",
+          "exec-1b329e84-e9e3-48f2-85d5-071aa3bae501",
+          "exec-e5809334-20b5-42e4-ab8e-82c27b5a93f2",
+          "exec-0adf1da9-3be0-4b97-9559-2590a1f98bfb",
+          "exec-f2cd9660-7dd2-4b9a-9514-e14c1acf484e",
+          "exec-21c8b9a3-4181-42e8-9cf2-fe9c2e3bf6e1",
+          "exec-99561bfd-df67-4ca6-b312-9291e9826878",
+          "exec-aa2ff13f-f263-4cbe-80b1-8c232eb041af",
+          "exec-f9ecee7b-579b-44ca-91c8-ed26e656acd6",
+          "exec-16696f25-2cb0-4a07-8658-1260b9dcee47",
+          "exec-2edbcb62-4470-4f62-8af8-bc622ff425c0",
+          "exec-31595728-a05a-4d7f-91cd-5e563f2811b3",
+          "exec-827234fe-e025-4f4d-8483-3add67c3bcdd",
+          "exec-c881fc61-f36d-4baa-afee-24a510802208",
+          "exec-cd44cf1c-9931-41ac-a65f-d854d4a5fffd"
+        ],
+        "count": 73,
+        "representative": {
+          "id": "CRefine_Capability_Transforms:exec-ca76ed2d-c2cd-48fd-b2c3-c32ef9150e35",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "check_theory",
+          "start_shanghai": "2026-10-25T18:11:46.702341+08:00",
+          "end_shanghai": "2026-10-25T18:14:32.834172+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 10779,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 10847,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": "red",
+            "feedback_status": "rejected_batch",
+            "request_number": 245,
+            "native_log": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/check-tasks/107a92514d5d41378a8253ec622b0d3d8f430cc5f36dbecfa1a25f9f4f694540/isabelle/regen-batch-db27adf4cb4f4036/31.log",
+            "timeout_scope": "candidate-watchdog",
+            "timeout_seconds": 120,
+            "source_sha256": "10db73c41733f64d39e953c4db72ae9bb33c9e3c8bd1386f1e4e19e1eb93f292",
+            "native_diagnostic_sha256": "3a99134ce53851b1702a76f851db5a79f92cac65daba7cad025b70fbdf8d620f"
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "native_timeout"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=native_timeout"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-OPEN-GOALS",
+      "title": "open_goals",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Capability_Transforms:exec-73ec92ed-de4c-4d8f-840c-2bc4a2325409",
+          "CRefine_Capability_Transforms:exec-fe1db194-10cf-4981-a0ab-b2598e92a36f",
+          "CRefine_Capability_Transforms:exec-b52a9ecb-0c59-4fa6-9736-3e092b3eb871",
+          "CRefine_Thread_State_Primitives:exec-8744b302-d882-4621-b4a5-a8f99293d62d",
+          "CRefine_Thread_State_Primitives:exec-5b5684f0-30d4-4423-812c-ac9497891070",
+          "CRefine_Thread_State_Primitives:exec-05df9fd7-4ba6-409c-b41e-eaf3c92b201c",
+          "CRefine_Thread_State_Primitives:exec-730d0261-929d-46f5-b03b-810b97396617",
+          "CRefine_Capability_Transforms:exec-3bc4fc4b-59a2-4c0e-bc56-bc31df9afa6e",
+          "CRefine_Thread_State_Primitives:exec-b724d299-c830-4f6a-82ed-f3c4f779e5aa",
+          "CRefine_Thread_State_Primitives:exec-c74a9304-bdc4-4840-92c4-f0503b760adf",
+          "CRefine_Capability_Transforms:exec-a676e871-4e12-43ea-916f-4b79e231f3f0",
+          "CRefine_Thread_State_Primitives:exec-632c98df-79e4-4894-9165-3ea5e255142f",
+          "CRefine_Capability_Transforms:exec-ecacac0c-b506-46e0-8f18-0cab507c4cdd",
+          "CRefine_Capability_Transforms:exec-11dd70b7-4561-417f-8658-6474502fdab0",
+          "CRefine_Capability_Transforms:exec-72f32f90-f3c7-4ea7-adf4-6b63585aa24a",
+          "CRefine_Capability_Transforms:exec-0a1c99d5-577d-4a54-840d-21d3716bb5b5",
+          "CRefine_Capability_Transforms:exec-6b3abcc5-33ce-4abf-9226-afb49ca7434c",
+          "CRefine_Thread_State_Primitives:exec-8156e14d-c100-40e8-881e-91450f34dd78",
+          "CRefine_Capability_Transforms:exec-ffa6e82e-6bb7-47f8-ac7d-bcaa85fc23cd",
+          "CRefine_Thread_State_Primitives:exec-9256a43d-2340-48b0-bbec-473aaea950ca",
+          "CRefine_Capability_Transforms:exec-5a7e2c98-97f8-4326-be4d-99fd2df696ab",
+          "CRefine_Capability_Transforms:exec-6f0651db-3d15-4c74-81b6-2c374b6b3403",
+          "CRefine_Capability_Transforms:exec-3de674ee-bde3-4f6c-b636-39483aa1bfb5",
+          "CRefine_Thread_State_Primitives:exec-1314c92d-7b24-4146-961c-fb8f0df66154",
+          "CRefine_Capability_Transforms:exec-d9ab10a9-57c6-463a-8763-3d2bfd34b465",
+          "CRefine_Capability_Transforms:exec-b87fa9d7-54dd-4932-9fd4-8455a263b498",
+          "CRefine_Thread_State_Primitives:exec-bb490c01-f5e3-4c95-9ffc-258d48764626",
+          "CRefine_Capability_Transforms:exec-f8b1a0c1-0831-4649-870a-daa93f421463",
+          "CRefine_Thread_State_Primitives:exec-ec0c74a7-a626-46a0-ad20-fcc9a361ee0f",
+          "CRefine_Thread_State_Primitives:exec-7b02ddb0-f635-46d5-8edd-a789f670c6d1",
+          "CRefine_Capability_Transforms:exec-f51e960d-4c13-4fc2-b79b-2cd7fb74c785",
+          "CRefine_Thread_State_Primitives:exec-52e63dbf-7d00-465c-b0d3-d4472b0b5732",
+          "CRefine_Capability_Transforms:exec-0918818f-e093-41e6-9b3c-7797a3f8c28a",
+          "CRefine_Thread_State_Primitives:exec-43d129f9-af2c-4037-bfac-7524d46ad384",
+          "CRefine_Capability_Transforms:exec-dd6f984e-446e-4faa-963b-93d19cc2e280",
+          "CRefine_Thread_State_Primitives:exec-102f7b0d-85b0-4ca9-b184-3743a42211eb",
+          "CRefine_Thread_State_Primitives:exec-8915c8a1-b1a6-4e21-a96d-501504b2d023",
+          "CRefine_Thread_State_Primitives:exec-a4ea2b99-ccc5-42a2-b278-3a872d999b1c",
+          "CRefine_Thread_State_Primitives:exec-c43149c6-f16e-4d1a-bea4-7a96647768ee",
+          "CRefine_Thread_State_Primitives:exec-12a0232e-3424-473b-9c4a-6130e8bd1796",
+          "CRefine_Thread_State_Primitives:exec-b2365222-542c-48e9-809c-d6d35cab3b7c",
+          "CRefine_Thread_State_Primitives:exec-e5ef9231-7e24-4e6f-bb92-a0148eea226f",
+          "CRefine_Thread_State_Primitives:exec-c0a20fe0-94da-404d-8c7b-ab232f339c35",
+          "CRefine_Capability_Transforms:exec-de8b0240-a429-4011-b889-8712e3426184",
+          "CRefine_Thread_State_Primitives:exec-bf923893-0a81-4052-9ece-2e944e6e834a",
+          "CRefine_Capability_Transforms:exec-c5439dce-d2d2-4c09-b1c1-c7254510f758",
+          "CRefine_Thread_State_Primitives:exec-b0a503e1-a68d-4f36-b45e-eb16a81acda6",
+          "CRefine_Capability_Transforms:exec-f3e406d7-f2f3-469e-a320-9ff7f8254983",
+          "CRefine_Capability_Transforms:exec-d4ee7a8e-f3dc-46ca-90e0-87ef72c94543",
+          "CRefine_Capability_Transforms:exec-44bfd55e-c5dc-41f4-9a82-bf79de46c533",
+          "CRefine_Thread_State_Primitives:exec-c79d553e-be3c-4b58-b85a-2c582476f9e5",
+          "CRefine_Capability_Transforms:exec-cabd0207-0e4f-4db0-9f06-079844ca8b4a",
+          "CRefine_Capability_Transforms:exec-3691f060-a4b0-4a1f-a29d-4641ff152b94",
+          "CRefine_Thread_State_Primitives:exec-b95b1a4e-0806-4177-9d28-a310568b4363",
+          "CRefine_Thread_State_Primitives:exec-60a5ee07-f4cc-4458-ab1a-7c3f96f2e15f",
+          "CRefine_Capability_Transforms:exec-fc72b395-b68c-4093-81f8-9cf1927a2a91",
+          "CRefine_Capability_Transforms:exec-86e749e4-b55e-4cd2-80fb-f89b50d5103e",
+          "CRefine_Thread_State_Primitives:exec-e4bcfc07-b2ac-43fc-b67e-d76743d11c7b",
+          "CRefine_Capability_Transforms:exec-b21820fc-ad03-4fce-840c-d46c7e7037bf",
+          "CRefine_Thread_State_Primitives:exec-ea8bd507-b853-48f9-84ae-0e966e3c29b4",
+          "CRefine_Capability_Transforms:exec-2f2856ed-bd9f-4399-bd4b-bd6cf96930d1",
+          "CRefine_Capability_Transforms:exec-991f271c-06ca-4ba2-b2ff-069f019f3f07",
+          "CRefine_Capability_Transforms:exec-a8f84730-540e-407f-a2c7-e0fea2f0ad01",
+          "CRefine_Capability_Transforms:exec-e1233ca3-de5c-424a-8703-9bbd4d1c9141",
+          "CRefine_Capability_Transforms:exec-335d1e5b-64b0-40b4-9acf-c0ff2c76c9b7",
+          "CRefine_Capability_Transforms:exec-7be2f725-86c4-455c-a37a-b4a3ea6f0028",
+          "CRefine_Thread_State_Primitives:exec-0b182c45-a3e6-4b97-877f-f78e477aaaa3",
+          "CRefine_Thread_State_Primitives:exec-9ad28525-a661-4239-91d9-c33d6e659e30",
+          "CRefine_Thread_State_Primitives:exec-48777f30-b86e-47ac-a7cf-4d1ba0fae448",
+          "CRefine_Thread_State_Primitives:exec-acaae529-f7e8-4d57-b33d-15a71cdc6387",
+          "CRefine_Thread_State_Primitives:exec-f61a0ac9-7b57-47e6-9938-2e46fcefd3f4",
+          "CRefine_Capability_Transforms:exec-18dae17f-2561-4717-9524-86524df2098a",
+          "exec-d718a933-f1f5-49db-8836-005f89c3b2c0",
+          "exec-f9487e1c-0d71-4816-b194-848dc060828b",
+          "exec-60eab429-c62f-4822-b922-21af8e593bb2",
+          "exec-b4740c90-6b17-49bc-991b-ee78b43d9dac",
+          "exec-a4631e51-5cef-4e4f-9dc7-a78c4be1dcf3",
+          "exec-ef3925c5-24ac-4ab4-845b-3617cdbd7aef",
+          "exec-2918e904-e41d-4a10-b8a7-315fbd948c15",
+          "exec-29b4a71e-7cfc-4970-b83a-971a3d302408",
+          "exec-ef329dc4-9646-4dd1-abf3-6ac46dc6cd2a",
+          "exec-855fbe59-e569-4576-8a17-cd765817431e",
+          "exec-926dcd5b-c0d8-4956-8eaa-a7b22e6e79c2",
+          "exec-814e34a0-5d56-4eb5-b286-f719cef8b863",
+          "exec-3efa6178-a9d0-408d-a431-5eca1ff2678e",
+          "exec-43293fbd-12e4-4258-95a9-d41770a2b4e0",
+          "exec-c0a74ffe-296a-4da8-93b5-d5a4960741d6",
+          "exec-bec50a20-2def-418c-a14f-e01c2b2a6ff3",
+          "exec-4b2138b0-91b0-426c-966e-5d8388acf51f",
+          "exec-ce54b349-54dc-4ea1-8286-6d240781b994",
+          "exec-18b279e5-691e-4740-984b-362ae22a11ae",
+          "exec-8f55261d-6bb7-4dec-be14-3ce95daf2e83",
+          "exec-0a01eb1c-ccd8-4b6b-9160-689a3f332aaa",
+          "exec-48246cf1-3600-48ed-b05d-38a909860b49",
+          "exec-afccfe4a-8091-4c23-a1ce-1bac17d06015",
+          "exec-705b6f05-32be-43ab-9c4e-20f56bfedfed",
+          "exec-81f1f178-8d11-418f-b441-6e9f27651df1",
+          "exec-8b60dee1-f51f-4618-968a-2e77fb74dbeb",
+          "exec-b3de96ee-080b-4255-a817-9604133e04c8",
+          "exec-a1686608-073b-4779-b30f-01f7fde5f217",
+          "exec-ba593d80-0fc0-4073-8a12-4a65f8b5692c",
+          "exec-15a550d2-73d2-4325-9d28-aad8bbd75002",
+          "exec-48541ffd-88a9-4f68-958e-41cc534dc63d",
+          "exec-d39f6f3d-fad1-4f9a-92b5-cac01ce85f00",
+          "exec-e91a130c-f954-42fd-8a15-693e8851cdaf",
+          "exec-f0fdd9d1-3cd7-4fb1-9b79-7a09566af23e",
+          "exec-3097a6c3-f75f-457a-b934-93d73661c225",
+          "exec-5b2869d2-81fc-48f5-9e20-0f280dd8e3e1",
+          "exec-b678beba-255c-4ce5-9ad8-d57cf121c384",
+          "exec-944f0213-940e-4e19-8299-e00f6fb943f5",
+          "exec-51064d38-0d86-4174-919c-94d610685fb5",
+          "exec-4a69e3bd-0e56-44b3-9c6b-465c73045893",
+          "exec-e1fab4d8-21fd-48b2-a3fa-ab299409c851",
+          "exec-8e51317e-0916-4c80-a919-797ae769334b",
+          "exec-846bd03a-061c-4f04-be01-5b9057efd5fd",
+          "exec-4798c568-6378-42a8-8df8-52a3cc0a2450",
+          "exec-b4f7d9c2-208e-4f1e-9cd9-8374dbffdadc",
+          "exec-d6fb9e17-033b-47c7-a9ce-eb73bbf3db08"
+        ],
+        "count": 118,
+        "representative": {
+          "id": "CRefine_Capability_Transforms:exec-73ec92ed-de4c-4d8f-840c-2bc4a2325409",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "check_theory",
+          "start_shanghai": "2026-10-25T17:50:58.915234+08:00",
+          "end_shanghai": "2026-10-25T17:51:42.145006+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 10065,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 10071,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": "red",
+            "feedback_status": "rejected_batch",
+            "request_number": 237,
+            "native_log": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/check-tasks/107a92514d5d41378a8253ec622b0d3d8f430cc5f36dbecfa1a25f9f4f694540/isabelle/regen-batch-db27adf4cb4f4036/23.log",
+            "timeout_scope": null,
+            "timeout_seconds": 120,
+            "source_sha256": "ac6c819259740badea7e5f8f9999479c2b8ae50a31ec06170901d2d25d8aba36",
+            "native_diagnostic_sha256": "7ebc535c3664c7472786b4488202df4e63efe477d98388bb3ec7b087418a402f"
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "open_goals"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=open_goals"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-PROOF-METHOD-FAILURE",
+      "title": "proof_method_failure",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Thread_State_Primitives:exec-1c17d629-2d98-4e06-8629-8fe8165dfe45",
+          "CRefine_Thread_State_Primitives:exec-cd722028-468e-490c-a1eb-b4b5c0274a3c",
+          "CRefine_Capability_Transforms:exec-39b4a444-f9df-4a14-a675-d6792488fb3f",
+          "CRefine_Thread_State_Primitives:exec-136acada-5824-4ee0-b26f-3e8ff93eea00",
+          "CRefine_Capability_Transforms:exec-25e9bbcb-eaab-4516-bf39-bf893dc1fee9",
+          "CRefine_Capability_Transforms:exec-28371c44-6e82-40a6-acb1-02fc27eaf3ce",
+          "CRefine_Thread_State_Primitives:exec-0affd21a-c758-48f9-b117-ab91009e3b92",
+          "CRefine_Capability_Transforms:exec-20be4fac-f431-4cce-b2b1-d7f84aac5b93",
+          "CRefine_Capability_Transforms:exec-997446e3-dfef-4373-af15-e1c49c70bc79",
+          "CRefine_Thread_State_Primitives:exec-f052bc08-a232-4718-876d-030428de0011",
+          "CRefine_Capability_Transforms:exec-7c0fa0f4-8803-41ec-bbd9-6960ab22cf07",
+          "CRefine_Thread_State_Primitives:exec-d2c0bc68-5a1b-4a35-a11e-3741561d41a1",
+          "CRefine_Capability_Transforms:exec-50a2e6a6-a241-4a91-a88e-680ee4bbceb9",
+          "CRefine_Capability_Transforms:exec-2f046466-4d5a-4eff-a2f1-42a9bbd057eb",
+          "CRefine_Capability_Transforms:exec-5e81387e-6dfa-41fb-ad6a-f4811d1fd00a",
+          "CRefine_Thread_State_Primitives:exec-71aa3e94-8670-4e6c-9f6b-3391b6cf38cf",
+          "CRefine_Capability_Transforms:exec-46318440-0d1f-4824-81a4-78915b729aec",
+          "CRefine_Capability_Transforms:exec-eef1515e-8f73-424e-85cd-076707b0e2b9",
+          "CRefine_Thread_State_Primitives:exec-5e7fe2cb-6c8c-4bc5-b49b-063794402bd3",
+          "CRefine_Capability_Transforms:exec-9680c945-fa26-4bad-9ebe-2921569c1468",
+          "CRefine_Thread_State_Primitives:exec-a0e84129-2c9d-4d1c-af38-cf0d8731f185",
+          "CRefine_Thread_State_Primitives:exec-c8f90e0d-0029-43d6-9aef-5359659b681f",
+          "CRefine_Thread_State_Primitives:exec-1658b072-3079-4845-941d-3cd90a1918d7",
+          "CRefine_Capability_Transforms:exec-19f13047-db4d-42e5-bdab-a2f2a0c4a069",
+          "CRefine_Thread_State_Primitives:exec-03fa5201-d7e4-4b11-bea2-2f838d7626ac",
+          "CRefine_Thread_State_Primitives:exec-39dbbd93-5209-4951-9b3a-d1eac61d5dde",
+          "CRefine_Thread_State_Primitives:exec-b6d3d638-d832-4bdd-a4a7-73277559359d",
+          "CRefine_Capability_Transforms:exec-d2534232-ec69-4425-8d40-8adc76634a86",
+          "CRefine_Capability_Transforms:exec-27e0078f-8097-40d7-95ed-7271db1f417a",
+          "CRefine_Capability_Transforms:exec-574b463c-07d5-4a26-87c4-4c9afe16ea0e",
+          "CRefine_Capability_Transforms:exec-8c436c87-f1b3-4d04-a999-48b236d88a3b",
+          "CRefine_Capability_Transforms:exec-5df475c6-fda4-4452-a60c-75dd36d8ea1c",
+          "CRefine_Capability_Transforms:exec-ecfef86a-d068-4a92-afdd-0d737b726f11",
+          "CRefine_Capability_Transforms:exec-b4856ba6-ba9d-44c0-ade8-a43d4982edda",
+          "CRefine_Capability_Transforms:exec-5e720440-200d-4319-92ad-7f0cac3193bf",
+          "CRefine_Capability_Transforms:exec-4d9cd085-5911-4a65-9909-baa36454d3de",
+          "CRefine_Capability_Transforms:exec-ece73315-a8e4-4f00-807b-56d2235f33fe",
+          "CRefine_Capability_Transforms:exec-9c929a86-8641-4d2e-a0f8-cf6407a71a33",
+          "CRefine_Capability_Transforms:exec-1019e414-a502-48fc-a38c-1e0ea11fcb76",
+          "CRefine_Capability_Transforms:exec-46ca4d83-6840-430d-b0a1-558e39be63f8",
+          "CRefine_Capability_Transforms:exec-7fd485e6-ba3b-42a5-8209-892cf37b06a2",
+          "CRefine_Capability_Transforms:exec-177983ae-8d25-43af-96ab-2939e5a68282",
+          "CRefine_Capability_Transforms:exec-4f4790fa-2f6e-4fe6-88a2-5dcea9105934",
+          "CRefine_Capability_Transforms:exec-59f0b848-d496-4736-9ddf-70f3025b0175",
+          "CRefine_Capability_Transforms:exec-a86862c5-dfa0-4a02-ac9b-6d37a79268d3",
+          "CRefine_Thread_State_Primitives:exec-482ffad0-bad8-477c-b778-a27ddcc66e31",
+          "CRefine_Capability_Transforms:exec-627f903a-75d3-4474-8c68-e64e0f54bc96",
+          "CRefine_Thread_State_Primitives:exec-12d54a5e-395d-4323-b767-6ce9096621d3",
+          "CRefine_Capability_Transforms:exec-ccb8b861-878f-4232-a7af-bb57d3025fd0",
+          "CRefine_Thread_State_Primitives:exec-8cb97582-7567-4d5b-9199-617748857832",
+          "CRefine_Thread_State_Primitives:exec-9345192a-09c8-4730-8689-09e5d7e40333",
+          "CRefine_Thread_State_Primitives:exec-ccc70a5b-b349-418b-8e86-3396617ae3ce",
+          "CRefine_Thread_State_Primitives:exec-a48cf2e1-839a-46cd-9787-be7c29a61fe6",
+          "CRefine_Thread_State_Primitives:exec-902c71c0-b0dd-4d32-8297-9ec84c4c440b",
+          "CRefine_Capability_Transforms:exec-56aff44c-f65b-47e5-ad8d-06135d74a743",
+          "CRefine_Thread_State_Primitives:exec-d1a98664-742f-432a-82a8-27affd8e6a4f",
+          "CRefine_Thread_State_Primitives:exec-4944d277-a9f2-4432-8996-51de710c4e61",
+          "CRefine_Capability_Transforms:exec-6eb064b6-7af9-45ca-b330-035e73b473d3",
+          "CRefine_Capability_Transforms:exec-08d868df-642b-4f4a-a2c4-fff2dd5cf401",
+          "CRefine_Thread_State_Primitives:exec-6c14e701-b043-467b-a113-93623df101bf",
+          "CRefine_Thread_State_Primitives:exec-e2414d7f-f97b-4669-ad66-2a4a1de4bce1",
+          "CRefine_Capability_Transforms:exec-58c37f84-a329-42e9-830a-1f455ef56696",
+          "CRefine_Thread_State_Primitives:exec-68d55458-ac54-4b38-ab66-b938f76e6b35",
+          "CRefine_Capability_Transforms:exec-24f5367e-04b2-48d3-a8eb-8e046879791a",
+          "CRefine_Capability_Transforms:exec-3bc753cb-3889-4991-9224-bba79cd30720",
+          "CRefine_Thread_State_Primitives:exec-ddab71be-9922-4836-9938-662cff59ab59",
+          "CRefine_Capability_Transforms:exec-76510399-d9ba-4d28-ac41-d659e76722cc",
+          "CRefine_Thread_State_Primitives:exec-e3d1148c-761e-4c76-b453-22d3e2e091c4",
+          "CRefine_Capability_Transforms:exec-7bc709b1-6ab3-4a5c-b4b9-41dd08fa4f68",
+          "CRefine_Thread_State_Primitives:exec-dc5c340e-6c42-48e4-a61d-6f5e2d39fbfb",
+          "CRefine_Capability_Transforms:exec-4e80ef96-ded4-4787-9a50-42e11e769728",
+          "CRefine_Capability_Transforms:exec-47d60d92-b663-4990-8d2c-07f82519ac92",
+          "CRefine_Capability_Transforms:exec-55ea3c1c-63e6-4310-a07e-691257421cc6",
+          "CRefine_Thread_State_Primitives:exec-9a7a1723-b36e-45fc-87dd-375839292417",
+          "CRefine_Capability_Transforms:exec-cf8f940a-7db6-41c4-b728-3ef67bbf1eac",
+          "CRefine_Thread_State_Primitives:exec-3a752ca5-de35-4a1e-a1e7-14386772c157",
+          "CRefine_Capability_Transforms:exec-d44a2e46-fd5c-4916-b76f-9d8d72788f57",
+          "CRefine_Capability_Transforms:exec-6e67b720-377b-4b44-90ec-39b90604fadd",
+          "CRefine_Thread_State_Primitives:exec-53c73dde-bfa2-49ab-986a-546dcab584ea",
+          "CRefine_Thread_State_Primitives:exec-3255abaf-5b24-4089-a4a0-bb5300d92f7e",
+          "CRefine_Thread_State_Primitives:exec-cdee7d24-708d-4c33-897b-e4436faa1f6c",
+          "CRefine_Thread_State_Primitives:exec-d24d955d-038a-4913-b51a-9bad4e3dd8d4",
+          "CRefine_Thread_State_Primitives:exec-9b730cf4-d592-4427-a13c-e692909b8a42",
+          "CRefine_Thread_State_Primitives:exec-bf0142c8-6452-44b1-87b1-23ce7b630f0a",
+          "CRefine_Thread_State_Primitives:exec-de1bfd92-ba54-4ff5-bad7-e6058bfe1341",
+          "CRefine_Thread_State_Primitives:exec-e3e5ce26-dfb5-4cdd-9951-17ae15cc0a66",
+          "CRefine_Thread_State_Primitives:exec-0caeb557-18c4-44f5-82e3-5c608ad0fa5e",
+          "CRefine_Capability_Transforms:exec-870f937e-8f4a-488e-90ec-6eb5097a76f1",
+          "CRefine_Capability_Transforms:exec-de3e2859-c3fc-4cd9-a9d7-c9404a31d198",
+          "CRefine_Thread_State_Primitives:exec-a74a6099-30c0-4e84-af6c-97fd69b4a510",
+          "CRefine_Capability_Transforms:exec-6343d685-9aff-491d-b30e-5e75165ad7fa",
+          "CRefine_Thread_State_Primitives:exec-c794475d-5971-4025-8e80-50398dc42759",
+          "exec-325f2b23-3508-4ec6-b31e-d4d2927a9491",
+          "exec-1b612cc8-6e21-4457-9c3c-604820d5b41f",
+          "exec-752074d0-85e9-41e1-bd20-71d7966e78ae",
+          "exec-399b587d-f4c5-4d7d-96c7-73c2488163fa",
+          "exec-3af2d344-a8bc-4aa1-8df3-e8c227e3f3df",
+          "exec-8cf22570-23b7-42d3-b1e8-3fb8db30bb16",
+          "exec-d0c4b08f-054c-4581-a5ce-c5b147268e04",
+          "exec-7ec961bc-4ab5-4300-967d-1c2835074370",
+          "exec-e832b353-6b1e-4ac2-8f11-fbd5ccf8391a",
+          "exec-bdffa715-61bf-4e87-ab77-9e7efdc7dfbe",
+          "exec-0d0aba49-0f66-4549-a1b1-75498cb126b3",
+          "exec-59a1d4cb-c516-402e-af98-36541ae65824",
+          "exec-2609e4bb-9b68-4dfa-933b-b5933897a394",
+          "exec-92c9088f-9301-4705-be48-f3a65e4022e2",
+          "exec-ab13c55a-a57c-42d9-8671-734b576bd4d2",
+          "exec-bd046b90-50e3-4aea-907c-e05601449984",
+          "exec-99114dc4-d6a8-4894-9588-aa7dc61e46cb",
+          "exec-83c7bff1-0209-4859-a305-2c6928164d86",
+          "exec-0001954a-4fb7-4e19-a8d3-e94e1d201f53",
+          "exec-25c4a9d8-5486-4ecb-bf26-1a84a5e52606",
+          "exec-0cdae646-81f9-46fe-a143-034b505e0415",
+          "exec-dd96cc13-7dae-4569-a19d-27cbc335918b",
+          "exec-fa8d1ef0-c0ed-4532-9948-e1581d4e87db",
+          "exec-dcdd2465-72cc-49a5-89a8-7d8eda76c2ab",
+          "exec-baaca2e2-154c-4838-92eb-0c7c1becae8a",
+          "exec-b15e5252-355c-4d3c-bc5b-62ff2e6dd7fd",
+          "exec-ecf3fef4-ca47-42db-bfd3-9ac2f3ecca8d",
+          "exec-2ef9cca7-bd6d-4757-8f40-0b069706ec38",
+          "exec-2b78a909-ca44-49b6-83c5-f8d7e8283ffa",
+          "exec-530108f7-6f2e-4b48-b0b1-f99eb0dce1b5",
+          "exec-0aeecd3e-b822-4edc-b14d-7e67626ce3ca",
+          "exec-cb50a3b1-0d1e-4d60-82ac-be56fa19bff3",
+          "exec-b707c417-8f3e-4f4f-9d5b-6c02be9a7c0b",
+          "exec-5ff13e39-ca5d-492b-8d69-c3140f90e7fd",
+          "exec-6a70b93e-4106-4acc-b9d0-ffda42aff7e4",
+          "exec-27d649a6-c3f0-4c73-bea1-8a2e6191cebc",
+          "exec-2deecacd-f15b-400d-b2bf-bed7f36538ed",
+          "exec-59bf2451-67a2-410d-bf51-010e71f08f05",
+          "exec-69aa5bf6-79cd-4b5f-9d6b-91745f0dc7bb",
+          "exec-fd276714-9576-443f-9ec2-aca91475dab7",
+          "exec-7cf56046-5af7-444c-b383-0faa89b41711",
+          "exec-b701224a-7711-44e7-a84b-7916b3be2534",
+          "exec-8b203620-31fc-44d0-b9a4-b5b8b987796e",
+          "exec-e8f24577-1168-4abf-83c8-78b0abccdc7a",
+          "exec-71f8041a-0bf4-4858-a342-5f52d65b4554",
+          "exec-b11d94da-9d76-4490-9381-74362ea79f22",
+          "exec-d6741f84-fcbe-43bc-b5e5-8ab30044fef5",
+          "exec-f78cc253-d1a8-4d5f-911b-4f21f66eaea9",
+          "exec-a101f877-5a2c-4a38-83ca-e9bc7ea6683d",
+          "exec-68a277fe-ec52-460c-9664-d6781e570fa5",
+          "exec-16be66e6-9e07-4b58-a23d-f9185b2cbe12",
+          "exec-c590f92c-363a-46bb-9c9a-a586620ccad5",
+          "exec-6f6044af-0ba7-4040-ab5d-c8853b7fddc7",
+          "exec-bbcf9220-bf0d-4411-8482-2b35c669f08c",
+          "exec-20becd3c-eb06-4127-b109-136b6af719da",
+          "exec-5ee7c105-f69a-4aad-9108-abd95c80db9c",
+          "exec-83faf62d-47ce-4f8a-8a5b-359c8de2f1a6",
+          "exec-10e71105-2a82-48fb-86b5-a700f3ca03f9",
+          "exec-7ac4769d-4485-42fe-b585-fb0271e81156",
+          "exec-bc0544ee-7671-4f8f-9157-1395d0018a97",
+          "exec-80ed333c-b512-401c-8727-fc83fee65e69",
+          "exec-50f9897b-f558-4ac3-a956-b2be3d4cd8aa",
+          "exec-6bbc215c-9a54-4418-89e9-30759976985f",
+          "exec-c45306ef-4562-4c70-908f-eb696299f68f",
+          "exec-13920d39-b211-4ec1-b895-916e738a060e",
+          "exec-ac882b22-7356-4163-9ea0-b0e869aa3c05",
+          "exec-9a6fc717-f815-42e6-a8e1-ed44a7324bae",
+          "exec-4543bee3-ad8b-4ac9-b6db-080ff4aec607",
+          "exec-7dbabf14-12c2-4c12-873a-0cfd20170602",
+          "exec-1c663d70-e87b-456b-99a9-254ba8f95ca4",
+          "exec-f4cb994c-49e4-4bf1-8d1a-9f448f444c22",
+          "exec-50c2014a-0d41-47c4-9971-457a67aee474",
+          "exec-d50763f5-eaec-4c77-9b6d-f538d6a29398",
+          "exec-84836aa5-67e8-4394-98ea-980571072ca1",
+          "exec-e9465a00-0b62-4b5b-ae93-d4ea80bdc238",
+          "exec-112145eb-62df-4925-bf5a-2ab4ed336084",
+          "exec-b2b26e9d-a28e-44a1-984d-985c53402d91",
+          "exec-7e211cf8-de68-4444-a746-d86a2926efa4",
+          "exec-093f80d8-e5eb-4427-8c00-8539e0f6cc51",
+          "exec-b9882ca5-781a-4b28-b841-78ee81a986a7",
+          "exec-fa9bd69f-6077-464f-a949-b68cad2b75a7",
+          "exec-86398210-273d-4063-807d-9bc11701b9c4",
+          "exec-0b5419f7-408e-40a8-8722-593071e834ee",
+          "exec-9e39b883-4641-4653-b8fa-33eee04fe222",
+          "exec-1575ffe7-5cb8-4351-84fb-de4f0e753719",
+          "exec-923f2efa-bd35-40c8-b188-b4485d2e912d",
+          "exec-968f4b0e-133a-43ba-aef9-30afd13c0fce"
+        ],
+        "count": 179,
+        "representative": {
+          "id": "CRefine_Thread_State_Primitives:exec-1c17d629-2d98-4e06-8629-8fe8165dfe45",
+          "window": 1,
+          "theory": "CRefine_Thread_State_Primitives",
+          "action": "check_theory",
+          "start_shanghai": "2026-10-25T17:46:20.034506+08:00",
+          "end_shanghai": "2026-10-25T17:47:48.706660+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Thread_State_Primitives/session-transcript.jsonl",
+              "line": 8856,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Thread_State_Primitives/session-transcript.jsonl",
+              "line": 8866,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": "red",
+            "feedback_status": "rejected_batch",
+            "request_number": 177,
+            "native_log": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/check-tasks/c194645651beccad991d59b8af74cd3ddee1ff388826fbef81e5ca020b57db3a/isabelle/regen-batch-6f78a73d26e94431/133.log",
+            "timeout_scope": null,
+            "timeout_seconds": 120,
+            "source_sha256": "1512338405211619fe9e6807a557e67d506a3839f7c13c5d2da294f203d446de",
+            "native_diagnostic_sha256": "fd7dfb8304bd12b96a5f88ba05997238d4eddae8f6a8edfc359f1c6093d73924"
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "proof_method_failure"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=proof_method_failure"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-PROVIDER-NO-COMPLETE-RESPONSE",
+      "title": "约900s无完整provider反馈",
+      "category": "运行资源",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "provider:1208b11989994c8f80b151c59fcc878d",
+          "provider:438baa3df38447148d1789c435a2fbfb",
+          "69fe49ffeb0046de8062409d83ee572b"
+        ],
+        "count": 3,
+        "representative": {
+          "id": "provider:1208b11989994c8f80b151c59fcc878d",
+          "window": 2,
+          "theory": "CRefine_Thread_State_Primitives",
+          "action": "provider_request",
+          "start_shanghai": "2026-10-26T04:51:06.335812+08:00",
+          "end_shanghai": "2026-10-26T05:06:06.339208+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Thread_State_Primitives/session-transcript.jsonl",
+              "line": 34960
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Thread_State_Primitives/session-transcript.jsonl",
+              "line": 34964
+            }
+          ],
+          "details": {}
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "provider_no_complete_response"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=provider_no_complete_response"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-SEAL-PREREQUISITE",
+      "title": "seal_prerequisite",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "exec-a717b230-e6e1-4ff5-b04e-2602ad3f6f73",
+          "exec-0c214000-f685-4fda-b10f-bf48e65cf36d",
+          "exec-1deb3bf9-6c81-458f-907f-89facebd39e8"
+        ],
+        "count": 3,
+        "representative": {
+          "id": "exec-a717b230-e6e1-4ff5-b04e-2602ad3f6f73",
+          "window": 2,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "finish",
+          "start_shanghai": "2026-10-26T05:02:39.969394+08:00",
+          "end_shanghai": "2026-10-26T05:02:41.690963+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 43353
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 43357
+            }
+          ],
+          "details": {
+            "task_id": null,
+            "request_number": null,
+            "failure_identity": null,
+            "source_sha256": "aef47332c1f7ab3b35c3b30cf2f039aceff7ead2c6dc79865dd615e1db36a19c"
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "seal_prerequisite"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=seal_prerequisite"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-SKETCH-PREREQUISITE",
+      "title": "sketch_prerequisite",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Capability_Transforms:exec-266d57ed-ed56-4468-91cc-38ee5ceba0b9",
+          "CRefine_Capability_Transforms:exec-2d895406-4aef-4c7e-9578-8599d8462c2d",
+          "CRefine_Capability_Transforms:exec-ff0df3c8-93c4-407d-a5ec-79e6a4ee2625",
+          "CRefine_Capability_Transforms:exec-d0cca87a-d670-43ba-a8da-7b2843bacfb3",
+          "CRefine_Capability_Transforms:exec-df291932-d290-4754-b1fc-b1ae49fa00ca",
+          "CRefine_Capability_Transforms:exec-f9596659-f28d-4897-9035-18c13b876113",
+          "CRefine_Capability_Transforms:exec-ae8b6145-8dc8-48d7-b1f7-6a9339da4054",
+          "CRefine_Capability_Transforms:exec-8c8543cd-69fd-4c3b-a391-a170bb4822a9",
+          "CRefine_Capability_Transforms:exec-6ee950e5-6bbd-4ab5-8463-6848125c0074",
+          "CRefine_Capability_Transforms:exec-926fc096-9eaa-48ca-bcd0-8fe73db9fc0e",
+          "CRefine_Capability_Transforms:exec-bc91e51d-54c5-4bfe-b632-3e0dff27f445",
+          "CRefine_Capability_Transforms:exec-4286fd9f-26d9-49b6-9be5-bfe48ae407a3",
+          "CRefine_Capability_Transforms:exec-d3fdc6ea-d6ad-414b-bc4a-6bf8b89c3395",
+          "CRefine_Capability_Transforms:exec-0bffbbf2-4f48-49bd-b4b3-9782bf1b4bb1",
+          "CRefine_Capability_Transforms:exec-039d8e93-4fc2-48e3-b432-fca9d094b497",
+          "CRefine_Capability_Transforms:exec-f26970d3-48c3-4e51-9e4b-7bfad63eb943",
+          "exec-22f095ab-60a1-4965-89fd-ef1952ab7f90",
+          "exec-86a54694-d639-4e89-a387-6d76f16923da",
+          "exec-0ab5547d-534e-48dc-9318-4ae8dc95b676",
+          "exec-d4f66000-69fa-4651-a66e-6097ab4c4b9a",
+          "exec-71dd837e-cf41-4e76-be7e-b4dc5f03b70b",
+          "exec-f91559cf-77b3-41ab-8f94-7b990da22f3e",
+          "exec-81fe71d0-08d0-40cd-9552-85e9ec1aa0c9",
+          "exec-be4bad03-f4bb-46b2-8eb4-b98492eb8889",
+          "exec-2b006dcb-eeb4-4469-b565-df98b0559212",
+          "exec-e5a28045-4d87-4bc4-a9cb-2af31d16c8e1",
+          "exec-0c7300be-f3fe-4843-8891-807ca4984df2",
+          "exec-6eade561-9fc9-42ee-a5f2-13f26bfe5484",
+          "exec-0aa96170-1299-4599-8c0b-5ad82b51fc64",
+          "exec-b26c25ed-d2ca-4e98-a87f-e49e048cacf5",
+          "exec-61951976-b3ff-42d4-a06d-cf7de4dc2619",
+          "exec-e0f39444-4003-4756-8ed1-7f5c54ad3a63",
+          "exec-e57f3733-31a3-4795-90a6-cdb0573a2773",
+          "exec-29a8fd03-8c75-4417-8358-4da8acdcb3fe",
+          "exec-ecd28c21-3010-4fa5-be4a-2b74e1b9c12a",
+          "exec-51f47396-bde0-479a-bbc7-47a7f9fc9314",
+          "exec-9472b406-73be-4f9a-ae60-93e83569c601",
+          "exec-28dbad89-f4b5-4d4f-87a2-b55c4a852df8",
+          "exec-9f67a951-44bd-4538-88eb-f81fe5439b1b",
+          "exec-01073bb0-022e-46ea-ad42-49dc902459d0"
+        ],
+        "count": 40,
+        "representative": {
+          "id": "CRefine_Capability_Transforms:exec-266d57ed-ed56-4468-91cc-38ee5ceba0b9",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "edit_theory",
+          "start_shanghai": "2026-10-25T20:39:31.463959+08:00",
+          "end_shanghai": "2026-10-25T20:39:34.407184+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 17060,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 17063,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": null,
+            "feedback_status": null,
+            "request_number": null,
+            "native_log": null,
+            "timeout_scope": null,
+            "timeout_seconds": null,
+            "source_sha256": null,
+            "native_diagnostic_sha256": null
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "sketch_prerequisite"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=sketch_prerequisite"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-SLOW-RETRIEVAL",
+      "title": "成功query/observe回调耗时至少60s",
+      "category": "性能",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "exec-e49f778b-d6a3-415b-9a8d-f5ce42f568a0",
+          "exec-9585ee7a-e2db-41d1-9723-55bb70724432",
+          "exec-6db4d2f9-c697-48d5-9c4c-a6e3f5407061",
+          "exec-4fbba324-6ae5-4c6a-9a54-86d2ed2d06a0",
+          "exec-63f4811d-9eda-462f-b81a-ffbc43f73296",
+          "exec-43dd38dd-c5e2-44d7-b6fb-d4027cdfe302",
+          "exec-6f85f145-3f73-45c2-90b7-4b3d8b80032e",
+          "exec-42957038-ba7a-4168-9256-5309b5070761",
+          "exec-b4392878-6b6a-4c56-916b-77f40b1806ce",
+          "exec-39dee107-c605-41b2-a51e-e52e500acfd9",
+          "exec-9cd85040-3e58-45ae-9d77-8ca5e6459710",
+          "exec-7a3e9cd1-1558-47a4-a5a5-4370f3475e1c",
+          "exec-a69db180-d33d-4d41-a4e4-d2d43a195cef",
+          "exec-dd90744f-db90-449b-b927-5c2ef1c50ecc",
+          "exec-321faecf-b7f3-4be9-bea1-d983c6edd6d3",
+          "exec-18a1364c-d4b2-4b38-a0fc-b764bb2e0690",
+          "exec-bfb2648d-2547-443a-bf4d-67b5a4c11ed6",
+          "exec-b9d5d5c4-60c4-4e0b-933e-aa9993899371",
+          "exec-94defc60-4e45-4088-8637-fcf5b552645d",
+          "exec-aa1e0885-e26b-48ee-8eb0-df4310031f53",
+          "exec-6d288a71-ae7f-47c0-891d-31d2b22d5348",
+          "exec-d0a0a05e-fdf6-4991-b208-ce5a9bf2e7ea",
+          "exec-8adca33f-1a58-4d13-a6fc-d8b9968deb43",
+          "exec-a09f2dc5-6929-4a08-94d3-c0724d2dc9fc",
+          "exec-c4722e69-989a-4ab9-ae3c-a967cd736357",
+          "exec-ea9e0bdb-8d28-4e33-9748-5d8dd7cea63c",
+          "exec-71946080-a0f1-4946-8fe3-e86130a3e8eb",
+          "exec-1a94a1ee-fd27-409f-958b-cbddb971ea92",
+          "exec-cecdd13b-5df9-4185-abb6-29a8d2ea64c3",
+          "exec-c8b2237e-fe33-463d-980c-ce820b2c1aec",
+          "exec-d4b2dd4b-9dbd-412d-a34b-59aebfee0dac",
+          "exec-01b9a6b1-41b7-4720-a5fb-ee9dc650bd06",
+          "exec-20935d8d-f5e3-40ae-862c-796001b7dab8",
+          "exec-e13721dd-a17d-433f-9a74-5aa0b42176bf",
+          "exec-1655ab06-b092-42d2-976a-fbcc58cd80c1",
+          "exec-7bb0b926-9660-4d91-a521-9720d13095b2",
+          "exec-84e65fd3-c620-4eb7-8e72-83bd70a7a658",
+          "exec-775ccede-f7ca-4930-a4d1-aafdee8ad8f3",
+          "exec-f8526699-f49f-4eb6-a8c1-a1956d4a60e3",
+          "exec-5221e1df-179a-40da-a436-915b9810aaec",
+          "exec-735fb32d-0ad5-4837-91e0-ba34a082d5f5",
+          "exec-ce3b45b2-333c-4145-ab4e-fab5385696af",
+          "exec-5bcfdd35-677b-4f35-8049-33db9ff7c973",
+          "slow:6b14a82b5e6332ff4ad64970483b146b7c9c45f27f38da078c8858ae2390bfc6",
+          "slow:567712f1bb0ec4a289994f14fe62d7379067e72e1c254f4c881c515d80785e11",
+          "slow:04c79cf5866318f8c7c94b48e35fd2b2382c3d1813d52d77b52ff491092cf067",
+          "slow:c47d2e61060355434681789f96930970434d6c8ae1bc3f7d6379c2090323f3d4",
+          "slow:b3356062cdb7ab0e61c050a7c0fc039fb90206a5eadc76214e12c408f4267c71",
+          "slow:cce6e7446186ce00d00cb94b530b900698e7192ac0ef8c101aad2acdc262b7d6",
+          "slow:1e3cd0626e06766860ad48159df04fb622f3d1b8a081e2a537d8bb91bd7c5e44",
+          "slow:2d1f1b115adc5ac276b3574123589fc1871ae7998f3fb3aeae3ebe9e74cdb1de",
+          "slow:dbbb1efea8fea065c93f7a958c1b0064df2fc5bf1f4472dc351c4356002a7879",
+          "slow:9af5101d371c06240a394d45bb96e9b8aababc1c7f2ff5aa3433d63bd2e18637",
+          "slow:46a72eba2bbbeaad6c099f54aed1049f09a8022ce4d8f90df347547fff668196",
+          "slow:e0073bce3c2abdbf0e6e5a0b16129dcc1a3a925d2a0c3f3cd07d5355750520f9",
+          "slow:8dece2efc2779e5515fb7de981ee3d01d848eaabf3dfc6c92b7232439533c46e",
+          "slow:23e891e3d070e873e52bde3659c2e5496f4d5e54fdca75eb86af4ecf1d303754",
+          "slow:7567d15f45c3e553b99a7029e948a1f495283b56f52376abf61696836406ecd9",
+          "slow:e0c1ed97cb3c0c593bc2987e0acc6375c44262089b9c8a7a87c00798d0b9bc03",
+          "slow:acd89d3b4b02a3483c02999871d6411d0f856dd7513a8f66bd1ca7363ea4715a",
+          "slow:b9699af9efe443f93f1b5a68e59516e3d100170922741257faa6c0b5c2630b0a",
+          "exec-c9f06603-77fa-4745-8180-554dc4547ac8",
+          "exec-2f094aeb-ec78-4a01-be4a-d35f4a9074db",
+          "exec-3631adeb-be63-495c-8569-d0d5e81a6541",
+          "exec-aac15798-8fa3-4d5f-aeaf-0226c44bddc3",
+          "exec-998e3fdb-db80-4895-af64-578b09a90f7e",
+          "exec-48b53cb9-6815-49ee-a3a2-adf48973f8ab",
+          "exec-7867066d-5702-4e9c-90cd-37777eec6b69",
+          "exec-35884fe7-1a02-4d67-bb40-101b097f72fb",
+          "exec-c3a80dde-82f7-4a36-8187-73f0dacf8525",
+          "exec-c320aedf-f5b5-4689-8845-94bfd9574a6a",
+          "exec-641f5378-ffa0-4f3b-b09c-c427ff418714",
+          "exec-982d07ac-0b95-4a02-a32e-cf1165e5f79f",
+          "exec-3c2d2d72-3397-44e1-af78-33953e535da2",
+          "exec-20beda68-6f61-4bf0-85b7-bcbf64ed2b61",
+          "exec-02f23444-fa96-4f0b-ae69-e1ed56d7518b",
+          "exec-fa0275fd-6e5a-4191-be57-28a910db2616",
+          "exec-208cf313-a691-4e07-ab28-a7d609b09b50",
+          "exec-92e43b66-7a75-44d3-9352-72cf9fd12cf0",
+          "exec-a338de61-e0cd-4bc1-8fd8-37fc60d50934",
+          "exec-0151cb04-a580-4528-aa93-1cf2848e4342",
+          "exec-8d5fe781-a363-444b-9358-c66ddd47630b",
+          "exec-515464d8-541e-4c96-9008-e2bb25f7feef",
+          "exec-9e7f540a-bb1a-4a52-80f7-7d8c787c0a0e",
+          "exec-521f61cd-dd20-42b6-b42a-1a698d9e520a",
+          "exec-7d6a0512-d9a3-4d62-b24d-f3b0c0e1575d",
+          "exec-89d7659f-6bce-4ffa-9e02-695e00da1164",
+          "exec-d15abc81-bf6c-4d86-a358-c44b786d345e",
+          "exec-f32279c7-13d1-4e5c-9773-b77f3f306670",
+          "exec-599d5b05-5bc4-48d7-a4b4-c39efcd71584",
+          "exec-7de30358-b431-4a29-b0c1-4299876d0706",
+          "exec-e7a38748-208e-40a0-a3bf-ef7ccccdc124",
+          "exec-861efc6d-4962-486e-9099-87b8c0f522e7",
+          "exec-6bd51375-6b3d-445f-8079-908fe60be141",
+          "exec-75ce4e84-5f63-4806-8380-41eafd46c10b",
+          "exec-ab908ebd-96dc-460e-8ae5-ef8748dec003",
+          "exec-5e2f0a90-132f-4d51-9690-a56242ab7fe6",
+          "exec-95e8acb8-ce8e-4828-b344-54449dd27d36",
+          "exec-5173451b-8aca-4b26-ad77-733f4ae2014c",
+          "exec-1fad26a3-a2fd-40c7-90ec-05748a380840",
+          "exec-53204a13-ddbb-443c-8218-bbfe65338368",
+          "exec-95ef19b4-dac2-4ca6-ab82-826a5c5e4953",
+          "exec-ebb70072-f594-41ac-9b02-69446bd3a77c",
+          "exec-7294bf5f-a4ce-4c8d-abb6-354c6643659b",
+          "exec-07174460-1b43-4326-a37d-972fb813f4ce",
+          "exec-4e4336ca-5649-4362-a483-50dfebbd15ca",
+          "exec-c21b0879-9225-41d5-986c-032e356c5b7f",
+          "exec-6189dd5d-8613-496f-b265-f5bdeb5248fd"
+        ],
+        "count": 108,
+        "representative": {
+          "id": "exec-e49f778b-d6a3-415b-9a8d-f5ce42f568a0",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "observe",
+          "start_shanghai": "2026-10-25T17:45:26.192056+08:00",
+          "end_shanghai": "2026-10-25T17:47:18.264110+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 9802
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 9874
+            }
+          ],
+          "details": {}
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "slow_retrieval"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=slow_retrieval"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-SYNTAX-OR-PROOF-MODE",
+      "title": "syntax_or_proof_mode",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Thread_State_Primitives:exec-6637816e-31c2-41ca-9984-376dd7fe0dab",
+          "CRefine_Capability_Transforms:exec-204e8a36-63f1-4deb-9a90-1165abe84b0e",
+          "CRefine_Capability_Transforms:exec-acd1537e-5f29-4261-80fc-2a3e6ec3bdc3",
+          "CRefine_Thread_State_Primitives:exec-d26e55f5-8c38-4035-b8de-4192de54f49d",
+          "CRefine_Thread_State_Primitives:exec-bf912935-46fe-4d03-9809-2df7721a0291",
+          "CRefine_Thread_State_Primitives:exec-bd74c5e4-8796-4363-b574-7268c03d0a3c",
+          "CRefine_Thread_State_Primitives:exec-49f62324-f61c-433f-b60f-c7c3fa39fef1",
+          "CRefine_Thread_State_Primitives:exec-fd9a96b7-c7af-4527-bb16-877003317272",
+          "CRefine_Capability_Transforms:exec-590efadf-e6a0-457e-8add-fe35e61fb0a5",
+          "exec-082e7658-e548-4786-a4de-9bf31791ab44",
+          "exec-c0624178-3c9f-4f0b-bf18-8d26c3baaeae",
+          "exec-a95c3687-d42b-4a55-9fae-1877dcc15dce",
+          "exec-0bf1303f-7bcd-4253-989b-25596e66aa6e",
+          "exec-9a68bc34-a307-40b6-b33b-eaf72d176e39",
+          "exec-3286b790-89fc-4c3a-b16e-bc94a2251107",
+          "exec-3dddc36b-2ce8-4e20-a8ba-9a8bb10a7d78",
+          "exec-72b19f5a-8553-46c7-8a13-f3112de7da78",
+          "exec-29128c43-731f-4635-96d2-1dc3cc49afd0",
+          "exec-ca7118c2-3dd7-4fca-a433-c8835542ad87",
+          "exec-800be7e9-13ca-4ca7-8655-f1813547a4e6",
+          "exec-097e5ea5-0ec9-428f-acdf-83cf0e6d8bbd",
+          "exec-27540a1a-89f0-453e-81a8-2e3f9ca6b4d4",
+          "exec-f5c9923b-68ed-4135-b72e-b24567595b93",
+          "exec-580204ee-3d5e-4c23-8754-92cbc2a50030",
+          "exec-f6f299e4-91ef-404b-925c-2979b6612feb",
+          "exec-3d8d9ab8-dba9-4747-80a8-fc02b627b25b",
+          "exec-59aabf50-e5d7-409d-b72b-40a49af3d55f",
+          "exec-c696448a-4dc0-4b66-9b61-8225e49ab375",
+          "exec-c62ed6a0-1fdf-4954-8bde-b14a0cb9e046",
+          "exec-ba608831-4df5-46a1-8715-8f6f37040b13",
+          "exec-9e067538-907a-49d6-a3df-6a9cdf052f9a",
+          "exec-bf7742de-458e-4daf-bbfb-e6fa194ce9fd",
+          "exec-0ab176ee-7a08-4863-a73d-dc21ec3f5849",
+          "exec-1d1714b6-6b67-4f52-b1a6-32849bab4b04",
+          "exec-a36b591b-d32c-4043-ad18-c73df8e96ecc",
+          "exec-ead78c78-8c22-456f-a2a1-40fad3517496",
+          "exec-c0aea4f2-93ea-4576-ac00-042b25b26d30",
+          "exec-a2cd0d37-5c61-43c9-a8c1-e11ce3914bc0",
+          "exec-0f0f9886-253e-4633-8856-d88389a8b3a4",
+          "exec-bab62638-da65-411b-ae95-7373b333af34",
+          "exec-33ddf4d0-a912-4933-8b12-e11dee338dc3"
+        ],
+        "count": 41,
+        "representative": {
+          "id": "CRefine_Thread_State_Primitives:exec-6637816e-31c2-41ca-9984-376dd7fe0dab",
+          "window": 1,
+          "theory": "CRefine_Thread_State_Primitives",
+          "action": "check_theory",
+          "start_shanghai": "2026-10-25T18:46:52.531914+08:00",
+          "end_shanghai": "2026-10-25T18:47:59.362025+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Thread_State_Primitives/session-transcript.jsonl",
+              "line": 10548,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Thread_State_Primitives/session-transcript.jsonl",
+              "line": 10558,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": "red",
+            "feedback_status": "rejected_batch",
+            "request_number": 189,
+            "native_log": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/check-tasks/c194645651beccad991d59b8af74cd3ddee1ff388826fbef81e5ca020b57db3a/isabelle/regen-batch-6f78a73d26e94431/150.log",
+            "timeout_scope": null,
+            "timeout_seconds": 120,
+            "source_sha256": "04a4d189613368d95d37128fc90fac01870339e9f877fb11a7a703f8544c1af7",
+            "native_diagnostic_sha256": "b63ef6a3161e8ccc1bf8430f78a00a5a16519f7b91fef551f8acf9c30ce6d8b9"
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "syntax_or_proof_mode"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=syntax_or_proof_mode"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-TYPE-OR-BINDING",
+      "title": "type_or_binding",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Capability_Transforms:exec-0c066509-f1e3-497b-a19d-99b07feacd44",
+          "CRefine_Capability_Transforms:exec-bf0f60f4-555e-4fc3-9bcc-66cbdb152daf",
+          "CRefine_Capability_Transforms:exec-4d6b21a3-53ef-4b00-836f-bfb4f3738e4d",
+          "CRefine_Capability_Transforms:exec-1cea3eaa-b32c-4837-a1e3-f77879c2e669",
+          "CRefine_Thread_State_Primitives:exec-31b5e2bd-579c-4540-accb-404285ec158f",
+          "CRefine_Thread_State_Primitives:exec-120fa974-cda7-4b85-b4f1-74ea78a7f142",
+          "CRefine_Capability_Transforms:exec-2d59cc3a-dd93-499d-96bf-3be6541006af",
+          "CRefine_Capability_Transforms:exec-7374ab45-f946-4c63-8905-9d66647c2823",
+          "CRefine_Capability_Transforms:exec-3bb1f4b3-adab-4122-b9df-b5659ee75e2a",
+          "CRefine_Thread_State_Primitives:exec-f4025cd7-dec1-4f39-9a1c-36fc0a2b82ec",
+          "CRefine_Thread_State_Primitives:exec-a31c7bfa-1ac4-4546-b1b3-7219e6beb497",
+          "CRefine_Capability_Transforms:exec-4afc3908-b7c7-4f0a-a490-b7380a92f28d",
+          "exec-0dcd54a4-f140-48bb-90f7-2110ec1305ea",
+          "exec-91860cca-b47d-4681-a00c-f9568a528cab",
+          "exec-49f70d04-ee63-4d1f-ab50-ca749a5ad7ab",
+          "exec-c282d317-b56e-485e-a832-1713a119b1c7",
+          "exec-356be5de-a8dc-49fd-a8b6-8f9ba66c26dc",
+          "exec-8f4cd4d9-a430-40cd-85da-d4b4418d523f",
+          "exec-c7c8d9b4-15cc-448f-9d97-1560f9226f18",
+          "exec-7e8d84d3-02e4-4248-a909-4f083d77f99f",
+          "exec-0226dc72-a8de-42a8-a8ce-9b58cacc0532",
+          "exec-acc95d3b-9a48-4fed-a9c9-52d0055d523a",
+          "exec-aea361ec-7e82-4d37-b22d-232cf62a0cc5",
+          "exec-12222e25-57ee-4a19-a0a0-f65c60aed39c",
+          "exec-58a4f88d-3331-4698-b177-55eb65601bdf",
+          "exec-52c62a9b-3d04-4142-b64a-ed12fbc96177",
+          "exec-9676c0c3-4e9c-4921-814e-9611b05bcb2c",
+          "exec-e32fb4c7-6684-492d-a3d5-da1cbe7160e1",
+          "exec-0f8fa2dd-38ae-4e38-8842-6e9a97b2af59",
+          "exec-8268704d-6a99-4ec1-92ab-97b90edcf863",
+          "exec-784de7b2-56f3-45ed-97e3-184cb650b900",
+          "exec-fa629513-7d31-4c85-a8fa-93700cac2c22",
+          "exec-b2e8e661-6bc4-4387-9ec1-6ddb67d69ec9",
+          "exec-22c646d4-3679-4189-a163-4746f057ea3d",
+          "exec-799f3218-645b-4ea5-a03b-0623351ac545",
+          "exec-abdea4f1-585c-435d-96dd-eb770c9a1481",
+          "exec-aca76c7a-173a-401c-973a-e74af89e65bc",
+          "exec-5b7fd90b-3fcb-4b59-9dad-6f6d4b372793",
+          "exec-e3f48d5a-6778-4f99-9e47-39cacdf346e5",
+          "exec-814e61c1-511a-474d-ba5d-90df9ce43df6",
+          "exec-911e0bff-b7ea-44b6-8f41-44d05fdb619e",
+          "exec-ec4f006d-c862-4f27-a915-30fb03f80888",
+          "exec-24881622-c3ef-4fad-9d0c-5953e09eff40"
+        ],
+        "count": 43,
+        "representative": {
+          "id": "CRefine_Capability_Transforms:exec-0c066509-f1e3-497b-a19d-99b07feacd44",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "check_theory",
+          "start_shanghai": "2026-10-25T18:41:34.041577+08:00",
+          "end_shanghai": "2026-10-25T18:43:19.432826+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 12033,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 12039,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": "red",
+            "feedback_status": "rejected_batch",
+            "request_number": 251,
+            "native_log": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/check-tasks/f0d962b6a0767c8fd202b8b1982676c7169486c0a333c4b6b2400c190848877b/isabelle/regen-batch-fe87f2bf95c647f3/7.log",
+            "timeout_scope": null,
+            "timeout_seconds": 120,
+            "source_sha256": "ee1a18453620e8b2118107904ce1e7a4ca072656a46661e433c0aeea9657c1ac",
+            "native_diagnostic_sha256": "fa00655e9c0f841938946ac948d234f9c9982d48115d65a72b900192e5e96044"
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "type_or_binding"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=type_or_binding"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-UNKNOWN-FACT",
+      "title": "unknown_fact",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Capability_Transforms:exec-2408e2fa-9f74-40c2-bdd4-997abdea528d",
+          "CRefine_Capability_Transforms:exec-2eef34d4-9813-4150-8b50-a7c485393b9e",
+          "CRefine_Capability_Transforms:exec-0a8eef95-e00e-4019-bccb-aa21e38c64d9",
+          "CRefine_Capability_Transforms:exec-81603411-c279-46f3-b99c-3f3467188e11",
+          "CRefine_Capability_Transforms:exec-7ac1b28b-6658-4eb9-b086-4b60202500c5",
+          "CRefine_Thread_State_Primitives:exec-0a56db5f-947b-4408-a3a4-401efb9251ad",
+          "CRefine_Capability_Transforms:exec-b679c4dd-3ad1-4adf-b569-8ab37c796eda",
+          "CRefine_Capability_Transforms:exec-3b0779d6-686c-492c-aef0-5d29dbc4908f",
+          "exec-6d461db9-a1fe-4253-91b0-1ad6ae0f7559",
+          "exec-fc917454-3916-4540-b910-f06232193916",
+          "exec-96ee3036-e115-43ff-8762-43ad83048ce9",
+          "exec-f6837811-ae3b-4bb4-b1e9-05ea66e6acd2",
+          "exec-9030f4a4-5b65-4d76-8c39-71d39a7b6a76",
+          "exec-75ab44ef-b30e-4b61-9cfe-106cd5155ea6",
+          "exec-af33ca83-9d39-4479-be10-43844419ead2",
+          "exec-1ec7f766-3637-4082-ac50-d6cbb0fb4826",
+          "exec-c0df90de-37a3-4241-900b-9dbf435d41f9",
+          "exec-47d08b4d-a042-4879-affd-9a90f3d69a32"
+        ],
+        "count": 18,
+        "representative": {
+          "id": "CRefine_Capability_Transforms:exec-2408e2fa-9f74-40c2-bdd4-997abdea528d",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "check_theory",
+          "start_shanghai": "2026-10-25T20:48:14.211393+08:00",
+          "end_shanghai": "2026-10-25T20:49:27.041276+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 17493,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 17502,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": "red",
+            "feedback_status": "rejected_batch",
+            "request_number": 302,
+            "native_log": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/check-tasks/5586737c97be9743f0e3dd9fe58ccca1d2c5fac28f38366e595cbbfdef46999a/isabelle/regen-batch-39ef7226220a4f8b/50.log",
+            "timeout_scope": null,
+            "timeout_seconds": 120,
+            "source_sha256": "134d4c3b87ba3e617adbfa420e8027661796420cdc5ba55ab207d12c1d279068",
+            "native_diagnostic_sha256": "4da32b4392ddf9143699fb9f730f7d52e0fd1434b538aa3b3b1ecdfb25abae6e"
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "unknown_fact"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=unknown_fact"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-UNKNOWN-METHOD",
+      "title": "unknown_method",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Capability_Transforms:exec-fd8b88c8-dee5-4061-8cff-77bb90ed93c0",
+          "CRefine_Thread_State_Primitives:exec-6bccedc0-fabc-4ca6-aaf5-4d2c7236f485",
+          "exec-560e3a9a-a0c5-4312-b4c3-2c156b396ebf",
+          "exec-edee2e1a-9f1d-42b5-a5ca-a60b0950fdc4",
+          "exec-3fd21b4a-cde5-4108-ad5e-a5afba4cb62d",
+          "exec-9b52322c-f7ba-409c-9acd-c540bbbb6f6b",
+          "exec-ea615e20-262f-4657-b96d-e732349872e0",
+          "exec-351f98fa-953a-4b1c-87da-42251ebb2b47"
+        ],
+        "count": 8,
+        "representative": {
+          "id": "CRefine_Capability_Transforms:exec-fd8b88c8-dee5-4061-8cff-77bb90ed93c0",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "check_theory",
+          "start_shanghai": "2026-10-25T17:47:59.965173+08:00",
+          "end_shanghai": "2026-10-25T17:50:12.122238+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 9947,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 10021,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": "red",
+            "feedback_status": "rejected_batch",
+            "request_number": 236,
+            "native_log": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/check-tasks/107a92514d5d41378a8253ec622b0d3d8f430cc5f36dbecfa1a25f9f4f694540/isabelle/regen-batch-db27adf4cb4f4036/22.log",
+            "timeout_scope": null,
+            "timeout_seconds": 120,
+            "source_sha256": "51c2f8131fd1522ddead91c4f77fc4fbd9057d2c2607696eea937bc17941cb16",
+            "native_diagnostic_sha256": "318d120f8e1168b27e1bae34876f2ceaaf9ed60b28c1f6faf62c3529fff65268"
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "unknown_method"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=unknown_method"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-GAP-UNSUPPORTED-WORKFLOW",
+      "title": "unsupported_workflow",
+      "category": "正常证明失败",
+      "machine": "A historical",
+      "root_cause": "结构化台账观察类型；不把错误字符串直接当成底层根因。普通证明/工具拒绝不计框架bug。",
+      "status": "historical A window audit only; no current A changes or verification",
+      "certainty": "confirmed observed classification; root cause per event may remain unresolved",
+      "source_step": {
+        "event_ids": [
+          "CRefine_Capability_Transforms:exec-07c96885-5a22-4840-ae3e-b6510c74437d",
+          "CRefine_Capability_Transforms:exec-94531790-f73d-4433-be9e-af613cd8d19a",
+          "CRefine_Capability_Transforms:exec-60d861c0-1412-43ee-96cf-41508167b2f1",
+          "exec-18ce0c46-2737-401c-a24f-cdd0eafb3e9b"
+        ],
+        "count": 4,
+        "representative": {
+          "id": "CRefine_Capability_Transforms:exec-07c96885-5a22-4840-ae3e-b6510c74437d",
+          "window": 1,
+          "theory": "CRefine_Capability_Transforms",
+          "action": "transition_proof",
+          "start_shanghai": "2026-10-25T20:49:59.571093+08:00",
+          "end_shanghai": "2026-10-25T20:50:02.528676+08:00",
+          "evidence": [
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 17559,
+              "kind": "request"
+            },
+            {
+              "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+              "line": 17562,
+              "kind": "result"
+            }
+          ],
+          "details": {
+            "proof_verdict": null,
+            "feedback_status": null,
+            "request_number": null,
+            "native_log": null,
+            "timeout_scope": null,
+            "timeout_seconds": null,
+            "source_sha256": "134d4c3b87ba3e617adbfa420e8027661796420cdc5ba55ab207d12c1d279068",
+            "native_diagnostic_sha256": null
+          }
+        },
+        "all_events_index": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+        "filter": {
+          "category": "unsupported_workflow"
+        }
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/issues.jsonl",
+          "sha256": "841c6f0442b60f7429d2484525270075f901c114d9fbca6b4e8a02e406c03eac",
+          "bytes": 1935196,
+          "role": "preserved_operator_evidence",
+          "selector": "filter category=unsupported_workflow"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "按台账event_id抽request+result+对应candidate/native source和receipt；性能用采样延迟、证明RED用真实native oracle；完整770条索引已存在",
+      "raw_data_availability": "structured event index preserved locally; selected native source/log paths need existence/hash verification before extraction",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-BLOCKED-AUTO-CONTINUE",
+      "title": "模型报告harness阻塞后自动Continue四次",
+      "category": "框架bug",
+      "machine": "A historical",
+      "root_cause": "4/4GREEN但seal审计错误，模型final报告blocked仍被通用continuation继续；模型继续无法修复trusted审计器。状态分类/调度未将framework故障分离。",
+      "status": "historical A report; current behavior not verified",
+      "certainty": "confirmed",
+      "source_step": {
+        "control_events": [
+          "gap2-episode-1",
+          "gap2-episode-2",
+          "gap2-episode-3",
+          "gap2-episode-4"
+        ],
+        "source_lines": [
+          [
+            2562,
+            2570
+          ],
+          [
+            5507,
+            5515
+          ],
+          [
+            44394,
+            44402
+          ],
+          [
+            44679,
+            44687
+          ]
+        ]
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/issue-ledger/auto-continuation-observations.json",
+          "sha256": "4853b72b01d28dbc111b2771d3364d7d7a553370089cb68b785770064c4cc9ae",
+          "bytes": 6109,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "4 accepted+seal infrastructure error+final blocked+continue控制事件；验证基础设施分类，不能仅以model自述承认故障",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay",
+      "replay_status": "historical_statistics_only",
+      "replay_case_ids": [
+        "history-a-green-gap-observations"
+      ]
+    },
+    {
+      "id": "A-PROGRESS-WATCH-DISABLED",
+      "title": "有效预算模式关闭信息进展检测，长期RED仍可能持续",
+      "category": "性能",
+      "machine": "A historical",
+      "root_cause": "progress_timeout=0不创建ProgressWatch，信息重复读取检测一起关闭；无GREEN和无信息进展不是同一概念；真实RED本来就算有效证明工作。",
+      "status": "intentional policy/risk, not automatically a bug; preserve no attempt/no-progress hard cap requirement",
+      "certainty": "confirmed policy and monitoring limitation",
+      "source_step": {
+        "configuration": "progress_timeout=0",
+        "exact_step": null
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/crefine-green-gap-audit-20261027-001/ISSUE-LEDGER.md",
+          "sha256": "b7ffbaeda03a9587604da7b6087d5d0258206f1a8dd69fa88b1d00a0dc6ab693",
+          "bytes": 10635,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [],
+      "minimal_reproduction_input": "重复信息读取与不同真实RED两类轨迹；观测故障签名/受阻状态，不暗加尝试上限",
+      "raw_data_availability": "preserved_local_evidence; referenced machine-B originals require read-only verification before replay"
+    },
+    {
+      "id": "A-PLAN-REVIEW-SELF-REFERENCE",
+      "title": "旧medium评审自引用导致一次性退出",
+      "category": "框架bug",
+      "machine": "A historical planning",
+      "root_cause": "历史review包含Generated_TCBInvocations/setPriority_ccorres及Generated_InvocationDispatch/Arch_decodeInvocation_ccorres自消费，旧validator一次抛错终止。",
+      "status": "schema feedback repair now exists; deleted old raw run",
+      "certainty": "confirmed historical observation or explicit synthetic audit finding",
+      "source_step": {
+        "historical_run": "crefine-owner-blind-sol-20261022-001",
+        "stage": "planning/review",
+        "failed_ids": [
+          "goal:59f812b28ced919d7a17",
+          "goal:4589cfe87b58241db7fc"
+        ]
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/REPORT.md",
+          "sha256": "2734f4c0b6248c4277ea75d2382d7e65644addce833ab4c83ddc27649e50c3fe",
+          "bytes": 19159,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/evidence.json",
+          "sha256": "c4a17f812ea6a1eb42ff0632597ed95c9f7554b6e12cae5b36142ba0b4795ccc",
+          "bytes": 5059,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_plan_review.ReviewTests.test_invalid_external_reference_is_repaired_before_commit",
+        "regen.tests.current.test_plan_review.ReviewTests.test_repeated_invalid_output_can_repair_beyond_former_round_limit"
+      ],
+      "minimal_reproduction_input": "保留probe脚本+结构化结果和小型mock provider输入；旧medium原始review无法从删除路径重取",
+      "raw_data_availability": "report/probes preserved; old raw run/transcripts/application deleted by user authorization",
+      "replay_status": "documented_not_replayed"
+    },
+    {
+      "id": "A-PLAN-REVISION-DECISIONS-FEEDBACK",
+      "title": "修订决策错误缺少受控反馈修复",
+      "category": "框架bug",
+      "machine": "A historical planning",
+      "root_cause": "revision planner结束后才检查decisions，缺文件/字段/非法枚举直接失败。",
+      "status": "audit finding F1; current implementation status not revalidated",
+      "certainty": "confirmed historical observation or explicit synthetic audit finding",
+      "source_step": {
+        "audit_finding": "F1",
+        "synthetic_probe_cases": [
+          "missing decisions",
+          "invalid enum",
+          "missing issue_id"
+        ]
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/REPORT.md",
+          "sha256": "2734f4c0b6248c4277ea75d2382d7e65644addce833ab4c83ddc27649e50c3fe",
+          "bytes": 19159,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/evidence.json",
+          "sha256": "c4a17f812ea6a1eb42ff0632597ed95c9f7554b6e12cae5b36142ba0b4795ccc",
+          "bytes": 5059,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_reviewed_planning.ReviewedPlanningTests.test_complete_decisions"
+      ],
+      "minimal_reproduction_input": "保留probe脚本+结构化结果和小型mock provider输入；旧medium原始review无法从删除路径重取",
+      "raw_data_availability": "report/probes preserved; old raw run/transcripts/application deleted by user authorization",
+      "replay_status": "documented_not_replayed"
+    },
+    {
+      "id": "A-PLAN-CORRUPT-TRANSCRIPT-AUDIT",
+      "title": "损坏NDJSON未阻止provider调用审计通过",
+      "category": "框架bug",
+      "machine": "A historical planning",
+      "root_cause": "parse_errors被记录但no_tool_events/终止条件未强制完整；模拟provider返回0和合法final可被接受。",
+      "status": "audit finding F2; not observed in old live experiment; current status not revalidated",
+      "certainty": "confirmed historical observation or explicit synthetic audit finding",
+      "source_step": {
+        "audit_finding": "F2",
+        "synthetic_probe": "plan-review-audit-probe.json"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/REPORT.md",
+          "sha256": "2734f4c0b6248c4277ea75d2382d7e65644addce833ab4c83ddc27649e50c3fe",
+          "bytes": 19159,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/evidence.json",
+          "sha256": "c4a17f812ea6a1eb42ff0632597ed95c9f7554b6e12cae5b36142ba0b4795ccc",
+          "bytes": 5059,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_plan_review.ReviewTests.test_provider_or_audit_failure_is_not_retried_as_schema_repair"
+      ],
+      "minimal_reproduction_input": "保留probe脚本+结构化结果和小型mock provider输入；旧medium原始review无法从删除路径重取",
+      "raw_data_availability": "report/probes preserved; old raw run/transcripts/application deleted by user authorization",
+      "replay_status": "documented_not_replayed"
+    },
+    {
+      "id": "A-PLAN-FINAL-PLAN-REVIEW-GAP",
+      "title": "一次修订直接冻结，最终计划未重新消费评审",
+      "category": "比较局限",
+      "machine": "A historical planning",
+      "root_cause": "当前被评审对象是draft；修订后只结构比较/native声明检查，不能当作最终语义消费成功。",
+      "status": "audit finding F3; design limitation",
+      "certainty": "confirmed historical observation or explicit synthetic audit finding",
+      "source_step": {
+        "audit_finding": "F3"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/REPORT.md",
+          "sha256": "2734f4c0b6248c4277ea75d2382d7e65644addce833ab4c83ddc27649e50c3fe",
+          "bytes": 19159,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/evidence.json",
+          "sha256": "c4a17f812ea6a1eb42ff0632597ed95c9f7554b6e12cae5b36142ba0b4795ccc",
+          "bytes": 5059,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_reviewed_planning.ReviewedPlanningTests.test_unlimited_review_policy_and_model_are_bound_and_dispatched"
+      ],
+      "minimal_reproduction_input": "保留probe脚本+结构化结果和小型mock provider输入；旧medium原始review无法从删除路径重取",
+      "raw_data_availability": "report/probes preserved; old raw run/transcripts/application deleted by user authorization",
+      "replay_status": "documented_not_replayed"
+    },
+    {
+      "id": "A-PLAN-PLANNING-FAILURE-RESUME",
+      "title": "planning失败目录fresh-only且workspace路径超时策略不同",
+      "category": "框架bug",
+      "machine": "A historical planning",
+      "root_cause": "review/workspace CLI要求新目录；workspace分支未用call_with_retry；旧运行不自动续跑。",
+      "status": "audit finding F4; current implementation status not revalidated",
+      "certainty": "confirmed historical observation or explicit synthetic audit finding",
+      "source_step": {
+        "audit_finding": "F4"
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/REPORT.md",
+          "sha256": "2734f4c0b6248c4277ea75d2382d7e65644addce833ab4c83ddc27649e50c3fe",
+          "bytes": 19159,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/evidence.json",
+          "sha256": "c4a17f812ea6a1eb42ff0632597ed95c9f7554b6e12cae5b36142ba0b4795ccc",
+          "bytes": 5059,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_reviewed_planning.ReviewedPlanningTests.test_unlimited_review_policy_and_model_are_bound_and_dispatched"
+      ],
+      "minimal_reproduction_input": "保留probe脚本+结构化结果和小型mock provider输入；旧medium原始review无法从删除路径重取",
+      "raw_data_availability": "report/probes preserved; old raw run/transcripts/application deleted by user authorization",
+      "replay_status": "documented_not_replayed"
+    },
+    {
+      "id": "A-PLAN-REVIEW-SEMANTIC-BOUNDARY",
+      "title": "格式合法、静态import图与评审意见不能证明计划质量",
+      "category": "比较局限",
+      "machine": "A historical planning",
+      "root_cause": "非空占位assessment、空issues或revise但无真实plan差异可通过；review本身不是通用脱敏器。",
+      "status": "audit findings F5/F6/F7; synthetic behavior, no proof acceptance claimed",
+      "certainty": "confirmed historical observation or explicit synthetic audit finding",
+      "source_step": {
+        "audit_findings": [
+          "F5",
+          "F6",
+          "F7"
+        ]
+      },
+      "evidence": [
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/REPORT.md",
+          "sha256": "2734f4c0b6248c4277ea75d2382d7e65644addce833ab4c83ddc27649e50c3fe",
+          "bytes": 19159,
+          "role": "preserved_operator_evidence"
+        },
+        {
+          "path": "reports/regen/plan-interface-review-audit-20261024-001/evidence.json",
+          "sha256": "c4a17f812ea6a1eb42ff0632597ed95c9f7554b6e12cae5b36142ba0b4795ccc",
+          "bytes": 5059,
+          "role": "preserved_operator_evidence"
+        }
+      ],
+      "existing_test_ids": [
+        "regen.tests.current.test_owner_blind_planning.OwnerBlindPlanningTest.test_no_owner_metadata_in_cards_inspection_or_prompt"
+      ],
+      "minimal_reproduction_input": "保留probe脚本+结构化结果和小型mock provider输入；旧medium原始review无法从删除路径重取",
+      "raw_data_availability": "report/probes preserved; old raw run/transcripts/application deleted by user authorization",
+      "replay_status": "documented_not_replayed"
+    }
+  ]
+}

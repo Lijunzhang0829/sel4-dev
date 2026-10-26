@@ -1,0 +1,5480 @@
+[
+  {
+    "id": "native-queue:6081",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792921694.585744,
+    "end_unix": 1792921811.006744,
+    "direct_seconds": 116.421,
+    "task_id": "73f6a111fc7d16eb621633161d3371fc256afb566f54190786a123cd423456bf",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6081
+      }
+    ],
+    "start_shanghai": "2026-10-25T17:48:14.585744+08:00",
+    "end_shanghai": "2026-10-25T17:50:11.006744+08:00",
+    "clipped_start_unix": 1792921694.585744,
+    "clipped_end_unix": 1792921811.006744,
+    "seconds_in_window": 116.4210000038147,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6247",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792922451.3042889,
+    "end_unix": 1792922495.603289,
+    "direct_seconds": 44.299,
+    "task_id": "5e2eae3e35cc70979525d584066c87965677eda0ec50e416a10e695695f0258b",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6247
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:00:51.304289+08:00",
+    "end_shanghai": "2026-10-25T18:01:35.603289+08:00",
+    "clipped_start_unix": 1792922451.3042889,
+    "clipped_end_unix": 1792922495.603289,
+    "seconds_in_window": 44.29900002479553,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6310",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792922650.03401,
+    "end_unix": 1792922727.77401,
+    "direct_seconds": 77.74,
+    "task_id": "6bf0057d0e4a7c1e559ac68ab52c2c73eae5f5bcd3ae23f4ca07aba9d838b642",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6310
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:04:10.034010+08:00",
+    "end_shanghai": "2026-10-25T18:05:27.774010+08:00",
+    "clipped_start_unix": 1792922650.03401,
+    "clipped_end_unix": 1792922727.77401,
+    "seconds_in_window": 77.74000000953674,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6358",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792922784.613677,
+    "end_unix": 1792922830.075677,
+    "direct_seconds": 45.462,
+    "task_id": "85a3aeb13d6f46fe0d8e7ec7c1fe9f8f3c6b69fb757523df3b9dc88217f4b471",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6358
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:06:24.613677+08:00",
+    "end_shanghai": "2026-10-25T18:07:10.075677+08:00",
+    "clipped_start_unix": 1792922784.613677,
+    "clipped_end_unix": 1792922830.075677,
+    "seconds_in_window": 45.46199989318848,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6378",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792922874.9908931,
+    "end_unix": 1792922879.997893,
+    "direct_seconds": 5.007,
+    "task_id": "328416eab78def65a6a20b09849bb292982954bef624f3e970a19ba9ee80a903",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6378
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:07:54.990893+08:00",
+    "end_shanghai": "2026-10-25T18:07:59.997893+08:00",
+    "clipped_start_unix": 1792922874.9908931,
+    "clipped_end_unix": 1792922879.997893,
+    "seconds_in_window": 5.006999969482422,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6402",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792922921.091106,
+    "end_unix": 1792922963.674106,
+    "direct_seconds": 42.583,
+    "task_id": "1582fa6d368b2cb5892da889407c7f67393cf8ebdc07f7a894b71c5d40cd0d56",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6402
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:08:41.091106+08:00",
+    "end_shanghai": "2026-10-25T18:09:23.674106+08:00",
+    "clipped_start_unix": 1792922921.091106,
+    "clipped_end_unix": 1792922963.674106,
+    "seconds_in_window": 42.58299994468689,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6423",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792922982.076911,
+    "end_unix": 1792923010.177911,
+    "direct_seconds": 28.101,
+    "task_id": "919d9374bebbdf708999d27efb1490a78293d1aaea774fd577c262b4129332b7",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6423
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:09:42.076911+08:00",
+    "end_shanghai": "2026-10-25T18:10:10.177911+08:00",
+    "clipped_start_unix": 1792922982.076911,
+    "clipped_end_unix": 1792923010.177911,
+    "seconds_in_window": 28.1010000705719,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6450",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792923055.917198,
+    "end_unix": 1792923093.696198,
+    "direct_seconds": 37.779,
+    "task_id": "c9ea03c48363b0cee259f39afaf99a281d7c540020a456a0ffc6149dbf600cf7",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6450
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:10:55.917198+08:00",
+    "end_shanghai": "2026-10-25T18:11:33.696198+08:00",
+    "clipped_start_unix": 1792923055.917198,
+    "clipped_end_unix": 1792923093.696198,
+    "seconds_in_window": 37.77900004386902,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6471",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792923112.103859,
+    "end_unix": 1792923139.238859,
+    "direct_seconds": 27.135,
+    "task_id": "6a988efa0f90d863ccdaf1589e91e9aae28e7ae3f0f50a09e1b86d855c08ead5",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6471
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:11:52.103859+08:00",
+    "end_shanghai": "2026-10-25T18:12:19.238859+08:00",
+    "clipped_start_unix": 1792923112.103859,
+    "clipped_end_unix": 1792923139.238859,
+    "seconds_in_window": 27.134999990463257,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6494",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792923159.559395,
+    "end_unix": 1792923271.682395,
+    "direct_seconds": 112.123,
+    "task_id": "d497e0aa6d36ebfaf10d73ac2799ca7e9badb846678817f8fa225d7446633119",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6494
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:12:39.559395+08:00",
+    "end_shanghai": "2026-10-25T18:14:31.682395+08:00",
+    "clipped_start_unix": 1792923159.559395,
+    "clipped_end_unix": 1792923271.682395,
+    "seconds_in_window": 112.12299990653992,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6517",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792923296.661554,
+    "end_unix": 1792923315.975554,
+    "direct_seconds": 19.314,
+    "task_id": "f0d962b6a0767c8fd202b8b1982676c7169486c0a333c4b6b2400c190848877b",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6517
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:14:56.661554+08:00",
+    "end_shanghai": "2026-10-25T18:15:15.975554+08:00",
+    "clipped_start_unix": 1792923296.661554,
+    "clipped_end_unix": 1792923315.975554,
+    "seconds_in_window": 19.313999891281128,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6558",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792923332.625919,
+    "end_unix": 1792923613.172919,
+    "direct_seconds": 280.547,
+    "task_id": "dfb2d827400d7cb8fa7e73966d83c356070922c293c3ff164955b4bd1fa80332",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6558
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:15:32.625919+08:00",
+    "end_shanghai": "2026-10-25T18:20:13.172919+08:00",
+    "clipped_start_unix": 1792923332.625919,
+    "clipped_end_unix": 1792923613.172919,
+    "seconds_in_window": 280.54699993133545,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6601",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792923685.6792672,
+    "end_unix": 1792923760.818267,
+    "direct_seconds": 75.139,
+    "task_id": "e979861ff8cfbf21728a1ec883c45fc1431e5f162f44665fbf6cb489ebba4616",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6601
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:21:25.679267+08:00",
+    "end_shanghai": "2026-10-25T18:22:40.818267+08:00",
+    "clipped_start_unix": 1792923685.6792672,
+    "clipped_end_unix": 1792923760.818267,
+    "seconds_in_window": 75.13899993896484,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6621",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792923794.444613,
+    "end_unix": 1792923813.266613,
+    "direct_seconds": 18.822,
+    "task_id": "10bd1fa54426ce9ec1ba59bf105330b30f36abe534472354b3139a47a427dc16",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6621
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:23:14.444613+08:00",
+    "end_shanghai": "2026-10-25T18:23:33.266613+08:00",
+    "clipped_start_unix": 1792923794.444613,
+    "clipped_end_unix": 1792923813.266613,
+    "seconds_in_window": 18.82200002670288,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6673",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792923870.0681221,
+    "end_unix": 1792923956.974122,
+    "direct_seconds": 86.906,
+    "task_id": "b2c805b37a767ff9d6efeba064f3502aca076e4c19c209ed32f0badf640d8391",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6673
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:24:30.068122+08:00",
+    "end_shanghai": "2026-10-25T18:25:56.974122+08:00",
+    "clipped_start_unix": 1792923870.0681221,
+    "clipped_end_unix": 1792923956.974122,
+    "seconds_in_window": 86.90599989891052,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6696",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792924008.769451,
+    "end_unix": 1792924016.774451,
+    "direct_seconds": 8.005,
+    "task_id": "14dd1dab37b4fb106c86220552dec306bec376fa4c22cc4c83d2eea09215a269",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6696
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:26:48.769451+08:00",
+    "end_shanghai": "2026-10-25T18:26:56.774451+08:00",
+    "clipped_start_unix": 1792924008.769451,
+    "clipped_end_unix": 1792924016.774451,
+    "seconds_in_window": 8.005000114440918,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6743",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792924132.933542,
+    "end_unix": 1792924135.940542,
+    "direct_seconds": 3.007,
+    "task_id": "21ad317e43049843cc300f8433a683192918522e478dc110fd84eed5d96b8f99",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6743
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:28:52.933542+08:00",
+    "end_shanghai": "2026-10-25T18:28:55.940542+08:00",
+    "clipped_start_unix": 1792924132.933542,
+    "clipped_end_unix": 1792924135.940542,
+    "seconds_in_window": 3.006999969482422,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6771",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792924214.962935,
+    "end_unix": 1792924225.587935,
+    "direct_seconds": 10.625,
+    "task_id": "d3970908f052a425551f573f30c7b16035be82d497c5e32696b260ac9c378b81",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6771
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:30:14.962935+08:00",
+    "end_shanghai": "2026-10-25T18:30:25.587935+08:00",
+    "clipped_start_unix": 1792924214.962935,
+    "clipped_end_unix": 1792924225.587935,
+    "seconds_in_window": 10.625,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6884",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792924914.051223,
+    "end_unix": 1792924998.250223,
+    "direct_seconds": 84.199,
+    "task_id": "b5747db82c0cfbeb4659bbe3276014f6937657f1d5cc9a23db323e40d9aaadf3",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6884
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:41:54.051223+08:00",
+    "end_shanghai": "2026-10-25T18:43:18.250223+08:00",
+    "clipped_start_unix": 1792924914.051223,
+    "clipped_end_unix": 1792924998.250223,
+    "seconds_in_window": 84.19899988174438,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:6972",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792925244.7999918,
+    "end_unix": 1792925277.272992,
+    "direct_seconds": 32.473,
+    "task_id": "7b020821561baadeedde236bf6dec01ff114f567be87100ad0794dc40fea1cf9",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 6972
+      }
+    ],
+    "start_shanghai": "2026-10-25T18:47:24.799992+08:00",
+    "end_shanghai": "2026-10-25T18:47:57.272992+08:00",
+    "clipped_start_unix": 1792925244.7999918,
+    "clipped_end_unix": 1792925277.272992,
+    "seconds_in_window": 32.473000049591064,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7183",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792926165.185899,
+    "end_unix": 1792926236.263899,
+    "direct_seconds": 71.078,
+    "task_id": "e4b937cff976f68114fd3696e8d4e3f5f5f9df65ff5f2b20d2789ff2727973c7",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7183
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:02:45.185899+08:00",
+    "end_shanghai": "2026-10-25T19:03:56.263899+08:00",
+    "clipped_start_unix": 1792926165.185899,
+    "clipped_end_unix": 1792926236.263899,
+    "seconds_in_window": 71.07800006866455,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7205",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792926256.958499,
+    "end_unix": 1792926358.751499,
+    "direct_seconds": 101.793,
+    "task_id": "5586737c97be9743f0e3dd9fe58ccca1d2c5fac28f38366e595cbbfdef46999a",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7205
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:04:16.958499+08:00",
+    "end_shanghai": "2026-10-25T19:05:58.751499+08:00",
+    "clipped_start_unix": 1792926256.958499,
+    "clipped_end_unix": 1792926358.751499,
+    "seconds_in_window": 101.79299998283386,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7248",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792926417.8719022,
+    "end_unix": 1792926698.162902,
+    "direct_seconds": 280.291,
+    "task_id": "cce8e6973c64c18efd699c14377fff092dcfb74472928407c1413195e2b98ecf",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7248
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:06:57.871902+08:00",
+    "end_shanghai": "2026-10-25T19:11:38.162902+08:00",
+    "clipped_start_unix": 1792926417.8719022,
+    "clipped_end_unix": 1792926698.162902,
+    "seconds_in_window": 280.2909998893738,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7278",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792926751.269784,
+    "end_unix": 1792926767.470784,
+    "direct_seconds": 16.201,
+    "task_id": "12b591b664e158aeada18568b611cc706803d85237d1af7285112286ab203fda",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7278
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:12:31.269784+08:00",
+    "end_shanghai": "2026-10-25T19:12:47.470784+08:00",
+    "clipped_start_unix": 1792926751.269784,
+    "clipped_end_unix": 1792926767.470784,
+    "seconds_in_window": 16.200999975204468,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7307",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792926791.7738829,
+    "end_unix": 1792926871.937883,
+    "direct_seconds": 80.164,
+    "task_id": "92c9618f474ff1e84dde905d5ef758a230cb0605e7a47f209ba4347265f1012e",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7307
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:13:11.773883+08:00",
+    "end_shanghai": "2026-10-25T19:14:31.937883+08:00",
+    "clipped_start_unix": 1792926791.7738829,
+    "clipped_end_unix": 1792926871.937883,
+    "seconds_in_window": 80.16400003433228,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7330",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792926922.192472,
+    "end_unix": 1792926946.438472,
+    "direct_seconds": 24.246,
+    "task_id": "9253752c840e95f0e4dd2fabb8879831462fd1125e283e119e2947f902001fd1",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7330
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:15:22.192472+08:00",
+    "end_shanghai": "2026-10-25T19:15:46.438472+08:00",
+    "clipped_start_unix": 1792926922.192472,
+    "clipped_end_unix": 1792926946.438472,
+    "seconds_in_window": 24.246000051498413,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7354",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792926971.524132,
+    "end_unix": 1792927050.410132,
+    "direct_seconds": 78.886,
+    "task_id": "f9082675a66b08444bed44facb0b788240773bd3ee156f589b2abd9197869b2c",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7354
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:16:11.524132+08:00",
+    "end_shanghai": "2026-10-25T19:17:30.410132+08:00",
+    "clipped_start_unix": 1792926971.524132,
+    "clipped_end_unix": 1792927050.410132,
+    "seconds_in_window": 78.88599991798401,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7408",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792927106.004165,
+    "end_unix": 1792927180.625165,
+    "direct_seconds": 74.621,
+    "task_id": "ca130d7dfcdd9c1363bfdf0f8e46812c1d2d3bf9fea887b2c761b392b1d17dc5",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7408
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:18:26.004165+08:00",
+    "end_shanghai": "2026-10-25T19:19:40.625165+08:00",
+    "clipped_start_unix": 1792927106.004165,
+    "clipped_end_unix": 1792927180.625165,
+    "seconds_in_window": 74.62100005149841,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7427",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792927202.8837662,
+    "end_unix": 1792927251.325766,
+    "direct_seconds": 48.442,
+    "task_id": "6fcb547ebad6a3b9e4345ce9a131bbc1651c6f8a4f6d56888b46f97c95b26f04",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7427
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:20:02.883766+08:00",
+    "end_shanghai": "2026-10-25T19:20:51.325766+08:00",
+    "clipped_start_unix": 1792927202.8837662,
+    "clipped_end_unix": 1792927251.325766,
+    "seconds_in_window": 48.44199991226196,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7456",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792927277.698995,
+    "end_unix": 1792927354.376995,
+    "direct_seconds": 76.678,
+    "task_id": "8a0943bc7b01b67e61a678e493921b5b5e7316786120bc05fcbb4e494a47778d",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7456
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:21:17.698995+08:00",
+    "end_shanghai": "2026-10-25T19:22:34.376995+08:00",
+    "clipped_start_unix": 1792927277.698995,
+    "clipped_end_unix": 1792927354.376995,
+    "seconds_in_window": 76.67799997329712,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7475",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792927379.115998,
+    "end_unix": 1792927425.230998,
+    "direct_seconds": 46.115,
+    "task_id": "9d167b7eae5fd951abf0074f4072c69f437b37370557c6cceb1c8c2711934bde",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7475
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:22:59.115998+08:00",
+    "end_shanghai": "2026-10-25T19:23:45.230998+08:00",
+    "clipped_start_unix": 1792927379.115998,
+    "clipped_end_unix": 1792927425.230998,
+    "seconds_in_window": 46.11500000953674,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7505",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792927464.340143,
+    "end_unix": 1792927536.478143,
+    "direct_seconds": 72.138,
+    "task_id": "ce70d4e7668de7a6b33c6e1bde6bf5c58514b66dd69a16caa31eb5a43832b80f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7505
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:24:24.340143+08:00",
+    "end_shanghai": "2026-10-25T19:25:36.478143+08:00",
+    "clipped_start_unix": 1792927464.340143,
+    "clipped_end_unix": 1792927536.478143,
+    "seconds_in_window": 72.13800001144409,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7524",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792927567.761899,
+    "end_unix": 1792927607.658899,
+    "direct_seconds": 39.897,
+    "task_id": "852302d007735001cc85bf54d2412840733dcee4febed7a6ea49a881bec547d9",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7524
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:26:07.761899+08:00",
+    "end_shanghai": "2026-10-25T19:26:47.658899+08:00",
+    "clipped_start_unix": 1792927567.761899,
+    "clipped_end_unix": 1792927607.658899,
+    "seconds_in_window": 39.8970000743866,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7552",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792927634.5115712,
+    "end_unix": 1792927721.167571,
+    "direct_seconds": 86.656,
+    "task_id": "3a1234336a99cae6b3c0c564f790667e2183d0523fd758d01d106d9297f7f212",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7552
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:27:14.511571+08:00",
+    "end_shanghai": "2026-10-25T19:28:41.167571+08:00",
+    "clipped_start_unix": 1792927634.5115712,
+    "clipped_end_unix": 1792927721.167571,
+    "seconds_in_window": 86.65599989891052,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7608",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792927815.162061,
+    "end_unix": 1792927825.048061,
+    "direct_seconds": 9.886,
+    "task_id": "64b8aeb17984df32bc27f108b4d9d06207c61a77fe559c8928011a387bbaaf67",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7608
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:30:15.162061+08:00",
+    "end_shanghai": "2026-10-25T19:30:25.048061+08:00",
+    "clipped_start_unix": 1792927815.162061,
+    "clipped_end_unix": 1792927825.048061,
+    "seconds_in_window": 9.885999917984009,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7629",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792927849.838455,
+    "end_unix": 1792927898.022455,
+    "direct_seconds": 48.184,
+    "task_id": "343febe1d4657d8333cf27dd9f111dbdc5468b39816efe0ac718839a470053d1",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7629
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:30:49.838455+08:00",
+    "end_shanghai": "2026-10-25T19:31:38.022455+08:00",
+    "clipped_start_unix": 1792927849.838455,
+    "clipped_end_unix": 1792927898.022455,
+    "seconds_in_window": 48.18400001525879,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7659",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792927930.920463,
+    "end_unix": 1792927933.515463,
+    "direct_seconds": 2.595,
+    "task_id": "d2e1a79628c418ceab2bb4d293c11312768ac73d2f1f5b2c118f16c065e6060f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7659
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:32:10.920463+08:00",
+    "end_shanghai": "2026-10-25T19:32:13.515463+08:00",
+    "clipped_start_unix": 1792927930.920463,
+    "clipped_end_unix": 1792927933.515463,
+    "seconds_in_window": 2.5950000286102295,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7722",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792928071.356145,
+    "end_unix": 1792928106.184145,
+    "direct_seconds": 34.828,
+    "task_id": "cfe04afcf24c0efa13e6d9a2fae2ed81de1c65c76920d83e9186b667a8d2d9ec",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7722
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:34:31.356145+08:00",
+    "end_shanghai": "2026-10-25T19:35:06.184145+08:00",
+    "clipped_start_unix": 1792928071.356145,
+    "clipped_end_unix": 1792928106.184145,
+    "seconds_in_window": 34.82800006866455,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7752",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792928146.5281098,
+    "end_unix": 1792928224.08911,
+    "direct_seconds": 77.561,
+    "task_id": "3c3667b97055a86c01500b632ed8f88ecfdebbbc19ef9f683b00b98bb0133160",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7752
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:35:46.528110+08:00",
+    "end_shanghai": "2026-10-25T19:37:04.089110+08:00",
+    "clipped_start_unix": 1792928146.5281098,
+    "clipped_end_unix": 1792928224.08911,
+    "seconds_in_window": 77.56100010871887,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7827",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792928342.3074272,
+    "end_unix": 1792928394.216427,
+    "direct_seconds": 51.909,
+    "task_id": "878758798d29394aa6961dda4e87ef43b9f96aba5b52ff28a73b6a2d3abab5c1",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7827
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:39:02.307427+08:00",
+    "end_shanghai": "2026-10-25T19:39:54.216427+08:00",
+    "clipped_start_unix": 1792928342.3074272,
+    "clipped_end_unix": 1792928394.216427,
+    "seconds_in_window": 51.90899991989136,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7874",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792928430.286411,
+    "end_unix": 1792928435.340411,
+    "direct_seconds": 5.054,
+    "task_id": "11f5bf9a83de18440bdeb508e28739b7042f2091533cfc65d633720abdaa662f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7874
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:40:30.286411+08:00",
+    "end_shanghai": "2026-10-25T19:40:35.340411+08:00",
+    "clipped_start_unix": 1792928430.286411,
+    "clipped_end_unix": 1792928435.340411,
+    "seconds_in_window": 5.053999900817871,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:7894",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792928452.844438,
+    "end_unix": 1792928511.575438,
+    "direct_seconds": 58.731,
+    "task_id": "b98833f71be3f068dc9d9cc7f4b00564d6f6fd1a6208745b61b0587f0d25f8dc",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 7894
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:40:52.844438+08:00",
+    "end_shanghai": "2026-10-25T19:41:51.575438+08:00",
+    "clipped_start_unix": 1792928452.844438,
+    "clipped_end_unix": 1792928511.575438,
+    "seconds_in_window": 58.73099994659424,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8061",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792928881.9902432,
+    "end_unix": 1792928923.406243,
+    "direct_seconds": 41.416,
+    "task_id": "02a7fc3e930d7e209b3ba3193ba87742cd60d49017fa24ffa63111a0ab2d4ee6",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8061
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:48:01.990243+08:00",
+    "end_shanghai": "2026-10-25T19:48:43.406243+08:00",
+    "clipped_start_unix": 1792928881.9902432,
+    "clipped_end_unix": 1792928923.406243,
+    "seconds_in_window": 41.41599988937378,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8227",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792929366.471364,
+    "end_unix": 1792929384.006364,
+    "direct_seconds": 17.535,
+    "task_id": "db255e31cd9fa072108a1500f586194002324e80338299a8f065d0fa925e20d8",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8227
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:56:06.471364+08:00",
+    "end_shanghai": "2026-10-25T19:56:24.006364+08:00",
+    "clipped_start_unix": 1792929366.471364,
+    "clipped_end_unix": 1792929384.006364,
+    "seconds_in_window": 17.53500008583069,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8302",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792929456.944533,
+    "end_unix": 1792929518.471533,
+    "direct_seconds": 61.527,
+    "task_id": "2f5606cf1c8f2d08f2b8748219ec5a5335eebb0062923e5e26612b3c57c6d8c7",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8302
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:57:36.944533+08:00",
+    "end_shanghai": "2026-10-25T19:58:38.471533+08:00",
+    "clipped_start_unix": 1792929456.944533,
+    "clipped_end_unix": 1792929518.471533,
+    "seconds_in_window": 61.526999950408936,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8349",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792929590.237634,
+    "end_unix": 1792929637.854634,
+    "direct_seconds": 47.617,
+    "task_id": "853f1b718a4b6f2ba00efc3232adba05d6c20c3df54bdf0fa6006e18c547e05d",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8349
+      }
+    ],
+    "start_shanghai": "2026-10-25T19:59:50.237634+08:00",
+    "end_shanghai": "2026-10-25T20:00:37.854634+08:00",
+    "clipped_start_unix": 1792929590.237634,
+    "clipped_end_unix": 1792929637.854634,
+    "seconds_in_window": 47.617000102996826,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8397",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792929680.663242,
+    "end_unix": 1792929708.301242,
+    "direct_seconds": 27.638,
+    "task_id": "c9b8a730b2e8e1e272d1ff00db5aca193386b60686f2f9ed86223221704b8cb8",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8397
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:01:20.663242+08:00",
+    "end_shanghai": "2026-10-25T20:01:48.301242+08:00",
+    "clipped_start_unix": 1792929680.663242,
+    "clipped_end_unix": 1792929708.301242,
+    "seconds_in_window": 27.638000011444092,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8417",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792929734.019388,
+    "end_unix": 1792929781.377388,
+    "direct_seconds": 47.358,
+    "task_id": "99b2ee9cf18bad7da03351a8a3e7c385703fe7c684bc4f907a832987bd1e8a87",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8417
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:02:14.019388+08:00",
+    "end_shanghai": "2026-10-25T20:03:01.377388+08:00",
+    "clipped_start_unix": 1792929734.019388,
+    "clipped_end_unix": 1792929781.377388,
+    "seconds_in_window": 47.35800004005432,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8471",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792929865.2038121,
+    "end_unix": 1792929888.471812,
+    "direct_seconds": 23.268,
+    "task_id": "de7dfde23f22ab5af513b85c8a935f39b253a8fcaeb6935847ea7db1c4d29049",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8471
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:04:25.203812+08:00",
+    "end_shanghai": "2026-10-25T20:04:48.471812+08:00",
+    "clipped_start_unix": 1792929865.2038121,
+    "clipped_end_unix": 1792929888.471812,
+    "seconds_in_window": 23.26799988746643,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8589",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792930207.0383348,
+    "end_unix": 1792930211.129335,
+    "direct_seconds": 4.091,
+    "task_id": "fda385b9b276f0e12575d3519e8f3f63b9505e457dc6fcdb90af9328b7a9e772",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8589
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:10:07.038335+08:00",
+    "end_shanghai": "2026-10-25T20:10:11.129335+08:00",
+    "clipped_start_unix": 1792930207.0383348,
+    "clipped_end_unix": 1792930211.129335,
+    "seconds_in_window": 4.091000080108643,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8613",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792930236.665458,
+    "end_unix": 1792930334.178458,
+    "direct_seconds": 97.513,
+    "task_id": "daa2f9b35bb11e190f6597be8ae317760974eaf3a58114c4a00c8475cfc6a630",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8613
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:10:36.665458+08:00",
+    "end_shanghai": "2026-10-25T20:12:14.178458+08:00",
+    "clipped_start_unix": 1792930236.665458,
+    "clipped_end_unix": 1792930334.178458,
+    "seconds_in_window": 97.51300001144409,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8691",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792930445.53844,
+    "end_unix": 1792930488.38344,
+    "direct_seconds": 42.845,
+    "task_id": "d550633101e08e52a28b15312f9d254938e7816e4ebce7dfdda2e9270a4671e7",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8691
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:14:05.538440+08:00",
+    "end_shanghai": "2026-10-25T20:14:48.383440+08:00",
+    "clipped_start_unix": 1792930445.53844,
+    "clipped_end_unix": 1792930488.38344,
+    "seconds_in_window": 42.84500002861023,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8756",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792930559.66123,
+    "end_unix": 1792930579.61523,
+    "direct_seconds": 19.954,
+    "task_id": "32ffbe5045d23ae8e3fbec1a741487750ea624140e0577479cde3aff70b77401",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8756
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:15:59.661230+08:00",
+    "end_shanghai": "2026-10-25T20:16:19.615230+08:00",
+    "clipped_start_unix": 1792930559.66123,
+    "clipped_end_unix": 1792930579.61523,
+    "seconds_in_window": 19.953999996185303,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8774",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792930607.43451,
+    "end_unix": 1792930651.71351,
+    "direct_seconds": 44.279,
+    "task_id": "4b44336353d8c7bc5a9e5a36c15d4cdc10159d443b0cc571bb7c8f4ab6b61f40",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8774
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:16:47.434510+08:00",
+    "end_shanghai": "2026-10-25T20:17:31.713510+08:00",
+    "clipped_start_unix": 1792930607.43451,
+    "clipped_end_unix": 1792930651.71351,
+    "seconds_in_window": 44.27900004386902,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8806",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792930674.9385169,
+    "end_unix": 1792930689.707517,
+    "direct_seconds": 14.769,
+    "task_id": "ecbaa1877f9a7dd4b4771f5749faa9e291cc4f06a63bf4e52605eab212f58060",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8806
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:17:54.938517+08:00",
+    "end_shanghai": "2026-10-25T20:18:09.707517+08:00",
+    "clipped_start_unix": 1792930674.9385169,
+    "clipped_end_unix": 1792930689.707517,
+    "seconds_in_window": 14.769000053405762,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8825",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792930710.206079,
+    "end_unix": 1792930762.013079,
+    "direct_seconds": 51.807,
+    "task_id": "2ad905121a7ee221bcfd13a021ba8cf25e74ecc6cfcf0cb8e7a7801bc31fa570",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8825
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:18:30.206079+08:00",
+    "end_shanghai": "2026-10-25T20:19:22.013079+08:00",
+    "clipped_start_unix": 1792930710.206079,
+    "clipped_end_unix": 1792930762.013079,
+    "seconds_in_window": 51.806999921798706,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8906",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792930916.5429592,
+    "end_unix": 1792930983.800959,
+    "direct_seconds": 67.258,
+    "task_id": "1a1533671339a1959140bc3e0f02b480e7074567cbbf5cffea80c146de8fca22",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8906
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:21:56.542959+08:00",
+    "end_shanghai": "2026-10-25T20:23:03.800959+08:00",
+    "clipped_start_unix": 1792930916.5429592,
+    "clipped_end_unix": 1792930983.800959,
+    "seconds_in_window": 67.25799989700317,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8937",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792931018.6400092,
+    "end_unix": 1792931024.118009,
+    "direct_seconds": 5.478,
+    "task_id": "d7d4457eedfa56fa4f04a239e1d2663c954ff20dc8fe9397f8ddd44067a7ee55",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8937
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:23:38.640009+08:00",
+    "end_shanghai": "2026-10-25T20:23:44.118009+08:00",
+    "clipped_start_unix": 1792931018.6400092,
+    "clipped_end_unix": 1792931024.118009,
+    "seconds_in_window": 5.477999925613403,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8957",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792931053.939269,
+    "end_unix": 1792931092.929269,
+    "direct_seconds": 38.99,
+    "task_id": "612887a16ab91ed20cfb9ca6b57cc52b68f47a3a09a38542571bb1ac5b946b6e",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8957
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:24:13.939269+08:00",
+    "end_shanghai": "2026-10-25T20:24:52.929269+08:00",
+    "clipped_start_unix": 1792931053.939269,
+    "clipped_end_unix": 1792931092.929269,
+    "seconds_in_window": 38.99000000953674,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:8982",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792931115.2373722,
+    "end_unix": 1792931136.794372,
+    "direct_seconds": 21.557,
+    "task_id": "924e568950faff4b9a4a1ac698105553c74065bf92eb96f1e4e13843bd52f630",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 8982
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:25:15.237372+08:00",
+    "end_shanghai": "2026-10-25T20:25:36.794372+08:00",
+    "clipped_start_unix": 1792931115.2373722,
+    "clipped_end_unix": 1792931136.794372,
+    "seconds_in_window": 21.556999921798706,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9001",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792931155.221787,
+    "end_unix": 1792931206.324787,
+    "direct_seconds": 51.103,
+    "task_id": "ca0fbdfaa5160aafd00b3af4dfe4515a8cb5e4efa8235790b3978d38a8ae9a2c",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9001
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:25:55.221787+08:00",
+    "end_shanghai": "2026-10-25T20:26:46.324787+08:00",
+    "clipped_start_unix": 1792931155.221787,
+    "clipped_end_unix": 1792931206.324787,
+    "seconds_in_window": 51.1029999256134,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9079",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792931358.2831469,
+    "end_unix": 1792931392.996147,
+    "direct_seconds": 34.713,
+    "task_id": "c24e3b3902b5a64674eb17edb4225664e02eaccfd51153eac4cb8fefdae7d71f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9079
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:29:18.283147+08:00",
+    "end_shanghai": "2026-10-25T20:29:52.996147+08:00",
+    "clipped_start_unix": 1792931358.2831469,
+    "clipped_end_unix": 1792931392.996147,
+    "seconds_in_window": 34.71300005912781,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9130",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792931458.165969,
+    "end_unix": 1792931526.599969,
+    "direct_seconds": 68.434,
+    "task_id": "0b776d27674405ccbd614737f73f015044fb9c77878a13e7918e201075ca0357",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9130
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:30:58.165969+08:00",
+    "end_shanghai": "2026-10-25T20:32:06.599969+08:00",
+    "clipped_start_unix": 1792931458.165969,
+    "clipped_end_unix": 1792931526.599969,
+    "seconds_in_window": 68.43400001525879,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9152",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792931550.7028391,
+    "end_unix": 1792931599.469839,
+    "direct_seconds": 48.767,
+    "task_id": "bfe287a5ee0d9711a04560429f4c332b5ebf100148c0495b4a5b9d8d9c6fe3d3",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9152
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:32:30.702839+08:00",
+    "end_shanghai": "2026-10-25T20:33:19.469839+08:00",
+    "clipped_start_unix": 1792931550.7028391,
+    "clipped_end_unix": 1792931599.469839,
+    "seconds_in_window": 48.76699995994568,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9195",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792931662.655773,
+    "end_unix": 1792931684.638773,
+    "direct_seconds": 21.983,
+    "task_id": "84916fa304320423eb7401c877ddab06cbd95a4b4e3413e80df9705015e3b00f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9195
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:34:22.655773+08:00",
+    "end_shanghai": "2026-10-25T20:34:44.638773+08:00",
+    "clipped_start_unix": 1792931662.655773,
+    "clipped_end_unix": 1792931684.638773,
+    "seconds_in_window": 21.98300004005432,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9246",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792931739.7142742,
+    "end_unix": 1792931858.880274,
+    "direct_seconds": 119.166,
+    "task_id": "3ff5efa1834bc48f6b1a0a1530b2abc35f7f9c6dc40d757e75f9c2979b30a20c",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9246
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:35:39.714274+08:00",
+    "end_shanghai": "2026-10-25T20:37:38.880274+08:00",
+    "clipped_start_unix": 1792931739.7142742,
+    "clipped_end_unix": 1792931858.880274,
+    "seconds_in_window": 119.16599988937378,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9346",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792932027.505805,
+    "end_unix": 1792932034.613805,
+    "direct_seconds": 7.108,
+    "task_id": "cefab44c249a99ec1b176a8cb42a8478a2c90dacc2b8b9fe59dba961bc0aeadc",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9346
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:40:27.505805+08:00",
+    "end_shanghai": "2026-10-25T20:40:34.613805+08:00",
+    "clipped_start_unix": 1792932027.505805,
+    "clipped_end_unix": 1792932034.613805,
+    "seconds_in_window": 7.108000040054321,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9365",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792932065.730349,
+    "end_unix": 1792932079.415349,
+    "direct_seconds": 13.685,
+    "task_id": "a6aba4bb287f1d35490f0ffb424accf755ffd20386b79b66011cdf3b8ece72fb",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9365
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:41:05.730349+08:00",
+    "end_shanghai": "2026-10-25T20:41:19.415349+08:00",
+    "clipped_start_unix": 1792932065.730349,
+    "clipped_end_unix": 1792932079.415349,
+    "seconds_in_window": 13.684999942779541,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9484",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792932344.021507,
+    "end_unix": 1792932414.995507,
+    "direct_seconds": 70.974,
+    "task_id": "20b9918de394dbf92086e5a666f1c31a6ed96693cfdae0001e2a7ee258c1ec97",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9484
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:45:44.021507+08:00",
+    "end_shanghai": "2026-10-25T20:46:54.995507+08:00",
+    "clipped_start_unix": 1792932344.021507,
+    "clipped_end_unix": 1792932414.995507,
+    "seconds_in_window": 70.97399997711182,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9510",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792932436.354562,
+    "end_unix": 1792932462.214562,
+    "direct_seconds": 25.86,
+    "task_id": "de0176dff85a6b1a34cea76229edda338899a2d5d5fa46a264cc473f6b093307",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9510
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:47:16.354562+08:00",
+    "end_shanghai": "2026-10-25T20:47:42.214562+08:00",
+    "clipped_start_unix": 1792932436.354562,
+    "clipped_end_unix": 1792932462.214562,
+    "seconds_in_window": 25.859999895095825,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9534",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792932503.054523,
+    "end_unix": 1792932536.530523,
+    "direct_seconds": 33.476,
+    "task_id": "af60ef3d9f8bb4657097834f276205cecaae0fb67fba14d3024c75ccc8c17910",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9534
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:48:23.054523+08:00",
+    "end_shanghai": "2026-10-25T20:48:56.530523+08:00",
+    "clipped_start_unix": 1792932503.054523,
+    "clipped_end_unix": 1792932536.530523,
+    "seconds_in_window": 33.4760000705719,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9558",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792932557.7747982,
+    "end_unix": 1792932565.644798,
+    "direct_seconds": 7.87,
+    "task_id": "aaec3b8b8a89c98aadc67b2644df670cd79352ac57cce0dd35baf514f5496c14",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9558
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:49:17.774798+08:00",
+    "end_shanghai": "2026-10-25T20:49:25.644798+08:00",
+    "clipped_start_unix": 1792932557.7747982,
+    "clipped_end_unix": 1792932565.644798,
+    "seconds_in_window": 7.869999885559082,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9591",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792932630.8264441,
+    "end_unix": 1792932637.801444,
+    "direct_seconds": 6.975,
+    "task_id": "a2807c4fd9e13a86c3b9e6a55a9f8fb9bf4756dd365991b8890527d7c14cd0df",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9591
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:50:30.826444+08:00",
+    "end_shanghai": "2026-10-25T20:50:37.801444+08:00",
+    "clipped_start_unix": 1792932630.8264441,
+    "clipped_end_unix": 1792932637.801444,
+    "seconds_in_window": 6.974999904632568,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9708",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792932872.284354,
+    "end_unix": 1792932896.267354,
+    "direct_seconds": 23.983,
+    "task_id": "bec2c8582cb6e881f8eef6c3825513076aedc2b5692fd41aefa71467f95d5594",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9708
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:54:32.284354+08:00",
+    "end_shanghai": "2026-10-25T20:54:56.267354+08:00",
+    "clipped_start_unix": 1792932872.284354,
+    "clipped_end_unix": 1792932896.267354,
+    "seconds_in_window": 23.98300004005432,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9733",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792932922.427879,
+    "end_unix": 1792932944.671879,
+    "direct_seconds": 22.244,
+    "task_id": "5527280bed24508ae5d7b8e42ca1005e757b6129eca9d8142af18156094e500f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9733
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:55:22.427879+08:00",
+    "end_shanghai": "2026-10-25T20:55:44.671879+08:00",
+    "clipped_start_unix": 1792932922.427879,
+    "clipped_end_unix": 1792932944.671879,
+    "seconds_in_window": 22.24399995803833,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9766",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792933010.616411,
+    "end_unix": 1792933066.926411,
+    "direct_seconds": 56.31,
+    "task_id": "b7766120da59ca86ac560e93b5a3c092084b5750582bbe56039ddfd2a5c90720",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9766
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:56:50.616411+08:00",
+    "end_shanghai": "2026-10-25T20:57:46.926411+08:00",
+    "clipped_start_unix": 1792933010.616411,
+    "clipped_end_unix": 1792933066.926411,
+    "seconds_in_window": 56.30999994277954,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9782",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792933081.2279491,
+    "end_unix": 1792933110.143949,
+    "direct_seconds": 28.916,
+    "task_id": "6bc167615d96a0fbb60c65ab174fbe1e648cb90e6130a4e230e1f369442179c6",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9782
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:58:01.227949+08:00",
+    "end_shanghai": "2026-10-25T20:58:30.143949+08:00",
+    "clipped_start_unix": 1792933081.2279491,
+    "clipped_end_unix": 1792933110.143949,
+    "seconds_in_window": 28.91599988937378,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9904",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792933318.8273048,
+    "end_unix": 1792933367.497305,
+    "direct_seconds": 48.67,
+    "task_id": "43067fdfb8f066e3fd9811a67bd4972980196b9148474a4c93637204d3762145",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9904
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:01:58.827305+08:00",
+    "end_shanghai": "2026-10-25T21:02:47.497305+08:00",
+    "clipped_start_unix": 1792933318.8273048,
+    "clipped_end_unix": 1792933367.497305,
+    "seconds_in_window": 48.670000076293945,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9927",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792933391.109984,
+    "end_unix": 1792933395.614984,
+    "direct_seconds": 4.505,
+    "task_id": "fc2aba7358c04a71f2dc7b0784e5cfea5f235cdf0d7129dcbfb406fa11901a6d",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9927
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:03:11.109984+08:00",
+    "end_shanghai": "2026-10-25T21:03:15.614984+08:00",
+    "clipped_start_unix": 1792933391.109984,
+    "clipped_end_unix": 1792933395.614984,
+    "seconds_in_window": 4.505000114440918,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9952",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792933455.014257,
+    "end_unix": 1792933467.140257,
+    "direct_seconds": 12.126,
+    "task_id": "a0cfd487bd44d0971c00a6c955924410457062de06414b7bb148b7bfc1e04906",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9952
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:04:15.014257+08:00",
+    "end_shanghai": "2026-10-25T21:04:27.140257+08:00",
+    "clipped_start_unix": 1792933455.014257,
+    "clipped_end_unix": 1792933467.140257,
+    "seconds_in_window": 12.125999927520752,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:9997",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792933531.26868,
+    "end_unix": 1792933569.23268,
+    "direct_seconds": 37.964,
+    "task_id": "04860e02464b730d458ac9199e0ee7d626a363edf60c6963a998f0406a434bae",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 9997
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:05:31.268680+08:00",
+    "end_shanghai": "2026-10-25T21:06:09.232680+08:00",
+    "clipped_start_unix": 1792933531.26868,
+    "clipped_end_unix": 1792933569.23268,
+    "seconds_in_window": 37.96399998664856,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10039",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792933609.9967551,
+    "end_unix": 1792933664.250755,
+    "direct_seconds": 54.254,
+    "task_id": "df0a267ce4f77ace3ab416ea8e39b93561e07af19f8f946eaaf9c94b19c2d3f1",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10039
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:06:49.996755+08:00",
+    "end_shanghai": "2026-10-25T21:07:44.250755+08:00",
+    "clipped_start_unix": 1792933609.9967551,
+    "clipped_end_unix": 1792933664.250755,
+    "seconds_in_window": 54.25399994850159,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10084",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792933718.213807,
+    "end_unix": 1792933831.240807,
+    "direct_seconds": 113.027,
+    "task_id": "8286c0756cd78611e09a397dc82f3b72abeea34d2f0a8901b662222fd72fe6ac",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10084
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:08:38.213807+08:00",
+    "end_shanghai": "2026-10-25T21:10:31.240807+08:00",
+    "clipped_start_unix": 1792933718.213807,
+    "clipped_end_unix": 1792933831.240807,
+    "seconds_in_window": 113.02699995040894,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10105",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792933867.325494,
+    "end_unix": 1792933901.069494,
+    "direct_seconds": 33.744,
+    "task_id": "066c3ba9f1f25b17790bebaf2694baddbc355cd148b5ee2c7b4835d8ab62222b",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10105
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:11:07.325494+08:00",
+    "end_shanghai": "2026-10-25T21:11:41.069494+08:00",
+    "clipped_start_unix": 1792933867.325494,
+    "clipped_end_unix": 1792933901.069494,
+    "seconds_in_window": 33.74399995803833,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10131",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792933924.176954,
+    "end_unix": 1792934027.558954,
+    "direct_seconds": 103.382,
+    "task_id": "3a418f5e494e3d41f02368b213132c2c3d3ef57b9bd7d5c5856c7587a502f5b5",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10131
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:12:04.176954+08:00",
+    "end_shanghai": "2026-10-25T21:13:47.558954+08:00",
+    "clipped_start_unix": 1792933924.176954,
+    "clipped_end_unix": 1792934027.558954,
+    "seconds_in_window": 103.38199996948242,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10158",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792934083.857567,
+    "end_unix": 1792934098.470567,
+    "direct_seconds": 14.613,
+    "task_id": "33c577d60101ceedab7195f7f1ddc48972912c6d02a1e822b25df56e5cda2673",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10158
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:14:43.857567+08:00",
+    "end_shanghai": "2026-10-25T21:14:58.470567+08:00",
+    "clipped_start_unix": 1792934083.857567,
+    "clipped_end_unix": 1792934098.470567,
+    "seconds_in_window": 14.61299991607666,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10245",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792934492.295659,
+    "end_unix": 1792934516.536659,
+    "direct_seconds": 24.241,
+    "task_id": "c9803b5e15f31ad4db7f6d4936fc996cc910352d61783d9960eb519340bbecba",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10245
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:21:32.295659+08:00",
+    "end_shanghai": "2026-10-25T21:21:56.536659+08:00",
+    "clipped_start_unix": 1792934492.295659,
+    "clipped_end_unix": 1792934516.536659,
+    "seconds_in_window": 24.240999937057495,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10284",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792934555.534784,
+    "end_unix": 1792934772.646784,
+    "direct_seconds": 217.112,
+    "task_id": "a4bc5f43e9fe27a4333905ef72ca7d0cd929b2596a885dd5defdd01f7a1e823e",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10284
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:22:35.534784+08:00",
+    "end_shanghai": "2026-10-25T21:26:12.646784+08:00",
+    "clipped_start_unix": 1792934555.534784,
+    "clipped_end_unix": 1792934772.646784,
+    "seconds_in_window": 217.1119999885559,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10309",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792934803.398934,
+    "end_unix": 1792934846.923934,
+    "direct_seconds": 43.525,
+    "task_id": "591ecda9eeef4fe6daf7ce377fda8fbec2e419ebdee78710dcebf3477ee506e2",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10309
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:26:43.398934+08:00",
+    "end_shanghai": "2026-10-25T21:27:26.923934+08:00",
+    "clipped_start_unix": 1792934803.398934,
+    "clipped_end_unix": 1792934846.923934,
+    "seconds_in_window": 43.52500009536743,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10357",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792934922.8495212,
+    "end_unix": 1792934959.225521,
+    "direct_seconds": 36.376,
+    "task_id": "75309df8707ea85cca8752c51ed1fb7de6980f24b9483fafee62e966523c01ad",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10357
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:28:42.849521+08:00",
+    "end_shanghai": "2026-10-25T21:29:19.225521+08:00",
+    "clipped_start_unix": 1792934922.8495212,
+    "clipped_end_unix": 1792934959.225521,
+    "seconds_in_window": 36.37599992752075,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10380",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792934991.3218281,
+    "end_unix": 1792934994.161828,
+    "direct_seconds": 2.84,
+    "task_id": "012265faf34d3102e7a81a7b0b9cf8357d6fb4937e9b9d384cf36368f11d040b",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10380
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:29:51.321828+08:00",
+    "end_shanghai": "2026-10-25T21:29:54.161828+08:00",
+    "clipped_start_unix": 1792934991.3218281,
+    "clipped_end_unix": 1792934994.161828,
+    "seconds_in_window": 2.8399999141693115,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10401",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792935015.953681,
+    "end_unix": 1792935064.398681,
+    "direct_seconds": 48.445,
+    "task_id": "528e07ebbdfc7c3febb519dbb5b162afa37359aa8b5d34e1194f72f07b26b647",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10401
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:30:15.953681+08:00",
+    "end_shanghai": "2026-10-25T21:31:04.398681+08:00",
+    "clipped_start_unix": 1792935015.953681,
+    "clipped_end_unix": 1792935064.398681,
+    "seconds_in_window": 48.4449999332428,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10426",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792935097.205811,
+    "end_unix": 1792935192.145811,
+    "direct_seconds": 94.94,
+    "task_id": "b96b85ab569cb67997f98bab8d4cab8f9f11254e63365af3567a92f0860cbb1f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10426
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:31:37.205811+08:00",
+    "end_shanghai": "2026-10-25T21:33:12.145811+08:00",
+    "clipped_start_unix": 1792935097.205811,
+    "clipped_end_unix": 1792935192.145811,
+    "seconds_in_window": 94.94000005722046,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10456",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792935261.365005,
+    "end_unix": 1792935262.874005,
+    "direct_seconds": 1.509,
+    "task_id": "7e4bef28c8a039ca966d1aaa145378ae0f37756b0a76e7a8a4b30f087baa7475",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10456
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:34:21.365005+08:00",
+    "end_shanghai": "2026-10-25T21:34:22.874005+08:00",
+    "clipped_start_unix": 1792935261.365005,
+    "clipped_end_unix": 1792935262.874005,
+    "seconds_in_window": 1.5090000629425049,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10480",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792935288.252545,
+    "end_unix": 1792935298.740545,
+    "direct_seconds": 10.488,
+    "task_id": "2b31a9d5badc08c43cb1a0303ca671537f4cb24b3dee40f4d89cfb8e5ec48e92",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10480
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:34:48.252545+08:00",
+    "end_shanghai": "2026-10-25T21:34:58.740545+08:00",
+    "clipped_start_unix": 1792935288.252545,
+    "clipped_end_unix": 1792935298.740545,
+    "seconds_in_window": 10.48799991607666,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10511",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792935362.108386,
+    "end_unix": 1792935371.683386,
+    "direct_seconds": 9.575,
+    "task_id": "cf0b05ade579e985f0f441a1ee4e5d50e15bb1281b0227c756cbf8c64dbfc2ff",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10511
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:36:02.108386+08:00",
+    "end_shanghai": "2026-10-25T21:36:11.683386+08:00",
+    "clipped_start_unix": 1792935362.108386,
+    "clipped_end_unix": 1792935371.683386,
+    "seconds_in_window": 9.575000047683716,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10535",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792935397.4158359,
+    "end_unix": 1792935432.874836,
+    "direct_seconds": 35.459,
+    "task_id": "44a5b504b3be31679160a166bac520a4c82d4c3273ba4f7fb6fcafb8d04f6b84",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10535
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:36:37.415836+08:00",
+    "end_shanghai": "2026-10-25T21:37:12.874836+08:00",
+    "clipped_start_unix": 1792935397.4158359,
+    "clipped_end_unix": 1792935432.874836,
+    "seconds_in_window": 35.45900011062622,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10608",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792935550.548367,
+    "end_unix": 1792935646.750367,
+    "direct_seconds": 96.202,
+    "task_id": "0532d60ac30c1f5398363f0341ee7c561818131491ff79a80f3d1f6983a412d2",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10608
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:39:10.548367+08:00",
+    "end_shanghai": "2026-10-25T21:40:46.750367+08:00",
+    "clipped_start_unix": 1792935550.548367,
+    "clipped_end_unix": 1792935646.750367,
+    "seconds_in_window": 96.20199990272522,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10820",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792936289.438366,
+    "end_unix": 1792936295.809366,
+    "direct_seconds": 6.371,
+    "task_id": "11617d916ba67d0e15970ba9a84819f97a5e333b8d65afac8c804106a3149d8d",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10820
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:51:29.438366+08:00",
+    "end_shanghai": "2026-10-25T21:51:35.809366+08:00",
+    "clipped_start_unix": 1792936289.438366,
+    "clipped_end_unix": 1792936295.809366,
+    "seconds_in_window": 6.371000051498413,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10871",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792936367.754514,
+    "end_unix": 1792936373.485514,
+    "direct_seconds": 5.731,
+    "task_id": "fd4a610c7515b9d4613ddd053649effb627edcdb23ca617fcd5c58399c89bae8",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10871
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:52:47.754514+08:00",
+    "end_shanghai": "2026-10-25T21:52:53.485514+08:00",
+    "clipped_start_unix": 1792936367.754514,
+    "clipped_end_unix": 1792936373.485514,
+    "seconds_in_window": 5.730999946594238,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10891",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792936402.344814,
+    "end_unix": 1792936453.217814,
+    "direct_seconds": 50.873,
+    "task_id": "a2ce7d9af22891b7bcc1844f1952ae723c0ed665af57237aba15c8ccfae7e1e4",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10891
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:53:22.344814+08:00",
+    "end_shanghai": "2026-10-25T21:54:13.217814+08:00",
+    "clipped_start_unix": 1792936402.344814,
+    "clipped_end_unix": 1792936453.217814,
+    "seconds_in_window": 50.87299990653992,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10933",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792936495.076788,
+    "end_unix": 1792936556.596788,
+    "direct_seconds": 61.52,
+    "task_id": "9491ded29e5bb464e1c58130c035e0e2811ec7001c0a12945481330fe3790312",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10933
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:54:55.076788+08:00",
+    "end_shanghai": "2026-10-25T21:55:56.596788+08:00",
+    "clipped_start_unix": 1792936495.076788,
+    "clipped_end_unix": 1792936556.596788,
+    "seconds_in_window": 61.519999980926514,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:10984",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792936653.262044,
+    "end_unix": 1792936673.228044,
+    "direct_seconds": 19.966,
+    "task_id": "ee14b14941937388f72bf5d7cc262b17891b8513de0f4f14561358c020dfa90c",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 10984
+      }
+    ],
+    "start_shanghai": "2026-10-25T21:57:33.262044+08:00",
+    "end_shanghai": "2026-10-25T21:57:53.228044+08:00",
+    "clipped_start_unix": 1792936653.262044,
+    "clipped_end_unix": 1792936673.228044,
+    "seconds_in_window": 19.966000080108643,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:11063",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792936815.631238,
+    "end_unix": 1792936901.775238,
+    "direct_seconds": 86.144,
+    "task_id": "097103170cf56c32b8705bc0bf6a1508496f62d63a12a128623c7de1e76a44b1",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 11063
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:00:15.631238+08:00",
+    "end_shanghai": "2026-10-25T22:01:41.775238+08:00",
+    "clipped_start_unix": 1792936815.631238,
+    "clipped_end_unix": 1792936901.775238,
+    "seconds_in_window": 86.14400005340576,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:11213",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792937275.124953,
+    "end_unix": 1792937279.487953,
+    "direct_seconds": 4.363,
+    "task_id": "53be4858303c509cfa77fbe3691b856f6fde1ace88e18264a9065486d7494e1c",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 11213
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:07:55.124953+08:00",
+    "end_shanghai": "2026-10-25T22:07:59.487953+08:00",
+    "clipped_start_unix": 1792937275.124953,
+    "clipped_end_unix": 1792937279.487953,
+    "seconds_in_window": 4.36299991607666,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:11232",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792937314.754217,
+    "end_unix": 1792937356.665217,
+    "direct_seconds": 41.911,
+    "task_id": "ddc4de70346093c6630f311bb519d51bb12b0fe6127c723a652f3051cbc17426",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 11232
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:08:34.754217+08:00",
+    "end_shanghai": "2026-10-25T22:09:16.665217+08:00",
+    "clipped_start_unix": 1792937314.754217,
+    "clipped_end_unix": 1792937356.665217,
+    "seconds_in_window": 41.91100001335144,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:11277",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792937420.970056,
+    "end_unix": 1792937454.172056,
+    "direct_seconds": 33.202,
+    "task_id": "97c4254c89ba29f34cc40c450e90669e15e516ea824f9b4ed37189ee0a626dda",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 11277
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:10:20.970056+08:00",
+    "end_shanghai": "2026-10-25T22:10:54.172056+08:00",
+    "clipped_start_unix": 1792937420.970056,
+    "clipped_end_unix": 1792937454.172056,
+    "seconds_in_window": 33.20199990272522,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:11462",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792938229.1406288,
+    "end_unix": 1792938234.392629,
+    "direct_seconds": 5.252,
+    "task_id": "0734a37d7f605dfe21cc919b301bbce8d8093691bd81a58806cffd367f6e0663",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 11462
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:23:49.140629+08:00",
+    "end_shanghai": "2026-10-25T22:23:54.392629+08:00",
+    "clipped_start_unix": 1792938229.1406288,
+    "clipped_end_unix": 1792938234.392629,
+    "seconds_in_window": 5.252000093460083,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:11582",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792938408.871737,
+    "end_unix": 1792938448.640737,
+    "direct_seconds": 39.769,
+    "task_id": "0566ee714983da4547276b434a8db14c3337f1f40ba5edce8ea0bde06a793dff",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 11582
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:26:48.871737+08:00",
+    "end_shanghai": "2026-10-25T22:27:28.640737+08:00",
+    "clipped_start_unix": 1792938408.871737,
+    "clipped_end_unix": 1792938448.640737,
+    "seconds_in_window": 39.76900005340576,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:11610",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792938471.195376,
+    "end_unix": 1792938475.043376,
+    "direct_seconds": 3.848,
+    "task_id": "87bea42090eec135501f042c11c19a0f3e5b5e6d355c9e67c20fb04beacdfb48",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 11610
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:27:51.195376+08:00",
+    "end_shanghai": "2026-10-25T22:27:55.043376+08:00",
+    "clipped_start_unix": 1792938471.195376,
+    "clipped_end_unix": 1792938475.043376,
+    "seconds_in_window": 3.8480000495910645,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:11980",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792939774.8232782,
+    "end_unix": 1792939828.808278,
+    "direct_seconds": 53.985,
+    "task_id": "f89dc8e9eb21cc85d4469e216d1f8253b1762d1365d9fbe802b689eb3a0b684f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 11980
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:49:34.823278+08:00",
+    "end_shanghai": "2026-10-25T22:50:28.808278+08:00",
+    "clipped_start_unix": 1792939774.8232782,
+    "clipped_end_unix": 1792939828.808278,
+    "seconds_in_window": 53.984999895095825,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12023",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792939872.853452,
+    "end_unix": 1792939933.666452,
+    "direct_seconds": 60.813,
+    "task_id": "aaca53ec82532b4c0a6a6e8026ba33e2fb1366260c34660cc85bfea75b0c2ce0",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12023
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:51:12.853452+08:00",
+    "end_shanghai": "2026-10-25T22:52:13.666452+08:00",
+    "clipped_start_unix": 1792939872.853452,
+    "clipped_end_unix": 1792939933.666452,
+    "seconds_in_window": 60.812999963760376,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12049",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792939960.433759,
+    "end_unix": 1792939961.904759,
+    "direct_seconds": 1.471,
+    "task_id": "0db97407a6ef38b15bacb4127ed20d6c00b5d86cbd702fa7614935a66a29507a",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12049
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:52:40.433759+08:00",
+    "end_shanghai": "2026-10-25T22:52:41.904759+08:00",
+    "clipped_start_unix": 1792939960.433759,
+    "clipped_end_unix": 1792939961.904759,
+    "seconds_in_window": 1.4709999561309814,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12074",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792940010.588629,
+    "end_unix": 1792940031.932629,
+    "direct_seconds": 21.344,
+    "task_id": "87a4be87888a482b845b8f00ff659a5bb0520bee7d05b2e1d94ebb98bd5a494c",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12074
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:53:30.588629+08:00",
+    "end_shanghai": "2026-10-25T22:53:51.932629+08:00",
+    "clipped_start_unix": 1792940010.588629,
+    "clipped_end_unix": 1792940031.932629,
+    "seconds_in_window": 21.344000101089478,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12101",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792940062.754473,
+    "end_unix": 1792940165.178473,
+    "direct_seconds": 102.424,
+    "task_id": "1659dca3383002ca828169b0452cd116603b3b951747c9645551b2c929507fce",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12101
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:54:22.754473+08:00",
+    "end_shanghai": "2026-10-25T22:56:05.178473+08:00",
+    "clipped_start_unix": 1792940062.754473,
+    "clipped_end_unix": 1792940165.178473,
+    "seconds_in_window": 102.42400002479553,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12121",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792940192.8327842,
+    "end_unix": 1792940236.248784,
+    "direct_seconds": 43.416,
+    "task_id": "567bdc744a6324b1574d5bd173bbec4d201968b3c073aaf6906587eb1560f0ea",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12121
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:56:32.832784+08:00",
+    "end_shanghai": "2026-10-25T22:57:16.248784+08:00",
+    "clipped_start_unix": 1792940192.8327842,
+    "clipped_end_unix": 1792940236.248784,
+    "seconds_in_window": 43.41599988937378,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12161",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792940262.128907,
+    "end_unix": 1792940504.838907,
+    "direct_seconds": 242.71,
+    "task_id": "f8dad00e65385df8c345a4e5097dd7246e0f4c99558ffbca58e1f604518c51ab",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12161
+      }
+    ],
+    "start_shanghai": "2026-10-25T22:57:42.128907+08:00",
+    "end_shanghai": "2026-10-25T23:01:44.838907+08:00",
+    "clipped_start_unix": 1792940262.128907,
+    "clipped_end_unix": 1792940504.838907,
+    "seconds_in_window": 242.71000003814697,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12224",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792940653.901015,
+    "end_unix": 1792940691.322015,
+    "direct_seconds": 37.421,
+    "task_id": "16263358639a49d6fad029c07305dbdf826da2649c04ac50d2ed14e6107de205",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12224
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:04:13.901015+08:00",
+    "end_shanghai": "2026-10-25T23:04:51.322015+08:00",
+    "clipped_start_unix": 1792940653.901015,
+    "clipped_end_unix": 1792940691.322015,
+    "seconds_in_window": 37.4210000038147,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12257",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792940730.144012,
+    "end_unix": 1792940816.089012,
+    "direct_seconds": 85.945,
+    "task_id": "6586f845eff6fb0245fc53260e7c9df61b53747611468be742ad145e7c15e84b",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12257
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:05:30.144012+08:00",
+    "end_shanghai": "2026-10-25T23:06:56.089012+08:00",
+    "clipped_start_unix": 1792940730.144012,
+    "clipped_end_unix": 1792940816.089012,
+    "seconds_in_window": 85.9449999332428,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12278",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792940860.504243,
+    "end_unix": 1792940887.079243,
+    "direct_seconds": 26.575,
+    "task_id": "33730744dfbf87f3d5461f515ef99b61eb6e6bf0aff476aa9d3d142d539ef64d",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12278
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:07:40.504243+08:00",
+    "end_shanghai": "2026-10-25T23:08:07.079243+08:00",
+    "clipped_start_unix": 1792940860.504243,
+    "clipped_end_unix": 1792940887.079243,
+    "seconds_in_window": 26.575000047683716,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12303",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792940912.706327,
+    "end_unix": 1792940927.642327,
+    "direct_seconds": 14.936,
+    "task_id": "d742702448d70f82d08df3784401075d74463a65a9fc10e23124f5d9fc0780ca",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12303
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:08:32.706327+08:00",
+    "end_shanghai": "2026-10-25T23:08:47.642327+08:00",
+    "clipped_start_unix": 1792940912.706327,
+    "clipped_end_unix": 1792940927.642327,
+    "seconds_in_window": 14.936000108718872,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12419",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792941237.515755,
+    "end_unix": 1792941246.555755,
+    "direct_seconds": 9.04,
+    "task_id": "8d450967186719e2f0aecf2567f6233cbdfd437c312cbb7343663b4c10d04160",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12419
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:13:57.515755+08:00",
+    "end_shanghai": "2026-10-25T23:14:06.555755+08:00",
+    "clipped_start_unix": 1792941237.515755,
+    "clipped_end_unix": 1792941246.555755,
+    "seconds_in_window": 9.039999961853027,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12445",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792941285.7005281,
+    "end_unix": 1792941287.366528,
+    "direct_seconds": 1.666,
+    "task_id": "0c321657465021a5027788a1d2bd3db18350bbcea4500626e45ae0cda4797f5a",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12445
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:14:45.700528+08:00",
+    "end_shanghai": "2026-10-25T23:14:47.366528+08:00",
+    "clipped_start_unix": 1792941285.7005281,
+    "clipped_end_unix": 1792941287.366528,
+    "seconds_in_window": 1.6659998893737793,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12617",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792941966.473081,
+    "end_unix": 1792942060.468081,
+    "direct_seconds": 93.995,
+    "task_id": "6f773e9879952de57e158623a2e9fe900d913ca3cd643cf750e4307d84ad4d75",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12617
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:26:06.473081+08:00",
+    "end_shanghai": "2026-10-25T23:27:40.468081+08:00",
+    "clipped_start_unix": 1792941966.473081,
+    "clipped_end_unix": 1792942060.468081,
+    "seconds_in_window": 93.99499988555908,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12653",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792942106.5160651,
+    "end_unix": 1792942161.616065,
+    "direct_seconds": 55.1,
+    "task_id": "5175bd17d3422d93473080a3b9e23d0ea6b4544777003c3cb52c8d0fc3d567cd",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12653
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:28:26.516065+08:00",
+    "end_shanghai": "2026-10-25T23:29:21.616065+08:00",
+    "clipped_start_unix": 1792942106.5160651,
+    "clipped_end_unix": 1792942161.616065,
+    "seconds_in_window": 55.09999990463257,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12672",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792942201.285233,
+    "end_unix": 1792942233.601233,
+    "direct_seconds": 32.316,
+    "task_id": "058b1606019eed49644b28eb5ea61d689f287cc1d139f90ab352dc2c7f9d7685",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12672
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:30:01.285233+08:00",
+    "end_shanghai": "2026-10-25T23:30:33.601233+08:00",
+    "clipped_start_unix": 1792942201.285233,
+    "clipped_end_unix": 1792942233.601233,
+    "seconds_in_window": 32.31599998474121,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12696",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792942280.92263,
+    "end_unix": 1792942341.92063,
+    "direct_seconds": 60.998,
+    "task_id": "b156124f6c879f45f8b2b2ca848e5912774074d402964bb4bc556751ea8e5b0c",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12696
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:31:20.922630+08:00",
+    "end_shanghai": "2026-10-25T23:32:21.920630+08:00",
+    "clipped_start_unix": 1792942280.92263,
+    "clipped_end_unix": 1792942341.92063,
+    "seconds_in_window": 60.99799990653992,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12715",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792942375.7895439,
+    "end_unix": 1792942425.617544,
+    "direct_seconds": 49.828,
+    "task_id": "17c2e93b29cfdab9904e90d4671c66f1093432ebabf17bd7e8e4465ac6bef438",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12715
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:32:55.789544+08:00",
+    "end_shanghai": "2026-10-25T23:33:45.617544+08:00",
+    "clipped_start_unix": 1792942375.7895439,
+    "clipped_end_unix": 1792942425.617544,
+    "seconds_in_window": 49.82800006866455,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12744",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792942450.075431,
+    "end_unix": 1792942540.648431,
+    "direct_seconds": 90.573,
+    "task_id": "ce135da678d2bf4d08a2eee1fed9f9e5893896a705982b35cbc1cdd0c56c7881",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12744
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:34:10.075431+08:00",
+    "end_shanghai": "2026-10-25T23:35:40.648431+08:00",
+    "clipped_start_unix": 1792942450.075431,
+    "clipped_end_unix": 1792942540.648431,
+    "seconds_in_window": 90.57299995422363,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12763",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792942590.725513,
+    "end_unix": 1792942662.997513,
+    "direct_seconds": 72.272,
+    "task_id": "9e4f068495b9a030e6eac16d4a2b578cba2cd9a36479339a9dd8ae4a051576f5",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12763
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:36:30.725513+08:00",
+    "end_shanghai": "2026-10-25T23:37:42.997513+08:00",
+    "clipped_start_unix": 1792942590.725513,
+    "clipped_end_unix": 1792942662.997513,
+    "seconds_in_window": 72.2720000743866,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:12796",
+    "window": 1,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792942721.2525802,
+    "end_unix": 1792942769.03358,
+    "direct_seconds": 47.781,
+    "task_id": "2f3b425e4c6263d94043bd1065cb345013a6aa0e22ce52e05705498a0667d123",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 12796
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:38:41.252580+08:00",
+    "end_shanghai": "2026-10-25T23:39:29.033580+08:00",
+    "clipped_start_unix": 1792942721.2525802,
+    "clipped_end_unix": 1792942769.03358,
+    "seconds_in_window": 47.78099989891052,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:16426",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792955932.325864,
+    "end_unix": 1792956014.280864,
+    "direct_seconds": 81.955,
+    "task_id": "f14d12e1e8e4d7f17491ebe1fccdbf7469bc19f56ca9c2c9dff0a3a1412ddafe",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 16426
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:18:52.325864+08:00",
+    "end_shanghai": "2026-10-26T03:20:14.280864+08:00",
+    "clipped_start_unix": 1792955932.325864,
+    "clipped_end_unix": 1792956014.280864,
+    "seconds_in_window": 81.95499992370605,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:16689",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792956619.662328,
+    "end_unix": 1792956727.124328,
+    "direct_seconds": 107.462,
+    "task_id": "8b10c94c7e71ea2d2cc99924cbeb8e7bff7f7c66bd24a8ca652742b7176b8333",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 16689
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:30:19.662328+08:00",
+    "end_shanghai": "2026-10-26T03:32:07.124328+08:00",
+    "clipped_start_unix": 1792956619.662328,
+    "clipped_end_unix": 1792956727.124328,
+    "seconds_in_window": 107.46199989318848,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:16697",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792956727.1607609,
+    "end_unix": 1792956756.586761,
+    "direct_seconds": 29.426,
+    "task_id": "00ebf01de5cdcf1c50fb874b2de4ab80a036b1b4b3e737b4dac599fa408a566d",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 16697
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:32:07.160761+08:00",
+    "end_shanghai": "2026-10-26T03:32:36.586761+08:00",
+    "clipped_start_unix": 1792956727.1607609,
+    "clipped_end_unix": 1792956756.586761,
+    "seconds_in_window": 29.426000118255615,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:16720",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792956784.5443141,
+    "end_unix": 1792956803.584314,
+    "direct_seconds": 19.04,
+    "task_id": "92d813211a58712b3082814f17c02e760d047f58c99284fb4488e3729faa72e2",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 16720
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:33:04.544314+08:00",
+    "end_shanghai": "2026-10-26T03:33:23.584314+08:00",
+    "clipped_start_unix": 1792956784.5443141,
+    "clipped_end_unix": 1792956803.584314,
+    "seconds_in_window": 19.039999961853027,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:16781",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792956872.852104,
+    "end_unix": 1792957145.190104,
+    "direct_seconds": 272.338,
+    "task_id": "4453ae9617be187970328b56a399978636ce90fda5986c3b5483c73024c1b004",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 16781
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:34:32.852104+08:00",
+    "end_shanghai": "2026-10-26T03:39:05.190104+08:00",
+    "clipped_start_unix": 1792956872.852104,
+    "clipped_end_unix": 1792957145.190104,
+    "seconds_in_window": 272.3380000591278,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:16904",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792957677.102301,
+    "end_unix": 1792957712.720301,
+    "direct_seconds": 35.618,
+    "task_id": "813871de14d27ef90230625dfdc9bd1ab9c1032930909e4bc7cf332d9fbc4ad8",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 16904
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:47:57.102301+08:00",
+    "end_shanghai": "2026-10-26T03:48:32.720301+08:00",
+    "clipped_start_unix": 1792957677.102301,
+    "clipped_end_unix": 1792957712.720301,
+    "seconds_in_window": 35.61800003051758,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:16953",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792957796.5153081,
+    "end_unix": 1792957808.904308,
+    "direct_seconds": 12.389,
+    "task_id": "1f61a93d7a4394e2a82efaa88889849e500292436aa9a065e6ede072c62a25a7",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 16953
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:49:56.515308+08:00",
+    "end_shanghai": "2026-10-26T03:50:08.904308+08:00",
+    "clipped_start_unix": 1792957796.5153081,
+    "clipped_end_unix": 1792957808.904308,
+    "seconds_in_window": 12.388999938964844,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:16971",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792957826.1510491,
+    "end_unix": 1792957852.648049,
+    "direct_seconds": 26.497,
+    "task_id": "e79b4d8f5879f84fe3613e1ca78a78ba703c31779c2471942ca3c24e79539c43",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 16971
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:50:26.151049+08:00",
+    "end_shanghai": "2026-10-26T03:50:52.648049+08:00",
+    "clipped_start_unix": 1792957826.1510491,
+    "clipped_end_unix": 1792957852.648049,
+    "seconds_in_window": 26.496999979019165,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17044",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792958045.119829,
+    "end_unix": 1792958102.473829,
+    "direct_seconds": 57.354,
+    "task_id": "44ece670fc3fb1de6546ec5676d717db0a6eb02ad0b2c9b1462dfeafa1b1314e",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17044
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:54:05.119829+08:00",
+    "end_shanghai": "2026-10-26T03:55:02.473829+08:00",
+    "clipped_start_unix": 1792958045.119829,
+    "clipped_end_unix": 1792958102.473829,
+    "seconds_in_window": 57.354000091552734,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17049",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792958102.481295,
+    "end_unix": 1792958148.331295,
+    "direct_seconds": 45.85,
+    "task_id": "70c45efe3269db102c8217e5b40f6db4284f87b64e9cf01e0cd570eea6470b9c",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17049
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:55:02.481295+08:00",
+    "end_shanghai": "2026-10-26T03:55:48.331295+08:00",
+    "clipped_start_unix": 1792958102.481295,
+    "clipped_end_unix": 1792958148.331295,
+    "seconds_in_window": 45.84999990463257,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17067",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792958156.6538959,
+    "end_unix": 1792958197.879896,
+    "direct_seconds": 41.226,
+    "task_id": "f8e682a5ab24b64a4e4045505f4ef663fe8846df1f00a811077d238f460ef6b1",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17067
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:55:56.653896+08:00",
+    "end_shanghai": "2026-10-26T03:56:37.879896+08:00",
+    "clipped_start_unix": 1792958156.6538959,
+    "clipped_end_unix": 1792958197.879896,
+    "seconds_in_window": 41.2260000705719,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17256",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792959019.56489,
+    "end_unix": 1792959100.89289,
+    "direct_seconds": 81.328,
+    "task_id": "604c49fe8088d1d959d208ce7e8c42984941a3ea22a92c03ac716fe7873d9bd8",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17256
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:10:19.564890+08:00",
+    "end_shanghai": "2026-10-26T04:11:40.892890+08:00",
+    "clipped_start_unix": 1792959019.56489,
+    "clipped_end_unix": 1792959100.89289,
+    "seconds_in_window": 81.32800006866455,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17273",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792959118.821415,
+    "end_unix": 1792959133.741415,
+    "direct_seconds": 14.92,
+    "task_id": "a975a6fbaa717f7a44d0434958e52b946cfd9f6656392344e12fc7f5b0e05b1b",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17273
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:11:58.821415+08:00",
+    "end_shanghai": "2026-10-26T04:12:13.741415+08:00",
+    "clipped_start_unix": 1792959118.821415,
+    "clipped_end_unix": 1792959133.741415,
+    "seconds_in_window": 14.920000076293945,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17329",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792959205.624019,
+    "end_unix": 1792959227.620019,
+    "direct_seconds": 21.996,
+    "task_id": "16f9f2e4cefa79b3e5c9bdd3c0439f43d4dfbf28928181b2cd95cc7e605f5935",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17329
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:13:25.624019+08:00",
+    "end_shanghai": "2026-10-26T04:13:47.620019+08:00",
+    "clipped_start_unix": 1792959205.624019,
+    "clipped_end_unix": 1792959227.620019,
+    "seconds_in_window": 21.996000051498413,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17359",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792959263.9156768,
+    "end_unix": 1792959417.042677,
+    "direct_seconds": 153.127,
+    "task_id": "9ac10733f75fa9998f31c4c42f9d442a8ea2ac089c119ced0dfb1130d7ea2882",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17359
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:14:23.915677+08:00",
+    "end_shanghai": "2026-10-26T04:16:57.042677+08:00",
+    "clipped_start_unix": 1792959263.9156768,
+    "clipped_end_unix": 1792959417.042677,
+    "seconds_in_window": 153.12700009346008,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17369",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792959417.090255,
+    "end_unix": 1792959450.917255,
+    "direct_seconds": 33.827,
+    "task_id": "16f9f2e4cefa79b3e5c9bdd3c0439f43d4dfbf28928181b2cd95cc7e605f5935",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17369
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:16:57.090255+08:00",
+    "end_shanghai": "2026-10-26T04:17:30.917255+08:00",
+    "clipped_start_unix": 1792959417.090255,
+    "clipped_end_unix": 1792959450.917255,
+    "seconds_in_window": 33.82699990272522,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17431",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792959543.720858,
+    "end_unix": 1792959554.491858,
+    "direct_seconds": 10.771,
+    "task_id": "764be422bdd2d9b82bdfc64771cdef859c9bd4569cd0b8135174bc5fa24f3187",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17431
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:19:03.720858+08:00",
+    "end_shanghai": "2026-10-26T04:19:14.491858+08:00",
+    "clipped_start_unix": 1792959543.720858,
+    "clipped_end_unix": 1792959554.491858,
+    "seconds_in_window": 10.770999908447266,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17463",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792959582.807449,
+    "end_unix": 1792959863.802449,
+    "direct_seconds": 280.995,
+    "task_id": "a4cfaf1c08d9093cff7c12cc421c701743495ead9f4e27e196dc467224dcd7a6",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17463
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:19:42.807449+08:00",
+    "end_shanghai": "2026-10-26T04:24:23.802449+08:00",
+    "clipped_start_unix": 1792959582.807449,
+    "clipped_end_unix": 1792959863.802449,
+    "seconds_in_window": 280.9949998855591,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17518",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792960236.677112,
+    "end_unix": 1792960295.668112,
+    "direct_seconds": 58.991,
+    "task_id": "0f2061fe6fe722c2f29ea4861279e7c3f6a5d0abf0b96866cdbad58efbfb8ed3",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17518
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:30:36.677112+08:00",
+    "end_shanghai": "2026-10-26T04:31:35.668112+08:00",
+    "clipped_start_unix": 1792960236.677112,
+    "clipped_end_unix": 1792960295.668112,
+    "seconds_in_window": 58.990999937057495,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17576",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792960385.0166352,
+    "end_unix": 1792960426.902635,
+    "direct_seconds": 41.886,
+    "task_id": "3cb4946fa25cf6b934a4c101875ac5f8fa79c41aec4445fd98b039040c499dc5",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17576
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:33:05.016635+08:00",
+    "end_shanghai": "2026-10-26T04:33:46.902635+08:00",
+    "clipped_start_unix": 1792960385.0166352,
+    "clipped_end_unix": 1792960426.902635,
+    "seconds_in_window": 41.88599991798401,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17673",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792960701.51492,
+    "end_unix": 1792960739.21692,
+    "direct_seconds": 37.702,
+    "task_id": "d5b67b9b35a918301bcb2ebe6a86bdca1c9ab138daaa127293c26b01cd17d8e6",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17673
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:38:21.514920+08:00",
+    "end_shanghai": "2026-10-26T04:38:59.216920+08:00",
+    "clipped_start_unix": 1792960701.51492,
+    "clipped_end_unix": 1792960739.21692,
+    "seconds_in_window": 37.70199990272522,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17722",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792960811.744377,
+    "end_unix": 1792960884.964377,
+    "direct_seconds": 73.22,
+    "task_id": "030b9ae5b29e19b247e0e713448a935c3bd81dab2d833e85377b58a7f2d78a20",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17722
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:40:11.744377+08:00",
+    "end_shanghai": "2026-10-26T04:41:24.964377+08:00",
+    "clipped_start_unix": 1792960811.744377,
+    "clipped_end_unix": 1792960884.964377,
+    "seconds_in_window": 73.22000002861023,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:17906",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792961413.9039168,
+    "end_unix": 1792961458.524917,
+    "direct_seconds": 44.621,
+    "task_id": "d3b903d994eb9330167656c95728af7542877f28c39bfe78fcd90d5d590dc72f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 17906
+      }
+    ],
+    "start_shanghai": "2026-10-26T04:50:13.903917+08:00",
+    "end_shanghai": "2026-10-26T04:50:58.524917+08:00",
+    "clipped_start_unix": 1792961413.9039168,
+    "clipped_end_unix": 1792961458.524917,
+    "seconds_in_window": 44.62100005149841,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18226",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792962585.683548,
+    "end_unix": 1792962824.925548,
+    "direct_seconds": 239.242,
+    "task_id": "74429b11292cd24b93c3867ef3f1d20c5710015a575da074ee1687a781ee71e7",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18226
+      }
+    ],
+    "start_shanghai": "2026-10-26T05:09:45.683548+08:00",
+    "end_shanghai": "2026-10-26T05:13:44.925548+08:00",
+    "clipped_start_unix": 1792962585.683548,
+    "clipped_end_unix": 1792962824.925548,
+    "seconds_in_window": 239.24200010299683,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18287",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792962860.297596,
+    "end_unix": 1792963324.059596,
+    "direct_seconds": 463.762,
+    "task_id": "8a5132821e23f19f8b8c240480642ed2296c387f51482b09b55baaca2aa5ac11",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18287
+      }
+    ],
+    "start_shanghai": "2026-10-26T05:14:20.297596+08:00",
+    "end_shanghai": "2026-10-26T05:22:04.059596+08:00",
+    "clipped_start_unix": 1792962860.297596,
+    "clipped_end_unix": 1792963324.059596,
+    "seconds_in_window": 463.76200008392334,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18307",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792963335.8201761,
+    "end_unix": 1792963367.946176,
+    "direct_seconds": 32.126,
+    "task_id": "c1191f799595d69bb9f5f3d9488b200fb4c4fc2a08e0d5f4b9a46afabcbdb98d",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18307
+      }
+    ],
+    "start_shanghai": "2026-10-26T05:22:15.820176+08:00",
+    "end_shanghai": "2026-10-26T05:22:47.946176+08:00",
+    "clipped_start_unix": 1792963335.8201761,
+    "clipped_end_unix": 1792963367.946176,
+    "seconds_in_window": 32.12599992752075,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18344",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792963408.553542,
+    "end_unix": 1792963430.766542,
+    "direct_seconds": 22.213,
+    "task_id": "75927db52316d00f302af3e7c90b5e2f2527140e3d304a9a2849a7c66261561e",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18344
+      }
+    ],
+    "start_shanghai": "2026-10-26T05:23:28.553542+08:00",
+    "end_shanghai": "2026-10-26T05:23:50.766542+08:00",
+    "clipped_start_unix": 1792963408.553542,
+    "clipped_end_unix": 1792963430.766542,
+    "seconds_in_window": 22.213000059127808,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18366",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792963497.740375,
+    "end_unix": 1792963553.257375,
+    "direct_seconds": 55.517,
+    "task_id": "562e7e6b4ce402f06b50112910bea6c8cc12750bf6128d092a6376710fcf3026",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18366
+      }
+    ],
+    "start_shanghai": "2026-10-26T05:24:57.740375+08:00",
+    "end_shanghai": "2026-10-26T05:25:53.257375+08:00",
+    "clipped_start_unix": 1792963497.740375,
+    "clipped_end_unix": 1792963553.257375,
+    "seconds_in_window": 55.51699995994568,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18513",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792964020.406852,
+    "end_unix": 1792964031.160852,
+    "direct_seconds": 10.754,
+    "task_id": "9b8655ecc1d2c2f7fa4285a5bd7a4dfd49307cd04dd87ba476eaf73f64ad11b0",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18513
+      }
+    ],
+    "start_shanghai": "2026-10-26T05:33:40.406852+08:00",
+    "end_shanghai": "2026-10-26T05:33:51.160852+08:00",
+    "clipped_start_unix": 1792964020.406852,
+    "clipped_end_unix": 1792964031.160852,
+    "seconds_in_window": 10.753999948501587,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18555",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792964103.764112,
+    "end_unix": 1792964344.854112,
+    "direct_seconds": 241.09,
+    "task_id": "2dfa991ba33cb4328bc2dacf0b66b77a522250a6b7d9765ec6a412c1a68f1311",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18555
+      }
+    ],
+    "start_shanghai": "2026-10-26T05:35:03.764112+08:00",
+    "end_shanghai": "2026-10-26T05:39:04.854112+08:00",
+    "clipped_start_unix": 1792964103.764112,
+    "clipped_end_unix": 1792964344.854112,
+    "seconds_in_window": 241.0899999141693,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18874",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792965486.293598,
+    "end_unix": 1792965775.979598,
+    "direct_seconds": 289.686,
+    "task_id": "20232c09a158e642b8e944f5ca336d54ecddf74eb04bb195a45b4a2b1e4365eb",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18874
+      }
+    ],
+    "start_shanghai": "2026-10-26T05:58:06.293598+08:00",
+    "end_shanghai": "2026-10-26T06:02:55.979598+08:00",
+    "clipped_start_unix": 1792965486.293598,
+    "clipped_end_unix": 1792965775.979598,
+    "seconds_in_window": 289.6860001087189,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18909",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792965874.342013,
+    "end_unix": 1792965899.318013,
+    "direct_seconds": 24.976,
+    "task_id": "6b869d52febdbd9d32ac48a216772ee7dbf50f0d3e3ee7adf362c21fe5d72cb2",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18909
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:04:34.342013+08:00",
+    "end_shanghai": "2026-10-26T06:04:59.318013+08:00",
+    "clipped_start_unix": 1792965874.342013,
+    "clipped_end_unix": 1792965899.318013,
+    "seconds_in_window": 24.9760000705719,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18945",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792965983.936106,
+    "end_unix": 1792966009.591106,
+    "direct_seconds": 25.655,
+    "task_id": "82b15148787f1218cfbc10d9ff0c81d2936f8b5f97afbda27ba86fc60f7b3dbd",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18945
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:06:23.936106+08:00",
+    "end_shanghai": "2026-10-26T06:06:49.591106+08:00",
+    "clipped_start_unix": 1792965983.936106,
+    "clipped_end_unix": 1792966009.591106,
+    "seconds_in_window": 25.65499997138977,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18966",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792966024.721916,
+    "end_unix": 1792966133.007916,
+    "direct_seconds": 108.286,
+    "task_id": "96dd7ca9a3cbd1f94ad4a6c5383f80e3b97fc661b8938053e6d61cf6878cdb49",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18966
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:07:04.721916+08:00",
+    "end_shanghai": "2026-10-26T06:08:53.007916+08:00",
+    "clipped_start_unix": 1792966024.721916,
+    "clipped_end_unix": 1792966133.007916,
+    "seconds_in_window": 108.28600001335144,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18990",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792966222.531863,
+    "end_unix": 1792966287.509863,
+    "direct_seconds": 64.978,
+    "task_id": "d90d9e86c6f84f04e28659efa7a3e3a5eb4963e1e29cf3e19633fa4f9e822986",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18990
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:10:22.531863+08:00",
+    "end_shanghai": "2026-10-26T06:11:27.509863+08:00",
+    "clipped_start_unix": 1792966222.531863,
+    "clipped_end_unix": 1792966287.509863,
+    "seconds_in_window": 64.9779999256134,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:18995",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792966287.5185108,
+    "end_unix": 1792966294.852511,
+    "direct_seconds": 7.334,
+    "task_id": "96dd7ca9a3cbd1f94ad4a6c5383f80e3b97fc661b8938053e6d61cf6878cdb49",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 18995
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:11:27.518511+08:00",
+    "end_shanghai": "2026-10-26T06:11:34.852511+08:00",
+    "clipped_start_unix": 1792966287.5185108,
+    "clipped_end_unix": 1792966294.852511,
+    "seconds_in_window": 7.334000110626221,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:19346",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792966929.591599,
+    "end_unix": 1792967223.108599,
+    "direct_seconds": 293.517,
+    "task_id": "bf82c5adb191ace3b4832ac69a7778134184c9a6ecc3e6fb9d0aacc5b56983af",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 19346
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:22:09.591599+08:00",
+    "end_shanghai": "2026-10-26T06:27:03.108599+08:00",
+    "clipped_start_unix": 1792966929.591599,
+    "clipped_end_unix": 1792967223.108599,
+    "seconds_in_window": 293.5169999599457,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:19383",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792967249.3638082,
+    "end_unix": 1792967370.380808,
+    "direct_seconds": 121.017,
+    "task_id": "46b1ed134685d2ac0805b05583a11445a796951816a84f10833a9c67d635645d",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 19383
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:27:29.363808+08:00",
+    "end_shanghai": "2026-10-26T06:29:30.380808+08:00",
+    "clipped_start_unix": 1792967249.3638082,
+    "clipped_end_unix": 1792967370.380808,
+    "seconds_in_window": 121.01699995994568,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:19419",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792967439.7545469,
+    "end_unix": 1792967526.486547,
+    "direct_seconds": 86.732,
+    "task_id": "1c79d46c5723bf4d6614783d8dde44f90fd31680b7f9568e04a534650fd7facf",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 19419
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:30:39.754547+08:00",
+    "end_shanghai": "2026-10-26T06:32:06.486547+08:00",
+    "clipped_start_unix": 1792967439.7545469,
+    "clipped_end_unix": 1792967526.486547,
+    "seconds_in_window": 86.73200011253357,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:19429",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792967526.4939198,
+    "end_unix": 1792967648.28592,
+    "direct_seconds": 121.792,
+    "task_id": "46b1ed134685d2ac0805b05583a11445a796951816a84f10833a9c67d635645d",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 19429
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:32:06.493920+08:00",
+    "end_shanghai": "2026-10-26T06:34:08.285920+08:00",
+    "clipped_start_unix": 1792967526.4939198,
+    "clipped_end_unix": 1792967648.28592,
+    "seconds_in_window": 121.79200005531311,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:19627",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792968116.398941,
+    "end_unix": 1792968163.893941,
+    "direct_seconds": 47.495,
+    "task_id": "46a245c9c787a7326d8a1556cc37d2792eee4018891faef341e83a65ba80aef1",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 19627
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:41:56.398941+08:00",
+    "end_shanghai": "2026-10-26T06:42:43.893941+08:00",
+    "clipped_start_unix": 1792968116.398941,
+    "clipped_end_unix": 1792968163.893941,
+    "seconds_in_window": 47.49499988555908,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:19675",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792968198.59543,
+    "end_unix": 1792968457.76643,
+    "direct_seconds": 259.171,
+    "task_id": "f19e1dd0eecc9e4fdd77c9a30cd3e0cf79ba140230ca1f61731ac96e81dfe688",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 19675
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:43:18.595430+08:00",
+    "end_shanghai": "2026-10-26T06:47:37.766430+08:00",
+    "clipped_start_unix": 1792968198.59543,
+    "clipped_end_unix": 1792968457.76643,
+    "seconds_in_window": 259.1710000038147,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:19700",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792968474.607734,
+    "end_unix": 1792968581.064734,
+    "direct_seconds": 106.457,
+    "task_id": "c352cd0edfc164c2032a5019c4f1fdeb6e0e3ab825fb0731aeeeabf2dfc89d50",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 19700
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:47:54.607734+08:00",
+    "end_shanghai": "2026-10-26T06:49:41.064734+08:00",
+    "clipped_start_unix": 1792968474.607734,
+    "clipped_end_unix": 1792968581.064734,
+    "seconds_in_window": 106.45700001716614,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:19937",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792969139.168508,
+    "end_unix": 1792969193.327508,
+    "direct_seconds": 54.159,
+    "task_id": "0a051f963277c7631499b836bf5361fbe0c2e27dd43a4d14a4b90a527d1f1e0b",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 19937
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:58:59.168508+08:00",
+    "end_shanghai": "2026-10-26T06:59:53.327508+08:00",
+    "clipped_start_unix": 1792969139.168508,
+    "clipped_end_unix": 1792969193.327508,
+    "seconds_in_window": 54.15899991989136,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:19984",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792969319.192003,
+    "end_unix": 1792969322.694003,
+    "direct_seconds": 3.502,
+    "task_id": "a95887632e783c51a17b2f42f978516f360290dbdf110127d1fd787bfda2e9df",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 19984
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:01:59.192003+08:00",
+    "end_shanghai": "2026-10-26T07:02:02.694003+08:00",
+    "clipped_start_unix": 1792969319.192003,
+    "clipped_end_unix": 1792969322.694003,
+    "seconds_in_window": 3.502000093460083,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20042",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792969348.947405,
+    "end_unix": 1792969804.895405,
+    "direct_seconds": 455.948,
+    "task_id": "3095eed83b03bdc1641b11d997943e8e23129faff3191186f8bb22eb4423a5b9",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20042
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:02:28.947405+08:00",
+    "end_shanghai": "2026-10-26T07:10:04.895405+08:00",
+    "clipped_start_unix": 1792969348.947405,
+    "clipped_end_unix": 1792969804.895405,
+    "seconds_in_window": 455.94799995422363,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20138",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792970203.4054952,
+    "end_unix": 1792970227.775495,
+    "direct_seconds": 24.37,
+    "task_id": "395be949730751bda2b843d91ae1f62790b84066ad763ac68d02a20f44b268f9",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20138
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:16:43.405495+08:00",
+    "end_shanghai": "2026-10-26T07:17:07.775495+08:00",
+    "clipped_start_unix": 1792970203.4054952,
+    "clipped_end_unix": 1792970227.775495,
+    "seconds_in_window": 24.369999885559082,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20204",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792970316.278399,
+    "end_unix": 1792970570.754399,
+    "direct_seconds": 254.476,
+    "task_id": "55ca55b3259f3be9ba09511fb26ce49abf75160e6fa3ec6184a65fed66c3e848",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20204
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:18:36.278399+08:00",
+    "end_shanghai": "2026-10-26T07:22:50.754399+08:00",
+    "clipped_start_unix": 1792970316.278399,
+    "clipped_end_unix": 1792970570.754399,
+    "seconds_in_window": 254.4760000705719,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20240",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792970627.145191,
+    "end_unix": 1792970684.177191,
+    "direct_seconds": 57.032,
+    "task_id": "2f45e6904e5acac50218b9cf1ce6f1bb7a5a7213db508f5844cebcbbbe2dd6da",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20240
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:23:47.145191+08:00",
+    "end_shanghai": "2026-10-26T07:24:44.177191+08:00",
+    "clipped_start_unix": 1792970627.145191,
+    "clipped_end_unix": 1792970684.177191,
+    "seconds_in_window": 57.03200006484985,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20299",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792970790.006604,
+    "end_unix": 1792970896.413604,
+    "direct_seconds": 106.407,
+    "task_id": "c6da0a53c0acff623a1434bcc799b13d23899d3a92a4c6992434ff58527cf210",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20299
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:26:30.006604+08:00",
+    "end_shanghai": "2026-10-26T07:28:16.413604+08:00",
+    "clipped_start_unix": 1792970790.006604,
+    "clipped_end_unix": 1792970896.413604,
+    "seconds_in_window": 106.40700006484985,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20314",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792970896.422163,
+    "end_unix": 1792971012.472163,
+    "direct_seconds": 116.05,
+    "task_id": "f9f2c2079d230b32d826fd844512c3878571322dd2fcaef58a217b56e1251cca",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20314
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:28:16.422163+08:00",
+    "end_shanghai": "2026-10-26T07:30:12.472163+08:00",
+    "clipped_start_unix": 1792970896.422163,
+    "clipped_end_unix": 1792971012.472163,
+    "seconds_in_window": 116.04999995231628,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20579",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792971692.277231,
+    "end_unix": 1792971744.184231,
+    "direct_seconds": 51.907,
+    "task_id": "d53ff15cece64ae46b5e613a6a018fb5a7859e4fdcbbabb20773ecc0ede0961b",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20579
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:41:32.277231+08:00",
+    "end_shanghai": "2026-10-26T07:42:24.184231+08:00",
+    "clipped_start_unix": 1792971692.277231,
+    "clipped_end_unix": 1792971744.184231,
+    "seconds_in_window": 51.90700006484985,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20718",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792972148.135524,
+    "end_unix": 1792972167.036524,
+    "direct_seconds": 18.901,
+    "task_id": "cc2166a2c76ec6f47c71146c886abe2dff553077caf13b8f60f6d11690432eb1",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20718
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:49:08.135524+08:00",
+    "end_shanghai": "2026-10-26T07:49:27.036524+08:00",
+    "clipped_start_unix": 1792972148.135524,
+    "clipped_end_unix": 1792972167.036524,
+    "seconds_in_window": 18.901000022888184,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20734",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792972183.832787,
+    "end_unix": 1792972186.315787,
+    "direct_seconds": 2.483,
+    "task_id": "fda24c27e685f75cfaf8de012f8c83c3f359d4bd97e99607ef05c811fa479aa6",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20734
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:49:43.832787+08:00",
+    "end_shanghai": "2026-10-26T07:49:46.315787+08:00",
+    "clipped_start_unix": 1792972183.832787,
+    "clipped_end_unix": 1792972186.315787,
+    "seconds_in_window": 2.4830000400543213,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20789",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792972261.6116261,
+    "end_unix": 1792972271.152626,
+    "direct_seconds": 9.541,
+    "task_id": "7e4ec714cb434438da20e7303ef3ce41ec7e1fb3fd271a8431516e37df1f4881",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20789
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:51:01.611626+08:00",
+    "end_shanghai": "2026-10-26T07:51:11.152626+08:00",
+    "clipped_start_unix": 1792972261.6116261,
+    "clipped_end_unix": 1792972271.152626,
+    "seconds_in_window": 9.54099988937378,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20831",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792972312.9303598,
+    "end_unix": 1792972420.93236,
+    "direct_seconds": 108.002,
+    "task_id": "240b71c019fdf76bb4440d1bfcb0f511727a0ef924b537d3f68dcf3c9f1782c2",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20831
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:51:52.930360+08:00",
+    "end_shanghai": "2026-10-26T07:53:40.932360+08:00",
+    "clipped_start_unix": 1792972312.9303598,
+    "clipped_end_unix": 1792972420.93236,
+    "seconds_in_window": 108.00200009346008,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20838",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792972420.9416711,
+    "end_unix": 1792972440.478671,
+    "direct_seconds": 19.537,
+    "task_id": "7e4ec714cb434438da20e7303ef3ce41ec7e1fb3fd271a8431516e37df1f4881",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20838
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:53:40.941671+08:00",
+    "end_shanghai": "2026-10-26T07:54:00.478671+08:00",
+    "clipped_start_unix": 1792972420.9416711,
+    "clipped_end_unix": 1792972440.478671,
+    "seconds_in_window": 19.536999940872192,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20867",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792972480.982423,
+    "end_unix": 1792972489.939423,
+    "direct_seconds": 8.957,
+    "task_id": "a8c648aa9054a440552a791750a27cfa21d9812b4325696a8712771d1d7b0cc8",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20867
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:54:40.982423+08:00",
+    "end_shanghai": "2026-10-26T07:54:49.939423+08:00",
+    "clipped_start_unix": 1792972480.982423,
+    "clipped_end_unix": 1792972489.939423,
+    "seconds_in_window": 8.957000017166138,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20962",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792972562.4535742,
+    "end_unix": 1792972847.675574,
+    "direct_seconds": 285.222,
+    "task_id": "8ea6c6c78e08407a6a43abd06443585a1ad1b929253be7fd7682f9cce24c13c3",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20962
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:56:02.453574+08:00",
+    "end_shanghai": "2026-10-26T08:00:47.675574+08:00",
+    "clipped_start_unix": 1792972562.4535742,
+    "clipped_end_unix": 1792972847.675574,
+    "seconds_in_window": 285.22199988365173,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:20993",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792972863.330062,
+    "end_unix": 1792972971.543062,
+    "direct_seconds": 108.213,
+    "task_id": "2919994214224b08e8efd06e105987ce77951b6503014bc0dd3c2d743cf5655f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 20993
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:01:03.330062+08:00",
+    "end_shanghai": "2026-10-26T08:02:51.543062+08:00",
+    "clipped_start_unix": 1792972863.330062,
+    "clipped_end_unix": 1792972971.543062,
+    "seconds_in_window": 108.21300005912781,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21084",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792973074.963357,
+    "end_unix": 1792973182.650357,
+    "direct_seconds": 107.687,
+    "task_id": "9fc14c2c36e71f3774e2046060b7169841e577ba14d10e2fc8241697180221f2",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21084
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:04:34.963357+08:00",
+    "end_shanghai": "2026-10-26T08:06:22.650357+08:00",
+    "clipped_start_unix": 1792973074.963357,
+    "clipped_end_unix": 1792973182.650357,
+    "seconds_in_window": 107.68700003623962,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21110",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792973182.676924,
+    "end_unix": 1792973306.415924,
+    "direct_seconds": 123.739,
+    "task_id": "b31bdee4d25bacdec6d84d19e96db85bb8281ccc93add1d7faf6ee817dd68d3f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21110
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:06:22.676924+08:00",
+    "end_shanghai": "2026-10-26T08:08:26.415924+08:00",
+    "clipped_start_unix": 1792973182.676924,
+    "clipped_end_unix": 1792973306.415924,
+    "seconds_in_window": 123.73900008201599,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21339",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792973910.936271,
+    "end_unix": 1792974170.656271,
+    "direct_seconds": 259.72,
+    "task_id": "3c790f6330dfa75b643f1e53c5eef62b319c84d966fb95a91d15cf4e9a9a5235",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21339
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:18:30.936271+08:00",
+    "end_shanghai": "2026-10-26T08:22:50.656271+08:00",
+    "clipped_start_unix": 1792973910.936271,
+    "clipped_end_unix": 1792974170.656271,
+    "seconds_in_window": 259.72000002861023,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21373",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792974187.650321,
+    "end_unix": 1792974295.010321,
+    "direct_seconds": 107.36,
+    "task_id": "e021533dc69befd9f7985179106b6e553f3e69114ed9df792409bb312cea0504",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21373
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:23:07.650321+08:00",
+    "end_shanghai": "2026-10-26T08:24:55.010321+08:00",
+    "clipped_start_unix": 1792974187.650321,
+    "clipped_end_unix": 1792974295.010321,
+    "seconds_in_window": 107.35999989509583,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21465",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792974393.556219,
+    "end_unix": 1792974521.691219,
+    "direct_seconds": 128.135,
+    "task_id": "0da69411088fadd11d09b1107eab4bd75591090fbaa41d67fcb47874c41f51e7",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21465
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:26:33.556219+08:00",
+    "end_shanghai": "2026-10-26T08:28:41.691219+08:00",
+    "clipped_start_unix": 1792974393.556219,
+    "clipped_end_unix": 1792974521.691219,
+    "seconds_in_window": 128.13499999046326,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21488",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792974521.697781,
+    "end_unix": 1792974645.723781,
+    "direct_seconds": 124.026,
+    "task_id": "d4070dc811215f52f5ae2e4d440fed915b999cb11abd5bd03dc6b40359fde2f5",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21488
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:28:41.697781+08:00",
+    "end_shanghai": "2026-10-26T08:30:45.723781+08:00",
+    "clipped_start_unix": 1792974521.697781,
+    "clipped_end_unix": 1792974645.723781,
+    "seconds_in_window": 124.02600002288818,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21561",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792974806.236917,
+    "end_unix": 1792974816.562917,
+    "direct_seconds": 10.326,
+    "task_id": "f7f9bb9aabc853d4362e4713a7994975367a9bcf93ce126b6a8532c3371f628b",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21561
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:33:26.236917+08:00",
+    "end_shanghai": "2026-10-26T08:33:36.562917+08:00",
+    "clipped_start_unix": 1792974806.236917,
+    "clipped_end_unix": 1792974816.562917,
+    "seconds_in_window": 10.325999975204468,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21625",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792974869.9630551,
+    "end_unix": 1792975121.872055,
+    "direct_seconds": 251.909,
+    "task_id": "9b06b6cc5d8129166c553a8069ea0f846a1ae2e0cff1c7b3f5308e0acdff8eae",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21625
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:34:29.963055+08:00",
+    "end_shanghai": "2026-10-26T08:38:41.872055+08:00",
+    "clipped_start_unix": 1792974869.9630551,
+    "clipped_end_unix": 1792975121.872055,
+    "seconds_in_window": 251.90899991989136,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21658",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792975152.033873,
+    "end_unix": 1792975246.491873,
+    "direct_seconds": 94.458,
+    "task_id": "509e972925eae91b25b2255bfe9b40c5e297769775d2139e9279be46dbbb4346",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21658
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:39:12.033873+08:00",
+    "end_shanghai": "2026-10-26T08:40:46.491873+08:00",
+    "clipped_start_unix": 1792975152.033873,
+    "clipped_end_unix": 1792975246.491873,
+    "seconds_in_window": 94.45799994468689,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21701",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792975333.452338,
+    "end_unix": 1792975346.926338,
+    "direct_seconds": 13.474,
+    "task_id": "bc73b6c11e27d3c90d1ee0e4dc1ee4a2adb4eff8b85a7f3078964bd8f1cf6409",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21701
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:42:13.452338+08:00",
+    "end_shanghai": "2026-10-26T08:42:26.926338+08:00",
+    "clipped_start_unix": 1792975333.452338,
+    "clipped_end_unix": 1792975346.926338,
+    "seconds_in_window": 13.473999977111816,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21736",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792975389.998975,
+    "end_unix": 1792975471.432975,
+    "direct_seconds": 81.434,
+    "task_id": "248cb71faa66d9f35b3650c0f9e4786303565446404ca587d639f6e13b0b4f51",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21736
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:43:09.998975+08:00",
+    "end_shanghai": "2026-10-26T08:44:31.432975+08:00",
+    "clipped_start_unix": 1792975389.998975,
+    "clipped_end_unix": 1792975471.432975,
+    "seconds_in_window": 81.43400001525879,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21782",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792975559.1923459,
+    "end_unix": 1792975581.458346,
+    "direct_seconds": 22.266,
+    "task_id": "967ddce99f95297923e44e7794cdab7bfd0d9f12115efeb0847e8eeab1d9c21e",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21782
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:45:59.192346+08:00",
+    "end_shanghai": "2026-10-26T08:46:21.458346+08:00",
+    "clipped_start_unix": 1792975559.1923459,
+    "clipped_end_unix": 1792975581.458346,
+    "seconds_in_window": 22.266000032424927,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21811",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792975610.4675891,
+    "end_unix": 1792975668.570589,
+    "direct_seconds": 58.103,
+    "task_id": "899a5ca7cf3a161546549ab2fa9cc1dff7572c156fcac326146301375f908485",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21811
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:46:50.467589+08:00",
+    "end_shanghai": "2026-10-26T08:47:48.570589+08:00",
+    "clipped_start_unix": 1792975610.4675891,
+    "clipped_end_unix": 1792975668.570589,
+    "seconds_in_window": 58.1029999256134,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21847",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792975728.551456,
+    "end_unix": 1792975766.140456,
+    "direct_seconds": 37.589,
+    "task_id": "1c295aa5466fc786e0e1e7b66f3c0d5c74c52ac8d0ecb4b4dc480f5a32c14cf8",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21847
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:48:48.551456+08:00",
+    "end_shanghai": "2026-10-26T08:49:26.140456+08:00",
+    "clipped_start_unix": 1792975728.551456,
+    "clipped_end_unix": 1792975766.140456,
+    "seconds_in_window": 37.58899998664856,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21879",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792975793.979138,
+    "end_unix": 1792975851.103138,
+    "direct_seconds": 57.124,
+    "task_id": "0c8347bf4fe4f0b09afb20622bf53e1bd26383de108777c6aa1f98b07cd58669",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21879
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:49:53.979138+08:00",
+    "end_shanghai": "2026-10-26T08:50:51.103138+08:00",
+    "clipped_start_unix": 1792975793.979138,
+    "clipped_end_unix": 1792975851.103138,
+    "seconds_in_window": 57.12400007247925,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21916",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792975903.9561641,
+    "end_unix": 1792975952.592164,
+    "direct_seconds": 48.636,
+    "task_id": "305bdf04d3789050cf8e3af28e79e618800189ff080c9dcf2200da7ed7e2b88e",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21916
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:51:43.956164+08:00",
+    "end_shanghai": "2026-10-26T08:52:32.592164+08:00",
+    "clipped_start_unix": 1792975903.9561641,
+    "clipped_end_unix": 1792975952.592164,
+    "seconds_in_window": 48.63599991798401,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21945",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792975986.139642,
+    "end_unix": 1792976037.269642,
+    "direct_seconds": 51.13,
+    "task_id": "7cec1632e6d5a637b1d4b7862962e4cb38f309d73f0a324e1a8a649fc126477d",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21945
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:53:06.139642+08:00",
+    "end_shanghai": "2026-10-26T08:53:57.269642+08:00",
+    "clipped_start_unix": 1792975986.139642,
+    "clipped_end_unix": 1792976037.269642,
+    "seconds_in_window": 51.13000011444092,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:21993",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792976120.9034982,
+    "end_unix": 1792976136.167498,
+    "direct_seconds": 15.264,
+    "task_id": "743211e3ff367997bf9efd9a7025bc3c772454c4e87a4b72a8e8dc4afe2b0c51",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 21993
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:55:20.903498+08:00",
+    "end_shanghai": "2026-10-26T08:55:36.167498+08:00",
+    "clipped_start_unix": 1792976120.9034982,
+    "clipped_end_unix": 1792976136.167498,
+    "seconds_in_window": 15.263999938964844,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22023",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792976171.38167,
+    "end_unix": 1792976227.18367,
+    "direct_seconds": 55.802,
+    "task_id": "87b595eaf549316abff4f9c14fb0580a3be8570c45a8dc6641c917b4da754e17",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22023
+      }
+    ],
+    "start_shanghai": "2026-10-26T08:56:11.381670+08:00",
+    "end_shanghai": "2026-10-26T08:57:07.183670+08:00",
+    "clipped_start_unix": 1792976171.38167,
+    "clipped_end_unix": 1792976227.18367,
+    "seconds_in_window": 55.80200004577637,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22153",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792976668.9315028,
+    "end_unix": 1792976743.522503,
+    "direct_seconds": 74.591,
+    "task_id": "7c8b18eba42df5b5a66af50902de338f4012d18d120d3ec95a6d0e83196f4cb8",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22153
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:04:28.931503+08:00",
+    "end_shanghai": "2026-10-26T09:05:43.522503+08:00",
+    "clipped_start_unix": 1792976668.9315028,
+    "clipped_end_unix": 1792976743.522503,
+    "seconds_in_window": 74.59100008010864,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22183",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792976793.155259,
+    "end_unix": 1792976850.822259,
+    "direct_seconds": 57.667,
+    "task_id": "fd3322e4138cda3e7022c31c258bbbadc4c118cd8f1f28ced163982539e84d6a",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22183
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:06:33.155259+08:00",
+    "end_shanghai": "2026-10-26T09:07:30.822259+08:00",
+    "clipped_start_unix": 1792976793.155259,
+    "clipped_end_unix": 1792976850.822259,
+    "seconds_in_window": 57.66700005531311,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22212",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792976877.6412652,
+    "end_unix": 1792976975.221265,
+    "direct_seconds": 97.58,
+    "task_id": "8963a87403f1cb09d7fa4f2a95049d3d090c63f3a497b5c8b8934f3955b8c393",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22212
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:07:57.641265+08:00",
+    "end_shanghai": "2026-10-26T09:09:35.221265+08:00",
+    "clipped_start_unix": 1792976877.6412652,
+    "clipped_end_unix": 1792976975.221265,
+    "seconds_in_window": 97.57999992370605,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22291",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792977128.399611,
+    "end_unix": 1792977219.474611,
+    "direct_seconds": 91.075,
+    "task_id": "61580dd6b359cc23876038c7182bfc287baff718eda37803250efffff0988dcc",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22291
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:12:08.399611+08:00",
+    "end_shanghai": "2026-10-26T09:13:39.474611+08:00",
+    "clipped_start_unix": 1792977128.399611,
+    "clipped_end_unix": 1792977219.474611,
+    "seconds_in_window": 91.07500004768372,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22318",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792977261.656833,
+    "end_unix": 1792977323.705833,
+    "direct_seconds": 62.049,
+    "task_id": "a31025ad400875effd64c09f473ef6e45abc37b35044d1c4917d4179841a0baf",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22318
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:14:21.656833+08:00",
+    "end_shanghai": "2026-10-26T09:15:23.705833+08:00",
+    "clipped_start_unix": 1792977261.656833,
+    "clipped_end_unix": 1792977323.705833,
+    "seconds_in_window": 62.04900002479553,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22434",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792977665.437966,
+    "end_unix": 1792977760.955966,
+    "direct_seconds": 95.518,
+    "task_id": "3d5d7f775dd8efdf6e54eac64bc1ec7339eff95bce5acdba26da3b2e76b1fec1",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22434
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:21:05.437966+08:00",
+    "end_shanghai": "2026-10-26T09:22:40.955966+08:00",
+    "clipped_start_unix": 1792977665.437966,
+    "clipped_end_unix": 1792977760.955966,
+    "seconds_in_window": 95.51799988746643,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22542",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792977973.000909,
+    "end_unix": 1792978033.392909,
+    "direct_seconds": 60.392,
+    "task_id": "64bc0a00625d9e735b61b36246c81694ed4c0bfaa4abcea6e540306173a195e4",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22542
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:26:13.000909+08:00",
+    "end_shanghai": "2026-10-26T09:27:13.392909+08:00",
+    "clipped_start_unix": 1792977973.000909,
+    "clipped_end_unix": 1792978033.392909,
+    "seconds_in_window": 60.39199995994568,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22561",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792978071.500994,
+    "end_unix": 1792978082.853994,
+    "direct_seconds": 11.353,
+    "task_id": "bd34745c11a5fdbd1ac10f2ba07ecc63bbe876d98eebcc12c28c4c3b2b5ed5e6",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22561
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:27:51.500994+08:00",
+    "end_shanghai": "2026-10-26T09:28:02.853994+08:00",
+    "clipped_start_unix": 1792978071.500994,
+    "clipped_end_unix": 1792978082.853994,
+    "seconds_in_window": 11.352999925613403,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22589",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792978130.918743,
+    "end_unix": 1792978181.647743,
+    "direct_seconds": 50.729,
+    "task_id": "42300818d204606469365f823e1d69302496c7a3ba9d5d7bf7e0315fb58de6a5",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22589
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:28:50.918743+08:00",
+    "end_shanghai": "2026-10-26T09:29:41.647743+08:00",
+    "clipped_start_unix": 1792978130.918743,
+    "clipped_end_unix": 1792978181.647743,
+    "seconds_in_window": 50.729000091552734,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22609",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792978211.3173149,
+    "end_unix": 1792978231.678315,
+    "direct_seconds": 20.361,
+    "task_id": "c47a1e204d45b60b3f97663344f42c888a1b95f8b85afa4e0e9339418679fbdc",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22609
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:30:11.317315+08:00",
+    "end_shanghai": "2026-10-26T09:30:31.678315+08:00",
+    "clipped_start_unix": 1792978211.3173149,
+    "clipped_end_unix": 1792978231.678315,
+    "seconds_in_window": 20.361000061035156,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22636",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792978277.108997,
+    "end_unix": 1792978330.997997,
+    "direct_seconds": 53.889,
+    "task_id": "d9c3e291f4d21870b8b9fe4b15d6c2a142594d780abf1ddc5d2a085d0d6dc314",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22636
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:31:17.108997+08:00",
+    "end_shanghai": "2026-10-26T09:32:10.997997+08:00",
+    "clipped_start_unix": 1792978277.108997,
+    "clipped_end_unix": 1792978330.997997,
+    "seconds_in_window": 53.888999938964844,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22683",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792978590.127933,
+    "end_unix": 1792978620.683933,
+    "direct_seconds": 30.556,
+    "task_id": "8352322cf516c1fdaa3bcb363039ec4fd780bfa8acc8550be042295621444ef6",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22683
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:36:30.127933+08:00",
+    "end_shanghai": "2026-10-26T09:37:00.683933+08:00",
+    "clipped_start_unix": 1792978590.127933,
+    "clipped_end_unix": 1792978620.683933,
+    "seconds_in_window": 30.555999994277954,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22719",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792978700.856692,
+    "end_unix": 1792978722.064692,
+    "direct_seconds": 21.208,
+    "task_id": "080855046b307fdcba1b3d2411d641274dc8cbedb31041cb63ef2e16ce3a47e7",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22719
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:38:20.856692+08:00",
+    "end_shanghai": "2026-10-26T09:38:42.064692+08:00",
+    "clipped_start_unix": 1792978700.856692,
+    "clipped_end_unix": 1792978722.064692,
+    "seconds_in_window": 21.20799994468689,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:22802",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "native_queue",
+    "start_unix": 1792978780.987798,
+    "end_unix": 1792979377.796798,
+    "direct_seconds": 596.809,
+    "task_id": "4c4f41780ebc793920bdfebe22e5d8b04c299f02087faeeefd889340e5cdfe65",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 22802
+      }
+    ],
+    "start_shanghai": "2026-10-26T09:39:40.987798+08:00",
+    "end_shanghai": "2026-10-26T09:49:37.796798+08:00",
+    "clipped_start_unix": 1792978780.987798,
+    "clipped_end_unix": 1792979377.796798,
+    "seconds_in_window": 596.8090000152588,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:25866",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792987804.23052,
+    "end_unix": 1792987810.53752,
+    "direct_seconds": 6.307,
+    "task_id": "04ca15685a8d9dd4c64c238b310ad0b69e75d76aa229dfb15d293bcaeb6c7dd9",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 25866
+      }
+    ],
+    "start_shanghai": "2026-10-26T12:10:04.230520+08:00",
+    "end_shanghai": "2026-10-26T12:10:10.537520+08:00",
+    "clipped_start_unix": 1792987804.23052,
+    "clipped_end_unix": 1792987810.53752,
+    "seconds_in_window": 6.306999921798706,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:26215",
+    "window": 3,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792989453.700386,
+    "end_unix": 1792989462.810386,
+    "direct_seconds": 9.11,
+    "task_id": "fbb1144ee915e621266356b9e77c0d636924da5ede2fa68a011f736c77a718c2",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 26215
+      }
+    ],
+    "start_shanghai": "2026-10-26T12:37:33.700386+08:00",
+    "end_shanghai": "2026-10-26T12:37:42.810386+08:00",
+    "clipped_start_unix": 1792989453.700386,
+    "clipped_end_unix": 1792989462.810386,
+    "seconds_in_window": 9.109999895095825,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:26277",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792989525.916374,
+    "end_unix": 1792989530.853374,
+    "direct_seconds": 4.937,
+    "task_id": "0a09855a57ecec7dd3c807039598240949c866aebcbdc1069a8f2ab036a04fff",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 26277
+      }
+    ],
+    "start_shanghai": "2026-10-26T12:38:45.916374+08:00",
+    "end_shanghai": "2026-10-26T12:38:50.853374+08:00",
+    "clipped_start_unix": 1792989525.916374,
+    "clipped_end_unix": 1792989530.853374,
+    "seconds_in_window": 4.937000036239624,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:26379",
+    "window": 3,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792989633.717335,
+    "end_unix": 1792989645.971335,
+    "direct_seconds": 12.254,
+    "task_id": "59e8eb83d06753f0861c38bd97efa82c3bcdd7a7159522d25bf53b4fd9da8e4f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 26379
+      }
+    ],
+    "start_shanghai": "2026-10-26T12:40:33.717335+08:00",
+    "end_shanghai": "2026-10-26T12:40:45.971335+08:00",
+    "clipped_start_unix": 1792989633.717335,
+    "clipped_end_unix": 1792989645.971335,
+    "seconds_in_window": 12.253999948501587,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:26677",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792990241.0970352,
+    "end_unix": 1792990244.101035,
+    "direct_seconds": 3.004,
+    "task_id": "567819aba4ba801d9ef7de2f73b85b784347dfe6c988256fe2a051a1d104e27a",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 26677
+      }
+    ],
+    "start_shanghai": "2026-10-26T12:50:41.097035+08:00",
+    "end_shanghai": "2026-10-26T12:50:44.101035+08:00",
+    "clipped_start_unix": 1792990241.0970352,
+    "clipped_end_unix": 1792990244.101035,
+    "seconds_in_window": 3.003999948501587,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:27054",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792991488.328604,
+    "end_unix": 1792991493.543604,
+    "direct_seconds": 5.215,
+    "task_id": "a262c0310f6221219a560ee0ffdcae0666d12b4645dfd8c2c1f9aa898e344a20",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 27054
+      }
+    ],
+    "start_shanghai": "2026-10-26T13:11:28.328604+08:00",
+    "end_shanghai": "2026-10-26T13:11:33.543604+08:00",
+    "clipped_start_unix": 1792991488.328604,
+    "clipped_end_unix": 1792991493.543604,
+    "seconds_in_window": 5.2149999141693115,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:27108",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792991557.391532,
+    "end_unix": 1792991563.546532,
+    "direct_seconds": 6.155,
+    "task_id": "c77267397548d16badaec54c809666fdc2c01c80795a24db516fbdb03799fa5f",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 27108
+      }
+    ],
+    "start_shanghai": "2026-10-26T13:12:37.391532+08:00",
+    "end_shanghai": "2026-10-26T13:12:43.546532+08:00",
+    "clipped_start_unix": 1792991557.391532,
+    "clipped_end_unix": 1792991563.546532,
+    "seconds_in_window": 6.1549999713897705,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:27434",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792992216.082403,
+    "end_unix": 1792992217.144403,
+    "direct_seconds": 1.062,
+    "task_id": "47ee57299aad7e71246c334bb9bf036047282912bb106fb2bc707fa1a4106231",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 27434
+      }
+    ],
+    "start_shanghai": "2026-10-26T13:23:36.082403+08:00",
+    "end_shanghai": "2026-10-26T13:23:37.144403+08:00",
+    "clipped_start_unix": 1792992216.082403,
+    "clipped_end_unix": 1792992217.144403,
+    "seconds_in_window": 1.062000036239624,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:27786",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792993069.810688,
+    "end_unix": 1792993086.909688,
+    "direct_seconds": 17.099,
+    "task_id": "ec87647d7d451d257586767ab2c3ace9ea03af98f97bc6d114b885bcdab6505a",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 27786
+      }
+    ],
+    "start_shanghai": "2026-10-26T13:37:49.810688+08:00",
+    "end_shanghai": "2026-10-26T13:38:06.909688+08:00",
+    "clipped_start_unix": 1792993069.810688,
+    "clipped_end_unix": 1792993086.909688,
+    "seconds_in_window": 17.098999977111816,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:28015",
+    "window": 3,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792994040.7771258,
+    "end_unix": 1792994155.384126,
+    "direct_seconds": 114.607,
+    "task_id": "501b3a2ce94ac7b2fb2e43ae1ac8de8782b578b88f135ff8e3439bf9fd122a8c",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 28015
+      }
+    ],
+    "start_shanghai": "2026-10-26T13:54:00.777126+08:00",
+    "end_shanghai": "2026-10-26T13:55:55.384126+08:00",
+    "clipped_start_unix": 1792994040.7771258,
+    "clipped_end_unix": 1792994155.384126,
+    "seconds_in_window": 114.60700011253357,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:28125",
+    "window": 3,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792994626.077288,
+    "end_unix": 1792994732.751288,
+    "direct_seconds": 106.674,
+    "task_id": "7012f8125e6219d32b500419b9a9e98f207247f245dd9d98a630847cb2f062ee",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 28125
+      }
+    ],
+    "start_shanghai": "2026-10-26T14:03:46.077288+08:00",
+    "end_shanghai": "2026-10-26T14:05:32.751288+08:00",
+    "clipped_start_unix": 1792994626.077288,
+    "clipped_end_unix": 1792994732.751288,
+    "seconds_in_window": 106.67400002479553,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:28275",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792995199.064642,
+    "end_unix": 1792995259.191642,
+    "direct_seconds": 60.127,
+    "task_id": "4e5352701dcd7e86414927e5f5fd00cecc4ecf08ec7785aa0b7a8b3370e22046",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 28275
+      }
+    ],
+    "start_shanghai": "2026-10-26T14:13:19.064642+08:00",
+    "end_shanghai": "2026-10-26T14:14:19.191642+08:00",
+    "clipped_start_unix": 1792995199.064642,
+    "clipped_end_unix": 1792995259.191642,
+    "seconds_in_window": 60.12700009346008,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:28386",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792995607.322127,
+    "end_unix": 1792995625.441127,
+    "direct_seconds": 18.119,
+    "task_id": "590587285222991343f0c694c29f8c8459990584d37c81c0d6ee5f7437c5eb69",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 28386
+      }
+    ],
+    "start_shanghai": "2026-10-26T14:20:07.322127+08:00",
+    "end_shanghai": "2026-10-26T14:20:25.441127+08:00",
+    "clipped_start_unix": 1792995607.322127,
+    "clipped_end_unix": 1792995625.441127,
+    "seconds_in_window": 18.11899995803833,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:28803",
+    "window": 3,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792997369.4011688,
+    "end_unix": 1792997493.143169,
+    "direct_seconds": 123.742,
+    "task_id": "cde203d35b2076546d86342621d69454a4a2bffe47e0f6f4bb3e4e4568ca0007",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 28803
+      }
+    ],
+    "start_shanghai": "2026-10-26T14:49:29.401169+08:00",
+    "end_shanghai": "2026-10-26T14:51:33.143169+08:00",
+    "clipped_start_unix": 1792997369.4011688,
+    "clipped_end_unix": 1792997493.143169,
+    "seconds_in_window": 123.74200010299683,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:29005",
+    "window": 3,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792998653.7639399,
+    "end_unix": 1792998757.04594,
+    "direct_seconds": 103.282,
+    "task_id": "60f3af4ab7d8142f5b6ef29b0f82a5332e8ad803ee5f030e9f6b2e649add1de9",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 29005
+      }
+    ],
+    "start_shanghai": "2026-10-26T15:10:53.763940+08:00",
+    "end_shanghai": "2026-10-26T15:12:37.045940+08:00",
+    "clipped_start_unix": 1792998653.7639399,
+    "clipped_end_unix": 1792998757.04594,
+    "seconds_in_window": 103.28200006484985,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:29201",
+    "window": 3,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792999723.6446948,
+    "end_unix": 1792999796.531695,
+    "direct_seconds": 72.887,
+    "task_id": "2a76a414f45dbd01085f5009717ae21f502ec6d077b84db55751f9f9fc362e3e",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 29201
+      }
+    ],
+    "start_shanghai": "2026-10-26T15:28:43.644695+08:00",
+    "end_shanghai": "2026-10-26T15:29:56.531695+08:00",
+    "clipped_start_unix": 1792999723.6446948,
+    "clipped_end_unix": 1792999796.531695,
+    "seconds_in_window": 72.88700008392334,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:29254",
+    "window": 3,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "native_queue",
+    "start_unix": 1792999930.335447,
+    "end_unix": 1792999978.029447,
+    "direct_seconds": 47.694,
+    "task_id": "aed527cafaed689ae6c440810454c5436430d0cbe2bc4546d0e6e17558c2a990",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 29254
+      }
+    ],
+    "start_shanghai": "2026-10-26T15:32:10.335447+08:00",
+    "end_shanghai": "2026-10-26T15:32:58.029447+08:00",
+    "clipped_start_unix": 1792999930.335447,
+    "clipped_end_unix": 1792999978.029447,
+    "seconds_in_window": 47.694000005722046,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:29322",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1793000115.811428,
+    "end_unix": 1793000157.923428,
+    "direct_seconds": 42.112,
+    "task_id": "969d77c7c486af5114ea9352d7b09ee2243612e639e029405c7bc86849a77cc4",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 29322
+      }
+    ],
+    "start_shanghai": "2026-10-26T15:35:15.811428+08:00",
+    "end_shanghai": "2026-10-26T15:35:57.923428+08:00",
+    "clipped_start_unix": 1793000115.811428,
+    "clipped_end_unix": 1793000157.923428,
+    "seconds_in_window": 42.11199998855591,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:29387",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1793000261.4587371,
+    "end_unix": 1793000301.581737,
+    "direct_seconds": 40.123,
+    "task_id": "9129a8f0dc548038c7e36af4f4db8d0f82f8ad2a9e989832a46027a58995d2a9",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 29387
+      }
+    ],
+    "start_shanghai": "2026-10-26T15:37:41.458737+08:00",
+    "end_shanghai": "2026-10-26T15:38:21.581737+08:00",
+    "clipped_start_unix": 1793000261.4587371,
+    "clipped_end_unix": 1793000301.581737,
+    "seconds_in_window": 40.12299990653992,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:29514",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1793000723.051633,
+    "end_unix": 1793000843.662633,
+    "direct_seconds": 120.611,
+    "task_id": "625e08c42391f471cfd0764e320a09ec474293b618f116ba283ac614cda8fc08",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 29514
+      }
+    ],
+    "start_shanghai": "2026-10-26T15:45:23.051633+08:00",
+    "end_shanghai": "2026-10-26T15:47:23.662633+08:00",
+    "clipped_start_unix": 1793000723.051633,
+    "clipped_end_unix": 1793000843.662633,
+    "seconds_in_window": 120.61100006103516,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:29583",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1793001087.1199021,
+    "end_unix": 1793001208.570902,
+    "direct_seconds": 121.451,
+    "task_id": "57020f3eecc78c64318e203e4b5f4c1c2df40cdf4fbe92a834d089ae411d07f2",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 29583
+      }
+    ],
+    "start_shanghai": "2026-10-26T15:51:27.119902+08:00",
+    "end_shanghai": "2026-10-26T15:53:28.570902+08:00",
+    "clipped_start_unix": 1793001087.1199021,
+    "clipped_end_unix": 1793001208.570902,
+    "seconds_in_window": 121.45099997520447,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:29892",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1793002722.9005198,
+    "end_unix": 1793002839.92252,
+    "direct_seconds": 117.022,
+    "task_id": "736c63b1714e743efcb6446d50eea8de101647a34f14be03ea01f662908f7e1c",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 29892
+      }
+    ],
+    "start_shanghai": "2026-10-26T16:18:42.900520+08:00",
+    "end_shanghai": "2026-10-26T16:20:39.922520+08:00",
+    "clipped_start_unix": 1793002722.9005198,
+    "clipped_end_unix": 1793002839.92252,
+    "seconds_in_window": 117.0220000743866,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:29956",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1793002963.505915,
+    "end_unix": 1793003061.987915,
+    "direct_seconds": 98.482,
+    "task_id": "a106dfffdb81b500cb89088f04d9147bc7a18d5192eb55be7b8d67ad068b15f5",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 29956
+      }
+    ],
+    "start_shanghai": "2026-10-26T16:22:43.505915+08:00",
+    "end_shanghai": "2026-10-26T16:24:21.987915+08:00",
+    "clipped_start_unix": 1793002963.505915,
+    "clipped_end_unix": 1793003061.987915,
+    "seconds_in_window": 98.48200011253357,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:30074",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1793003315.630682,
+    "end_unix": 1793003427.343682,
+    "direct_seconds": 111.713,
+    "task_id": "883448f13d523657aa94377c6da49a2889a5be24cccc181104377739209d7c06",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 30074
+      }
+    ],
+    "start_shanghai": "2026-10-26T16:28:35.630682+08:00",
+    "end_shanghai": "2026-10-26T16:30:27.343682+08:00",
+    "clipped_start_unix": 1793003315.630682,
+    "clipped_end_unix": 1793003427.343682,
+    "seconds_in_window": 111.71300005912781,
+    "boundary_clipped": false
+  },
+  {
+    "id": "native-queue:30150",
+    "window": 3,
+    "theory": "CRefine_Machine_Cache_Primitives",
+    "category": "native_queue",
+    "start_unix": 1793003536.14008,
+    "end_unix": 1793003650.73208,
+    "direct_seconds": 114.592,
+    "task_id": "8a658a8714769c9a2b7868ff2e6459fe5aa613b06ca9c7d3191d4a7fc2f45d8a",
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 30150
+      }
+    ],
+    "start_shanghai": "2026-10-26T16:32:16.140080+08:00",
+    "end_shanghai": "2026-10-26T16:34:10.732080+08:00",
+    "clipped_start_unix": 1793003536.14008,
+    "clipped_end_unix": 1793003650.73208,
+    "seconds_in_window": 114.5920000076294,
+    "boundary_clipped": false
+  }
+]

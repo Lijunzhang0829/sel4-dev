@@ -1,0 +1,122 @@
+[
+  {
+    "id": "gap2-episode-1",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "model_reported_harness_blocked_auto_continued",
+    "start_unix": 1792967805.79742,
+    "end_unix": 1792967807.772231,
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/retry-001/session-transcript.jsonl",
+        "line": 2562
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/retry-001/session-transcript.jsonl",
+        "line": 2570
+      }
+    ],
+    "start_shanghai": "2026-10-26T06:36:45.797420+08:00",
+    "end_shanghai": "2026-10-26T06:36:47.772231+08:00",
+    "clipped_start_unix": 1792967805.79742,
+    "clipped_end_unix": 1792967807.772231,
+    "seconds_in_window": 1.97481107711792,
+    "boundary_clipped": false,
+    "start_basis": "Model final-answer explicitly reports checker/harness blocked with 4 accepted and 0 open.",
+    "end_basis": "Harness sends mandatory continuation; this endpoint is not problem resolution.",
+    "includes_other_work": true,
+    "not_causal_wasted_time": true,
+    "duration_role": "notification_to_auto_continuation_latency_only",
+    "full_seconds": 1.97481107711792
+  },
+  {
+    "id": "gap2-episode-2",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "model_reported_harness_blocked_auto_continued",
+    "start_unix": 1792969969.305113,
+    "end_unix": 1792969971.346293,
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/retry-001/session-transcript.jsonl",
+        "line": 5507
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/retry-001/session-transcript.jsonl",
+        "line": 5515
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:12:49.305113+08:00",
+    "end_shanghai": "2026-10-26T07:12:51.346293+08:00",
+    "clipped_start_unix": 1792969969.305113,
+    "clipped_end_unix": 1792969971.346293,
+    "seconds_in_window": 2.041179895401001,
+    "boundary_clipped": false,
+    "start_basis": "Model final-answer explicitly reports checker/harness blocked with 4 accepted and 0 open.",
+    "end_basis": "Harness sends mandatory continuation; this endpoint is not problem resolution.",
+    "includes_other_work": true,
+    "not_causal_wasted_time": true,
+    "duration_role": "notification_to_auto_continuation_latency_only",
+    "full_seconds": 2.041179895401001
+  },
+  {
+    "id": "gap2-episode-3",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "model_reported_harness_blocked_auto_continued",
+    "start_unix": 1792963607.206403,
+    "end_unix": 1792963609.268565,
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+        "line": 44394
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+        "line": 44402
+      }
+    ],
+    "start_shanghai": "2026-10-26T05:26:47.206403+08:00",
+    "end_shanghai": "2026-10-26T05:26:49.268565+08:00",
+    "clipped_start_unix": 1792963607.206403,
+    "clipped_end_unix": 1792963609.268565,
+    "seconds_in_window": 2.062161922454834,
+    "boundary_clipped": false,
+    "start_basis": "Model final-answer explicitly reports checker/harness blocked with 4 accepted and 0 open.",
+    "end_basis": "Harness sends mandatory continuation; this endpoint is not problem resolution.",
+    "includes_other_work": true,
+    "not_causal_wasted_time": true,
+    "duration_role": "notification_to_auto_continuation_latency_only",
+    "full_seconds": 2.062161922454834
+  },
+  {
+    "id": "gap2-episode-4",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "model_reported_harness_blocked_auto_continued",
+    "start_unix": 1792963762.643875,
+    "end_unix": 1792963764.575301,
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+        "line": 44679
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+        "line": 44687
+      }
+    ],
+    "start_shanghai": "2026-10-26T05:29:22.643875+08:00",
+    "end_shanghai": "2026-10-26T05:29:24.575301+08:00",
+    "clipped_start_unix": 1792963762.643875,
+    "clipped_end_unix": 1792963764.575301,
+    "seconds_in_window": 1.9314260482788086,
+    "boundary_clipped": false,
+    "start_basis": "Model final-answer explicitly reports checker/harness blocked with 4 accepted and 0 open.",
+    "end_basis": "Harness sends mandatory continuation; this endpoint is not problem resolution.",
+    "includes_other_work": true,
+    "not_causal_wasted_time": true,
+    "duration_role": "notification_to_auto_continuation_latency_only",
+    "full_seconds": 1.9314260482788086
+  }
+]

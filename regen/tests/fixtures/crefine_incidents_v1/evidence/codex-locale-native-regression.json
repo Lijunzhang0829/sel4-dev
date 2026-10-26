@@ -1,0 +1,33 @@
+{
+  "audit_content": "<batch_audit version=\"2\" worker=\"regen-batch-bd8a350336b349f7\" request=\"12\" theory=\"Native_Backend_Acceptance\"><prefix>\nunbundle l4v_word_context\n\ncontext fixes x :: nat assumes side_assumption: &quot;x = 1&quot; begin\nlemma shared_fact: &quot;x + 1 = 2&quot; using side_assumption by simp\nend\n\nlemma accepted_consumer: &quot;(x::nat) = 1 \\&lt;Longrightarrow&gt; x + 1 = 2&quot; by (rule shared_fact)\n\nlemma recovered: &quot;(x::nat) = 1 \\&lt;Longrightarrow&gt; x + 1 = 2&quot; by (rule shared_fact)\n</prefix><delta>\nlocale audit_locale = fixes y :: nat\ncontext audit_locale begin\nlemma scoped_fact: &quot;y = y&quot; by simp\nend\n</delta><imports><import>CRefine_Semantic_Base.Semantic_Root</import></imports><facts><fact>scoped_fact</fact></facts></batch_audit>",
+  "audit_sha256": "67b8bf6e593d9f358344e9f906bf376a13456e3ec2b7e228509ee9e9c34823c5",
+  "audited_facts": [
+    "scoped_fact"
+  ],
+  "source_content": "theory Native_Backend_Acceptance\nimports \"CRefine_Semantic_Base.Semantic_Root\"\nbegin\n\nunbundle l4v_word_context\n\ncontext fixes x :: nat assumes side_assumption: \"x = 1\" begin\nlemma shared_fact: \"x + 1 = 2\" using side_assumption by simp\nend\n\nlemma accepted_consumer: \"(x::nat) = 1 \\<Longrightarrow> x + 1 = 2\" by (rule shared_fact)\n\nlemma recovered: \"(x::nat) = 1 \\<Longrightarrow> x + 1 = 2\" by (rule shared_fact)\n\nlocale audit_locale = fixes y :: nat\ncontext audit_locale begin\nlemma scoped_fact: \"y = y\" by simp\nend\n\nend\n",
+  "source_sha256": "3cecaddb383a883ebede750c6c2193ec3c86319d9474579a870597fce9ca9f66",
+  "prefix_sha256": "bcc19a80d30e221f0c061c03db1cca9e9f414546927169eae94230775d8015b4",
+  "delta_sha256": "be6f80aab901a23e81a547eae5068293795eabd54fdaf9f69b36648f8d99c834",
+  "request_id": 12,
+  "worker": "regen-batch-bd8a350336b349f7",
+  "verdict": "green",
+  "returncode": 0,
+  "native_receipt": {
+    "candidate_execution_ms": 1108,
+    "check_scope": "committed-prefix-and-incremental-batch",
+    "checker_binding_sha256": "38e4f733366d30ba81197d3a3eb598a8dbfe8bbae6c7d2021cbffa3ba4d5d05e",
+    "delta_sha256": "be6f80aab901a23e81a547eae5068293795eabd54fdaf9f69b36648f8d99c834",
+    "log_sha256": "b0cd431edf37e36036b2d64b350f0f06a228959f7455a16b996ab7c2f2720885",
+    "prefix_prepare_ms": null,
+    "prefix_sha256": "bcc19a80d30e221f0c061c03db1cca9e9f414546927169eae94230775d8015b4",
+    "request_id": "regen-batch-bd8a350336b349f7:12",
+    "returncode": 0,
+    "schema": "native-check-receipt-v1",
+    "source_files_sha256": null,
+    "source_sha256": "3cecaddb383a883ebede750c6c2193ec3c86319d9474579a870597fce9ca9f66",
+    "timeout_scope": null,
+    "timeout_seconds": 20,
+    "verdict": "green",
+    "wall_ms": 1108
+  }
+}

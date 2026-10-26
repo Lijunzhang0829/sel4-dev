@@ -1,0 +1,13 @@
+{
+  "observed_at": "2026-10-27T00:22:43.061945+08:00",
+  "event_path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/effective-generation-budget/events/000019422.json",
+  "event_id": "ac879b52f117a303bf1750a614d0d0564cec2988440615390340493a81fe7ca3",
+  "state": {
+    "effective_seconds": 143397.1652191584,
+    "seconds": 172800.0,
+    "excluded_failed_request_seconds": 1088.927731228061,
+    "excluded_infrastructure_seconds": 0.0,
+    "excluded_infrastructure_worker_seconds": 0.0,
+    "paused": false
+  }
+}

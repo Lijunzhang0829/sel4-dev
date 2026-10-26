@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "codex-locale-fact-audit",
+  "title": "命名 locale 导出定理短名导致 native 审计误拒绝",
+  "component": "codex",
+  "category": "native_audit",
+  "status": "fixed_with_native_validation",
+  "source_steps": [
+    {
+      "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+      "batch_request": 39,
+      "native_request": "regen-batch-5f839f029e4a4da7:51",
+      "fact": "get_tsType_ccorres"
+    },
+    {
+      "run": "locale-audit-stability-20261025-001/native-v3",
+      "worker": 1,
+      "native_request": 12,
+      "check": "named-locale-export"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/codex-locale-native-extract.json",
+      "sha256": "b546ba605bd7e19f81c622a854b2d5923349e58c1d94282312d6d0058a1141d5",
+      "source_path": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/proof-runs/0001/theories/Generated_Kernel_Base/batch-requests/000039/check.json",
+      "source_sha256": "29ca6c297157a33b761b834f10272e594883acea9eef8698d1919d73213bcb4c",
+      "source_logical_sha256": "613ca23e142b5a01fdf396cd43c206473b18e701f73a6f245493a856593d9b60",
+      "selection": "$.check fields: diagnostic,native_proof_state,native_proof_state_full,native_receipt,returncode,verdict,timed_out,timeout_scope,timeout_seconds,source_sha256,log_sha256,audited_facts,source_content,prefix_sha256,delta_sha256"
+    },
+    {
+      "path": "evidence/codex-locale-native-regression.json",
+      "sha256": "6c151dc1cf3712f92c4bda1739a0b72a8d95f1f546d85f5def83e2b6fa04cb6f",
+      "source_path": "reports/regen/locale-audit-stability-20261025-001/native-v3/worker-1/named-locale-export.json",
+      "source_sha256": "5549085a4bbe9c8f6e8fa0d8ea2193335c3562d0b41a13ec7329c2fbc3cafc6e",
+      "selection": {
+        "json_keys": [
+          "audit_content",
+          "audit_sha256",
+          "audited_facts",
+          "source_content",
+          "source_sha256",
+          "prefix_sha256",
+          "delta_sha256",
+          "request_id",
+          "worker",
+          "verdict",
+          "returncode",
+          "native_receipt"
+        ]
+      }
+    }
+  ],
+  "replays": [
+    {
+      "id": "native-audit-binding",
+      "handler": "codex.locale_audit",
+      "kind": "extracted_step",
+      "parameters": {
+        "evidence": "evidence/codex-locale-native-regression.json",
+        "failure_evidence": "evidence/codex-locale-native-extract.json"
+      },
+      "oracle": "Recorded native locale XML is accepted only with exact prefix/delta/names/imports/request/worker; every changed binding is rejected."
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_native_locale_repair",
+    "regen.tools.native_backend_acceptance"
+  ],
+  "limitations": [
+    "Offline replay validates the Python native audit boundary only; it does not execute Isabelle/ML fact resolution.",
+    "The successful locale case was a deliberately synthetic native regression run, not a CRefine contract proof.",
+    "Original batch39 response is real; no new GREEN is created."
+  ]
+}

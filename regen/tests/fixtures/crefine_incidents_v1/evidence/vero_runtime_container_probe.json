@@ -1,0 +1,12 @@
+{
+  "verified_at": "2026-10-26T17:24:49.116026+00:00",
+  "actual_isolation_launcher": "passed",
+  "model_invoked": false,
+  "auth_home": "empty temporary directory",
+  "frozen_pythonpath": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/crefine-owner-blind-aligned-a-20261025-001/application",
+  "runtime_pythonpath": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/vero-tool-runtime-repair-release-20261027-002/application",
+  "mounted_client_sha256": "9fbfa71861005cdb0add01b8785555fb6f4f4fa5dc58ee1a5e45844e71786bac",
+  "diagnostic_help_exit_code": 0,
+  "diagnostic_help": "usage: tool.py diagnostic [-h] [--offset OFFSET] [--limit LIMIT]\n                          request_id module\n\npositional arguments:\n  request_id       request_id from check diagnostics_metadata\n  module           module from check diagnostics_metadata\n\noptions:\n  -h, --help       show this help message and exit\n  --offset OFFSET  byte offset; follow next_offset until eof\n  --limit LIMIT    requested bytes, 1 through 1048576\n",
+  "stderr": ""
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CRefine incident replay case v1",
+  "type": "object",
+  "required": ["schema_version", "id", "title", "component", "category", "status", "source_steps", "evidence", "replays", "limitations"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "component": {"type": "string"},
+    "category": {"type": "string"},
+    "status": {"type": "string"},
+    "source_steps": {"type": "array", "minItems": 1},
+    "evidence": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "replays": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["id", "handler", "kind", "oracle"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "handler": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["extracted_step", "synthetic_regression", "performance_probe", "evidence_replay"]},
+          "parameters": {"type": "object"},
+          "oracle": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "existing_tests": {"type": "array", "items": {"type": "string"}}
+  }
+}

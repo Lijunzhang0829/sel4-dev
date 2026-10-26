@@ -1,0 +1,80 @@
+{
+  "transport": {
+    "migration_id": "vero-bounded-diagnostic-transport-20261026-v1",
+    "predecessor_migration_sha256": "ad9dd1074318678bfd812d5dc5e30623f2d047545472ebc76a83d3800b0356c0",
+    "original_application_sha256": "01edd0f4260da6113bd94b87781804623f76fa5924b20b1d8e684951f0688bfa",
+    "new_application_sha256": "e50170d01720cc3628ec3b60069f4ae13fde5676bbd016143ad6525382885bde",
+    "new_application": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/vero-tool-transport-repair-release-20261026-001/application/regen/tools/vero_serial_application.py",
+    "original_application_dependencies": {
+      "execution/vero_checker_adapter.py": "53b7d53ecdd7adde93bcd77e0f699ca2f088a154e734738fce71e4b10e5ef575",
+      "execution/vero_import_graph.py": "79089dc645db8605377dfffffd7e40f4ae9bc5ad315ca3bbf149b82481b398da",
+      "execution/vero_prefix_revalidation.py": "1b5fb7b1da69da1b367777a6741f6adefbb68ef315bac65a283860b99a3db215",
+      "infrastructure/effective_time_budget.py": "79dd551eb0b7d65ab0d5b8b9f60ba5a11e111cb6c693763fc18be8f3c11f86a8",
+      "infrastructure/vero_experiment_observer.py": "af46f87e873825859bdc9dea37a214d4e3373954bb5e657757f6893d1729b4a4",
+      "planning/vero_plan_audit.py": "3c8bd04c7885fb17690c2535e8eb9be5b56b1c179497a22405b703a0acdce21a"
+    },
+    "new_application_dependencies": {
+      "execution/vero_checker_adapter.py": "53b7d53ecdd7adde93bcd77e0f699ca2f088a154e734738fce71e4b10e5ef575",
+      "execution/vero_prefix_revalidation.py": "1b5fb7b1da69da1b367777a6741f6adefbb68ef315bac65a283860b99a3db215",
+      "execution/vero_import_graph.py": "79089dc645db8605377dfffffd7e40f4ae9bc5ad315ca3bbf149b82481b398da",
+      "infrastructure/effective_time_budget.py": "79dd551eb0b7d65ab0d5b8b9f60ba5a11e111cb6c693763fc18be8f3c11f86a8",
+      "infrastructure/vero_experiment_observer.py": "af46f87e873825859bdc9dea37a214d4e3373954bb5e657757f6893d1729b4a4",
+      "planning/vero_plan_audit.py": "3c8bd04c7885fb17690c2535e8eb9be5b56b1c179497a22405b703a0acdce21a",
+      "tools/vero_application_tool.py": "9fbfa71861005cdb0add01b8785555fb6f4f4fa5dc58ee1a5e45844e71786bac",
+      "tools/vero_tool_protocol.py": "2336cf55b5b044b4d4a84fed95bcc4da0f99f3bbc8cfc8dc45c96514cc01e3b1"
+    },
+    "frozen_binding_sha256": "d8aeeb6f2b7125ccef1aa014ef46c5a285a2544d610e5c5e9d6568bcbe9953cc",
+    "purpose": "bounded diagnostic previews and read-only log paging; complete JSON framing",
+    "clock_and_usage_preserved": true,
+    "frozen_inputs_and_plan_preserved": true
+  },
+  "runtime": {
+    "migration_id": "vero-tool-runtime-binding-20261027-v2",
+    "predecessor_migration_sha256": "cb06eb04ac0185105e4fda4d8ab27a2980316acb0d799ff9d790a03d8aa284f7",
+    "original_application_sha256": "e50170d01720cc3628ec3b60069f4ae13fde5676bbd016143ad6525382885bde",
+    "new_application_sha256": "11e948b629120e523c2f15fc747546d101c8ebb100bb7d4105eae2e4d535bdb0",
+    "new_application": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/vero-tool-runtime-repair-release-20261027-002/application/regen/tools/vero_serial_application.py",
+    "original_application_dependencies": {
+      "execution/vero_checker_adapter.py": "53b7d53ecdd7adde93bcd77e0f699ca2f088a154e734738fce71e4b10e5ef575",
+      "execution/vero_import_graph.py": "79089dc645db8605377dfffffd7e40f4ae9bc5ad315ca3bbf149b82481b398da",
+      "execution/vero_prefix_revalidation.py": "1b5fb7b1da69da1b367777a6741f6adefbb68ef315bac65a283860b99a3db215",
+      "infrastructure/effective_time_budget.py": "79dd551eb0b7d65ab0d5b8b9f60ba5a11e111cb6c693763fc18be8f3c11f86a8",
+      "infrastructure/vero_experiment_observer.py": "af46f87e873825859bdc9dea37a214d4e3373954bb5e657757f6893d1729b4a4",
+      "planning/vero_plan_audit.py": "3c8bd04c7885fb17690c2535e8eb9be5b56b1c179497a22405b703a0acdce21a",
+      "tools/vero_application_tool.py": "9fbfa71861005cdb0add01b8785555fb6f4f4fa5dc58ee1a5e45844e71786bac",
+      "tools/vero_tool_protocol.py": "2336cf55b5b044b4d4a84fed95bcc4da0f99f3bbc8cfc8dc45c96514cc01e3b1"
+    },
+    "new_application_dependencies": {
+      "execution/vero_checker_adapter.py": "53b7d53ecdd7adde93bcd77e0f699ca2f088a154e734738fce71e4b10e5ef575",
+      "execution/vero_prefix_revalidation.py": "1b5fb7b1da69da1b367777a6741f6adefbb68ef315bac65a283860b99a3db215",
+      "execution/vero_import_graph.py": "79089dc645db8605377dfffffd7e40f4ae9bc5ad315ca3bbf149b82481b398da",
+      "infrastructure/effective_time_budget.py": "79dd551eb0b7d65ab0d5b8b9f60ba5a11e111cb6c693763fc18be8f3c11f86a8",
+      "infrastructure/vero_experiment_observer.py": "af46f87e873825859bdc9dea37a214d4e3373954bb5e657757f6893d1729b4a4",
+      "planning/vero_plan_audit.py": "3c8bd04c7885fb17690c2535e8eb9be5b56b1c179497a22405b703a0acdce21a",
+      "tools/vero_application_tool.py": "9fbfa71861005cdb0add01b8785555fb6f4f4fa5dc58ee1a5e45844e71786bac",
+      "tools/vero_tool_protocol.py": "2336cf55b5b044b4d4a84fed95bcc4da0f99f3bbc8cfc8dc45c96514cc01e3b1"
+    },
+    "frozen_binding_sha256": "d8aeeb6f2b7125ccef1aa014ef46c5a285a2544d610e5c5e9d6568bcbe9953cc",
+    "purpose": "bind model runtime transport and mounted client to the audited current application",
+    "clock_and_usage_preserved": true,
+    "frozen_inputs_and_plan_preserved": true
+  },
+  "frozen_artifacts_sha256": {
+    "binding.json": "4ab647ad98c1334c646915fc2fa85687b384535b42e737a1e921668ca746ce1b",
+    "config.json": "c908395cdd795e700114fd5b8f98ab0f9552476e83d8d60e0950a4ba8e02d7b3",
+    "accepted-plan.json": "5cf93441c4876c110e2359a621125d5bc2bc17e733f6d10c609f14a3272d2be8",
+    "planned-benchmark.json": "2ac484f4a90308a43db7c6b240e358ae32f88322cfcdb3e3f58e1c335bb45628"
+  },
+  "source_documents": [
+    {
+      "path": "reports/regen/vero-rpc-repair-20261026-001/preflight-receipt.json",
+      "sha256": "e5a33d093b705e3d0b427fa06dc8078a5cefaf15ebc89c4caf5421068f0c36be",
+      "selection": "planned_migration and frozen_artifacts_sha256"
+    },
+    {
+      "path": "reports/regen/dual-step-resume-validation-20261027-001/runtime-preflight-receipt.json",
+      "sha256": "48c1c290e1ef7a528840904d3cff90aa253b465703b49d10e8a956e816a22c0e",
+      "selection": "planned_migration and frozen_artifacts_sha256"
+    }
+  ]
+}

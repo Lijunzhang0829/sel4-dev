@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "codex-batch628-proof-not-timeout",
+  "title": "batch628 在 done 时仍有五个子目标，属于证明失败",
+  "component": "codex",
+  "category": "failure_classification",
+  "status": "expected_proof_failure",
+  "source_steps": [
+    {
+      "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-004",
+      "batch_request": 628,
+      "check_completed": 33376,
+      "acceptance_sequence": 991,
+      "native_command": "done",
+      "line": 2963,
+      "goal_count": 5
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/codex-batch628-native-extract.json",
+      "sha256": "1287f8a9a6ff68e1dbc42de1c91e0cf5b22d05552f3eb87c00de70faf6ef8810",
+      "source_path": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-004/proof-runs/0001/theories/Generated_Kernel_Base/batch-requests/000628/check.json",
+      "source_sha256": "2243cdaa0f6ffea78f4d09b8ccca05c58ccf95a8ee31f70a171936d0e5932544",
+      "source_logical_sha256": "3fc3b28c4cbf9db04296572d4c0852f950cb11713f237fecc19e150c807f0eb7",
+      "selection": "$.check fields: diagnostic,native_proof_state,native_proof_state_full,native_receipt,returncode,verdict,timed_out,timeout_scope,timeout_seconds,source_sha256,log_sha256,audited_facts,source_content,prefix_sha256,delta_sha256"
+    }
+  ],
+  "replays": [
+    {
+      "id": "recorded-native-response",
+      "handler": "codex.native_failure",
+      "kind": "extracted_step",
+      "parameters": {
+        "evidence": "evidence/codex-batch628-native-extract.json"
+      },
+      "oracle": "Production BatchWorker response processing keeps returncode1, timed_out false, timeout_scope null, and five remaining goals; pending candidate is discarded."
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_native_check_receipt"
+  ],
+  "limitations": [
+    "Native transaction is replaced by the exact recorded RED response and captured proof state; Isabelle itself is not rerun.",
+    "The response-processing replay does not certify original prefix imports/context or mathematical correctness."
+  ]
+}

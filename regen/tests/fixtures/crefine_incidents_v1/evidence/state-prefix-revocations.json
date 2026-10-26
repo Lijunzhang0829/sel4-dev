@@ -1,0 +1,262 @@
+{
+  "run": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+  "transitions": [
+    {
+      "before": "evidence/state-prefix-before_first.thy",
+      "after": "evidence/state-prefix-after_first.thy",
+      "revocations": [
+        {
+          "data": {
+            "current_receipt": {
+              "accepted_prefix_sha256": "94f8b9f2c0b6ecee84e27287fca40cec2beeb5d8dffd56721bd42c853d55c034",
+              "context_identity": "61719274b5133c866faf67954d6eeab59cb9c7bc21a7461561ba81542ca38617",
+              "filled": true,
+              "open_prefix_slots": [
+                "c0003:disprove",
+                "c0013:prove",
+                "c0013:disprove",
+                "c0014:disprove",
+                "c0016:disprove",
+                "c0021:prove",
+                "c0021:disprove"
+              ],
+              "polarity": "prove",
+              "pre_proof_sha256": "9d1482926be3cb8ed1f4e0d8cf97fd0d07c28c6752e63c5a0ba7bca1c5388a0f",
+              "prefix_sha256": "41ff5eb62cf8aa20103748ee0732710ff67306deafb4170567ae01de888e0e46",
+              "prior_accepted_prefix_sha256": "94f8b9f2c0b6ecee84e27287fca40cec2beeb5d8dffd56721bd42c853d55c034",
+              "proof_body_sha256": "c3f6f9247813a63910ceb56239466d585c358c7ce5da1efb9493a48d7a4e1836"
+            },
+            "current_receipt_sha256": "1ae31b748acf1b5c13a5db046f6e65e5b25cc5f99590db3c11711ad746666f8d",
+            "old_receipt": {
+              "accepted_prefix_sha256": "84beb3a13e37539a24117df5d0b89917985911b774548346a7ec6474b241b6b4",
+              "context_identity": "61719274b5133c866faf67954d6eeab59cb9c7bc21a7461561ba81542ca38617",
+              "filled": true,
+              "open_prefix_slots": [
+                "c0003:disprove",
+                "c0013:prove",
+                "c0013:disprove",
+                "c0014:disprove",
+                "c0016:disprove",
+                "c0021:prove",
+                "c0021:disprove"
+              ],
+              "polarity": "prove",
+              "pre_proof_sha256": "c59d3958ebc18c32a66baab3e8d2e2d4f172673f1797acf50c0b66a5ca20b521",
+              "prefix_sha256": "36c38bf58f637f2dfa527ac5acd9bb5536ac4f91f297870418284fc3b29dfa67",
+              "proof_body_sha256": "c3f6f9247813a63910ceb56239466d585c358c7ce5da1efb9493a48d7a4e1836"
+            },
+            "old_receipt_sha256": "19d2fd9dbd95dc598df43eacf4c73cfa2bc435355a52599d1c54b9bd1580807c",
+            "reason": "checked_prefix_before_proof_changed",
+            "requested_theory": "Vero_Thread_Core",
+            "target_id": "c0022",
+            "theory": "Vero_Thread_Core"
+          },
+          "event_id": "826c9deb1d3efd400ac2467c479836c146d83b7fb283cc98c716f5ec36e7140b",
+          "kind": "contract_green_invalidated",
+          "parent": "e9e5283acecdca4b877188e774466275144a186cbd28392d5262bed97d657569",
+          "run_id": "vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+          "sequence": 12396,
+          "time_unix": 1792922460.0388384
+        },
+        {
+          "data": {
+            "current_receipt": {
+              "accepted_prefix_sha256": "94ffea0b9513e457154a0f14188aae95eaabea72cf237e1fda9ebb7931ac7843",
+              "context_identity": "61719274b5133c866faf67954d6eeab59cb9c7bc21a7461561ba81542ca38617",
+              "filled": true,
+              "open_prefix_slots": [
+                "c0003:disprove",
+                "c0013:prove",
+                "c0013:disprove",
+                "c0014:disprove",
+                "c0016:disprove",
+                "c0021:prove",
+                "c0021:disprove",
+                "c0022:disprove"
+              ],
+              "polarity": "prove",
+              "pre_proof_sha256": "05258e049ff35c55f4d332ab1cdd61aea5497b558b00f83396424614804ddf65",
+              "prefix_sha256": "f94f68864b6b7433b8288c5237329ccd1e883d365dda251b33250731b98e8f48",
+              "prior_accepted_prefix_sha256": "94ffea0b9513e457154a0f14188aae95eaabea72cf237e1fda9ebb7931ac7843",
+              "proof_body_sha256": "86a9787387e5ccfac87d60bb1922bd9ff7c7b10ea1527cc6edd68ac0f34794e0"
+            },
+            "current_receipt_sha256": "3123f7b943b6574066ef67f27ad574628008d3ef1893055e7fbc6838fde957ee",
+            "old_receipt": {
+              "accepted_prefix_sha256": "63bb89a80c9ad80f082cc65b36d2b2595e34a6d81351e0ccf18306c85c19c96c",
+              "context_identity": "61719274b5133c866faf67954d6eeab59cb9c7bc21a7461561ba81542ca38617",
+              "filled": true,
+              "open_prefix_slots": [
+                "c0003:disprove",
+                "c0013:prove",
+                "c0013:disprove",
+                "c0014:disprove",
+                "c0016:disprove",
+                "c0021:prove",
+                "c0021:disprove",
+                "c0022:disprove"
+              ],
+              "polarity": "prove",
+              "pre_proof_sha256": "538e451ae155dea77033422469c1e62666455df8a22fa34b6e4b010a6cef86c7",
+              "prefix_sha256": "5759e7df5458541da3c13d31221d586d6b4a89a2e2c43e669d5ca17ddf281aa0",
+              "proof_body_sha256": "86a9787387e5ccfac87d60bb1922bd9ff7c7b10ea1527cc6edd68ac0f34794e0"
+            },
+            "old_receipt_sha256": "d048edcff50dd72d4b4bb97da14c35aa84789c4705654984a5ffbb96e62128af",
+            "reason": "checked_prefix_before_proof_changed",
+            "requested_theory": "Vero_Thread_Core",
+            "target_id": "c0057",
+            "theory": "Vero_Thread_Core"
+          },
+          "event_id": "4b9aff5f19f92dde4f2d14ccc181e946f173be0ce6e4efecb391ab0a415bf667",
+          "kind": "contract_green_invalidated",
+          "parent": "826c9deb1d3efd400ac2467c479836c146d83b7fb283cc98c716f5ec36e7140b",
+          "run_id": "vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+          "sequence": 12397,
+          "time_unix": 1792922460.1415033
+        }
+      ]
+    },
+    {
+      "before": "evidence/state-prefix-before_second.thy",
+      "after": "evidence/state-prefix-after_second.thy",
+      "revocations": [
+        {
+          "data": {
+            "current_receipt": {
+              "accepted_prefix_sha256": "8ec3f55c064d5dfd7ab3b396dc906827dd0e2895edec240931616f9a42ddf463",
+              "context_identity": "61719274b5133c866faf67954d6eeab59cb9c7bc21a7461561ba81542ca38617",
+              "filled": true,
+              "open_prefix_slots": [
+                "c0003:disprove",
+                "c0013:prove",
+                "c0013:disprove",
+                "c0014:disprove"
+              ],
+              "polarity": "prove",
+              "pre_proof_sha256": "1b501bc97348039ff9af85869570557510447fbf88ebb71c60dbf2b592173949",
+              "prefix_sha256": "e0344b50ce526b3f5cfb971f6903cbe7a05d5475e7720d0e0489ab788ac7974a",
+              "prior_accepted_prefix_sha256": "8ec3f55c064d5dfd7ab3b396dc906827dd0e2895edec240931616f9a42ddf463",
+              "proof_body_sha256": "02bed7e0473cb1dc4e76c7d1215b54a47987e903f3edd4425cad06ee0d73558e"
+            },
+            "current_receipt_sha256": "cea04983f4ef84b82775dfbd0444239b8fb68ca83186038eeb76109d74fd96e1",
+            "old_receipt": {
+              "accepted_prefix_sha256": "302483b3db9d4c45a73973a4be7ce5671fa4104df6966e65557746c6b19c0f39",
+              "context_identity": "61719274b5133c866faf67954d6eeab59cb9c7bc21a7461561ba81542ca38617",
+              "filled": true,
+              "open_prefix_slots": [
+                "c0003:disprove",
+                "c0013:prove",
+                "c0013:disprove",
+                "c0014:disprove"
+              ],
+              "polarity": "prove",
+              "pre_proof_sha256": "cae619916bb142b5fec545cc461d16c074f36addccbc7773c76cc1463c85deb3",
+              "prefix_sha256": "c965ef8c93612ad0921d3a73f1b258e68cd3025b74ea65ce7876845d81a729f2",
+              "proof_body_sha256": "02bed7e0473cb1dc4e76c7d1215b54a47987e903f3edd4425cad06ee0d73558e"
+            },
+            "old_receipt_sha256": "c4417cab162fdc61a2e538a8dd5e1c4ab30bb7d77121a51983ab90b145369cff",
+            "reason": "checked_prefix_before_proof_changed",
+            "requested_theory": "Vero_Thread_Core",
+            "target_id": "c0016",
+            "theory": "Vero_Thread_Core"
+          },
+          "event_id": "657070168b2d4ecd763f1b94fc4fef49b8f7749311ff849daf7c9a5dbe8beebb",
+          "kind": "contract_green_invalidated",
+          "parent": "dc608d7823aa00fded3c72bd8d2567c48ca3059dfcf5f1ca9eef25ed67e26ffe",
+          "run_id": "vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+          "sequence": 12469,
+          "time_unix": 1792922749.397343
+        }
+      ]
+    }
+  ],
+  "native_dependency_audit": {
+    "schema_version": 1,
+    "conclusion": "overconservative-prefix-invalidation; prior OPEN-proof-slot fix is deployed but does not cover auxiliary declaration edits",
+    "run": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+    "changed_helpers": [
+      "vero_aux_c0021_register_bound",
+      "vero_aux_c0021_getRegister_not_tcb",
+      "vero_aux_c0021_getRegister_empty_fail",
+      "vero_aux_c0021_getRegister_no_result_without_tcb",
+      "vero_aux_c0021_getRegister_nofail",
+      "vero_aux_c0021_getRegister_value",
+      "vero_aux_c0021_getRegister_result_value",
+      "vero_aux_c0021_tcb_h_t_valid_general",
+      "vero_aux_c0021_getRegister_result_value_tcb",
+      "vero_aux_c0016_rf_sr_ret_update",
+      "vero_aux_c0016_restartPC_result_general"
+    ],
+    "actual_local_auxiliary_dependencies": {
+      "c0016": [
+        "Vero_Thread_Core.kernel.vero_aux_c0016_asUser_nofail_tcb_at",
+        "Vero_Thread_Core.kernel.vero_aux_c0016_nofail_h_t_valid",
+        "Vero_Thread_Core.kernel.vero_aux_c0016_nofail_h_t_valid_general",
+        "Vero_Thread_Core.kernel.vero_aux_c0016_restartPC_result",
+        "Vero_Thread_Core.kernel.vero_aux_c0016_restartPC_result_value",
+        "Vero_Thread_Core.kernel.vero_aux_c0016_restartPC_value",
+        "Vero_Thread_Core.kernel.vero_aux_c0016_rf_sr_same_globals",
+        "Vero_Thread_Core.kernel.vero_aux_c0016_tcb_h_t_valid"
+      ],
+      "c0022": [
+        "Vero_Thread_Core.kernel_m.vero_aux_c0022_isStopped_C",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0022_isStopped_result",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0022_stopped_C_def",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0022_stopped_relation",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0022_tcb_h_t_valid"
+      ],
+      "c0057": [
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_cendpoint_relation_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_clift_domain_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_cmap_endpoint_relation_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_cmap_notification_relation_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_cmap_relation_overwrite",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_cnotification_relation_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_cpspace_relation_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_cpspace_tcb_relation_eq",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_cpspace_tcb_relation_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_ctcb_relation_domain_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_cvariable_array_overwrite",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_ep_queue_relation_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_map_to_ctes_domain_update_raw",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_map_to_tcbs_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_not_field_by_name",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_not_sub_by_name",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_other_clift",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_other_clifts",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_region_byte_valid",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_rf_sr_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_tcb_ptr_inj",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_tcb_queue_relation_update",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_threadSet_eval",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_word32_region_disjoint",
+        "Vero_Thread_Core.kernel_m.vero_aux_c0057_zero_ranges_update"
+      ]
+    },
+    "changed_helpers_used_by_affected_proofs": [],
+    "native_replay": {
+      "original_returncode": 0,
+      "all_changed_helpers_removed_returncode": 0,
+      "affected_contract_proof_bodies_unchanged": true,
+      "local_dependency_sets_identical": true,
+      "contracts_clean_in_both_runs": [
+        "c0003",
+        "c0014",
+        "c0016",
+        "c0022",
+        "c0057"
+      ]
+    },
+    "live_experiment_modified": false,
+    "model_calls": 0,
+    "ledger_modified": false,
+    "related_mechanism": "native_rc != 0 discards all clean markers from audited_ids; subsequent c0088 end error blocks independent reacceptance",
+    "evidence_files": [
+      "evidence.json",
+      "receipt-reproduction.json",
+      "model-edit-actions.json",
+      "native-report.json",
+      "before_first--after_first.diff",
+      "before_second--after_second.diff"
+    ]
+  }
+}

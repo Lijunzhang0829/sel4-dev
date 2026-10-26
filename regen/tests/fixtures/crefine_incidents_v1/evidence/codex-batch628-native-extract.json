@@ -1,0 +1,1982 @@
+{
+  "source_path": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-004/proof-runs/0001/theories/Generated_Kernel_Base/batch-requests/000628/check.json",
+  "source_manifest_sha256": "2243cdaa0f6ffea78f4d09b8ccca05c58ccf95a8ee31f70a171936d0e5932544",
+  "source_logical_sha256": "3fc3b28c4cbf9db04296572d4c0852f950cb11713f237fecc19e150c807f0eb7",
+  "selection": "$.check fields: diagnostic,native_proof_state,native_proof_state_full,native_receipt,returncode,verdict,timed_out,timeout_scope,timeout_seconds,source_sha256,log_sha256,audited_facts,source_content,prefix_sha256,delta_sha256",
+  "data": {
+    "diagnostic": "RED\nFailed to finish proof:\ngoal (5 subgoals):\n 1. \\<And>\\<sigma>.\n       \\<Gamma>\n          \\<turnstile> ((if undefined then UNIV else {}) \\<inter> UNIV)\n                       \\<acute>ret__unsigned :== CALL cap_cnode_cap_get_capCNodeRadix_'proc(\\<acute>nodeCap);;\n                       \\<acute>radixBits :== \\<acute>ret__unsigned;;\n                       \\<acute>ret__unsigned :== CALL cap_cnode_cap_get_capCNodeGuardSize_'proc(\\<acute>nodeCap);;\n                       \\<acute>guardBits :== \\<acute>ret__unsigned;;\n                       \\<acute>levelBits :==\n                         \\<acute>radixBits + \\<acute>guardBits;;\n                       SKIP;;\n                       \\<acute>ret__unsigned :== CALL cap_cnode_cap_get_capCNodeGuard_'proc(\\<acute>nodeCap);;\n                       \\<acute>capGuard :== \\<acute>ret__unsigned;;\n                       Guard ShiftError\n                        \\<lbrace>\\<acute>guardBits < 0x20\\<rbrace>\n                        (Guard ShiftError\n                          \\<lbrace>\\<acute>n_bits - \\<acute>guardBits &&\n                                   0x1F\n                                   < 0x20\\<rbrace>\n                          (Guard ShiftError UNIV\n                            (Guard ShiftError UNIV\n                              (\\<acute>guard :==\n                                 (\\<acute>capptr >>\n                                  unat\n                                   (\\<acute>n_bits - \\<acute>guardBits &&\n                                    0x1F)) &&\n                                 2 ^ unat \\<acute>guardBits - 1))));;\n                       IF \\<acute>n_bits < \\<acute>guardBits \\<or>\n                          \\<acute>guard \\<noteq> \\<acute>capGuard THEN\n                         \\<acute>current_lookup_fault :== CALL lookup_fault_guard_mismatch_new_'proc(\\<acute>capGuard,\n                         \\<acute>n_bits,\\<acute>guardBits);;\n                         \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                           resolveAddressBits_ret_C.status_C_update\n                            (\\<lambda>_.\n                                SCAST(32 signed \\<rightarrow> 32)\n                                 EXCEPTION_LOOKUP_FAULT)\n                            \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                         return_C\n                          ret__struct_resolveAddressBits_ret_C_'_update\n                          ret___struct_resolveAddressBits_ret_C_'\n                       FI;;\n                       IF \\<acute>n_bits < \\<acute>levelBits THEN\n                         \\<acute>current_lookup_fault :== CALL lookup_fault_depth_mismatch_new_'proc(\\<acute>levelBits,\n                         \\<acute>n_bits);;\n                         \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                           resolveAddressBits_ret_C.status_C_update\n                            (\\<lambda>_.\n                                SCAST(32 signed \\<rightarrow> 32)\n                                 EXCEPTION_LOOKUP_FAULT)\n                            \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                         return_C\n                          ret__struct_resolveAddressBits_ret_C_'_update\n                          ret___struct_resolveAddressBits_ret_C_'\n                       FI;;\n                       Guard ShiftError\n                        \\<lbrace>\\<acute>radixBits < 0x20\\<rbrace>\n                        (Guard ShiftError\n                          \\<lbrace>\\<acute>n_bits - \\<acute>levelBits\n                                   < 0x20\\<rbrace>\n                          (\\<acute>offset___unsigned_long :==\n                             (\\<acute>capptr >>\n                              unat (\\<acute>n_bits - \\<acute>levelBits)) &&\n                             2 ^ unat \\<acute>radixBits - 1));;\n                       \\<acute>ret__unsigned :== CALL cap_cnode_cap_get_capCNodePtr_'proc(\\<acute>nodeCap);;\n                       Guard MemorySafety\n                        \\<lbrace>ptr_add_assertion'\n                                  (cte_Ptr \\<acute>ret__unsigned)\n                                  (uint \\<acute>offset___unsigned_long)\n                                  False (hrs_htd \\<acute>t_hrs)\\<rbrace>\n                        (\\<acute>slot :==\n                           cte_Ptr \\<acute>ret__unsigned +\\<^sub>p\n                           uint \\<acute>offset___unsigned_long);;\n                       IF \\<acute>n_bits = \\<acute>levelBits THEN\n                         \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                           resolveAddressBits_ret_C.status_C_update\n                            (\\<lambda>_.\n                                SCAST(32 signed \\<rightarrow> 32)\n                                 EXCEPTION_NONE)\n                            \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                         \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                           resolveAddressBits_ret_C.slot_C_update\n                            (\\<lambda>_. \\<acute>slot)\n                            \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                         \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                           bitsRemaining_C_update (\\<lambda>_. 0)\n                            \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                         return_C\n                          ret__struct_resolveAddressBits_ret_C_'_update\n                          ret___struct_resolveAddressBits_ret_C_'\n                       FI;;\n                       Guard GhostStateError\n                        \\<lbrace>0 < \\<acute>levelBits\\<rbrace>\n                        (\\<acute>globals :== ghost'state_'_update id);;\n                       \\<acute>n_bits :==\n                         \\<acute>n_bits - \\<acute>levelBits;;\n                       Guard C_Guard {s. s \\<Turnstile>\\<^sub>c slot_' s}\n                        (\\<acute>nodeCap :==\n                           h_val (hrs_mem \\<acute>t_hrs)\n                            (cap_Ptr\n                              &(\\<acute>slot\\<rightarrow>[''cap_C''])));;\n                       \\<acute>ret__unsigned :== CALL cap_get_capType_'proc(\\<acute>nodeCap);;\n                       IF \\<acute>ret__unsigned \\<noteq>\n                          SCAST(32 signed \\<rightarrow> 32)\n                           cap_cnode_cap THEN\n                         \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                           resolveAddressBits_ret_C.status_C_update\n                            (\\<lambda>_.\n                                SCAST(32 signed \\<rightarrow> 32)\n                                 EXCEPTION_NONE)\n                            \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                         \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                           resolveAddressBits_ret_C.slot_C_update\n                            (\\<lambda>_. \\<acute>slot)\n                            \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                         \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                           bitsRemaining_C_update\n                            (\\<lambda>_. \\<acute>n_bits)\n                            \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                         return_C\n                          ret__struct_resolveAddressBits_ret_C_'_update\n                          ret___struct_resolveAddressBits_ret_C_'\n                       FI\n                       (if undefined then UNIV else {})\n 2. \\<And>\\<sigma>.\n       (if undefined then UNIV else {}) \\<inter> - UNIV\n       \\<subseteq> {s. (\\<forall>t.\n                           t may_not_modify_globals s \\<longrightarrow>\n                           False) \\<and>\n                       (\\<exists>t. t may_not_modify_globals s)}\n 3. \\<And>\\<sigma>.\n       \\<Gamma>\n          \\<turnstile> {s. (valid_pspace' and valid_cap' cap' and\n                            K (guard' \\<le> 32))\n                            \\<sigma> \\<and>\n                           s \\<in> \\<lbrace>ccap_relation cap'\n       \\<acute>nodeCap\\<rbrace> \\<inter>\n                                   \\<lbrace>\\<acute>capptr =\n      cptr'\\<rbrace> \\<inter>\n                                   \\<lbrace>unat \\<acute>n_bits =\n      guard'\\<rbrace> \\<and>\n                           (\\<sigma>, s) \\<in> rf_sr}\n                       lvar_nondet_init\n                        ret___struct_resolveAddressBits_ret_C_'\n                        ret___struct_resolveAddressBits_ret_C_'_update;;\n                       lvar_nondet_init radixBits_' radixBits_'_update;;\n                       lvar_nondet_init guardBits_' guardBits_'_update;;\n                       lvar_nondet_init levelBits_' levelBits_'_update;;\n                       lvar_nondet_init guard_' guard_'_update;;\n                       lvar_nondet_init capGuard_' capGuard_'_update;;\n                       lvar_nondet_init offset___unsigned_long_'\n                        offset___unsigned_long_'_update;;\n                       lvar_nondet_init slot_' slot_'_update;;\n                       \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                         bitsRemaining_C_update (\\<lambda>_. \\<acute>n_bits)\n                          \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                       \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                         resolveAddressBits_ret_C.slot_C_update\n                          (\\<lambda>_. NULL)\n                          \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                       \\<acute>ret__unsigned :== CALL cap_get_capType_'proc(\\<acute>nodeCap);;\n                       IF \\<acute>ret__unsigned \\<noteq>\n                          SCAST(32 signed \\<rightarrow> 32)\n                           cap_cnode_cap THEN\n                         \\<acute>current_lookup_fault :== CALL lookup_fault_invalid_root_new_'proc();;\n                         \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                           resolveAddressBits_ret_C.status_C_update\n                            (\\<lambda>_.\n                                SCAST(32 signed \\<rightarrow> 32)\n                                 EXCEPTION_LOOKUP_FAULT)\n                            \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                         return_C\n                          ret__struct_resolveAddressBits_ret_C_'_update\n                          ret___struct_resolveAddressBits_ret_C_'\n                       FI\n                       (if undefined then UNIV else {})\n 4. \\<And>\\<sigma>.\n       \\<Gamma>\n          \\<turnstile> (?R80 \\<sigma>) SKIP\n                       {s. \\<exists>(rv, \\<sigma>')\n                                    \\<in>fst\n    (gets\n      (resolveAddressBitsFn cap' cptr' guard' \\<circ>\n       only_cnode_caps \\<circ>\n       ctes_of)\n      \\<sigma>).\n                              (\\<sigma>', s) \\<in> rf_sr \\<and>\n                              (lookup_failure_rel \\<currency>\n                               (\\<lambda>(cte, bits) (cte', bits').\n                                   cte' = cte_Ptr cte \\<and>\n                                   bits = unat bits' \\<and>\n                                   bits' \\<le> 0x20))\n                               rv (liftxf errstate\n                                    resolveAddressBits_ret_C.status_C\n                                    (\\<lambda>v.\n  (resolveAddressBits_ret_C.slot_C v, bitsRemaining_C v))\n                                    ret__struct_resolveAddressBits_ret_C_'\n                                    s)}\n 5. \\<And>s s'.\n       \\<lbrakk>(s, s') \\<in> rf_sr;\n        (valid_pspace' and valid_cap' cap' and K (guard' \\<le> 32)) s;\n        s' \\<in> \\<lbrace>ccap_relation cap'\n                           \\<acute>nodeCap\\<rbrace> \\<inter>\n                 \\<lbrace>\\<acute>capptr = cptr'\\<rbrace> \\<inter>\n                 \\<lbrace>unat \\<acute>n_bits = guard'\\<rbrace>\\<rbrakk>\n       \\<Longrightarrow> (valid_pspace' and valid_cap' cap' and\n                          K (guard' \\<le> 32) and\n                          (valid_objs' and valid_cap' cap' and\n                           (\\<lambda>s.\n                               cnode_caps_gsCNodes\n                                (only_cnode_caps (ctes_of s))\n                                (gsCNodes s) \\<and>\n                               (isCNodeCap cap' \\<longrightarrow>\n                                gsCNodes s (capCNodePtr cap') =\n                                Some (capCNodeBits cap')))))\n                          s \\<and>\n                         s' \\<in> \\<lbrace>ccap_relation cap'\n      \\<acute>nodeCap\\<rbrace> \\<inter>\n                                  \\<lbrace>\\<acute>capptr =\n     cptr'\\<rbrace> \\<inter>\n                                  \\<lbrace>unat \\<acute>n_bits =\n     guard'\\<rbrace>\nAt command \"done\" (line 2963 of \"/candidate/Batch_Check_603a16cd590afafe.thy\")",
+    "native_proof_state": {
+      "available_via": "read_proof_state",
+      "command": "done",
+      "goal_count": 5,
+      "line": "2963",
+      "origin": "before_failed_command"
+    },
+    "native_proof_state_full": {
+      "command": "done",
+      "executed_commands": [
+        {
+          "line": "2397",
+          "name": "ML"
+        },
+        {
+          "line": "2397",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2398",
+          "name": "ML"
+        },
+        {
+          "line": "2398",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2399",
+          "name": "context"
+        },
+        {
+          "line": "2400",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2401",
+          "name": "lemma"
+        },
+        {
+          "line": "2408",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2409",
+          "name": "proof"
+        },
+        {
+          "line": "2409",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2410",
+          "name": "have"
+        },
+        {
+          "line": "2416",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2417",
+          "name": "proof"
+        },
+        {
+          "line": "2417",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2418",
+          "name": "fix"
+        },
+        {
+          "line": "2418",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2419",
+          "name": "fix"
+        },
+        {
+          "line": "2419",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2420",
+          "name": "assume"
+        },
+        {
+          "line": "2420",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2421",
+          "name": "assume"
+        },
+        {
+          "line": "2423",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2424",
+          "name": "have"
+        },
+        {
+          "line": "2424",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2425",
+          "name": "proof"
+        },
+        {
+          "line": "2425",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2426",
+          "name": "assume"
+        },
+        {
+          "line": "2426",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2427",
+          "name": "have"
+        },
+        {
+          "line": "2429",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2430",
+          "name": "using"
+        },
+        {
+          "line": "2430",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2431",
+          "name": "by"
+        },
+        {
+          "line": "2445",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2446",
+          "name": "show"
+        },
+        {
+          "line": "2446",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2446",
+          "name": "using"
+        },
+        {
+          "line": "2446",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2446",
+          "name": "by"
+        },
+        {
+          "line": "2446",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2447",
+          "name": "qed"
+        },
+        {
+          "line": "2447",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2448",
+          "name": "show"
+        },
+        {
+          "line": "2449",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2450",
+          "name": "using"
+        },
+        {
+          "line": "2450",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2451",
+          "name": "by"
+        },
+        {
+          "line": "2465",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2466",
+          "name": "qed"
+        },
+        {
+          "line": "2466",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2468",
+          "name": "have"
+        },
+        {
+          "line": "2469",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2470",
+          "name": "by"
+        },
+        {
+          "line": "2470",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2472",
+          "name": "have"
+        },
+        {
+          "line": "2479",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2480",
+          "name": "proof"
+        },
+        {
+          "line": "2480",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2481",
+          "name": "fix"
+        },
+        {
+          "line": "2481",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2482",
+          "name": "fix"
+        },
+        {
+          "line": "2482",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2483",
+          "name": "assume"
+        },
+        {
+          "line": "2485",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2486",
+          "name": "assume"
+        },
+        {
+          "line": "2486",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2487",
+          "name": "have"
+        },
+        {
+          "line": "2487",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2488",
+          "name": "using"
+        },
+        {
+          "line": "2488",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2488",
+          "name": "by"
+        },
+        {
+          "line": "2488",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2489",
+          "name": "show"
+        },
+        {
+          "line": "2491",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2492",
+          "name": "apply"
+        },
+        {
+          "line": "2492",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2493",
+          "name": "apply"
+        },
+        {
+          "line": "2493",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2494",
+          "name": "using"
+        },
+        {
+          "line": "2494",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2495",
+          "name": "apply"
+        },
+        {
+          "line": "2495",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2496",
+          "name": "apply"
+        },
+        {
+          "line": "2506",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2507",
+          "name": "done"
+        },
+        {
+          "line": "2507",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2508",
+          "name": "qed"
+        },
+        {
+          "line": "2508",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2510",
+          "name": "have"
+        },
+        {
+          "line": "2521",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2522",
+          "name": "proof"
+        },
+        {
+          "line": "2522",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2523",
+          "name": "fix"
+        },
+        {
+          "line": "2523",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2524",
+          "name": "fix"
+        },
+        {
+          "line": "2524",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2525",
+          "name": "fix"
+        },
+        {
+          "line": "2525",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2526",
+          "name": "fix"
+        },
+        {
+          "line": "2526",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2527",
+          "name": "fix"
+        },
+        {
+          "line": "2527",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2528",
+          "name": "fix"
+        },
+        {
+          "line": "2528",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2529",
+          "name": "fix"
+        },
+        {
+          "line": "2529",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2530",
+          "name": "assume"
+        },
+        {
+          "line": "2530",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2531",
+          "name": "assume"
+        },
+        {
+          "line": "2531",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2532",
+          "name": "assume"
+        },
+        {
+          "line": "2534",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2535",
+          "name": "have"
+        },
+        {
+          "line": "2538",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2539",
+          "name": "using"
+        },
+        {
+          "line": "2539",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2540",
+          "name": "by"
+        },
+        {
+          "line": "2540",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2541",
+          "name": "show"
+        },
+        {
+          "line": "2546",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2547",
+          "name": "by"
+        },
+        {
+          "line": "2547",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2548",
+          "name": "qed"
+        },
+        {
+          "line": "2548",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2550",
+          "name": "have"
+        },
+        {
+          "line": "2553",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2554",
+          "name": "proof"
+        },
+        {
+          "line": "2554",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2555",
+          "name": "fix"
+        },
+        {
+          "line": "2555",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2556",
+          "name": "fix"
+        },
+        {
+          "line": "2556",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2557",
+          "name": "assume"
+        },
+        {
+          "line": "2557",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2558",
+          "name": "have"
+        },
+        {
+          "line": "2558",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2559",
+          "name": "using"
+        },
+        {
+          "line": "2559",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2559",
+          "name": "by"
+        },
+        {
+          "line": "2559",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2560",
+          "name": "have"
+        },
+        {
+          "line": "2560",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2561",
+          "name": "using"
+        },
+        {
+          "line": "2561",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2562",
+          "name": "by"
+        },
+        {
+          "line": "2562",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2563",
+          "name": "have"
+        },
+        {
+          "line": "2564",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2565",
+          "name": "by"
+        },
+        {
+          "line": "2568",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2569",
+          "name": "have"
+        },
+        {
+          "line": "2569",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2570",
+          "name": "using"
+        },
+        {
+          "line": "2570",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2571",
+          "name": "by"
+        },
+        {
+          "line": "2571",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2572",
+          "name": "have"
+        },
+        {
+          "line": "2574",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2575",
+          "name": "using"
+        },
+        {
+          "line": "2575",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2576",
+          "name": "by"
+        },
+        {
+          "line": "2576",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2577",
+          "name": "have"
+        },
+        {
+          "line": "2577",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2578",
+          "name": "by"
+        },
+        {
+          "line": "2578",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2579",
+          "name": "show"
+        },
+        {
+          "line": "2579",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2580",
+          "name": "using"
+        },
+        {
+          "line": "2580",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2581",
+          "name": "by"
+        },
+        {
+          "line": "2581",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2582",
+          "name": "qed"
+        },
+        {
+          "line": "2582",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2584",
+          "name": "have"
+        },
+        {
+          "line": "2593",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2594",
+          "name": "unfolding"
+        },
+        {
+          "line": "2594",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2595",
+          "name": "apply"
+        },
+        {
+          "line": "2595",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2596",
+          "name": "apply"
+        },
+        {
+          "line": "2597",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2598",
+          "name": "apply"
+        },
+        {
+          "line": "2598",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2599",
+          "name": "apply"
+        },
+        {
+          "line": "2599",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2600",
+          "name": "apply"
+        },
+        {
+          "line": "2600",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2601",
+          "name": "subgoal"
+        },
+        {
+          "line": "2601",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2602",
+          "name": "apply"
+        },
+        {
+          "line": "2609",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2610",
+          "name": "subgoal"
+        },
+        {
+          "line": "2610",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2611",
+          "name": "proof"
+        },
+        {
+          "line": "2611",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2612",
+          "name": "have"
+        },
+        {
+          "line": "2615",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2616",
+          "name": "apply"
+        },
+        {
+          "line": "2616",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2617",
+          "name": "apply"
+        },
+        {
+          "line": "2617",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2618",
+          "name": "apply"
+        },
+        {
+          "line": "2618",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2619",
+          "name": "done"
+        },
+        {
+          "line": "2619",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2620",
+          "name": "have"
+        },
+        {
+          "line": "2623",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2624",
+          "name": "using"
+        },
+        {
+          "line": "2624",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2625",
+          "name": "by"
+        },
+        {
+          "line": "2625",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2626",
+          "name": "have"
+        },
+        {
+          "line": "2632",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2633",
+          "name": "apply"
+        },
+        {
+          "line": "2633",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2634",
+          "name": "apply"
+        },
+        {
+          "line": "2634",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2635",
+          "name": "apply"
+        },
+        {
+          "line": "2635",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2636",
+          "name": "done"
+        },
+        {
+          "line": "2636",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2637",
+          "name": "have"
+        },
+        {
+          "line": "2641",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2642",
+          "name": "using"
+        },
+        {
+          "line": "2642",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2643",
+          "name": "by"
+        },
+        {
+          "line": "2643",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2644",
+          "name": "have"
+        },
+        {
+          "line": "2649",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2650",
+          "name": "apply"
+        },
+        {
+          "line": "2650",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2651",
+          "name": "apply"
+        },
+        {
+          "line": "2651",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2652",
+          "name": "apply"
+        },
+        {
+          "line": "2652",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2653",
+          "name": "apply"
+        },
+        {
+          "line": "2653",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2654",
+          "name": "done"
+        },
+        {
+          "line": "2654",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2655",
+          "name": "have"
+        },
+        {
+          "line": "2658",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2659",
+          "name": "using"
+        },
+        {
+          "line": "2660",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2661",
+          "name": "by"
+        },
+        {
+          "line": "2661",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2662",
+          "name": "have"
+        },
+        {
+          "line": "2665",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2666",
+          "name": "by"
+        },
+        {
+          "line": "2666",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2667",
+          "name": "obtain"
+        },
+        {
+          "line": "2671",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2672",
+          "name": "using"
+        },
+        {
+          "line": "2672",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2673",
+          "name": "by"
+        },
+        {
+          "line": "2673",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2674",
+          "name": "have"
+        },
+        {
+          "line": "2677",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2678",
+          "name": "using"
+        },
+        {
+          "line": "2678",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2679",
+          "name": "by"
+        },
+        {
+          "line": "2679",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2680",
+          "name": "have"
+        },
+        {
+          "line": "2680",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2681",
+          "name": "using"
+        },
+        {
+          "line": "2682",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2683",
+          "name": "by"
+        },
+        {
+          "line": "2683",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2684",
+          "name": "have"
+        },
+        {
+          "line": "2688",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2689",
+          "name": "by"
+        },
+        {
+          "line": "2689",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2690",
+          "name": "show"
+        },
+        {
+          "line": "2690",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2691",
+          "name": "apply"
+        },
+        {
+          "line": "2716",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2717",
+          "name": "apply"
+        },
+        {
+          "line": "2717",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2718",
+          "name": "apply"
+        },
+        {
+          "line": "2733",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2734",
+          "name": "apply"
+        },
+        {
+          "line": "2759",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2760",
+          "name": "subgoal"
+        },
+        {
+          "line": "2760",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2761",
+          "name": "proof"
+        },
+        {
+          "line": "2761",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2762",
+          "name": "have"
+        },
+        {
+          "line": "2762",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2763",
+          "name": "using"
+        },
+        {
+          "line": "2763",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2763",
+          "name": "by"
+        },
+        {
+          "line": "2763",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2764",
+          "name": "show"
+        },
+        {
+          "line": "2764",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2765",
+          "name": "apply"
+        },
+        {
+          "line": "2765",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2766",
+          "name": "subgoal"
+        },
+        {
+          "line": "2766",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2767",
+          "name": "proof"
+        },
+        {
+          "line": "2767",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2768",
+          "name": "have"
+        },
+        {
+          "line": "2768",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2769",
+          "name": "using"
+        },
+        {
+          "line": "2769",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2769",
+          "name": "."
+        },
+        {
+          "line": "2769",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2770",
+          "name": "have"
+        },
+        {
+          "line": "2771",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2772",
+          "name": "using"
+        },
+        {
+          "line": "2772",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2772",
+          "name": "."
+        },
+        {
+          "line": "2772",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2773",
+          "name": "have"
+        },
+        {
+          "line": "2773",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2774",
+          "name": "using"
+        },
+        {
+          "line": "2774",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2774",
+          "name": "by"
+        },
+        {
+          "line": "2774",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2775",
+          "name": "have"
+        },
+        {
+          "line": "2775",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2776",
+          "name": "using"
+        },
+        {
+          "line": "2776",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2776",
+          "name": "by"
+        },
+        {
+          "line": "2776",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2777",
+          "name": "have"
+        },
+        {
+          "line": "2777",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2778",
+          "name": "using"
+        },
+        {
+          "line": "2778",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2778",
+          "name": "by"
+        },
+        {
+          "line": "2778",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2779",
+          "name": "have"
+        },
+        {
+          "line": "2788",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2789",
+          "name": "using"
+        },
+        {
+          "line": "2789",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2790",
+          "name": "by"
+        },
+        {
+          "line": "2790",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2791",
+          "name": "have"
+        },
+        {
+          "line": "2793",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2794",
+          "name": "unfolding"
+        },
+        {
+          "line": "2795",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2796",
+          "name": "apply"
+        },
+        {
+          "line": "2796",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2797",
+          "name": "apply"
+        },
+        {
+          "line": "2799",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2800",
+          "name": "using"
+        },
+        {
+          "line": "2800",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2801",
+          "name": "apply"
+        },
+        {
+          "line": "2801",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2802",
+          "name": "done"
+        },
+        {
+          "line": "2802",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2803",
+          "name": "have"
+        },
+        {
+          "line": "2803",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2804",
+          "name": "using"
+        },
+        {
+          "line": "2804",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2805",
+          "name": "by"
+        },
+        {
+          "line": "2808",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2809",
+          "name": "have"
+        },
+        {
+          "line": "2814",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2815",
+          "name": "apply"
+        },
+        {
+          "line": "2815",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2816",
+          "name": "apply"
+        },
+        {
+          "line": "2844",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2845",
+          "name": "apply"
+        },
+        {
+          "line": "2845",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2846",
+          "name": "using"
+        },
+        {
+          "line": "2846",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2847",
+          "name": "apply"
+        },
+        {
+          "line": "2847",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2848",
+          "name": "done"
+        },
+        {
+          "line": "2848",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2849",
+          "name": "have"
+        },
+        {
+          "line": "2853",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2854",
+          "name": "using"
+        },
+        {
+          "line": "2854",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2855",
+          "name": "by"
+        },
+        {
+          "line": "2855",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2856",
+          "name": "have"
+        },
+        {
+          "line": "2862",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2863",
+          "name": "using"
+        },
+        {
+          "line": "2863",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2863",
+          "name": "by"
+        },
+        {
+          "line": "2863",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2864",
+          "name": "have"
+        },
+        {
+          "line": "2869",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2870",
+          "name": "using"
+        },
+        {
+          "line": "2870",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2870",
+          "name": "by"
+        },
+        {
+          "line": "2870",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2871",
+          "name": "have"
+        },
+        {
+          "line": "2879",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2880",
+          "name": "apply"
+        },
+        {
+          "line": "2880",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2881",
+          "name": "apply"
+        },
+        {
+          "line": "2908",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2909",
+          "name": "apply"
+        },
+        {
+          "line": "2909",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2910",
+          "name": "apply"
+        },
+        {
+          "line": "2910",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2911",
+          "name": "apply"
+        },
+        {
+          "line": "2911",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2912",
+          "name": "apply"
+        },
+        {
+          "line": "2912",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2913",
+          "name": "apply"
+        },
+        {
+          "line": "2913",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2914",
+          "name": "apply"
+        },
+        {
+          "line": "2914",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2915",
+          "name": "using"
+        },
+        {
+          "line": "2915",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2916",
+          "name": "apply"
+        },
+        {
+          "line": "2916",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2917",
+          "name": "apply"
+        },
+        {
+          "line": "2917",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2918",
+          "name": "apply"
+        },
+        {
+          "line": "2918",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2919",
+          "name": "apply"
+        },
+        {
+          "line": "2919",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2920",
+          "name": "apply"
+        },
+        {
+          "line": "2920",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2921",
+          "name": "apply"
+        },
+        {
+          "line": "2921",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2922",
+          "name": "apply"
+        },
+        {
+          "line": "2922",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2923",
+          "name": "apply"
+        },
+        {
+          "line": "2923",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2924",
+          "name": "apply"
+        },
+        {
+          "line": "2924",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2925",
+          "name": "apply"
+        },
+        {
+          "line": "2925",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2926",
+          "name": "apply"
+        },
+        {
+          "line": "2926",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2927",
+          "name": "apply"
+        },
+        {
+          "line": "2927",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2928",
+          "name": "done"
+        },
+        {
+          "line": "2928",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2929",
+          "name": "show"
+        },
+        {
+          "line": "2929",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2930",
+          "name": "using"
+        },
+        {
+          "line": "2930",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2931",
+          "name": "by"
+        },
+        {
+          "line": "2936",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2937",
+          "name": "qed"
+        },
+        {
+          "line": "2937",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2938",
+          "name": "done"
+        },
+        {
+          "line": "2938",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2939",
+          "name": "qed"
+        },
+        {
+          "line": "2939",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2940",
+          "name": "done"
+        },
+        {
+          "line": "2940",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2941",
+          "name": "qed"
+        },
+        {
+          "line": "2941",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2942",
+          "name": "done"
+        },
+        {
+          "line": "2942",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2943",
+          "name": "done"
+        },
+        {
+          "line": "2943",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2944",
+          "name": "show"
+        },
+        {
+          "line": "2944",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2945",
+          "name": "apply"
+        },
+        {
+          "line": "2945",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2946",
+          "name": "apply"
+        },
+        {
+          "line": "2951",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2952",
+          "name": "apply"
+        },
+        {
+          "line": "2952",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2953",
+          "name": "apply"
+        },
+        {
+          "line": "2954",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2955",
+          "name": "apply"
+        },
+        {
+          "line": "2955",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2956",
+          "name": "apply"
+        },
+        {
+          "line": "2956",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2957",
+          "name": "apply"
+        },
+        {
+          "line": "2957",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2958",
+          "name": "apply"
+        },
+        {
+          "line": "2958",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2959",
+          "name": "prefer"
+        },
+        {
+          "line": "2959",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2960",
+          "name": "apply"
+        },
+        {
+          "line": "2960",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2961",
+          "name": "apply"
+        },
+        {
+          "line": "2961",
+          "name": "<ignored>"
+        },
+        {
+          "line": "2962",
+          "name": "apply"
+        },
+        {
+          "line": "2962",
+          "name": "<ignored>"
+        }
+      ],
+      "goals": [
+        "\\<And>\\<sigma>.\n   \\<Gamma>\n      \\<turnstile> ((if undefined then UNIV else {}) \\<inter> UNIV)\n                   \\<acute>ret__unsigned :== CALL cap_cnode_cap_get_capCNodeRadix_'proc(\\<acute>nodeCap);;\n                   \\<acute>radixBits :== \\<acute>ret__unsigned;;\n                   \\<acute>ret__unsigned :== CALL cap_cnode_cap_get_capCNodeGuardSize_'proc(\\<acute>nodeCap);;\n                   \\<acute>guardBits :== \\<acute>ret__unsigned;;\n                   \\<acute>levelBits :==\n                     \\<acute>radixBits + \\<acute>guardBits;;\n                   SKIP;;\n                   \\<acute>ret__unsigned :== CALL cap_cnode_cap_get_capCNodeGuard_'proc(\\<acute>nodeCap);;\n                   \\<acute>capGuard :== \\<acute>ret__unsigned;;\n                   Guard ShiftError\n                    \\<lbrace>\\<acute>guardBits < 0x20\\<rbrace>\n                    (Guard ShiftError\n                      \\<lbrace>\\<acute>n_bits - \\<acute>guardBits && 0x1F\n                               < 0x20\\<rbrace>\n                      (Guard ShiftError UNIV\n                        (Guard ShiftError UNIV\n                          (\\<acute>guard :==\n                             (\\<acute>capptr >>\n                              unat\n                               (\\<acute>n_bits - \\<acute>guardBits &&\n                                0x1F)) &&\n                             2 ^ unat \\<acute>guardBits - 1))));;\n                   IF \\<acute>n_bits < \\<acute>guardBits \\<or>\n                      \\<acute>guard \\<noteq> \\<acute>capGuard THEN\n                     \\<acute>current_lookup_fault :== CALL lookup_fault_guard_mismatch_new_'proc(\\<acute>capGuard,\n                     \\<acute>n_bits,\\<acute>guardBits);;\n                     \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                       resolveAddressBits_ret_C.status_C_update\n                        (\\<lambda>_.\n                            SCAST(32 signed \\<rightarrow> 32)\n                             EXCEPTION_LOOKUP_FAULT)\n                        \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                     return_C ret__struct_resolveAddressBits_ret_C_'_update\n                      ret___struct_resolveAddressBits_ret_C_'\n                   FI;;\n                   IF \\<acute>n_bits < \\<acute>levelBits THEN\n                     \\<acute>current_lookup_fault :== CALL lookup_fault_depth_mismatch_new_'proc(\\<acute>levelBits,\n                     \\<acute>n_bits);;\n                     \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                       resolveAddressBits_ret_C.status_C_update\n                        (\\<lambda>_.\n                            SCAST(32 signed \\<rightarrow> 32)\n                             EXCEPTION_LOOKUP_FAULT)\n                        \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                     return_C ret__struct_resolveAddressBits_ret_C_'_update\n                      ret___struct_resolveAddressBits_ret_C_'\n                   FI;;\n                   Guard ShiftError\n                    \\<lbrace>\\<acute>radixBits < 0x20\\<rbrace>\n                    (Guard ShiftError\n                      \\<lbrace>\\<acute>n_bits - \\<acute>levelBits\n                               < 0x20\\<rbrace>\n                      (\\<acute>offset___unsigned_long :==\n                         (\\<acute>capptr >>\n                          unat (\\<acute>n_bits - \\<acute>levelBits)) &&\n                         2 ^ unat \\<acute>radixBits - 1));;\n                   \\<acute>ret__unsigned :== CALL cap_cnode_cap_get_capCNodePtr_'proc(\\<acute>nodeCap);;\n                   Guard MemorySafety\n                    \\<lbrace>ptr_add_assertion'\n                              (cte_Ptr \\<acute>ret__unsigned)\n                              (uint \\<acute>offset___unsigned_long) False\n                              (hrs_htd \\<acute>t_hrs)\\<rbrace>\n                    (\\<acute>slot :==\n                       cte_Ptr \\<acute>ret__unsigned +\\<^sub>p\n                       uint \\<acute>offset___unsigned_long);;\n                   IF \\<acute>n_bits = \\<acute>levelBits THEN\n                     \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                       resolveAddressBits_ret_C.status_C_update\n                        (\\<lambda>_.\n                            SCAST(32 signed \\<rightarrow> 32)\n                             EXCEPTION_NONE)\n                        \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                     \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                       resolveAddressBits_ret_C.slot_C_update\n                        (\\<lambda>_. \\<acute>slot)\n                        \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                     \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                       bitsRemaining_C_update (\\<lambda>_. 0)\n                        \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                     return_C ret__struct_resolveAddressBits_ret_C_'_update\n                      ret___struct_resolveAddressBits_ret_C_'\n                   FI;;\n                   Guard GhostStateError\n                    \\<lbrace>0 < \\<acute>levelBits\\<rbrace>\n                    (\\<acute>globals :== ghost'state_'_update id);;\n                   \\<acute>n_bits :== \\<acute>n_bits - \\<acute>levelBits;;\n                   Guard C_Guard {s. s \\<Turnstile>\\<^sub>c slot_' s}\n                    (\\<acute>nodeCap :==\n                       h_val (hrs_mem \\<acute>t_hrs)\n                        (cap_Ptr &(\\<acute>slot\\<rightarrow>[''cap_C''])));;\n                   \\<acute>ret__unsigned :== CALL cap_get_capType_'proc(\\<acute>nodeCap);;\n                   IF \\<acute>ret__unsigned \\<noteq>\n                      SCAST(32 signed \\<rightarrow> 32) cap_cnode_cap THEN\n                     \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                       resolveAddressBits_ret_C.status_C_update\n                        (\\<lambda>_.\n                            SCAST(32 signed \\<rightarrow> 32)\n                             EXCEPTION_NONE)\n                        \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                     \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                       resolveAddressBits_ret_C.slot_C_update\n                        (\\<lambda>_. \\<acute>slot)\n                        \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                     \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                       bitsRemaining_C_update (\\<lambda>_. \\<acute>n_bits)\n                        \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                     return_C ret__struct_resolveAddressBits_ret_C_'_update\n                      ret___struct_resolveAddressBits_ret_C_'\n                   FI\n                   (if undefined then UNIV else {})",
+        "\\<And>\\<sigma>.\n   (if undefined then UNIV else {}) \\<inter> - UNIV\n   \\<subseteq> {s. (\\<forall>t.\n                       t may_not_modify_globals s \\<longrightarrow>\n                       False) \\<and>\n                   (\\<exists>t. t may_not_modify_globals s)}",
+        "\\<And>\\<sigma>.\n   \\<Gamma>\n      \\<turnstile> {s. (valid_pspace' and valid_cap' cap' and\n                        K (guard' \\<le> 32))\n                        \\<sigma> \\<and>\n                       s \\<in> \\<lbrace>ccap_relation cap'\n   \\<acute>nodeCap\\<rbrace> \\<inter>\n                               \\<lbrace>\\<acute>capptr =\n  cptr'\\<rbrace> \\<inter>\n                               \\<lbrace>unat \\<acute>n_bits =\n  guard'\\<rbrace> \\<and>\n                       (\\<sigma>, s) \\<in> rf_sr}\n                   lvar_nondet_init ret___struct_resolveAddressBits_ret_C_'\n                    ret___struct_resolveAddressBits_ret_C_'_update;;\n                   lvar_nondet_init radixBits_' radixBits_'_update;;\n                   lvar_nondet_init guardBits_' guardBits_'_update;;\n                   lvar_nondet_init levelBits_' levelBits_'_update;;\n                   lvar_nondet_init guard_' guard_'_update;;\n                   lvar_nondet_init capGuard_' capGuard_'_update;;\n                   lvar_nondet_init offset___unsigned_long_'\n                    offset___unsigned_long_'_update;;\n                   lvar_nondet_init slot_' slot_'_update;;\n                   \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                     bitsRemaining_C_update (\\<lambda>_. \\<acute>n_bits)\n                      \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                   \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                     resolveAddressBits_ret_C.slot_C_update\n                      (\\<lambda>_. NULL)\n                      \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                   \\<acute>ret__unsigned :== CALL cap_get_capType_'proc(\\<acute>nodeCap);;\n                   IF \\<acute>ret__unsigned \\<noteq>\n                      SCAST(32 signed \\<rightarrow> 32) cap_cnode_cap THEN\n                     \\<acute>current_lookup_fault :== CALL lookup_fault_invalid_root_new_'proc();;\n                     \\<acute>ret___struct_resolveAddressBits_ret_C :==\n                       resolveAddressBits_ret_C.status_C_update\n                        (\\<lambda>_.\n                            SCAST(32 signed \\<rightarrow> 32)\n                             EXCEPTION_LOOKUP_FAULT)\n                        \\<acute>ret___struct_resolveAddressBits_ret_C;;\n                     return_C ret__struct_resolveAddressBits_ret_C_'_update\n                      ret___struct_resolveAddressBits_ret_C_'\n                   FI\n                   (if undefined then UNIV else {})",
+        "\\<And>\\<sigma>.\n   \\<Gamma>\n      \\<turnstile> (?R80 \\<sigma>) SKIP\n                   {s. \\<exists>(rv, \\<sigma>')\n                                \\<in>fst\n(gets\n  (resolveAddressBitsFn cap' cptr' guard' \\<circ> only_cnode_caps \\<circ>\n   ctes_of)\n  \\<sigma>).\n                          (\\<sigma>', s) \\<in> rf_sr \\<and>\n                          (lookup_failure_rel \\<currency>\n                           (\\<lambda>(cte, bits) (cte', bits').\n                               cte' = cte_Ptr cte \\<and>\n                               bits = unat bits' \\<and> bits' \\<le> 0x20))\n                           rv (liftxf errstate\n                                resolveAddressBits_ret_C.status_C\n                                (\\<lambda>v.\n                                    (resolveAddressBits_ret_C.slot_C v,\n                                     bitsRemaining_C v))\n                                ret__struct_resolveAddressBits_ret_C_' s)}",
+        "\\<And>s s'.\n   \\<lbrakk>(s, s') \\<in> rf_sr;\n    (valid_pspace' and valid_cap' cap' and K (guard' \\<le> 32)) s;\n    s' \\<in> \\<lbrace>ccap_relation cap' \\<acute>nodeCap\\<rbrace> \\<inter>\n             \\<lbrace>\\<acute>capptr = cptr'\\<rbrace> \\<inter>\n             \\<lbrace>unat \\<acute>n_bits = guard'\\<rbrace>\\<rbrakk>\n   \\<Longrightarrow> (valid_pspace' and valid_cap' cap' and\n                      K (guard' \\<le> 32) and\n                      (valid_objs' and valid_cap' cap' and\n                       (\\<lambda>s.\n                           cnode_caps_gsCNodes (only_cnode_caps (ctes_of s))\n                            (gsCNodes s) \\<and>\n                           (isCNodeCap cap' \\<longrightarrow>\n                            gsCNodes s (capCNodePtr cap') =\n                            Some (capCNodeBits cap')))))\n                      s \\<and>\n                     s' \\<in> \\<lbrace>ccap_relation cap'\n  \\<acute>nodeCap\\<rbrace> \\<inter>\n                              \\<lbrace>\\<acute>capptr =\n cptr'\\<rbrace> \\<inter>\n                              \\<lbrace>unat \\<acute>n_bits = guard'\\<rbrace>"
+      ],
+      "line": "2963",
+      "local_assumptions": [],
+      "origin": "before_failed_command"
+    },
+    "native_receipt": {
+      "candidate_execution_ms": 51398,
+      "check_scope": "committed-prefix-and-incremental-batch",
+      "checker_binding_sha256": "86f4091ad6e438802e38e8b457a7d966d60607f0ef604df9816fb9486f85d5e1",
+      "delta_sha256": "d9b49b34c9914861eaf0dd1e1d3f1e955e26e07a4be0c767989a94a78c6e0069",
+      "log_sha256": "85d557a1449849292f7ef82eabc8a8c2d7525e89b9a6262b25a5f5af2aed1627",
+      "prefix_prepare_ms": 29,
+      "prefix_sha256": "9a7547dacd5d522b23621d0ae0efefceeb5e085725e3b1003eeae7d923aa9367",
+      "request_id": "regen-batch-ef814cbb62e04415:75",
+      "returncode": 1,
+      "schema": "native-check-receipt-v1",
+      "source_files_sha256": null,
+      "source_sha256": "64a7b27cdb165e90f407052f46b3bcae8f79b6f15905aa065acbc0ca1adb5d54",
+      "timeout_scope": null,
+      "timeout_seconds": 120,
+      "verdict": "red",
+      "wall_ms": 51427
+    },
+    "returncode": 1,
+    "verdict": "red",
+    "timed_out": false,
+    "timeout_scope": null,
+    "timeout_seconds": 120,
+    "source_sha256": "64a7b27cdb165e90f407052f46b3bcae8f79b6f15905aa065acbc0ca1adb5d54",
+    "log_sha256": "85d557a1449849292f7ef82eabc8a8c2d7525e89b9a6262b25a5f5af2aed1627",
+    "audited_facts": [
+      "resolveAddressBits_ccorres"
+    ],
+    "source_content": "theory Batch_Check_603a16cd590afafe\n  imports\n    \"CRefine_Semantic_Base.Semantic_Root\"\nbegin\n\nunbundle l4v_word_context\n\nML \\<open>writeln \"REGEN_NODE goal:b6b0c86e4105cb63c3fa\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:b6b0c86e4105cb63c3fa \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel\nbegin\nlemma get_tsType_ccorres[corres]:\n  \"ccorres (\\<lambda>r r'. r' = thread_state_to_tsType r) ret__unsigned_' (tcb_at' thread)\n           ({s. f s = tcb_ptr_to_ctcb_ptr thread} \\<inter>\n            {s. cslift s (Ptr &(f s\\<rightarrow>[''tcbState_C''])) = Some (thread_state_' s)}) []\n  (getThreadState thread) (Call thread_state_get_tsType_'proc)\"\napply (rule ccorres_from_vcg)\napply (intro allI)\napply (rule hoare_complete)\napply (rule HoarePartialDef.validI)\napply clarsimp\nsubgoal premises prems for abstract_state c_state outcome\nproof -\n  note functional = structures_proofs.kernel_all_substitute.thread_state_get_tsType_spec[rule_format, where symbol_table=symbol_table and domain=domain and s=c_state]\n  have functional_post:\n    \"outcome \\<in> Normal ` {s. ret__unsigned_' s = tsType_CL (thread_state_lift (thread_state_' c_state))}\"\n    using hoare_sound[OF functional] prems(1)\n    by (auto simp: HoarePartialDef.cvalid_def HoarePartialDef.valid_def)\n  have frame:\n    \"kernel_all_substitute.\\<Gamma> symbol_table domain\n       \\<turnstile> {c_state} Call thread_state_get_tsType_'proc\n              {s. globals s = globals c_state}\"\n    apply (rule HoarePartial.ProcBody[where P'=\"{c_state}\" and body=\"kernel_all_substitute.thread_state_get_tsType_body\"])\n      apply simp\n     unfolding Substitute.kernel_all_substitute.thread_state_get_tsType_body_def\n     apply vcg\n     apply simp\n    apply (simp add: Substitute.kernel_all_substitute.thread_state_get_tsType_impl\n                     Substitute.kernel_all_substitute.thread_state_get_tsType_body_def)\n    done\n  have frame_post:\n    \"outcome \\<in> Normal ` {s. globals s = globals c_state}\"\n    using hoare_sound[OF frame] prems(1) functional_post\n    by (auto simp: HoarePartialDef.cvalid_def HoarePartialDef.valid_def)\n  obtain final_state where out: \"outcome = Normal final_state\"\n    and ret: \"ret__unsigned_' final_state = tsType_CL (thread_state_lift (thread_state_' c_state))\"\n    using functional_post by auto\n  have globals_eq: \"globals final_state = globals c_state\"\n    using frame_post out by auto\n  have rf_final: \"(abstract_state, final_state) \\<in> rf_sr\"\n    using prems(5) globals_eq\n    by (simp add: rf_sr_def)\n  have nonempty: \"fst (getThreadState thread abstract_state) \\<noteq> {}\"\n    using EmptyFail.empty_fail_getThreadState\n          KHeap_R.no_fail_getThreadState prems(2)\n    by (auto simp: Nondet_Empty_Fail.empty_fail_def\n                   Nondet_No_Fail.no_fail_def)\n  obtain result_pair where result_pair:\n    \"result_pair \\<in> fst (getThreadState thread abstract_state)\"\n    using nonempty by blast\n  obtain rv abstract_state' where pair:\n    \"result_pair = (rv, abstract_state')\"\n    by (cases result_pair; simp)\n  have result:\n    \"(rv, abstract_state') \\<in> fst (getThreadState thread abstract_state)\"\n    using result_pair pair by simp\n  have rf_result: \"(abstract_state', final_state) \\<in> rf_sr\"\n    using TcbAcc_R.threadGet_inv[where P=\"\\<lambda>s. (s, final_state) \\<in> rf_sr\"\n          and f=tcbState and t=thread] result rf_final\n    unfolding Thread_H.getThreadState_def Nondet_VCG.valid_def\n    by blast\n  obtain tcb where ko: \"ko_at' tcb thread abstract_state'\"\n    and rv_eq: \"tcbState tcb = rv\"\n    using TcbAcc_R.threadGet_sp[where P=\"\\<lambda>_. True\"\n          and f=tcbState and ptr=thread] result\n    unfolding Thread_H.getThreadState_def Nondet_VCG.valid_def\n    by blast\n  have amap:\n    \"map_to_tcbs (ksPSpace abstract_state') thread = Some tcb\"\n    using ko\n    unfolding Invariants_H.obj_at'_real_def Invariants_H.ko_wp_at'_def\n    by clarsimp\n  have cpspace:\n    \"cpspace_relation (ksPSpace abstract_state')\n       (underlying_memory (ksMachineState abstract_state'))\n       (t_hrs_' (globals final_state))\"\n    using rf_result\n    unfolding rf_sr_def state_rel.cstate_relation_def\n    by (simp only: Let_def; blast)\n  have tcb_space:\n    \"cpspace_tcb_relation (ksPSpace abstract_state')\n       (t_hrs_' (globals final_state))\"\n    using cpspace\n    unfolding cpspace_relation_def\n    by blast\n  have tcb_map_rel:\n    \"cmap_relation (map_to_tcbs (ksPSpace abstract_state'))\n       (cslift final_state) tcb_ptr_to_ctcb_ptr ctcb_relation\"\n    using tcb_space by assumption\n  have adom:\n    \"thread \\<in> dom (map_to_tcbs (ksPSpace abstract_state'))\"\n    apply (rule domI)\n    apply (rule amap)\n    done\n  have dom_eq:\n    \"tcb_ptr_to_ctcb_ptr ` dom (map_to_tcbs (ksPSpace abstract_state')) =\n     dom (cslift final_state)\"\n    using tcb_map_rel\n    unfolding cmap_relation_def\n    by blast\n  have cdom:\n    \"tcb_ptr_to_ctcb_ptr thread \\<in> dom (cslift final_state)\"\n    using adom dom_eq by blast\n  obtain ctcb where cobj:\n    \"cslift final_state (tcb_ptr_to_ctcb_ptr thread) = Some ctcb\"\n    using cdom by auto\n  have pointwise:\n    \"\\<forall>x\\<in>dom (map_to_tcbs (ksPSpace abstract_state')).\n       ctcb_relation (the (map_to_tcbs (ksPSpace abstract_state') x))\n         (the (cslift final_state (tcb_ptr_to_ctcb_ptr x)))\"\n    using tcb_map_rel\n    unfolding cmap_relation_def\n    by blast\n  have ctcb_rel: \"ctcb_relation tcb ctcb\"\n    using pointwise[rule_format, OF adom] amap cobj\n    by simp\n  have field_final:\n    \"cslift final_state\n       (PTR(thread_state_C) &(tcb_ptr_to_ctcb_ptr thread\\<rightarrow>[''tcbState_C''])) =\n     Some (tcbState_C ctcb)\"\n    using TypHeapLib.clift_field[where 'b=thread_state_C,\n          OF cobj Kernel_C.tcb_C_tcbState_C_fl_ti]\n    by simp\n  have state_eq: \"tcbState_C ctcb = thread_state_' c_state\"\n    using field_final prems(3) prems(4) globals_eq\n    by simp\n  have value_eq:\n    \"thread_state_to_tsType rv =\n     tsType_CL (thread_state_lift (thread_state_' c_state))\"\n    using ctcb_rel rv_eq state_eq\n    unfolding ctcb_relation_def cthread_state_relation_def\n    by (cases rv; simp_all)\n  show ?thesis\n    apply (simp only: out image_iff)\n    apply (rule bexI[where x=final_state])\n     apply simp\n    apply (simp only: mem_Collect_eq)\n    apply (rule bexI[where x=\"(rv, abstract_state')\"])\n     apply (simp add: rf_result ret value_eq)\n    apply (rule result)\n    done\nqed\ndone\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:b6b0c86e4105cb63c3fa \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:0fe8eb2105af19a8ec8d\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:0fe8eb2105af19a8ec8d \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel\nbegin\nlemma getRegister_ccorres [corres]:\n  \"ccorres (=) ret__unsigned_long_' \\<top>\n             ({s. thread_' s = tcb_ptr_to_ctcb_ptr thread} \\<inter> {s. reg_' s = register_from_H reg}) []\n             (asUser thread (getRegister reg)) (Call getRegister_'proc)\"\nunfolding MachineOps.ARM.getRegister_def\napply (simp only: SubMonad_R.submonad_asUser.gets)\napply (rule Corres_UL_C.ccorresI)\napply (clarsimp simp: HaskellLib_H.stateAssert_def\n                      NonDetMonadEx.guard_def\n                      Nondet_Monad.bind_def\n                      Nondet_Monad.gets_def\n                      Nondet_Monad.get_def\n                      Nondet_Monad.return_def)\nsubgoal premises prems for abstract_state c_state n outcome\nproof -\n  obtain ko tcb where ks:\n    \"ksPSpace abstract_state thread = Some ko\"\n    and proj: \"tcb_of' ko = Some tcb\"\n    using prems(6)\n    unfolding Invariants_H.obj_at'_real_def Invariants_H.ko_wp_at'_def\n    by clarsimp\n  have ko_eq: \"ko = KOTCB tcb\"\n    using Invariants_H.projectKO_opt_tcbD[OF proj] .\n  have amap:\n    \"map_to_tcbs (ksPSpace abstract_state) thread = Some tcb\"\n    using ks ko_eq by simp\n  have cpspace:\n    \"cpspace_relation (ksPSpace abstract_state)\n       (underlying_memory (ksMachineState abstract_state))\n       (t_hrs_' (globals c_state))\"\n    using prems(1)\n    unfolding rf_sr_def state_rel.cstate_relation_def\n    by (simp only: Let_def; blast)\n  have tcb_space:\n    \"cpspace_tcb_relation (ksPSpace abstract_state)\n       (t_hrs_' (globals c_state))\"\n    using cpspace\n    unfolding cpspace_relation_def\n    by blast\n  have tcb_map_rel:\n    \"cmap_relation (map_to_tcbs (ksPSpace abstract_state))\n       (cslift c_state) tcb_ptr_to_ctcb_ptr ctcb_relation\"\n    using tcb_space by assumption\n  have adom:\n    \"thread \\<in> dom (map_to_tcbs (ksPSpace abstract_state))\"\n    using amap by auto\n  have dom_eq:\n    \"tcb_ptr_to_ctcb_ptr ` dom (map_to_tcbs (ksPSpace abstract_state)) =\n     dom (cslift c_state)\"\n    using tcb_map_rel\n    unfolding cmap_relation_def\n    by blast\n  have cdom:\n    \"tcb_ptr_to_ctcb_ptr thread \\<in> dom (cslift c_state)\"\n    using adom dom_eq by blast\n  obtain ctcb where cobj:\n    \"cslift c_state (tcb_ptr_to_ctcb_ptr thread) = Some ctcb\"\n    using cdom by auto\n  have ptr_guard:\n    \"c_guard (tcb_ptr_to_ctcb_ptr thread)\"\n    using TypHeapLib.c_guard_clift[OF cobj] .\n  have hvalid:\n    \"hrs_htd (t_hrs_' (globals c_state))\n       \\<Turnstile>\\<^sub>t tcb_ptr_to_ctcb_ptr thread\"\n    using TypHeapLib.h_t_valid_clift[OF cobj] .\n  have ptr_safe:\n    \"ptr_safe (tcb_ptr_to_ctcb_ptr thread)\n       (hrs_htd (t_hrs_' (globals c_state)))\"\n    using TypHeap.h_t_valid_ptr_safe[OF hvalid] .\n  have reg_bound:\n    \"register_from_H reg < SCAST(32 signed \\<rightarrow> 32) 0x14\"\n    by (cases reg rule: StateRelation_C.register_from_H.cases;\n        simp add: Kernel_C.R0_def Kernel_C.R1_def Kernel_C.R2_def\n                  Kernel_C.R3_def Kernel_C.R4_def Kernel_C.R5_def\n                  Kernel_C.R6_def Kernel_C.R7_def Kernel_C.R8_def\n                  Kernel_C.R9_def Kernel_C.R10_def Kernel_C.R11_def\n                  Kernel_C.R12_def Kernel_C.SP_def Kernel_C.LR_def\n                  Kernel_C.NextIP_def Kernel_C.CPSR_def\n                  Kernel_C.TPIDRURW_def Kernel_C.TPIDRURO_def\n                  Kernel_C.FaultIP_def)\n  note handler_cases =\n    Corres_UL_C.exec_handlers.simps[THEN iffD1, OF prems(2)]\n  have call_normal:\n    \"\\<And>call_out. kernel_all_substitute.\\<Gamma> symbol_table domain\n       \\<turnstile> \\<langle>Call getRegister_'proc, Normal c_state\\<rangle> \\<Rightarrow> call_out\n       \\<Longrightarrow> \\<exists>final_state. call_out = Normal final_state\"\n  proof -\n    fix call_out\n    assume call_exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile> \\<langle>Call getRegister_'proc, Normal c_state\\<rangle> \\<Rightarrow> call_out\"\n    have body_exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile> \\<langle>kernel_all_substitute.getRegister_body,\n                      Normal c_state\\<rangle> \\<Rightarrow> call_out\"\n      using call_exec\n      by (auto elim!: Semantic.exec_Normal_elim_cases\n               simp: Substitute.kernel_all_substitute.getRegister_impl)\n    show \"\\<exists>final_state. call_out = Normal final_state\"\n      using body_exec prems(4,5) ptr_guard ptr_safe hvalid reg_bound\n      unfolding Substitute.kernel_all_substitute.getRegister_body_def\n                CLanguage.creturn_def\n      by (auto simp: LemmaBucket_C.exec_Guard\n               elim!: Semantic.exec_Normal_elim_cases)\n  qed\n  show False\n    using handler_cases prems(3)\n    by (auto dest!: call_normal)\nqed\napply (clarsimp simp: HaskellLib_H.stateAssert_def\n                      NonDetMonadEx.guard_def\n                      Nondet_Monad.bind_def\n                      Nondet_Monad.gets_def\n                      Nondet_Monad.get_def\n                      Nondet_Monad.return_def)\nsubgoal premises prems for n final_state abstract_state c_state\nproof -\n  note handler_cases =\n    Corres_UL_C.exec_handlers.simps[THEN iffD1, OF prems(2)]\n  have empty_handlers:\n    \"\\<And>x m. kernel_all_substitute.\\<Gamma> symbol_table domain\n       \\<turnstile>\\<^sub>h \\<langle>[], x\\<rangle> \\<Rightarrow> (m, Normal final_state)\n       \\<Longrightarrow> False\"\n  proof -\n    fix x m\n    assume exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile>\\<^sub>h \\<langle>[], x\\<rangle> \\<Rightarrow> (m, Normal final_state)\"\n    note cases = Corres_UL_C.exec_handlers.simps[THEN iffD1, OF exec]\n    show False using cases by auto\n  qed\n  have n0: \"n = 0\"\n    and call_exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile> \\<langle>Call getRegister_'proc, Normal c_state\\<rangle>\n                    \\<Rightarrow> Normal final_state\"\n    using handler_cases\n    by (auto dest!: empty_handlers)\n\n  obtain ko tcb where ks:\n    \"ksPSpace abstract_state thread = Some ko\"\n    and proj: \"tcb_of' ko = Some tcb\"\n    using prems(5)\n    unfolding Invariants_H.obj_at'_real_def Invariants_H.ko_wp_at'_def\n    by clarsimp\n  have ko_eq: \"ko = KOTCB tcb\"\n    using Invariants_H.projectKO_opt_tcbD[OF proj] .\n  have amap:\n    \"map_to_tcbs (ksPSpace abstract_state) thread = Some tcb\"\n    using ks ko_eq by simp\n  have cpspace:\n    \"cpspace_relation (ksPSpace abstract_state)\n       (underlying_memory (ksMachineState abstract_state))\n       (t_hrs_' (globals c_state))\"\n    using prems(1)\n    unfolding rf_sr_def state_rel.cstate_relation_def\n    by (simp only: Let_def; blast)\n  have tcb_space:\n    \"cpspace_tcb_relation (ksPSpace abstract_state)\n       (t_hrs_' (globals c_state))\"\n    using cpspace\n    unfolding cpspace_relation_def\n    by blast\n  have tcb_map_rel:\n    \"cmap_relation (map_to_tcbs (ksPSpace abstract_state))\n       (cslift c_state) tcb_ptr_to_ctcb_ptr ctcb_relation\"\n    using tcb_space by assumption\n  have adom:\n    \"thread \\<in> dom (map_to_tcbs (ksPSpace abstract_state))\"\n    using amap by auto\n  have dom_eq:\n    \"tcb_ptr_to_ctcb_ptr ` dom (map_to_tcbs (ksPSpace abstract_state)) =\n     dom (cslift c_state)\"\n    using tcb_map_rel\n    unfolding cmap_relation_def\n    by blast\n  have cdom:\n    \"tcb_ptr_to_ctcb_ptr thread \\<in> dom (cslift c_state)\"\n    using adom dom_eq by blast\n  obtain ctcb where cobj:\n    \"cslift c_state (tcb_ptr_to_ctcb_ptr thread) = Some ctcb\"\n    using cdom by auto\n  have pointwise:\n    \"\\<forall>x\\<in>dom (map_to_tcbs (ksPSpace abstract_state)).\n       ctcb_relation (the (map_to_tcbs (ksPSpace abstract_state) x))\n         (the (cslift c_state (tcb_ptr_to_ctcb_ptr x)))\"\n    using tcb_map_rel\n    unfolding cmap_relation_def\n    by blast\n  have ctcb_rel: \"ctcb_relation tcb ctcb\"\n    using pointwise[rule_format, OF adom] amap cobj\n    by simp\n\n  have ptr_guard:\n    \"c_guard (tcb_ptr_to_ctcb_ptr thread)\"\n    using TypHeapLib.c_guard_clift[OF cobj] .\n  have hvalid:\n    \"hrs_htd (t_hrs_' (globals c_state))\n       \\<Turnstile>\\<^sub>t tcb_ptr_to_ctcb_ptr thread\"\n    using TypHeapLib.h_t_valid_clift[OF cobj] .\n  have ptr_safe:\n    \"ptr_safe (tcb_ptr_to_ctcb_ptr thread)\n       (hrs_htd (t_hrs_' (globals c_state)))\"\n    using TypHeap.h_t_valid_ptr_safe[OF hvalid] .\n  have reg_bound:\n    \"register_from_H reg < SCAST(32 signed \\<rightarrow> 32) 0x14\"\n    by (cases reg rule: StateRelation_C.register_from_H.cases;\n        simp add: Kernel_C.R0_def Kernel_C.R1_def Kernel_C.R2_def\n                  Kernel_C.R3_def Kernel_C.R4_def Kernel_C.R5_def\n                  Kernel_C.R6_def Kernel_C.R7_def Kernel_C.R8_def\n                  Kernel_C.R9_def Kernel_C.R10_def Kernel_C.R11_def\n                  Kernel_C.R12_def Kernel_C.SP_def Kernel_C.LR_def\n                  Kernel_C.NextIP_def Kernel_C.CPSR_def\n                  Kernel_C.TPIDRURW_def Kernel_C.TPIDRURO_def\n                  Kernel_C.FaultIP_def)\n  have index_bound: \"unat (register_from_H reg) < 20\"\n    by (cases reg rule: StateRelation_C.register_from_H.cases;\n        simp add: Kernel_C.R0_def Kernel_C.R1_def Kernel_C.R2_def\n                  Kernel_C.R3_def Kernel_C.R4_def Kernel_C.R5_def\n                  Kernel_C.R6_def Kernel_C.R7_def Kernel_C.R8_def\n                  Kernel_C.R9_def Kernel_C.R10_def Kernel_C.R11_def\n                  Kernel_C.R12_def Kernel_C.SP_def Kernel_C.LR_def\n                  Kernel_C.NextIP_def Kernel_C.CPSR_def\n                  Kernel_C.TPIDRURW_def Kernel_C.TPIDRURO_def\n                  Kernel_C.FaultIP_def)\n\n  let ?arch_ptr =\n    \"PTR(arch_tcb_C)\n       &(tcb_ptr_to_ctcb_ptr thread\\<rightarrow>[''tcbArch_C''])\"\n  let ?context_ptr =\n    \"PTR(user_context_C)\n       &(?arch_ptr\\<rightarrow>[''tcbContext_C''])\"\n  let ?regs_ptr =\n    \"PTR(32 word[20])\n       &(?context_ptr\\<rightarrow>[''registers_C''])\"\n\n  have body_exec:\n    \"kernel_all_substitute.\\<Gamma> symbol_table domain\n       \\<turnstile> \\<langle>kernel_all_substitute.getRegister_body,\n                    Normal c_state\\<rangle> \\<Rightarrow> Normal final_state\"\n    using call_exec\n    by (auto elim!: Semantic.exec_Normal_elim_cases\n             simp: Substitute.kernel_all_substitute.getRegister_impl)\n  have body_post:\n    \"globals final_state = globals c_state \\<and>\n     ret__unsigned_long_' final_state =\n       (h_val (hrs_mem (t_hrs_' (globals c_state))) ?regs_ptr).[\n         unat (register_from_H reg)]\"\n    using body_exec prems(3,4) ptr_guard ptr_safe hvalid reg_bound\n    unfolding Substitute.kernel_all_substitute.getRegister_body_def\n              CLanguage.creturn_def\n    by (auto simp: LemmaBucket_C.exec_Guard\n             elim!: Semantic.exec_Normal_elim_cases)\n  have globals_eq: \"globals final_state = globals c_state\"\n    using body_post by simp\n  have rf_final: \"(abstract_state, final_state) \\<in> rf_sr\"\n    using prems(1) globals_eq\n    by (simp add: rf_sr_def)\n\n  have arch_field:\n    \"cslift c_state ?arch_ptr = Some (tcbArch_C ctcb)\"\n    using TypHeapLib.clift_field[\n      where 'b=arch_tcb_C,\n      OF cobj Kernel_C.tcb_C_tcbArch_C_fl_ti]\n    by simp\n  have context_field:\n    \"cslift c_state ?context_ptr =\n       Some (tcbContext_C (tcbArch_C ctcb))\"\n    using TypHeapLib.clift_field[\n      where 'b=user_context_C,\n      OF arch_field Kernel_C.arch_tcb_C_tcbContext_C_fl_ti]\n    by simp\n  have regs_field:\n    \"cslift c_state ?regs_ptr =\n       Some (registers_C (tcbContext_C (tcbArch_C ctcb)))\"\n    using TypHeapLib.clift_field[\n      where 'b=\"32 word[20]\",\n      OF context_field Kernel_C.user_context_C_registers_C_fl_ti]\n    by simp\n  have regs_value:\n    \"h_val (hrs_mem (t_hrs_' (globals c_state))) ?regs_ptr =\n       registers_C (tcbContext_C (tcbArch_C ctcb))\"\n    using TypHeapLib.h_val_clift'[OF regs_field] .\n\n  have fetch:\n    \"asUser_fetch thread abstract_state =\n       atcbContextGet (tcbArch tcb)\"\n    using ks ko_eq\n    unfolding SubMonad_R.asUser_fetch_def\n    by simp\n  have reg_rel:\n    \"user_regs (atcbContextGet (tcbArch tcb)) reg =\n     (registers_C (tcbContext_C (tcbArch_C ctcb))).[\n       unat (register_from_H reg)]\"\n    using ctcb_rel\n    unfolding ctcb_relation_def carch_tcb_relation_def\n              ccontext_relation_def cregs_relation_def\n    by blast\n  have value_eq:\n    \"user_regs (asUser_fetch thread abstract_state) reg =\n       ret__unsigned_long_' final_state\"\n    using body_post regs_value fetch reg_rel\n    by simp\n  show ?thesis\n    using rf_final n0 value_eq\n    by (simp add: Corres_UL_C.unif_rrel_def)\nqed\ndone\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:0fe8eb2105af19a8ec8d \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:d378bee93e6f0055f6f7\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:d378bee93e6f0055f6f7 \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel\nbegin\nlemma rab_failure_case_ccorres:\nassumes spec: \"\\<Gamma>\\<turnstile> G' call_part {s. resolveAddressBits_ret_C.status_C v \\<noteq> scast EXCEPTION_NONE\n                                      \\<and> lookup_failure_rel e (resolveAddressBits_ret_C.status_C v)\n                                                           (errstate s)}\"\nassumes mod:  \"\\<And>s. \\<Gamma>\\<turnstile> {s'. (s, s') \\<in> rf_sr} call_part {s'. (s, s') \\<in> rf_sr}\"\nshows \"ccorres (lookup_failure_rel \\<currency> r) rab_xf \\<top> G' (SKIP # hs)\n   (throwError e)\n   (call_part ;;\n    \\<acute>ret___struct_resolveAddressBits_ret_C :== v;;\n    return_C ret__struct_resolveAddressBits_ret_C_'_update ret___struct_resolveAddressBits_ret_C_')\"\nunfolding CLanguage.creturn_def\napply (rule ccorres_symb_exec_r[\n  where Q'=\"{s. resolveAddressBits_ret_C.status_C v \\<noteq> scast EXCEPTION_NONE\n               \\<and> lookup_failure_rel e (resolveAddressBits_ret_C.status_C v) (errstate s)\n               \\<and> ret___struct_resolveAddressBits_ret_C_' s = v}\"])\n  apply (rule mp[OF com_eq_homD[\n    OF CCorres_Rewrite.ccorres_com_eq_hom Simpl_Rewrite.com_eq_Seq_assoc_l]])\n  apply (rule ccorres_trim_redundant_throw')\n    apply (rule ccorres_from_vcg)\n    apply (intro allI)\n    apply (clarsimp simp: Nondet_Monad.throwError_def Nondet_Monad.return_def)\n    apply (rule HoarePartial.Basic)\n    apply (clarsimp simp: rf_sr_def Corres_C.liftxf_def\n                          Corres_C.kernel.errstate_def)\n   apply (simp add: Corres_C.liftxf_def Corres_C.kernel.errstate_def)\n  apply (simp add: rf_sr_def)\n apply (vcg exspec=spec)\n apply (rule HoarePartial.conseq_no_aux[OF spec])\n apply (simp add: Corres_C.kernel.errstate_def)\nsubgoal for s\n  apply (vcg exspec=mod)\n  apply (rule HoarePartial.conseq_no_aux[OF mod[of s]])\n  apply (simp add: rf_sr_def)\n  done\ndone\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:d378bee93e6f0055f6f7 \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:47e9bbbbe8e0d46310e9\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:47e9bbbbe8e0d46310e9 \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel begin\nlemma getSlotCap_h_val_ccorres [corres]:\nfixes p :: \"cstate \\<Rightarrow> cte_C ptr\"\nassumes gl: \"\\<And>v s. globals (xfu v s) = globals s\"\n  and     fg: \"\\<And>v s. xf (xfu (\\<lambda>_. v) s) = v\"\nshows \"ccorres ccap_relation xf \\<top> {s. p s = Ptr a} hs\n         (getSlotCap a) (Basic (\\<lambda>s. xfu (\\<lambda>_. h_val (hrs_mem (t_hrs_' (globals s))) (Ptr &(p s\\<rightarrow>[''cap_C'']) :: cap_C ptr)) s))\"\napply (rule Corres_UL_C.ccorresI)\nsubgoal premises prems\n  using CCorresLemmas.exec_handlers_BasicD[OF prems(5)] prems(6)\n  by auto\nsubgoal premises prems for n t' s s'\nproof -\n  have t'_eq:\n    \"t' = xfu (\\<lambda>_. h_val (hrs_mem (t_hrs_' (globals s')))\n                    (cap_Ptr &(p s'\\<rightarrow>[''cap_C'']))) s'\"\n    using CCorresLemmas.exec_handlers_BasicD[OF prems(4)]\n    by simp\n  have empty_fail_obj: \"empty_fail (getObject a :: cte kernel)\"\n  proof (rule EmptyFail.empty_fail_getObject[where x=a])\n    fix b c d\n    show \"empty_fail (loadObject a b c d :: cte kernel)\"\n      apply (cases d)\n      apply (simp_all add: ObjectInstances_H.loadObject_cte\n                           PSpaceStorable_H.typeError_def)\n      apply safe\n      done\n  qed\n  have notfail_obj: \"\\<not> snd ((getObject a :: cte kernel) s)\"\n    using prems(5)\n    by (simp add: CNode_H.getSlotCap_def CNode_H.getCTE_def\n                  MonadicRewrite.snd_bind)\n  have nonempty: \"fst ((getObject a :: cte kernel) s) \\<noteq> {}\"\n  proof\n    assume empty: \"fst ((getObject a :: cte kernel) s) = {}\"\n    have \"snd ((getObject a :: cte kernel) s)\"\n      using empty_fail_obj empty\n      by (auto simp: Nondet_Empty_Fail.empty_fail_def)\n    then show False using notfail_obj by contradiction\n  qed\n  obtain pair where pair:\n    \"pair \\<in> fst ((getObject a :: cte kernel) s)\"\n    using nonempty by (elim Many_More.nonemptyE)\n  obtain cte s0 where pair_eq: \"pair = (cte, s0)\"\n    by (cases pair; simp)\n  have obj: \"(cte, s0) \\<in> fst ((getObject a :: cte kernel) s)\"\n    using pair pair_eq by simp\n  have det: \"fst ((getObject a :: cte kernel) s) = {(cte, s)}\"\n    using CSpace_I.getObject_cte_det[OF obj] by blast\n  have cte_at: \"cte_wp_at' ((=) cte) a s\"\n    using det by (simp add: Invariants_H.cte_wp_at'_def)\n  have ctes: \"ctes_of s a = Some cte\"\n    using KHeap_R.ctes_of_eq_cte_wp_at'[OF cte_at] .\n  have cspace:\n    \"cpspace_relation (ksPSpace s)\n       (underlying_memory (ksMachineState s))\n       (t_hrs_' (globals s'))\"\n    using prems(1)\n    unfolding rf_sr_def StateRelation_C.state_rel.cstate_relation_def\n    by (simp only: Let_def; blast)\n  have cmap:\n    \"cmap_relation (ctes_of s) (cslift s') cte_Ptr ccte_relation\"\n    using cspace by (simp add: StateRelation_C.cpspace_relation_def)\n  have adom: \"a \\<in> dom (ctes_of s)\"\n    using ctes by auto\n  have dom_eq:\n    \"cte_Ptr ` dom (ctes_of s) = dom (cslift s')\"\n    using cmap\n    unfolding StateRelation_C.cmap_relation_def\n    by blast\n  have ptrdom: \"cte_Ptr a \\<in> dom (cslift s')\"\n    using adom dom_eq by blast\n  obtain ccte where cobj: \"cslift s' (cte_Ptr a) = Some ccte\"\n    using ptrdom by auto\n  have pointwise:\n    \"\\<forall>x\\<in>dom (ctes_of s).\n       ccte_relation (the (ctes_of s x))\n         (the (cslift s' (cte_Ptr x)))\"\n    using cmap\n    unfolding StateRelation_C.cmap_relation_def\n    by blast\n  have ccte_rel: \"ccte_relation cte ccte\"\n    using pointwise[rule_format, OF adom] ctes cobj\n    by simp\n  have cap_field_clift:\n    \"cslift s' (cap_Ptr &(cte_Ptr a\\<rightarrow>[''cap_C''])) =\n       Some (Kernel_C.cte_C.cap_C ccte)\"\n    using TypHeapLib.clift_field[\n      where 'b=cap_C, OF cobj Kernel_C.cte_C_cap_C_fl_ti]\n    by simp\n  have cap_field:\n    \"h_val (hrs_mem (t_hrs_' (globals s')))\n       (cap_Ptr &(cte_Ptr a\\<rightarrow>[''cap_C''])) = Kernel_C.cte_C.cap_C ccte\"\n    using TypHeapLib.h_val_clift'[OF cap_field_clift] .\n  have cap_rel: \"ccap_relation (cteCap cte) (Kernel_C.cte_C.cap_C ccte)\"\n    using ccte_rel\n    by (auto simp: StateRelation_C.ccte_relation_def\n                   Wellformed_C.cte_lift_def Wellformed_C.cte_to_H_def\n                   StateRelation_C.ccap_relation_def\n                   Wellformed_C.c_valid_cte_def\n             split: option.splits)\n  have rf_final:\n    \"(s, xfu (\\<lambda>_. h_val (hrs_mem (t_hrs_' (globals s')))\n                       (cap_Ptr &(cte_Ptr a\\<rightarrow>[''cap_C'']))) s') \\<in> rf_sr\"\n    using prems(1) by (simp add: rf_sr_def gl)\n  show ?thesis\n    using det t'_eq prems(3) rf_final cap_rel cap_field\n    by (auto simp: CNode_H.getSlotCap_def CNode_H.getCTE_def\n                   Nondet_Monad.bind_def Nondet_Monad.return_def\n                   Corres_UL_C.unif_rrel_def fg)\nqed\ndone\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:47e9bbbbe8e0d46310e9 \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:301c1fa3a1a051f739f6\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:301c1fa3a1a051f739f6 \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel begin\nlemma locateSlotCNode_ccorres [corres]:\nassumes gl: \"\\<And>v s. globals (xfu v s) = globals s\"\n  and     fg: \"\\<And>v s. xf (xfu (\\<lambda>_. v) s) = v\"\nshows \"ccorres (\\<lambda>v v'. v' = Ptr v) xf \\<top> {_. cnode = cnode' \\<and> offset = offset'} hs\n    (locateSlotCNode cnode bits offset)\n    (Guard MemorySafety\n          {s. x s = 0 \\<or> array_assertion (cte_Ptr cnode') (unat offset') (hrs_htd (t_hrs_' (globals s)))}\n          (Basic (\\<lambda>s. xfu (\\<lambda>_. cte_Ptr (cnode' + offset'\n              * of_nat (size_of TYPE(cte_C)))) s)))\"\napply (rule Corres_UL_C.ccorres_guard_imp[\n  where Q=\"\\<lambda>s.\n    (case gsCNodes s (fromPPtr cnode) of\n       None \\<Rightarrow> False\n     | Some n \\<Rightarrow> n = bits \\<and> offset < 2 ^ n)\n    \\<longrightarrow>\n    (case gsCNodes s (fromPPtr cnode) of\n       None \\<Rightarrow> False\n     | Some n \\<Rightarrow> n = bits \\<and> offset < 2 ^ n)\"\n    and Q'=\"{_. cnode = cnode' \\<and> offset = offset'}\"])\n  unfolding CNode_H.locateSlotCNode_def Monad_Lib.swp_def\n  apply (rule CCorresLemmas.ccorres_stateAssert[\n    where P=\"\\<lambda>s. case gsCNodes s (fromPPtr cnode) of\n                       None \\<Rightarrow> False\n                     | Some n \\<Rightarrow> n = bits \\<and> offset < 2 ^ n\"])\n  apply (rule ccorres_from_vcg)\n  apply (intro allI)\n  apply vcg\n  subgoal premises prems\n    using prems\n    apply (simp add: CNode_H.locateSlotBasic_def\n                     NonDetMonadEx.guard_def\n                     Nondet_Monad.bind_def\n                     Nondet_Monad.return_def\n                     Invariants_H.objBits_cte_conv\n                     ArchTypes_H.cteSizeBits_def\n                     gl fg rf_sr_def\n                     StateRelation_C.state_rel.cstate_relation_def\n                     StateRelation_C.cvariable_array_map_relation_def\n                     Let_def\n               split: option.splits)\n    apply (rule disjI2)\n    apply (rule ArrayAssertion.array_assertion_shrink_right[\n      where n=\"2 ^ bits\"])\n     apply (rule ArrayAssertion.h_t_array_valid_array_assertion)\n      apply blast\n     apply simp\n    apply (rule less_imp_le)\n    apply (rule More_Word.unat_less_power)\n     apply (rule ccontr)\n     apply (clarsimp simp: More_Word.power_overflow)\n    apply assumption\n    done\n subgoal by simp\n subgoal by simp\ndone\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:301c1fa3a1a051f739f6 \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:3104e8dd5b61c5c33db7\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:3104e8dd5b61c5c33db7 \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel begin\nlemma locateSlotTCB_ccorres [corres]:\nassumes gl: \"\\<And>v s. globals (xfu v s) = globals s\"\n  and     fg: \"\\<And>v s. xf (xfu (\\<lambda>_. v) s) = v\"\nshows \"ccorres (\\<lambda>v v'. v' = Ptr v) xf \\<top> {_. cnode = cnode' \\<and> offset = offset'} hs\n    (locateSlotTCB cnode offset)\n    (Basic (\\<lambda>s. xfu (\\<lambda>_. Ptr (cnode' + offset' * of_nat (size_of TYPE(cte_C))) :: cte_C ptr) s))\"\nunfolding CNode_H.locateSlotTCB_def CNode_H.locateSlotBasic_def\napply (simp only: return_bind)\napply (rule ccorres_from_vcg)\napply (intro allI)\napply (rule HoarePartial.Basic)\napply (clarsimp simp: gl fg rf_sr_def)\napply (simp add: Nondet_Monad.return_def Invariants_H.objBits_cte_conv\n                 ArchTypes_H.cteSizeBits_def)\ndone\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:3104e8dd5b61c5c33db7 \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:d8d5fd5b3086695c40fa\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:d8d5fd5b3086695c40fa \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel begin\nlemma storePTE_Basic_ccorres:\n  \"\\<lbrakk> cpte_relation pte pte' \\<rbrakk> \\<Longrightarrow>\n   ccorres dc xfdc \\<top> {s. f s = p} hs\n     (storePTE p pte)\n     (Guard C_Guard {s. s \\<Turnstile>\\<^sub>c pte_Ptr (f s)}\n        (Basic (\\<lambda>s. globals_update( t_hrs_'_update\n            (hrs_mem_update (heap_update (pte_Ptr (f s)) pte'))) s)))\"\napply (rule Corres_UL_C.ccorresI')\nsubgoal premises prems for s s' n z\nproof -\n  have nf_set: \"\\<not> snd (setObject p pte s)\"\n    using prems(6)\n    by (simp add: ArchVSpace_H.ARM_H.storePTE_def\n                  MonadicRewrite.snd_bind)\n  note nf_set =\n    nf_set[unfolded PSpaceFuns_H.setObject_def\n                    ArchObjInsts_H.updateObject_pte\n                    PSpaceStorable_H.pre_storable_class.updateObject_default_def]\n  have gets_result:\n      \"(ksPSpace s, s) \\<in> fst (gets ksPSpace s)\"\n    by (simp add: Nondet_In_Monad.in_gets)\n  note step1 =\n    Nondet_MonadEq_Lemmas.not_snd_bindD[OF nf_set gets_result]\n  obtain before after where look:\n      \"lookupAround2 p (ksPSpace s) = (before, after)\"\n    by (cases \"lookupAround2 p (ksPSpace s)\"; simp)\n  have before_some: \"before \\<noteq> None\"\n    using step1\n    by (auto simp: look MonadicRewrite.snd_bind\n                   Nondet_MonadEq_Lemmas.snd_assert_opt\n              split: prod.splits option.splits)\n  obtain addr obj where before: \"before = Some (addr, obj)\"\n    using before_some by (cases before; auto)\n  have ptr_eq: \"p = addr\"\n    using step1\n    by (auto simp: look before MonadicRewrite.snd_bind\n                   Nondet_MonadEq_Lemmas.snd_assert_opt\n                   Nondet_MonadEq_Lemmas.not_snd_assert\n              split: prod.splits option.splits)\n  have look':\n      \"lookupAround2 addr (ksPSpace s) = (Some (addr, obj), after)\"\n    using look before ptr_eq by simp\n  have proj_some:\n      \"(projectKO_opt obj :: Hardware_H.ARM_H.pte option) \\<noteq> None\"\n  proof\n    assume none:\n      \"(projectKO_opt obj :: Hardware_H.ARM_H.pte option) = None\"\n    show False\n      using step1 ptr_eq\n      by (auto simp: look' ptr_eq none MonadicRewrite.snd_bind\n                     Nondet_MonadEq_Lemmas.snd_assert_opt\n                     Nondet_MonadEq_Lemmas.not_snd_assert\n                     KHeap_R.projectKO_def2\n                     Nondet_Reader_Option.fst_assert_opt\n                     Nondet_Monad.return_def\n                split: prod.splits option.splits)\n  qed\n  obtain old_pte where proj_eq:\n      \"(projectKO_opt obj :: Hardware_H.ARM_H.pte option) = Some old_pte\"\n    using proj_some\n    by (cases \"(projectKO_opt obj :: Hardware_H.ARM_H.pte option)\"; auto)\n  have obj_eq: \"obj = KOArch (ARM_H.KOPTE old_pte)\"\n    using proj_eq\n    by (cases obj;\n        auto simp: ArchObjInsts_H.projectKO_opt_pte\n             split: ARM_H.arch_kernel_object.splits)\n  have heap: \"ksPSpace s addr = Some obj\"\n    apply (rule KHeap_R.lookupAround2_same1[THEN iffD1])\n    using look'\n    apply simp\n    done\n  have align_nf:\n      \"\\<not> snd (alignCheck addr (objBits pte) s)\"\n    using step1 ptr_eq proj_eq\n    by (auto simp: look' ptr_eq MonadicRewrite.snd_bind\n                   Nondet_MonadEq_Lemmas.snd_assert_opt\n                   Nondet_MonadEq_Lemmas.not_snd_assert\n                   KHeap_R.projectKO_def2\n                   Nondet_Reader_Option.fst_assert_opt\n                   Nondet_Monad.return_def\n              split: prod.splits option.splits)\n  have not_pos:\n      \"\\<not> 0 < addr && mask (objBits pte)\"\n    using align_nf\n    by (auto simp: PSpaceStorable_H.alignCheck_def\n                  PSpaceStorable_H.alignError_def\n                  Nondet_Monad.unless_def\n                  Nondet_Monad.when_def\n                  Nondet_Monad.return_def\n                  Nondet_Monad.fail_def)\n  have le_zero: \"addr && mask (objBits pte) \\<le> 0\"\n    using not_pos by (simp only: not_less)\n  have zero_le: \"0 \\<le> addr && mask (objBits pte)\"\n    by simp\n  have mask_zero: \"addr && mask (objBits pte) = 0\"\n    apply (rule antisym)\n     apply (rule le_zero)\n    apply (rule zero_le)\n    done\n  have aligned: \"is_aligned addr (objBits pte)\"\n    unfolding Aligned.is_aligned_mask\n    apply (rule mask_zero)\n    done\n  have mag_nf:\n      \"\\<not> snd (magnitudeCheck addr after (objBits pte) s)\"\n    using step1 ptr_eq proj_eq mask_zero\n    by (auto simp: look' ptr_eq MonadicRewrite.snd_bind\n                   Nondet_MonadEq_Lemmas.snd_assert_opt\n                   Nondet_MonadEq_Lemmas.not_snd_assert\n                   KHeap_R.projectKO_def2\n                   Nondet_Reader_Option.fst_assert_opt\n                   PSpaceStorable_H.alignCheck_def\n                   PSpaceStorable_H.alignError_def\n                   Nondet_Monad.unless_def\n                   Nondet_Monad.when_def\n                   Nondet_Monad.return_def\n                   Nondet_Monad.fail_def\n              split: prod.splits option.splits)\n  have mag_mem:\n      \"((), s) \\<in> fst (magnitudeCheck addr after (objBits pte) s)\"\n    using mag_nf\n    by (cases after;\n        auto simp: PSpaceStorable_H.magnitudeCheck_def\n                   Nondet_Monad.when_def\n                   Nondet_Monad.return_def\n                   Nondet_Monad.fail_def)\n  have after_eq:\n      \"snd (lookupAround2 addr (ksPSpace s)) = after\"\n    using look' by simp\n  have mag_mem_lookup:\n      \"((), s) \\<in>\n       fst (magnitudeCheck addr\n              (snd (lookupAround2 addr (ksPSpace s)))\n              (objBits pte) s)\"\n    using mag_mem after_eq by simp\n  have mag_char:\n      \"(((), s) \\<in>\n        fst (magnitudeCheck addr\n               (snd (lookupAround2 addr (ksPSpace s)))\n               (objBits pte) s)) =\n       (s = s \\<and> ps_clear addr (objBits pte) s)\"\n    apply (rule Invariants_H.in_magnitude_check)\n      apply (rule aligned)\n     apply (simp add: PSpaceStorable_H.pre_storable_class.objBits_def\n                      Invariants_H.objBits_simps\n                      ArchStructures_H.ARM_H.archObjSize_def\n                      Hardware_H.ARM_H.pteBits_def)\n    apply (rule heap)\n    done\n  have ps_clear: \"ps_clear addr (objBits pte) s\"\n    using mag_char mag_mem_lookup by simp\n  have pte_at_addr: \"pte_at' addr s\"\n    unfolding Invariants_H.typ_at'_def Invariants_H.ko_wp_at'_def\n    apply (rule exI[where x=obj])\n    using heap obj_eq aligned ps_clear\n    apply (simp add: PSpaceStorable_H.pre_storable_class.objBits_def\n                     Invariants_H.objBits_simps\n                     ArchStructures_H.ARM_H.archObjSize_def\n                     Hardware_H.ARM_H.pteBits_def)\n    done\n  have pte_at: \"pte_at' (f s') s\"\n    using pte_at_addr prems(4) ptr_eq by simp\n  have amap:\n      \"map_to_ptes (ksPSpace s) addr = Some old_pte\"\n    using heap proj_eq by simp\n  have cpspace:\n      \"cpspace_relation (ksPSpace s)\n         (underlying_memory (ksMachineState s))\n         (t_hrs_' (globals s'))\"\n    using prems(2)\n    unfolding rf_sr_def state_rel.cstate_relation_def\n    by (simp only: Let_def; blast)\n  have pte_space:\n      \"cpspace_pte_relation (ksPSpace s)\n         (t_hrs_' (globals s'))\"\n    using cpspace\n    unfolding cpspace_relation_def\n    by blast\n  have pte_map_rel:\n      \"cmap_relation (map_to_ptes (ksPSpace s))\n         (cslift s') pte_Ptr cpte_relation\"\n    using pte_space by assumption\n  have adom:\n      \"addr \\<in> dom (map_to_ptes (ksPSpace s))\"\n    using amap by auto\n  have dom_eq:\n      \"image pte_Ptr (dom (map_to_ptes (ksPSpace s))) =\n       dom (cslift s')\"\n    using pte_map_rel\n    unfolding cmap_relation_def\n    by blast\n  have cdom: \"pte_Ptr addr \\<in> dom (cslift s')\"\n    using adom dom_eq by blast\n  obtain cpte where cobj:\n      \"cslift s' (pte_Ptr addr) = Some cpte\"\n    using cdom by auto\n  have ptr_guard: \"c_guard (pte_Ptr addr)\"\n    using TypHeapLib.c_guard_clift[OF cobj] .\n  have hvalid:\n      \"hrs_htd (t_hrs_' (globals s')) \\<Turnstile>\\<^sub>t pte_Ptr addr\"\n    using TypHeapLib.h_t_valid_clift[OF cobj] .\n  have ptr_safe:\n      \"ptr_safe (pte_Ptr addr)\n         (hrs_htd (t_hrs_' (globals s')))\"\n    using TypHeap.h_t_valid_ptr_safe[OF hvalid] .\n  have obj_at_true:\n      \"obj_at' (\\<lambda>(_::Hardware_H.ARM_H.pte). True) addr s\"\n    unfolding Invariants_H.obj_at'_real_def\n              Invariants_H.ko_wp_at'_def\n    apply (rule exI[where x=obj])\n    using heap proj_eq obj_eq aligned ps_clear\n    apply (simp add: PSpaceStorable_H.pre_storable_class.objBits_def\n                     Invariants_H.objBits_simps\n                     ArchStructures_H.ARM_H.archObjSize_def\n                     Hardware_H.ARM_H.pteBits_def)\n    done\n  have set_eq:\n      \"setObject addr pte s =\n       modify\n        (ksPSpace_update\n          (\\<lambda>ps. ps(addr \\<mapsto> injectKOS pte))) s\"\n    apply (rule KHeap_R.setObject_modify[\n      where P=\"\\<lambda>(_::Hardware_H.ARM_H.pte). True\"])\n       apply (rule obj_at_true)\n    apply (simp_all add: ArchObjInsts_H.updateObject_pte\n                         PSpaceStorable_H.pre_storable_class.objBits_def\n                         Invariants_H.objBits_simps\n                         ArchStructures_H.ARM_H.archObjSize_def\n                         Hardware_H.ARM_H.pteBits_def)\n    done\n  note handler_cases =\n    Corres_UL_C.exec_handlers.simps[THEN iffD1, OF prems(5)]\n  have stmt_normal:\n      \"\\<And>out. kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile>\n         \\<langle>Guard C_Guard\n            {x. x \\<Turnstile>\\<^sub>c pte_Ptr (f x)}\n            (Basic (\\<lambda>x. globals_update\n              (t_hrs_'_update\n                (hrs_mem_update\n                  (heap_update (pte_Ptr (f x)) pte'))) x)),\n          Normal s'\\<rangle> \\<Rightarrow> out\n       \\<Longrightarrow> \\<exists>final_state. out = Normal final_state\"\n  proof -\n    fix out\n    assume exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile>\n         \\<langle>Guard C_Guard\n            {x. x \\<Turnstile>\\<^sub>c pte_Ptr (f x)}\n            (Basic (\\<lambda>x. globals_update\n              (t_hrs_'_update\n                (hrs_mem_update\n                  (heap_update (pte_Ptr (f x)) pte'))) x)),\n          Normal s'\\<rangle> \\<Rightarrow> out\"\n    show \"\\<exists>final_state. out = Normal final_state\"\n      using exec prems(4) ptr_eq ptr_guard ptr_safe hvalid\n      by (auto simp: LemmaBucket_C.exec_Guard\n               elim!: Semantic.exec_Normal_elim_cases)\n  qed\n  obtain final_state where z_eq: \"z = Normal final_state\"\n    using handler_cases\n    by (auto dest!: stmt_normal)\n  have n_eq: \"n = length hs\"\n    and stmt_exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile>\n         \\<langle>Guard C_Guard\n            {x. x \\<Turnstile>\\<^sub>c pte_Ptr (f x)}\n            (Basic (\\<lambda>x. globals_update\n              (t_hrs_'_update\n                (hrs_mem_update\n                  (heap_update (pte_Ptr (f x)) pte'))) x)),\n          Normal s'\\<rangle> \\<Rightarrow> Normal final_state\"\n    using handler_cases z_eq\n    by (auto dest!: stmt_normal)\n  have final_eq:\n      \"final_state =\n       globals_update\n        (t_hrs_'_update\n          (hrs_mem_update\n            (heap_update (pte_Ptr (f s')) pte'))) s'\"\n    using stmt_exec prems(4) ptr_eq ptr_guard ptr_safe hvalid\n    by (auto simp: LemmaBucket_C.exec_Guard\n             elim!: Semantic.exec_Normal_elim_cases)\n  have clift_pde_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pte_Ptr addr) pte')\n            (t_hrs_' (globals s')))\n          :: pde_C ptr \\<Rightarrow> pde_C option) =\n       (cslift s' :: pde_C ptr \\<Rightarrow> pde_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_pte_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pte_Ptr addr) pte')\n            (t_hrs_' (globals s')))\n          :: pte_C ptr \\<Rightarrow> pte_C option) =\n       (cslift s')(pte_Ptr addr \\<mapsto> pte')\"\n    using TypHeapLib.clift_heap_update[OF hvalid] .\n  have clift_cte_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pte_Ptr addr) pte')\n            (t_hrs_' (globals s')))\n          :: cte_C ptr \\<Rightarrow> cte_C option) =\n       (cslift s' :: cte_C ptr \\<Rightarrow> cte_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_tcb_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pte_Ptr addr) pte')\n            (t_hrs_' (globals s')))\n          :: tcb_C ptr \\<Rightarrow> tcb_C option) =\n       (cslift s' :: tcb_C ptr \\<Rightarrow> tcb_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_ep_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pte_Ptr addr) pte')\n            (t_hrs_' (globals s')))\n          :: endpoint_C ptr \\<Rightarrow> endpoint_C option) =\n       (cslift s' :: endpoint_C ptr \\<Rightarrow> endpoint_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_ntfn_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pte_Ptr addr) pte')\n            (t_hrs_' (globals s')))\n          :: notification_C ptr \\<Rightarrow> notification_C option) =\n       (cslift s' :: notification_C ptr \\<Rightarrow> notification_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_asidpool_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pte_Ptr addr) pte')\n            (t_hrs_' (globals s')))\n          :: asid_pool_C ptr \\<Rightarrow> asid_pool_C option) =\n       (cslift s' :: asid_pool_C ptr \\<Rightarrow> asid_pool_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_user_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pte_Ptr addr) pte')\n            (t_hrs_' (globals s')))\n          :: user_data_C ptr \\<Rightarrow> user_data_C option) =\n       (cslift s' :: user_data_C ptr \\<Rightarrow> user_data_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_device_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pte_Ptr addr) pte')\n            (t_hrs_' (globals s')))\n          :: user_data_device_C ptr \\<Rightarrow> user_data_device_C option) =\n       (cslift s' :: user_data_device_C ptr \\<Rightarrow> user_data_device_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have map_tcbs_eq:\n      \"map_to_tcbs\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPTE pte))) =\n       map_to_tcbs (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: ObjectInstances_H.projectKO_opt_tcb)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have map_eps_eq:\n      \"map_to_eps\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPTE pte))) =\n       map_to_eps (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: Map.map_comp_def\n                        ObjectInstances_H.projectKO_opt_ep)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have map_ntfns_eq:\n      \"map_to_ntfns\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPTE pte))) =\n       map_to_ntfns (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: Map.map_comp_def\n                        ObjectInstances_H.projectKO_opt_ntfn)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have map_pdes_eq:\n      \"map_to_pdes\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPTE pte))) =\n       map_to_pdes (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: Map.map_comp_def\n                        ArchObjInsts_H.projectKO_opt_pde)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have map_ptes_eq:\n      \"map_to_ptes\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPTE pte))) =\n       (map_to_ptes (ksPSpace s))(addr \\<mapsto> pte)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       apply (simp add: Map.map_comp_def\n                        ArchObjInsts_H.projectKO_opt_pte)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have map_asidpools_eq:\n      \"map_to_asidpools\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPTE pte))) =\n       map_to_asidpools (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: Map.map_comp_def\n                        ArchObjInsts_H.projectKO_opt_asidpool)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have dom_ps_eq:\n      \"dom ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPTE pte))) =\n       dom (ksPSpace s)\"\n    using heap by auto\n  have map_ctes_eq:\n      \"map_to_ctes\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPTE pte))) =\n       map_to_ctes (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      using heap obj_eq dom_ps_eq\n      by (auto simp: Invariants_H.map_to_ctes_def Let_def\n               split: if_splits option.splits)\n    done\n  have heap_user_eq:\n      \"heap_to_user_data\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPTE pte)))\n         (underlying_memory (ksMachineState s)) =\n       heap_to_user_data (ksPSpace s)\n         (underlying_memory (ksMachineState s))\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: StateRelation_C.heap_to_user_data_def\n                        Map.map_comp_def\n                        ObjectInstances_H.projectKO_opt_user_data)\n      apply (simp add: StateRelation_C.heap_to_user_data_def\n                       Map.map_comp_def)\n      done\n    done\n  have heap_device_eq:\n      \"heap_to_device_data\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPTE pte)))\n         (underlying_memory (ksMachineState s)) =\n       heap_to_device_data (ksPSpace s)\n         (underlying_memory (ksMachineState s))\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: StateRelation_C.heap_to_device_data_def\n                        Map.map_comp_def\n                        ObjectInstances_H.projectKO_opt_user_data_device)\n      apply (simp add: StateRelation_C.heap_to_device_data_def\n                       Map.map_comp_def)\n      done\n    done\n  have dom_ptes_eq:\n      \"dom ((map_to_ptes (ksPSpace s))(addr \\<mapsto> pte)) =\n       dom (map_to_ptes (ksPSpace s))\"\n    using adom by auto\n  show ?thesis\n    apply (rule exI[where x=final_state])\n    apply (intro conjI)\n     apply (rule z_eq)\n    apply (subst final_eq)\n    using set_eq ptr_eq prems(4) prems(1) prems(2) hvalid\n    apply (simp add: ArchVSpace_H.ARM_H.storePTE_def\n                     MachineOps.ARM.storeWordVM_def\n                     KernelStateData_H.doMachineOp_def\n                     Nondet_Monad.bind_def\n                     Nondet_Monad.gets_def\n                     Nondet_Monad.get_def\n                     Nondet_Monad.select_f_def\n                     Nondet_Monad.modify_def\n                     Nondet_Monad.put_def\n                     Nondet_Monad.return_def\n                     Corres_UL_C.unif_rrel_def)\n    apply (clarsimp simp: rf_sr_def\n                          StateRelation_C.state_rel.cstate_relation_def\n                          Let_def\n                          TypHeapLib.clift_heap_update[OF hvalid])\n    apply (intro conjI)\n        defer\n       defer\n      using clift_pde_eq\n      apply (simp add:\n        StateRelation_C.state_rel.carch_state_relation_def)\n     apply (simp add: StateRelation_C.cmachine_state_relation_def)\n    using map_tcbs_eq\n    apply (clarsimp simp:\n      StateRelation_C.cvariable_array_map_relation_def)\n    using clift_pte_eq clift_cte_eq clift_tcb_eq clift_ep_eq\n          clift_ntfn_eq clift_pde_eq clift_asidpool_eq\n          clift_user_eq clift_device_eq\n          map_ctes_eq map_tcbs_eq map_eps_eq map_ntfns_eq\n          map_pdes_eq map_ptes_eq map_asidpools_eq\n          heap_user_eq heap_device_eq dom_ptes_eq\n          heap obj_eq amap adom cdom\n    apply (clarsimp simp:\n      StateRelation_C.cpspace_relation_def\n      StateRelation_C.cmap_relation_def\n      StateRelation_C.carray_map_relation_def\n      PSpaceStorable_H.pre_storable_class.objBits_def\n      Invariants_H.objBits_simps\n      ArchStructures_H.ARM_H.archObjSize_def\n      Hardware_H.ARM_H.pteBits_def)\n    apply auto\n    apply (unfold StateRelation_C.zero_ranges_are_zero_def)\n    apply clarsimp\n    apply (intro conjI)\n     apply fastforce\n    apply (simp only: HeapRawState.hrs_mem_update_def\n                           HeapRawState.hrs_mem_def split_beta)\n    apply (simp only: CTypesDefs.heap_update_def)\n    apply (simp only: Product_Type.fst_conv)\n    apply (rule trans)\n     apply (rule TypHeap.heap_list_update_disjoint_same)\n     apply (rule equals0I)\n     apply clarsimp\n     subgoal premises zs for a b y\n     proof -\n       obtain k where k_lt: \"k < 4\"\n         and y_eq: \"y = f s' + word_of_nat k\"\n         using zs\n         by (auto simp: CTypesBase.intvl_def)\n       have bytes:\n           \"region_actually_is_bytes a (unat (b + 1 - a)) s'\"\n         using zs by fastforce\n       have htd_y:\n           \"hrs_htd (t_hrs_' (globals s')) y =\n            (True, [0 \\<mapsto> (typ_uinfo_t TYPE(8 word), True)])\"\n         using bytes zs\n         unfolding StateRelation_C.region_actually_is_bytes'_def\n         by auto\n       have vf:\n           \"valid_footprint (hrs_htd (t_hrs_' (globals s')))\n              (f s') (typ_uinfo_t TYPE(pte_C))\"\n         using hvalid prems(4) ptr_eq\n         by (simp add: TypHeap.h_t_valid_def)\n       have k_size:\n           \"k < size_td (typ_uinfo_t TYPE(pte_C))\"\n         using k_lt by simp\n       note footprint =\n         TypHeap.valid_footprintD[OF vf k_size]\n       have incl:\n           \"list_map\n              (typ_slice_t (typ_uinfo_t TYPE(pte_C)) k)\n              \\<subseteq>\\<^sub>m snd (hrs_htd (t_hrs_' (globals s')) y)\"\n         using footprint y_eq by simp\n       obtain n bb where\n           n_lt:\n             \"n < length (typ_slice_t (typ_uinfo_t TYPE(pte_C)) k)\"\n         and nth:\n             \"typ_slice_t (typ_uinfo_t TYPE(pte_C)) k ! n =\n              (typ_uinfo_t TYPE(pte_C), bb)\"\n         using LemmaBucket_C.typ_slice_t_self_nth[\n           where td=\"typ_uinfo_t TYPE(pte_C)\" and m=k]\n         by blast\n       have lm:\n           \"list_map (typ_slice_t (typ_uinfo_t TYPE(pte_C)) k) n =\n            Some (typ_uinfo_t TYPE(pte_C), bb)\"\n         using TypHeap.list_map[OF n_lt] nth by simp\n       have ndom:\n           \"n \\<in> dom\n              (list_map (typ_slice_t (typ_uinfo_t TYPE(pte_C)) k))\"\n         using n_lt by auto\n       have map_eq:\n           \"list_map (typ_slice_t (typ_uinfo_t TYPE(pte_C)) k) n =\n            snd (hrs_htd (t_hrs_' (globals s')) y) n\"\n         using incl ndom\n         unfolding Map.map_le_def\n         by blast\n       have rhs:\n           \"snd (hrs_htd (t_hrs_' (globals s')) y) n =\n            Some (typ_uinfo_t TYPE(pte_C), bb)\"\n         using map_eq lm by simp\n       have tag_neq:\n           \"typ_uinfo_t TYPE(pte_C) \\<noteq>\n            typ_uinfo_t TYPE(8 word)\"\n         apply (rule TypHeap.size_of_neq_implies_typ_uinfo_t_neq)\n         apply simp\n         done\n       show False\n         using rhs htd_y tag_neq\n         by (cases \"n = 0\"; simp)\n     qed\n    apply fastforce\n    done\nqed\ndone\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:d8d5fd5b3086695c40fa \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:ffae3fdff8f0b296c18f\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:ffae3fdff8f0b296c18f \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel begin\nlemma storePTE_Basic_ccorres':\n  \"\\<lbrakk> cpte_relation pte pte' \\<rbrakk> \\<Longrightarrow>\n   ccorres dc xfdc \\<top> {s. ptr_val (f s) = p} hs\n     (storePTE p pte)\n     (Guard C_Guard {s. s \\<Turnstile>\\<^sub>c f s}\n        (Basic (\\<lambda>s. globals_update( t_hrs_'_update\n            (hrs_mem_update (heap_update (f s) pte'))) s)))\"\nproof -\n  assume rel: \"cpte_relation pte pte'\"\n  note raw = storePTE_Basic_ccorres[\n    where f=\"\\<lambda>s. ptr_val (f s)\" and p=p\n      and pte=pte and pte'=pte' and hs=hs]\n  note base = raw[OF rel]\n  show ?thesis\n    using base\n    by simp\nqed\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:ffae3fdff8f0b296c18f \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:0c6bd1a5e060b1800c2f\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:0c6bd1a5e060b1800c2f \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel\nbegin\nlemma getRestartPC_ccorres [corres]:\n  \"ccorres (=) ret__unsigned_long_' \\<top> \\<lbrace>\\<acute>thread = tcb_ptr_to_ctcb_ptr thread\\<rbrace> []\n           (asUser thread getRestartPC) (Call getRestartPC_'proc)\"\nunfolding MachineOps.ARM.getRestartPC_def MachineOps.ARM.getRegister_def\napply (simp only: SubMonad_R.submonad_asUser.gets)\napply (rule Corres_UL_C.ccorresI)\napply (clarsimp simp: HaskellLib_H.stateAssert_def\n                      NonDetMonadEx.guard_def\n                      Nondet_Monad.bind_def\n                      Nondet_Monad.gets_def\n                      Nondet_Monad.get_def\n                      Nondet_Monad.return_def)\nsubgoal premises prems for abstract_state c_state n outcome\nproof -\n  obtain ko tcb where ks:\n    \"ksPSpace abstract_state thread = Some ko\"\n    and proj: \"tcb_of' ko = Some tcb\"\n    using prems(5)\n    unfolding Invariants_H.obj_at'_real_def Invariants_H.ko_wp_at'_def\n    by clarsimp\n  have ko_eq: \"ko = KOTCB tcb\"\n    using Invariants_H.projectKO_opt_tcbD[OF proj] .\n  have amap:\n    \"map_to_tcbs (ksPSpace abstract_state) thread = Some tcb\"\n    using ks ko_eq by simp\n  have cpspace:\n    \"cpspace_relation (ksPSpace abstract_state)\n       (underlying_memory (ksMachineState abstract_state))\n       (t_hrs_' (globals c_state))\"\n    using prems(1)\n    unfolding rf_sr_def state_rel.cstate_relation_def\n    by (simp only: Let_def; blast)\n  have tcb_space:\n    \"cpspace_tcb_relation (ksPSpace abstract_state)\n       (t_hrs_' (globals c_state))\"\n    using cpspace\n    unfolding cpspace_relation_def\n    by blast\n  have tcb_map_rel:\n    \"cmap_relation (map_to_tcbs (ksPSpace abstract_state))\n       (cslift c_state) tcb_ptr_to_ctcb_ptr ctcb_relation\"\n    using tcb_space by assumption\n  have adom:\n    \"thread \\<in> dom (map_to_tcbs (ksPSpace abstract_state))\"\n    using amap by auto\n  have dom_eq:\n    \"tcb_ptr_to_ctcb_ptr ` dom (map_to_tcbs (ksPSpace abstract_state)) =\n     dom (cslift c_state)\"\n    using tcb_map_rel\n    unfolding cmap_relation_def\n    by blast\n  have cdom:\n    \"tcb_ptr_to_ctcb_ptr thread \\<in> dom (cslift c_state)\"\n    using adom dom_eq by blast\n  obtain ctcb where cobj:\n    \"cslift c_state (tcb_ptr_to_ctcb_ptr thread) = Some ctcb\"\n    using cdom by auto\n  have ptr_guard:\n    \"c_guard (tcb_ptr_to_ctcb_ptr thread)\"\n    using TypHeapLib.c_guard_clift[OF cobj] .\n  have hvalid:\n    \"hrs_htd (t_hrs_' (globals c_state))\n       \\<Turnstile>\\<^sub>t tcb_ptr_to_ctcb_ptr thread\"\n    using TypHeapLib.h_t_valid_clift[OF cobj] .\n  have ptr_safe:\n    \"ptr_safe (tcb_ptr_to_ctcb_ptr thread)\n       (hrs_htd (t_hrs_' (globals c_state)))\"\n    using TypHeap.h_t_valid_ptr_safe[OF hvalid] .\n  have reg_bound:\n    \"register_from_H ARM.FaultIP < SCAST(32 signed \\<rightarrow> 32) 0x14\"\n    by (simp add: Kernel_C.FaultIP_def)\n  note handler_cases =\n    Corres_UL_C.exec_handlers.simps[THEN iffD1, OF prems(3)]\n  have call_normal:\n    \"\\<And>call_out. kernel_all_substitute.\\<Gamma> symbol_table domain\n       \\<turnstile> \\<langle>Call getRestartPC_'proc, Normal c_state\\<rangle> \\<Rightarrow> call_out\n       \\<Longrightarrow> \\<exists>final_state. call_out = Normal final_state\"\n  proof -\n    fix call_out\n    assume call_exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile> \\<langle>Call getRestartPC_'proc, Normal c_state\\<rangle> \\<Rightarrow> call_out\"\n    have body_exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile> \\<langle>kernel_all_substitute.getRestartPC_body,\n                      Normal c_state\\<rangle> \\<Rightarrow> call_out\"\n      using call_exec\n      by (auto elim!: Semantic.exec_Normal_elim_cases\n               simp: Substitute.kernel_all_substitute.getRestartPC_impl)\n    show \"\\<exists>final_state. call_out = Normal final_state\"\n      using body_exec prems(2) ptr_guard ptr_safe hvalid reg_bound\n      unfolding Substitute.kernel_all_substitute.getRestartPC_body_def\n                Substitute.kernel_all_substitute.getRegister_body_def\n                CLanguage.creturn_def\n      apply (auto simp: Substitute.kernel_all_substitute.getRegister_impl\n                        LemmaBucket_C.exec_Guard\n                  elim!: Semantic.exec_Normal_elim_cases)\n      subgoal for s' s'a\n        apply (cases s'a; cases s')\n        by (auto simp: Substitute.kernel_all_substitute.getRegister_impl\n                       Substitute.kernel_all_substitute.getRegister_body_def\n                       CLanguage.creturn_def\n                       LemmaBucket_C.exec_Guard\n                 elim!: Semantic.exec_call_Normal_elim\n                        Semantic.exec_call_exn_Normal_elim\n                        Semantic.exec_dynCall_Normal_elim\n                        Semantic.exec_dynCall_exn_Normal_elim\n                        Semantic.exec_block_Normal_elim\n                        Semantic.exec_block_exn_Normal_elim\n                        Semantic.exec_Normal_elim_cases\n                        Semantic.exec_elim_cases)\n      done\n  qed\n  show False\n    using handler_cases prems(4)\n    by (auto dest!: call_normal)\nqed\napply (clarsimp simp: HaskellLib_H.stateAssert_def\n                      NonDetMonadEx.guard_def\n                      Nondet_Monad.bind_def\n                      Nondet_Monad.gets_def\n                      Nondet_Monad.get_def\n                      Nondet_Monad.return_def)\nsubgoal premises prems for n final_state abstract_state c_state\nproof -\n  note handler_cases =\n    Corres_UL_C.exec_handlers.simps[THEN iffD1, OF prems(3)]\n  have empty_handlers:\n    \"\\<And>x m. kernel_all_substitute.\\<Gamma> symbol_table domain\n       \\<turnstile>\\<^sub>h \\<langle>[], x\\<rangle> \\<Rightarrow> (m, Normal final_state)\n       \\<Longrightarrow> False\"\n  proof -\n    fix x m\n    assume exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile>\\<^sub>h \\<langle>[], x\\<rangle> \\<Rightarrow> (m, Normal final_state)\"\n    note cases = Corres_UL_C.exec_handlers.simps[THEN iffD1, OF exec]\n    show False using cases by auto\n  qed\n  have n0: \"n = 0\"\n    and call_exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile> \\<langle>Call getRestartPC_'proc, Normal c_state\\<rangle>\n                    \\<Rightarrow> Normal final_state\"\n    using handler_cases\n    by (auto dest!: empty_handlers)\n\n  obtain ko tcb where ks:\n    \"ksPSpace abstract_state thread = Some ko\"\n    and proj: \"tcb_of' ko = Some tcb\"\n    using prems(4)\n    unfolding Invariants_H.obj_at'_real_def Invariants_H.ko_wp_at'_def\n    by clarsimp\n  have ko_eq: \"ko = KOTCB tcb\"\n    using Invariants_H.projectKO_opt_tcbD[OF proj] .\n  have amap:\n    \"map_to_tcbs (ksPSpace abstract_state) thread = Some tcb\"\n    using ks ko_eq by simp\n  have cpspace:\n    \"cpspace_relation (ksPSpace abstract_state)\n       (underlying_memory (ksMachineState abstract_state))\n       (t_hrs_' (globals c_state))\"\n    using prems(1)\n    unfolding rf_sr_def state_rel.cstate_relation_def\n    by (simp only: Let_def; blast)\n  have tcb_space:\n    \"cpspace_tcb_relation (ksPSpace abstract_state)\n       (t_hrs_' (globals c_state))\"\n    using cpspace\n    unfolding cpspace_relation_def\n    by blast\n  have tcb_map_rel:\n    \"cmap_relation (map_to_tcbs (ksPSpace abstract_state))\n       (cslift c_state) tcb_ptr_to_ctcb_ptr ctcb_relation\"\n    using tcb_space by assumption\n  have adom:\n    \"thread \\<in> dom (map_to_tcbs (ksPSpace abstract_state))\"\n    using amap by auto\n  have dom_eq:\n    \"tcb_ptr_to_ctcb_ptr ` dom (map_to_tcbs (ksPSpace abstract_state)) =\n     dom (cslift c_state)\"\n    using tcb_map_rel\n    unfolding cmap_relation_def\n    by blast\n  have cdom:\n    \"tcb_ptr_to_ctcb_ptr thread \\<in> dom (cslift c_state)\"\n    using adom dom_eq by blast\n  obtain ctcb where cobj:\n    \"cslift c_state (tcb_ptr_to_ctcb_ptr thread) = Some ctcb\"\n    using cdom by auto\n  have pointwise:\n    \"\\<forall>x\\<in>dom (map_to_tcbs (ksPSpace abstract_state)).\n       ctcb_relation (the (map_to_tcbs (ksPSpace abstract_state) x))\n         (the (cslift c_state (tcb_ptr_to_ctcb_ptr x)))\"\n    using tcb_map_rel\n    unfolding cmap_relation_def\n    by blast\n  have ctcb_rel: \"ctcb_relation tcb ctcb\"\n    using pointwise[rule_format, OF adom] amap cobj\n    by simp\n\n  have ptr_guard:\n    \"c_guard (tcb_ptr_to_ctcb_ptr thread)\"\n    using TypHeapLib.c_guard_clift[OF cobj] .\n  have hvalid:\n    \"hrs_htd (t_hrs_' (globals c_state))\n       \\<Turnstile>\\<^sub>t tcb_ptr_to_ctcb_ptr thread\"\n    using TypHeapLib.h_t_valid_clift[OF cobj] .\n  have ptr_safe:\n    \"ptr_safe (tcb_ptr_to_ctcb_ptr thread)\n       (hrs_htd (t_hrs_' (globals c_state)))\"\n    using TypHeap.h_t_valid_ptr_safe[OF hvalid] .\n  have reg_bound:\n    \"register_from_H ARM.FaultIP < SCAST(32 signed \\<rightarrow> 32) 0x14\"\n    by (simp add: Kernel_C.FaultIP_def)\n  have index_bound: \"unat (register_from_H ARM.FaultIP) < 20\"\n    by (simp add: Kernel_C.FaultIP_def)\n\n  let ?arch_ptr =\n    \"PTR(arch_tcb_C)\n       &(tcb_ptr_to_ctcb_ptr thread\\<rightarrow>[''tcbArch_C''])\"\n  let ?context_ptr =\n    \"PTR(user_context_C)\n       &(?arch_ptr\\<rightarrow>[''tcbContext_C''])\"\n  let ?regs_ptr =\n    \"PTR(32 word[20])\n       &(?context_ptr\\<rightarrow>[''registers_C''])\"\n\n  have body_exec:\n    \"kernel_all_substitute.\\<Gamma> symbol_table domain\n       \\<turnstile> \\<langle>kernel_all_substitute.getRestartPC_body,\n                    Normal c_state\\<rangle> \\<Rightarrow> Normal final_state\"\n    using call_exec\n    by (auto elim!: Semantic.exec_Normal_elim_cases\n             simp: Substitute.kernel_all_substitute.getRestartPC_impl)\n  have body_post:\n    \"globals final_state = globals c_state \\<and>\n     ret__unsigned_long_' final_state =\n       (h_val (hrs_mem (t_hrs_' (globals c_state))) ?regs_ptr).[\n         unat (register_from_H ARM.FaultIP)]\"\n    using body_exec prems(2) ptr_guard ptr_safe hvalid reg_bound\n    unfolding Substitute.kernel_all_substitute.getRestartPC_body_def\n              Substitute.kernel_all_substitute.getRegister_body_def\n              CLanguage.creturn_def\n    apply (auto simp: Substitute.kernel_all_substitute.getRegister_impl\n                      LemmaBucket_C.exec_Guard\n                elim!: Semantic.exec_call_Normal_elim\n                       Semantic.exec_call_exn_Normal_elim\n                       Semantic.exec_dynCall_Normal_elim\n                       Semantic.exec_dynCall_exn_Normal_elim\n                       Semantic.exec_block_Normal_elim\n                       Semantic.exec_block_exn_Normal_elim\n                       Semantic.exec_Normal_elim_cases\n                       Semantic.exec_elim_cases;\n           auto simp: Substitute.kernel_all_substitute.getRegister_body_def\n                      CLanguage.creturn_def\n                      LemmaBucket_C.exec_Guard\n                elim!: Semantic.exec_Normal_elim_cases\n                       Semantic.exec_elim_cases)\n    done\n  have globals_eq: \"globals final_state = globals c_state\"\n    using body_post by simp\n  have rf_final: \"(abstract_state, final_state) \\<in> rf_sr\"\n    using prems(1) globals_eq\n    by (simp add: rf_sr_def)\n\n  have arch_field:\n    \"cslift c_state ?arch_ptr = Some (tcbArch_C ctcb)\"\n    using TypHeapLib.clift_field[\n      where 'b=arch_tcb_C,\n      OF cobj Kernel_C.tcb_C_tcbArch_C_fl_ti]\n    by simp\n  have context_field:\n    \"cslift c_state ?context_ptr =\n       Some (tcbContext_C (tcbArch_C ctcb))\"\n    using TypHeapLib.clift_field[\n      where 'b=user_context_C,\n      OF arch_field Kernel_C.arch_tcb_C_tcbContext_C_fl_ti]\n    by simp\n  have regs_field:\n    \"cslift c_state ?regs_ptr =\n       Some (registers_C (tcbContext_C (tcbArch_C ctcb)))\"\n    using TypHeapLib.clift_field[\n      where 'b=\"32 word[20]\",\n      OF context_field Kernel_C.user_context_C_registers_C_fl_ti]\n    by simp\n  have regs_value:\n    \"h_val (hrs_mem (t_hrs_' (globals c_state))) ?regs_ptr =\n       registers_C (tcbContext_C (tcbArch_C ctcb))\"\n    using TypHeapLib.h_val_clift'[OF regs_field] .\n\n  have fetch:\n    \"asUser_fetch thread abstract_state =\n       atcbContextGet (tcbArch tcb)\"\n    using ks ko_eq\n    unfolding SubMonad_R.asUser_fetch_def\n    by simp\n  have reg_rel:\n    \"user_regs (atcbContextGet (tcbArch tcb)) ARM.FaultIP =\n     (registers_C (tcbContext_C (tcbArch_C ctcb))).[\n       unat (register_from_H ARM.FaultIP)]\"\n    using ctcb_rel\n    unfolding ctcb_relation_def carch_tcb_relation_def\n              ccontext_relation_def cregs_relation_def\n    by blast\n  have value_eq:\n    \"user_regs (asUser_fetch thread abstract_state) ARM.FaultIP =\n       ret__unsigned_long_' final_state\"\n    using body_post regs_value fetch reg_rel\n    by simp\n  show ?thesis\n    using rf_final n0 value_eq\n    by (simp add: Corres_UL_C.unif_rrel_def)\nqed\ndone\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:0c6bd1a5e060b1800c2f \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:daec644774e038048e11\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:daec644774e038048e11 \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel begin\nlemma storePDE_Basic_ccorres:\n  \"\\<lbrakk> cpde_relation pde pde' \\<rbrakk> \\<Longrightarrow>\n   ccorres dc xfdc (\\<lambda>_. valid_pde_mapping_offset' (p && mask pdBits)) {s. f s = p} hs\n     (storePDE p pde)\n     (Guard C_Guard {s. s \\<Turnstile>\\<^sub>c pde_Ptr (f s)}\n        (Basic (\\<lambda>s. globals_update(t_hrs_'_update\n            (hrs_mem_update (heap_update (pde_Ptr (f s)) pde'))) s)))\"\napply (rule Corres_UL_C.ccorresI')\nsubgoal premises prems for s s' n z\nproof -\n  have nf_set: \"\\<not> snd (setObject p pde s)\"\n    using prems(6)\n    by (simp add: ArchVSpace_H.ARM_H.storePDE_def\n                  MonadicRewrite.snd_bind)\n  note nf_set =\n    nf_set[unfolded PSpaceFuns_H.setObject_def\n                    ArchObjInsts_H.updateObject_pde\n                    PSpaceStorable_H.pre_storable_class.updateObject_default_def]\n  have gets_result:\n      \"(ksPSpace s, s) \\<in> fst (gets ksPSpace s)\"\n    by (simp add: Nondet_In_Monad.in_gets)\n  note step1 =\n    Nondet_MonadEq_Lemmas.not_snd_bindD[OF nf_set gets_result]\n  obtain before after where look:\n      \"lookupAround2 p (ksPSpace s) = (before, after)\"\n    by (cases \"lookupAround2 p (ksPSpace s)\"; simp)\n  have before_some: \"before \\<noteq> None\"\n    using step1\n    by (auto simp: look MonadicRewrite.snd_bind\n                   Nondet_MonadEq_Lemmas.snd_assert_opt\n              split: prod.splits option.splits)\n  obtain addr obj where before: \"before = Some (addr, obj)\"\n    using before_some by (cases before; auto)\n  have ptr_eq: \"p = addr\"\n    using step1\n    by (auto simp: look before MonadicRewrite.snd_bind\n                   Nondet_MonadEq_Lemmas.snd_assert_opt\n                   Nondet_MonadEq_Lemmas.not_snd_assert\n              split: prod.splits option.splits)\n  have look':\n      \"lookupAround2 addr (ksPSpace s) = (Some (addr, obj), after)\"\n    using look before ptr_eq by simp\n  have proj_some:\n      \"(projectKO_opt obj :: Hardware_H.ARM_H.pde option) \\<noteq> None\"\n  proof\n    assume none:\n      \"(projectKO_opt obj :: Hardware_H.ARM_H.pde option) = None\"\n    show False\n      using step1 ptr_eq\n      by (auto simp: look' ptr_eq none MonadicRewrite.snd_bind\n                     Nondet_MonadEq_Lemmas.snd_assert_opt\n                     Nondet_MonadEq_Lemmas.not_snd_assert\n                     KHeap_R.projectKO_def2\n                     Nondet_Reader_Option.fst_assert_opt\n                     Nondet_Monad.return_def\n                split: prod.splits option.splits)\n  qed\n  obtain old_pde where proj_eq:\n      \"(projectKO_opt obj :: Hardware_H.ARM_H.pde option) = Some old_pde\"\n    using proj_some\n    by (cases \"(projectKO_opt obj :: Hardware_H.ARM_H.pde option)\"; auto)\n  have obj_eq: \"obj = KOArch (ARM_H.KOPDE old_pde)\"\n    using proj_eq\n    by (cases obj;\n        auto simp: ArchObjInsts_H.projectKO_opt_pde\n             split: ARM_H.arch_kernel_object.splits)\n  have heap: \"ksPSpace s addr = Some obj\"\n    apply (rule KHeap_R.lookupAround2_same1[THEN iffD1])\n    using look'\n    apply simp\n    done\n  have align_nf:\n      \"\\<not> snd (alignCheck addr (objBits pde) s)\"\n    using step1 ptr_eq proj_eq\n    by (auto simp: look' ptr_eq MonadicRewrite.snd_bind\n                   Nondet_MonadEq_Lemmas.snd_assert_opt\n                   Nondet_MonadEq_Lemmas.not_snd_assert\n                   KHeap_R.projectKO_def2\n                   Nondet_Reader_Option.fst_assert_opt\n                   Nondet_Monad.return_def\n              split: prod.splits option.splits)\n  have not_pos:\n      \"\\<not> 0 < addr && mask (objBits pde)\"\n    using align_nf\n    by (auto simp: PSpaceStorable_H.alignCheck_def\n                  PSpaceStorable_H.alignError_def\n                  Nondet_Monad.unless_def\n                  Nondet_Monad.when_def\n                  Nondet_Monad.return_def\n                  Nondet_Monad.fail_def)\n  have le_zero: \"addr && mask (objBits pde) \\<le> 0\"\n    using not_pos by (simp only: not_less)\n  have zero_le: \"0 \\<le> addr && mask (objBits pde)\"\n    by simp\n  have mask_zero: \"addr && mask (objBits pde) = 0\"\n    apply (rule antisym)\n     apply (rule le_zero)\n    apply (rule zero_le)\n    done\n  have aligned: \"is_aligned addr (objBits pde)\"\n    unfolding Aligned.is_aligned_mask\n    apply (rule mask_zero)\n    done\n  have mag_nf:\n      \"\\<not> snd (magnitudeCheck addr after (objBits pde) s)\"\n    using step1 ptr_eq proj_eq mask_zero\n    by (auto simp: look' ptr_eq MonadicRewrite.snd_bind\n                   Nondet_MonadEq_Lemmas.snd_assert_opt\n                   Nondet_MonadEq_Lemmas.not_snd_assert\n                   KHeap_R.projectKO_def2\n                   Nondet_Reader_Option.fst_assert_opt\n                   PSpaceStorable_H.alignCheck_def\n                   PSpaceStorable_H.alignError_def\n                   Nondet_Monad.unless_def\n                   Nondet_Monad.when_def\n                   Nondet_Monad.return_def\n                   Nondet_Monad.fail_def\n              split: prod.splits option.splits)\n  have mag_mem:\n      \"((), s) \\<in> fst (magnitudeCheck addr after (objBits pde) s)\"\n    using mag_nf\n    by (cases after;\n        auto simp: PSpaceStorable_H.magnitudeCheck_def\n                   Nondet_Monad.when_def\n                   Nondet_Monad.return_def\n                   Nondet_Monad.fail_def)\n  have after_eq:\n      \"snd (lookupAround2 addr (ksPSpace s)) = after\"\n    using look' by simp\n  have mag_mem_lookup:\n      \"((), s) \\<in>\n       fst (magnitudeCheck addr\n              (snd (lookupAround2 addr (ksPSpace s)))\n              (objBits pde) s)\"\n    using mag_mem after_eq by simp\n  have mag_char:\n      \"(((), s) \\<in>\n        fst (magnitudeCheck addr\n               (snd (lookupAround2 addr (ksPSpace s)))\n               (objBits pde) s)) =\n       (s = s \\<and> ps_clear addr (objBits pde) s)\"\n    apply (rule Invariants_H.in_magnitude_check)\n      apply (rule aligned)\n     apply (simp add: PSpaceStorable_H.pre_storable_class.objBits_def\n                      Invariants_H.objBits_simps\n                      ArchStructures_H.ARM_H.archObjSize_def\n                      Hardware_H.ARM_H.pdeBits_def)\n    apply (rule heap)\n    done\n  have ps_clear: \"ps_clear addr (objBits pde) s\"\n    using mag_char mag_mem_lookup by simp\n  have pde_at_addr: \"pde_at' addr s\"\n    unfolding Invariants_H.typ_at'_def Invariants_H.ko_wp_at'_def\n    apply (rule exI[where x=obj])\n    using heap obj_eq aligned ps_clear\n    apply (simp add: PSpaceStorable_H.pre_storable_class.objBits_def\n                     Invariants_H.objBits_simps\n                     ArchStructures_H.ARM_H.archObjSize_def\n                     Hardware_H.ARM_H.pdeBits_def)\n    done\n  have pde_at: \"pde_at' (f s') s\"\n    using pde_at_addr prems(4) ptr_eq by simp\n  have amap:\n      \"map_to_pdes (ksPSpace s) addr = Some old_pde\"\n    using heap proj_eq by simp\n  have cpspace:\n      \"cpspace_relation (ksPSpace s)\n         (underlying_memory (ksMachineState s))\n         (t_hrs_' (globals s'))\"\n    using prems(2)\n    unfolding rf_sr_def state_rel.cstate_relation_def\n    by (simp only: Let_def; blast)\n  have pde_space:\n      \"cpspace_pde_relation (ksPSpace s)\n         (t_hrs_' (globals s'))\"\n    using cpspace\n    unfolding cpspace_relation_def\n    by blast\n  have pde_map_rel:\n      \"cmap_relation (map_to_pdes (ksPSpace s))\n         (cslift s') pde_Ptr cpde_relation\"\n    using pde_space by assumption\n  have adom:\n      \"addr \\<in> dom (map_to_pdes (ksPSpace s))\"\n    using amap by auto\n  have dom_eq:\n      \"image pde_Ptr (dom (map_to_pdes (ksPSpace s))) =\n       dom (cslift s')\"\n    using pde_map_rel\n    unfolding cmap_relation_def\n    by blast\n  have cdom: \"pde_Ptr addr \\<in> dom (cslift s')\"\n    using adom dom_eq by blast\n  obtain cpde where cobj:\n      \"cslift s' (pde_Ptr addr) = Some cpde\"\n    using cdom by auto\n  have ptr_guard: \"c_guard (pde_Ptr addr)\"\n    using TypHeapLib.c_guard_clift[OF cobj] .\n  have hvalid:\n      \"hrs_htd (t_hrs_' (globals s')) \\<Turnstile>\\<^sub>t pde_Ptr addr\"\n    using TypHeapLib.h_t_valid_clift[OF cobj] .\n  have ptr_safe:\n      \"ptr_safe (pde_Ptr addr)\n         (hrs_htd (t_hrs_' (globals s')))\"\n    using TypHeap.h_t_valid_ptr_safe[OF hvalid] .\n  have obj_at_true:\n      \"obj_at' (\\<lambda>(_::Hardware_H.ARM_H.pde). True) addr s\"\n    unfolding Invariants_H.obj_at'_real_def\n              Invariants_H.ko_wp_at'_def\n    apply (rule exI[where x=obj])\n    using heap proj_eq obj_eq aligned ps_clear\n    apply (simp add: PSpaceStorable_H.pre_storable_class.objBits_def\n                     Invariants_H.objBits_simps\n                     ArchStructures_H.ARM_H.archObjSize_def\n                     Hardware_H.ARM_H.pdeBits_def)\n    done\n  have set_eq:\n      \"setObject addr pde s =\n       modify\n        (ksPSpace_update\n          (\\<lambda>ps. ps(addr \\<mapsto> injectKOS pde))) s\"\n    apply (rule KHeap_R.setObject_modify[\n      where P=\"\\<lambda>(_::Hardware_H.ARM_H.pde). True\"])\n       apply (rule obj_at_true)\n    apply (simp_all add: ArchObjInsts_H.updateObject_pde\n                         PSpaceStorable_H.pre_storable_class.objBits_def\n                         Invariants_H.objBits_simps\n                         ArchStructures_H.ARM_H.archObjSize_def\n                         Hardware_H.ARM_H.pdeBits_def)\n    done\n  note handler_cases =\n    Corres_UL_C.exec_handlers.simps[THEN iffD1, OF prems(5)]\n  have stmt_normal:\n      \"\\<And>out. kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile>\n         \\<langle>Guard C_Guard\n            {x. x \\<Turnstile>\\<^sub>c pde_Ptr (f x)}\n            (Basic (\\<lambda>x. globals_update\n              (t_hrs_'_update\n                (hrs_mem_update\n                  (heap_update (pde_Ptr (f x)) pde'))) x)),\n          Normal s'\\<rangle> \\<Rightarrow> out\n       \\<Longrightarrow> \\<exists>final_state. out = Normal final_state\"\n  proof -\n    fix out\n    assume exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile>\n         \\<langle>Guard C_Guard\n            {x. x \\<Turnstile>\\<^sub>c pde_Ptr (f x)}\n            (Basic (\\<lambda>x. globals_update\n              (t_hrs_'_update\n                (hrs_mem_update\n                  (heap_update (pde_Ptr (f x)) pde'))) x)),\n          Normal s'\\<rangle> \\<Rightarrow> out\"\n    show \"\\<exists>final_state. out = Normal final_state\"\n      using exec prems(4) ptr_eq ptr_guard ptr_safe hvalid\n      by (auto simp: LemmaBucket_C.exec_Guard\n               elim!: Semantic.exec_Normal_elim_cases)\n  qed\n  obtain final_state where z_eq: \"z = Normal final_state\"\n    using handler_cases\n    by (auto dest!: stmt_normal)\n  have n_eq: \"n = length hs\"\n    and stmt_exec:\n      \"kernel_all_substitute.\\<Gamma> symbol_table domain\n         \\<turnstile>\n         \\<langle>Guard C_Guard\n            {x. x \\<Turnstile>\\<^sub>c pde_Ptr (f x)}\n            (Basic (\\<lambda>x. globals_update\n              (t_hrs_'_update\n                (hrs_mem_update\n                  (heap_update (pde_Ptr (f x)) pde'))) x)),\n          Normal s'\\<rangle> \\<Rightarrow> Normal final_state\"\n    using handler_cases z_eq\n    by (auto dest!: stmt_normal)\n  have final_eq:\n      \"final_state =\n       globals_update\n        (t_hrs_'_update\n          (hrs_mem_update\n            (heap_update (pde_Ptr (f s')) pde'))) s'\"\n    using stmt_exec prems(4) ptr_eq ptr_guard ptr_safe hvalid\n    by (auto simp: LemmaBucket_C.exec_Guard\n             elim!: Semantic.exec_Normal_elim_cases)\n  have clift_pte_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pde_Ptr addr) pde')\n            (t_hrs_' (globals s')))\n          :: pte_C ptr \\<Rightarrow> pte_C option) =\n       (cslift s' :: pte_C ptr \\<Rightarrow> pte_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_pde_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pde_Ptr addr) pde')\n            (t_hrs_' (globals s')))\n          :: pde_C ptr \\<Rightarrow> pde_C option) =\n       (cslift s')(pde_Ptr addr \\<mapsto> pde')\"\n    using TypHeapLib.clift_heap_update[OF hvalid] .\n  have clift_cte_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pde_Ptr addr) pde')\n            (t_hrs_' (globals s')))\n          :: cte_C ptr \\<Rightarrow> cte_C option) =\n       (cslift s' :: cte_C ptr \\<Rightarrow> cte_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_tcb_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pde_Ptr addr) pde')\n            (t_hrs_' (globals s')))\n          :: tcb_C ptr \\<Rightarrow> tcb_C option) =\n       (cslift s' :: tcb_C ptr \\<Rightarrow> tcb_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_ep_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pde_Ptr addr) pde')\n            (t_hrs_' (globals s')))\n          :: endpoint_C ptr \\<Rightarrow> endpoint_C option) =\n       (cslift s' :: endpoint_C ptr \\<Rightarrow> endpoint_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_ntfn_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pde_Ptr addr) pde')\n            (t_hrs_' (globals s')))\n          :: notification_C ptr \\<Rightarrow> notification_C option) =\n       (cslift s' :: notification_C ptr \\<Rightarrow> notification_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_asidpool_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pde_Ptr addr) pde')\n            (t_hrs_' (globals s')))\n          :: asid_pool_C ptr \\<Rightarrow> asid_pool_C option) =\n       (cslift s' :: asid_pool_C ptr \\<Rightarrow> asid_pool_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_user_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pde_Ptr addr) pde')\n            (t_hrs_' (globals s')))\n          :: user_data_C ptr \\<Rightarrow> user_data_C option) =\n       (cslift s' :: user_data_C ptr \\<Rightarrow> user_data_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have clift_device_eq:\n      \"(clift\n          (hrs_mem_update\n            (heap_update (pde_Ptr addr) pde')\n            (t_hrs_' (globals s')))\n          :: user_data_device_C ptr \\<Rightarrow> user_data_device_C option) =\n       (cslift s' :: user_data_device_C ptr \\<Rightarrow> user_data_device_C option)\"\n    apply (rule TypHeapLib.clift_heap_update_same_td_name[OF hvalid])\n    apply simp_all\n    done\n  have map_tcbs_eq:\n      \"map_to_tcbs\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPDE pde))) =\n       map_to_tcbs (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: ObjectInstances_H.projectKO_opt_tcb)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have map_eps_eq:\n      \"map_to_eps\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPDE pde))) =\n       map_to_eps (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: Map.map_comp_def\n                        ObjectInstances_H.projectKO_opt_ep)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have map_ntfns_eq:\n      \"map_to_ntfns\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPDE pde))) =\n       map_to_ntfns (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: Map.map_comp_def\n                        ObjectInstances_H.projectKO_opt_ntfn)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have map_ptes_eq:\n      \"map_to_ptes\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPDE pde))) =\n       map_to_ptes (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: Map.map_comp_def\n                        ArchObjInsts_H.projectKO_opt_pte)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have map_pdes_eq:\n      \"map_to_pdes\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPDE pde))) =\n       (map_to_pdes (ksPSpace s))(addr \\<mapsto> pde)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       apply (simp add: Map.map_comp_def\n                        ArchObjInsts_H.projectKO_opt_pde)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have map_asidpools_eq:\n      \"map_to_asidpools\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPDE pde))) =\n       map_to_asidpools (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: Map.map_comp_def\n                        ArchObjInsts_H.projectKO_opt_asidpool)\n      apply (simp add: Map.map_comp_def)\n      done\n    done\n  have dom_ps_eq:\n      \"dom ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPDE pde))) =\n       dom (ksPSpace s)\"\n    using heap by auto\n  have map_ctes_eq:\n      \"map_to_ctes\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPDE pde))) =\n       map_to_ctes (ksPSpace s)\"\n    apply (rule ext)\n    subgoal for x\n      using heap obj_eq dom_ps_eq\n      by (auto simp: Invariants_H.map_to_ctes_def Let_def\n               split: if_splits option.splits)\n    done\n  have heap_user_eq:\n      \"heap_to_user_data\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPDE pde)))\n         (underlying_memory (ksMachineState s)) =\n       heap_to_user_data (ksPSpace s)\n         (underlying_memory (ksMachineState s))\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: StateRelation_C.heap_to_user_data_def\n                        Map.map_comp_def\n                        ObjectInstances_H.projectKO_opt_user_data)\n      apply (simp add: StateRelation_C.heap_to_user_data_def\n                       Map.map_comp_def)\n      done\n    done\n  have heap_device_eq:\n      \"heap_to_device_data\n         ((ksPSpace s)(addr \\<mapsto> KOArch (ARM_H.KOPDE pde)))\n         (underlying_memory (ksMachineState s)) =\n       heap_to_device_data (ksPSpace s)\n         (underlying_memory (ksMachineState s))\"\n    apply (rule ext)\n    subgoal for x\n      apply (cases \"x = addr\")\n       using heap obj_eq\n       apply (simp add: StateRelation_C.heap_to_device_data_def\n                        Map.map_comp_def\n                        ObjectInstances_H.projectKO_opt_user_data_device)\n      apply (simp add: StateRelation_C.heap_to_device_data_def\n                       Map.map_comp_def)\n      done\n    done\n  have dom_pdes_eq:\n      \"dom ((map_to_pdes (ksPSpace s))(addr \\<mapsto> pde)) =\n       dom (map_to_pdes (ksPSpace s))\"\n    using adom by auto\n  have asid_slot_neq:\n      \"\\<And>pd::32 word. is_aligned pd pdBits \\<Longrightarrow>\n       pd + 0x3FC0 \\<noteq> addr\"\n  proof -\n    fix pd :: \"32 word\"\n    assume al: \"is_aligned pd pdBits\"\n    have pd_bits_eq: \"pdBits = 14\"\n      by (simp add: Hardware_H.ARM_H.pdBits_def\n                    Hardware_H.ARM_H.pdeBits_def)\n    have low:\n        \"(pd + 0x3FC0) && mask pdBits = 0x3FC0\"\n      apply (subst Aligned.mask_add_aligned[OF al])\n      apply (subst pd_bits_eq)\n      apply (simp add: Word.mask_eq_iff)\n      done\n    have addr_low:\n        \"addr && mask pdBits \\<noteq> 0x3FC0\"\n      using prems(3) prems(4) ptr_eq\n      by (simp add: Invariants_H.valid_pde_mapping_offset'_def\n                    Invariants_H.pd_asid_slot_def)\n    show \"pd + 0x3FC0 \\<noteq> addr\"\n      using low addr_low\n      by auto\n  qed\n  have asid_update_eq:\n      \"set_option \\<circ>\n         (pde_stored_asid \\<circ>\\<^sub>m\n          (cslift s')(pde_Ptr addr \\<mapsto> pde') \\<circ>\\<^sub>m\n          pd_pointer_to_asid_slot) =\n       set_option \\<circ>\n         (pde_stored_asid \\<circ>\\<^sub>m cslift s' \\<circ>\\<^sub>m\n          pd_pointer_to_asid_slot)\"\n    apply (rule ext)\n    subgoal for pd\n      by (simp add: StateRelation_C.pd_pointer_to_asid_slot_def\n                    Map.map_comp_def asid_slot_neq)\n    done\n  show ?thesis\n    apply (rule exI[where x=final_state])\n    apply (intro conjI)\n     apply (rule z_eq)\n    apply (subst final_eq)\n    using set_eq ptr_eq prems(4) prems(1) prems(2) hvalid\n    apply (simp add: ArchVSpace_H.ARM_H.storePDE_def\n                     MachineOps.ARM.storeWordVM_def\n                     KernelStateData_H.doMachineOp_def\n                     Nondet_Monad.bind_def\n                     Nondet_Monad.gets_def\n                     Nondet_Monad.get_def\n                     Nondet_Monad.select_f_def\n                     Nondet_Monad.modify_def\n                     Nondet_Monad.put_def\n                     Nondet_Monad.return_def\n                     Corres_UL_C.unif_rrel_def)\n    apply (clarsimp simp: rf_sr_def\n                          StateRelation_C.state_rel.cstate_relation_def\n                          Let_def\n                          TypHeapLib.clift_heap_update[OF hvalid])\n    apply (intro conjI)\n        defer\n       defer\n      using clift_pde_eq asid_update_eq\n      apply (simp add:\n        StateRelation_C.state_rel.carch_state_relation_def)\n    subgoal\n      using prems(2)\n      by (clarsimp simp: rf_sr_def\n                          StateRelation_C.state_rel.cstate_relation_def\n                          StateRelation_C.cmachine_state_relation_def\n                          Let_def)\n    subgoal\n      using prems(2) map_tcbs_eq\n      by (clarsimp simp: rf_sr_def\n                          StateRelation_C.state_rel.cstate_relation_def\n                          StateRelation_C.cvariable_array_map_relation_def\n                          Let_def)\n    subgoal\n      using prems(2)\n            clift_pde_eq clift_cte_eq clift_tcb_eq clift_ep_eq\n            clift_ntfn_eq clift_pte_eq clift_asidpool_eq\n            clift_user_eq clift_device_eq\n            map_ctes_eq map_tcbs_eq map_eps_eq map_ntfns_eq\n            map_ptes_eq map_pdes_eq map_asidpools_eq\n            heap_user_eq heap_device_eq dom_pdes_eq\n            heap obj_eq amap adom cdom\n      apply (clarsimp simp:\n        rf_sr_def\n        StateRelation_C.state_rel.cstate_relation_def\n        StateRelation_C.cpspace_relation_def\n        StateRelation_C.cmap_relation_def\n        StateRelation_C.carray_map_relation_def\n        PSpaceStorable_H.pre_storable_class.objBits_def\n        Invariants_H.objBits_simps\n        ArchStructures_H.ARM_H.archObjSize_def\n        Hardware_H.ARM_H.pdeBits_def\n        Let_def)\n      apply auto\n      done\n    apply (unfold StateRelation_C.zero_ranges_are_zero_def)\n    apply clarsimp\n    apply (intro conjI)\n     apply fastforce\n    apply (simp only: HeapRawState.hrs_mem_update_def\n                           HeapRawState.hrs_mem_def split_beta)\n    apply (simp only: CTypesDefs.heap_update_def)\n    apply (simp only: Product_Type.fst_conv)\n    apply (rule trans)\n     apply (rule TypHeap.heap_list_update_disjoint_same)\n     apply (rule equals0I)\n     apply clarsimp\n     subgoal premises zs for a b y\n     proof -\n       obtain k where k_lt: \"k < 4\"\n         and y_eq: \"y = f s' + word_of_nat k\"\n         using zs\n         by (auto simp: CTypesBase.intvl_def)\n       have bytes:\n           \"region_actually_is_bytes a (unat (b + 1 - a)) s'\"\n         using zs by fastforce\n       have htd_y:\n           \"hrs_htd (t_hrs_' (globals s')) y =\n            (True, [0 \\<mapsto> (typ_uinfo_t TYPE(8 word), True)])\"\n         using bytes zs\n         unfolding StateRelation_C.region_actually_is_bytes'_def\n         by auto\n       have vf:\n           \"valid_footprint (hrs_htd (t_hrs_' (globals s')))\n              (f s') (typ_uinfo_t TYPE(pde_C))\"\n         using hvalid prems(4) ptr_eq\n         by (simp add: TypHeap.h_t_valid_def)\n       have k_size:\n           \"k < size_td (typ_uinfo_t TYPE(pde_C))\"\n         using k_lt by simp\n       note footprint =\n         TypHeap.valid_footprintD[OF vf k_size]\n       have incl:\n           \"list_map\n              (typ_slice_t (typ_uinfo_t TYPE(pde_C)) k)\n              \\<subseteq>\\<^sub>m snd (hrs_htd (t_hrs_' (globals s')) y)\"\n         using footprint y_eq by simp\n       obtain n bb where\n           n_lt:\n             \"n < length (typ_slice_t (typ_uinfo_t TYPE(pde_C)) k)\"\n         and nth:\n             \"typ_slice_t (typ_uinfo_t TYPE(pde_C)) k ! n =\n              (typ_uinfo_t TYPE(pde_C), bb)\"\n         using LemmaBucket_C.typ_slice_t_self_nth[\n           where td=\"typ_uinfo_t TYPE(pde_C)\" and m=k]\n         by blast\n       have lm:\n           \"list_map (typ_slice_t (typ_uinfo_t TYPE(pde_C)) k) n =\n            Some (typ_uinfo_t TYPE(pde_C), bb)\"\n         using TypHeap.list_map[OF n_lt] nth by simp\n       have ndom:\n           \"n \\<in> dom\n              (list_map (typ_slice_t (typ_uinfo_t TYPE(pde_C)) k))\"\n         using n_lt by auto\n       have map_eq:\n           \"list_map (typ_slice_t (typ_uinfo_t TYPE(pde_C)) k) n =\n            snd (hrs_htd (t_hrs_' (globals s')) y) n\"\n         using incl ndom\n         unfolding Map.map_le_def\n         by blast\n       have rhs:\n           \"snd (hrs_htd (t_hrs_' (globals s')) y) n =\n            Some (typ_uinfo_t TYPE(pde_C), bb)\"\n         using map_eq lm by simp\n       have tag_neq:\n           \"typ_uinfo_t TYPE(pde_C) \\<noteq>\n            typ_uinfo_t TYPE(8 word)\"\n         apply (rule TypHeap.size_of_neq_implies_typ_uinfo_t_neq)\n         apply simp\n         done\n       show False\n         using rhs htd_y tag_neq\n         by (cases \"n = 0\"; simp)\n     qed\n    apply fastforce\n    done\nqed\ndone\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:daec644774e038048e11 \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:26c9f96aeea202b130d7\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:26c9f96aeea202b130d7 \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel begin\nlemma storePDE_Basic_ccorres':\n  \"\\<lbrakk> cpde_relation pde pde' \\<rbrakk> \\<Longrightarrow>\n   ccorres dc xfdc\n     (\\<lambda>_. valid_pde_mapping_offset' (p && mask pdBits))\n     {s. ptr_val (f s) = p} hs\n     (storePDE p pde)\n     (Guard C_Guard {s. s \\<Turnstile>\\<^sub>c f s}\n        (Basic (\\<lambda>s. globals_update( t_hrs_'_update\n            (hrs_mem_update (heap_update (f s) pde'))) s)))\"\nproof -\n  assume rel: \"cpde_relation pde pde'\"\n  note raw = storePDE_Basic_ccorres[\n    where f=\"\\<lambda>s. ptr_val (f s)\" and p=p\n      and pde=pde and pde'=pde' and hs=hs]\n  note base = raw[OF rel]\n  show ?thesis\n    using base\n    by simp\nqed\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:26c9f96aeea202b130d7 \" ^ Time.toString (Time.now ()))\\<close>\nML \\<open>writeln \"REGEN_NODE goal:7babac5e87aaf23ac785\"\\<close>\nML \\<open>writeln (\"REGEN_TIMING_START goal:7babac5e87aaf23ac785 \" ^ Time.toString (Time.now ()))\\<close>\ncontext kernel\nbegin\nlemma resolveAddressBits_ccorres [corres]:\nshows \"ccorres (lookup_failure_rel \\<currency>\n    (\\<lambda>(cte, bits) (cte', bits'). cte' = Ptr cte \\<and> bits = unat bits' \\<and> bits'\\<le> 32)) rab_xf\n  (valid_pspace' and valid_cap' cap'\n        and K (guard' \\<le> 32))\n  ({s. ccap_relation cap' (nodeCap_' s)} \\<inter>\n  {s. capptr_' s = cptr'} \\<inter> {s. unat (n_bits_' s) = guard'}) []\n  (resolveAddressBits cap' cptr' guard') (Call resolveAddressBits_'proc)\"\nproof -\n  have locateSlotCap_eq:\n    \"\\<And>ptr bits grd gsz off s.\n       gsCNodes s ptr = Some bits \\<Longrightarrow>\n       \\<not> snd (locateSlotCap\n          (capability.CNodeCap ptr bits grd gsz) off s) \\<Longrightarrow>\n       locateSlotCap (capability.CNodeCap ptr bits grd gsz) off s =\n       ({(ptr + 0x10 * off, s)}, False)\"\n  proof -\n    fix ptr bits grd gsz off\n    fix s :: KernelStateData_H.kernel_state\n    assume gs: \"gsCNodes s ptr = Some bits\"\n    assume nf:\n      \"\\<not> snd (locateSlotCap\n         (capability.CNodeCap ptr bits grd gsz) off s)\"\n    have bound: \"off < 2 ^ bits\"\n    proof (rule ccontr)\n      assume nb: \"\\<not> off < 2 ^ bits\"\n      have fail:\n          \"snd (locateSlotCap\n             (capability.CNodeCap ptr bits grd gsz) off s)\"\n        using gs nb\n        by (simp add: CNode_H.locateSlotCap_def\n                    CNode_H.locateSlotCNode_def\n                    CNode_H.locateSlotBasic_def\n                    HaskellLib_H.stateAssert_def\n                    Nondet_Monad.state_assert_def\n                    Nondet_Monad.get_def\n                    Nondet_Monad.assert_def\n                    Nondet_Monad.bind_def\n                    Nondet_Monad.return_def\n                    Nondet_Monad.fail_def\n                    Invariants_H.objBits_cte_conv\n                    ArchTypes_H.cteSizeBits_def\n                    Structures_H.isCNodeCap_def\n                    Structures_H.capability.capCNodePtr_def\n                    Structures_H.capability.capCNodeBits_def)\n      show False using nf fail by simp\n    qed\n    show \"locateSlotCap (capability.CNodeCap ptr bits grd gsz) off s =\n          ({(ptr + 0x10 * off, s)}, False)\"\n      using gs bound\n      by (simp add: CNode_H.locateSlotCap_def\n                    CNode_H.locateSlotCNode_def\n                    CNode_H.locateSlotBasic_def\n                    HaskellLib_H.stateAssert_def\n                    Nondet_Monad.state_assert_def\n                    Nondet_Monad.get_def\n                    Nondet_Monad.assert_def\n                    Nondet_Monad.bind_def\n                    Nondet_Monad.return_def\n                    Nondet_Monad.fail_def\n                    Invariants_H.objBits_cte_conv\n                    ArchTypes_H.cteSizeBits_def\n                    Structures_H.isCNodeCap_def\n                    Structures_H.capability.capCNodePtr_def\n                    Structures_H.capability.capCNodeBits_def)\n  qed\n\n  have bindE_nf_first:\n    \"\\<And>m f s. \\<not> snd ((m >>=E f) s) \\<Longrightarrow> \\<not> snd (m s)\"\n    by (simp add: Nondet_Monad.bindE_def MonadicRewrite.snd_bind)\n\n  have resolve_locate_nf:\n    \"\\<And>ptr bits grd gsz cp n (s :: KernelStateData_H.kernel_state).\n       0 < bits \\<Longrightarrow>\n       \\<not> snd (CSpace_H.resolveAddressBits\n          (capability.CNodeCap ptr bits grd gsz) cp n s) \\<Longrightarrow>\n       \\<not> snd (locateSlotCap\n          (capability.CNodeCap ptr bits grd gsz)\n          ((fromCPtr cp >> (n - (bits + gsz))) && mask bits) s)\"\n  proof -\n    fix ptr bits grd gsz cp n\n    fix s :: KernelStateData_H.kernel_state\n    assume nf:\n      \"\\<not> snd (CSpace_H.resolveAddressBits\n         (capability.CNodeCap ptr bits grd gsz) cp n s)\"\n    assume pos: \"0 < bits\"\n    have level: \"bits + gsz \\<noteq> 0\"\n      using pos by linarith\n    show \"\\<not> snd (locateSlotCap\n            (capability.CNodeCap ptr bits grd gsz)\n            ((fromCPtr cp >> (n - (bits + gsz))) && mask bits) s)\"\n      apply (subst Nondet_MonadEq_Lemmas.snd_liftE[symmetric])\n      apply (rule bindE_nf_first)\n      using nf level\n      apply (subst (asm) CSpace_H.resolveAddressBits.simps)\n      apply (simp del: CSpace_H.resolveAddressBits.simps\n                         add: level\n                              Structures_H.isCNodeCap_def\n                              Structures_H.capability.capCNodeBits_def\n                              Structures_H.capability.capCNodeGuardSize_def\n                              Structures_H.capability.capCNodeGuard_def\n                              Structures_H.capability.capCNodePtr_def\n                              HaskellLib_H.haskell_assertE_def\n                              Nondet_Monad.assertE_def\n                              Nondet_Monad.returnOk_bindE\n                              FaultMonad_H.withoutFailure_def)\n      done\n  qed\n\n  have resolve_locate_eq:\n    \"\\<And>ptr bits grd gsz cp n (s :: KernelStateData_H.kernel_state).\n       0 < bits \\<Longrightarrow>\n       gsCNodes s ptr = Some bits \\<Longrightarrow>\n       \\<not> snd (CSpace_H.resolveAddressBits\n          (capability.CNodeCap ptr bits grd gsz) cp n s) \\<Longrightarrow>\n       locateSlotCap\n          (capability.CNodeCap ptr bits grd gsz)\n          ((cp >> (n - (bits + gsz))) && mask bits) s =\n       ({(ptr + 0x10 *\n              ((cp >> (n - (bits + gsz))) && mask bits), s)},\n        False)\"\n  proof -\n    fix ptr :: machine_word\n    fix bits :: nat\n    fix grd :: machine_word\n    fix gsz :: nat\n    fix cp :: machine_word\n    fix n :: nat\n    fix s :: KernelStateData_H.kernel_state\n    assume pos: \"0 < bits\"\n    assume gs: \"gsCNodes s ptr = Some bits\"\n    assume nf:\n      \"\\<not> snd (CSpace_H.resolveAddressBits\n         (capability.CNodeCap ptr bits grd gsz) cp n s)\"\n    have loc_nf:\n      \"\\<not> snd (locateSlotCap\n         (capability.CNodeCap ptr bits grd gsz)\n         ((cp >> (n - (bits + gsz))) && mask bits) s)\"\n      using resolve_locate_nf[OF pos nf]\n      by (simp add: Types_H.fromCPtr_def)\n    show \"locateSlotCap\n            (capability.CNodeCap ptr bits grd gsz)\n            ((cp >> (n - (bits + gsz))) && mask bits) s =\n          ({(ptr + 0x10 *\n                 ((cp >> (n - (bits + gsz))) && mask bits), s)},\n           False)\"\n      by (rule locateSlotCap_eq[OF gs loc_nf])\n  qed\n\n  have getSlotCap_eq:\n    \"\\<And>p cte (s :: KernelStateData_H.kernel_state).\n       ctes_of s p = Some cte \\<Longrightarrow>\n       getSlotCap p s = ({(cteCap cte, s)}, False)\"\n  proof -\n    fix p cte\n    fix s :: KernelStateData_H.kernel_state\n    assume cte: \"ctes_of s p = Some cte\"\n    have cwp: \"cte_wp_at' ((=) cte) p s\"\n      using cte by (rule ADT_H.ctes_of_cte_wp_atD)\n    have getCTE_eq: \"fst (getCTE p s) = {(cte, s)}\"\n      using cwp\n      by (simp add: CNode_H.getCTE_def Invariants_H.cte_wp_at'_def)\n    have fst_eq:\n        \"fst (getSlotCap p s) = {(cteCap cte, s)}\"\n      by (simp add: CNode_H.getSlotCap_def\n                    Nondet_Monad.bind_def\n                    Nondet_Monad.return_def\n                    getCTE_eq)\n    have cwp_true: \"cte_wp_at' (\\<lambda>_. True) p s\"\n      using cwp\n      by (clarsimp simp: Invariants_H.cte_wp_at'_def)\n    have nf:\n        \"\\<And>t. cte_wp_at' (\\<lambda>_. True) p t \\<Longrightarrow>\n             \\<not> snd (getSlotCap p t)\"\n      using CSpace_R.no_fail_getSlotCap[where p=p]\n      by (simp add: Nondet_No_Fail.no_fail_def)\n    have snd_eq: \"\\<not> snd (getSlotCap p s)\"\n      by (rule nf[OF cwp_true])\n    show \"getSlotCap p s = ({(cteCap cte, s)}, False)\"\n      using fst_eq snd_eq\n      by (cases \"getSlotCap p s\"; simp)\n  qed\n\n  have rw:\n    \"monadic_rewrite True True\n       (valid_objs' and valid_cap' cap' and\n        (\\<lambda>s. RAB_FN.cnode_caps_gsCNodes\n               (RAB_FN.only_cnode_caps (ctes_of s)) (gsCNodes s) \\<and>\n             (isCNodeCap cap' \\<longrightarrow>\n              gsCNodes s (capCNodePtr cap') = Some (capCNodeBits cap'))))\n       (resolveAddressBits cap' cptr' guard')\n       (gets (RAB_FN.resolveAddressBitsFn cap' cptr' guard' \\<circ>\n              RAB_FN.only_cnode_caps \\<circ> ctes_of))\"\n    unfolding MonadicRewrite.monadic_rewrite_def\n    apply clarsimp\n    apply (induct cap' cptr' guard' arbitrary: s\n             rule: CSpace_H.resolveAddressBits.induct)\n    apply (subst CSpace_H.resolveAddressBits.simps)\n    apply (subst RAB_FN.resolveAddressBitsFn.simps)\n    apply simp\n    subgoal for a b c s\n      apply (cases a; clarsimp simp: Invariants_H.valid_cap'_def\n                                Structures_H.isCNodeCap_def\n                                Structures_H.capability.capCNodeBits_def\n                                Structures_H.capability.capCNodeGuardSize_def\n                                Structures_H.capability.capCNodeGuard_def\n                                Structures_H.capability.capCNodePtr_def\n                                Nondet_Monad.throwError_def\n                                Nondet_Monad.return_def)\n      subgoal premises prems for x111 x112 x113 x114\n      proof -\n        have loc_nf0:\n          \"\\<not> snd (locateSlotCap\n             (capability.CNodeCap x111 x112 x113 x114)\n             ((fromCPtr b >> (c - (x112 + x114))) && mask x112) s)\"\n          apply (rule resolve_locate_nf)\n           apply (rule prems(8))\n          apply (rule prems(5))\n          done\n        have loc_nf:\n          \"\\<not> snd (locateSlotCap\n             (capability.CNodeCap x111 x112 x113 x114)\n             ((b >> (c - (x112 + x114))) && mask x112) s)\"\n          using loc_nf0\n          by (simp add: Types_H.fromCPtr_def)\n        have loc_eq:\n          \"locateSlotCap\n             (capability.CNodeCap x111 x112 x113 x114)\n             ((b >> (c - (x112 + x114))) && mask x112) s =\n           ({(x111 + 0x10 *\n                ((b >> (c - (x112 + x114))) && mask x112), s)},\n            False)\"\n          apply (rule locateSlotCap_eq)\n           apply (rule prems(4))\n          apply (rule loc_nf)\n          done\n        have loc_nf_zero:\n          \"c < x112 + x114 \\<Longrightarrow>\n           \\<not> snd (locateSlotCap\n             (capability.CNodeCap x111 x112 x113 x114)\n             (b && mask x112) s)\"\n          using loc_nf\n          by simp\n        have loc_eq_zero:\n          \"c < x112 + x114 \\<Longrightarrow>\n           locateSlotCap\n             (capability.CNodeCap x111 x112 x113 x114)\n             (b && mask x112) s =\n           ({(x111 + 0x10 * (b && mask x112), s)}, False)\"\n          apply (rule locateSlotCap_eq)\n           apply (rule prems(4))\n          apply (rule loc_nf_zero)\n          apply assumption\n          done\n        have real_slot:\n          \"real_cte_at'\n             (x111 + 0x10 *\n                ((b >> (c - (x112 + x114))) && mask x112)) s\"\n          using prems(11)[rule_format,\n            of \"b >> (c - (x112 + x114))\"]\n          by (simp add: ArchTypes_H.cteSizeBits_def)\n        have cwp_slot:\n          \"cte_wp_at' (\\<lambda>_. True)\n             (x111 + 0x10 *\n                ((b >> (c - (x112 + x114))) && mask x112)) s\"\n          by (rule KHeap_R.real_cte_at'[OF real_slot])\n        obtain cte where ctes:\n          \"ctes_of s\n             (x111 + 0x10 *\n                ((b >> (c - (x112 + x114))) && mask x112)) =\n           Some cte\"\n          using cwp_slot\n          by (auto simp: KHeap_R.cte_wp_at_ctes_of)\n        have cwp_eq:\n          \"cte_wp_at' ((=) cte)\n             (x111 + 0x10 *\n                ((b >> (c - (x112 + x114))) && mask x112)) s\"\n          using ctes\n          by (rule ADT_H.ctes_of_cte_wp_atD)\n        have valid_cte: \"valid_cap' (cteCap cte) s\"\n          using CSpace_I.cte_wp_at_valid_objs_valid_cap'[\n            OF cwp_eq prems(2)]\n          by auto\n        have get_eq:\n          \"getSlotCap\n             (x111 + 0x10 *\n                ((b >> (c - (x112 + x114))) && mask x112)) s =\n           ({(cteCap cte, s)}, False)\"\n          by (rule getSlotCap_eq[OF ctes])\n        show ?thesis\n          apply (simp_all add: loc_eq\n                               loc_eq_zero\n                               getSlotCap_eq\n                             RAB_FN.locateSlotFun_def\n                             HaskellLib_H.stateAssert_def\n                             FaultMonad_H.withoutFailure_def\n                             Nondet_Monad.liftE_def\n                             Nondet_Monad.unlessE_def\n                             Nondet_Monad.whenE_def\n                             Nondet_Monad.assertE_def\n                             Nondet_Monad.assert_def\n                             Nondet_Monad.state_assert_def\n                             Nondet_Monad.fail_def\n                             Nondet_Monad.returnOk_def\n                             Nondet_Monad.get_def\n                             Nondet_Monad.bind_def\n                             Nondet_Monad.gets_def\n                             Invariants_H.objBits_cte_conv\n                             Arch_Structs_A.ARM_A.cte_level_bits_def\n                             ArchTypes_H.cteSizeBits_def\n                             RAB_FN.cnode_caps_gsCNodes_def\n                             RAB_FN.only_cnode_caps_def\n                             Invariants_H.valid_objs'_def\n                             Invariants_H.cte_wp_at'_def\n                             Word.and_mask_less_size\n                             Map.ran_def)\n          apply (cases \"c < x112 + x114\")\n          apply (simp_all add: loc_eq\n                               loc_eq_zero\n                               getSlotCap_eq\n                               get_eq\n                               ctes\n                               valid_cte\n                               FaultMonad_H.withoutFailure_def\n                               Nondet_Monad.liftE_def\n                               Nondet_Monad.lift_def\n                               Nondet_Monad.unlessE_def\n                               Nondet_Monad.whenE_def\n                               Nondet_Monad.throwError_def\n                               Nondet_Monad.returnOk_def\n                               Nondet_Monad.return_def\n                               Nondet_Monad.bindE_def\n                               Nondet_Monad.bind_def)\n          apply (cases \"cteCap cte\";\n                 simp_all add: loc_eq\n                               get_eq\n                               ctes\n                               valid_cte\n                               prems(1)\n                               RAB_FN.only_cnode_caps_def\n                               RAB_FN.cnode_caps_gsCNodes_def\n                               Invariants_H.valid_cap'_def\n                               Structures_H.isCNodeCap_def\n                               Structures_H.capability.capCNodeBits_def\n                               Structures_H.capability.capCNodeGuardSize_def\n                               Structures_H.capability.capCNodeGuard_def\n                               Structures_H.capability.capCNodePtr_def\n                               FaultMonad_H.withoutFailure_def\n                               Nondet_Monad.liftE_def\n                               Nondet_Monad.lift_def\n                               Nondet_Monad.unlessE_def\n                               Nondet_Monad.whenE_def\n                               Nondet_Monad.throwError_def\n                               Nondet_Monad.returnOk_def\n                               Nondet_Monad.return_def\n                               Nondet_Monad.bindE_def\n                               Nondet_Monad.bind_def\n                               Let_def\n                               Map.ran_def)\n          subgoal premises rec for y111 y112 y113 y114\n          proof -\n            have level_le: \"x112 + x114 \\<le> c\"\n              using rec(1) by simp\n            show ?thesis\n              apply (intro impI)\n              subgoal premises branch\n              proof -\n                have depth_ne: \"c \\<noteq> x112 + x114\"\n                  using branch(1) .\n                have guard_eq:\n                  \"(b >> (c - x114)) && mask x114 = x113\"\n                  using branch(2) .\n              have level_lt: \"x112 + x114 < c\"\n                using level_le depth_ne by linarith\n              have bits_pos: \"0 < c - (x112 + x114)\"\n                using level_lt by simp\n              have guard_le: \"x114 \\<le> c\"\n                using level_le by linarith\n              have next_valid:\n                \"capAligned\n                   (capability.CNodeCap y111 y112 y113 y114) \\<and>\n                 0 < y112 \\<and>\n                 y112 + y114 \\<le> word_bits \\<and>\n                 y113 && mask y114 = y113 \\<and>\n                 (\\<forall>addr.\n                    real_cte_at'\n                      (y111 + 2 ^ cteSizeBits *\n                         (addr && mask y112)) s)\"\n                using valid_cte rec(2)\n                by (simp add: Invariants_H.valid_cap'_def)\n              have next_in:\n                \"capability.CNodeCap y111 y112 y113 y114\n                   \\<in> ran (RAB_FN.only_cnode_caps (ctes_of s))\"\n                unfolding RAB_FN.only_cnode_caps_def\n                          Map.ran_def\n                apply (simp only: mem_Collect_eq)\n                apply (rule exI[\n                  where x=\"x111 + 0x10 *\n                    ((b >> (c - (x112 + x114))) && mask x112)\"])\n                using ctes rec(2)\n                apply (simp add: Structures_H.isCNodeCap_def)\n                done\n              have next_gs: \"gsCNodes s y111 = Some y112\"\n                using prems(3) next_in\n                by (auto simp: RAB_FN.cnode_caps_gsCNodes_def\n                               Structures_H.isCNodeCap_def\n                               Structures_H.capability.capCNodePtr_def\n                               Structures_H.capability.capCNodeBits_def)\n              have root_eq:\n                \"CSpace_H.resolveAddressBits\n                   (capability.CNodeCap x111 x112 x113 x114) b c s =\n                 CSpace_H.resolveAddressBits\n                   (capability.CNodeCap y111 y112 y113 y114) b\n                   (c - (x112 + x114)) s\"\n                apply (subst CSpace_H.resolveAddressBits.simps)\n                apply (simp del: CSpace_H.resolveAddressBits.simps\n                            add: loc_eq\n                                 get_eq\n                                 rec(1,2)\n                                 prems(8)\n                                 level_lt\n                                 depth_ne\n                                 guard_eq\n                                 guard_le\n                                 bits_pos\n                                 Types_H.fromCPtr_def\n                                 Structures_H.isCNodeCap_def\n                                 Structures_H.capability.capCNodeBits_def\n                                 Structures_H.capability.capCNodeGuardSize_def\n                                 Structures_H.capability.capCNodeGuard_def\n                                 Structures_H.capability.capCNodePtr_def\n                                 HaskellLib_H.haskell_assertE_def\n                                 FaultMonad_H.withoutFailure_def\n                                 Nondet_Monad.assertE_def\n                                 Nondet_Monad.liftE_def\n                                 Nondet_Monad.lift_def\n                                 Nondet_Monad.unlessE_def\n                                 Nondet_Monad.whenE_def\n                                 Nondet_Monad.throwError_def\n                                 Nondet_Monad.returnOk_def\n                                 Nondet_Monad.return_def\n                                 Nondet_Monad.bindE_def\n                                 Nondet_Monad.bind_def\n                                 Let_def)\n                apply (intro impI)\n                using level_lt\n                apply linarith\n                done\n              have next_nf:\n                \"\\<not> snd\n                   (CSpace_H.resolveAddressBits\n                     (capability.CNodeCap y111 y112 y113 y114) b\n                     (c - (x112 + x114)) s)\"\n                using prems(5) root_eq\n                by simp\n              have loc_mem:\n                \"(x111 + 0x10 *\n                    ((b >> (c - (x112 + x114))) && mask x112), s)\n                 \\<in> fst\n                   (locateSlotCap\n                     (capability.CNodeCap x111 x112 x113 x114)\n                     ((b >> (c - (x112 + x114))) && mask x112) s)\"\n                using loc_eq by simp\n              have get_mem:\n                \"(capability.CNodeCap y111 y112 y113 y114, s)\n                 \\<in> fst\n                   (getSlotCap\n                     (x111 + 0x10 *\n                       ((b >> (c - (x112 + x114))) && mask x112)) s)\"\n                using get_eq rec(2) by simp\n              have ih:\n                \"CSpace_H.resolveAddressBits\n                   (capability.CNodeCap y111 y112 y113 y114) b\n                   (c - (x112 + x114)) s =\n                 gets\n                   (RAB_FN.resolveAddressBitsFn\n                      (capability.CNodeCap y111 y112 y113 y114) b\n                      (c - (x112 + x114)) \\<circ>\n                    RAB_FN.only_cnode_caps \\<circ> ctes_of) s\"\n                apply (rule prems(1))\n                apply (simp_all add: loc_eq\n                                     get_eq\n                                     rec(1,2)\n                                     depth_ne\n                                     guard_eq\n                                     guard_le\n                                     bits_pos\n                                     next_valid\n                                     next_gs\n                                     next_nf\n                                     Types_H.fromCPtr_def\n                                     Structures_H.isCNodeCap_def\n                                     Structures_H.capability.capCNodeBits_def\n                                     Structures_H.capability.capCNodeGuardSize_def\n                                     Structures_H.capability.capCNodeGuard_def\n                                     Structures_H.capability.capCNodePtr_def\n                                     HaskellLib_H.haskell_assertE_def\n                                     FaultMonad_H.withoutFailure_def\n                                     Nondet_Monad.assertE_def\n                                     Nondet_Monad.liftE_def\n                                     Nondet_Monad.lift_def\n                                     Nondet_Monad.unlessE_def\n                                     Nondet_Monad.whenE_def\n                                     Nondet_Monad.throwError_def\n                                     Nondet_Monad.returnOk_def\n                                     Nondet_Monad.return_def\n                                     Nondet_Monad.bindE_def\n                                     Nondet_Monad.bind_def)\n                apply (rule conjI)\n                 apply (intro impI)\n                 apply (rule refl)\n                apply (rule conjI)\n                 apply (intro impI)\n                 apply (rule refl)\n                using prems(8)\n                apply simp\n                apply (rule loc_mem)\n                apply (rule conjI)\n                 apply (intro impI)\n                 apply (rule refl)\n                apply (rule conjI)\n                 apply (rule guard_le)\n                apply (rule guard_eq)\n                apply (rule level_lt)\n                apply (rule get_mem)\n                apply (rule prems(2))\n                apply (rule prems(3))\n                done\n              show ?thesis\n                using ih\n                by (simp add: RAB_FN.only_cnode_caps_def\n                              Structures_H.isCNodeCap_def\n                              Nondet_Monad.gets_def\n                              Nondet_Monad.get_def\n                              Nondet_Monad.bind_def\n                              Nondet_Monad.return_def)\n              qed\n              done\n          qed\n          done\n      qed\n      done\n    done\n  show ?thesis\n  apply (rule Corres_UL_C.ccorres_guard_imp2)\n   apply (rule MonadicRewrite_C.monadic_rewrite_ccorres_assemble[\n     where P=\"valid_pspace' and valid_cap' cap' and K (guard' \\<le> 32)\"\n       and P'=\"{s. ccap_relation cap' (nodeCap_' s)} \\<inter>\n               {s. capptr_' s = cptr'} \\<inter>\n               {s. unat (n_bits_' s) = guard'}\",\n     OF _ rw])\n   apply (rule Corres_UL_C.ccorres_Call)\n    apply (simp add: Substitute.kernel_all_substitute.resolveAddressBits_impl\n                     Substitute.kernel_all_substitute.resolveAddressBits_body_def)\n   apply (rule ccorres_from_vcg)\n   apply (intro allI)\n   apply vcg_step\n   apply vcg_step\n   prefer 2\n   apply vcg_step\n   apply vcg_step\n   apply vcg_step\n  done\nqed\nend\nML \\<open>writeln (\"REGEN_TIMING_END goal:7babac5e87aaf23ac785 \" ^ Time.toString (Time.now ()))\\<close>\n\nend\n",
+    "prefix_sha256": "9a7547dacd5d522b23621d0ae0efefceeb5e085725e3b1003eeae7d923aa9367",
+    "delta_sha256": "d9b49b34c9914861eaf0dd1e1d3f1e955e26e07a4be0c767989a94a78c6e0069"
+  }
+}

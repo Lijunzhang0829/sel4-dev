@@ -1,0 +1,158 @@
+[
+  {
+    "id": "namespace-episode-1",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "namespace_fact_lookup",
+    "start_unix": 1792932079.551465,
+    "end_unix": 1792933515.240025,
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+        "line": 17134,
+        "kind": "first namespace failure"
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+        "line": 18461,
+        "kind": "withdrawal full-source request"
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+        "line": 18464,
+        "kind": "withdrawal saved"
+      }
+    ],
+    "start_shanghai": "2026-10-25T20:41:19.551465+08:00",
+    "end_shanghai": "2026-10-25T21:05:15.240025+08:00",
+    "clipped_start_unix": 1792932079.551465,
+    "clipped_end_unix": 1792933515.240025,
+    "seconds_in_window": 1435.6885600090027,
+    "boundary_clipped": false,
+    "start_basis": "first failed check_sketch response in this decomposition episode",
+    "end_basis": "successful edit_theory draft_saved of complete source containing only four fixed contract entries and zero helper entries; decomposition withdrawn",
+    "includes_other_work": true,
+    "not_causal_wasted_time": true,
+    "duration_role": "affected_state_or_route_span_including_other_work",
+    "full_seconds": 1435.6885600090027,
+    "seconds": 1435.6885600090027,
+    "withdrawal_entry_ids": [
+      "goal:e0ca545abd1b65faf391",
+      "goal:bd38081de57efaafee95",
+      "goal:fe59097383b95d5c790b",
+      "goal:bf22bb7ab3e1fec5e842"
+    ],
+    "intervening_issue_count": 24,
+    "intervening_direct_issue_union_seconds": 643.0325665473938
+  },
+  {
+    "id": "namespace-episode-2",
+    "window": 1,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "namespace_fact_lookup",
+    "start_unix": 1792940927.786393,
+    "end_unix": 1792941552.117659,
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+        "line": 23167,
+        "kind": "first namespace failure"
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+        "line": 23789,
+        "kind": "withdrawal full-source request"
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Capability_Transforms/session-transcript.jsonl",
+        "line": 23793,
+        "kind": "withdrawal saved"
+      }
+    ],
+    "start_shanghai": "2026-10-25T23:08:47.786393+08:00",
+    "end_shanghai": "2026-10-25T23:19:12.117659+08:00",
+    "clipped_start_unix": 1792940927.786393,
+    "clipped_end_unix": 1792941552.117659,
+    "seconds_in_window": 624.3312661647797,
+    "boundary_clipped": false,
+    "start_basis": "first failed check_sketch response in this decomposition episode",
+    "end_basis": "successful edit_theory draft_saved of complete source containing only four fixed contract entries and zero helper entries; decomposition withdrawn",
+    "includes_other_work": true,
+    "not_causal_wasted_time": true,
+    "duration_role": "affected_state_or_route_span_including_other_work",
+    "full_seconds": 624.3312661647797,
+    "seconds": 624.3312661647797,
+    "withdrawal_entry_ids": [
+      "goal:e0ca545abd1b65faf391",
+      "goal:bd38081de57efaafee95",
+      "goal:fe59097383b95d5c790b",
+      "goal:bf22bb7ab3e1fec5e842"
+    ],
+    "intervening_issue_count": 8,
+    "intervening_direct_issue_union_seconds": 176.50050258636475
+  },
+  {
+    "id": "gap2-episode-5",
+    "window": 2,
+    "theory": "CRefine_Capability_Transforms",
+    "category": "all_contracts_accepted_but_seal_audit_unresolved",
+    "start_unix": 1792955773.822997,
+    "end_unix": 1792981727.938388,
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 16687
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 16719
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/service-runner.log",
+        "line": 23308
+      }
+    ],
+    "start_shanghai": "2026-10-26T03:16:13.822997+08:00",
+    "end_shanghai": "2026-10-26T10:28:47.938388+08:00",
+    "clipped_start_unix": 1792955773.822997,
+    "clipped_end_unix": 1792979379.9164002,
+    "seconds_in_window": 23606.093403100967,
+    "boundary_clipped": true,
+    "start_basis": "Left-censored affected-state window: 4 contracts already accepted at gap2 start; first in-window native full check GREEN then namespace audit failure corroborates state. This is not the exact onset of the defect.",
+    "end_basis": "First subsequent Complete_Audit GREEN; outside gap2. This is audit success, not necessarily final build/seal completion.",
+    "includes_other_work": true,
+    "not_causal_wasted_time": true,
+    "duration_role": "affected_state_or_route_span_including_other_work",
+    "full_seconds": 25954.115391016006
+  },
+  {
+    "id": "gap2-episode-6",
+    "window": 2,
+    "theory": "CRefine_Thread_State_Primitives",
+    "category": "sketch_namespace_failure_observed_to_strategy_exit",
+    "start_unix": 1792969805.074222,
+    "end_unix": 1792971539.588067,
+    "evidence": [
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Thread_State_Primitives/retry-001/session-transcript.jsonl",
+        "line": 6050
+      },
+      {
+        "path": "reports/regen/crefine-owner-blind-sol-xhigh-20261025-001/proof/parallel-sessions/2f303a8ed7a644deb9bd3fdf1625706b/CRefine_Thread_State_Primitives/retry-001/session-transcript.jsonl",
+        "line": 7488
+      }
+    ],
+    "start_shanghai": "2026-10-26T07:10:05.074222+08:00",
+    "end_shanghai": "2026-10-26T07:38:59.588067+08:00",
+    "clipped_start_unix": 1792969805.074222,
+    "clipped_end_unix": 1792971539.588067,
+    "seconds_in_window": 1734.5138449668884,
+    "boundary_clipped": false,
+    "start_basis": "First of four observed post-check ML namespace failures in the window.",
+    "end_basis": "Model says it will abandon helper/sketch route and resume the ordinary checker; this is strategy change, not a verified repair of the sketch auditor.",
+    "includes_other_work": true,
+    "not_causal_wasted_time": true,
+    "duration_role": "affected_state_or_route_span_including_other_work",
+    "full_seconds": 1734.5138449668884
+  }
+]

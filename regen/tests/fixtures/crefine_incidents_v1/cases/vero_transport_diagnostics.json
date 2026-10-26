@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "id": "vero-transport-bounded-diagnostics",
+  "title": "785 MB diagnostic amplification: bounded preview and byte-offset paging",
+  "component": "vero_tool_protocol",
+  "category": "diagnostic_amplification",
+  "status": "fixed",
+  "source_steps": [
+    {
+      "run_directory": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+      "iteration": "iter-004",
+      "item": "item_1792",
+      "request_id": "1b7d94a880d24a169ca14ceb19eeb682",
+      "ledger_events": [
+        25040,
+        25143,
+        25144
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/vero_transport_step1792.json",
+      "sha256": "13e4c988efa931627783ed2b3829ee6494e924bf8ccf9d14229596108e67c269",
+      "source_path": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/run/iter-004/agent/agent_events.jsonl",
+      "source_sha256": "a2d0a20d5b4ec86fc45cac255ec7b50633e0fb3f254b450607e5f6ff6a1cc2af",
+      "source_hash_scope": "selected raw JSONL line including original newline",
+      "selection": "whitelist fields from item.completed item_1792; code identity cross-reference"
+    },
+    {
+      "path": "evidence/vero_transport_live_pages.json",
+      "sha256": "ba6270b97a0a4ccb0e1f42a5046c58d1244d37dff07bcdecb7a9c697a10e5b30",
+      "source_path": "reports/regen/dual-step-resume-validation-20261027-001/vero-live-rpc-probe.json",
+      "source_sha256": "ba6270b97a0a4ccb0e1f42a5046c58d1244d37dff07bcdecb7a9c697a10e5b30",
+      "source_hash_scope": "complete file",
+      "selection": "complete JSON object"
+    },
+    {
+      "path": "evidence/vero_transport_archive_receipt.json",
+      "sha256": "3030563003bad80e87c7f42eccbcc3f3891a83f5c1514160770d651917c1cd32",
+      "source_path": "reports/regen/vero-rpc-repair-20261026-001/archive-receipts.jsonl",
+      "source_sha256": "9407f95b789b219d31bfa1056189ef267821c229e30dee4b96ee19744cff0258",
+      "source_hash_scope": "complete file",
+      "selection": "single JSONL receipt matching request 1b7d94a880d24a169ca14ceb19eeb682"
+    }
+  ],
+  "replays": [
+    {
+      "id": "vero-transport-bounded-diagnostics-replay",
+      "handler": "transport.diagnostic_paging",
+      "parameters": {
+        "logical_log_bytes": 785184572,
+        "page_bytes": 65536
+      },
+      "kind": "synthetic_regression",
+      "oracle": {
+        "preview_bytes": 65536,
+        "wire_bytes_upper_bound": 400000,
+        "head_tail_offsets": "match extracted historical pages",
+        "unicode": "exact sequential roundtrip",
+        "evidence_mutation": false
+      }
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_vero_tool_protocol",
+    "regen.tests.current.test_vero_diagnostic_service"
+  ],
+  "limitations": [
+    "A sparse generated log preserves the historical byte length and page offsets, but does not reproduce native Isabelle feedback or its 785 MB content.",
+    "This replay establishes transport bounds and exact generated paging; it does not establish proof success."
+  ]
+}

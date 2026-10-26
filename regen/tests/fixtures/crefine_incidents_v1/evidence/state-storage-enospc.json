@@ -1,0 +1,391 @@
+{
+  "archive_receipts": [
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/343d6f64298a4f05adcefc05f0e4e2ae/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/343d6f64298a4f05adcefc05f0e4e2ae/response.json.gz",
+      "original_bytes": 115121564,
+      "archive_bytes": 19082080,
+      "uncompressed_sha256": "5002297de4846ccc3002b936388bafce054811312684568ea2a7aa609fa9e31d",
+      "verified_at_unix": 1793031169.1642568,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/ad8e3cf399df4fa38d521855b4896543/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/ad8e3cf399df4fa38d521855b4896543/response.json.gz",
+      "original_bytes": 455771824,
+      "archive_bytes": 75575362,
+      "uncompressed_sha256": "83e8e91039b78c6b71e94f2e7e9a9633eb70b86ca7e2615716101c83d3ac1021",
+      "verified_at_unix": 1793031178.4499247,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/9057d48836b14809b140de97ba62c159/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/9057d48836b14809b140de97ba62c159/response.json.gz",
+      "original_bytes": 455772597,
+      "archive_bytes": 75575510,
+      "uncompressed_sha256": "bef89e2a5ffed7485ebb4fa1256ea65250550de7609b24865f306531535b9adc",
+      "verified_at_unix": 1793031188.1053104,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/f0cc2aa8058a43d3ba217bc5945349d5/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/f0cc2aa8058a43d3ba217bc5945349d5/response.json.gz",
+      "original_bytes": 455819690,
+      "archive_bytes": 75584500,
+      "uncompressed_sha256": "3ef13e0139df2aab6b8682fdc8ee79689d25c32ffb76a65b94bc2c99f4ee30e7",
+      "verified_at_unix": 1793031197.4214046,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/4497e8c6c1014ecfb25efb97b6e47a69/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/4497e8c6c1014ecfb25efb97b6e47a69/response.json.gz",
+      "original_bytes": 798032806,
+      "archive_bytes": 132332966,
+      "uncompressed_sha256": "a92ea52db20227e0ab90645f5abd2dca5e6fceb53cd09f222d1b888eb007fdf6",
+      "verified_at_unix": 1793031213.6778393,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/1b7d94a880d24a169ca14ceb19eeb682/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/1b7d94a880d24a169ca14ceb19eeb682/response.json.gz",
+      "original_bytes": 798033089,
+      "archive_bytes": 132332031,
+      "uncompressed_sha256": "38f564002daed21c4dec594d8007bb45c89e9a28916dd4b12dc9d054f99e6792",
+      "verified_at_unix": 1793031230.0032868,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/2e7e91abbfec4d8a809af99ada199287/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/2e7e91abbfec4d8a809af99ada199287/response.json.gz",
+      "original_bytes": 798033126,
+      "archive_bytes": 132332248,
+      "uncompressed_sha256": "43f46e888b044c4007db711b2bfc063f381fdc447d6a7053fa99e4df7c59a8ea",
+      "verified_at_unix": 1793031246.6516924,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/65414581ba9247f68966df45b8a7f50e/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/65414581ba9247f68966df45b8a7f50e/response.json.gz",
+      "original_bytes": 798033163,
+      "archive_bytes": 132331717,
+      "uncompressed_sha256": "88d42869b75ce98d6616b230f407216e994b04b705e2e94c608d02666b2d1390",
+      "verified_at_unix": 1793031263.2649586,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/32203d3c59ca42cbb43c615335376388/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/32203d3c59ca42cbb43c615335376388/response.json.gz",
+      "original_bytes": 798033200,
+      "archive_bytes": 132332956,
+      "uncompressed_sha256": "106b050f2a293aaff507e439c63b38739a2b4853a27d389d739a9742053a34c0",
+      "verified_at_unix": 1793031280.0175211,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/b8203e451b3b4fb2b2886839470e0fa4/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/b8203e451b3b4fb2b2886839470e0fa4/response.json.gz",
+      "original_bytes": 798033315,
+      "archive_bytes": 132331369,
+      "uncompressed_sha256": "51d0736ee78556383aaffd4bb5a231ea011f8dfc047a6bc1b8164ac69cc64ec7",
+      "verified_at_unix": 1793031296.7209759,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/27c629b44bd145fda7cc190934766bbe/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/27c629b44bd145fda7cc190934766bbe/response.json.gz",
+      "original_bytes": 798033346,
+      "archive_bytes": 132333315,
+      "uncompressed_sha256": "5b0dad5cc3f660b9806139e135bbb58d6aec142680337fc6f3d995cea0c878bb",
+      "verified_at_unix": 1793031312.325541,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/a27d770709a249f984be7729d48e6e94/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/a27d770709a249f984be7729d48e6e94/response.json.gz",
+      "original_bytes": 798033402,
+      "archive_bytes": 132330725,
+      "uncompressed_sha256": "81e9bab3fb8137723026a43002c6b325d73c23521d294c06e2dedf0749894512",
+      "verified_at_unix": 1793031330.3757703,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/fb3e030827b64025bc6693a803269fa6/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/fb3e030827b64025bc6693a803269fa6/response.json.gz",
+      "original_bytes": 798033585,
+      "archive_bytes": 132333766,
+      "uncompressed_sha256": "aaac3a5d2476a673eafbcca17df33e622ae1e7b0e8a3c205da267023da8c8ed9",
+      "verified_at_unix": 1793031346.9819872,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/11c5f6b348ff44e7a3cba420348f4ba7/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/11c5f6b348ff44e7a3cba420348f4ba7/response.json.gz",
+      "original_bytes": 798033586,
+      "archive_bytes": 132331187,
+      "uncompressed_sha256": "324bf789e093d7c342127f3caade870de1f81c4c682b4c09315e6335ff3d95b1",
+      "verified_at_unix": 1793031361.9674168,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/c4e02e5a04b642f1bf3ce26fe66be3ff/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/c4e02e5a04b642f1bf3ce26fe66be3ff/response.json.gz",
+      "original_bytes": 798033586,
+      "archive_bytes": 132331592,
+      "uncompressed_sha256": "98b88c94e322306c7babe4f298936cb148315415ec6e1aa1886c24f70020101a",
+      "verified_at_unix": 1793031377.763267,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/05fefa94d59c43cda383fb1dbd5c065e/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/05fefa94d59c43cda383fb1dbd5c065e/response.json.gz",
+      "original_bytes": 798033586,
+      "archive_bytes": 132332410,
+      "uncompressed_sha256": "a3448e71472b68eb52df9a8304b7ab5fc74f64809a3bb4e44c06eb12e345e7ed",
+      "verified_at_unix": 1793031393.3807476,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/ad72308a72994087a9431eb5f2b849dc/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/ad72308a72994087a9431eb5f2b849dc/response.json.gz",
+      "original_bytes": 911543212,
+      "archive_bytes": 151151006,
+      "uncompressed_sha256": "2b86713e378c4129aaa5484b087af41195aec492c8fee71413b8a752793f3ee9",
+      "verified_at_unix": 1793031409.9250345,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/e6b6dfe40ed84d949ae55de008422114/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/e6b6dfe40ed84d949ae55de008422114/response.json.gz",
+      "original_bytes": 911543236,
+      "archive_bytes": 151150088,
+      "uncompressed_sha256": "f457fe79c0b45ca222b922c7384e4dc8758b3748643f87d2261ba8eb7e1a3854",
+      "verified_at_unix": 1793031426.758709,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/c382b8c77abf46b18e004a27e23a09c2/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/c382b8c77abf46b18e004a27e23a09c2/response.json.gz",
+      "original_bytes": 911547251,
+      "archive_bytes": 151149890,
+      "uncompressed_sha256": "8384de036299c3751589eb7309667b3b9bb0cb6257edfe639c5676f5c64a6e18",
+      "verified_at_unix": 1793031443.4610565,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/0fa68dd4a9f84f4789ae59213c1c42e0/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/0fa68dd4a9f84f4789ae59213c1c42e0/response.json.gz",
+      "original_bytes": 911548524,
+      "archive_bytes": 151150372,
+      "uncompressed_sha256": "04e4172af1219cd496edc1009a15de1b78f647fcc2611536cdca0de514c566a6",
+      "verified_at_unix": 1793031460.0320022,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/69f639eac7fa424f93f6cda7bf8e5bb6/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/69f639eac7fa424f93f6cda7bf8e5bb6/response.json.gz",
+      "original_bytes": 911549126,
+      "archive_bytes": 151149174,
+      "uncompressed_sha256": "e7b41fb5548225543ab10f652af61dd957d6d684b81c298eb2c1bd953610a729",
+      "verified_at_unix": 1793031477.4834876,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/4e3b04d1fbd241de987fd9eb8405a50c/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/4e3b04d1fbd241de987fd9eb8405a50c/response.json.gz",
+      "original_bytes": 911550509,
+      "archive_bytes": 151148783,
+      "uncompressed_sha256": "a36d27537bc390c2a110f0d7e4ffbc05abaf27e75b7df402951fc4d4c0bc33dc",
+      "verified_at_unix": 1793031495.0452957,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/7a5d162cadde41f5a8bf43a168a3f402/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/7a5d162cadde41f5a8bf43a168a3f402/response.json.gz",
+      "original_bytes": 911551621,
+      "archive_bytes": 151151421,
+      "uncompressed_sha256": "3c4f270181b02adc8b473dee9f629b114e8ec3c1d28d5a016b09570db6145df6",
+      "verified_at_unix": 1793031511.6797936,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/0a929429dde94f619306725b3e96e0ca/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/0a929429dde94f619306725b3e96e0ca/response.json.gz",
+      "original_bytes": 911553875,
+      "archive_bytes": 151151759,
+      "uncompressed_sha256": "49fa714f067eb6daf4d0c3da67517e634d7a1b07a945973a2ae407f5bfd6d3ae",
+      "verified_at_unix": 1793031529.689277,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/d8de32ca501841fa81816cec01b4e3cc/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/d8de32ca501841fa81816cec01b4e3cc/response.json.gz",
+      "original_bytes": 911554491,
+      "archive_bytes": 151149993,
+      "uncompressed_sha256": "4ac1356f43b182658e900893fd6833880841465a34e92e5df4569a8db3b68b93",
+      "verified_at_unix": 1793031546.5591671,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/983a293da0ae4dd88465e6c121ab4877/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/983a293da0ae4dd88465e6c121ab4877/response.json.gz",
+      "original_bytes": 911557209,
+      "archive_bytes": 151150478,
+      "uncompressed_sha256": "ec6c35f14f5d8b592820a48235584d1e3985ae568c00f7b17f6ab182b5a65acb",
+      "verified_at_unix": 1793031563.4446037,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/6bb818deb20143ee925eb657747176d3/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/6bb818deb20143ee925eb657747176d3/response.json.gz",
+      "original_bytes": 911558023,
+      "archive_bytes": 151150419,
+      "uncompressed_sha256": "d778d9b56f7abefd01aff70f9cf328fe683865e3f6a92dc9b75a5942142eb0a7",
+      "verified_at_unix": 1793031580.3305979,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/52668ae6d5a0450a8bf3d1ea45d45f3a/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/52668ae6d5a0450a8bf3d1ea45d45f3a/response.json.gz",
+      "original_bytes": 1253788467,
+      "archive_bytes": 207902786,
+      "uncompressed_sha256": "b2a6cc93dbd8cf59e1d8b1959b06f160bb6ff539aaeef0658c1171467aea40b2",
+      "verified_at_unix": 1793031605.5808535,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/cead6bd0c60047789d2946e9ced9b29e/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/cead6bd0c60047789d2946e9ced9b29e/response.json.gz",
+      "original_bytes": 1253788502,
+      "archive_bytes": 207906091,
+      "uncompressed_sha256": "b67ca4ac691587fac884366fae847c3e6d6acb3fd657ebeedd0acfd8a7c43c36",
+      "verified_at_unix": 1793031628.839428,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/bd360193ff2f4c81bab821ab9acab772/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/bd360193ff2f4c81bab821ab9acab772/response.json.gz",
+      "original_bytes": 1253788541,
+      "archive_bytes": 207903710,
+      "uncompressed_sha256": "8082acf177e299a0c5fcd3db589ea970cbf78f54e0c08952b4933dd62dae5111",
+      "verified_at_unix": 1793031652.6214643,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    },
+    {
+      "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/3c1fb7bfc37b4a7eb9794f8dc5b12e8f/response.json",
+      "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/3c1fb7bfc37b4a7eb9794f8dc5b12e8f/response.json.gz",
+      "original_bytes": 1253788652,
+      "archive_bytes": 207905587,
+      "uncompressed_sha256": "3a866615d77f2b88402efc0473ffb2acd69a6799187b4b1f28dc50894eadffd8",
+      "verified_at_unix": 1793031676.148557,
+      "method": "gzip-level1; full decompression SHA256 verified before unlink"
+    }
+  ],
+  "pause_audit": {
+    "observed_at": "2026-10-27T00:01:37.158347+08:00",
+    "service_status": "MainPID=0\nResult=exit-code\nExecMainExitTimestamp=Mon 2026-10-26 22:45:48 CST\nExecMainCode=1\nExecMainStatus=1\nId=vero-crefine-owner-blind-sol-xhigh-plan48h-branch-credit-resume-20261026-006.service\nActiveState=failed\nSubState=failed\n\nMainPID=0\nResult=exit-code\nExecMainExitTimestamp=Mon 2026-10-26 23:56:41 CST\nExecMainCode=1\nExecMainStatus=1\nId=codex-crefine-owner-blind-sol-xhigh-plan48h-locale-repair-20261025-004.service\nActiveState=failed\nSubState=failed\n",
+    "last_vero_event": {
+      "sequence": 27730,
+      "kind": "check_completed",
+      "time_unix": 1793025938.7592146,
+      "data": {
+        "elapsed_seconds": 921.081,
+        "native_elapsed_seconds": 921.081,
+        "outcome": "blocked_dependency",
+        "seal_elapsed_seconds": 0,
+        "target_ids": [
+          "c0031",
+          "c0032",
+          "c0033",
+          "c0044",
+          "c0068",
+          "c0072",
+          "c0075",
+          "c0083",
+          "c0091",
+          "c0103",
+          "c0111",
+          "c0112",
+          "c0115",
+          "c0117",
+          "c0126",
+          "c0133",
+          "c0139",
+          "c0144",
+          "c0162",
+          "c0173",
+          "c0174",
+          "c0186",
+          "c0197",
+          "c0198",
+          "c0207",
+          "c0210",
+          "c0226",
+          "c0268",
+          "c0272",
+          "c0276",
+          "c0284",
+          "c0285",
+          "c0288",
+          "c0291",
+          "c0295"
+        ],
+        "theory": "Vero_Scheduler",
+        "timing_basis": "native cold contract check only; automatic seal is a separate seal_result event"
+      }
+    },
+    "last_vero_clock": {
+      "boundary": "checkpoint",
+      "state": {
+        "base_seconds": 172800,
+        "checkpoint_seconds": 30,
+        "effective_seconds": 147106.26784896082,
+        "finish_reason": null,
+        "finished": false,
+        "gate_open": true,
+        "include_planning": true,
+        "next_exclusion": 7,
+        "paused": false,
+        "planning_active": false,
+        "planning_seconds": 295.43020781408995,
+        "policy": "global-effective-generation-budget-v1",
+        "reason": null,
+        "seconds": 172800,
+        "theory_seconds": {
+          "Vero_Cache_Maintenance": 0,
+          "Vero_Capability_Core": 29932.75856585754,
+          "Vero_IPC_Transfer": 1.9426182769238949,
+          "Vero_IRQ": 142.72573108179495,
+          "Vero_Notification": 25.85452367598191,
+          "Vero_Scheduler": 11815.003239973448,
+          "Vero_Thread_Core": 104558.88136813488,
+          "Vero_Untyped_Objects": 333.67159414617345
+        },
+        "unclean_recoveries": 1,
+        "worker_seconds": 146810.83764114673
+      }
+    },
+    "findings": [
+      "VERO ledger chain verifies through sequence 27730. Last durable budget checkpoint is sequence 27725, 2026-10-26T22:45:19.615936+08:00, gate_open=true and paused=false. No close checkpoint was persisted before exit 22:45:48. The approximately 28.384-second gap is an unobserved online tail, not offline time, and must not be inferred as a fully charged amount.",
+      "Codex ledger chain verifies through sequence 33396 experiment_paused. Budget checkpoint 33395 is boundary=close with gate_open=false, paused=true, accounting_complete=true.",
+      "VERO retains 14 current GREEN contracts and Codex 11, with no sealed theories or final integration success.",
+      "Disk free_bytes includes root-reserved capacity. Available to experiment account: 1901686784 bytes (1.77 GiB); df rounds to 1.8G.",
+      "Diagnostic amplification includes evaluation logs, native prefix logs, native check result.json, and application response.json. 47 native result.json files above 256MiB alone consume 26896724605 bytes, beyond the log/response categories.",
+      "The seven hash samples of equal-sized files all differ, so size groups must not be blindly deduplicated or hard-linked.",
+      "The largest response.json reaches 1253788652 bytes. In-memory zlib(level=1) sampling of 256KiB head/middle/tail indicates roughly 16–18% compressed size, but this is an estimate rather than a completed archival result.",
+      "Existing proof evidence/recovery reads native result.json and log paths and verifies SHA-256; those original paths cannot simply be removed or replaced with compressed content without a compatible archive reader/restoration scheme.",
+      "The latest two request directories do not contain response.json, consistent with the interrupted/failed tail. Existing top-level plan/config/binding and agent state JSON parse successfully."
+    ],
+    "disk": {
+      "total_bytes": 1967845998592,
+      "available_bytes": 1901686784,
+      "free_bytes": 101938352128
+    },
+    "temporary_files": [
+      {
+        "path": "run/iter-004/agent/state.json.tmp",
+        "bytes": 0,
+        "mtime": 1793025947.474133
+      }
+    ]
+  }
+}

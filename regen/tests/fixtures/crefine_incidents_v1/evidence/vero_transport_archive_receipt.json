@@ -1,0 +1,9 @@
+{
+  "source": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/1b7d94a880d24a169ca14ceb19eeb682/response.json",
+  "archive": "/data/zljj/vero-a-unified/crefine-preparation-20261017-001/experiments/vero-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001/requests/1b7d94a880d24a169ca14ceb19eeb682/response.json.gz",
+  "original_bytes": 798033089,
+  "archive_bytes": 132332031,
+  "uncompressed_sha256": "38f564002daed21c4dec594d8007bb45c89e9a28916dd4b12dc9d054f99e6792",
+  "verified_at_unix": 1793031230.0032868,
+  "method": "gzip-level1; full decompression SHA256 verified before unlink"
+}

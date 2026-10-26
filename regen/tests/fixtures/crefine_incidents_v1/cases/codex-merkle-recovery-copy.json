@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "id": "codex-merkle-recovery-copy",
+  "title": "恢复复制展开共享 Merkle 历史，及独立存储损坏的拒绝",
+  "component": "codex",
+  "category": "recovery_integrity",
+  "status": "fixed",
+  "source_steps": [
+    {
+      "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-001",
+      "phase": "initialization before provider start",
+      "step": null,
+      "step_unavailable_reason": "Recovery receipt identifies directory/phase; no exact failing file was retained in this package."
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/codex-merkle-recovery-receipt.json",
+      "sha256": "6f09e48fe5e42c46e282c3392c531ca17bc3a2d630e323a28b37ca543789c849",
+      "source_path": "reports/regen/locale-audit-stability-20261025-001/recovery-receipt.json",
+      "source_sha256": "e4d265cfa0fee2562b7591748cb176aa834008718b0b3c6dd991baacf4ef9e3e",
+      "selection": {
+        "json_keys": [
+          "source_run",
+          "continued_run",
+          "previous_initialization_attempt",
+          "previous_initialization_attempts",
+          "durability_policy",
+          "charged_seconds_before_migration",
+          "manual_proof_changes",
+          "historical_green_promoted_without_recheck"
+        ]
+      }
+    }
+  ],
+  "replays": [
+    {
+      "id": "independent-object-copy",
+      "handler": "codex.merkle_copy",
+      "kind": "synthetic_regression",
+      "parameters": {
+        "copies": 4
+      },
+      "oracle": "No decode or encode during copy; manifest identity preserved; target independent of removed source; corrupt source/destination and sync failure rejected."
+    }
+  ],
+  "existing_tests": [
+    "regen.tests.current.test_merkle_copy_repair"
+  ],
+  "limitations": [
+    "Small generated Merkle graph models shared history; it is not an extracted production proof DAG.",
+    "The documented production incident was slow decode/reencode, not proven historical object corruption; corruption cases are preventive regressions."
+  ]
+}

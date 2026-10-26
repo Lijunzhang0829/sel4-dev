@@ -1,0 +1,31 @@
+{
+  "source_run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-fresh-20261025-001",
+  "continued_run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-004",
+  "previous_initialization_attempt": {
+    "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-001",
+    "stopped_before_provider_start": true,
+    "reason": "slow decode/re-encode copy of shared Merkle logs",
+    "directory_preserved": true
+  },
+  "previous_initialization_attempts": [
+    {
+      "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-001",
+      "stopped_before_provider_start": true,
+      "directory_preserved": true
+    },
+    {
+      "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-002",
+      "stopped_before_provider_start": true,
+      "directory_preserved": true
+    },
+    {
+      "run": "codex-crefine-owner-blind-sol-xhigh-effective48h-planning-included-cont-20261025-003",
+      "stopped_before_provider_start": true,
+      "directory_preserved": true
+    }
+  ],
+  "durability_policy": "Recovery copy requires filesystem sync and final source/destination object stamp verification before success; ordinary live journal fsync unchanged",
+  "charged_seconds_before_migration": 42427.41534037329,
+  "manual_proof_changes": false,
+  "historical_green_promoted_without_recheck": false
+}
