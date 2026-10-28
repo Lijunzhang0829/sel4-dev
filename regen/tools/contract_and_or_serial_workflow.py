@@ -231,7 +231,7 @@ def build_parallel_workspace_command(
         "--theory", case["theory"], "--planner-model", "gpt-6-astra",
         "--call-timeout", str(resources.get("call_timeout_seconds", 900)),
         "--check-timeout", str(resources.get("check_timeout_seconds", 900)),
-        "--candidate-timeout", str(resources.get("candidate_timeout_seconds", 120)),
+        "--candidate-timeout", str(resources.get("candidate_timeout_seconds", 300)),
         "--max-parallel-theories", "1",
         "--native-slots", str(resources.get("native_slots", 1)),
         "--native-threads", str(resources.get("native_threads", 4)),

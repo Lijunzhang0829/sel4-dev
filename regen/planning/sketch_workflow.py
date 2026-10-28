@@ -10,8 +10,23 @@ from uuid import uuid4
 from regen.execution.proof_commits import digest, durable, freeze_evidence
 from regen.planning.sketch_check import (available_prefix, certificate, interface,
                                         load_groups, prefix_binding)
+from regen.execution.native_fact_audit import FACT_SNAPSHOT_ML, target_resolution_ml
 
 PROBE_SECONDS = 10
+PROBE_AUDIT_POLICY = 'declaration-export-audit-v1'
+
+
+def render_probe(prefix, node, proof, marker):
+    from regen.execution.isabelle_node_checker import wrap_context
+    from regen.execution.proof_batches import _safe_text
+    _safe_text(proof)
+    audit = (r'ML \<open>let' + target_resolution_ml(node['name']) + r'''
+      val _ = Thm.consolidate targets;
+      val _ = if null (Thm_Deps.all_oracles targets)
+        then () else error "Probe has an oracle dependency";
+    in writeln ''' + json.dumps(marker) + r''' end\<close>''')
+    return prefix[:-len('end\n')] + wrap_context(node['context'],
+        FACT_SNAPSHOT_ML + '\n' + node['statement'] + '\n' + proof + '\n' + audit) + '\nend\n'
 
 
 def _node(node):
@@ -64,7 +79,6 @@ def probe_helpers(checker, store, sha, entry_ids=None):
     plain = copy(store); plain.require_review = False; plain.require_phases = False
     authorize(plain, store.checked_source(sha), selected)
     from regen.execution.proof_batches import _render, _safe_text
-    from regen.execution.isabelle_node_checker import wrap_context
     results = []
     for key in selected:
         from regen.execution.check_tasks import check_cancelled
@@ -79,16 +93,9 @@ def probe_helpers(checker, store, sha, entry_ids=None):
         guard_attempt(store,nodes,{**proofs,key:proof},[key])
         binding = {'run_id':store.state['graph']['run_id'], 'entry':_node(nodes[key]),
                    'imports':store.imports, 'prefix':prefix_binding(base), 'proof':proof,
-                   'timeout_seconds':PROBE_SECONDS}
+                   'timeout_seconds':PROBE_SECONDS, 'audit_policy':PROBE_AUDIT_POLICY}
         marker = 'REGEN_HELPER_PROBE_CLEAN ' + digest(binding)
-        audit = r'''ML \<open>let
-          val facts = Global_Theory.get_thms (Proof_Context.theory_of \<^context>) %s;
-          val _ = Thm.consolidate facts;
-          val _ = if not (null facts) andalso null (Thm_Deps.all_oracles facts)
-            then () else error "Probe has an oracle dependency";
-        in writeln %s end\<close>''' % (json.dumps(nodes[key]['name']), json.dumps(marker))
-        source = prefix[:-len('end\n')] + wrap_context(nodes[key]['context'],
-            nodes[key]['statement'] + '\n' + proof) + '\n' + audit + '\nend\n'
+        source = render_probe(prefix, nodes[key], proof, marker)
         names = {n['id']:n['name'] for n in base['graph']['nodes']}
         checker._sketch_prefix_names = [names[k] for k in base['accepted_order']]
         check = freeze_evidence(checker.check_sketch_source(source, prefix, [], timeout=PROBE_SECONDS))
@@ -148,6 +155,8 @@ def _review(store, nodes, proofs, target, visiting=None):
             if row['burden'] != 'isolated' or ('probe_id' not in row and not getattr(store, 'require_assessment', False)):
                 raise ValueError('helper is now a leaf; review it with a native probe')
             probe = _read(store, 'probes', row['probe_id']) if row.get('probe_id') else None
+            if probe and probe.get('audit_policy') != PROBE_AUDIT_POLICY:
+                raise ValueError('leaf probe uses an old audit policy; probe it again')
             if probe and not _compatible(store, nodes, key, probe):
                 raise ValueError('leaf probe is stale')
     return identity
@@ -198,7 +207,8 @@ def review_sketch(store, sha, target, receipt_id, reviews):
             if row['burden'] != 'isolated' or ('probe_id' not in row and not getattr(store, 'require_assessment', False)):
                 raise ValueError('leaf review requires isolated burden and a native probe')
             probe = _read(store, 'probes', row['probe_id']) if row.get('probe_id') else None
-            if probe and not _compatible(store, nodes, key, probe):
+            if probe and (probe.get('audit_policy') != PROBE_AUDIT_POLICY
+                          or not _compatible(store, nodes, key, probe)):
                 raise ValueError('leaf probe does not match this interface/context')
     if getattr(store, 'require_assessment', False):
         from regen.planning.sketch_assessment import validate_review

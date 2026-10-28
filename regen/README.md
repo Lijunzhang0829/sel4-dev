@@ -1,5 +1,8 @@
 # Semantic Base 上的仓库级证明生成
 
+实验终止、基础设施阻塞、搜索停滞、计时与恢复异常的统一更新入口见
+[实验异常状态台账](EXPERIMENT-ANOMALIES.md)。台账区分历史观察、修复、部署和复验，不能用旧状态代替当前验收。
+
 当前实现针对 Refine：删除普通人类证明层，在 command 级 Semantic Base 上生成固定 contracts。
 持续共享工作区支持局部图、helper 修订、批量证明和成果复制复验。
 新 `parallel-workspace` 入口已接通每 theory 持续 File Planner、独立 native 资源池及仓库集成 gate；

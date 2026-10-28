@@ -12,6 +12,7 @@ import tempfile
 import threading
 import time
 import uuid
+from copy import deepcopy
 from datetime import datetime, timezone
 
 from regen.planning.workspace_harness import WorkspaceHarness, save
@@ -135,6 +136,7 @@ def call_worker(settings, policy, output, public, workspace, api, text, number):
     def artifact(suffix): return Path(str(prefix)+suffix)
     if artifact('.meta.json').exists(): raise ValueError('Never overwrite a model call.')
     artifact('.prompt.txt').write_text(text)
+    (workspace/'final.txt').unlink(missing_ok=True)
     auth=Path(os.environ.get('CODEX_HOME',str(Path.home()/'.codex')))/'auth.json'
     if not auth.is_file(): raise ValueError('Codex authentication unavailable.')
     started=datetime.now(timezone.utc).isoformat(); t0=time.monotonic()
@@ -188,7 +190,11 @@ def call_worker(settings, policy, output, public, workspace, api, text, number):
     artifact('.final.txt').write_text(final)
     events=[]; invalid_lines=0
     for line in artifact('.ndjson').read_text().splitlines():
-        try: events.append(json.loads(line))
+        try:
+            event = json.loads(line)
+            if not isinstance(event, dict):
+                raise ValueError('event must be an object')
+            events.append(event)
         except ValueError: invalid_lines+=1
     types=sorted({e['item']['type'] for e in events if isinstance(e.get('item'),dict) and 'type' in e['item']})
     audit={'allowed_item_types':sorted(ALLOWED_EVENTS),'observed_item_types':types,
@@ -201,7 +207,8 @@ def call_worker(settings, policy, output, public, workspace, api, text, number):
     for suffix,key in [('.ndjson','raw'),('.stderr.txt','stderr'),('.final.txt','final'),('.audit.json','audit')]:
         meta[key+'_sha256']=hashlib.sha256(artifact(suffix).read_bytes()).hexdigest()
     save(artifact('.meta.json'),meta)
-    if audit['forbidden_item_types'] or invalid_lines: raise ValueError('Workspace call failed tool audit.')
+    if audit['forbidden_item_types'] or (invalid_lines and not meta['timed_out']):
+        raise ValueError('Workspace call failed tool audit.')
     return meta,prefix
 
 
@@ -245,6 +252,55 @@ def completed_submission(harness, output, policy, settings):
     return {'status':'submitted','proposal':proposal,'artifacts':artifacts,'plan_prefix':prefix}
 
 
+def call_worker_with_retry(settings, policy, output, public, workspace, api, text, number, harness):
+    """Timeout retry restores pre-request artifacts; query evidence stays audited.
+
+    This is a request retry inside one live planning attempt, not permission to
+    resume a crashed stage or overwrite an existing output identity.
+    """
+    from regen.infrastructure.planning_retry import (
+        retry_planning_request, PlanningFeedbackTimeout, discard_timeout_output)
+    saved_state, saved_submission = deepcopy(harness.state), deepcopy(harness.submitted)
+    failed_prefixes = []
+    with tempfile.TemporaryDirectory(prefix='regen-planning-retry-') as tmp:
+        snapshot = Path(tmp)/'workspace'
+        shutil.copytree(workspace, snapshot, symlinks=True)
+        def restore():
+            with harness.lock:
+                # Never reuse a query sequence: failed requests remain evidence.
+                sequence = harness.state['sequence']
+                harness.state = {**deepcopy(saved_state), 'sequence':sequence}
+                harness.submitted = deepcopy(saved_submission)
+                save(harness.state_path, harness.state)
+                submitted = output/'control/submitted.json'
+                if saved_submission is None:
+                    submitted.unlink(missing_ok=True)
+                else:
+                    save(submitted, saved_submission)
+                shutil.rmtree(workspace)
+                shutil.copytree(snapshot, workspace, symlinks=True)
+        def request(attempt):
+            nonlocal number
+            number += 1
+            harness.active_call = number
+            try:
+                meta, prefix = call_worker(settings, policy, output, public, workspace, api, text, number)
+                if meta['timed_out']:
+                    failed_prefixes.append(prefix)
+                    raise PlanningFeedbackTimeout('Workspace planning request timed out')
+                if meta['returncode'] != 0:
+                    raise RuntimeError('Workspace model call failed; inspect '+str(prefix)+'.stderr.txt')
+                verify_worker_call(prefix, policy, settings['codex_sha256'])
+                return meta, prefix
+            except PlanningFeedbackTimeout:
+                restore()
+                raise
+        meta, prefix = retry_planning_request(request)
+    for failed in failed_prefixes:
+        discard_timeout_output(failed)
+    return meta, prefix, number
+
+
 def run_agent(payload, planning_input_path, policy, output):
     output=Path(output).resolve()
     if not policy.get('_allow_external_call'):
@@ -280,6 +336,7 @@ def run_agent(payload, planning_input_path, policy, output):
     revision_text = ''
     if policy.get('revision_context'):
         context = policy['revision_context']
+        harness.revision_review = context['review']
         save(public/'revision.json', context)
         save(workspace/'plan.json', context['initial_plan'])
         revision_text = ('\nRevise the existing plan using /input/revision.json. This is a pre-freeze review, not a new architecture search. '
@@ -287,20 +344,17 @@ def run_agent(payload, planning_input_path, policy, output):
             'Make only justified changes, query actual definitions/premises when needed, and revalidate/preflight/submit. '
             'Write /workspace/revision-decisions.json as a JSON array: one object per issue, with issue_id, '
             'decision (revise, local, or retain), reason, tradeoff, and remaining_risk, all nonempty strings. '
-            'Explain actual final changes. Do not claim a helper is proved. Do not use historical experiments.\n')
+            'The validate/preflight/submit tools automatically read revision-decisions.json; '
+            'repair any decision errors before submitting. Explain actual final changes. '
+            'Do not claim a helper is proved. Do not use historical experiments.\n')
         text += revision_text
     harness.view.assert_no_owner_disclosure(text)
     api=Path(tempfile.mkdtemp(prefix='regen-planner-api-')); server,thread=start_service(harness,api)
     number=0
     try:
         while True:
-            number+=1
-            harness.active_call=number
-            meta,prefix=call_worker(settings,policy,output,public,workspace,api,text,number)
-            if meta['timed_out']:
-                raise RuntimeError('Repository planning timed out; start a fresh plan in a new output directory.')
-            if meta['returncode']!=0: raise RuntimeError('Workspace model call failed; inspect '+str(prefix)+'.stderr.txt')
-            verify_worker_call(prefix,policy,settings['codex_sha256'])
+            meta,prefix,number=call_worker_with_retry(
+                settings,policy,output,public,workspace,api,text,number,harness)
             completed=completed_submission(harness,output,policy,settings)
             if completed is not None:
                 save(marker, {'policy':'fresh-only-v1', 'status':'submitted'})

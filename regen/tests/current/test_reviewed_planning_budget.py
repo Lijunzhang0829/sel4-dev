@@ -305,13 +305,13 @@ while not Path({str(pidfile)!r}).exists():
                 self.write(folder/'planner-proposal.json', proposal)
                 self.write(folder/'agent-proposal.json', proposal)
                 self.write(folder/'private-contract-map.json', {'C0001':'a'})
-            elif name == 'review':
+            elif name in {'review','final-review'}:
                 self.assertEqual(args[args.index('--model')+1], 'gpt-5.6-sol')
                 self.assertEqual(args[args.index('--reasoning-effort')+1], 'xhigh')
                 self.write(folder/'review.json', review)
             elif name == 'revision':
                 self.write(folder/'planner-proposal.json', proposal)
-                self.write(folder/'workspace/revision-decisions.json', [])
+                self.write(folder/'revision-decisions.json', [])
                 self.write(folder/'repository-plan.json',
                            {**proposal, 'plan_id':'test-plan','revision':1})
                 self.write(folder/'file-generation-list.json', {
@@ -319,7 +319,7 @@ while not Path({str(pidfile)!r}).exists():
                     'files':[{'theory':'A','contract_ids':['a']}]})
             else:
                 self.fail('unexpected stage '+name)
-            now[0] += {'draft':10, 'review':20, 'revision':30}[name]
+            now[0] += {'draft':10, 'review':20, 'revision':30, 'final-review':5}[name]
         def create(ledger, **kwargs):
             return EffectiveTimeBudget(ledger, monotonic=lambda:now[0], **kwargs)
         argv = ['reviewed_planning', '--input',str(self.input_path), '--output',str(output),
@@ -328,13 +328,17 @@ while not Path({str(pidfile)!r}).exists():
         with patch('sys.argv', argv), patch.object(module, 'EffectiveTimeBudget', side_effect=create), \
                 patch.object(reviewed_planning, 'run_command', side_effect=run_command):
             reviewed_planning.main()
-        self.assertEqual(calls, ['draft','review','revision'])
+        self.assertEqual(calls, ['draft','review','revision','final-review'])
         self.assertEqual(len({id(budget) for budget in budgets}), 1)
         receipt = json.loads((output/'budget-receipt.json').read_text())
         self.assertEqual(receipt['seconds'], 100)
-        self.assertEqual(receipt['effective_seconds'], 60)
-        self.assertEqual(receipt['planning_seconds'], 60)
-        self.assertEqual(receipt['remaining_seconds'], 40)
+        self.assertEqual(receipt['effective_seconds'], 65)
+        self.assertEqual(receipt['planning_seconds'], 65)
+        self.assertEqual(receipt['remaining_seconds'], 35)
+        frozen = json.loads((output/'frozen-plan.json').read_text())
+        self.assertEqual(frozen['final_review_sha256'], reviewed_planning.digest(review))
+        self.assertEqual(frozen['final_review_plan_sha256'], module.file_hash(output/'revision/planner-proposal.json'))
+        self.assertFalse(frozen['quality_improvement_certified'])
         self.assertEqual(receipt['model'], 'gpt-5.6-sol')
         self.assertEqual(receipt['reasoning_effort'], 'xhigh')
         self.assertEqual(json.loads((output/'status.json').read_text()),

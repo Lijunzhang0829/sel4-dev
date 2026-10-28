@@ -1,4 +1,4 @@
-"""Fresh complete planning: draft, blind consumer review, bounded-scope revision, freeze.
+"""Fresh planning: draft, consumer review, revision, final consumer review, freeze.
 
 Only the final freeze receipt authorizes this workflow's downstream plan choice.
 Each underlying planner still requires audited submission and native preflight.
@@ -10,20 +10,7 @@ from pathlib import Path
 import subprocess
 import sys
 from regen.planning.plan_review import analyze, digest, read, write, OUTPUT_REPAIR_POLICY
-
-
-def decisions_valid(decisions, review):
-    expected = {i['id'] for i in review['issues']}
-    if not isinstance(decisions, list) or len(decisions) != len(expected):
-        raise ValueError('One decision required per review issue')
-    if {d['issue_id'] for d in decisions} != expected:
-        raise ValueError('Decision issue identities mismatch')
-    for d in decisions:
-        if d['decision'] not in {'revise', 'local', 'retain'}:
-            raise ValueError('Invalid decision')
-        for key in ['reason','tradeoff','remaining_risk']:
-            if not isinstance(d[key],str) or not d[key].strip():
-                raise ValueError('Missing decision explanation')
+from regen.planning.revision_decisions import decisions_valid
 
 
 def replace_ids(value, mapping):
@@ -69,6 +56,7 @@ def main():
     binding={'input_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),
         'policy_sha256':digest(policy),'model':a.model,'reasoning_effort':a.reasoning_effort,
         'review_max_repairs':None,'review_output_repair_policy':OUTPUT_REPAIR_POLICY,
+        'final_plan_review_required':True,
         'include_planning_time':a.include_planning_time,
         'historical_execution_inputs':False,'proof_generation':False,
         'implementation':{str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in
@@ -98,8 +86,16 @@ def main():
             'notice':'Review hypotheses are not proof failures; keep local proof work local. No historical execution evidence.'}
         write(root/'revision-policy.json',policy)
         planner('revision',root/'revision-policy.json')
-        decisions=read(root/'revision/workspace/revision-decisions.json')
+        decisions=read(root/'revision/revision-decisions.json')
         decisions_valid(decisions,review)
+        # The first review concerns the draft. Review the exact submitted
+        # revision too; record remaining risks without pretending a model
+        # judgment certifies provability or automatically changing the plan.
+        run_command(root,'final-review',['regen.planning.plan_review',
+            '--plan',str(root/'revision/planner-proposal.json'),
+            '--input',str(source),'--output',str(root/'final-review'),'--allow-external-call',
+            '--model',a.model,'--reasoning-effort',a.reasoning_effort,'--timeout','600'],budget=budget)
+        final_review=read(root/'final-review/review.json')
         before=read(root/'draft/planner-proposal.json');after=read(root/'revision/planner-proposal.json')
         contracts=read(source)['contracts']
         old=analyze(before,contracts);new=analyze(after,contracts)
@@ -110,12 +106,15 @@ def main():
             'decisions':decisions,'quality_improvement_certified':False})
         # Only freeze after genuine planner completion, native validation and review decisions.
         artifacts={str(f.relative_to(root)):hashlib.sha256(f.read_bytes()).hexdigest()
-            for folder in ['draft','review','revision'] for f in sorted((root/folder).rglob('*')) if f.is_file()}
+            for folder in ['draft','review','revision','final-review'] for f in sorted((root/folder).rglob('*')) if f.is_file()}
         artifacts['comparison.json']=hashlib.sha256((root/'comparison.json').read_bytes()).hexdigest()
         frozen={'state':'frozen','plan':str(root/'revision/repository-plan.json'),
             'file_generation_list':str(root/'revision/file-generation-list.json'),
             'plan_sha256':hashlib.sha256((root/'revision/repository-plan.json').read_bytes()).hexdigest(),
             'review_sha256':digest(review),'artifacts':artifacts,
+            'final_review_sha256':digest(final_review),
+            'final_review_plan_sha256':hashlib.sha256((root/'revision/planner-proposal.json').read_bytes()).hexdigest(),
+            'final_review_issues':final_review['issues'], 'quality_improvement_certified':False,
             'proof_generation_started':False,'remaining_risks':[d['remaining_risk'] for d in decisions]}
         if budget is None: write(root/'frozen-plan.json',frozen)
         else: budget.complete(frozen)

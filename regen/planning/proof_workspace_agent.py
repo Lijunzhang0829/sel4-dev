@@ -79,7 +79,7 @@ def workspace_tools():
 class WorkspaceController:
     """Caller holds the run mutation lock for the full provider session."""
     def __init__(self, run_dir, *, theories=None, model=None, call_timeout=600,
-                 check_timeout=900, candidate_timeout=120):
+                 check_timeout=900, candidate_timeout=300):
         from regen.execution.proof_session_runner import frozen_role_model
         self.root = Path(run_dir).resolve()
         self.shared = SharedProofWorkspace(self.root)
@@ -248,6 +248,9 @@ class WorkspaceController:
                 'all_selected_sealed':self._all_selected_sealed(theory, state)}
         if proposal.get('action') == 'finish' and state['status'] == 'sealed':
             result.update(tool_status='completed', proof_verdict='green', publication='sealed')
+        elif proposal.get('action') == 'finish' and feedback.get('framework_blocked'):
+            result.update(framework_blocked=True, failure_scope=feedback['failure_scope'],
+                          notice='Trusted seal audit failed after complete checking; preserve proofs and pause this worker for harness repair.')
         if proposal.get('action') in {'check_theory', 'submit_batch'}:
             observation = next_proof_observation(state, feedback=feedback)
             if observation is not None:
@@ -267,7 +270,7 @@ class WorkspaceController:
 
 
 def run_workspace(run_dir, *, theories=None, model=None, call_timeout=600, check_timeout=900,
-                  candidate_timeout=120, allow_external_call=False, codex_bin=None, codex_home=None):
+                  candidate_timeout=300, allow_external_call=False, codex_bin=None, codex_home=None):
     from regen.execution.proof_session_runner import acquire_run_mutation_lock, release_run_mutation_lock
     from regen.infrastructure.audited_llm import model_settings
     from regen.infrastructure.codex_workspace_session import CodexWorkspaceSession

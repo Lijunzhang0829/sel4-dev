@@ -310,7 +310,7 @@ class EffectiveTimeBudget:
             checkpoint_seconds=self.checkpoint_seconds, unclean_recoveries=self.unclean_recoveries)
         # Legacy/non-provider runs need no duplicated counters or empty request
         # metadata in thousands of checkpoints. Their raw cost equals net cost.
-        if self.provider_requests.requests:
+        if self.provider_requests.requests or self.provider_requests.other_excluded_effective_seconds:
             value.update(provider_request_accounting=self.provider_requests.state(),
                          **self.provider_requests.summary())
         return value

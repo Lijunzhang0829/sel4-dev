@@ -44,7 +44,7 @@ class BatchWorker(PrefixWorker):
                             ('imports', '\n'.join(imports)), ('theory_name', self.label),
                             ('command_timeout', str(checker.timeout)),
                             ('prefix_timeout', str(self.prefix_timeout)),
-                            ('candidate_timeout', str(getattr(checker, 'batch_candidate_timeout', 120)))]:
+                            ('candidate_timeout', str(getattr(checker, 'batch_candidate_timeout', 300)))]:
             (self.root/name).write_text(value)
         self.checkpoints = self._write_checkpoints('initial', source)
         self.checkpoints[hashlib.sha256(self.base.encode()).hexdigest()] = self.base
@@ -102,7 +102,7 @@ class BatchWorker(PrefixWorker):
             (self.root/(stem+'.'+suffix)).write_text(str(value))
         temp = self.root/(stem+'.tmp'); temp.write_text(text)
         temp.rename(self.root/(stem+'.request'))
-        limit = timeout if timeout is not None else (getattr(self.checker, 'batch_candidate_timeout', 120) + 10 if action == 'check' else self.checker.timeout)
+        limit = timeout if timeout is not None else (getattr(self.checker, 'batch_candidate_timeout', 300) + 10 if action == 'check' else self.checker.timeout)
         self.wait(self.root/(stem+'.response'), timeout=limit)
         answer = (self.root/(stem+'.response')).read_text()
         with open(self.root/'worker.log', 'rb') as stream:
@@ -248,7 +248,7 @@ class BatchWorker(PrefixWorker):
             'verdict':'green' if answer == 'GREEN' else 'red',
             'returncode':0 if answer == 'GREEN' else (124 if timed_out else 1), 'diagnostic':answer,
             'timed_out':timed_out, 'timeout_scope':timeout_scope,
-            'timeout_seconds':getattr(self.checker, 'batch_candidate_timeout', 120),
+            'timeout_seconds':getattr(self.checker, 'batch_candidate_timeout', 300),
             'watchdog_grace_seconds':10,
             'source':str(path), 'log':str(log_path),
             'wall_ms':round((time.monotonic()-started)*1000),
@@ -281,7 +281,7 @@ class BatchWorker(PrefixWorker):
         answer, log = self.transaction('sketch', candidate[len(self.base):], admitted_names,
             before.count('\n') + 1,
             fields={} if timeout is None else {'candidate_timeout': timeout},
-            timeout=(getattr(self.checker, 'batch_candidate_timeout', 120) if timeout is None else timeout) + 10)
+            timeout=(getattr(self.checker, 'batch_candidate_timeout', 300) if timeout is None else timeout) + 10)
         log_path = self.root / (stem + '.sketch.log')
         log_path.write_text(log + '\n' + answer)
         snapshot = self.root / (stem + '.proof-state.xml')
@@ -299,7 +299,7 @@ class BatchWorker(PrefixWorker):
                 'publishable': False, 'incremental': True,
                 'proof_state_path': str(snapshot) if snapshot.exists() else None,
                 'native_proof_state_full':state,
-                'timeout_seconds':timeout if timeout is not None else getattr(self.checker,'batch_candidate_timeout',120),
+                'timeout_seconds':timeout if timeout is not None else getattr(self.checker,'batch_candidate_timeout',300),
                 'timeout_scope':'conditional-sketch-candidate' if answer.startswith('TIMEOUT\n') else None}
         from regen.execution.native_check_receipt import native_check_receipt
         result['native_receipt'] = native_check_receipt(

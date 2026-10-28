@@ -320,7 +320,7 @@ def _run(args,ownership):
             provider_recovery_window_seconds=recovery_window_seconds,
             provider_auth_store='external-private-v1',
             native_slots=1,resident_limit=2,native_cpus=4,native_memory_mb=16384,native_pids_limit=1024,
-            provider_build_timeout=1800,check_timeout=args.check_timeout,candidate_timeout=getattr(args,'candidate_timeout',120))
+            provider_build_timeout=1800,check_timeout=args.check_timeout,candidate_timeout=getattr(args,'candidate_timeout',300))
         config.update(shared_host_binding(getattr(args,'shared_host_lock_dir',None),
             getattr(args,'shared_host_slots',1),
             getattr(args,'shared_host_cleanup_timeout',30)))
@@ -615,7 +615,7 @@ def main():
     parser.add_argument('--idle-timeout',type=int,default=900)
     parser.add_argument('--preflight-seconds',type=int,default=900,help='Repository declaration preflight wall limit; matches Workspace Planner default')
     parser.add_argument('--check-timeout',type=int,default=900)
-    parser.add_argument('--candidate-timeout',type=int,default=120)
+    parser.add_argument('--candidate-timeout',type=int,default=300)
     parser.add_argument('--shared-host-lock-dir',
         help='Opt in to one shared native slot directory mounted by every experiment')
     parser.add_argument('--shared-host-slots',type=int,default=1)

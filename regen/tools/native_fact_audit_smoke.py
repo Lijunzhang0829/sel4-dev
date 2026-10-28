@@ -14,6 +14,7 @@ from regen.execution.isabelle_node_checker import (IsabelleChecker,
     automation_context_audit_ml, parse_proof_dependencies)
 from regen.infrastructure.resource_budget import clone_heaps
 from regen.planning.sketch_check import render_check
+from regen.planning.sketch_workflow import render_probe, PROBE_SECONDS
 from regen.preparation.checker_context import load_context
 
 
@@ -134,7 +135,7 @@ def run(dataset, output, *, only="all"):
              'red', 'Audit target has no theorems'),
         ]
         for label, entry, proof, prelude, expected, diagnostic in fixtures:
-            if only == 'sketch' or label == 'ordinary':
+            if only in {'sketch','probe'} or label == 'ordinary':
                 continue  # Run the large complete automation dump once, last.
             c = checker('seal_'+label, prelude)
             try:
@@ -148,14 +149,14 @@ def run(dataset, output, *, only="all"):
         entries = [node(name='source', ident='source',
                         statement='lemma source: "True" "(0::nat) = 0"'),
                    node(statement='lemma target: "(0::nat) = 0"')]
-        if only != 'sketch':
+        if only in {'all','seal'}:
             c = checker('seal_bundle_selection')
             record('seal_bundle_selection', seal_check(c, graph(entries),
                 {'source':'by simp_all','target':'using source(2) by assumption'}), 'green')
             c.close_prefix()
 
         for label, entry, proof, prelude, expected, diagnostic in fixtures:
-            if only == 'seal':
+            if only in {'seal','probe'}:
                 continue
             # Public sketch statements are lemma-only. This one trusted
             # malformed-result fixture replaces a rendered dummy lemma with a
@@ -191,23 +192,48 @@ def run(dataset, output, *, only="all"):
                    'REGEN_SKETCH_CLOSED '+signature if expected == 'green' else None)
             c.close_prefix()
 
+        if only in {'all','probe'}:
+            for label, entry, proof, prelude, expected, diagnostic in fixtures:
+                c = checker('probe_'+label)
+                (c.work_dir/'Audit_Synthetic_Base.thy').write_text(
+                    'theory Audit_Synthetic_Base imports "'+ctx['base_import']+'" begin\n'
+                    + prelude + '\nend\n')
+                c.synthetic_parent = True
+                prefix = 'theory Probe_Smoke\nimports "Draft.Audit_Synthetic_Base"\nbegin\n\nend\n'
+                marker = 'REGEN_HELPER_PROBE_CLEAN synthetic_'+label
+                rendered_entry = node() if label == 'empty_bundle' else entry
+                rendered_proof = 'by simp' if label == 'empty_bundle' else proof
+                source = render_probe(prefix, rendered_entry, rendered_proof, marker)
+                if label == 'empty_bundle':
+                    source = source.replace(rendered_entry['statement']+'\n'+rendered_proof, EMPTY_FACT, 1)
+                c.batch_incremental = True
+                c.batch_candidate_timeout = 300
+                try:
+                    result = c.check_sketch_source(source, prefix, [], timeout=PROBE_SECONDS)
+                    record('probe_'+label, result, expected, diagnostic,
+                           marker if expected == 'green' else None)
+                finally:
+                    c.close_prefix()
+
         # Empty names fail before native work in both paths; no fallback to the
         # first/old theorem in a theory can make the audit succeed.
-        for mode in ('seal','sketch'):
+        for mode in ('seal','sketch','probe'):
             entry = node(name='')
             try:
                 if mode == 'seal':
                     checker('empty_name').complete_audit_source(graph([entry]), {'target':'by simp'})
-                else:
+                elif mode == 'sketch':
                     render_check(dict(graph=graph([entry]),proofs={},accepted_order=[]), {'target':entry},
                         {'target':'by simp'}, {'target_entry_id':'target','helper_ids':[]},
                         [ctx['base_import']], 'empty')
+                else:
+                    render_probe('end\n', entry, 'by simp', 'empty')
             except ValueError as error:
                 passed = 'theorem name' in str(error)
             else:
                 passed = False
             report['cases'].append(dict(case=mode+'_empty_name', passed=passed, expected='ValueError'))
-        if only != 'sketch':
+        if only in {'all','seal'}:
             c = checker('seal_ordinary')
             record('seal_ordinary', seal_check(c, graph([node()]), {'target':'by simp'}), 'green')
             c.close_prefix()
@@ -226,7 +252,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dataset', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--only', choices=('all','seal','sketch'), default='all')
+    parser.add_argument('--only', choices=('all','seal','sketch','probe'), default='all')
     args = parser.parse_args()
     result = run(args.dataset, args.output, only=args.only)
     print(json.dumps({'pass':result['pass'], 'cases':len(result['cases']),

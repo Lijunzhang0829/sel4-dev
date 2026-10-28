@@ -139,10 +139,11 @@ def validate_review(value, plan, contracts):
 
 def run_review(packet, plan, contracts, output, *, model, reasoning_effort,
                timeout):
-    """Repair audited output-schema errors; transport/audit failures still stop.
+    """Repair output-schema errors without a round cap; resend one timeout.
 
     Every attempt keeps its own transcript and validation receipt. Only a fully
-    validated model response may become the committed review; nothing is filtered
+    validated model response may become the committed review; bad audits stop,
+    and a second consecutive transport timeout pauses. Nothing is filtered
     or amended by the supervisor. Output validation has no repair-round limit.
     """
     from regen.infrastructure.llm_transcript import call_codex, validate_call_artifact
@@ -154,11 +155,26 @@ def run_review(packet, plan, contracts, output, *, model, reasoning_effort,
         prefix = output / ('review' if attempt == 0 else f'review-repair-{attempt:04d}')
         write(output/'status.json', {'state':'running', 'attempt':attempt + 1,
                                     'max_repairs':None, 'output_repair_policy':OUTPUT_REPAIR_POLICY})
-        text = call_codex(prompt, prefix, model=model, reasoning_effort=reasoning_effort,
-                          timeout=timeout, clean_runtime=True,
-                          stage='plan-interface-review', theory='Repository')
-        # An unaudited or failed provider call is not a schema-correction request.
-        meta = validate_call_artifact(prefix, require_real=True)
+        from regen.infrastructure.planning_retry import (
+            retry_planning_request, PlanningFeedbackTimeout, discard_timeout_output)
+        failed_prefixes = []
+        def request(retry):
+            actual = prefix if not retry else prefix.with_name(prefix.name+'-timeout-retry')
+            try:
+                text = call_codex(prompt, actual, model=model, reasoning_effort=reasoning_effort,
+                                  timeout=timeout, clean_runtime=True,
+                                  stage='plan-interface-review', theory='Repository')
+            except RuntimeError as error:
+                path = Path(str(actual)+'.meta.json')
+                if path.is_file() and json.loads(path.read_text()).get('timed_out'):
+                    failed_prefixes.append(actual)
+                    raise PlanningFeedbackTimeout(str(error)) from error
+                raise
+            meta = validate_call_artifact(actual, require_real=True)
+            return text, actual, meta
+        text, prefix, meta = retry_planning_request(request)
+        for failed_prefix in failed_prefixes:
+            discard_timeout_output(failed_prefix)
         if not meta.get('sealable_generation'):
             raise ValueError('Unaudited review')
         receipt = {'attempt':attempt + 1, 'transcript_prefix':prefix.name,

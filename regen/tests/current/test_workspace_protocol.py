@@ -169,7 +169,7 @@ class WorkspaceProtocolTest(unittest.TestCase):
         self.assertEqual(self.f.f.policy['interaction'],'agent-iterative')
         self.assertNotIn('max_attempts',policy['model'])
 
-    def test_timeout_discards_submission_and_never_retries_same_output(self):
+    def test_timeout_retries_once_then_requires_explicit_stage_recovery(self):
         output=self.f.root/'timeout-runner'
         policy=json.loads(Path('regen/config/repository-planning-policy.json').read_text())
         policy['_allow_external_call']=True
@@ -177,12 +177,13 @@ class WorkspaceProtocolTest(unittest.TestCase):
         with patch.object(workspace_planner,'model_settings',return_value=settings), \
              patch.object(workspace_planner,'native_checker',return_value=self.f.native), \
              patch.object(workspace_planner,'call_worker',return_value=(
-                 {'timed_out':True,'returncode':124},output/'unused')) as call:
-            with self.assertRaisesRegex(RuntimeError,'fresh plan'):
+                 {'timed_out':True,'returncode':124},output/'unused')) as call, \
+             patch('regen.infrastructure.planning_retry.time.sleep'):
+            with self.assertRaisesRegex(RuntimeError,'two consecutive timeouts'):
                 workspace_planner.run_agent({},self.f.input,policy,output)
             with self.assertRaisesRegex(ValueError,'fresh-only'):
                 workspace_planner.run_agent({},self.f.input,policy,output)
-            self.assertEqual(call.call_count,1)
+            self.assertEqual(call.call_count,2)
         self.assertFalse((output/'control/submitted.json').exists())
         self.assertFalse(list((output/'control').glob('checkpoint-*')))
         self.assertFalse((output/'snapshots').exists())

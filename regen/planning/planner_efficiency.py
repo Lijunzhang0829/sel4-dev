@@ -46,7 +46,7 @@ def failure_identity(run, checker, old, candidate):
     return digest({'scheme':'same-context-red-v1', 'run':run,
         'old':_binding(old), 'candidate':_binding(candidate),
         'imports':checker.imports(), 'timeout':checker.timeout,
-        'candidate_timeout':getattr(checker, 'batch_candidate_timeout', 120),
+        'candidate_timeout':getattr(checker, 'batch_candidate_timeout', 300),
         'incremental':getattr(checker, 'batch_incremental', False)})
 
 

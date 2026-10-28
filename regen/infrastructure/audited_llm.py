@@ -39,6 +39,9 @@ def audit_events(raw_path: Path) -> dict:
         except ValueError:
             parse_errors += 1
             continue
+        if not isinstance(event, dict):
+            parse_errors += 1
+            continue
         event_type = str(event.get("type", "unknown"))
         event_types[event_type] = event_types.get(event_type, 0) + 1
         item = event.get("item")
@@ -56,6 +59,7 @@ def audit_events(raw_path: Path) -> dict:
         "event_types": event_types,
         "item_types": item_types,
         "parse_errors": parse_errors,
+        "event_stream_valid": parse_errors == 0,
         "passive_item_types": sorted(PASSIVE_ITEM_TYPES),
         # Keep the old key for existing transcript consumers.
         "allowed_item_types": sorted(PASSIVE_ITEM_TYPES),
@@ -276,6 +280,7 @@ def call_codex(
         "no_tool_events": audit["no_tool_events"],
         "sealable_generation": bool(
             returncode == 0 and not timed_out and not interrupted and audit["no_tool_events"]
+            and audit['event_stream_valid'] and bool(final.strip())
         ),
     }
     meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -286,6 +291,8 @@ def call_codex(
         raise ValueError('input_too_large: provider rejected the input; do not retry unchanged')
     if returncode != 0:
         raise RuntimeError(f"Codex failed with exit code {returncode}; see {stderr_path}")
+    if not audit['event_stream_valid']:
+        raise RuntimeError('Codex transcript contains malformed events; output rejected')
     if not audit["no_tool_events"]:
         raise RuntimeError(
             f"Codex used forbidden tools {audit['forbidden_item_types']}; output rejected"

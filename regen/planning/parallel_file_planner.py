@@ -347,6 +347,7 @@ class TheoryController(WorkspaceController):
         self._tool_lock = threading.RLock()
         self._abort_requested = threading.Event()
         self._provider_preparation_error = None
+        self.framework_blocked = False
         self.focus_contract_id = focus_contract_id
         self.stop_at_focus_contract = stop_at_focus_contract
         if focus_contract_id is not None:
@@ -448,6 +449,9 @@ class TheoryController(WorkspaceController):
         # Receipt inspection/cancellation may be used by an external supervisor.
         # All mathematical/read tools share one theory-local serial boundary.
         mathematical = name in {'proof_action', 'submit_check'}
+        if mathematical and getattr(self, 'framework_blocked', False):
+            return {'framework_blocked':True, 'failure_scope':'trusted_audit_target',
+                    'notice':'Preserve accepted proofs; this worker requires trusted audit repair.'}
         if self.stop_at_focus_contract and mathematical:
             if self.target_contract_green():
                 raise ValueError(
@@ -457,7 +461,8 @@ class TheoryController(WorkspaceController):
                 raise ValueError(
                     'target-contract mode does not seal the whole theory')
         if name in {'get_check_result','wait_checks','cancel_check'}:
-            return self._handle(name, arguments, metadata)
+            result = self._handle(name, arguments, metadata)
+            return {**result, **({'framework_blocked':True} if getattr(self, 'framework_blocked', False) else {})}
         with self._tool_lock:
             self._check_session_active()
             self._completed_action_state = None
@@ -466,6 +471,8 @@ class TheoryController(WorkspaceController):
             if self.document_mode:
                 from regen.planning.document_interface import public_view
                 result = public_view(result)
+            if getattr(self, 'framework_blocked', False):
+                result = {**result, 'framework_blocked':True, 'failure_scope':'trusted_audit_target'}
             if self.target_contract_green():
                 if not isinstance(result, dict):
                     result = {'result': result}
@@ -755,6 +762,8 @@ class TheoryController(WorkspaceController):
                                 result = super(TheoryController,self).proof_action(
                                     {'theory':self.theory,'proposal':proposal},metadata,
                                     state_snapshot=now, helper_attempt=helper_attempt)
+                                if kind == 'seal' and result.get('framework_blocked'):
+                                    self.framework_blocked = True
                     else:
                         result = self._observe(kind,proposal,snapshot,package,directory)
                     emit_event('check_task_result_ready',kind=kind)
@@ -839,7 +848,7 @@ class TheoryController(WorkspaceController):
 
 
 def run_theory_session(root, theory, *, resources, executor, settings, directory,
-                       model=None, call_timeout=600, check_timeout=900, candidate_timeout=120,
+                       model=None, call_timeout=600, check_timeout=900, candidate_timeout=300,
                        codex_home=None, cancel_event=None, document_mode=True,
                        generation_strategy_name='baseline', focus_contract_id=None,
                        stop_at_focus_contract=False, and_or_control=None, retry_context=None,
@@ -923,11 +932,10 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                                        reasoning_effort=settings['reasoning_effort'],timeout=call_timeout,
                                                        cancel_event=cancel_event,
                                                        on_abort=getattr(controller,'abort_pending',None),
-                                                       stop_when=(
-                                                           (lambda value: 'target_contract_green'
-                                                            if isinstance(value,dict) and value.get('target_contract_green')
-                                                            else None)
-                                                           if stop_at_focus_contract else None))
+                                                       stop_when=lambda value: (
+                                                           'framework_blocked' if isinstance(value,dict) and value.get('framework_blocked')
+                                                           else 'target_contract_green' if stop_at_focus_contract and isinstance(value,dict)
+                                                           and value.get('target_contract_green') else None))
                             except BaseException as error:
                                 # The proof journal is the authority even if
                                 # transport fails after the accepting callback.
@@ -946,6 +954,11 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                             target_completed = controller.target_contract_green()
                             if target_completed or state['status'] in {'sealed','retired'}:
                                 break
+                            if (getattr(controller,'framework_blocked',False)
+                                    or state.get('batch_feedback', {}).get('framework_blocked')):
+                                emit_event('generation_framework_blocked', theory=theory,
+                                           failure_scope='trusted_audit_target')
+                                break
                             # A model turn is not a proof or budget boundary.
                             # The persistent session keeps its independent
                             # inactivity/duplicate-result guards; the coordinator
@@ -954,7 +967,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                     if transport_anomaly is None:
                         audit = audit_workspace_session(
                             directory/'session-transcript.jsonl',
-                            require_terminal=not target_completed,
+                            require_terminal=not target_completed and not getattr(controller,'framework_blocked',False)
+                                and not state.get('batch_feedback', {}).get('framework_blocked'),
                             require_real=True)
                     else:
                         audit = {
@@ -968,7 +982,9 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
             _, state = controller._state(theory)
             target_completed = controller.target_contract_green()
             status = ('target_green_completed'
-                      if target_completed else state['status'])
+                      if target_completed else 'framework_blocked'
+                      if getattr(controller,'framework_blocked',False)
+                         or state.get('batch_feedback', {}).get('framework_blocked') else state['status'])
             provider = (providers[-1] if providers else
                         {'status':'not_started_target_already_green'})
             result = {'theory':theory,'status':status,
@@ -1123,7 +1139,7 @@ def _attach_budget_pause(error, budget, active=()):
 
 def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, native_slots=1,
                            native_threads=4, resident_limit=2, model=None, call_timeout=600,
-                           check_timeout=900, candidate_timeout=120, allow_external_call=False,
+                           check_timeout=900, candidate_timeout=300, allow_external_call=False,
                            codex_home=None, integrate=True, file_planner_interface='document',
                            execution_policy=None, native_cpus=4, native_memory_mb=16384,
                            native_pids_limit=1024, provider_build_timeout=1800,
@@ -1286,7 +1302,8 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                 _reclaim_completed_heaps(root, completed)
                                 results.append(completed)
                                 if completed.get('status') not in {'sealed','retired'}:
-                                    failures[theory] = {'reason':'session_returned_unsealed',
+                                    failures[theory] = {'reason':('framework_blocked' if completed.get('status') == 'framework_blocked'
+                                                                  else 'session_returned_unsealed'),
                                                         'status':completed.get('status')}
                             except Exception as error:
                                 from regen.infrastructure.codex_workspace_session import ProviderHTTPError, ProviderFeedbackError

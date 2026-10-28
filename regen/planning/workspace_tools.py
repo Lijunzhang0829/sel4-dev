@@ -19,6 +19,9 @@ def main():
             p.error('provide one plan JSON file')
         try:
             request['proposal'] = json.loads(Path(a.values[0]).read_text())
+            decisions = Path('revision-decisions.json')
+            if decisions.exists():
+                request['revision_decisions'] = json.loads(decisions.read_text())
         except (OSError, ValueError) as e:
             print(json.dumps({'valid':False,'errors':[str(e)]})); return 1
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:

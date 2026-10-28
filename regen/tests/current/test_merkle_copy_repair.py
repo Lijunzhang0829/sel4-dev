@@ -58,14 +58,24 @@ class MerkleCopyRepairTests(unittest.TestCase):
         self.assertFalse(self.destination.exists())
 
     def test_shared_objects_are_checked_once_per_batch_and_again_on_next_copy(self):
+        import subprocess
+        second=self.source/'batch-requests/0002/check.json'
+        second_destination=self.target/'batch-requests/0002/check.json'
+        logs.write_artifact(second,{**self.value,'request':2},immutable=True)
         original=logs.ObjectStore.references;counts={}
         def references(store,key):
             identity=(store.root,key);counts[identity]=counts.get(identity,0)+1
             return original(store,key)
-        with patch.object(logs.ObjectStore,'references',references),logs.logged_copy_batch():
-            logs.copy_logged_file(self.original,self.destination)
-            logs.copy_logged_file(self.original,self.target/'batch-requests/0002/check.json')
+        with patch.object(logs.ObjectStore,'references',references), \
+                patch('subprocess.run',wraps=subprocess.run) as sync:
+            with logs.logged_copy_batch():
+                logs.copy_logged_file(self.original,self.destination)
+                logs.copy_logged_file(second,second_destination)
+                sync.assert_not_called()
+            sync.assert_called_once_with(['sync','-f',str(self.target)],check=True,
+                                         capture_output=True,timeout=120)
         self.assertTrue(all(n==1 for n in counts.values()),counts)
+        self.assertEqual(logs.read_artifact(second_destination),{**self.value,'request':2})
         child=next(k for k,_ in self.store.fingerprint(self.key) if k!=self.key)
         self.store.path(child).write_bytes(b'corrupt')
         with self.assertRaises(ValueError):

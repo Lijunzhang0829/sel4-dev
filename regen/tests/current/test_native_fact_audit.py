@@ -2,6 +2,7 @@
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from regen.execution.isabelle_node_checker import IsabelleChecker
 from regen.execution.native_fact_audit import FACT_SNAPSHOT_ML, target_resolution_ml
@@ -17,6 +18,35 @@ def fixture(name='target', context=()):
 
 
 class NativeFactAuditTests(unittest.TestCase):
+    def test_trusted_audit_target_failure_is_distinct_from_ordinary_red(self):
+        with tempfile.TemporaryDirectory() as d:
+            checker = self.checker(Path(d))
+            _, graph = fixture()
+            for message, expected in [('Missing newly declared audit fact: target', True),
+                                      ('Failed to finish proof: goal', False)]:
+                with patch.object(checker, '_check', return_value={
+                        'verdict':'red','diagnostic':message,'returncode':1}):
+                    result = checker.audit_complete_theory(graph, {'target':'by simp'})
+                self.assertEqual(result.get('failure_scope') == 'trusted_audit_target', expected)
+
+    def test_helper_probe_audits_new_export_inside_locale(self):
+        from regen.planning.sketch_workflow import render_probe
+        node, _ = fixture(context=['context Synthetic_Locale begin'])
+        source = render_probe('theory Probe imports Main begin\nend\n', node, 'by simp', 'probe-marker')
+        scope = source.index('context Synthetic_Locale begin')
+        snapshot = source.index(FACT_SNAPSHOT_ML)
+        declaration = source.index(node['statement'])
+        audit = source.index('val target_name =')
+        end = source.index('\nend\n', audit)
+        self.assertTrue(scope < snapshot < declaration < audit < end)
+        self.assertIn('not (Facts.defined (regen_audit_facts_before ()) name)', source)
+        self.assertIn('if null targets', source)
+        for name in ('', 'target(1)', 'target[OF assms]'):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                render_probe('end\n', dict(node, name=name), 'by simp', 'marker')
+        with self.assertRaises(ValueError):
+            render_probe('end\n', node, 'sorry', 'marker')
+
     def checker(self, root):
         return IsabelleChecker(root, root/'isabelle', heaps_dir=root, l4v_dir=root,
                                semantic_workspace=root, base_import='Main')

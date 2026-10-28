@@ -67,6 +67,7 @@ class WorkspaceHarness:
             'checker':identity if isinstance(identity,dict) else None,
         })
         self.active_call=None
+        self.revision_review=None
         self.state_path=self.output/'control/state.json'
         self.state=json.loads(self.state_path.read_text()) if self.state_path.exists() else {'inspected_contracts':{},'inspected_premises':{},'sequence':0}
         from regen.infrastructure.incremental_log import find_root, read_artifact
@@ -182,6 +183,13 @@ class WorkspaceHarness:
             return {'records':records,'withheld_records':len(values)-len(records),'notice':'Only records respecting the public input boundary are returned and eligible for reuse.'}
         if action in {'validate','preflight','submit'}:
             proposal=request.get('proposal'); result=self.validate(proposal)
+            if self.revision_review is not None:
+                from regen.planning.revision_decisions import decisions_valid
+                try:
+                    decisions_valid(request.get('revision_decisions'), self.revision_review)
+                except ValueError as error:
+                    return {'valid':False, 'stage':'revision-decisions', 'error':str(error),
+                        'notice':'Repair revision-decisions.json and validate/submit again. No plan was published.'}
             if not result['valid'] or action=='validate': return result
             identity=hashlib.sha256(json.dumps(proposal,sort_keys=True).encode()).hexdigest()
             cache=self.output/f'preflight/{identity}/result.json'
@@ -196,6 +204,8 @@ class WorkspaceHarness:
                 self.submitted={'proposal':deepcopy(proposal),'preflight_sha256':identity,
                                 'preflight_result_sha256':hashlib.sha256(cache.read_bytes()).hexdigest(),
                                 'call_number':self.active_call}
+                if self.revision_review is not None:
+                    self.submitted['revision_decisions'] = deepcopy(request['revision_decisions'])
                 save(self.output/'control/submitted.json',self.submitted)
             return {**result,'native_preflight':'pass','submitted':action=='submit','notice':'Declarations/imports load; no goal or helper has been proved.'}
         raise ValueError('Unknown operation.')
@@ -220,6 +230,11 @@ class WorkspaceHarness:
         validation=self.validate(public)
         if not validation['valid']:
             raise ValueError('Submitted plan no longer validates against its inspection receipts.')
+        if self.revision_review is not None:
+            from regen.planning.revision_decisions import decisions_valid
+            decisions = self.submitted.get('revision_decisions')
+            decisions_valid(decisions, self.revision_review)
+            save(self.output/'revision-decisions.json', decisions)
         evidence=self.view.canonical_evidence(self.evidence()); canonical=self.view.decode(public)
         bundle=build_bundle({**self.view.canonical_payload,'planner_evidence':evidence},canonical)
         save(self.output/'agent-proposal.json',public); save(self.output/'agent-evidence.json',self.evidence()); save(self.output/'planner-evidence.json',evidence)

@@ -2292,7 +2292,7 @@ def main() -> int:
     batch.add_argument("--planner-model", default=None)
     batch.add_argument("--call-timeout", type=int, default=600)
     batch.add_argument("--check-timeout", type=int, default=900)
-    batch.add_argument("--candidate-timeout", type=int, default=120,
+    batch.add_argument("--candidate-timeout", type=int, default=300,
                        help="Seconds per candidate proof batch; separate from graph and final seal checks")
     batch.add_argument("--max-requests", type=int, default=0,
                        help="Checkpoint after this many requests; 0 means no count limit")
@@ -2302,7 +2302,7 @@ def main() -> int:
     workspace.add_argument("--planner-model", default=None, help="Must match the run-frozen File Planner model")
     workspace.add_argument("--call-timeout", type=int, default=600, help="Provider event inactivity timeout; excludes native checks")
     workspace.add_argument("--check-timeout", type=int, default=900)
-    workspace.add_argument("--candidate-timeout", type=int, default=120)
+    workspace.add_argument("--candidate-timeout", type=int, default=300)
     workspace.add_argument("--allow-external-call", action="store_true", help="Enable the audited dynamic-tool provider session")
     workspace.add_argument("--codex-home", type=Path, help="Authentication source; only auth.json is copied")
     parallel = sub.add_parser("parallel-workspace", parents=[workspace], add_help=False,

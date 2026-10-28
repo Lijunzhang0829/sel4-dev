@@ -38,6 +38,59 @@ class ReviewedPlanningBudget:
         self.stage = EffectiveTimeBudget(self.ledger, seconds=seconds, include_planning=True)
         self.process = None
         self.process_lock = threading.RLock()
+        self.requests = {}
+        self.active_request = None
+
+    def request_event(self, event, fields):
+        """Measure charged planning work, never trust a child-supplied duration.
+
+        Planning is serial and has no proof workers. Native preparation already
+        excluded by the activity bridge cannot be refunded a second time.
+        """
+        with self.stage.lock:
+            self.stage._settle()
+            if self.stage.workers:
+                raise ValueError('planning retry accounting requires a serial planning clock')
+            if event == 'planning_request_started':
+                request = fields['request_id']
+                if not isinstance(request, str) or not request or request in self.requests or self.active_request:
+                    raise ValueError('duplicate or overlapping planning request')
+                self.stage.check()
+                self.requests[request] = {'start':self.stage.planning_seconds, 'outcome':'pending',
+                                          'retry_of':fields.get('retry_of')}
+                self.active_request = request
+            elif event == 'planning_request_finished':
+                request = fields['request_id']
+                if request != self.active_request or fields['outcome'] not in {'success','timeout','failed'}:
+                    raise ValueError('unmatched planning request finish')
+                row = self.requests[request]
+                row.update(outcome=fields['outcome'],
+                           charged_seconds=self.stage.planning_seconds-row['start'])
+                self.active_request = None
+            elif event == 'planning_request_retry_succeeded':
+                failed, success = fields['failed_request_id'], fields['successful_request_id']
+                old, new = self.requests[failed], self.requests[success]
+                if old.get('credited_to') == success:
+                    return
+                if (old['outcome'] != 'timeout' or new['outcome'] != 'success'
+                        or new['retry_of'] != failed or old.get('credited_to')):
+                    raise ValueError('invalid planning retry credit')
+                self.stage.check()  # A prospective credit never bypasses cutoff.
+                seconds = old['charged_seconds']
+                self.stage.effective_seconds -= seconds
+                self.stage.planning_seconds -= seconds
+                self.stage.provider_requests.other_excluded_effective_seconds += seconds
+                old['credited_to'] = success
+                self.stage.provider_requests.validate(self.stage.effective_seconds,
+                    self.stage.worker_seconds, self.stage._theory_seconds)
+                self.stage._write_state('planning_request_retry_credit', correction={
+                    'failed_request_id':failed, 'successful_request_id':success,
+                    'effective_seconds':seconds, 'planning_seconds':seconds,
+                    'policy':'successful-planning-retry-exclusion-v1',
+                    'original_consumption_preserved':True})
+            else:
+                raise ValueError('unknown planning request event')
+            self.ledger.append(event, **fields)
 
     def start(self):
         self.stage.begin_planning()
@@ -85,7 +138,11 @@ class ReviewedPlanningBudget:
                         event = json.loads(line[len('[regen-event] '):])
                         if not isinstance(event, dict) or not isinstance(event.get('event'), str):
                             raise ValueError('malformed trusted planning event')
-                        bridge.handle(event['event'], event)
+                        if event['event'] in {'planning_request_started', 'planning_request_finished',
+                                              'planning_request_retry_succeeded'}:
+                            self.request_event(event['event'], event)
+                        else:
+                            bridge.handle(event['event'], event)
             except BaseException as error:
                 errors.append(error)
                 try:
@@ -106,6 +163,8 @@ class ReviewedPlanningBudget:
                 raise errors[0]
             bridge.close()
             self.stage.check()
+            if self.active_request is not None:
+                raise ValueError('planning child left an unfinished provider request')
             if process.returncode:
                 raise subprocess.CalledProcessError(process.returncode, command)
         except BaseException:
@@ -144,6 +203,8 @@ class ReviewedPlanningBudget:
                 raise ValueError('planning child must exit before freezing')
         with self.stage.lock:
             self.stage.check()
+            if self.active_request is not None:
+                raise ValueError('cannot freeze an unfinished planning provider request')
             if self.stage.exclusions:
                 raise ValueError('planning clock has unfinished exclusions')
             self.stage.end_planning()

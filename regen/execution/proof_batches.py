@@ -198,7 +198,7 @@ def check_batch(checker, old, candidate):
     if additions:
         import time
         batch_started = time.monotonic()
-        candidate_timeout = getattr(checker, 'batch_candidate_timeout', 120)
+        candidate_timeout = getattr(checker, 'batch_candidate_timeout', 300)
         source = _render(candidate['graph'], candidate['proofs'], evidence['imports'], evidence['label'])
         result = None
         if getattr(checker, 'batch_incremental', False):

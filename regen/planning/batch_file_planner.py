@@ -864,8 +864,11 @@ def seal_theory(run_dir, run, package, directory, checker, ancestors, state):
         impact = audit_theory(checker=checker, graph=graph, proofs=proofs,
             premise_snapshot_path=Path(run['premise_snapshot']), output_path=directory/'retained-semantic-impact.json')
     except ValueError as error:
+        audit = freeze_evidence(getattr(checker, 'last_complete_audit', {}))
         return None, {'stage':'semantic-audit', 'diagnostic':str(error),
-                      'check':freeze_evidence(getattr(checker, 'last_complete_audit', {}))}
+                      'check':audit,
+                      **({'framework_blocked':True, 'failure_scope':'trusted_audit_target'}
+                         if audit.get('failure_scope') == 'trusted_audit_target' else {})}
     name = generated_checkpoint_theory(package['file_slot'])
     source = checker.complete_source(graph, proofs, theory_name=name)
     path = checker.generated_dir/(name+'.thy'); path.write_text(source)
@@ -982,7 +985,7 @@ def _record_termination(run_dir, theory, directory, journal, state, error):
 
 
 def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
-                    call_timeout=600, check_timeout=900, candidate_timeout=120, max_requests=0,
+                    call_timeout=600, check_timeout=900, candidate_timeout=300, max_requests=0,
                     decision_source=None, runtime_cache=None, observation_source=None, observation_order=None,
                     state_sink=None, incremental_progress=False, helper_attempt=None):
     from regen.execution.repository_execution import setup, progress

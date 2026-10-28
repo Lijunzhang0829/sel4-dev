@@ -664,7 +664,7 @@ class IsabelleChecker:
                 self._batch_worker = None
                 raise
         label = prefix_source.splitlines()[0].split()[1]
-        result = self._check(source, label, timeout=timeout if timeout is not None else getattr(self, 'batch_candidate_timeout', 120))
+        result = self._check(source, label, timeout=timeout if timeout is not None else getattr(self, 'batch_candidate_timeout', 300))
         result.update(check_scope='isolated-conditional-sketch', publishable=False,
                       incremental=False)
         return result
@@ -917,6 +917,13 @@ class IsabelleChecker:
             source, label, writable_mounts=[(audit_dir, "/audit-output")],
         )
         if result["verdict"] != "green":
+            # These messages originate in our declaration-bound renderer, after
+            # ordinary checking. They are not mathematical proof diagnostics.
+            diagnostic = (result.get('diagnostic') or '') + '\n' + (result.get('log_content') or '')
+            if any(message in diagnostic for message in (
+                    'Missing newly declared audit fact:', 'Ambiguous newly declared audit fact:',
+                    'Audit target has no theorems:', 'Audit target retains local hypotheses:')):
+                result = {**result, 'failure_scope':'trusted_audit_target'}
             return result
 
         context_tsv = audit_dir / "automation-context.tsv"

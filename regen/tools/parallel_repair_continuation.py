@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 from regen.execution.proof_commits import durable, digest
-from regen.infrastructure.incremental_log import read_artifact
+from regen.infrastructure.incremental_log import read_artifact, logged_copy_batch
 from regen.tools.application_release import verify
 from regen.tools.provider_feedback_continuation import replacement_experiment
 
@@ -72,7 +72,8 @@ def prepare(source, destination, manifest, *, authorization, candidate_timeout=3
             raise ValueError('source launch and frozen candidate timeout differ')
         reviewed = review_parallel_budget_clock(source)
         strategy = generation_strategy(source_policy['generation_strategy']['name'])
-        fork_workspace_continuation(source, destination)
+        with logged_copy_batch():
+            fork_workspace_continuation(source, destination)
         budget = carry_parallel_budget(source, destination, authorization=authorization,
             clock_review=reviewed['clock_review'], target_candidate_timeout=candidate_timeout,
             target_strategy=strategy if strategy != source_policy['generation_strategy'] else None)

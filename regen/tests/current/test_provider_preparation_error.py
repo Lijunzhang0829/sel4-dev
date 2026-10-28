@@ -44,7 +44,7 @@ class ProviderPreparationErrorTest(unittest.TestCase):
                 self.assertEqual(options['provider_build_timeout'],expected_timeout)
                 self.assertEqual(options['build_ml_heap_mb'],expected_heap)
                 self.assertEqual(options['check_timeout'],900)
-                self.assertEqual(options['candidate_timeout'],120)
+                self.assertEqual(options['candidate_timeout'],300)
 
 
 if __name__=='__main__':unittest.main()

@@ -354,8 +354,24 @@ class SchedulerTests(unittest.TestCase):
                 directory=Path(temporary)/'session',cancel_event=cancel_event,
                 focus_contract_id='goal' if focus else None,stop_at_focus_contract=focus,
                 effective_budget=effective_budget)
-            self.assertEqual(audit.call_args.kwargs['require_terminal'],not focus)
+            self.assertEqual(audit.call_args.kwargs['require_terminal'],
+                not focus and result['status'] != 'framework_blocked')
             return result
+
+    def test_trusted_framework_block_preserves_state_and_stops_auto_continue(self):
+        import tempfile
+        def block(turn):
+            self.empty_controller.state['proofs']['goal'] = 'by simp'
+            self.empty_controller.state['batch_feedback'] = {
+                'status':'seal_failed','framework_blocked':True,
+                'failure_scope':'trusted_audit_target'}
+        with tempfile.TemporaryDirectory() as temporary:
+            result = self._empty_turn_scenario(temporary, on_turn=block, effective_budget=True)
+        self.assertEqual(result['status'], 'framework_blocked')
+        self.assertEqual(result['theory_status'], 'generating')
+        self.assertEqual(self.empty_session.turns, 1)
+        self.assertEqual(self.empty_controller.state['proofs'], {'goal':'by simp'})
+        self.assertTrue(self.empty_controller.closed)
 
     def test_many_empty_turns_continue_until_checker_seal(self):
         import tempfile

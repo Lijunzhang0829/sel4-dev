@@ -16,6 +16,23 @@ from regen.infrastructure.model_isolation import ModelIsolation
 
 
 class WorkspacePlanningTest(unittest.TestCase):
+    def test_revision_decisions_are_repairable_and_bound_to_submission(self):
+        self.h.revision_review = {'issues':[{'id':'I1'}]}
+        request = {'action':'submit','proposal':self.proposal}
+        for decisions in (None, [], [{}], [None]):
+            result = self.h.dispatch({**request,'revision_decisions':decisions})
+            self.assertFalse(result['valid'])
+            self.assertEqual(result['stage'], 'revision-decisions')
+            self.assertIsNone(self.h.submitted)
+        good = [{'issue_id':'I1','decision':'retain','reason':'context is coherent',
+                 'tradeoff':'provider may wait','remaining_risk':'unproved'}]
+        self.native.return_value = {'valid':True,'proved_contracts':0}
+        self.assertTrue(self.h.dispatch({**request,'revision_decisions':good})['submitted'])
+        good[0]['decision'] = 'invalid'  # The caller cannot mutate the authority.
+        self.h.artifacts()
+        saved = json.loads((self.h.output/'revision-decisions.json').read_text())
+        self.assertEqual(saved[0]['decision'], 'retain')
+
     def setUp(self):
         f=fixtures.IterativeRepositoryPlannerTest();f.setUp();self.addCleanup(f.doCleanups);self.f=f
         db=db_fixtures.PremiseDatabaseV2Tests();db.setUp();self.addCleanup(db.doCleanups)

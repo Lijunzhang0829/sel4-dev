@@ -120,6 +120,8 @@ def _events(path: Path) -> tuple[list[dict[str, Any]], int]:
             continue
         if isinstance(event, dict):
             result.append(event)
+        else:
+            errors += 1
     return result, errors
 
 
@@ -165,7 +167,10 @@ def call_codex(prompt: str, artifact_prefix: Path, *, model: str = "gpt-5.5",
             sealable = bool(
                 meta.get("returncode") == 0
                 and not meta.get("timed_out")
+                and not meta.get("interrupted")
                 and meta.get("no_tool_events")
+                and _events(artifact_paths(artifact_prefix)['raw'])[1] == 0
+                and bool(artifact_paths(artifact_prefix)['final'].read_text().strip())
             )
             _upgrade(artifact_prefix, theory=theory, stage=stage,
                      sealable=sealable, network_call=True)
@@ -371,7 +376,9 @@ def call_claude(prompt: str, artifact_prefix: Path, *, model: str = "opus",
         "started_at": started, "finished_at": datetime.now(timezone.utc).isoformat(),
         "wall_ms": int((time.time() - t0) * 1000), "returncode": returncode,
         "timed_out": timed_out, "cwd": str(cwd), "provider_network_call": True,
-        "model_network_tool_access": False, "sealable_generation": True,
+        "model_network_tool_access": False,
+        "sealable_generation": bool(returncode == 0 and not timed_out
+            and audit['parse_errors'] == 0 and audit['no_tool_events'] and final.strip()),
         "tools": [], "max_turns": max_turns,
         "argv": ["<PROMPT_IN_FILE>" if arg == prompt else arg for arg in argv],
         **_hashes(paths),
@@ -381,6 +388,8 @@ def call_claude(prompt: str, artifact_prefix: Path, *, model: str = "opus",
     paths["meta"].write_text(json.dumps(meta, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if returncode != 0:
         raise RuntimeError(f"Claude failed with exit code {returncode}; see {paths['stderr']}")
+    if audit['parse_errors']:
+        raise RuntimeError('Claude transcript contains malformed events; output rejected')
     if not audit["no_tool_events"]:
         raise RuntimeError(f"Claude tool use detected; see {paths['audit']}")
     if not final.strip():
@@ -488,6 +497,10 @@ def inspect_call_artifact(artifact_prefix: Path, *, require_real: bool = True,
         raise ValueError(f"transcript is explicitly non-sealable: {artifact_prefix}")
     if require_success and (meta.get("returncode") != 0 or meta.get("timed_out")):
         raise ValueError(f"unsuccessful LLM transcript: {artifact_prefix}")
+    # Inspect actual bytes too: old metadata may have incorrectly marked a
+    # malformed stream sealable, even with internally consistent file hashes.
+    if _events(paths['raw'])[1] or audit.get('parse_errors', 0):
+        raise ValueError(f"malformed LLM transcript events: {artifact_prefix}")
     if not meta.get("no_tool_events") or not audit.get("no_tool_events"):
         raise ValueError(f"tool-using LLM transcript cannot seal: {artifact_prefix}")
     required_nonempty = ["prompt"]
