@@ -1,0 +1,11 @@
+session Intervaltree = HOL +
+  options [document = false, threads = 2]
+  directories "theories"
+  theories
+    Interval_Model
+    Interval_Baseline
+    Interval_Baseline_Proofs
+    Interval_Extensions
+    Interval_Tree
+    Interval_Refinement
+    Interval_Audit

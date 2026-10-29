@@ -1,0 +1,15 @@
+{
+  "files": {
+    "vendor/intervaltree/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "vendor/intervaltree/UPSTREAM_COMMIT": "7ee754a6fc319b9d8a818fff4bdc3c319abfaefee89830eee3b1692944bfc749",
+    "vendor/intervaltree/intervaltree/__init__.py": "60ecc9dc39ac442e3c4c67b309607b5bf09fd296f587bfae7a198de24dbc736c",
+    "vendor/intervaltree/intervaltree/interval.py": "63607e891e50e85382e34673b07d3cf6b17826a84ed0ad49dc6b959199704e50",
+    "vendor/intervaltree/intervaltree/intervaltree.py": "e3a6158685d126a685af879fbbd6036e8fab206072f0b5db56f3957e30b35168",
+    "vendor/intervaltree/intervaltree/node.py": "0cb621d02a83e108c2dbb3b4417888f7ba3bb696768dad990acdcdb5afb5a3c3",
+    "vendor/vero/Intervaltree/Impl/Merge.lean": "fed9f2e6b61aefa5585f3ce1322ecf6fc407680c2ce3ea6cc50136d3244a7530",
+    "vendor/vero/Intervaltree/Spec/Merge.lean": "fa94f48382a2cffbf6995f450f85676980c05c1af81323ad3349fcfd9778f6a9",
+    "vendor/vero/Intervaltree/Test.lean": "295393e58ac8c4a86d35e299d23f7d2df6e7897233fbf2af08d59146f7a786d5",
+    "vendor/vero/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "vendor/vero/manifest.json": "75f5b33b685ff50af6fcdbdf436282a011e92d883b4ce75e4a16fe74c2f99c93"
+  }
+}

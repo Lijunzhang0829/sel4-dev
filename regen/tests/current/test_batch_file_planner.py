@@ -75,7 +75,9 @@ class BatchControllerTest(unittest.TestCase):
         checker.last_complete_audit={'verdict':'red','diagnostic':'native missing dependency detail'}
         with tempfile.TemporaryDirectory() as tmp, \
              patch('regen.analysis.retained_semantic_impact.audit_theory',side_effect=ValueError('audit failed')):
-            new,feedback=seal_theory(Path(tmp),{'premise_snapshot':tmp},package,Path(tmp),checker,[],state)
+            snapshot = Path(tmp)/'audit.json'
+            snapshot.write_text(json.dumps({'campaign_id':'test','semantic_base_seal_id':'test-base','records':[]}))
+            new,feedback=seal_theory(Path(tmp),{'premise_snapshot':str(snapshot)},package,Path(tmp),checker,[],state)
         self.assertIsNone(new)
         self.assertEqual(feedback['stage'],'semantic-audit')
         self.assertEqual(feedback['check']['diagnostic'],'native missing dependency detail')

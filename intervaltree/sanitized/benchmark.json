@@ -1,0 +1,750 @@
+{
+  "backend": "isabelle",
+  "base_import": "Intervaltree_Definitions.Interval_Input",
+  "benchmark_id": "1992ddc22bcd2c5f0643aa2a980284754d0ba646e0b23d38dce1c2341a7fbe52",
+  "contracts": [
+    {
+      "context": [],
+      "id": "c0001",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_overlaps_symm",
+      "source_id": "spec_overlaps_symm",
+      "statement": "lemma spec_overlaps_symm: \"Interval_Baseline.spec_overlaps_symm\""
+    },
+    {
+      "context": [],
+      "id": "c0002",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_overlaps_self_nonempty",
+      "source_id": "spec_overlaps_self_nonempty",
+      "statement": "lemma spec_overlaps_self_nonempty: \"Interval_Baseline.spec_overlaps_self_nonempty\""
+    },
+    {
+      "context": [],
+      "id": "c0003",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_overlaps_self_empty",
+      "source_id": "spec_overlaps_self_empty",
+      "statement": "lemma spec_overlaps_self_empty: \"Interval_Baseline.spec_overlaps_self_empty\""
+    },
+    {
+      "context": [],
+      "id": "c0004",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_overlaps_disjoint_false",
+      "source_id": "spec_overlaps_disjoint_false",
+      "statement": "lemma spec_overlaps_disjoint_false: \"Interval_Baseline.spec_overlaps_disjoint_false\""
+    },
+    {
+      "context": [],
+      "id": "c0005",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_overlaps_iff_common_point",
+      "source_id": "spec_overlaps_iff_common_point",
+      "statement": "lemma spec_overlaps_iff_common_point: \"Interval_Baseline.spec_overlaps_iff_common_point\""
+    },
+    {
+      "context": [],
+      "id": "c0006",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_coverage",
+      "source_id": "spec_merge_coverage",
+      "statement": "lemma spec_merge_coverage: \"Interval_Baseline.spec_merge_coverage\""
+    },
+    {
+      "context": [],
+      "id": "c0007",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_disjoint_strict",
+      "source_id": "spec_merge_disjoint_strict",
+      "statement": "lemma spec_merge_disjoint_strict: \"Interval_Baseline.spec_merge_disjoint_strict\""
+    },
+    {
+      "context": [],
+      "id": "c0008",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_nil",
+      "source_id": "spec_merge_nil",
+      "statement": "lemma spec_merge_nil: \"Interval_Baseline.spec_merge_nil\""
+    },
+    {
+      "context": [],
+      "id": "c0009",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_singleton",
+      "source_id": "spec_merge_singleton",
+      "statement": "lemma spec_merge_singleton: \"Interval_Baseline.spec_merge_singleton\""
+    },
+    {
+      "context": [],
+      "id": "c0010",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_all_empty_nil",
+      "source_id": "spec_merge_all_empty_nil",
+      "statement": "lemma spec_merge_all_empty_nil: \"Interval_Baseline.spec_merge_all_empty_nil\""
+    },
+    {
+      "context": [],
+      "id": "c0011",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_output_nonempty",
+      "source_id": "spec_merge_output_nonempty",
+      "statement": "lemma spec_merge_output_nonempty: \"Interval_Baseline.spec_merge_output_nonempty\""
+    },
+    {
+      "context": [],
+      "id": "c0012",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_sorted_lo",
+      "source_id": "spec_merge_sorted_lo",
+      "statement": "lemma spec_merge_sorted_lo: \"Interval_Baseline.spec_merge_sorted_lo\""
+    },
+    {
+      "context": [],
+      "id": "c0013",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_length_le",
+      "source_id": "spec_merge_length_le",
+      "statement": "lemma spec_merge_length_le: \"Interval_Baseline.spec_merge_length_le\""
+    },
+    {
+      "context": [],
+      "id": "c0014",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_idempotent",
+      "source_id": "spec_merge_idempotent",
+      "statement": "lemma spec_merge_idempotent: \"Interval_Baseline.spec_merge_idempotent\""
+    },
+    {
+      "context": [],
+      "id": "c0015",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_exact_idempotent",
+      "source_id": "spec_merge_exact_idempotent",
+      "statement": "lemma spec_merge_exact_idempotent: \"Interval_Baseline.spec_merge_exact_idempotent\""
+    },
+    {
+      "context": [],
+      "id": "c0016",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_totalLen_le",
+      "source_id": "spec_merge_totalLen_le",
+      "statement": "lemma spec_merge_totalLen_le: \"Interval_Baseline.spec_merge_totalLen_le\""
+    },
+    {
+      "context": [],
+      "id": "c0017",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_totalLen_disjoint_eq",
+      "source_id": "spec_merge_totalLen_disjoint_eq",
+      "statement": "lemma spec_merge_totalLen_disjoint_eq: \"Interval_Baseline.spec_merge_totalLen_disjoint_eq\""
+    },
+    {
+      "context": [],
+      "id": "c0018",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_hull_lo",
+      "source_id": "spec_merge_hull_lo",
+      "statement": "lemma spec_merge_hull_lo: \"Interval_Baseline.spec_merge_hull_lo\""
+    },
+    {
+      "context": [],
+      "id": "c0019",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_hull_hi",
+      "source_id": "spec_merge_hull_hi",
+      "statement": "lemma spec_merge_hull_hi: \"Interval_Baseline.spec_merge_hull_hi\""
+    },
+    {
+      "context": [],
+      "id": "c0020",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_chop_coverage",
+      "source_id": "spec_merge_chop_coverage",
+      "statement": "lemma spec_merge_chop_coverage: \"Interval_Baseline.spec_merge_chop_coverage\""
+    },
+    {
+      "context": [],
+      "id": "c0021",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_reverse_eq",
+      "source_id": "spec_merge_reverse_eq",
+      "statement": "lemma spec_merge_reverse_eq: \"Interval_Baseline.spec_merge_reverse_eq\""
+    },
+    {
+      "context": [],
+      "id": "c0022",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_removes",
+      "source_id": "spec_chop_removes",
+      "statement": "lemma spec_chop_removes: \"Interval_Baseline.spec_chop_removes\""
+    },
+    {
+      "context": [],
+      "id": "c0023",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_pointwise",
+      "source_id": "spec_chop_pointwise",
+      "statement": "lemma spec_chop_pointwise: \"Interval_Baseline.spec_chop_pointwise\""
+    },
+    {
+      "context": [],
+      "id": "c0024",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_empty_range_id",
+      "source_id": "spec_chop_empty_range_id",
+      "statement": "lemma spec_chop_empty_range_id: \"Interval_Baseline.spec_chop_empty_range_id\""
+    },
+    {
+      "context": [],
+      "id": "c0025",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_idempotent",
+      "source_id": "spec_chop_idempotent",
+      "statement": "lemma spec_chop_idempotent: \"Interval_Baseline.spec_chop_idempotent\""
+    },
+    {
+      "context": [],
+      "id": "c0026",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_canonical_unique",
+      "source_id": "spec_merge_canonical_unique",
+      "statement": "lemma spec_merge_canonical_unique: \"Interval_Baseline.spec_merge_canonical_unique\""
+    },
+    {
+      "context": [],
+      "id": "c0027",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_coverage_determines",
+      "source_id": "spec_merge_coverage_determines",
+      "statement": "lemma spec_merge_coverage_determines: \"Interval_Baseline.spec_merge_coverage_determines\""
+    },
+    {
+      "context": [],
+      "id": "c0028",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_saturated_lo",
+      "source_id": "spec_merge_saturated_lo",
+      "statement": "lemma spec_merge_saturated_lo: \"Interval_Baseline.spec_merge_saturated_lo\""
+    },
+    {
+      "context": [],
+      "id": "c0029",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_concat_closure",
+      "source_id": "spec_merge_concat_closure",
+      "statement": "lemma spec_merge_concat_closure: \"Interval_Baseline.spec_merge_concat_closure\""
+    },
+    {
+      "context": [],
+      "id": "c0030",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_is_canonical",
+      "source_id": "spec_merge_is_canonical",
+      "statement": "lemma spec_merge_is_canonical: \"Interval_Baseline.spec_merge_is_canonical\""
+    },
+    {
+      "context": [],
+      "id": "c0031",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_saturated_hi",
+      "source_id": "spec_merge_saturated_hi",
+      "statement": "lemma spec_merge_saturated_hi: \"Interval_Baseline.spec_merge_saturated_hi\""
+    },
+    {
+      "context": [],
+      "id": "c0032",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_run_solid",
+      "source_id": "spec_merge_run_solid",
+      "statement": "lemma spec_merge_run_solid: \"Interval_Baseline.spec_merge_run_solid\""
+    },
+    {
+      "context": [],
+      "id": "c0033",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_lo_pred_uncovered",
+      "source_id": "spec_merge_lo_pred_uncovered",
+      "statement": "lemma spec_merge_lo_pred_uncovered: \"Interval_Baseline.spec_merge_lo_pred_uncovered\""
+    },
+    {
+      "context": [],
+      "id": "c0034",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_hi_uncovered",
+      "source_id": "spec_merge_hi_uncovered",
+      "statement": "lemma spec_merge_hi_uncovered: \"Interval_Baseline.spec_merge_hi_uncovered\""
+    },
+    {
+      "context": [],
+      "id": "c0035",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_append_coverage",
+      "source_id": "spec_merge_append_coverage",
+      "statement": "lemma spec_merge_append_coverage: \"Interval_Baseline.spec_merge_append_coverage\""
+    },
+    {
+      "context": [],
+      "id": "c0036",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_concat_closure_right",
+      "source_id": "spec_merge_concat_closure_right",
+      "statement": "lemma spec_merge_concat_closure_right: \"Interval_Baseline.spec_merge_concat_closure_right\""
+    },
+    {
+      "context": [],
+      "id": "c0037",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_self_union_idem",
+      "source_id": "spec_merge_self_union_idem",
+      "statement": "lemma spec_merge_self_union_idem: \"Interval_Baseline.spec_merge_self_union_idem\""
+    },
+    {
+      "context": [],
+      "id": "c0038",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_chop_merge",
+      "source_id": "spec_merge_chop_merge",
+      "statement": "lemma spec_merge_chop_merge: \"Interval_Baseline.spec_merge_chop_merge\""
+    },
+    {
+      "context": [],
+      "id": "c0039",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_chop_idempotent",
+      "source_id": "spec_merge_chop_idempotent",
+      "statement": "lemma spec_merge_chop_idempotent: \"Interval_Baseline.spec_merge_chop_idempotent\""
+    },
+    {
+      "context": [],
+      "id": "c0040",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_chop_coverage_determines",
+      "source_id": "spec_merge_chop_coverage_determines",
+      "statement": "lemma spec_merge_chop_coverage_determines: \"Interval_Baseline.spec_merge_chop_coverage_determines\""
+    },
+    {
+      "context": [],
+      "id": "c0041",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_coveredCount_le_one",
+      "source_id": "spec_merge_coveredCount_le_one",
+      "statement": "lemma spec_merge_coveredCount_le_one: \"Interval_Baseline.spec_merge_coveredCount_le_one\""
+    },
+    {
+      "context": [],
+      "id": "c0042",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_coveredCount_exact",
+      "source_id": "spec_merge_coveredCount_exact",
+      "statement": "lemma spec_merge_coveredCount_exact: \"Interval_Baseline.spec_merge_coveredCount_exact\""
+    },
+    {
+      "context": [],
+      "id": "c0043",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_loEndpoints_nodup",
+      "source_id": "spec_merge_loEndpoints_nodup",
+      "statement": "lemma spec_merge_loEndpoints_nodup: \"Interval_Baseline.spec_merge_loEndpoints_nodup\""
+    },
+    {
+      "context": [],
+      "id": "c0044",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_getElem_lo_split",
+      "source_id": "spec_merge_getElem_lo_split",
+      "statement": "lemma spec_merge_getElem_lo_split: \"Interval_Baseline.spec_merge_getElem_lo_split\""
+    },
+    {
+      "context": [],
+      "id": "c0045",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_perm_eq_any",
+      "source_id": "spec_merge_perm_eq_any",
+      "statement": "lemma spec_merge_perm_eq_any: \"Interval_Baseline.spec_merge_perm_eq_any\""
+    },
+    {
+      "context": [],
+      "id": "c0046",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_pairwise_strict_gap_all",
+      "source_id": "spec_merge_pairwise_strict_gap_all",
+      "statement": "lemma spec_merge_pairwise_strict_gap_all: \"Interval_Baseline.spec_merge_pairwise_strict_gap_all\""
+    },
+    {
+      "context": [],
+      "id": "c0047",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_consecutive_gap_witness",
+      "source_id": "spec_merge_consecutive_gap_witness",
+      "statement": "lemma spec_merge_consecutive_gap_witness: \"Interval_Baseline.spec_merge_consecutive_gap_witness\""
+    },
+    {
+      "context": [],
+      "id": "c0048",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_merge_coverage_monotone",
+      "source_id": "spec_merge_coverage_monotone",
+      "statement": "lemma spec_merge_coverage_monotone: \"Interval_Baseline.spec_merge_coverage_monotone\""
+    },
+    {
+      "context": [],
+      "id": "c0049",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_overlaps_merge_same_run",
+      "source_id": "spec_overlaps_merge_same_run",
+      "statement": "lemma spec_overlaps_merge_same_run: \"Interval_Baseline.spec_overlaps_merge_same_run\""
+    },
+    {
+      "context": [],
+      "id": "c0050",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_canonical_preserves_canonical",
+      "source_id": "spec_chop_canonical_preserves_canonical",
+      "statement": "lemma spec_chop_canonical_preserves_canonical: \"Interval_Baseline.spec_chop_canonical_preserves_canonical\""
+    },
+    {
+      "context": [],
+      "id": "c0051",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_canonical_sorted_lo",
+      "source_id": "spec_chop_canonical_sorted_lo",
+      "statement": "lemma spec_chop_canonical_sorted_lo: \"Interval_Baseline.spec_chop_canonical_sorted_lo\""
+    },
+    {
+      "context": [],
+      "id": "c0052",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_canonical_pairwise_strict_gap",
+      "source_id": "spec_chop_canonical_pairwise_strict_gap",
+      "statement": "lemma spec_chop_canonical_pairwise_strict_gap: \"Interval_Baseline.spec_chop_canonical_pairwise_strict_gap\""
+    },
+    {
+      "context": [],
+      "id": "c0053",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_canonical_merge_fixpoint",
+      "source_id": "spec_chop_canonical_merge_fixpoint",
+      "statement": "lemma spec_chop_canonical_merge_fixpoint: \"Interval_Baseline.spec_chop_canonical_merge_fixpoint\""
+    },
+    {
+      "context": [],
+      "id": "c0054",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_totalLen_le_clamped",
+      "source_id": "spec_chop_totalLen_le_clamped",
+      "statement": "lemma spec_chop_totalLen_le_clamped: \"Interval_Baseline.spec_chop_totalLen_le_clamped\""
+    },
+    {
+      "context": [],
+      "id": "c0055",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_append_coverage",
+      "source_id": "spec_chop_append_coverage",
+      "statement": "lemma spec_chop_append_coverage: \"Interval_Baseline.spec_chop_append_coverage\""
+    },
+    {
+      "context": [],
+      "id": "c0056",
+      "module": "Vero_Interval_Baseline",
+      "name": "spec_chop_coveredCount_cut_complement",
+      "source_id": "spec_chop_coveredCount_cut_complement",
+      "statement": "lemma spec_chop_coveredCount_cut_complement: \"Interval_Baseline.spec_chop_coveredCount_cut_complement\""
+    },
+    {
+      "context": [],
+      "id": "c0057",
+      "module": "Vero_Interval_Extensions",
+      "name": "ext_merge_exact_measure",
+      "source_id": "ext_merge_exact_measure",
+      "statement": "lemma ext_merge_exact_measure: \"Interval_Extensions.ext_merge_exact_measure\""
+    },
+    {
+      "context": [],
+      "id": "c0058",
+      "module": "Vero_Interval_Extensions",
+      "name": "ext_canonical_exact_measure",
+      "source_id": "ext_canonical_exact_measure",
+      "statement": "lemma ext_canonical_exact_measure: \"Interval_Extensions.ext_canonical_exact_measure\""
+    },
+    {
+      "context": [],
+      "id": "c0059",
+      "module": "Vero_Interval_Extensions",
+      "name": "ext_cut_all_coverage",
+      "source_id": "ext_cut_all_coverage",
+      "statement": "lemma ext_cut_all_coverage: \"Interval_Extensions.ext_cut_all_coverage\""
+    },
+    {
+      "context": [],
+      "id": "c0060",
+      "module": "Vero_Interval_Extensions",
+      "name": "ext_cut_all_exact_measure",
+      "source_id": "ext_cut_all_exact_measure",
+      "statement": "lemma ext_cut_all_exact_measure: \"Interval_Extensions.ext_cut_all_exact_measure\""
+    },
+    {
+      "context": [],
+      "id": "c0061",
+      "module": "Vero_Interval_Extensions",
+      "name": "ext_one_cut_fragment_bound",
+      "source_id": "ext_one_cut_fragment_bound",
+      "statement": "lemma ext_one_cut_fragment_bound: \"Interval_Extensions.ext_one_cut_fragment_bound\""
+    },
+    {
+      "context": [],
+      "id": "c0062",
+      "module": "Vero_Interval_Extensions",
+      "name": "ext_cut_all_fragment_bound",
+      "source_id": "ext_cut_all_fragment_bound",
+      "statement": "lemma ext_cut_all_fragment_bound: \"Interval_Extensions.ext_cut_all_fragment_bound\""
+    },
+    {
+      "context": [],
+      "id": "c0063",
+      "module": "Vero_Interval_Extensions",
+      "name": "ext_merge_component_count",
+      "source_id": "ext_merge_component_count",
+      "statement": "lemma ext_merge_component_count: \"Interval_Extensions.ext_merge_component_count\""
+    },
+    {
+      "context": [],
+      "id": "c0064",
+      "module": "Vero_Interval_Extensions",
+      "name": "ext_merge_component_hulls",
+      "source_id": "ext_merge_component_hulls",
+      "statement": "lemma ext_merge_component_hulls: \"Interval_Extensions.ext_merge_component_hulls\""
+    },
+    {
+      "context": [],
+      "id": "c0065",
+      "module": "Vero_Interval_Extensions",
+      "name": "ext_merge_component_bijection",
+      "source_id": "ext_merge_component_bijection",
+      "statement": "lemma ext_merge_component_bijection: \"Interval_Extensions.ext_merge_component_bijection\""
+    },
+    {
+      "context": [],
+      "id": "c0066",
+      "module": "Vero_Interval_Refinement",
+      "name": "tree_point_query_exact",
+      "source_id": "tree_point_query_exact",
+      "statement": "lemma tree_point_query_exact: \"Interval_Refinement.tree_point_query_exact\""
+    },
+    {
+      "context": [],
+      "id": "c0067",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_payload_erasure_coverage",
+      "source_id": "refine_payload_erasure_coverage",
+      "statement": "lemma refine_payload_erasure_coverage: \"Interval_Refinement.refine_payload_erasure_coverage\""
+    },
+    {
+      "context": [],
+      "id": "c0068",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_point_coverage_bridge",
+      "source_id": "refine_point_coverage_bridge",
+      "statement": "lemma refine_point_coverage_bridge: \"Interval_Refinement.refine_point_coverage_bridge\""
+    },
+    {
+      "context": [],
+      "id": "c0069",
+      "module": "Vero_Interval_Refinement",
+      "name": "tree_metadata_depth_exact",
+      "source_id": "tree_metadata_depth_exact",
+      "statement": "lemma tree_metadata_depth_exact: \"Interval_Refinement.tree_metadata_depth_exact\""
+    },
+    {
+      "context": [],
+      "id": "c0070",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_state_point_query",
+      "source_id": "refine_state_point_query",
+      "statement": "lemma refine_state_point_query: \"Interval_Refinement.refine_state_point_query\""
+    },
+    {
+      "context": [],
+      "id": "c0071",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_empty_state",
+      "source_id": "refine_empty_state",
+      "statement": "lemma refine_empty_state: \"Interval_Refinement.refine_empty_state\""
+    },
+    {
+      "context": [],
+      "id": "c0072",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_add_abstract_content",
+      "source_id": "refine_add_abstract_content",
+      "statement": "lemma refine_add_abstract_content: \"Interval_Refinement.refine_add_abstract_content\""
+    },
+    {
+      "context": [],
+      "id": "c0073",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_remove_abstract_content",
+      "source_id": "refine_remove_abstract_content",
+      "statement": "lemma refine_remove_abstract_content: \"Interval_Refinement.refine_remove_abstract_content\""
+    },
+    {
+      "context": [],
+      "id": "c0074",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_duplicate_insert_noop",
+      "source_id": "refine_duplicate_insert_noop",
+      "statement": "lemma refine_duplicate_insert_noop: \"Interval_Refinement.refine_duplicate_insert_noop\""
+    },
+    {
+      "context": [],
+      "id": "c0075",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_missing_discard_noop",
+      "source_id": "refine_missing_discard_noop",
+      "statement": "lemma refine_missing_discard_noop: \"Interval_Refinement.refine_missing_discard_noop\""
+    },
+    {
+      "context": [],
+      "id": "c0076",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_missing_remove_error",
+      "source_id": "refine_missing_remove_error",
+      "statement": "lemma refine_missing_remove_error: \"Interval_Refinement.refine_missing_remove_error\""
+    },
+    {
+      "context": [],
+      "id": "c0077",
+      "module": "Vero_Interval_Refinement",
+      "name": "tree_singleton_insert_progress",
+      "source_id": "tree_singleton_insert_progress",
+      "statement": "lemma tree_singleton_insert_progress: \"Interval_Refinement.tree_singleton_insert_progress\""
+    },
+    {
+      "context": [],
+      "id": "c0078",
+      "module": "Vero_Interval_Refinement",
+      "name": "tree_rotation_content",
+      "source_id": "tree_rotation_content",
+      "statement": "lemma tree_rotation_content: \"Interval_Refinement.tree_rotation_content\""
+    },
+    {
+      "context": [],
+      "id": "c0079",
+      "module": "Vero_Interval_Refinement",
+      "name": "tree_add_content",
+      "source_id": "tree_add_content",
+      "statement": "lemma tree_add_content: \"Interval_Refinement.tree_add_content\""
+    },
+    {
+      "context": [],
+      "id": "c0080",
+      "module": "Vero_Interval_Refinement",
+      "name": "tree_remove_content",
+      "source_id": "tree_remove_content",
+      "statement": "lemma tree_remove_content: \"Interval_Refinement.tree_remove_content\""
+    },
+    {
+      "context": [],
+      "id": "c0081",
+      "module": "Vero_Interval_Refinement",
+      "name": "tree_add_preserves_wf",
+      "source_id": "tree_add_preserves_wf",
+      "statement": "lemma tree_add_preserves_wf: \"Interval_Refinement.tree_add_preserves_wf\""
+    },
+    {
+      "context": [],
+      "id": "c0082",
+      "module": "Vero_Interval_Refinement",
+      "name": "tree_remove_preserves_wf",
+      "source_id": "tree_remove_preserves_wf",
+      "statement": "lemma tree_remove_preserves_wf: \"Interval_Refinement.tree_remove_preserves_wf\""
+    },
+    {
+      "context": [],
+      "id": "c0083",
+      "module": "Vero_Interval_Refinement",
+      "name": "tree_add_fuel_adequacy",
+      "source_id": "tree_add_fuel_adequacy",
+      "statement": "lemma tree_add_fuel_adequacy: \"Interval_Refinement.tree_add_fuel_adequacy\""
+    },
+    {
+      "context": [],
+      "id": "c0084",
+      "module": "Vero_Interval_Refinement",
+      "name": "tree_remove_fuel_adequacy",
+      "source_id": "tree_remove_fuel_adequacy",
+      "statement": "lemma tree_remove_fuel_adequacy: \"Interval_Refinement.tree_remove_fuel_adequacy\""
+    },
+    {
+      "context": [],
+      "id": "c0085",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_add_state_invariant",
+      "source_id": "refine_add_state_invariant",
+      "statement": "lemma refine_add_state_invariant: \"Interval_Refinement.refine_add_state_invariant\""
+    },
+    {
+      "context": [],
+      "id": "c0086",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_remove_state_invariant",
+      "source_id": "refine_remove_state_invariant",
+      "statement": "lemma refine_remove_state_invariant: \"Interval_Refinement.refine_remove_state_invariant\""
+    },
+    {
+      "context": [],
+      "id": "c0087",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_overlap_query",
+      "source_id": "refine_overlap_query",
+      "statement": "lemma refine_overlap_query: \"Interval_Refinement.refine_overlap_query\""
+    },
+    {
+      "context": [],
+      "id": "c0088",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_envelop_query",
+      "source_id": "refine_envelop_query",
+      "statement": "lemma refine_envelop_query: \"Interval_Refinement.refine_envelop_query\""
+    },
+    {
+      "context": [],
+      "id": "c0089",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_successful_trace_invariant",
+      "source_id": "refine_successful_trace_invariant",
+      "statement": "lemma refine_successful_trace_invariant: \"Interval_Refinement.refine_successful_trace_invariant\""
+    },
+    {
+      "context": [],
+      "id": "c0090",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_successful_trace_point_query",
+      "source_id": "refine_successful_trace_point_query",
+      "statement": "lemma refine_successful_trace_point_query: \"Interval_Refinement.refine_successful_trace_point_query\""
+    },
+    {
+      "context": [],
+      "id": "c0091",
+      "module": "Vero_Interval_Refinement",
+      "name": "refine_trace_abstract_content",
+      "source_id": "refine_trace_abstract_content",
+      "statement": "lemma refine_trace_abstract_content: \"Interval_Refinement.refine_trace_abstract_content\""
+    }
+  ],
+  "mode": "proof",
+  "policy": {
+    "auxiliary_slots": true,
+    "cross_module_proof_imports": true,
+    "editable_generated_imports": true,
+    "reference_proofs_visible": false,
+    "unfilled": "oops"
+  },
+  "provenance": {
+    "formal_evaluation_started": false,
+    "project": "intervaltree",
+    "python_commit": "1bc406e1f441577c4e421fc51aba2ab67fbd97fb",
+    "stage": "preparation"
+  },
+  "schema_version": 2
+}

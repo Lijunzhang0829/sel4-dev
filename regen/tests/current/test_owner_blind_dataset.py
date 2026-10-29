@@ -108,6 +108,8 @@ class CRefineContextTests(unittest.TestCase):
             paths = {k: k for k in ('l4v', 'semantic_workspace', 'heaps', 'isabelle')}
             for path in paths.values(): (root/path).mkdir()
             for name in ('parent-premises.sqlite', 'audit.json'): (root/name).touch()
+            (root/'audit.json').write_text(json.dumps({'campaign_id':'test',
+                'semantic_base_seal_id':'test-base', 'records':[]}))
             core = {'target_session': 'CRefine', 'artifact_type': 'crefine-checker-context',
                     'paths': paths, 'premise_database': 'parent-premises.sqlite', 'premise_audit_context': 'audit.json'}
             def save(value):

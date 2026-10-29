@@ -1,0 +1,79 @@
+{
+  "stage": "preparation",
+  "formal_evaluation_started": false,
+  "method": "Pinned Python produces observations; Isabelle Code_Evaluation executes translated definitions and the session fails unless every check evaluates to True.",
+  "source_commit": "1bc406e1f441577c4e421fc51aba2ab67fbd97fb",
+  "sortedcontainers_version": "2.4.0",
+  "cases_overlap_between_runs": true,
+  "scope": "Finite differential tests only; no universal correctness or Python-to-Isabelle equivalence theorem.",
+  "runs": [
+    {
+      "name": "differential-default",
+      "status": "passed",
+      "finished_utc": "2026-10-27T11:27:55.673945+00:00",
+      "elapsed_seconds": 110.2411624410015,
+      "seed": 20261027,
+      "fuel": 256,
+      "tree_prefix_cases": 67,
+      "query_observations_per_prefix": 40,
+      "query_observations_total": 2680,
+      "model_merge_cases": 5,
+      "also_checks": [
+        "tree_wf",
+        "all_items uniqueness and content",
+        "actual tree content",
+        "boundary key uniqueness and exact counts"
+      ],
+      "fixtures": "build/differential-default/fixtures.json",
+      "fixtures_sha256": "81baadab2727f129fadbc9f36bd9f101d403cba841b051f1a09621e1bd56de94",
+      "build_result": "build/differential-default/check/build-result.json",
+      "build_result_sha256": "d0b018f8f8fc4fed886fdf8190437bab6f371c26f92b3b0be3563f7e4e9a6992",
+      "checked_sources": {
+        "build/differential-default/ROOT": "408bc6b8a57f1648c4734bc32a8c01958291d783f5c5d0bf9718a05d5dff08bb",
+        "build/differential-default/Source_Differential.thy": "12cdf5c31ac63f6b52c8b562a6521b4fd679bfabffd7fc2ccd38750fecca591e",
+        "theories/Interval_Model.thy": "db298b04020062f0a0410d5147f14b7833ad53566270207f7e36b7ee3d23e905",
+        "theories/Interval_Tree.thy": "6c7f03788585475e74aa22ea233f49266442bea74a0dcf1d9f35012ee8d53ca9"
+      },
+      "python_sources": {
+        "vendor/intervaltree/intervaltree/__init__.py": "60ecc9dc39ac442e3c4c67b309607b5bf09fd296f587bfae7a198de24dbc736c",
+        "vendor/intervaltree/intervaltree/interval.py": "63607e891e50e85382e34673b07d3cf6b17826a84ed0ad49dc6b959199704e50",
+        "vendor/intervaltree/intervaltree/intervaltree.py": "e3a6158685d126a685af879fbbd6036e8fab206072f0b5db56f3957e30b35168",
+        "vendor/intervaltree/intervaltree/node.py": "0cb621d02a83e108c2dbb3b4417888f7ba3bb696768dad990acdcdb5afb5a3c3"
+      }
+    },
+    {
+      "name": "differential-deep",
+      "status": "passed",
+      "finished_utc": "2026-10-27T11:30:42.433700+00:00",
+      "elapsed_seconds": 83.46977424599754,
+      "seed": 20261027,
+      "fuel": 256,
+      "tree_prefix_cases": 275,
+      "query_observations_per_prefix": 40,
+      "query_observations_total": 11000,
+      "model_merge_cases": 5,
+      "also_checks": [
+        "tree_wf",
+        "all_items uniqueness and content",
+        "actual tree content",
+        "boundary key uniqueness and exact counts"
+      ],
+      "fixtures": "build/differential-deep/fixtures.json",
+      "fixtures_sha256": "79f5ada1a5c2a618c450d2661e52df876e9174f9dd73b65361c958a469a7a9ee",
+      "build_result": "build/differential-deep/check/build-result.json",
+      "build_result_sha256": "98f06aead8a2a8fe9c99eb5481e1313570a9e9090cff80f1606c2459f5202713",
+      "checked_sources": {
+        "build/differential-deep/ROOT": "408bc6b8a57f1648c4734bc32a8c01958291d783f5c5d0bf9718a05d5dff08bb",
+        "build/differential-deep/Source_Differential.thy": "18049a15e3706f24769480d08a2f4f6198706eb77ff8587667e6d2b8997350d3",
+        "theories/Interval_Model.thy": "db298b04020062f0a0410d5147f14b7833ad53566270207f7e36b7ee3d23e905",
+        "theories/Interval_Tree.thy": "6c7f03788585475e74aa22ea233f49266442bea74a0dcf1d9f35012ee8d53ca9"
+      },
+      "python_sources": {
+        "vendor/intervaltree/intervaltree/__init__.py": "60ecc9dc39ac442e3c4c67b309607b5bf09fd296f587bfae7a198de24dbc736c",
+        "vendor/intervaltree/intervaltree/interval.py": "63607e891e50e85382e34673b07d3cf6b17826a84ed0ad49dc6b959199704e50",
+        "vendor/intervaltree/intervaltree/intervaltree.py": "e3a6158685d126a685af879fbbd6036e8fab206072f0b5db56f3957e30b35168",
+        "vendor/intervaltree/intervaltree/node.py": "0cb621d02a83e108c2dbb3b4417888f7ba3bb696768dad990acdcdb5afb5a3c3"
+      }
+    }
+  ]
+}

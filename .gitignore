@@ -98,3 +98,6 @@ vero-isabelle/
 /regen/config/codex-runtime/
 /FORMAL-PRELAUNCH-*.json
 /TEST-PRELAUNCH-*.json
+
+# LaTeX paper build products.
+/paper/build/

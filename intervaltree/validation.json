@@ -1,0 +1,64 @@
+{
+  "stage": "preparation",
+  "formal_evaluation_started": false,
+  "full_build": {
+    "status": "passed",
+    "finished_utc": "2026-10-27T11:32:06.229052+00:00",
+    "elapsed_seconds": 24.824341514999105,
+    "image": "sel4-public:tuned",
+    "source_hashes": {
+      "ROOT": "4cb338d80d1d6a0e0e397b0606ece835e277579e6816f3456fe93d154c7f1646",
+      "theories/Interval_Audit.thy": "5e5ddbe5a91a4031c0bd22c5ea3532351a98d122daa2f476aa25d833b499be23",
+      "theories/Interval_Baseline.thy": "b07e9e8d2866ea61b45dd13a3f7c100cbb300be856389226425dccfffa5a5409",
+      "theories/Interval_Baseline_Proofs.thy": "2b36d94977d8ae1b571385fa069344096d6f9c2d3750e506904d95a469797a63",
+      "theories/Interval_Extensions.thy": "45c8c65a3128b51b5a91b58b877138764a38c4d7d6496a6f5dbb12452ad51c4c",
+      "theories/Interval_Model.thy": "db298b04020062f0a0410d5147f14b7833ad53566270207f7e36b7ee3d23e905",
+      "theories/Interval_Refinement.thy": "2d871494c46d876a7092c0bad4affbe3f82fc62c85dc8d4dfca6c09f9236cc5f",
+      "theories/Interval_Tree.thy": "6c7f03788585475e74aa22ea233f49266442bea74a0dcf1d9f35012ee8d53ca9"
+    }
+  },
+  "sanitized_build": {
+    "status": "passed",
+    "finished_utc": "2026-10-27T11:32:17.198888+00:00",
+    "elapsed_seconds": 33.3898004319999,
+    "source_hashes": {
+      "sanitized/ROOT": "ac8df8ed6959b314137e244747db7467dc8887af396fb4647381ed7193471a28",
+      "sanitized/goals/Interval_Goals.thy": "90e4f673567d90ddca3c5b1aebb9348b033a8d244817814f7ee241b7b17a4bb5",
+      "sanitized/theories/Interval_Baseline.thy": "76129343f56ac89cbd5d98e3f80dcd9e1e16c34fd703cb8c85af6f084c8a9f5d",
+      "sanitized/theories/Interval_Extensions.thy": "b3a5ecddf106c4d6f7ef6477904783a2742505702670c6cafd93f1f8b434e3a8",
+      "sanitized/theories/Interval_Input.thy": "636dfc9833e84b356faf365b5dce787a76c2897fdcae57f0ec6b334a2ab4e8ca",
+      "sanitized/theories/Interval_Model.thy": "95c53c926b2bfe9a9168d82d40bbf56aa70708ae272cae81d3660c2fe58b1d3c",
+      "sanitized/theories/Interval_Refinement.thy": "26930fd61318f968d2669d5d4ab1cd1dead2fe64c1d0d1746c05f67d80c5dcec",
+      "sanitized/theories/Interval_Tree.thy": "18a9eea413bf35b6782af2fb889e66e686532c523f9b7e404794f462f8c226dd"
+    }
+  },
+  "native_audit": {
+    "exact_target": true,
+    "no_undischarged_hypotheses": true,
+    "no_oracle_dependencies": true
+  },
+  "groups": {
+    "baseline": {
+      "total": 56,
+      "proved": 13,
+      "pending": 43
+    },
+    "concrete": {
+      "total": 26,
+      "proved": 14,
+      "pending": 12
+    },
+    "extension": {
+      "total": 9,
+      "proved": 3,
+      "pending": 6
+    }
+  },
+  "targets_sha256": "ebc688884823afd1a386f4826aee9275c7355f22b4fb274c8d524ff607a621bd",
+  "input_manifest_sha256": "41abf98ac05e73bb355c865f6184ec2fc8d13482600714c8203fa762ef1dc02a",
+  "limitations": [
+    "Pending contracts are not assumed or proved.",
+    "No checked equivalence to Python source semantics.",
+    "No formal proof-generation experiment has been run."
+  ]
+}

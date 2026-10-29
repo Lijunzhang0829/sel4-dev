@@ -1,0 +1,19 @@
+{
+  "base_import": "Intervaltree_Definitions.Interval_Input",
+  "target_count": 91,
+  "reference_proofs_included": false,
+  "helper_statements_included": false,
+  "validation": "requires an independent build; oops establishes no theorem",
+  "files": {
+    "ROOT": "ac8df8ed6959b314137e244747db7467dc8887af396fb4647381ed7193471a28",
+    "benchmark.json": "8486cb07df82dbd64a80f3302fd054da9c61491d4630776efabf814990256865",
+    "contracts.jsonl": "d1a0af07d5e4f3dad225596f7a63d1c559a5391e8936d45d972dfd2b5cdb6916",
+    "goals/Interval_Goals.thy": "90e4f673567d90ddca3c5b1aebb9348b033a8d244817814f7ee241b7b17a4bb5",
+    "theories/Interval_Baseline.thy": "76129343f56ac89cbd5d98e3f80dcd9e1e16c34fd703cb8c85af6f084c8a9f5d",
+    "theories/Interval_Extensions.thy": "b3a5ecddf106c4d6f7ef6477904783a2742505702670c6cafd93f1f8b434e3a8",
+    "theories/Interval_Input.thy": "636dfc9833e84b356faf365b5dce787a76c2897fdcae57f0ec6b334a2ab4e8ca",
+    "theories/Interval_Model.thy": "95c53c926b2bfe9a9168d82d40bbf56aa70708ae272cae81d3660c2fe58b1d3c",
+    "theories/Interval_Refinement.thy": "26930fd61318f968d2669d5d4ab1cd1dead2fe64c1d0d1746c05f67d80c5dcec",
+    "theories/Interval_Tree.thy": "18a9eea413bf35b6782af2fb889e66e686532c523f9b7e404794f462f8c226dd"
+  }
+}

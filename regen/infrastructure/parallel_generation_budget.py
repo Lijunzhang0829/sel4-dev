@@ -328,7 +328,7 @@ class ParallelGenerationBudgetBridge:
 
 def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
                                resume_authorization=None, extension_seconds=None, rows=None,
-                               planning_budget=None):
+                               planning_budget=None, wall_seconds=None):
     """Bind the clock before launch; never give a legacy continuation zero cost."""
     from regen.infrastructure.effective_time_budget import EffectiveTimeBudget, POLICY, CHECKPOINT_KIND
     root = Path(root)
@@ -403,6 +403,7 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
     stage = EffectiveTimeBudget(ledger, seconds=seconds,
         resume_authorization=resume_authorization, extension_seconds=extension_seconds,
         include_planning=include_planning)
+    stage.bind_wall_limit(wall_seconds)
     try:
         stage.register(theories, baseline_green=baseline)
     except BaseException:

@@ -118,13 +118,13 @@ def load_context(dataset_root: Path) -> dict[str, Any]:
     dataset_root = dataset_root.resolve()
     context = _read(dataset_root / "checker-context.json")
     if (
-        context.get("artifact_type") not in ("refine-checker-context", "crefine-checker-context")
-        or context.get("target_session") not in ("Refine", "CRefine")
+        context.get("artifact_type") not in ("refine-checker-context", "crefine-checker-context", "intervaltree-checker-context")
+        or context.get("target_session") not in ("Refine", "CRefine", "Intervaltree")
         or context.get("artifact_type") != context.get("target_session", "").lower() + "-checker-context"
         or "environment_gate_id" in context
         or "environment_run" in context
     ):
-        raise ValueError("invalid independent Refine/CRefine checker context")
+        raise ValueError("invalid independent checker context")
     core = {key: value for key, value in context.items()
             if key != "checker_context_id"}
     if context.get("checker_context_id") != "checker-context:" + sha256_json(core)[:20]:
@@ -139,7 +139,13 @@ def load_context(dataset_root: Path) -> dict[str, Any]:
     audit = (dataset_root / context["premise_audit_context"]).resolve()
     if not database.is_file() or not audit.is_file():
         raise ValueError("checker premise assets are missing")
+    from regen.analysis.retained_semantic_impact import load_audit_context
+    load_audit_context(audit)
     from regen.preparation.premise_database import verify_database, digest
+    if ("premise_audit_context_sha256" in context
+            and context["premise_audit_context_sha256"] != digest(audit)):
+        from regen.execution.check_tasks import NativePreparationError
+        raise NativePreparationError("checker premise audit context binding mismatch")
     if verify_database(database) == 2 and context.get("premise_database_sha256") != digest(database):
         raise ValueError("checker premise database binding mismatch")
     return {

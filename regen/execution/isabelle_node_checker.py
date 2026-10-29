@@ -112,9 +112,9 @@ def automation_audit_ml(
             + '\n' + automation_context_audit_ml())
 
 
-def automation_context_audit_ml() -> str:
+def automation_context_audit_ml(*, include_wp: bool = True) -> str:
     """Snapshot the final global automation context independently of local targets."""
-    return rf'''ML \<open>
+    source = rf'''ML \<open>
 local
   val thy = \<^theory>;
   val ctxt = Proof_Context.init_global thy;
@@ -179,6 +179,13 @@ in
   val _ = TextIO.closeOut context_stream;
 end
 \<close>'''
+    if not include_wp:
+        # Plain HOL datasets have no seL4 WeakestPre structure. Keep all
+        # simplifier and proof-dependency checks; omit only absent WP data.
+        source = '\n'.join(line for line in source.split('\n') if not any(
+            token in line for token in ('val wp =', 'val wp_rules =',
+                'val wp_trips =', 'val wp_pre =', '"WP_')))
+    return source
 
 
 def proof_dependency_audit_ml(
@@ -757,7 +764,8 @@ class IsabelleChecker:
             source = self._source(graph, proofs, theory_name=label, target=node_id,
                 declaration_audits={node_id: proof_dependency_audit_ml(
                     by_id[node_id]['name'], dependency_filename='proof-dependencies.tsv')})
-            source = append_before_theory_end(source, automation_context_audit_ml())
+            source = append_before_theory_end(source, automation_context_audit_ml(
+                include_wp=getattr(self, 'base_session', 'Semantic_Base') != 'Intervaltree_Project_Base'))
             writable_mounts = [(audit_dir, "/audit-output")]
 
         # One-shot reuse for the Runner's immediate acceptance recheck.  It is
@@ -884,7 +892,8 @@ class IsabelleChecker:
             getattr(self, 'complete_context_policy', ISOLATED_CONTEXT))
         source = self._source(graph, proofs, theory_name=label,
             reuse_arch_context=policy == ARCH_REUSE_CONTEXT, declaration_audits=audits)
-        return append_before_theory_end(source, automation_context_audit_ml())
+        return append_before_theory_end(source, automation_context_audit_ml(
+            include_wp=getattr(self, 'base_session', 'Semantic_Base') != 'Intervaltree_Project_Base'))
 
     def audit_complete_theory(
         self, graph: dict[str, Any], proofs: dict[str, str], *,
@@ -1019,10 +1028,8 @@ class IsabelleChecker:
         providers = theories[:-1] if seal else theories
         definitions = [
             f"session Generated_Refine = {self.base_session} +",
-            "  sessions",
-            "    Lib",
-            "    CorresK",
-            "    AInvs",
+            *([] if self.base_session == 'Intervaltree_Project_Base' else
+              ["  sessions", "    Lib", "    CorresK", "    AInvs"]),
             "  theories",
             *(f"    {name}" for name in providers),
             "",
@@ -1035,7 +1042,8 @@ class IsabelleChecker:
                 (self.generated_dir / (theories[-1] + '.thy')).read_bytes())
             definitions += [
                 f'session {session} in "sealed-session" = {"Generated_Refine" if providers else self.base_session} +',
-                "  sessions Lib CorresK AInvs", "  theories", f"    {theories[-1]}", "",
+                *([] if self.base_session == 'Intervaltree_Project_Base' else
+                  ["  sessions Lib CorresK AInvs"]), "  theories", f"    {theories[-1]}", "",
             ]
         root.write_text("\n".join(definitions), encoding="utf-8")
         build_sources = {name: (self.generated_dir / (name + '.thy')).read_text()

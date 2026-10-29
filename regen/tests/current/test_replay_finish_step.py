@@ -315,8 +315,12 @@ class ReplayFinishStepTests(unittest.TestCase):
                 checker.check_complete.return_value = {'verdict': verdict}
                 state = {'graph': {'nodes': [{'id': 'target'}]},
                          'proofs': {'target': 'by simp'}, 'status': 'active'}
+                snapshot = directory/'premise-audit.json'
+                write_json(snapshot, {'campaign_id': 'test',
+                    'semantic_base_seal_id': 'test-base', 'records': []})
+                run = {'premise_snapshot': str(snapshot)}
                 with patch('regen.analysis.retained_semantic_impact.audit_theory') as audit:
-                    sealed, feedback = seal_theory(directory, {}, {'file_slot': 'Target.thy'},
+                    sealed, feedback = seal_theory(directory, run, {'file_slot': 'Target.thy'},
                                                   directory, checker, [], state)
                 self.assertIsNone(sealed)
                 self.assertEqual(feedback, {'stage': 'complete', 'check': {'verdict': verdict}})
@@ -326,7 +330,7 @@ class ReplayFinishStepTests(unittest.TestCase):
                 checker.complete_source.assert_not_called()
                 checker.build_generated_session.assert_not_called()
                 checker.build_sealed_session.assert_not_called()
-                self.assertEqual(list(directory.iterdir()), [])
+                self.assertEqual(list(directory.iterdir()), [snapshot])
 
 
 if __name__ == '__main__':

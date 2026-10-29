@@ -852,11 +852,12 @@ def batch_query(run, package, state, checker, directory, request, *, audit_path=
 
 
 def seal_theory(run_dir, run, package, directory, checker, ancestors, state):
-    from regen.analysis.retained_semantic_impact import audit_theory
+    from regen.analysis.retained_semantic_impact import audit_theory, load_audit_context
     from regen.execution.proof_session_runner import generated_checkpoint_theory
     graph, proofs = state['graph'], state['proofs']
     if set(proofs) != {n['id'] for n in graph['nodes']}:
         raise ValueError('finish requires every active node proved; delete unnecessary unproved auxiliaries explicitly')
+    load_audit_context(Path(run['premise_snapshot']))
     complete = freeze_evidence(checker.check_complete(graph, proofs))
     if complete['verdict'] != 'green':
         return None, {'stage': 'complete', 'check': complete}

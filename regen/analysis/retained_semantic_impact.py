@@ -30,6 +30,29 @@ def sha256_path(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def load_audit_context(path: Path) -> dict[str, Any]:
+    """Validate trusted audit metadata before any expensive proof checking.
+
+    A broken preparation artifact is an infrastructure failure, never a model
+    request to retry or repair a mathematical proof.
+    """
+    from regen.execution.check_tasks import NativePreparationError
+    try:
+        snapshot = read_json(path)
+        if not isinstance(snapshot, dict):
+            raise ValueError('audit context must be an object')
+        for key in ('campaign_id', 'semantic_base_seal_id'):
+            value = snapshot.get(key)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError('missing or invalid ' + key)
+        records = snapshot.get('records')
+        if not isinstance(records, list) or any(not isinstance(r, dict) for r in records):
+            raise ValueError('records must be a list of objects')
+    except (OSError, ValueError, TypeError) as error:
+        raise NativePreparationError(f'invalid premise audit context {path}: {error}') from error
+    return snapshot
+
+
 def retained_records(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     return [
         record for record in snapshot.get("records", [])
@@ -238,7 +261,7 @@ def audit_theory(
     *, checker: Any, graph: dict[str, Any], proofs: dict[str, str],
     premise_snapshot_path: Path, output_path: Path,
 ) -> dict[str, Any]:
-    snapshot = read_json(premise_snapshot_path)
+    snapshot = load_audit_context(premise_snapshot_path)
     records = retained_records(snapshot)
     check = checker.audit_complete_theory(graph, proofs)
     checker.last_complete_audit = check

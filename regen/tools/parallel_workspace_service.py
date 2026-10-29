@@ -84,7 +84,7 @@ def _manifest(root):
               '--native-cpus', '--native-memory-mb', '--native-pids-limit',
               '--provider-build-timeout', '--build-ml-heap-mb', '--generation-strategy',
               '--focus-contract-id', '--effective-seconds', '--resume-authorization',
-              '--extend-effective-seconds', '--planning-budget'}
+              '--extend-effective-seconds', '--planning-budget', '--wall-seconds'}
     switches = {'--allow-external-call'}
     arguments = command[5:] if command[1] == '-u' else command[4:]
     options = {}

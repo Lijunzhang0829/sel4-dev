@@ -1,0 +1,26 @@
+{
+  "vero_repository": "https://github.com/sunblaze-ucb/vero",
+  "local_checkout_commit": "db0d68f44cd9c11afcbe2511d66855aa549b2b7c",
+  "snapshot_files": [
+    {
+      "path": "vendor/vero/manifest.json",
+      "sha256": "75f5b33b685ff50af6fcdbdf436282a011e92d883b4ce75e4a16fe74c2f99c93"
+    },
+    {
+      "path": "vendor/vero/Intervaltree/Impl/Merge.lean",
+      "sha256": "fed9f2e6b61aefa5585f3ce1322ecf6fc407680c2ce3ea6cc50136d3244a7530"
+    },
+    {
+      "path": "vendor/vero/Intervaltree/Spec/Merge.lean",
+      "sha256": "fa94f48382a2cffbf6995f450f85676980c05c1af81323ad3349fcfd9778f6a9"
+    },
+    {
+      "path": "vendor/vero/Intervaltree/Test.lean",
+      "sha256": "295393e58ac8c4a86d35e299d23f7d2df6e7897233fbf2af08d59146f7a786d5"
+    }
+  ],
+  "python_repository": "https://github.com/chaimleib/intervaltree",
+  "python_commit": "1bc406e1f441577c4e421fc51aba2ab67fbd97fb",
+  "translation_equivalence_proved": false,
+  "formal_agent_evaluation_started": false
+}

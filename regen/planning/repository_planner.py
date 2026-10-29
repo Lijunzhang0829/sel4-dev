@@ -45,7 +45,7 @@ def read_stream(root: Path, reference: dict) -> list[dict]:
 def validate_policy(policy: dict):
     if policy.get('schema_version') not in {2, 3} or policy.get('mode') != 'repository-proof-planning':
         raise ValueError('repository planning requires policy schema 2 or 3')
-    if not policy_artifact_supported(policy.get('artifact_type'), POLICY_ARTIFACT) or policy.get('stage') not in {'Refine', 'CRefine'}:
+    if not policy_artifact_supported(policy.get('artifact_type'), POLICY_ARTIFACT) or policy.get('stage') not in {'Refine', 'CRefine', 'Intervaltree'}:
         raise ValueError('invalid repository planning policy')
     if not isinstance(policy.get('model', {}).get('model'), str):
         raise ValueError('planning policy must specify a model')
@@ -705,7 +705,7 @@ def run_prepared(
     payload = read_json(planning_input_path)
     if (
         payload.get('artifact_type') != 'repository-planning-input'
-        or payload.get('benchmark', {}).get('target_session') not in {'Refine', 'CRefine'}
+        or payload.get('benchmark', {}).get('target_session') not in {'Refine', 'CRefine', 'Intervaltree'}
         or payload.get('benchmark', {}).get('cross_experiment_inputs') != []
     ):
         raise ValueError('direct planning requires an independent Refine/CRefine input')

@@ -1,0 +1,35 @@
+{
+  "stage": "benchmark-preparation",
+  "active_scope": "Fixed modeling input; user authorized a fresh VERO generation experiment on machine B with gpt-6-astra / low. The supervisor does not write target proofs.",
+  "target_proofs_required_for_delivery": false,
+  "formal_generation_experiment_started": true,
+  "upstream_python_commit": "1bc406e1f441577c4e421fc51aba2ab67fbd97fb",
+  "parts": [
+    {
+      "id": "model-extension",
+      "scope": "Port the three fixed VERO implementations and 56 specifications to Isabelle; add exact measure, repeated-cut fragmentation and graph-component specifications.",
+      "acceptance": "Definitions and all goal statements elaborate in the independent sanitized session; scope, preconditions, and goal coverage are explicit. Target proofs are not required."
+    },
+    {
+      "id": "concrete-refinement",
+      "scope": "Translate the upstream centered AVL representation and selected update/query paths, retain interval identity, and state representation/refinement contracts.",
+      "acceptance": "Document source correspondence and semantic gaps; check executable behavior against pinned Python and independently specified contents; do not claim the source translation is proved."
+    }
+  ],
+  "constraints": [
+    "The supervising Codex does not write target proofs. Target proofs may be generated only by the explicitly authorized VERO experiment using its frozen model, contracts, and checking protocol.",
+    "Existing preparation proofs are historical reference artifacts, not delivery requirements or proof-generation scores; keep them excluded from sanitized inputs.",
+    "Do not modify the existing VERO or coreMQTT experiments.",
+    "No sorry, axiomatization, or unproved goal imported as a premise.",
+    "An elaborated specification is not a proved theorem.",
+    "Local preparation proofs are disclosed and excluded from future sanitized evaluation inputs."
+  ],
+  "generation_run": {
+    "run_id": "intervaltree-vero-astra-low-20261027-001",
+    "machine": "serverb",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "remote_release": "/data/zljj/vero-runs/intervaltree-vero-astra-low-20261027-001",
+    "record": "experiments/intervaltree-vero-astra-low-20261027-001/latest-status.json"
+  }
+}

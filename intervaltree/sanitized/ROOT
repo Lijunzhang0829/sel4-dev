@@ -1,0 +1,7 @@
+session Intervaltree_Definitions = HOL +
+  options [document = false, threads = 2]
+  directories "theories"
+  theories Interval_Input
+session Intervaltree_Goals in "goals" = Intervaltree_Definitions +
+  options [document = false, threads = 2]
+  theories Interval_Goals

@@ -1145,7 +1145,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                            native_pids_limit=1024, provider_build_timeout=1800,
                            build_ml_heap_mb=None, generation_strategy_name='sketch-reviewed-v1', focus_contract_id=None,
                            effective_seconds=172800, resume_authorization=None,
-                           extend_effective_seconds=None, planning_budget=None):
+                           extend_effective_seconds=None, planning_budget=None, wall_seconds=None):
     from regen.execution.proof_session_runner import acquire_run_mutation_lock, release_run_mutation_lock
     from regen.infrastructure.audited_llm import model_settings
     if not allow_external_call:
@@ -1202,12 +1202,14 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
             'theory_tool_execution':'serial','file_planner_interface':file_planner_interface,
             **resources.policy,**overview.options,'integration_required':integrate,
             'execution_policy':policy}
+        if wall_seconds is not None:
+            workspace_policy['generation_wall_seconds'] = wall_seconds
         from regen.infrastructure.parallel_generation_budget import initialize_parallel_budget
         rows = overview.list_workspace()['theories']
         budget, bridge = initialize_parallel_budget(root, overview, workspace_policy,
             seconds=effective_seconds, resume_authorization=resume_authorization,
             extension_seconds=extend_effective_seconds, rows=rows,
-            planning_budget=planning_budget)
+            planning_budget=planning_budget, wall_seconds=wall_seconds)
         budget.ledger.append('parallel_budget_invocation',
             service_invocation_id=os.environ.get('INVOCATION_ID'), pid=os.getpid())
         durable(root/'parallel-workspace-policy.json', workspace_policy, immutable=True)

@@ -103,6 +103,8 @@ class EffectiveTimeBudget:
         self.thread = None
         self.reason = None
         self.finished = False
+        self.wall_limit = None
+        self.wall_deadline_monotonic = None
         self.finish_reason = None
         self.effective_seconds = 0.
         self.worker_seconds = 0.
@@ -361,6 +363,9 @@ class EffectiveTimeBudget:
         with self.lock:
             self._settle()
             value = self._compact()
+            if self.wall_limit is not None:
+                value['wall_limit'] = {**self.wall_limit, 'remaining_seconds': max(
+                    0., self.wall_deadline_monotonic - self.monotonic())}
             value.update(self.provider_requests.summary())
             value.update(effective_seconds_limit=self.seconds, token_limit=None,
                 remaining_seconds=max(0., self.seconds-self.effective_seconds),
@@ -571,10 +576,44 @@ class EffectiveTimeBudget:
             self._settle(); self._cancel_locked(reason)
 
     def _check_locked(self):
+        if (self.wall_deadline_monotonic is not None
+                and self.monotonic() >= self.wall_deadline_monotonic):
+            self._cancel_locked('generation_wall_time_budget_exhausted')
         if self.effective_seconds >= self.seconds:
             self._cancel_locked(self.limit_reason)
         if self.event.is_set() or self.closed.is_set():
             raise CheckCancelled(self.reason or 'time budget closed')
+
+    def bind_wall_limit(self, seconds, *, wall_clock=time.time):
+        """Optional elapsed cutoff, independent of worker gates and refunds.
+
+        The persisted absolute deadline includes downtime on resume. Within a
+        process use monotonic time. Publication and the existing watchdog share
+        this check, so late GREEN results cannot bypass the cutoff.
+        """
+        with self.lock:
+            rows = [r for r in self.ledger.rows if r['kind'] == 'generation_wall_limit']
+            if seconds is None:
+                if rows:
+                    raise ValueError('cannot remove a persisted wall limit')
+                return
+            seconds = _positive(seconds, 'generation wall limit')
+            if self.wall_limit is not None:
+                raise ValueError('wall limit already bound')
+            if rows:
+                if len(rows) != 1 or rows[0]['data']['seconds'] != seconds:
+                    raise ValueError('generation wall limit changed')
+                binding = rows[0]['data']
+            else:
+                now = wall_clock()
+                binding = {'seconds': seconds, 'started_unix': now,
+                           'deadline_unix': now + seconds,
+                           'includes_downtime': True, 'refunds': False}
+                self._append('generation_wall_limit', **binding)
+            self.wall_limit = binding
+            self.wall_deadline_monotonic = self.monotonic() + max(
+                0., min(seconds, binding['deadline_unix'] - wall_clock()))
+            self._check_locked()
 
     def check(self):
         with self.lock:

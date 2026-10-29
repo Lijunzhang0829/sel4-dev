@@ -2330,6 +2330,8 @@ def main() -> int:
                           help="Global effective generation allowance (default 48h); union of parallel worker activity")
     parallel.add_argument("--planning-budget", type=Path, default=None,
                           help="Completed reviewed-planning directory whose charged time belongs to this same allowance")
+    parallel.add_argument("--wall-seconds", type=float, default=None,
+                          help="Elapsed generation cutoff, including all waits; separate from effective accounting")
     parallel.add_argument("--resume-authorization", default=None,
                           help="Explicit authorization reference to resume a persisted effective-time budget")
     parallel.add_argument("--extend-effective-seconds", type=float, default=None,
@@ -2363,6 +2365,7 @@ def main() -> int:
                 generation_strategy_name=args.generation_strategy,
                 focus_contract_id=args.focus_contract_id,
                 effective_seconds=args.effective_seconds,
+                wall_seconds=args.wall_seconds,
                 planning_budget=args.planning_budget,
                 resume_authorization=args.resume_authorization,
                 extend_effective_seconds=args.extend_effective_seconds,

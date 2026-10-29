@@ -1,0 +1,91 @@
+{
+  "upstream_repo": "https://github.com/chaimleib/intervaltree",
+  "commit": "1bc406e1f441577c4e421fc51aba2ab67fbd97fb",
+  "license": "Apache-2.0",
+  "translation_status": "manual_semantics_preserving_intent_not_machine_checked_python_correspondence",
+  "mappings": [
+    {
+      "isabelle": "entry, entry_hit, entry_valid",
+      "source": "vendor/intervaltree/intervaltree/interval.py",
+      "python": "Interval.contains_point/is_null",
+      "note": "integer endpoints; immutable nat payload; equality includes endpoints and payload"
+    },
+    {
+      "isabelle": "Branch, refresh_node, singleton_node",
+      "source": "vendor/intervaltree/intervaltree/node.py",
+      "python": "Node fields, refresh_balance, from_interval",
+      "note": "explicit tree values replace mutable object references; depth and balance caches remain represented"
+    },
+    {
+      "isabelle": "routing_ok, metadata_ok, balanced_tree",
+      "source": "vendor/intervaltree/intervaltree/node.py",
+      "python": "Node.verify",
+      "note": "separate semantic routing, cache consistency, AVL balance; routing describes every subtree entry"
+    },
+    {
+      "isabelle": "execute_tree AddEntry",
+      "source": "vendor/intervaltree/intervaltree/node.py",
+      "python": "Node.add",
+      "note": "same center-hit and branch decisions; duplicate-free bucket list implements set insertion"
+    },
+    {
+      "isabelle": "execute_tree RotateNode/SingleRotateNode/DoubleRotateNode",
+      "source": "vendor/intervaltree/intervaltree/node.py",
+      "python": "Node.rotate/srotate/drotate",
+      "note": "keeps recursive rebalance and promoted bucket-entry removal, including pruning; no ordinary-BST replacement"
+    },
+    {
+      "isabelle": "execute_tree RemoveEntry/PruneNode/PopGreatestNode",
+      "source": "vendor/intervaltree/intervaltree/node.py",
+      "python": "remove_interval_helper/prune/pop_greatest_child",
+      "note": "keeps done propagation and predecessor extraction; maximal-end center selection expressed by Max/fold instead of sorting and popping"
+    },
+    {
+      "isabelle": "tree_at",
+      "source": "vendor/intervaltree/intervaltree/node.py",
+      "python": "Node.search_point",
+      "note": "same bucket filtering and one-child pruning; pure result set replaces mutable accumulator"
+    },
+    {
+      "isabelle": "boundaries, boundary_inc, boundary_dec, boundary_keys",
+      "source": "vendor/intervaltree/intervaltree/intervaltree.py",
+      "python": "_add_boundaries/_remove_boundaries",
+      "note": "association list with explicit key counters models SortedDict contract; actual SortedContainers implementation is outside scope"
+    },
+    {
+      "isabelle": "state_add/state_remove/state_discard",
+      "source": "vendor/intervaltree/intervaltree/intervaltree.py",
+      "python": "IntervalTree.add/remove/discard",
+      "note": "preserves duplicate/no-op and invalid/missing rejection; internal failure commits no partial state in this pure model"
+    },
+    {
+      "isabelle": "tree_overlap/tree_envelop",
+      "source": "vendor/intervaltree/intervaltree/intervaltree.py",
+      "python": "IntervalTree.overlap/envelop",
+      "note": "queries begin point and all indexed boundary keys in [begin,end); envelop filters candidates by complete containment"
+    },
+    {
+      "isabelle": "run_updates",
+      "source": "vendor/intervaltree/intervaltree/intervaltree.py",
+      "python": "composition of existing public updates",
+      "note": "new fixed experiment driver, not a claimed upstream function"
+    }
+  ],
+  "mandatory_open_obligations": [
+    "tree_add_fuel_adequacy",
+    "tree_remove_fuel_adequacy",
+    "tree_add_preserves_wf",
+    "tree_remove_preserves_wf",
+    "refine_add_state_invariant",
+    "refine_remove_state_invariant"
+  ],
+  "limitations": [
+    "Fuel is an explicit execution budget. None/ExecutionFailure must fail every differential test on valid operations; success-conditional proofs alone do not establish total correctness.",
+    "Fuel exhaustion, malformed internal states, and missing internal required entries share None internally; public invalid/missing API errors have distinct update_status constructors.",
+    "List order selects one ordering of Python set iterations. Observable contents and queries are sets; exact shape equality across runtimes is not claimed.",
+    "Node.from_intervals/from_sorted_intervals bulk construction is not translated. Tests start from empty_state and use actual incremental insertion paths.",
+    "Python exceptions, allocation failure, arbitrary endpoint classes, user-defined hashing/equality, mutable payloads, object aliasing and runtime resource costs are outside this model.",
+    "SortedDict behavior is modeled by boundary counters and sorted keys, not verified down to its concrete implementation.",
+    "No checked Python-to-Isabelle refinement theorem is provided; differential examples supply validation evidence only."
+  ]
+}
