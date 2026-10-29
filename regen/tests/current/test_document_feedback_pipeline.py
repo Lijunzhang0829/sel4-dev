@@ -168,6 +168,24 @@ class NativeGoalReadTests(unittest.TestCase):
 
 
 class DynamicFeedbackTests(unittest.TestCase):
+    def test_reviewed_check_returns_obstacle_summary_without_another_read(self):
+        from regen.tests.current.test_theory_document import DocumentControllerTests
+        from regen.planning.parallel_file_planner import generation_strategy
+        case = DocumentControllerTests(); case.setUp(); self.addCleanup(case.doCleanups)
+        case.controller.generation_strategy = generation_strategy('sketch-reviewed-v1')
+        draft = case.read()['document']
+        saved = case.call({'action':'edit_theory', 'base_sha256':draft['source_sha256'],
+                          'edits':[{'old':'oops', 'new':'by simp'}]})
+        evidence = {'check':{'verdict':'red','returncode':1,
+            'diagnostic':'Failed to finish proof (line 3): goal (1 subgoal): P'},
+            'node_results':[{'node_id':'target_contract','status':'failed'}]}
+        with patch('regen.planning.theory_document.check_document', return_value=evidence):
+            result = case.call({'action':'check_theory','source_sha256':saved['source_sha256']})
+        rows = result['feedback']['proof_obstacles']
+        self.assertEqual(rows[0]['entry_id'], 'target_contract')
+        self.assertEqual(rows[0]['obstacle_summary']['latest_comparison']['reason'], 'no_linked_predecessor')
+        self.assertEqual(result['publication'], 'not_published')
+
     def test_document_candidate_built_once_before_independent_commit_validation(self):
         from regen.tests.current.test_theory_document import DocumentControllerTests
         from regen.planning import theory_document

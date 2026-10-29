@@ -197,6 +197,110 @@ class WorkflowTests(unittest.TestCase):
             'node_results':[{'node_id':'helper','status':'failed'}]})
         self.assertFalse(workflow_view(self.store)['pending_failures'])
 
+    def test_obstacle_history_links_changed_proof_to_exact_previous_diagnosis(self):
+        from regen.planning.sketch_assessment import read_failure
+        first_source = self.source.replace('oops', 'by simp')
+        self.save(first_source)
+        diagnostic = 'Failed to finish proof (line 7 of "/candidate/First.thy"):\ngoal (1 subgoal):\n 1. P x'
+        check = {'verdict': 'red', 'returncode': 1, 'diagnostic': diagnostic}
+        evidence = {'check': check, 'node_results': [{'node_id': 'helper', 'status': 'failed'}]}
+        record_formal_result(self.store, first_source, evidence)
+        first = workflow_view(self.store)['pending_failures'][0]['failure_id']
+        diagnose_failure(self.store, first, 'script', 'Instantiate the premise of the failed rule.')
+        second_source = first_source.replace('by simp', 'by blast')
+        self.save(second_source)
+        moved = {**check, 'diagnostic': diagnostic.replace('line 7', 'line 17').replace('First.thy', 'Second.thy')}
+        record_formal_result(self.store, second_source, {**evidence, 'check': moved})
+        pending = workflow_view(self.store)['pending_failures'][0]
+        details = read_failure(self.store, pending['failure_id'])
+        self.assertEqual(details['previous_failure_id'], first)
+        summary = pending['obstacle_summary']
+        self.assertEqual(summary['latest_comparison']['status'], 'same_observation')
+        self.assertTrue(summary['latest_comparison']['candidate_changed'])
+        self.assertEqual(summary['same_observation_count_in_window'], 2)
+        self.assertEqual(summary['previous_diagnosis']['plan'], 'Instantiate the premise of the failed rule.')
+        self.assertNotIn('recent_failures', summary)
+        self.assertEqual(len(details['obstacle_history']['recent_failures']), 2)
+        self.assertEqual(details['proof'], 'by blast')
+        self.assertFalse(self.state['proofs'])
+
+    def test_obstacle_context_change_is_unknown_not_new_certified_progress(self):
+        from regen.planning.sketch_assessment import read_failure
+        source = self.source.replace('oops', 'by simp')
+        self.save(source)
+        evidence = {'check': {'verdict': 'red', 'returncode': 1,
+                             'diagnostic': 'Failed to finish proof: P x'},
+                    'node_results': [{'node_id': 'helper', 'status': 'failed'}]}
+        record_formal_result(self.store, source, evidence)
+        first = workflow_view(self.store)['pending_failures'][0]['failure_id']
+        diagnose_failure(self.store, first, 'mathematical', 'Reduce the helper interface.')
+        changed = source.replace('"True & True"', '"True"')
+        self.save(changed)
+        record_formal_result(self.store, changed, evidence)
+        second = workflow_view(self.store)['pending_failures'][0]
+        self.assertEqual(second['obstacle_summary']['latest_comparison']['reason'], 'context_changed')
+        self.assertEqual(second['obstacle_summary']['latest_comparison']['status'], 'unknown')
+        self.assertEqual(second['obstacle_summary']['same_observation_count_in_window'], 1)
+        self.assertEqual(read_failure(self.store, second['failure_id'])['previous_failure_id'], first)
+
+    def test_green_clears_live_obstacle_but_retains_failure_receipt(self):
+        from regen.planning.sketch_assessment import read_failure
+        failure = self.fail()
+        source = self.store.read()['source']
+        record_formal_result(self.store, source, {'check': {'verdict': 'green'}, 'node_results': []})
+        self.assertFalse(workflow_view(self.store)['pending_failures'])
+        archived = read_failure(self.store, failure)
+        self.assertFalse(archived['current'])
+        self.assertEqual(archived['proof'], 'by fail')
+        self.assertEqual(archived['obstacle_history']['latest_failure_id'], failure)
+
+    def test_cached_or_preparation_failure_does_not_extend_obstacle_chain(self):
+        first = self.fail()
+        source = self.store.read()['source']
+        for extra, scope in [({'cached_failure': True}, None), ({}, 'native_preparation')]:
+            check = {'verdict': 'red', 'returncode': 1, 'diagnostic': 'Failed to finish proof'}
+            if scope:
+                check['failure_scope'] = scope
+            record_formal_result(self.store, source, {**extra, 'check': check,
+                'node_results': [{'node_id': 'helper', 'status': 'failed'}]})
+            current = workflow_view(self.store)['pending_failures'][0]
+            self.assertEqual(current['failure_id'], first)
+            self.assertEqual(current['obstacle_summary']['observed_failure_count'], 1)
+
+    def test_probe_and_formal_failures_have_distinct_obstacle_contexts(self):
+        from regen.planning.sketch_workflow import _failure
+        from regen.planning.theory_document import parse
+        from regen.planning.sketch_assessment import read_failure
+        entries, _ = parse(self.store.read()['source'], self.store.package, self.store.imports)
+        nodes = {node['id']: node for node in entries}
+        check = {'verdict': 'red', 'returncode': 1, 'diagnostic': 'Failed to finish proof: P x'}
+        first = _failure(self.store, nodes, 'helper', 'by simp', check, 'probe:first')
+        second = _failure(self.store, nodes, 'helper', 'by simp', check, 'formal-second')
+        history = read_failure(self.store, second)['obstacle_history']
+        self.assertEqual(read_failure(self.store, second)['previous_failure_id'], first)
+        self.assertEqual(history['latest_comparison']['status'], 'unknown')
+        self.assertEqual(history['latest_comparison']['reason'], 'context_changed')
+
+    def test_changed_preceding_uncommitted_proof_changes_obstacle_context(self):
+        source = self.source.replace('oops', 'by simp')
+        self.save(source)
+        evidence = {'check': {'verdict': 'red', 'returncode': 1,
+                             'diagnostic': 'Failed to finish proof: P x'},
+                    'node_results': [{'node_id': 'contract', 'status': 'failed'}]}
+        record_formal_result(self.store, source, evidence)
+        first = workflow_view(self.store)['pending_failures'][0]['failure_id']
+        changed = source.replace('lemma helper: "True & True"\n(* REGEN-PROOF *)\nby simp',
+                                 'lemma helper: "True & True"\n(* REGEN-PROOF *)\nby blast')
+        self.save(changed)
+        record_formal_result(self.store, changed, evidence)
+        pending = workflow_view(self.store)['pending_failures'][0]
+        comparison = pending['obstacle_summary']['latest_comparison']
+        self.assertEqual(comparison['status'], 'unknown')
+        self.assertEqual(comparison['reason'], 'context_changed')
+        self.assertFalse(comparison['candidate_changed'])
+        from regen.planning.sketch_assessment import read_failure
+        self.assertEqual(read_failure(self.store, pending['failure_id'])['previous_failure_id'], first)
+
     def test_failed_parent_does_not_block_an_unrelated_parent(self):
         from pathlib import Path
         from regen.planning.declaration_index import build_index

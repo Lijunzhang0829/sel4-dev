@@ -208,6 +208,20 @@ Native failure IDs appear in read_theory.workflow. Use diagnose_failure before
 revising related decompositions. For script/known_fact failures, change and
 check the existing proof first. Unrelated parents may continue independently.
 Reviews are accountable model judgments, not kernel difficulty certificates.
+Use proof_obstacles in check feedback and read_theory.workflow to compare the
+last repair with its failure. same_observation means repeated rendered feedback
+in the same context, not semantic equivalence; changed_observation does not
+certify progress. unknown covers timeouts, infrastructure and changed context.
+Read linked read_failure receipts when needed. Explain which failed command or
+residual obligation the next edit addresses and how it differs from prior attempts.
+If the same observation survives edited candidates, reassess the rule instantiation,
+missing invariant or helper interface rather than merely renaming tactics. Continue
+hard proof work while useful; these observations impose no repair-round limit.
+In decomposition reviews describe both the removed obligations and the remaining
+hard mechanism (e.g. an invariant or address relation). An isolated obligation or
+a short probe timeout is not evidence that a leaf is easy. Preserve successful
+siblings; extract independently useful stable subproofs as checked helpers when
+appropriate, without treating any uncommitted script prefix as GREEN.
 '''
 
 GENERATION_STRATEGIES['sketch-guided-v1'] = GENERATION_STRATEGIES['sketch-local-demands-v1'].replace(

@@ -1318,6 +1318,12 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         feedback = {'status':'rejected_batch', 'check':evidence['check'],
                             'node_results':evidence.get('node_results',[]), 'failure_identity':identity,
                             **scope}
+                        if document_check_requested and store.require_review:
+                            from regen.planning.sketch_workflow import workflow_view
+                            failed_ids = {r['node_id'] for r in evidence.get('node_results', [])
+                                          if r.get('status') == 'failed'}
+                            feedback['proof_obstacles'] = [row for row in
+                                workflow_view(store)['pending_failures'] if row['entry_id'] in failed_ids]
                         if evidence['check']['verdict'] == 'green' and missing_accepted:
                             # A diagnostic draft may intentionally contain oops.
                             # Keep its native evidence, but never publish a smaller

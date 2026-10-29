@@ -242,9 +242,11 @@ def validate_review(store, nodes, proofs, target, reviews):
 def read_failure(store, failure_id):
     from regen.planning.sketch_workflow import _read, _pending, _diagnosis
     record = _read(store, 'failures', failure_id)
+    from regen.planning.proof_obstacles import history_view
     return {**record, 'failure_id': failure_id,
             'current': _pending(store).get(record['entry']['id']) == failure_id,
             'diagnosis': _diagnosis(store, failure_id),
             'repair_scope': record['entry']['id'],
+            'obstacle_history':history_view(store,failure_id),
             'notice': 'Repair this exact failed entry using its native state. Keep accepted siblings; '
                       'partial execution is not an accepted proof or reusable tactic checkpoint.'}

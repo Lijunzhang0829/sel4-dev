@@ -250,7 +250,7 @@ def _roots(groups, key):
         found = expanded
 
 
-def _failure(store, nodes, key, proof, check, evidence_id):
+def _failure(store, nodes, key, proof, check, evidence_id, candidate_proofs=None):
     pending = _pending(store)
     previous_id = pending.get(key)
     previous = _read(store,'failures',previous_id) if previous_id else None
@@ -258,9 +258,21 @@ def _failure(store, nodes, key, proof, check, evidence_id):
     retry_required = bool(previous and proof.strip() == previous['proof'].strip()
                           and (previous.get('local_retry_required')
                                or decision and decision['classification'] in {'script','known_fact'}))
+    preceding = []
+    for identity,node in nodes.items():
+        if identity == key:
+            break
+        if candidate_proofs is not None and identity not in store.state['proofs']:
+            preceding.append({'entry':_node(node), 'proof':candidate_proofs.get(identity)})
     record = {'run_id':store.state['graph']['run_id'], 'entry':_node(nodes[key]),'proof':proof,
               'check':check,'evidence_id':evidence_id, 'roots':sorted(_roots(load_groups(store), key)),
-              'local_retry_required':retry_required}
+              'local_retry_required':retry_required,
+              'previous_failure_id':previous_id,
+              'obstacle_context':{'entry':_node(nodes[key]), 'imports':store.imports,
+                  'evidence_mode':('probe' if evidence_id.startswith('probe:') else
+                                   'sketch' if evidence_id.startswith('sketch:') else 'formal'),
+                  'preceding_candidates_sha256':digest(preceding),
+                  'prefix':{'sha256':digest(prefix_binding(available_prefix(store.state,list(nodes.values()),key)))}}}
     if getattr(store,'require_phases',False):
         from regen.planning.sketch_phases import transition_record
         record['phase_failures'] = (previous.get('phase_failures',1)+1 if previous and not transition_record(store,previous_id) else 1)
@@ -285,7 +297,7 @@ def record_formal_result(store, source, evidence):
         for row in evidence.get('node_results', []):
             if row['status'] == 'failed' and row['node_id'] in proofs:
                 key = row['node_id']
-                _failure(store,nodes,key,proofs[key],evidence['check'],digest(evidence))
+                _failure(store,nodes,key,proofs[key],evidence['check'],digest(evidence),proofs)
 
 
 def record_conditional_result(store, nodes, proofs, target, check, receipt_id, closed):
@@ -293,7 +305,7 @@ def record_conditional_result(store, nodes, proofs, target, check, receipt_id, c
     if check.get('failure_scope') == 'native_preparation':
         return
     if check['verdict'] == 'red':
-        _failure(store,nodes,target,proofs[target],check,'sketch:'+receipt_id)
+        _failure(store,nodes,target,proofs[target],check,'sketch:'+receipt_id,proofs)
     elif closed:
         pending = _pending(store)
         identity = pending.get(target)
@@ -362,7 +374,16 @@ def workflow_view(store):
             'escalation_action':'transition_proof' if getattr(store,'require_phases',False) else None,
             'probe_candidate_seconds':PROBE_SECONDS,
             'pending_failures':[{'entry_id':key,'failure_id':identity,
-                'diagnosis':_diagnosis(store,identity)} for key,identity in _pending(store).items()],
+                'diagnosis':_diagnosis(store,identity),
+                'obstacle_summary':obstacle_summary(store,identity)}
+                for key,identity in _pending(store).items()],
             'structural_assessment_required':getattr(store, 'require_assessment', False),
             'failure_details_action':'read_failure',
             'difficulty_certified':False}
+
+
+def obstacle_summary(store, failure_id):
+    """Small navigation/comparison view; read_failure retains full receipts."""
+    from regen.planning.proof_obstacles import history_view
+    history = history_view(store, failure_id)
+    return {key:value for key,value in history.items() if key != 'recent_failures'}
