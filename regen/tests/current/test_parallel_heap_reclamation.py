@@ -1,4 +1,4 @@
-"""Coordinator cache reclamation requires a sealed, completed provider session."""
+"""Coordinator cache reclamation requires an exported, completed provider session."""
 from copy import deepcopy
 from pathlib import Path
 import unittest
@@ -8,11 +8,11 @@ from regen.planning.parallel_file_planner import _reclaim_completed_heaps
 
 
 class ParallelHeapReclamationTests(unittest.TestCase):
-    def test_only_sealed_and_completed_sessions_are_eligible(self):
-        for status in ('sealed', 'generating', 'retired', 'infrastructure_error'):
+    def test_only_exported_and_completed_sessions_are_eligible(self):
+        for status in ('sealed', 'exported_partial', 'generating', 'retired', 'infrastructure_error'):
             for provider in ({}, {'status':'failed'}, {'status':'completed'}):
                 result = {'theory':'Target', 'status':status, 'provider':provider}
-                expected = status == 'sealed' and provider.get('status') == 'completed'
+                expected = status in {'sealed', 'exported_partial'} and provider.get('status') == 'completed'
                 with self.subTest(status=status, provider=provider), patch(
                         'regen.infrastructure.resource_budget.reclaim_theory_heaps',
                         return_value={'status':'reclaimed'}) as reclaim:

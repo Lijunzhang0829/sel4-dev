@@ -53,6 +53,13 @@ class HeapReclamationTests(unittest.TestCase):
         self.assertEqual(reclaim_theory_heaps(self.root, 'Target')['status'], 'warning')
         self.assertTrue(self.heaps.exists())
 
+    def test_partial_status_without_v4_evidence_does_not_delete_cache(self):
+        self.seal(status='exported_partial')
+        result = reclaim_theory_heaps(self.root, 'Target')
+        self.assertEqual(result['status'], 'warning')
+        self.assertIn('version 4', result['diagnostic'])
+        self.assertTrue(self.heaps.exists())
+
     def test_traversal_and_symlink_theory_are_rejected(self):
         for name in ('..', '../Target', '/Target', 'a\\b', ''):
             self.assertEqual(reclaim_theory_heaps(self.root, name)['status'], 'warning')
@@ -105,6 +112,42 @@ class HeapReclamationTests(unittest.TestCase):
         self.assertTrue(result['heap_removed'])
         self.assertFalse(self.heaps.exists())
         self.assertEqual(json.loads(Path(result['audit_path']).read_text())['status'], 'planned')
+
+
+class PartialHeapReclamationTests(unittest.TestCase):
+    """Real acceptance journals; native check bytes are explicit unit fixtures."""
+    def setUp(self):
+        from regen.tests.current.test_partial_export_publication import PartialExportPublicationTests
+        self.fixture = PartialExportPublicationTests()
+        self.addCleanup(self.fixture.doCleanups)
+        self.fixture.setUp()
+        self.fixture.export_provider()
+        self.root = self.fixture.root
+        self.heaps = self.root/'theories/Provider/heaps'
+        self.heaps.mkdir()
+        (self.heaps/'Generated').write_bytes(b'disposable synthetic heap')
+
+    def test_partial_export_replays_before_reclaiming_and_preserves_evidence(self):
+        originals = {path:path.read_bytes() for path in self.root.rglob('*')
+                     if path.is_file() and not path.is_relative_to(self.heaps)}
+        result = reclaim_theory_heaps(self.root, 'Provider')
+        self.assertEqual(result['status'], 'reclaimed', result)
+        self.assertEqual(result['theory_status'], 'exported_partial')
+        self.assertFalse(self.heaps.exists())
+        for path, content in originals.items():
+            self.assertEqual(path.read_bytes(), content)
+
+    def test_rehashed_invalid_partial_scope_cannot_authorize_reclamation(self):
+        commits = sorted((self.root/'theories/Provider/acceptance/commits').glob('*.json'))
+        last = json.loads(commits[-1].read_text())
+        last['evidence']['export_scope']['exported_node_ids'].append('b')
+        last['state']['seal_id'] = 'theory-seal:'+digest(last['evidence'])[:20]
+        last['commit_id'] = digest({key:value for key,value in last.items() if key != 'commit_id'})
+        durable(commits[-1], last)
+        result = reclaim_theory_heaps(self.root, 'Provider')
+        self.assertEqual(result['status'], 'warning')
+        self.assertTrue(self.heaps.exists())
+        self.assertFalse(result['heap_removed'])
 
 
 if __name__ == '__main__':

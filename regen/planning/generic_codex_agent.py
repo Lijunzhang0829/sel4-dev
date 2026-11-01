@@ -261,7 +261,10 @@ class Controller:
         self.stage.register(self.current['allocation'],baseline_green=baseline)
         if hasattr(self.stage,'mark_sealed'):
             for r in self.ledger.rows:
-                if r['kind']=='proof_commit' and r['data']['epoch']==self.current['epoch'] and r['data']['event']=='seal':
+                # Legacy seal events were always complete. New observations
+                # retain state status because partial exports use that event too.
+                if (r['kind']=='proof_commit' and r['data']['epoch']==self.current['epoch']
+                        and r['data']['event']=='seal' and r['data'].get('theory_status','sealed')=='sealed'):
                     self.stage.mark_sealed(r['data']['theory'])
         states=self.stage.snapshot()['theories']
         if self.stage.active_theory is None or states[self.stage.active_theory]['sealed']:
@@ -295,7 +298,8 @@ class Controller:
     def committed(self,record,*,recovered=False,evidence_path=None):
         if self.current is None:raise ValueError('proof commit before accepted repository plan')
         self.ledger.append('proof_commit',epoch=self.current['epoch'],theory=record['state']['graph']['theory'],
-            commit_id=record['commit_id'],event=record['event'],nodes=node_rows(record),recovered=recovered,
+            commit_id=record['commit_id'],event=record['event'],theory_status=record['state']['status'],
+            nodes=node_rows(record),recovered=recovered,
             evidence_sha256=digest(record['evidence']),journal_artifact=str(evidence_path) if evidence_path else None)
         if hasattr(self.stage,'observe'):
             for row in node_rows(record):

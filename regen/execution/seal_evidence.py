@@ -26,12 +26,14 @@ def state_binding(state):
     return digest({k:state[k] for k in ('graph','proofs','accepted_order')})
 
 
-def validate_seal(state, evidence, *, expected_imports=None, base_session=None, runtime=None):
-    # Only v3 self-contained evidence can be replayed; older weak seals still
-    # require explicit re-sealing. Historical v3 renderer compatibility below
-    # never skips the ordinary source, native receipt or build checks.
-    if evidence.get('seal_evidence_version') != 3:
-        raise ValueError('seal needs v3 bound native evidence; legacy runs require explicit re-seal')
+def validate_seal(state, evidence, *, expected_imports=None, base_session=None, runtime=None,
+                  expected_package=None):
+    # v3 is a complete seal; v4 adds an explicitly scoped positive-only export.
+    # Older weak seals still require explicit re-sealing. Historical v3 renderer
+    # compatibility never skips the source, native receipt or build checks.
+    version = evidence.get('seal_evidence_version')
+    if version not in (3, 4):
+        raise ValueError('seal needs bound v3/v4 native evidence; legacy runs require explicit re-seal')
     if state['seal_id'] != 'theory-seal:' + digest(evidence)[:20]:
         raise ValueError('seal ID differs from evidence')
     if evidence.get('state_binding') != state_binding(state):
@@ -50,6 +52,14 @@ def validate_seal(state, evidence, *, expected_imports=None, base_session=None, 
         raise ValueError('seal render policy differs from frozen run')
     renderer.complete_context_policy = policy
     graph, proofs = state['graph'], state['proofs']
+    if version == 4:
+        if state.get('status') != 'exported_partial':
+            raise ValueError('partial export cannot claim the whole theory was proved')
+        from regen.execution.partial_theory_export import validate_export_scope
+        graph = validate_export_scope(state, evidence.get('export_scope'), runtime=runtime,
+                                      expected_imports=imports, expected_package=expected_package)
+    elif state.get('status') == 'exported_partial' or 'export_scope' in evidence:
+        raise ValueError('partial export requires a version 4 scope certificate')
     stem = graph['file_slot'].removesuffix('.thy')
     source = evidence.get('source_text')
     if not isinstance(source,str) or digest(source) != evidence.get('source_hash'):
@@ -72,7 +82,7 @@ def validate_seal(state, evidence, *, expected_imports=None, base_session=None, 
     audit_policy = evidence.get('audit_policy')
     if audit_policy == AUDIT_POLICY:
         expected_audit = renderer.complete_audit_source(graph, proofs)
-    elif 'audit_policy' not in evidence:
+    elif version == 3 and 'audit_policy' not in evidence:
         # Existing v3 seals predate declaration-bound audits. Accept only the
         # exact historical renderer; this branch also supports immutable seal
         # reuse in a continuation without pretending it is new certification.
@@ -122,7 +132,7 @@ def validate_seal(state, evidence, *, expected_imports=None, base_session=None, 
         raise ValueError('semantic impact binding mismatch')
 
 
-def bind_seal(state, evidence, checker):
+def bind_seal(state, evidence, checker, *, export_scope=None):
     from pathlib import Path
     from regen.execution.proof_commits import freeze_evidence
     evidence = freeze_evidence(evidence)
@@ -130,6 +140,9 @@ def bind_seal(state, evidence, checker):
                     complete_context_policy=resolve_complete_context_policy(vars(checker)), state_binding=state_binding(state),
                     imports=checker.imports(), base_session=checker.base_session,
                     dependency_receipts={})
+    if export_scope is not None:
+        from copy import deepcopy
+        evidence.update(seal_evidence_version=4, export_scope=deepcopy(export_scope))
     paths = evidence['dependencies']['complete_theory_audit']['proof_dependency_paths']
     for key, locations in paths.items():
         raw = Path(locations['raw']).read_bytes()

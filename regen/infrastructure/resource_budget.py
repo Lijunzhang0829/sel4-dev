@@ -142,9 +142,9 @@ def _clone_heaps(source, destination, *, reserve_bytes):
 
 
 def reclaim_theory_heaps(root, theory):
-    """Reclaim one sealed theory's disposable heaps after its controller closed.
+    """Reclaim one completed export's disposable heaps after its controller closed.
 
-    The caller must first confirm a sealed, completed provider session and a
+    The caller must first confirm a full/partial export, completed session and a
     successful controller close. This helper independently checks the terminal
     commit and restricts deletion to its exact theory-owned heap directory.
     Ordinary failures return warnings and never invalidate the accepted seal.
@@ -176,11 +176,29 @@ def reclaim_theory_heaps(root, theory):
             from regen.infrastructure.incremental_log import read_artifact
             last = read_artifact(commits[-1])
             body = {key: value for key, value in last.items() if key != 'commit_id'}
+            status = last.get('state', {}).get('status')
             if (last.get('commit_id') != digest(body)
                     or commits[-1].name != f'{last.get("sequence", 0):06d}.json'
-                    or last.get('event') != 'seal' or last.get('state', {}).get('status') != 'sealed'):
+                    or last.get('event') != 'seal' or status not in {'sealed', 'exported_partial'}):
                 raise ValueError('heap reclamation requires a valid terminal seal commit')
-            record.update(commit_id=last['commit_id'], sequence=last['sequence'], directory=str(heaps))
+            if status == 'exported_partial':
+                # Partial exports require their v4 scope and durable dispositions,
+                # not just a rehashed status label on an ordinary commit. Replay
+                # performs the normal package, prefix, native-evidence and policy
+                # checks without repairing or changing the original journal.
+                if last.get('evidence', {}).get('seal_evidence_version') != 4:
+                    raise ValueError('partial heap reclamation requires version 4 export evidence')
+                from regen.execution.repository_execution import journal, package_for
+                run = read_artifact(root / 'run.json')
+                package = package_for(run, last['state']['graph']['file_slot'])
+                if Path(package['file_slot']).stem != theory:
+                    raise ValueError('partial export package differs from heap owner')
+                snapshot = journal(root, run, package).replay_snapshot()
+                if (snapshot is None or snapshot['commit_id'] != last['commit_id']
+                        or snapshot['state'] != last['state']):
+                    raise ValueError('partial export journal differs from terminal reclamation commit')
+            record.update(commit_id=last['commit_id'], sequence=last['sequence'],
+                          theory_status=status, directory=str(heaps))
             if heaps.is_symlink():
                 raise ValueError('theory heaps cannot be a symlink')
             if not heaps.exists():

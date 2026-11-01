@@ -21,3 +21,18 @@ def resolve_complete_context_policy(run):
 def policy_binding(run):
     policy = resolve_complete_context_policy(run)
     return {} if policy == ISOLATED_CONTEXT else {'complete_context_policy': policy}
+
+
+def contract_policy_binding(run):
+    """Opt-in behavior is part of new journals, never retrofitted to old runs."""
+    from regen.planning.theory_outcomes import contract_dispositions_enabled
+    return ({'contract_outcome_policy': run['contract_outcome_policy']}
+            if contract_dispositions_enabled(run) else {})
+
+
+def exports_available(status):
+    return status in {'sealed', 'exported_partial'}
+
+
+def theory_finished(status):
+    return status in {'sealed', 'exported_partial', 'retired'}

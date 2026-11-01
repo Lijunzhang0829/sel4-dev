@@ -21,9 +21,13 @@ from uuid import uuid4
 from regen.execution.check_executor import CheckExecutor, NativeResources, CURRENT_RESOURCES
 from regen.execution.check_tasks import TERMINAL, CheckCancelled, check_cancelled
 from regen.execution.proof_commits import digest, durable
+from regen.execution.checker_policy import exports_available, theory_finished
 from regen.infrastructure.codex_runtime import CodexRuntimeError, runtime_verified_settings
 from regen.infrastructure.progress_events import event_scope, emit_event, generation_exclusion, observe_events
 from regen.planning.proof_workspace_agent import WorkspaceController, workspace_tools, _tool
+from regen.planning.theory_outcomes import (
+    contract_dispositions_enabled, current_dispositions, pending_contract_ids,
+)
 
 INSTRUCTIONS = '''You are the continuing File Planner for the ONE assigned theory.
 Own its proof graph and work normally until a verified finish/seal. Freely explore
@@ -301,12 +305,41 @@ def _cleanup_all(actions, primary=None):
 
 def _reclaim_completed_heaps(root, result):
     """Only call after future.result(): the controller's finally has completed."""
-    if result.get('status') == 'sealed' and result.get('provider', {}).get('status') == 'completed':
+    if exports_available(result.get('status')) and result.get('provider', {}).get('status') == 'completed':
         from regen.infrastructure.resource_budget import reclaim_theory_heaps
         result['heap_reclamation'] = reclaim_theory_heaps(root, result['theory'])
 
 
-def _continuation_prompt(theory, state):
+def _contract_view(controller, theory=None):
+    if not contract_dispositions_enabled(controller.run):
+        return {}
+    theory = theory or controller.theory
+    dispositions = current_dispositions(controller, theory)
+    pending = pending_contract_ids(controller, theory)
+    return {'contract_outcome_policy':controller.run['contract_outcome_policy'],
+            'contract_dispositions':{key:{'status':value['status'], 'reason':value['reason'],
+                'classification':value['classification'], 'receipt_id':value['receipt']['event_id'],
+                'available_as_positive_fact':False} for key,value in dispositions.items()},
+            'pending_contract_ids':pending, 'all_contracts_disposed_or_proved':not pending}
+
+
+def _progress_marker(controller, state):
+    marker = (digest(state.get('proofs', {})), getattr(controller, '_proof_work_version', 0))
+    if contract_dispositions_enabled(controller.run):
+        marker += (digest({key:value['receipt']['event_id'] for key,value in
+                           current_dispositions(controller).items()}),)
+    return marker
+
+
+def _continuation_prompt(theory, state, *, contract_view=None):
+    if contract_view is not None:
+        return (f'Continue the assigned theory {theory}. Contract dispositions stop only their '
+                'own goals and supply no positive facts. Leave these goals as oops, preserve '
+                'their fixed declarations, and attempt another pending contract. If no pending '
+                'contracts remain, finish to build and publish only checked positive facts; '
+                'do not retry disposed contracts or claim the entire theory was proved. '
+                'Existing budgets and accepted proofs are unchanged. Current disposition view:\n'
+                +json.dumps(contract_view, ensure_ascii=False))
     open_count = len(state['graph']['nodes']) - len(state['proofs'])
     return (f'Continue the same assigned theory {theory}. The previous model turn ended, '
             f'but checker authority still reports status={state["status"]!r} with '
@@ -468,6 +501,56 @@ class TheoryController(WorkspaceController):
     def _pending(self):
         return [self._owned(key) for key in self.task_ids if self._owned(key)['status'] not in TERMINAL]
 
+    def _guard_disposed_write(self, proposal):
+        """Keep stopped contracts unavailable without rewriting audited requests."""
+        if not contract_dispositions_enabled(self.run) or not isinstance(proposal, dict):
+            return
+        action = proposal.get('action')
+        if action not in {'edit_proof','edit_theory','submit_batch','check_theory',
+                          'check_sketch','assess_sketch','probe_helpers','review_sketch'}:
+            return
+        disposed = set(current_dispositions(self))
+        if not disposed:
+            return
+        selected = set()
+        if action == 'edit_proof':
+            # Clearing an obsolete failed body is harmless. A disposed slot may
+            # remain oops, but must never acquire another candidate proof.
+            if str(proposal.get('proof_body', '')).strip() != 'oops':
+                selected.add(proposal.get('entry_id'))
+        if action == 'submit_batch' and isinstance(proposal.get('proofs'), dict):
+            selected.update(proposal['proofs'])
+        for field in ('entry_ids', 'target_entry_ids'):
+            values = proposal.get(field)
+            if isinstance(values, list):
+                selected.update(value for value in values if isinstance(value, str))
+        if action == 'review_sketch':
+            selected.add(proposal.get('target_entry_id'))
+        if selected & disposed:
+            raise ValueError('disposed contracts cannot receive positive proofs or checks: '
+                             +', '.join(sorted(selected & disposed)))
+        if action == 'edit_theory':
+            from regen.planning.theory_document import parse
+            store, _ = self._document(); current = store.read()
+            source = proposal.get('source', current['source'])
+            if 'edits' in proposal:
+                edits = proposal['edits']
+                if not isinstance(edits, list):
+                    return  # The ordinary edit validator supplies its exact error.
+                for edit in edits:
+                    if (not isinstance(edit, dict) or not isinstance(edit.get('old'), str)
+                            or not edit['old'] or not isinstance(edit.get('new'), str)
+                            or source.count(edit['old']) != 1):
+                        return
+                    source = source.replace(edit['old'], edit['new'], 1)
+            if not isinstance(source, str):
+                return
+            _, before = parse(current['source'], store.package, store.imports)
+            _, after = parse(source, store.package, store.imports)
+            changed = [key for key in disposed if key in after and after[key] != before.get(key)]
+            if changed:
+                raise ValueError('disposed contract proof slots must stay oops: '+', '.join(sorted(changed)))
+
     def handle(self, name, arguments, metadata):
         # Receipt inspection/cancellation may be used by an external supervisor.
         # All mathematical/read tools share one theory-local serial boundary.
@@ -491,6 +574,8 @@ class TheoryController(WorkspaceController):
             return {**result, **({'framework_blocked':True} if getattr(self, 'framework_blocked', False) else {})}
         with self._tool_lock:
             self._check_session_active()
+            if mathematical:
+                self._guard_disposed_write(arguments.get('proposal'))
             self._completed_action_state = None
             self._helper_attempt = None
             result = self._handle(name, arguments, metadata)
@@ -546,7 +631,8 @@ class TheoryController(WorkspaceController):
                     'accepted_ids':list(state['accepted_order']),
                     'accepted_source_sha256':state.get('document_source_sha256'),
                     'status':state['status'],'feedback':compact_history_feedback(state.get('batch_feedback',{}),state),
-                    'observations':document_observations(context,state)}
+                    'observations':document_observations(context,state),
+                    **_contract_view(self)}
         if self.document_mode and name=='read_theory':
             if 'if_source_sha256' in arguments:
                 raise ValueError('if_source_sha256 applies only to the assigned draft')
@@ -572,7 +658,10 @@ class TheoryController(WorkspaceController):
                 if set(proposal) != {'action','entry_id'}:
                     raise ValueError('read_entry accepts entry_id only')
                 store, _ = self._document()
-                return store.read_entry(proposal['entry_id'])
+                result = store.read_entry(proposal['entry_id'])
+                if contract_dispositions_enabled(self.run):
+                    result['contract_disposition'] = _contract_view(self)['contract_dispositions'].get(proposal['entry_id'])
+                return result
             if proposal.get('action') == 'read_sketch':
                 from regen.planning.sketch_check import read_receipt
                 if set(proposal)-{'action','receipt_id','view'}:
@@ -591,7 +680,7 @@ class TheoryController(WorkspaceController):
                 if set(proposal) != {'action','source_sha256','failure_id','decision','plan'}:
                     raise ValueError('invalid transition_proof fields')
                 store,state = self._document()
-                if state['status'] in {'sealed','retired'}: raise ValueError('terminal theory is immutable')
+                if theory_finished(state['status']): raise ValueError('terminal theory is immutable')
                 record_workspace_action(store.root/'workflow'/'calls'/uuid4().hex/'call',
                     'transition_proof',proposal,metadata,theory=self.theory,model=self.model)
                 return transition_proof(store,proposal['source_sha256'],proposal['failure_id'],proposal['decision'],proposal['plan'])
@@ -604,7 +693,7 @@ class TheoryController(WorkspaceController):
                 if set(proposal) != fields:
                     raise ValueError('invalid ' + action + ' fields')
                 store,state = self._document()
-                if state['status'] in {'sealed','retired'}:
+                if theory_finished(state['status']):
                     raise ValueError('terminal theory is immutable')
                 record_workspace_action(store.root/'workflow'/'calls'/uuid4().hex/'call',
                     action,proposal,metadata,theory=self.theory,model=self.model)
@@ -628,7 +717,7 @@ class TheoryController(WorkspaceController):
             if proposal.get('action') in {'edit_theory','edit_proof'}:
                 from regen.infrastructure.workspace_transcript import record_workspace_action
                 store,state=self._document()
-                if state['status'] in {'sealed','retired'}:
+                if theory_finished(state['status']):
                     raise ValueError('terminal theory is immutable')
                 prefix=store.root/'edits'/uuid4().hex/'call'
                 record_workspace_action(prefix,'Persistent theory source edit',proposal,metadata,
@@ -638,7 +727,15 @@ class TheoryController(WorkspaceController):
             if proposal.get('action')=='finish':
                 store,state=self._document()
                 current=store.read()
-                if (proposal.get('source_sha256')!=current['source_sha256']
+                dispositions = current_dispositions(self)
+                if dispositions:
+                    from regen.planning.theory_document import parse
+                    _, draft_proofs = parse(current['source'], store.package, store.imports)
+                    if (proposal.get('source_sha256') != current['source_sha256']
+                            or pending_contract_ids(self)
+                            or any(draft_proofs.get(key) != value for key,value in state['proofs'].items())):
+                        raise ValueError('partial export requires every fixed contract proved/disposed and preserves every accepted proof')
+                elif (proposal.get('source_sha256')!=current['source_sha256']
                         or state.get('document_source_sha256')!=current['source_sha256']
                         or current['open_ids']):
                     raise ValueError('seal requires the current draft checked successfully with no open proof slots')
@@ -655,6 +752,7 @@ class TheoryController(WorkspaceController):
                     'required_imports':[p['theory'] for p in required_imports(package['repository_projection'])],
                     'ready_for_proof_action':ready['ready_for_proof_action'],
                     'unsealed_providers':ready['unsealed_providers'],
+                    **_contract_view(self),
                     'assigned_writer_count':1,'theory_tool_execution':'serial',
                     'notice':'Read this theory for exact goals/draft and feedback. list_workspace '
                              'lists other theories on demand; list_generated/read_generated expose '
@@ -938,6 +1036,11 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
         model=model,call_timeout=call_timeout,check_timeout=check_timeout,
         candidate_timeout=candidate_timeout, **controller_options)
     try:
+        contract_mode = contract_dispositions_enabled(controller.run)
+        if contract_mode and not document_mode:
+            raise ValueError('contract-dispositions-v1 requires the document File Planner interface')
+        if contract_mode and retry_unresolved:
+            raise ValueError('retry_unresolved requires an explicit contract retry event; unsupported under contract-dispositions-v1')
         with event_scope(directory,run_id=controller.run['run_id'],theory=theory):
             durable(directory/'policy.json',{'theory':theory,**controller.options,
                     'generation_strategy':strategy,
@@ -992,6 +1095,14 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                     formats = observation_instructions()
                 workspace_view = controller.handle('list_workspace',{'assigned_only':True} if document_mode else {}, {})
                 prompt = (DOCUMENT_INSTRUCTIONS if document_mode else INSTRUCTIONS)+strategy['instructions']+'\n'+formats+'\nASSIGNED THEORY: '+theory+'\n'+json.dumps(workspace_view,ensure_ascii=False)
+                if contract_mode:
+                    prompt += ('\nCONTRACT DISPOSITION POLICY: contract-dispositions-v1. '
+                        'report_unresolved requires explicit entry_ids and stops only those fixed contracts. '
+                        'check_refutation stops only its checked entry_id. Continue other pending goals; '
+                        'disposed goals supply no theorem and remain oops. When every fixed goal is '
+                        'proved or disposed, use finish to publish only the checked positive subset. '
+                        'An exported_partial theory is usable by consumers but is not fully proved. '
+                        'Do not retry or strengthen/weaken disposed contracts.\n')
                 if retry_context is not None:
                     prompt += '\nRECOVERY RECEIPT (not mathematical advice):\n'+json.dumps(retry_context,ensure_ascii=False)
                 if focus_contract_id is not None:
@@ -1000,6 +1111,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                         'All ordinary proof, legal-fact and checker-acceptance rules remain unchanged.')
                 providers = []
                 transport_anomaly = None
+                session_stop_reason = None
                 target_completed = controller.target_contract_green()
                 if not target_completed:
                     with CodexWorkspaceSession(tools=tools(document_mode),codex_bin=settings['codex_bin'],codex_home=home,
@@ -1010,8 +1122,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                         next_prompt = prompt
                         no_progress_turns = 0
                         _, progress_state = controller._state(theory)
-                        progress_marker = (digest(progress_state.get('proofs', {})),
-                                           getattr(controller, '_proof_work_version', 0))
+                        progress_marker = _progress_marker(controller, progress_state)
                         while True:
                             try:
                                 provider = session.run(next_prompt,controller.handle,artifact_dir=directory,model=controller.model,
@@ -1039,7 +1150,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                             providers.append(provider)
                             _, state = controller._state(theory)
                             target_completed = controller.target_contract_green()
-                            if (target_completed or state['status'] in {'sealed','retired'}
+                            if (target_completed or theory_finished(state['status'])
                                     or getattr(controller, 'theory_outcome', None)):
                                 break
                             if (getattr(controller,'framework_blocked',False)
@@ -1050,12 +1161,31 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                             # Model prose is not progress. A bounded series of final
                             # replies without new checker work yields an UNKNOWN
                             # local outcome, never success or a global budget reset.
-                            marker = (digest(state.get('proofs', {})),
-                                      getattr(controller, '_proof_work_version', 0))
+                            marker = _progress_marker(controller, state)
                             no_progress_turns = no_progress_turns + 1 if marker == progress_marker else 0
                             progress_marker = marker
                             if no_progress_turns >= no_progress_turn_limit:
                                 from regen.planning.theory_outcomes import record_unresolved
+                                if contract_mode:
+                                    pending = pending_contract_ids(controller)
+                                    if not pending:
+                                        session_stop_reason = 'positive_exports_not_published'
+                                        emit_event('contract_exports_unpublished', theory=theory,
+                                                   reason='no_progress_with_no_pending_contracts')
+                                        break
+                                    record_unresolved(controller, reason='no_progress', origin='controller',
+                                        entry_ids=[pending[0]], classification='no_progress',
+                                        details={'completed_turns_without_proof_work':no_progress_turns,
+                                                 'limit':no_progress_turn_limit,
+                                                 'target_selection':'first_pending_contract',
+                                                 'disposition_basis':'controller_idle_fallback'})
+                                    emit_event('contract_unresolved', theory=theory, entry_id=pending[0],
+                                               reason='no_progress', completed_turns=no_progress_turns)
+                                    no_progress_turns = 0
+                                    progress_marker = _progress_marker(controller, state)
+                                    next_prompt = _continuation_prompt(theory, state,
+                                        contract_view=_contract_view(controller))
+                                    continue
                                 record_unresolved(controller, reason='no_progress', origin='controller',
                                     classification='no_progress',
                                     details={'completed_turns_without_proof_work':no_progress_turns,
@@ -1063,7 +1193,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                 emit_event('theory_unresolved', theory=theory, reason='no_progress',
                                            completed_turns=no_progress_turns)
                                 break
-                            next_prompt = _continuation_prompt(theory,state)
+                            next_prompt = _continuation_prompt(theory,state,
+                                contract_view=_contract_view(controller) if contract_mode else None)
                     if transport_anomaly is None:
                         audit = audit_workspace_session(
                             directory/'session-transcript.jsonl',
@@ -1084,7 +1215,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
             target_completed = controller.target_contract_green()
             outcome = getattr(controller, 'theory_outcome', None)
             status = ('target_green_completed'
-                      if target_completed else outcome['status'] if outcome else 'framework_blocked'
+                      if target_completed else 'unpublished' if session_stop_reason else outcome['status'] if outcome else 'framework_blocked'
                       if getattr(controller,'framework_blocked',False)
                          or state.get('batch_feedback', {}).get('framework_blocked') else state['status'])
             provider = (providers[-1] if providers else
@@ -1093,6 +1224,10 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                       'theory_status':state['status'],'provider':provider,
                       'provider_turns':providers,'continuation_turns':len(providers)-1,'audit':audit,
                       'task_ids':sorted(controller.task_ids),'artifact_dir':str(directory)}
+            if contract_mode:
+                result.update(_contract_view(controller))
+            if session_stop_reason:
+                result['session_stop_reason'] = session_stop_reason
             if outcome:
                 result['theory_outcome'] = outcome
             if target_completed:
@@ -1166,10 +1301,22 @@ def _execution_policy(value, selected):
 
 
 def _stage_eligible(rows, policy, active=()):
-    states = {row['theory']:row['status'] for row in rows}
+    states = {row['theory']:row for row in rows}
+    publication_pending = set()
+    def finished(theory):
+        row = states.get(theory, {})
+        return (theory_finished(row.get('status'))
+                or (row.get('pending_contract_ids') == [] and bool(row.get('contract_dispositions'))))
     for stage in policy['stages']:
-        if any(states.get(theory) not in {'sealed','retired'} or theory in active for theory in stage):
-            return set(stage)
+        if any(not finished(theory) or theory in active for theory in stage):
+            return set(stage) | publication_pending
+        # A stopped contract scope can release independent later work before its
+        # positive exports are published. Keep that publication runnable on a
+        # later invocation too: the coordinator's per-invocation failures exclude
+        # a worker that already returned unpublished, without permanently
+        # stranding consumers behind an unexported earlier stage.
+        publication_pending.update(theory for theory in stage
+            if not theory_finished(states.get(theory, {}).get('status')))
     return {row['theory'] for row in rows if row['selected']}
 
 
@@ -1299,6 +1446,10 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
         overview.document_mode = file_planner_interface == 'document'
         selected = overview.selected
         policy = _execution_policy(execution_policy, selected)
+        if contract_dispositions_enabled(overview.run) and file_planner_interface != 'document':
+            raise ValueError('contract-dispositions-v1 requires the document File Planner interface')
+        if contract_dispositions_enabled(overview.run) and policy['retry_unresolved']:
+            raise ValueError('retry_unresolved requires an explicit contract retry event; unsupported under contract-dispositions-v1')
         if overview.run.get("execution_input_kind") != "refine-dataset":
             raise ValueError("parallel workspace requires isolated refine-dataset input; legacy shared build directories are unsupported")
         if overview.run.get('execution_input_kind')=='refine-dataset':
@@ -1329,7 +1480,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
         results, active, failures = [], {}, {}
         from regen.planning.theory_outcomes import current_outcome
         for row in rows:
-            if not row['selected'] or row['status'] in {'sealed','retired'}:
+            if not row['selected'] or theory_finished(row['status']):
                 continue
             outcome = current_outcome(overview, row['theory'])
             if outcome and (outcome['status'] == 'refuted' or not policy['retry_unresolved']):
@@ -1425,8 +1576,9 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                 # before removing any worker-mounted heap cache.
                                 _reclaim_completed_heaps(root, completed)
                                 results.append(completed)
-                                if completed.get('status') not in {'sealed','retired'}:
+                                if not theory_finished(completed.get('status')):
                                     failures[theory] = {'reason':('framework_blocked' if completed.get('status') == 'framework_blocked'
+                                                                  else 'positive_exports_not_published' if completed.get('status') == 'unpublished'
                                                                   else 'theory_'+completed['status'] if completed.get('status') in {'unknown','refuted'}
                                                                   else 'session_returned_unsealed'),
                                                         'status':completed.get('status')}
@@ -1551,7 +1703,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
             final = overview.list_workspace()
             final['worker_count'] = max_parallel_theories
             incomplete = [row for row in final['theories']
-                          if row['selected'] and row['status'] not in {'sealed','retired'}]
+                          if row['selected'] and not theory_finished(row['status'])]
             eligible = _stage_eligible(final['theories'], policy)
             runnable = [row['theory'] for row in incomplete
                         if row['ready_for_proof_action'] and row['theory'] not in failures
@@ -1580,6 +1732,10 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                 result['status'] = 'repository_verified' if result['repository_verified'] else 'integration_failed'
             elif all(row['status']=='sealed' for row in final['theories'] if row['selected']):
                 result['status'] = 'selected_theories_sealed'
+            elif all(theory_finished(row['status']) for row in final['theories'] if row['selected']):
+                result['status'] = 'selected_theories_exported'
+                result['all_selected_exported'] = True
+                result['all_selected_contracts_proved'] = False
             if result['repository_verified']:
                 budget.finish('repository_verified')
                 result['disposition'] = 'complete'

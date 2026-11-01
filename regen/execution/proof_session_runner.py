@@ -813,6 +813,7 @@ def _init_run_unlocked(
     schedule_path: Path | None = None,
     complete_context_policy: str = 'isolated-v1',
     log_storage: str = 'inline-v1',
+    contract_outcome_policy: str | None = None,
 ) -> dict[str, Any]:
     from regen.execution.checker_policy import validate_complete_context_policy, policy_binding
     validate_complete_context_policy(complete_context_policy)
@@ -821,9 +822,10 @@ def _init_run_unlocked(
     if schedule_path and read_json(schedule_path).get('artifact_type') == 'repository-file-generation-list':
         from regen.execution.repository_execution import init_run as init_repository
         return init_repository(run_dir, input_root, run_id, schedule_path,
-            **policy_binding({'complete_context_policy':complete_context_policy}), **logging)
+            **policy_binding({'complete_context_policy':complete_context_policy}), **logging,
+            contract_outcome_policy=contract_outcome_policy)
     # Everything below is the compatibility path for pre-schema-5 runs.
-    if complete_context_policy != 'isolated-v1' or logging:
+    if complete_context_policy != 'isolated-v1' or logging or contract_outcome_policy is not None:
         raise ValueError('Arch reuse requires a new refine-dataset repository run')
     environment_run = input_root.resolve()
     context = environment_context(environment_run)
@@ -887,6 +889,7 @@ def init_run(
     schedule_path: Path | None = None,
     complete_context_policy: str = 'isolated-v1',
     log_storage: str = 'inline-v1',
+    contract_outcome_policy: str | None = None,
 ) -> dict[str, Any]:
     lock = acquire_run_mutation_lock(run_dir, operation="init")
     try:
@@ -895,6 +898,7 @@ def init_run(
             schedule_path=schedule_path,
             complete_context_policy=complete_context_policy,
             log_storage=log_storage,
+            contract_outcome_policy=contract_outcome_policy,
         )
     finally:
         release_run_mutation_lock(lock)
@@ -2226,6 +2230,8 @@ def main() -> int:
     from regen.infrastructure.incremental_log import FORMAT
     init.add_argument('--log-storage', choices=['inline-v1', FORMAT], default='inline-v1',
                       help='Incremental immutable log objects for a new run')
+    init.add_argument('--contract-outcome-policy', choices=['contract-dispositions-v1'],
+                      help='Isolate terminal contract outcomes and publish checked partial exports; new repository runs only')
 
     plan = sub.add_parser("plan-file")
     plan.add_argument("--run-dir", type=Path, required=True)
@@ -2351,6 +2357,7 @@ def main() -> int:
                 schedule_path=args.schedule,
                 complete_context_policy=args.complete_context_policy,
                 log_storage=args.log_storage,
+                contract_outcome_policy=args.contract_outcome_policy,
             )
         elif args.command == "parallel-workspace":
             from regen.planning.parallel_file_planner import run_parallel_workspace

@@ -327,8 +327,14 @@ class SharedProofWorkspace:
         target = target_nodes.get(target_node_id)
         if target is None or target_node_id in target_state['proofs']:
             raise ValueError('reuse requires an existing unproved target consumer')
-        if target_state.get('status') in {'sealed', 'retired'}:
+        if target_state.get('status') in {'sealed', 'retired', 'exported_partial'}:
             raise ValueError('reuse target theory is immutable')
+        from types import SimpleNamespace
+        from regen.planning.theory_outcomes import current_dispositions
+        view = SimpleNamespace(root=self.root, run=self.run, theory=graph['theory'],
+            _state=lambda _: (target_package, target_state))
+        if target_node_id in current_dispositions(view):
+            raise ValueError('reuse target contract has a terminal disposition')
         dependencies, aliases = self._closure(snapshot, source)
         nodes = {n['id']: n for n in snapshot['state']['graph']['nodes']}
         if mapping is None:

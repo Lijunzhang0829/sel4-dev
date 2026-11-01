@@ -16,6 +16,7 @@ from uuid import uuid4
 from regen.execution.proof_commits import durable
 from regen.execution.shared_proof_workspace import SharedProofWorkspace
 from regen.planning.batch_file_planner import INSTRUCTIONS, _run_batch_file, compact_feedback, planner_input
+from regen.execution.checker_policy import exports_available, theory_finished
 
 
 WORKSPACE_INSTRUCTIONS = '''You are the continuing File Planner for a SHARED repository proof workspace.
@@ -136,11 +137,20 @@ class WorkspaceController:
                                       for c in package['contracts']],
                          'required_imports':[p['theory'] for p in required_imports(projection)],
                          **{k:deepcopy(projection[k]) for k in ('collaboration_groups','reuse_suggestions') if k in projection}})
+            from regen.planning.theory_outcomes import contract_dispositions_enabled, current_dispositions
+            if contract_dispositions_enabled(self.run):
+                dispositions = current_dispositions(self, theory)
+                rows[-1].update(contract_dispositions={key:{field:value.get(field) for field in
+                    ('status','reason','classification','truth_status')} for key,value in dispositions.items()},
+                    pending_contract_ids=[c['contract_id'] for c in package['contracts']
+                        if c['contract_id'] not in state['proofs'] and c['contract_id'] not in dispositions],
+                    exports_available=exports_available(state['status']))
         for row in rows:
-            row['unsealed_providers'] = [t for t in row['required_imports'] if states.get(t) != 'sealed']
-            row['ready_for_proof_action'] = row['selected'] and not row['unsealed_providers'] and row['status'] not in {'sealed','retired'}
+            row['unsealed_providers'] = [t for t in row['required_imports'] if not exports_available(states.get(t))]
+            row['ready_for_proof_action'] = row['selected'] and not row['unsealed_providers'] and not theory_finished(row['status'])
         return {'run_id':self.run['run_id'], 'worker_count':1, 'theories':rows,
-                'all_selected_sealed':all(states[t] in {'sealed','retired'} for t in self.selected)}
+                'all_selected_sealed':all(states[t] in {'sealed','retired'} for t in self.selected),
+                'all_selected_exported':all(theory_finished(states[t]) for t in self.selected)}
 
     def _theory_readiness(self, theory, *, package=None, state=None):
         """Read only a target and its hard providers, not the whole repository."""
@@ -151,9 +161,9 @@ class WorkspaceController:
             package, state = self._state(theory)
         providers = [p['theory'] for p in required_imports(package['repository_projection'])]
         unsealed = [provider for provider in providers
-                    if provider not in self.shared.entries or self._state(provider)[1]['status'] != 'sealed']
+                    if provider not in self.shared.entries or not exports_available(self._state(provider)[1]['status'])]
         return {'theory':theory, 'status':state['status'], 'unsealed_providers':unsealed,
-                'ready_for_proof_action':not unsealed and state['status'] not in {'sealed','retired'}}
+                'ready_for_proof_action':not unsealed and not theory_finished(state['status'])}
 
     def _all_selected_sealed(self, theory, state):
         # Most actions leave their target generating; that alone proves false.
@@ -161,6 +171,10 @@ class WorkspaceController:
             return False
         return all(self._state(other)[1]['status'] in {'sealed','retired'}
                    for other in self.selected if other != theory)
+
+    def _all_selected_exported(self, theory, state):
+        return theory_finished(state['status']) and all(theory_finished(self._state(other)[1]['status'])
+            for other in self.selected if other != theory)
 
     def handle(self, name, arguments, metadata):
         from regen.infrastructure.progress_events import emit_event
@@ -171,13 +185,15 @@ class WorkspaceController:
                 return self.list_workspace()
             if name == 'read_theory':
                 package,state = self._state(arguments['theory'])
+                from regen.planning.theory_outcomes import current_dispositions
                 from regen.planning.planner_context import project_context
                 projection = package['repository_projection']
                 context = {key:deepcopy(projection[key]) for key in (
                     'theory','file_slot','purpose','grouping_reason','context_profile_ids','context_profiles',
                     'required_imports','required_providers','suggested_predecessors','suggested_providers',
                     'collaboration_groups','reuse_suggestions','auxiliary_intents','import_semantics') if key in projection}
-                return {'status':'available', 'input':project_context(planner_input(package,state)),
+                return {'status':'available', 'input':project_context(planner_input(package,state,
+                            dispositions=current_dispositions(self, arguments['theory']) or None)),
                         'repository_projection':context}
             if name == 'list_generated':
                 return self.shared.index(**arguments)
@@ -206,7 +222,7 @@ class WorkspaceController:
             raise ValueError('proposal must be an object')
         row = (self._theory_readiness(theory) if state_snapshot is None else
                self._theory_readiness(theory, package=self.shared._package(theory), state=state_snapshot))
-        if row['status'] in {'sealed','retired'}:
+        if theory_finished(row['status']):
             return {'status':'already_'+row['status'],'theory':theory}
         if row['unsealed_providers']:
             return {'status':'not_ready','theory':theory,'unsealed_providers':row['unsealed_providers'],
@@ -245,9 +261,13 @@ class WorkspaceController:
                 'green_node_ids':list(state['accepted_order']),
                 'feedback':compact_feedback(feedback),
                 **feedback_semantics(feedback),
-                'all_selected_sealed':self._all_selected_sealed(theory, state)}
+                'all_selected_sealed':self._all_selected_sealed(theory, state),
+                'all_selected_exported':self._all_selected_exported(theory, state)}
         if proposal.get('action') == 'finish' and state['status'] == 'sealed':
             result.update(tool_status='completed', proof_verdict='green', publication='sealed')
+        elif proposal.get('action') == 'finish' and state['status'] == 'exported_partial':
+            result.update(tool_status='completed', publication='exported_partial', all_contracts_proved=False,
+                notice='Only checked positive facts are published; disposed contracts remain unproved.')
         elif proposal.get('action') == 'finish' and feedback.get('framework_blocked'):
             result.update(framework_blocked=True, failure_scope=feedback['failure_scope'],
                           notice='Trusted seal audit failed after complete checking; preserve proofs and pause this worker for harness repair.')
@@ -286,10 +306,13 @@ def run_workspace(run_dir, *, theories=None, model=None, call_timeout=600, check
     try:
         controller = WorkspaceController(root,theories=theories,model=model,call_timeout=call_timeout,
             check_timeout=check_timeout,candidate_timeout=candidate_timeout)
+        from regen.planning.theory_outcomes import contract_dispositions_enabled
+        if contract_dispositions_enabled(controller.run):
+            raise ValueError('contract-dispositions-v1 requires document parallel-workspace execution')
         configure_event_monitor(root,run_id=controller.run['run_id'])
         overview = controller.list_workspace()
-        if overview['all_selected_sealed']:
-            outcome = 'complete'
+        if overview['all_selected_exported']:
+            outcome = 'complete' if overview['all_selected_sealed'] else 'partial'
             return overview
         settings = model_settings()
         binary = codex_bin or settings['codex_bin']

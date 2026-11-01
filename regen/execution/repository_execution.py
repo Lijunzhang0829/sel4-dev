@@ -6,6 +6,7 @@ from __future__ import annotations
 from regen.planning.import_contract import required_imports
 from regen.execution.checker_policy import (
     ISOLATED_CONTEXT, validate_complete_context_policy, resolve_complete_context_policy, policy_binding,
+    contract_policy_binding, exports_available, theory_finished,
 )
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -81,8 +82,9 @@ def projection_package(projection, plan):
 
 
 def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=ISOLATED_CONTEXT,
-             log_storage='inline-v1', execution_models=None):
+             log_storage='inline-v1', execution_models=None, contract_outcome_policy=None):
     validate_complete_context_policy(complete_context_policy)
+    outcome_policy = contract_policy_binding({'contract_outcome_policy':contract_outcome_policy})
     from regen.infrastructure.incremental_log import enable, policy_arguments
     logging = policy_arguments({'log_storage':log_storage})
     from regen.planning.repository_planner import load_file_projection
@@ -190,6 +192,7 @@ def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=I
                 'environment_dataflow_id':plan['environment_dataflow_id'],
             })}}
     run.update(policy_binding({'complete_context_policy':complete_context_policy}))
+    run.update(outcome_policy)
     run.update(logging)
     if logging:
         enable(run_dir)
@@ -220,7 +223,7 @@ def context_graph(graph, order):
     return accepted_declarations(graph, order)
 
 
-def validator(package, runtime=None, frozen_imports=None):
+def validator(package, runtime=None, frozen_imports=None, *, disposition_check=None):
     def validate(old, new, event, evidence):
         def verify_embedded(value):
             if isinstance(value,list):
@@ -251,11 +254,13 @@ def validator(package, runtime=None, frozen_imports=None):
             raise ValueError('runtime graph owner differs from execution mode')
         nodes = {n['id']:n for n in graph['nodes']}
         proofs = new['proofs']; order = new['accepted_order']
+        if disposition_check is not None:
+            disposition_check(new)
         if len(set(order))!=len(order) or set(order)!=set(proofs) or not set(proofs)<=nodes.keys():
             raise ValueError('invalid committed proof prefix')
         if graph['accepted_order']!=order: raise ValueError('graph prefix differs from accepted proofs')
         if old:
-            if old['status'] in {'sealed','retired'}: raise ValueError('terminal theory is immutable')
+            if theory_finished(old['status']): raise ValueError('terminal theory is immutable')
             if event != 'document':
                 assert_green_nodes_unchanged(old['graph'], graph, set(old['proofs']))
                 if order[:len(old['accepted_order'])]!=old['accepted_order'] or any(proofs.get(k)!=v for k,v in old['proofs'].items()):
@@ -343,13 +348,17 @@ def validator(package, runtime=None, frozen_imports=None):
                 expected_imports = ([f'Generated_Refine.{name}' for name in frozen_imports]
                                     if frozen_imports else [runtime['base_import']])
             validate_seal(new, evidence, expected_imports=expected_imports,
-                          base_session=(runtime or {}).get('base_session'), runtime=runtime)
+                          base_session=(runtime or {}).get('base_session'), runtime=runtime,
+                          expected_package=package)
             if evidence.get('impact',{}).get('verdict')!='pass' or evidence.get('dependencies',{}).get('verdict')!='green':
                 raise ValueError('seal lacks dependency/impact audit')
-            if set(proofs)!=nodes.keys() or evidence.get('complete',{}).get('verdict')!='green' or evidence.get('build',{}).get('verdict')!='green':
+            partial = new['status'] == 'exported_partial'
+            if ((not partial and set(proofs)!=nodes.keys())
+                    or evidence.get('complete',{}).get('verdict')!='green'
+                    or evidence.get('build',{}).get('verdict')!='green'):
                 raise ValueError('seal requires complete checked proofs and session build')
         if new['status']=='retired' and (nodes or package['contracts']): raise ValueError('only empty auxiliary theory may retire')
-        if new['status']=='sealed' and event!='seal': raise ValueError('seal event required')
+        if exports_available(new['status']) and event!='seal': raise ValueError('seal event required')
     return validate
 
 
@@ -357,7 +366,8 @@ def journal(run_dir, run, package):
     from regen.infrastructure.incremental_log import find_root, policy_arguments
     if policy_arguments(run) and find_root(run_dir/'run.json') != run_dir.resolve():
         raise ValueError('incremental run lost its logging policy')
-    binding = {**run['session_schedule'], **policy_binding(run), 'run_id':run['run_id'], 'implementation':digest(run['implementation']),
+    binding = {**run['session_schedule'], **policy_binding(run), **contract_policy_binding(run),
+        'run_id':run['run_id'], 'implementation':digest(run['implementation']),
                'package_sha256':package['package_payload_sha256'],
                'imports':read(run_dir/'theories'/Path(package['file_slot']).stem/'imports.json')
                    if (run_dir/'theories'/Path(package['file_slot']).stem/'imports.json').exists() else []}
@@ -367,8 +377,21 @@ def journal(run_dir, run, package):
     namespace = digest({'runtime':run, 'package':package,
         'validator_version':'repository-validated-prefix-v1',
         'callables':[id(validator), id(validate_graph), id(validate_batch_commit), id(continuation_state)]})
+    check_dispositions = None
+    if contract_policy_binding(run):
+        def check_dispositions(state):
+            # Read the outcome ledger against the candidate state, without
+            # recursively replaying this journal or recovering native tasks.
+            from types import SimpleNamespace
+            from regen.planning.theory_outcomes import _saved_dispositions
+            view = SimpleNamespace(root=run_dir, run=run,
+                _state=lambda _: (package, state))
+            dispositions = _saved_dispositions(view, package['theory'])
+            if state.get('status') == 'exported_partial' and state.get('contract_dispositions') != dispositions:
+                raise ValueError('partial export differs from durable contract dispositions')
     return ProofCommits(run_dir/'theories'/Path(package['file_slot']).stem/'acceptance',
-                        binding, validator(package, run, binding['imports']), cache_namespace=namespace)
+                        binding, validator(package, run, binding['imports'],
+                            disposition_check=check_dispositions), cache_namespace=namespace)
 
 
 _SEALED_PUBLICATION_CACHE = {}
@@ -394,7 +417,7 @@ def _progress_unlocked(run_dir):
             else:
                 durable(directory/'active-graph.json',state['graph'])
                 durable(directory/'progress.json',state)
-            if state['status']=='sealed':
+            if exports_available(state['status']):
                 from regen.execution.proof_session_runner import publish_generated_records, generated_checkpoint_theory
                 record=read(sorted((directory/'acceptance/commits').glob('*.json'))[-1])
                 evidence=record['evidence']; source=evidence['source_text']
@@ -406,13 +429,31 @@ def _progress_unlocked(run_dir):
                 if publication_key not in _SEALED_PUBLICATION_CACHE:
                     if len(_SEALED_PUBLICATION_CACHE)>=128:
                         _SEALED_PUBLICATION_CACHE.pop(next(iter(_SEALED_PUBLICATION_CACHE)))
-                    _SEALED_PUBLICATION_CACHE[publication_key] = publish_generated_records(run_dir,state['graph'],state['seal_id'],p,records_only=True)
+                    graph = state['graph']
+                    if state['status'] == 'exported_partial':
+                        from regen.execution.partial_theory_export import export_graph
+                        graph = export_graph(state)
+                    _SEALED_PUBLICATION_CACHE[publication_key] = publish_generated_records(run_dir,graph,state['seal_id'],p,records_only=True)
                 catalog_records.extend(deepcopy(_SEALED_PUBLICATION_CACHE[publication_key]))
             revision_key = 'document_revision' if state['graph'].get('declaration_index_version') == 1 else 'graph_revision'
             entry[revision_key] = state['graph']['revision']
             entry.update(status=state['status'],
                 generation_ids=[run['run_id']+'--'+Path(entry['file_slot']).stem],
                 seal_id=state.get('seal_id'), reason=state.get('reason',''))
+        if contract_policy_binding(run):
+            from types import SimpleNamespace
+            from regen.planning.theory_outcomes import current_dispositions
+            current = state or _unstarted_outcome_state(p, run, document_mode=True)
+            view = SimpleNamespace(root=run_dir, run=run, theory=p['theory'],
+                _state=lambda _, package=p, value=current: (package, value))
+            dispositions = current_dispositions(view)
+            entry['contract_statuses'] = {c['contract_id']:
+                ('proved' if c['contract_id'] in current.get('proofs', {}) else
+                 dispositions[c['contract_id']]['status'] if c['contract_id'] in dispositions else 'pending')
+                for c in p['contracts']}
+            entry['refuted_contracts'] = sum(v == 'refuted' for v in entry['contract_statuses'].values())
+            entry['unknown_contracts'] = sum(v == 'unknown' for v in entry['contract_statuses'].values())
+            entry['exports_available'] = exports_available(entry['status'])
     catalog = {'records': sorted(catalog_records,key=lambda row:row['record_id'])}
     catalog_path = run_dir/'generated-premises.json'
     if not catalog_path.exists() or read(catalog_path)!=catalog:
@@ -422,9 +463,16 @@ def _progress_unlocked(run_dir):
     verified = complete and current_verification(run_dir)
     value={'schema_version':2,'artifact_type':'repository-proof-progress','files':files,
         'session_status':'complete' if complete else 'partial', 'repository_verified':verified, 'contracts':sum(len(f['contract_ids']) for f in files),
-        'proved_contracts':sum(len(f['contract_ids']) for f in files if f['status']=='sealed'),
+        'proved_contracts':(sum(f.get('checked_contracts',0) for f in files) if contract_policy_binding(run)
+                            else sum(len(f['contract_ids']) for f in files if f['status']=='sealed')),
         'checked_contracts':sum(f.get('checked_contracts',0) for f in files),
         'sealed_contracts':sum(len(f['contract_ids']) for f in files if f['status']=='sealed')}
+    if contract_policy_binding(run):
+        value.update(refuted_contracts=sum(f['refuted_contracts'] for f in files),
+            unknown_contracts=sum(f['unknown_contracts'] for f in files),
+            exported_contracts=sum(f.get('checked_contracts',0) for f in files if exports_available(f['status'])),
+            all_theories_finished=all(theory_finished(f['status']) for f in files),
+            all_contracts_proved=complete)
     durable(Path(run['session_progress_ledger']),value)
     if len(_PROGRESS_SNAPSHOTS) >= 32:
         _PROGRESS_SNAPSHOTS.clear()
@@ -449,7 +497,7 @@ def publish_theory_progress(run_dir, theory, state):
     root = Path(run_dir).resolve()
     with _PROJECTION_LOCK:
         previous = _PROGRESS_SNAPSHOTS.get(str(root))
-        if previous is None or state['status'] in {'sealed', 'retired'}:
+        if previous is None or theory_finished(state['status']) or contract_policy_binding(read(root/'run.json')):
             return progress(root)
         value = deepcopy(previous)
         entry = next((item for item in value['files']
@@ -517,7 +565,7 @@ def sealed_import_closure(run_dir, states, ancestors):
         if name in visited:
             return
         provider = by_checkpoint.get(name)
-        if provider is None or provider['status'] != 'sealed':
+        if provider is None or not exports_available(provider['status']):
             raise ValueError('frozen import provider is not sealed: ' + name)
         path = run_dir/'theories'/Path(provider['file_slot']).stem/'imports.json'
         if not path.is_file():
@@ -581,11 +629,11 @@ def setup(run_dir, theory, timeout):
         by_theory={item['theory']:item for item in states}
         unavailable=[
             provider for provider in providers
-            if provider not in by_theory or by_theory[provider]['status']!='sealed'
+            if provider not in by_theory or not exports_available(by_theory[provider]['status'])
         ]
         if unavailable:
             raise ValueError(
-                'theory is not ready; explicit providers are not sealed: '
+                'theory is not ready; explicit providers have no checked exports: '
                 + ', '.join(sorted(unavailable))
             )
         ancestors=[
@@ -707,6 +755,8 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
     from regen.execution.proof_session_runner import (next_graph_decision_index,
                                                     generated_checkpoint_theory, frozen_role_model)
     from regen.analysis.retained_semantic_impact import audit_theory
+    if contract_policy_binding(read(Path(run_dir)/'run.json')):
+        raise ValueError('contract-dispositions-v1 requires document parallel-workspace execution')
     run,p,d,j,checker,ancestors=setup(run_dir,theory,node_timeout)
     for role,model in [('File Planner',planner_model),('Graph Revision Agent',revision_model),('Lemma Prover',prover_model)]:
         if model!=frozen_role_model(run,role): raise ValueError(f'{role} differs from frozen model')
@@ -853,7 +903,7 @@ def run_file(run_dir,theory,*,provider,planner_model,revision_model,prover_model
     if state['status']=='failed':
         new=deepcopy(state);new['status']='generating'
         accept('resume',new,{'reason':'explicit retry preserves cumulative budgets'})
-    while state['status'] not in {'sealed','retired','failed'}:
+    while state['status'] not in {'sealed','retired','failed','exported_partial'}:
         graph=state['graph']; proofs=state['proofs']
         if state.get('revision_rejection'):
             key=state['revision_rejection']['node_id']
@@ -932,7 +982,7 @@ def run_session(run_dir,*,retry_failed=False,max_parallel_theories=1,**options):
     if not direct:
         results=[]
         for entry in progress(run_dir)['files']:
-            if entry['status'] in {'sealed','retired'} or (entry['status']=='failed' and not retry_failed):
+            if theory_finished(entry['status']) or (entry['status']=='failed' and not retry_failed):
                 results.append(entry);continue
             results.append(run_file(run_dir,entry['theory'],**options))
         return {**progress(run_dir),'results':results}
@@ -940,13 +990,13 @@ def run_session(run_dir,*,retry_failed=False,max_parallel_theories=1,**options):
     data=read(run_dir/'execution-input.json'); results=[]; attempted=set()
     while True:
         state={item['theory']:item for item in progress(run_dir)['files']}
-        terminal={name for name,item in state.items() if item['status']=='sealed'}
+        terminal={name for name,item in state.items() if exports_available(item['status'])}
         ready=[]
         for entry in data['files']:
             item=state[entry['theory']]
             if entry['theory'] in attempted:
                 continue
-            if item['status'] in {'sealed','retired'} or (item['status']=='failed' and not retry_failed):
+            if theory_finished(item['status']) or (item['status']=='failed' and not retry_failed):
                 continue
             package=package_for(run,entry['file_slot'])
             providers={p['theory'] for p in required_imports(package['repository_projection'])}
@@ -971,11 +1021,23 @@ CONTINUATION_ENV_FIELDS = ('execution_input_kind','environment_run',
     'isabelle_dir','image','isabelle_sha256')
 
 
+def _check_disposition_fork_support(source_dir, source):
+    """Do not silently drop or rebind outcome knowledge in an older fork path.
+
+    Same-run restart replays these receipts normally. Cross-run transfer needs
+    a versioned re-export protocol; the existing full-seal fork is not one.
+    """
+    if contract_policy_binding(source) and any((Path(source_dir)/'contract-dispositions').glob('*/events/*.json')):
+        raise ValueError('cross-run continuation with contract dispositions is not supported; '
+                         'resume the unchanged run or prepare a fresh run explicitly')
+
+
 def continuation_state(package, origin, *, sealed_reuse=False):
     """Verify every source commit before carrying proof state and charged costs."""
     source_run=origin['run']; records=origin['commits']
     if not records: raise ValueError('continuation has no source commits')
-    expected={**source_run['session_schedule'], **policy_binding(source_run), 'run_id':source_run['run_id'],
+    expected={**source_run['session_schedule'], **policy_binding(source_run), **contract_policy_binding(source_run),
+        'run_id':source_run['run_id'],
         'implementation':digest(source_run['implementation']),
         'package_sha256':package['package_payload_sha256'],'imports':origin['imports']}
     old=None; parent=None; contexts={}
@@ -991,7 +1053,7 @@ def continuation_state(package, origin, *, sealed_reuse=False):
     if sealed_reuse:
         if old['status'] != 'sealed' or records[-1]['event'] != 'seal':
             raise ValueError('sealed reuse requires a verified terminal seal')
-    elif old['status'] in {'sealed','retired'}:
+    elif theory_finished(old['status']):
         raise ValueError('cannot resume terminal theory')
     state=deepcopy(old);state.pop('runtime_policy',None)
     state['attempt_contexts']=contexts
@@ -1007,6 +1069,8 @@ def validate_continuation(package, runtime, state, origin, *, sealed_reuse=False
         raise ValueError('continuation changed proof environment')
     if resolve_complete_context_policy(runtime) != resolve_complete_context_policy(origin['run']):
         raise ValueError('continuation changed complete context policy')
+    if contract_policy_binding(runtime) != contract_policy_binding(origin['run']):
+        raise ValueError('continuation changed contract outcome policy')
     if state!=continuation_state(package,origin,sealed_reuse=sealed_reuse):
         raise ValueError('continuation changed proofs, graph, or cumulative costs')
 
@@ -1080,6 +1144,7 @@ def fork_continuation(source_dir, destination, theory):
     source_dir=source_dir.resolve(); destination=destination.resolve()
     if destination.exists(): raise ValueError('continuation destination already exists')
     source=read(source_dir/'run.json')
+    _check_disposition_fork_support(source_dir, source)
     entry=next(f for f in read(source_dir/'execution-input.json')['files'] if f['theory']==theory)
     package=package_for(source,entry['file_slot'])
     old_dir=source_dir/'theories'/theory
@@ -1090,6 +1155,7 @@ def fork_continuation(source_dir, destination, theory):
     input_root=Path(source.get('checker_context_root') or source['environment_run'])
     run=init_run(destination,input_root,destination.name,
                  Path(source['session_schedule']['source']), **policy_binding(source),
+                 **contract_policy_binding(source),
                  **({'execution_models':source['execution_models']} if 'execution_models' in source else {}),
                  **log_policy_arguments(source))
     if any(run.get(k)!=source.get(k) for k in CONTINUATION_ENV_FIELDS):
@@ -1336,6 +1402,7 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
     if destination.exists():
         raise ValueError('continuation destination already exists')
     source = read(source_dir/'run.json')
+    _check_disposition_fork_support(source_dir, source)
     if checkpoint is not None:
         if checkpoint.get('source_run') != str(source_dir):
             raise ValueError('checkpoint source mismatch')
@@ -1386,6 +1453,7 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
                 raise ValueError('checkpoint excludes a frozen dependency')
     run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
                    destination.name, Path(source['session_schedule']['source']), **policy_binding(source),
+                   **contract_policy_binding(source),
                    **({'execution_models':source['execution_models']} if 'execution_models' in source else {}),
                    **log_policy_arguments(source))
     if any(run.get(k) != source.get(k) for k in CONTINUATION_ENV_FIELDS):
@@ -1477,6 +1545,7 @@ def fork_with_sealed_theories(source_dir, destination):
     if destination.exists():
         raise ValueError('destination already exists')
     source = read(source_dir/'run.json')
+    _check_disposition_fork_support(source_dir, source)
     prepared = []
     for entry in read(source_dir/'execution-input.json')['files']:
         package = package_for(source, entry['file_slot'])
@@ -1491,6 +1560,7 @@ def fork_with_sealed_theories(source_dir, destination):
         raise ValueError('source contains no verified sealed theories')
     run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
                    destination.name, Path(source['session_schedule']['source']), **policy_binding(source),
+                   **contract_policy_binding(source),
                    **({'execution_models':source['execution_models']} if 'execution_models' in source else {}),
                    **log_policy_arguments(source))
     if any(run.get(k) != source.get(k) for k in CONTINUATION_ENV_FIELDS):

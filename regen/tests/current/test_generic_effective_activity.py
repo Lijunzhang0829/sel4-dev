@@ -140,6 +140,31 @@ class GenericEffectiveActivityTests(unittest.TestCase):
         self.assertEqual(self.stage.active_theory, 'B')
         self.assertEqual(self.idle('B'), 5)
 
+    def test_partial_seal_event_is_recorded_and_replayed_without_marking_all_green(self):
+        c = self.controller()
+        record = {'state': {'graph': {'theory': 'A'}, 'status': 'exported_partial'},
+                  'commit_id': 'partial-1', 'event': 'seal', 'evidence': {}}
+        rows = [{'uid': 'a1', 'kind': 'contract', 'theory': 'A', 'status': 'green'},
+                {'uid': 'a2', 'kind': 'contract', 'theory': 'A', 'status': 'open'}]
+        with patch('regen.planning.generic_codex_agent.node_rows', return_value=rows), \
+             patch.object(self.stage, 'mark_sealed', wraps=self.stage.mark_sealed) as mark:
+            c.committed(record)
+            c.register_activity_plan()
+            mark.assert_not_called()
+        commits = [r['data'] for r in self.ledger.rows if r['kind'] == 'proof_commit']
+        self.assertEqual(commits[-1]['theory_status'], 'exported_partial')
+        state = self.stage.snapshot()['theories']['A']
+        self.assertFalse(state['sealed'])
+        self.assertEqual(state['green_contract_ids'], ['a1'])
+
+    def test_legacy_seal_event_without_theory_status_still_restores_full_seal(self):
+        c = self.controller()
+        self.ledger.append('proof_commit', epoch=1, event='seal', theory='A', nodes=[
+            {'uid': uid, 'kind': 'contract', 'status': 'sealed'} for uid in ('a1', 'a2')])
+        c.register_activity_plan()
+        self.assertTrue(self.stage.snapshot()['theories']['A']['sealed'])
+        self.assertEqual(self.stage.active_theory, 'B')
+
     def test_status_handles_no_wall_deadline(self):
         c = self.controller()
         with self.stage.excluded('heap_preparation'):

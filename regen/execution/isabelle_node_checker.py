@@ -876,7 +876,7 @@ class IsabelleChecker:
     def complete_audit_source(self, graph, proofs, *, theory_name=None):
         ordered = [next(n for n in graph['nodes'] if n['id'] == key)
                    for key in graph['execution_order']]
-        if not ordered:
+        if not ordered and graph.get('partial_export_projection') != 'contract-dispositions-v1':
             raise ValueError('complete-theory audit requires at least one node')
         missing = [node['id'] for node in ordered if node['id'] not in proofs]
         if missing:
@@ -903,7 +903,7 @@ class IsabelleChecker:
             next(node for node in graph["nodes"] if node["id"] == node_id)
             for node_id in graph["execution_order"]
         ]
-        if not ordered:
+        if not ordered and graph.get('partial_export_projection') != 'contract-dispositions-v1':
             raise ValueError("complete-theory audit requires at least one node")
         audit_dir = self.work_dir / "complete-theory-audit"
         audit_dir.mkdir(parents=True, exist_ok=True)

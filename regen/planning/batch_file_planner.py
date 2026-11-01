@@ -579,7 +579,7 @@ def observation_summary(state):
         'notice':'No new record IDs does not imply no new information. These signals impose no action limit.'}
 
 
-def planner_input(package, state):
+def planner_input(package, state, *, dispositions=None):
     graph = state['graph']
     queries, signals = observation_summary(state)
     # Complete propositions remain in the journal; select recent working facts,
@@ -639,6 +639,14 @@ def planner_input(package, state):
         'progress_signals': signals,
         'requests_used': state.get('batch_requests', 0),
     }
+    if dispositions is not None:
+        payload['contract_dispositions'] = {key: {field: value.get(field) for field in
+            ('status', 'truth_status', 'reason', 'classification')} for key, value in dispositions.items()}
+        payload['unproved_node_ids'] = [key for key in payload['unproved_node_ids'] if key not in dispositions]
+        payload['pending_fixed_contract_ids'] = [c['contract_id'] for c in package['contracts']
+            if c['contract_id'] not in state['proofs'] and c['contract_id'] not in dispositions]
+        payload['disposition_notice'] = ('Disposed contracts stay in the fixed target registry but are not facts. '
+            'Continue independent pending contracts; finish may publish only the checked positive subset.')
 
 
     # A rejected submit already appears inside the target-bound proof feedback.
@@ -678,7 +686,15 @@ def prepare_prompt(payload):
     from regen.planning.planner_workspace import observation_inventory
     payload = project_context(payload)
     payload['observation_inventory'] = observation_inventory(payload)
-    prompt = INSTRUCTIONS+'\nINPUT:\n'+json.dumps(payload, ensure_ascii=False, indent=2)
+    instructions = INSTRUCTIONS
+    if 'contract_dispositions' in payload:
+        instructions += ('\nCONTRACT DISPOSITIONS POLICY (contract-dispositions-v1):\n'
+            'The finish rule above also permits a partial export when every fixed contract is '
+            'either proved or has a recorded disposition. Disposed contracts remain in the fixed '
+            'target registry with oops, never sorry; they are not usable facts. Continue independent '
+            'pending contracts. Finish checks and publishes only proved declarations and their '
+            'proved prerequisites; a partial export does not mean that all targets were proved.\n')
+    prompt = instructions+'\nINPUT:\n'+json.dumps(payload, ensure_ascii=False, indent=2)
     if len(prompt) > PROMPT_CHARS:
         raise ValueError('input_budget_exceeded: bounded observations still exceed local prompt budget; '
                          'mandatory statements/proofs were not truncated')
@@ -700,6 +716,46 @@ def workspace_action_input(run, package, state, request_number):
             'accepted_source_sha256': state.get('document_source_sha256'),
             'provider_called': False,
             'input_origin': 'audited workspace transcript; not a new model prompt'}
+
+
+def contract_dispositions_for(run_dir, run, package, state):
+    """Read the durable outcome authority without adding it to positive state."""
+    from regen.planning.theory_outcomes import contract_dispositions_enabled, current_dispositions
+    if not contract_dispositions_enabled(run):
+        return None
+    from types import SimpleNamespace
+    owner = SimpleNamespace(root=Path(run_dir), run=run, theory=package['theory'],
+                            _state=lambda _: (package, state))
+    return current_dispositions(owner)
+
+
+def disposition_check_source(package, state, source, imports, entry_ids, dispositions):
+    """Select live drafts without ever turning a disposed contract into a fact.
+
+    Selection is an internal checker projection.  The received model action and
+    its requested source hash remain unchanged in the provenance artifact.
+    """
+    from regen.planning.theory_document import parse, render, selected_source
+    if not dispositions:
+        return selected_source(package, state, source, imports, entry_ids), entry_ids
+    _, proofs = parse(source, package, imports)
+    if entry_ids is not None:
+        if (not isinstance(entry_ids, list) or not entry_ids
+                or any(not isinstance(key, str) or not key for key in entry_ids)
+                or len(set(entry_ids)) != len(entry_ids)):
+            raise ValueError('entry_ids must be a nonempty unique list of proof IDs')
+        if set(entry_ids) & set(dispositions):
+            raise ValueError('cannot select a disposed contract for positive checking')
+        selected = entry_ids
+    else:
+        selected = [key for key in proofs if key not in dispositions]
+    if selected:
+        return selected_source(package, state, source, imports, selected), selected
+    if set(state['proofs']) - set(proofs):
+        raise ValueError('targeted checks must retain every accepted proof')
+    # No active draft body remains.  Render the checked scaffold, not any stale
+    # failed body or newly proposed unselected helper in the draft.
+    return render(package, state, imports), []
 
 
 def read_diagnostic(directory, state, proposal):
@@ -851,12 +907,20 @@ def batch_query(run, package, state, checker, directory, request, *, audit_path=
         symbol_resolver=lambda names: checker.resolve_symbols(names, context))
 
 
-def seal_theory(run_dir, run, package, directory, checker, ancestors, state):
+def seal_theory(run_dir, run, package, directory, checker, ancestors, state, *, dispositions=None):
     from regen.analysis.retained_semantic_impact import audit_theory, load_audit_context
     from regen.execution.proof_session_runner import generated_checkpoint_theory
     graph, proofs = state['graph'], state['proofs']
+    export_scope = None
     if set(proofs) != {n['id'] for n in graph['nodes']}:
-        raise ValueError('finish requires every active node proved; delete unnecessary unproved auxiliaries explicitly')
+        if dispositions is None:
+            raise ValueError('finish requires every active node proved; delete unnecessary unproved auxiliaries explicitly')
+        from regen.execution.partial_theory_export import build_export_scope, export_graph
+        export_scope = build_export_scope(package, state, dispositions, runtime=run,
+                                          expected_imports=checker.imports())
+        graph = export_graph(state)
+    elif dispositions:
+        raise ValueError('fully proved theory cannot retain unproved contract dispositions')
     load_audit_context(Path(run['premise_snapshot']))
     complete = freeze_evidence(checker.check_complete(graph, proofs))
     if complete['verdict'] != 'green':
@@ -880,10 +944,15 @@ def seal_theory(run_dir, run, package, directory, checker, ancestors, state):
     if build['verdict'] != 'green' or impact.get('verdict') != 'pass' or deps.get('verdict') != 'green':
         return None, {'stage':'seal', 'evidence':evidence}
     from regen.execution.seal_evidence import bind_seal, validate_seal
-    evidence = bind_seal(state, evidence, checker)
-    new = deepcopy(state); new.update(status='sealed', reason='', seal_id='theory-seal:'+digest(evidence)[:20])
+    evidence = bind_seal(state, evidence, checker, **(
+        {'export_scope': export_scope} if export_scope is not None else {}))
+    new = deepcopy(state); new.update(status='exported_partial' if export_scope is not None else 'sealed',
+                                     reason='', seal_id='theory-seal:'+digest(evidence)[:20])
+    if export_scope is not None:
+        new['contract_dispositions'] = deepcopy(dispositions)
     validate_seal(new, evidence, expected_imports=checker.imports(),
-                  base_session=checker.base_session, runtime=run)
+                  base_session=checker.base_session, runtime=run, **(
+                      {'expected_package': package} if export_scope is not None else {}))
     return new, evidence
 
 
@@ -969,7 +1038,7 @@ def _record_termination(run_dir, theory, directory, journal, state, error):
         latest = journal.replay() if journal is not None else None
         if latest is not None:
             terminal['request_number'] = latest.get('batch_requests', 0)
-        if latest is not None and latest.get('status') not in {'sealed','retired'}:
+        if latest is not None and latest.get('status') not in {'sealed','retired','exported_partial'}:
             new = deepcopy(latest)
             new.update(status=terminal['status'], reason=terminal['reason'], termination=terminal)
             journal.append('failed', new, terminal)
@@ -1048,7 +1117,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     raise RuntimeError('fixed-contract scaffold failed native elaboration: '+check.get('diagnostic',''))
                 state = journal.append('initial', {'graph':graph, 'proofs':{}, 'accepted_order':[],
                     'rounds':{}, 'revisions':{}, 'status':'planned', 'seal_id':None}, {'check':check})
-            if state['status'] == 'sealed':
+            if state['status'] in {'sealed', 'exported_partial'}:
                 initialization.mark('progress')
                 return progress(run_dir)
             if state.get('runtime_policy') and state['runtime_policy'].get('mode') != policy['mode']:
@@ -1083,8 +1152,10 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 state = journal.append('planner-request', new, {'request_number':count})
                 timing.mark('input_and_prompt')
                 timing.metadata['model_attempts'] = 0
+                dispositions = contract_dispositions_for(run_dir, run, package, state)
                 if decision_source is None:
-                    payload, prompt = prepare_prompt(planner_input(package, state))
+                    payload, prompt = prepare_prompt(planner_input(package, state, **(
+                        {'dispositions': dispositions} if dispositions is not None else {})))
                 else:
                     payload = workspace_action_input(run, package, state, count)
                     prompt = json.dumps({'kind':'workspace-action-context-reference',
@@ -1145,17 +1216,18 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         raise ValueError('expected one JSON action object')
                     if proposal.get('action') == 'check_theory':
                         document_check_requested = True
-                        from regen.planning.theory_document import DocumentStore, candidate as document_candidate, selected_source
+                        from regen.planning.theory_document import DocumentStore, candidate as document_candidate
                         if set(proposal)-{'action','source_sha256','reason','notes','retry_check','entry_ids'}:
                             raise ValueError('check_theory accepts source_sha256, entry_ids, reason, notes and optional retry_check')
                         durable(request_dir/'model-proposal.json',proposal,immutable=True)
                         from regen.planning.sketch_check import strategy_options
                         store=DocumentStore(directory/'document',package,state,checker.imports(),
                             **strategy_options(getattr(checker,'generation_strategy_name','baseline')))
-                        source=store.checked_source(proposal.get('source_sha256'))
+                        requested_source=store.checked_source(proposal.get('source_sha256'))
+                        source, selected_ids = disposition_check_source(package, state, requested_source,
+                            checker.imports(), proposal.get('entry_ids'), dispositions)
                         from regen.planning.sketch_check import authorize
-                        document_sketch_authorizations=authorize(store,source,proposal.get('entry_ids'))
-                        source=selected_source(package,state,source,checker.imports(),proposal.get('entry_ids'))
+                        document_sketch_authorizations=authorize(store,requested_source,selected_ids)
                         projected=document_candidate(package,state,source,checker.imports())
                         proposal={**{k:v for k,v in proposal.items() if k in {'reason','notes','retry_check'}},
                             'action':'submit_batch','document_source':source,
@@ -1258,6 +1330,8 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                             durable(request_dir/'document-source.json',{'source':document_source},immutable=True)
                         else:
                             candidate = prepare_batch(package, state, {k: v for k, v in proposal.items() if k not in {'action', 'notes', 'workspace', 'reuse_origin', 'edit_origin', 'retry_check', 'workspace_reuse_origin'}})
+                        if set(candidate['proofs']) & set(dispositions or {}):
+                            raise ValueError('disposed contracts cannot acquire positive proof bodies')
                         if 'workspace' in proposal:
                             from regen.planning.planner_workspace import validate_workspace
                             validate_workspace(candidate, proposal['workspace'])
@@ -1339,12 +1413,14 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         if cached:
                             feedback.update(cached_failure=True, reused_request=cached['reused_request'], notice=cached['notice'])
                     elif action == 'finish':
-                        new, evidence = seal_theory(run_dir, run, package, directory, checker, ancestors, state)
+                        dispositions = contract_dispositions_for(run_dir, run, package, state)
+                        new, evidence = seal_theory(run_dir, run, package, directory, checker, ancestors, state,
+                            **({'dispositions': dispositions} if dispositions is not None else {}))
                         durable(request_dir/'seal.json', evidence, immutable=True)
                         if new is not None:
                             timing.mark('commit')
                             state = journal.append('seal', new, evidence)
-                            timing.metadata.update(status='sealed', action_completed=True)
+                            timing.metadata.update(status=state['status'], action_completed=True)
                             timing.mark('progress')
                             return progress(run_dir)
                         feedback = {'status':'seal_failed', **evidence}

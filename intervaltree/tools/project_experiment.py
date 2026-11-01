@@ -117,7 +117,8 @@ def launch(root, name='planning'):
     if frozen['state'] != 'frozen': raise ValueError('unfrozen plan')
     proof = root/'proof'
     init_run(proof,root/'dataset',run_id=root.name,
-        schedule_path=Path(frozen['file_generation_list']),log_storage='regen-merkle-json-v1')
+        schedule_path=Path(frozen['file_generation_list']),log_storage='regen-merkle-json-v1',
+        contract_outcome_policy='contract-dispositions-v1')
     command = [sys.executable,'-u','-m','regen.execution.proof_session_runner','parallel-workspace',
         '--run-dir',str(proof),'--planner-model','gpt-6-astra','--file-planner-interface','document',
         '--max-parallel-theories','1','--native-slots','1','--resident-limit','1',
