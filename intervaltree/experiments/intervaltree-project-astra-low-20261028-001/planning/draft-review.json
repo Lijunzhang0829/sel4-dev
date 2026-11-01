@@ -1,0 +1,148 @@
+{
+  "theory_reviews": [
+    {
+      "theory": "Interval_Normalization",
+      "assessment": "Independent provider of proposed coverage, canonicality, positivity, sorting and strict-gap interfaces. Algebra and measure consumers specifically need coverage and canonicality; geometry additionally expects positivity and strict gaps. Filtering, insertion-order and coalescing invariants can remain local helpers. No external dependency is demonstrated. The supplied exact statements reference specification constants without their bodies, so detailed premise compatibility cannot be certified. Its broad seal is a downstream availability risk, not evidence that the grouping is wrong.",
+      "consumed_contract_ids": []
+    },
+    {
+      "theory": "Tree_Executor",
+      "assessment": "Independent provider of proposed mutation content, well-formedness preservation and existential fuel adequacy. Keeping interacting removal, promotion and rotation reasoning together is justified by the described executor equations. Intermediate-state helpers should preserve the weaker routing and metadata assumptions of rotation; tree_wf-based add/remove contracts cannot automatically cover those states. Such generalized executor invariants can remain local. Restricted singleton progress in State_Update_Interface is only advisory and is neither available through an import nor a replacement for general adequacy. Existential adequacy does not expose a fixed fuel bound.",
+      "consumed_contract_ids": []
+    },
+    {
+      "theory": "State_Update_Interface",
+      "assessment": "Independent provider of proposed initialization, abstract list-content updates, no-op/error behavior and empty-state insertion at fuel 1. Consumers must not treat assumption-free list updates as root/list synchronization or treat singleton progress as general insertion progress. Wrapper branch analysis and the direct empty-tree calculation can remain local. The stated separation from Tree_Executor is coherent; no general executor result is established as necessary here.",
+      "consumed_contract_ids": []
+    },
+    {
+      "theory": "Interval_Cutting",
+      "assessment": "Independent provider of proposed pointwise cut semantics, canonical preservation and one-cut fragment bounds. Repeated and normalized cutting need these distinct interfaces. Preserve unconditional pointwise coverage separately from b<=e count/length results and b<e canonical results; the weaker range premise cannot justify canonical preservation. Fragment ordering, positivity and left/right case analysis can remain local. Advisory normalization collaboration does not make pending normalization results available or require an import.",
+      "consumed_contract_ids": []
+    },
+    {
+      "theory": "Tree_Queries",
+      "assessment": "Independent static-query provider. Trace consumers specifically expect refine_state_point_query; primitive point correctness and the coverage bridge retain routing_ok-only applicability, while state range queries use state_wf and endpoint counts. Mutation preservation is not a prerequisite for reasoning under these static assumptions. Boundary sampling, endpoint-index correspondence and payload-erasure calculations can remain local. No concrete missing generated import is evidenced.",
+      "consumed_contract_ids": []
+    },
+    {
+      "theory": "Normalization_Algebra",
+      "assessment": "Expects sealed normalization coverage and canonical output to support the proposed canonical uniqueness and extensional equality interface. Pointwise idempotence must not substitute for exact list idempotence. Canonical-list comparison, coverage decomposition and permutation bookkeeping can remain local. The normalization import has a concrete semantic purpose; the entire algebra package sealing before normalized cutting is a granularity choice, not a demonstrated dependency error.",
+      "consumed_contract_ids": [
+        "goal:07f9c52d0be542ae9149d1b0",
+        "goal:c8830f38335b6cb3fda89b17"
+      ]
+    },
+    {
+      "theory": "Interval_Run_Geometry",
+      "assessment": "Expects sealed coverage, output positivity and strict-gap interfaces from normalization. It proposes solidity, endpoint saturation and uncovered-gap results for component consumers. Strict overlap/common-point reasoning requires valid nonempty inputs as described and does not by itself cover touching connectivity. Indexed endpoint witnesses and run-membership arguments can remain local. Combining elementary overlap facts with run geometry is plausible; size alone does not justify splitting it.",
+      "consumed_contract_ids": [
+        "goal:07f9c52d0be542ae9149d1b0",
+        "goal:813a22e5868872c36635177e",
+        "goal:546ec97300e06132f4d4e92b"
+      ]
+    },
+    {
+      "theory": "Interval_Measure",
+      "assessment": "Expects normalization coverage and canonicality to connect canonical exact measure to normalized-output exact measure. Repeated cutting specifically needs the canonical-input theorem, not general merge exactness. Finite coverage, disjoint cardinality addition and signed-versus-clamped length bookkeeping can remain local. Canonical exactness must only be applied after canonicality is established; the disjoint-length theorem's detailed premises are not exposed by its specification-constant statement. The import is justified for the package, although it delays the more restricted interface.",
+      "consumed_contract_ids": [
+        "goal:07f9c52d0be542ae9149d1b0",
+        "goal:c8830f38335b6cb3fda89b17"
+      ]
+    },
+    {
+      "theory": "Normalized_Cutting",
+      "assessment": "Expects canonical uniqueness and coverage-determines from algebra, pointwise semantics and canonical preservation from cutting, and normalization coverage/canonicality transitively after sealing. These are concrete equality and coverage interfaces, so both hard imports are justified. Proper-cut and canonical-input premises belong to the canonical merge fixpoint and must not leak into unconditional coverage interactions. Coverage substitution and cut-complement bookkeeping can remain local; no direct normalization import is needed merely to access its transitive exports.",
+      "consumed_contract_ids": [
+        "goal:f067755a7fa1ceb05c3c201b",
+        "goal:19fdca1666ea33d1af3ae47f",
+        "goal:be63261346da4d096d3d756c",
+        "goal:82d78c967a38d4f26c86ffe3",
+        "goal:07f9c52d0be542ae9149d1b0",
+        "goal:c8830f38335b6cb3fda89b17"
+      ]
+    },
+    {
+      "theory": "Repeated_Cutting",
+      "assessment": "Expects unconditional one-cut pointwise semantics for arbitrary cut lists, canonical preservation and the one-cut fragment bound for proper cuts, and canonical exact measure for the resulting canonical list. The plan supplies these through its imports. Proper_cuts must provide each strict range premise needed during iteration; unconditional repeated coverage cannot rely on that restricted path. Iterated coverage, canonicality and additive fragment accounting can remain local. General merge exact measure and normalization algebra are not demonstrated needs.",
+      "consumed_contract_ids": [
+        "goal:be63261346da4d096d3d756c",
+        "goal:82d78c967a38d4f26c86ffe3",
+        "goal:a5a5fbc5e07163ba87ceb789",
+        "goal:8e6f72b4719e479f43b4f937"
+      ]
+    },
+    {
+      "theory": "Interval_Components",
+      "assessment": "Expects run solidity, endpoint saturation and uncovered-gap geometry, with normalization coverage and strict gaps available transitively. Those proposed interfaces support interval-side reasoning but do not themselves state correspondence with reflexive-transitive touching paths on valid indexed vertices. A touching-edge/run-membership bridge, path closure, index multiplicity handling and hull injectivity remain explicit local-helper obligations. The strict-overlap same-run theorem is not a matching touching theorem. Keeping hull image, bijection and count together is appropriate; no external graph provider is demonstrably required.",
+      "consumed_contract_ids": [
+        "goal:c61f18b4cbcd1846d713cedc",
+        "goal:0cd2cd56d61e329f635f93a0",
+        "goal:02091a693e5915cbea70919b",
+        "goal:d41334526dce8ee29e5d62e2",
+        "goal:2b7e601acd33406f0149ab42",
+        "goal:d5279e57f5b506b1d83295f7",
+        "goal:07f9c52d0be542ae9149d1b0",
+        "goal:546ec97300e06132f4d4e92b"
+      ]
+    },
+    {
+      "theory": "State_Invariants_And_Traces",
+      "assessment": "Expects executor content and well-formedness preservation, wrapper abstract-content and status behavior, initialization, and the state point-query interface. These imports have concrete synchronization and observation roles. Boundary-count updates, distinctness maintenance and trace composition can remain local. Successful-trace guarantees do not require proving that every requested trace succeeds, so existential fuel adequacy and singleton progress are not identified as consumed interfaces. Wrapper content alone does not establish state_wf; successful executor branches must meet the mutation contracts' premises. Full executor sealing may unnecessarily delay these consumers.",
+      "consumed_contract_ids": [
+        "goal:e7998738fb14084a5c625b20",
+        "goal:64a116fc0aa0b4c26bc7af2f",
+        "goal:a60bba5bea492da015967562",
+        "goal:d74e8bede705529bae8a1e94",
+        "goal:e4b9a60ced0935eb2121586f",
+        "goal:2ebf1147d50cd3fc4520c650",
+        "goal:548f63259f1f45f9e0de47e5",
+        "goal:44631ae7457e691422b61fee",
+        "goal:b1dda7bb5c7897beb9e833f5",
+        "goal:7a87767af1e840dfc74385d3",
+        "goal:c33d8c26c316071b79f9963b"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "measure_interface_seal",
+      "kind": "seal_barrier",
+      "theories": [
+        "Interval_Measure",
+        "Interval_Normalization",
+        "Repeated_Cutting"
+      ],
+      "contract_ids": [
+        "goal:8e6f72b4719e479f43b4f937",
+        "goal:f65a4b918c01c945264adb58",
+        "goal:c0d23c94396df9a90ba93e12"
+      ],
+      "evidence": "The plan explicitly says canonical exact measure can be explored before general merge exact measure and does not require it. Nevertheless, Interval_Measure imports the entire normalization package and seals both measure contracts together. Repeated_Cutting names canonical exact measure as its measurement interface.",
+      "scenario": "Canonical exact measure and proper-cut canonical preservation could be ready while normalization or general merge measure remains pending; repeated-cut exact measure would still await the full measure seal.",
+      "suggested_change": "Consider a small canonical-measure provider consumed by both Interval_Measure and Repeated_Cutting, preserving every fixed statement. Retain the current grouping if shared local reasoning makes the split counterproductive.",
+      "tradeoff": "Earlier availability adds a theory boundary and may require exporting cardinality helpers currently shared locally.",
+      "uncertainty": "This is an availability hypothesis supported by the stated restricted interface, not evidence of actual proof latency or of an independent completed proof."
+    },
+    {
+      "id": "executor_adequacy_seal",
+      "kind": "seal_barrier",
+      "theories": [
+        "Tree_Executor",
+        "State_Invariants_And_Traces"
+      ],
+      "contract_ids": [
+        "goal:d7b23bf8e1f662dc8f4a028d",
+        "goal:b28480a84b0ea49f1bc02a9d",
+        "goal:a60bba5bea492da015967562",
+        "goal:d74e8bede705529bae8a1e94",
+        "goal:208a4b394aeb50aa7a7fd4fd"
+      ],
+      "evidence": "Tree_Executor seals existential fuel adequacy together with content and well-formedness preservation. The state theory's import rationale names content and well-formedness, and its trace contracts concern successful traces. The supplied plan identifies no adequacy interface needed to reason about already successful executions.",
+      "scenario": "Mutation correctness could be ready while existential adequacy remains unresolved, leaving state synchronization and successful-trace results blocked by the executor seal.",
+      "suggested_change": "Assess whether adequacy can form a downstream theory importing a jointly sealed mutation-correctness package. Keep add, remove and rotation correctness together; split only if their reasoning does not depend back on adequacy.",
+      "tradeoff": "This may release state consumers earlier but can duplicate termination-related helpers or expose an artificial boundary within mutually related executor reasoning.",
+      "uncertainty": "Specification bodies and a proof dependency analysis are absent. Adequacy might participate in correctness reasoning, so the evidence supports investigation rather than a mandatory split."
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+--- a/regen/preparation/intervaltree_dataset.py
++++ b/regen/preparation/intervaltree_dataset.py
+@@ -39,6 +39,12 @@
+ 
+ def save(path, value):
+     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\n')
++
++
++def premise_audit_context(planning_input_id, export_sha256):
++    return {'schema_version':1, 'artifact_type':'intervaltree-parent-premise-audit-context',
++            'campaign_id':'independent-intervaltree:' + planning_input_id,
++            'semantic_base_seal_id':'native:' + export_sha256, 'records':[]}
+ 
+ 
+ def prepare(source, output, isabelle, image):
+@@ -151,14 +157,14 @@
+     payload['planning_input_id'] = 'intervaltree-planning-input:'+sha256_json(payload)[:20]
+     save(output/'repository-planning-input.json',payload)
+     save(output/'contract-map.json',mapping)
+-    save(output/'premise-audit-context.json',{'schema_version':1,
+-        'artifact_type':'intervaltree-parent-premise-audit-context','records':[],
+-        'semantic_base_seal_id':'native:'+digest(evidence/'premises.xml')})
++    save(output/'premise-audit-context.json', premise_audit_context(
++        payload['planning_input_id'], digest(evidence/'premises.xml')))
+     context = {'schema_version':1,'artifact_type':'intervaltree-checker-context',
+         'target_session':'Intervaltree','architecture':'ARM',
+         'paths':{'l4v':'checker-assets/l4v','semantic_workspace':'checker-assets/semantic-base',
+                  'heaps':'checker-assets/heaps','isabelle':'checker-assets/isabelle'},
+         'premise_database':'parent-premises.sqlite','premise_audit_context':'premise-audit-context.json',
++        'premise_audit_context_sha256':digest(output/'premise-audit-context.json'),
+         'premise_database_sha256':digest(database),'base_session':BASE,'base_import':IMPORT,
+         'base_catalog':'/semantic-base','image':image,'isabelle_sha256':source_identity(isabelle,allow_links=True),
+         'checker_policy':'fixed-prefix-cold-green-v1',
+--- a/regen/preparation/checker_context.py
++++ b/regen/preparation/checker_context.py
+@@ -139,7 +139,13 @@
+     audit = (dataset_root / context["premise_audit_context"]).resolve()
+     if not database.is_file() or not audit.is_file():
+         raise ValueError("checker premise assets are missing")
++    from regen.analysis.retained_semantic_impact import load_audit_context
++    load_audit_context(audit)
+     from regen.preparation.premise_database import verify_database, digest
++    if ("premise_audit_context_sha256" in context
++            and context["premise_audit_context_sha256"] != digest(audit)):
++        from regen.execution.check_tasks import NativePreparationError
++        raise NativePreparationError("checker premise audit context binding mismatch")
+     if verify_database(database) == 2 and context.get("premise_database_sha256") != digest(database):
+         raise ValueError("checker premise database binding mismatch")
+     return {
+--- a/regen/analysis/retained_semantic_impact.py
++++ b/regen/analysis/retained_semantic_impact.py
+@@ -28,6 +28,27 @@
+ 
+ def sha256_path(path: Path) -> str:
+     return hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def load_audit_context(path: Path) -> dict[str, Any]:
++    """Validate trusted audit metadata before any expensive proof checking.
++
++    A broken preparation artifact is an infrastructure failure, never a model
++    request to retry or repair a mathematical proof.
++    """
++    from regen.execution.check_tasks import NativePreparationError
++    try:
++        snapshot = read_json(path)
++        for key in ('campaign_id', 'semantic_base_seal_id'):
++            value = snapshot.get(key)
++            if not isinstance(value, str) or not value.strip():
++                raise ValueError('missing or invalid ' + key)
++        records = snapshot.get('records')
++        if not isinstance(records, list) or any(not isinstance(r, dict) for r in records):
++            raise ValueError('records must be a list of objects')
++    except (OSError, ValueError, TypeError) as error:
++        raise NativePreparationError(f'invalid premise audit context {path}: {error}') from error
++    return snapshot
+ 
+ 
+ def retained_records(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+@@ -238,7 +259,7 @@
+     *, checker: Any, graph: dict[str, Any], proofs: dict[str, str],
+     premise_snapshot_path: Path, output_path: Path,
+ ) -> dict[str, Any]:
+-    snapshot = read_json(premise_snapshot_path)
++    snapshot = load_audit_context(premise_snapshot_path)
+     records = retained_records(snapshot)
+     check = checker.audit_complete_theory(graph, proofs)
+     checker.last_complete_audit = check
+--- a/regen/planning/batch_file_planner.py
++++ b/regen/planning/batch_file_planner.py
+@@ -852,11 +852,12 @@
+ 
+ 
+ def seal_theory(run_dir, run, package, directory, checker, ancestors, state):
+-    from regen.analysis.retained_semantic_impact import audit_theory
++    from regen.analysis.retained_semantic_impact import audit_theory, load_audit_context
+     from regen.execution.proof_session_runner import generated_checkpoint_theory
+     graph, proofs = state['graph'], state['proofs']
+     if set(proofs) != {n['id'] for n in graph['nodes']}:
+         raise ValueError('finish requires every active node proved; delete unnecessary unproved auxiliaries explicitly')
++    load_audit_context(Path(run['premise_snapshot']))
+     complete = freeze_evidence(checker.check_complete(graph, proofs))
+     if complete['verdict'] != 'green':
+         return None, {'stage': 'complete', 'check': complete}
+--- a/regen/tests/current/test_owner_blind_dataset.py
++++ b/regen/tests/current/test_owner_blind_dataset.py
+@@ -108,6 +108,8 @@
+             paths = {k: k for k in ('l4v', 'semantic_workspace', 'heaps', 'isabelle')}
+             for path in paths.values(): (root/path).mkdir()
+             for name in ('parent-premises.sqlite', 'audit.json'): (root/name).touch()
++            (root/'audit.json').write_text(json.dumps({'campaign_id':'test',
++                'semantic_base_seal_id':'test-base', 'records':[]}))
+             core = {'target_session': 'CRefine', 'artifact_type': 'crefine-checker-context',
+                     'paths': paths, 'premise_database': 'parent-premises.sqlite', 'premise_audit_context': 'audit.json'}
+             def save(value):
+--- a/regen/tests/current/test_batch_file_planner.py
++++ b/regen/tests/current/test_batch_file_planner.py
+@@ -75,7 +75,9 @@
+         checker.last_complete_audit={'verdict':'red','diagnostic':'native missing dependency detail'}
+         with tempfile.TemporaryDirectory() as tmp, \
+              patch('regen.analysis.retained_semantic_impact.audit_theory',side_effect=ValueError('audit failed')):
+-            new,feedback=seal_theory(Path(tmp),{'premise_snapshot':tmp},package,Path(tmp),checker,[],state)
++            snapshot = Path(tmp)/'audit.json'
++            snapshot.write_text(json.dumps({'campaign_id':'test','semantic_base_seal_id':'test-base','records':[]}))
++            new,feedback=seal_theory(Path(tmp),{'premise_snapshot':str(snapshot)},package,Path(tmp),checker,[],state)
+         self.assertIsNone(new)
+         self.assertEqual(feedback['stage'],'semantic-audit')
+         self.assertEqual(feedback['check']['diagnostic'],'native missing dependency detail')
+--- /dev/null
++++ b/regen/tests/current/test_intervaltree_seal_context.py
+@@ -0,0 +1,73 @@
++"""Missing trusted metadata must fail before native work, never as candidate RED."""
++import json
++from pathlib import Path
++import tempfile
++import unittest
++from unittest.mock import Mock, patch
++
++from regen.analysis.retained_semantic_impact import audit_theory, load_audit_context
++from regen.execution.check_tasks import NativePreparationError
++from regen.planning.batch_file_planner import seal_theory
++from regen.preparation.checker_context import load_context
++from regen.preparation.intervaltree_dataset import premise_audit_context
++from regen.preparation.premise_database import digest
++from regen.preparation.refine_campaign import sha256_json
++
++
++class IntervaltreeSealContextTests(unittest.TestCase):
++    def test_preparation_metadata_is_consumable(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            path=Path(tmp)/'audit.json'
++            value=premise_audit_context('input:fixed', 'a'*64)
++            path.write_text(json.dumps(value))
++            self.assertEqual(load_audit_context(path),value)
++            self.assertEqual(value['campaign_id'],'independent-intervaltree:input:fixed')
++            self.assertEqual(value['records'],[])
++
++    def test_broken_context_stops_before_native_audit(self):
++        for value in ({'semantic_base_seal_id':'base','records':[]},
++                      {'campaign_id':'','semantic_base_seal_id':'base','records':[]},
++                      {'campaign_id':'test','semantic_base_seal_id':'base','records':[None]}):
++            with self.subTest(value=value), tempfile.TemporaryDirectory() as tmp:
++                path=Path(tmp)/'audit.json';path.write_text(json.dumps(value))
++                checker=Mock()
++                with self.assertRaises(NativePreparationError):
++                    audit_theory(checker=checker,graph={},proofs={},
++                        premise_snapshot_path=path,output_path=Path(tmp)/'impact.json')
++                checker.audit_complete_theory.assert_not_called()
++
++    def test_missing_campaign_is_not_a_retryable_seal_request(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            root=Path(tmp);path=root/'audit.json'
++            path.write_text(json.dumps({'semantic_base_seal_id':'base','records':[]}))
++            checker=Mock()
++            state={'graph':{'nodes':[{'id':'goal'}]},'proofs':{'goal':'by simp'}}
++            with self.assertRaisesRegex(NativePreparationError,'campaign_id'):
++                seal_theory(root,{'premise_snapshot':str(path)}, {},root,checker,[],state)
++            checker.check_complete.assert_not_called()
++            checker.audit_complete_theory.assert_not_called()
++            self.assertEqual(state['proofs'],{'goal':'by simp'})
++
++    def test_loader_rejects_missing_or_rebound_metadata(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            root=Path(tmp)
++            paths={k:k for k in ('l4v','semantic_workspace','heaps','isabelle')}
++            for p in paths.values():(root/p).mkdir()
++            (root/'parent-premises.sqlite').touch()
++            audit=root/'audit.json'
++            good=premise_audit_context('input:fixed','a'*64)
++            audit.write_text(json.dumps(good))
++            core={'target_session':'Intervaltree','artifact_type':'intervaltree-checker-context',
++                  'paths':paths,'premise_database':'parent-premises.sqlite',
++                  'premise_audit_context':'audit.json','premise_audit_context_sha256':digest(audit)}
++            (root/'checker-context.json').write_text(json.dumps({**core,
++                'checker_context_id':'checker-context:'+sha256_json(core)[:20]}))
++            with patch('regen.preparation.premise_database.verify_database',return_value=1):
++                self.assertEqual(load_context(root)['target_session'],'Intervaltree')
++                audit.write_text(json.dumps({k:v for k,v in good.items() if k!='campaign_id'}))
++                with self.assertRaisesRegex(NativePreparationError,'campaign_id'):load_context(root)
++                audit.write_text(json.dumps({**good,'campaign_id':'different'}))
++                with self.assertRaisesRegex(NativePreparationError,'binding mismatch'):load_context(root)
++
++
++if __name__=='__main__': unittest.main()

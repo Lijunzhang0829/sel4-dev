@@ -1,0 +1,12 @@
+{
+  "recorded_unix": 1793251011.6206188,
+  "authorization": "用户明确授权复制本机当前 Codex 凭据到机器 B 专用目录并继续实验",
+  "same_account_verified": true,
+  "previous_last_refresh": "2026-10-21T09:51:38.769322859Z",
+  "new_last_refresh": "2026-10-28T17:37:48.063469668Z",
+  "remote_file_mode": "0600",
+  "prior_planning_retained": "planning",
+  "next_planning_directory": "planning-002",
+  "target_proofs_reused": 0,
+  "generation_budget_started": false
+}

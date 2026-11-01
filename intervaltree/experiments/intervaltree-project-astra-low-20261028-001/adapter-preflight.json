@@ -1,0 +1,7 @@
+{
+  "status": "pass",
+  "contracts_checked": 91,
+  "fixed_targets_proved": 0,
+  "generic_smoke_audit": true,
+  "generic_smoke_seal_build": true
+}

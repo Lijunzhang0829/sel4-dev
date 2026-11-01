@@ -1,0 +1,16 @@
+[
+  {
+    "issue_id": "measure_interface_seal",
+    "decision": "revise",
+    "reason": "Inspected canonical exact-measure, canonicality, coverage and length definitions show a restricted list interface with no normalization operation. Move only C0020 to Canonical_Measure and commit both measure consumers to it.",
+    "tradeoff": "One additional single-contract theory exposes a concrete interface to two consumers and removes the normalization seal from repeated cutting; shared cardinality bookkeeping may cross a new boundary.",
+    "remaining_risk": "Semantic separation is not proof certification. Finite union and length arguments still need File Planner investigation; no helper is proved."
+  },
+  {
+    "issue_id": "executor_adequacy_seal",
+    "decision": "retain",
+    "reason": "Success-conditioned preservation and existential adequacy differ, and successful traces need only preservation. However inspected execute_tree equations interleave rotation, promoted-entry removal, pruning and popping; no independent intermediate-state helper interface has been established. Retain the combined executor under the review instruction to preserve uncertain boundaries.",
+    "tradeoff": "Keeps potentially shared executor invariants local and avoids speculative mandatory imports or helper exports, at the cost of state consumers waiting for both adequacy contracts.",
+    "remaining_risk": "Adequacy could become the sealing bottleneck. Definitions do not establish proof dependencies; a future evidence-backed split may be warranted, but no proof-latency evidence is available."
+  }
+]

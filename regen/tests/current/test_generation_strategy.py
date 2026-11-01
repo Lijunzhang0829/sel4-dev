@@ -25,7 +25,7 @@ class GenerationStrategyTest(unittest.TestCase):
         prompts=[]
         class Controller:
             options={};run={'run_id':'test'};model='gpt-6-astra';task_ids=set()
-            def __init__(self,*a,**kw):pass
+            def __init__(self,*a,**kw):self.root=Path(a[0])
             def handle(self,*a):return {'theories':[]}
             def _state(self,*a):return {},{'status':'sealed'}
             def target_contract_green(self):return False

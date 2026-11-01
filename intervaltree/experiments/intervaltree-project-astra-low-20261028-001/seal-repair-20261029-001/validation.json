@@ -1,0 +1,30 @@
+{
+  "status": "pass",
+  "started_unix": 1793217953.1090832,
+  "finished_unix": 1793218012.9561958,
+  "original_experiment": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001",
+  "repair_directory": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001",
+  "theory": "Interval_Normalization",
+  "validated_contracts": 13,
+  "source_commit_id": "2825eb703a5b1cc8e454cb3068a693d8441239b98ff27ac4d9118fe8ae644fff",
+  "proofs_sha256": "905cba79088cfbc94204e7f342ff2af0bbe7e26c0361f8a1d72e8c71b42702f8",
+  "graph_sha256": "ecc7ad30aa526161cdaed4f2aec6624199c0222ce159026aab30f3d81b5d2662",
+  "complete_check": "green",
+  "native_dependency_audit": "green",
+  "semantic_impact": "pass",
+  "native_sealed_build": "green",
+  "seal_certificate_replay": "pass",
+  "validation_seal_id": "theory-seal:a718c7388e8fa4e2b1d7",
+  "source_unchanged": true,
+  "source_files_verified": 1028,
+  "published_to_experiment": false,
+  "model_calls": 0,
+  "new_target_proofs": 0,
+  "experiment_resumed": false,
+  "service": {
+    "unit": "intervaltree-project-20261028-001-generation-resume-001.service",
+    "MainPID": "0",
+    "ActiveState": "failed",
+    "SubState": "failed"
+  }
+}

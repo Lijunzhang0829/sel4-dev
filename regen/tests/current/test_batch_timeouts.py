@@ -88,39 +88,44 @@ class BatchTimeoutTest(unittest.TestCase):
             self.assertEqual(evidence['check']['failure_scope'], 'native_preparation')
             self.assertTrue(all(n['status']=='not_checked' for n in evidence['node_results']))
 
-    def test_prefix_budget_scales_but_candidate_and_command_limits_do_not(self):
-        self.assertEqual(prefix_startup_budget(900, 0), 900)
-        self.assertEqual(prefix_startup_budget(900, 78), 2400)
-        self.assertEqual(prefix_startup_budget(900, 1000), 3600)
-        self.assertEqual(prefix_startup_budget(4000, 78), 4000)
+    def test_prefix_has_no_deadline_but_candidate_limits_remain(self):
+        for seconds, facts in [(900, 0), (900, 78), (4000, 1000)]:
+            self.assertIsNone(prefix_startup_budget(seconds, facts))
         with tempfile.TemporaryDirectory() as tmp:
             checker = Mock(work_dir=Path(tmp), timeout=900, batch_candidate_timeout=120)
             checker.previous_theories = []
             checker._command.return_value = ['docker','run','image','isabelle','-e','x']
             with patch.object(BatchWorker, '_launch'):
                 worker = BatchWorker(checker, 'theory T\nbegin\n\nend\n', ['a']*78, [])
-            self.assertEqual(worker.prefix_timeout, 2400)
+            self.assertIsNone(worker.prefix_timeout)
             self.assertEqual((worker.root/'command_timeout').read_text(), '900')
             self.assertEqual((worker.root/'candidate_timeout').read_text(), '120')
 
-    def test_ready_watchdog_uses_prefix_limit_only(self):
+    def test_ready_beyond_old_deadline_remains_cancellable_and_checks_worker_death(self):
+        from regen.execution.check_tasks import CheckCancelled
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root/'worker.log').write_text('prefix replay log')
             worker = object.__new__(BatchWorker)
             worker.root = root; worker.name = 'test-worker'
-            worker.checker = Mock(timeout=900)
-            worker.prefix_timeout = 2400
+            worker.checker = Mock(timeout=900); worker.prefix_timeout = None
             worker.process = Mock(); worker.process.poll.return_value = None
             worker.close = Mock()
-            for name, limit, scope in [('ready',2400,'prefix-startup'),
-                                       ('1.response',900,'candidate-watchdog')]:
-                with patch('regen.execution.batch_checker.time.monotonic', side_effect=[0,limit+1]):
-                    with self.assertRaises(TimeoutError) as caught:
-                        worker.wait(root/name)
-                self.assertEqual(caught.exception.timeout_seconds, limit)
-                self.assertEqual(caught.exception.timeout_scope, scope)
-                self.assertEqual(caught.exception.worker_log, 'prefix replay log')
+            with patch('regen.execution.batch_checker.time.monotonic', side_effect=[0,100000,100001]), \
+                 patch('regen.execution.batch_checker.time.sleep', side_effect=lambda _: (root/'ready').touch()):
+                worker.wait(root/'ready')
+            worker.close.assert_not_called()
+            (root/'ready').unlink()
+            with patch('regen.execution.batch_checker.check_cancelled', side_effect=CheckCancelled('stop')):
+                with self.assertRaises(CheckCancelled): worker.wait(root/'ready')
+            worker.close.assert_called_once()
+            worker.process.poll.return_value = 1
+            with self.assertRaisesRegex(RuntimeError, 'prefix replay log'): worker.wait(root/'ready')
+            worker.process.poll.return_value = None
+            with patch('regen.execution.batch_checker.time.monotonic', side_effect=[0,901]):
+                with self.assertRaises(TimeoutError) as caught: worker.wait(root/'1.response')
+            self.assertEqual(caught.exception.timeout_seconds, 900)
+            self.assertEqual(caught.exception.timeout_scope, 'candidate-watchdog')
 
     def test_explicit_cold_mode_uses_candidate_budget_without_changing_full_budget(self):
         with tempfile.TemporaryDirectory() as tmp:

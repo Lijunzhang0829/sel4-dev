@@ -79,6 +79,23 @@ class ParallelControllerTests(unittest.TestCase):
         self.assertEqual(row['error_type'], 'ImplementationChangedError')
         self.assertEqual(self.controller._state('Target')[1]['proofs'], {})
 
+    def test_unresolved_action_stops_only_assigned_theory_without_proof_changes(self):
+        before=deepcopy(self.controller._state('Target')[1])
+        with self.assertRaisesRegex(ValueError,'only the assigned theory'):
+            self.controller.handle('proof_action',{'theory':'Other','proposal':{
+                'action':'report_unresolved','reason':'suspected false goal'}},self.metadata)
+        result=self.controller.handle('proof_action',{'theory':'Target','proposal':{
+            'action':'report_unresolved','reason':'suspected false goal',
+            'classification':'suspected_counterexample'}},self.metadata)
+        self.assertTrue(result['theory_stop'])
+        self.assertEqual(result['theory_outcome']['status'],'unknown')
+        self.assertEqual(result['theory_outcome']['truth_status'],'undetermined')
+        self.assertEqual(before,self.controller._state('Target')[1])
+        stopped=self.controller.handle('proof_action',{'theory':'Target','proposal':{
+            'action':'submit_batch','proofs':{'target_contract':'by simp'}}},self.metadata)
+        self.assertTrue(stopped['theory_stop'])
+        self.assertEqual(len(self.controller.task_ids),0)
+
     def test_no_mathematical_pause_tool_in_new_controller(self):
         with self.assertRaisesRegex(ValueError,'continue local exploration'):
             self.controller.handle('proof_action',{'theory':'Target',
@@ -269,7 +286,7 @@ class SchedulerTests(unittest.TestCase):
             task_ids=set()
             state={'status':'generating','graph':{'nodes':[{'id':'goal'}]},'proofs':{}}
             closed=False
-            def __init__(self,*args,**kwargs):pass
+            def __init__(self,*args,**kwargs):self.root=Path(args[0])
             def handle(self,name,args,metadata):
                 if name=='list_workspace':return {'theories':[]}
                 return {}
@@ -302,7 +319,8 @@ class SchedulerTests(unittest.TestCase):
         self.assertIn('previous model turn ended',Session.prompts[1])
 
     def _empty_turn_scenario(self, temporary, *, progress_field=False,
-                             focus=False, on_turn=None, cancel_event=None, effective_budget=False):
+                             focus=False, on_turn=None, cancel_event=None, effective_budget=False,
+                             no_progress_turn_limit=3, retained_outcome=None, retry_unresolved=False):
         """Synthetic provider; never claim these fixtures establish live GREEN."""
         from types import SimpleNamespace
         from regen.planning.parallel_file_planner import run_theory_session
@@ -313,8 +331,9 @@ class SchedulerTests(unittest.TestCase):
             run={'run_id':'test'};model='test';task_ids=set()
             def __init__(self,*args,**kwargs):
                 test.empty_controller=self
+                self.root=Path(temporary)
                 self.state={'status':'generating','graph':{'nodes':[{'id':'goal'}]},'proofs':{}}
-                self.closed=False
+                self.closed=False;self.theory_outcome=None;self._proof_work_version=0
             def handle(self,name,args,metadata):
                 return {'theories':[]} if name=='list_workspace' else {}
             def _state(self,theory):return {},self.state
@@ -344,19 +363,62 @@ class SchedulerTests(unittest.TestCase):
                 result={'status':'completed','turn_id':str(self.turns)}
                 if progress_field:result['progress_made']=False
                 return result
+        def unresolved(controller, **kwargs):
+            controller.theory_outcome = {'status':'unknown','reason':kwargs['reason'],
+                                        'receipt':'synthetic-unresolved-receipt'}
+            return controller.theory_outcome
         with patch('regen.planning.parallel_file_planner.TheoryController',Controller),patch(
                 'regen.infrastructure.codex_workspace_session.CodexWorkspaceSession',Session),patch(
                 'regen.infrastructure.workspace_transcript.audit_workspace_session',
-                return_value={'terminal':not focus}) as audit:
+                return_value={'terminal':not focus}) as audit,patch(
+                'regen.planning.theory_outcomes.record_unresolved',side_effect=unresolved),patch(
+                'regen.planning.theory_outcomes.current_outcome',return_value=retained_outcome):
             result=run_theory_session(Path(temporary),'Target',
                 resources=type('Resources',(),{'policy':{}})(),executor=object(),
                 settings={'codex_bin':'codex','reasoning_effort':'medium'},
                 directory=Path(temporary)/'session',cancel_event=cancel_event,
                 focus_contract_id='goal' if focus else None,stop_at_focus_contract=focus,
-                effective_budget=effective_budget)
+                effective_budget=effective_budget,no_progress_turn_limit=no_progress_turn_limit,
+                retry_unresolved=retry_unresolved)
+            if result.get('retained_from_prior_invocation'):
+                audit.assert_not_called()
+                self.assertFalse(hasattr(self, 'empty_session'))
+                return result
             self.assertEqual(audit.call_args.kwargs['require_terminal'],
-                not focus and result['status'] != 'framework_blocked')
+                not focus and result['status'] not in {'framework_blocked','unknown','refuted'})
             return result
+
+    def test_direct_session_respects_retained_unknown_without_starting_model(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temporary:
+            result=self._empty_turn_scenario(temporary,retained_outcome={
+                'status':'unknown','receipt':'synthetic-prior-stop'})
+        self.assertEqual(result['status'],'unknown')
+        self.assertTrue(result['retained_from_prior_invocation'])
+        self.assertEqual(result['provider_turns'],[])
+        self.assertTrue(self.empty_controller.closed)
+
+    def test_direct_retry_cannot_bypass_retained_refutation(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temporary:
+            result=self._empty_turn_scenario(temporary,retry_unresolved=True,retained_outcome={
+                'status':'refuted','receipt':'synthetic-negative-certificate'})
+        self.assertEqual(result['status'],'refuted')
+        self.assertEqual(result['provider']['status'],'not_started_retained_theory_outcome')
+        self.assertFalse(self.empty_controller.state['proofs'])
+
+    def test_direct_explicit_unknown_retry_does_not_latch_old_tool_stop(self):
+        import tempfile
+        def complete(turn):
+            self.assertIsNone(self.empty_controller.theory_outcome)
+            self.empty_controller.state['status']='sealed'
+        with tempfile.TemporaryDirectory() as temporary:
+            result=self._empty_turn_scenario(temporary,retry_unresolved=True,on_turn=complete,
+                retained_outcome={'status':'unknown','receipt':'synthetic-prior-stop'})
+            policy=json.loads((Path(temporary)/'session/policy.json').read_text())
+        self.assertEqual(result['status'],'sealed')
+        self.assertEqual(self.empty_session.turns,1)
+        self.assertTrue(policy['retry_unresolved'])
 
     def test_trusted_framework_block_preserves_state_and_stops_auto_continue(self):
         import tempfile
@@ -373,40 +435,63 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(self.empty_controller.state['proofs'], {'goal':'by simp'})
         self.assertTrue(self.empty_controller.closed)
 
-    def test_many_empty_turns_continue_until_checker_seal(self):
+    def test_repeated_final_messages_stop_unknown_without_changing_accepted_state(self):
         import tempfile
         for progress_field in (False,True):
             with self.subTest(progress_field=progress_field),tempfile.TemporaryDirectory() as temporary:
                 result=self._empty_turn_scenario(temporary,progress_field=progress_field)
-                self.assertEqual(result['status'],'sealed')
-                self.assertEqual(result['continuation_turns'],5)
-                self.assertEqual(self.empty_session.turns,6)
+                self.assertEqual(result['status'],'unknown')
+                self.assertEqual(result['theory_status'],'generating')
+                self.assertEqual(result['continuation_turns'],2)
+                self.assertEqual(self.empty_session.turns,3)
+                self.assertEqual(self.empty_controller.state['proofs'],{})
                 self.assertTrue(self.empty_session.closed)
                 self.assertTrue(self.empty_controller.closed)
                 policy=json.loads((Path(temporary)/'session'/'policy.json').read_text())
-                self.assertNotIn('idle_turn_limit',policy['progress_policy'])
+                self.assertEqual(policy['progress_policy']['no_progress_turn_limit'],3)
                 self.assertEqual(policy['progress_policy']['repeated_result_limit'],8)
-                self.assertNotIn('preceding turn produced no new',self.empty_session.prompts[-1])
 
-    def test_many_no_progress_turns_continue_until_focus_journal_green(self):
+    def test_native_work_resets_idle_counter_without_relying_on_model_progress_flag(self):
+        import tempfile
+        def progress(turn):
+            if turn in (2,4):self.empty_controller._proof_work_version += 1
+            if turn==6:self.empty_controller.state['status']='sealed'
+        with tempfile.TemporaryDirectory() as temporary:
+            result=self._empty_turn_scenario(temporary,progress_field=True,on_turn=progress)
+        self.assertEqual(result['status'],'sealed')
+        self.assertEqual(result['continuation_turns'],5)
+
+    def test_focus_journal_green_remains_completion_authority(self):
         import tempfile
         with tempfile.TemporaryDirectory() as temporary:
-            result=self._empty_turn_scenario(temporary,progress_field=True,focus=True)
+            result=self._empty_turn_scenario(temporary,progress_field=True,focus=True,
+                                             no_progress_turn_limit=8)
         self.assertEqual(result['status'],'target_green_completed')
         self.assertEqual(result['theory_status'],'generating')
-        self.assertEqual(result['continuation_turns'],5)
         self.assertEqual(result['target_authority']['journal_commit_id'],'synthetic-green')
 
-    def test_effective_budget_disables_information_stops_without_changing_transport_timeout(self):
+    def test_global_budget_keeps_local_idle_stop_active_without_transport_changes(self):
         import tempfile
         with tempfile.TemporaryDirectory() as temporary:
             result=self._empty_turn_scenario(temporary,progress_field=True,effective_budget=True)
             policy=json.loads((Path(temporary)/'session'/'policy.json').read_text())
-        self.assertEqual(result['status'],'sealed')
+        self.assertEqual(result['status'],'unknown')
+        self.assertEqual(self.empty_session.turns,3)
         self.assertEqual(self.empty_session.options['progress_timeout'],0)
-        self.assertIsNone(policy['progress_policy']['repeated_result_limit'])
-        self.assertIsNone(policy['progress_policy']['no_information_timeout_seconds'])
-        self.assertEqual(policy['progress_policy']['policy'],'disabled-global-time-budget-v1')
+        self.assertEqual(policy['progress_policy']['no_progress_turn_limit'],3)
+        self.assertTrue(policy['progress_policy']['local_stop_preserves_global_budget'])
+
+    def test_explicit_refuted_outcome_stops_session_without_sealing(self):
+        import tempfile
+        def refute(turn):
+            self.empty_controller.theory_outcome={'status':'refuted',
+                'reason':'checked negation','receipt':'synthetic-negative-certificate'}
+        with tempfile.TemporaryDirectory() as temporary:
+            result=self._empty_turn_scenario(temporary,on_turn=refute,effective_budget=True)
+        self.assertEqual(result['status'],'refuted')
+        self.assertEqual(result['theory_status'],'generating')
+        self.assertEqual(self.empty_session.turns,1)
+        self.assertEqual(result['theory_outcome']['receipt'],'synthetic-negative-certificate')
 
     def test_budgeted_coordinator_always_uses_global_budget_session_policy(self):
         from contextlib import nullcontext
@@ -427,7 +512,7 @@ class SchedulerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             with self.assertRaises(SessionCancelled):
                 self._empty_turn_scenario(temporary,progress_field=True,
-                    cancel_event=cancel,on_turn=cancel_after_six)
+                    cancel_event=cancel,on_turn=cancel_after_six,no_progress_turn_limit=8)
             self.assertFalse((Path(temporary)/'session'/'result.json').exists())
         self.assertEqual(self.empty_session.turns,7)
         self.assertTrue(self.empty_session.closed)
@@ -445,7 +530,7 @@ class SchedulerTests(unittest.TestCase):
                 if turn==6:raise error
             with self.subTest(error=type(error).__name__),tempfile.TemporaryDirectory() as temporary:
                 with self.assertRaises(type(error)) as caught:
-                    self._empty_turn_scenario(temporary,progress_field=True,on_turn=fail_after_six)
+                    self._empty_turn_scenario(temporary,progress_field=True,on_turn=fail_after_six,no_progress_turn_limit=8)
                 self.assertIs(caught.exception,error)
                 self.assertEqual(self.empty_session.turns,6)
                 self.assertTrue(self.empty_session.closed)
@@ -467,7 +552,7 @@ class SchedulerTests(unittest.TestCase):
             try:
                 with self.assertRaises(CheckCancelled):
                     self._empty_turn_scenario(temporary,progress_field=True,
-                        cancel_event=budget.event,on_turn=charge_turn)
+                        cancel_event=budget.event,on_turn=charge_turn,no_progress_turn_limit=8)
                 self.assertEqual(self.empty_session.turns,6)
                 self.assertTrue(self.empty_session.closed)
                 self.assertTrue(self.empty_controller.closed)
@@ -490,7 +575,7 @@ class SchedulerTests(unittest.TestCase):
                 selected=['A','B','C'];run={'run_id':'test','execution_input_kind':'refine-dataset',
                     'checker_context_root':str(root),'checker_context_id':'fixture'}
                 options={'model':'test','call_timeout':10,'check_timeout':10,'candidate_timeout':10}
-                def __init__(self,*args,**kwargs):pass
+                def __init__(self,*args,**kwargs):self.root=root
                 def list_workspace(self):
                     with mutex:
                         return {'theories':[{'theory':name,'status':state,'selected':True,'contracts':[name],
@@ -512,3 +597,98 @@ class SchedulerTests(unittest.TestCase):
             self.assertEqual(result['status'],'selected_theories_sealed')
             self.assertFalse(result['repository_verified'])
             token=acquire_run_mutation_lock(root,operation='after-test');release_run_mutation_lock(token)
+
+class TheoryOutcomeSchedulingTests(unittest.TestCase):
+    def _schedule(self, *, retained_status=None, retry_unresolved=False):
+        import tempfile
+        import hashlib
+        from regen.planning.parallel_file_planner import run_parallel_workspace
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);binary=root/'codex';binary.write_text('fixture')
+            states={name:'pending' for name in ('A','B','C','D')}
+            dependencies={'A':[], 'B':[], 'C':['B'], 'D':['A']}
+            started=[]
+            class Overview:
+                selected=list(states)
+                run={'run_id':'test','execution_input_kind':'refine-dataset',
+                     'checker_context_root':str(root),'checker_context_id':'fixture'}
+                options={'model':'test','call_timeout':10,'check_timeout':10,'candidate_timeout':10}
+                def __init__(self,*args,**kwargs):self.root=root
+                def list_workspace(self):
+                    return {'theories':[{'theory':name,'status':state,'selected':True,
+                        'contracts':[name], 'required_imports':dependencies[name],
+                        'unsealed_providers':[p for p in dependencies[name] if states[p]!='sealed'],
+                        'ready_for_proof_action':state=='pending' and all(states[p]=='sealed' for p in dependencies[name])}
+                        for name,state in states.items()]}
+            def session(root,theory,**kwargs):
+                started.append(theory)
+                if theory=='A':
+                    return {'theory':theory,'status':'unknown','theory_outcome':{
+                        'status':'unknown','reason':'proof search exhausted','receipt':'synthetic'}}
+                states[theory]='sealed'
+                return {'theory':theory,'status':'sealed'}
+            settings={'codex_bin':str(binary),'codex_runtime_root':str(root/'codex-runtime'),
+                      'codex_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
+            with patch('regen.planning.parallel_file_planner.WorkspaceController',Overview),patch(
+                    'regen.planning.parallel_file_planner.run_theory_session',side_effect=session),patch(
+                    'regen.infrastructure.audited_llm.model_settings',return_value=settings),patch(
+                    'regen.preparation.checker_context.load_context',return_value={'checker_context_id':'fixture'}),patch(
+                    'regen.planning.theory_outcomes.current_outcome',side_effect=lambda controller,theory:
+                        {'status':retained_status,'receipt':'prior-authority'} if theory=='A' and retained_status else None):
+                result=run_parallel_workspace(root,allow_external_call=True,integrate=False,max_parallel_theories=1,
+                    execution_policy={'retry_unresolved':retry_unresolved})
+            return started,states,result
+
+    def test_stopped_root_releases_serial_slot_to_ready_deeper_theory(self):
+        started,states,result=self._schedule()
+        self.assertEqual(started,['A','B','C'])
+        self.assertEqual(result['failures']['A']['reason'],'theory_unknown')
+        self.assertEqual(result['blocked']['D']['unsealed_providers'],['A'])
+        self.assertEqual(result['status'],'partial')
+        self.assertFalse(result['repository_verified'])
+        self.assertEqual(states['A'],'pending')
+
+    def test_recovered_outcome_is_not_automatically_retried_or_treated_as_sealed(self):
+        for status in ['unknown','refuted']:
+            with self.subTest(status=status):
+                started,states,result=self._schedule(retained_status=status)
+                self.assertEqual(started,['B','C'])
+                self.assertTrue(result['failures']['A']['retained_from_prior_invocation'])
+                self.assertEqual(result['failures']['A']['status'],status)
+                self.assertEqual(result['blocked']['D']['unsealed_providers'],['A'])
+                self.assertFalse(result['repository_verified'])
+
+    def test_explicit_retry_policy_only_revisits_unknown_outcomes(self):
+        started,_,result=self._schedule(retained_status='unknown',retry_unresolved=True)
+        self.assertEqual(started,['A','B','C'])
+        started,_,result=self._schedule(retained_status='refuted',retry_unresolved=True)
+        self.assertEqual(started,['B','C'])
+        self.assertEqual(result['failures']['A']['status'],'refuted')
+
+    def test_only_new_native_candidate_receipts_count_as_proof_work(self):
+        from types import SimpleNamespace
+        controller=TheoryController.__new__(TheoryController)
+        controller._proof_work_seen=set();controller._proof_work_version=0
+        full={'result':{'check':{'verdict':'red'}},'binding':{'state_sha256':'fixed'}}
+        controller.executor=SimpleNamespace(get=lambda key:full)
+        row={'status':'completed','task_id':'one'}
+        arguments={'kind':'proof_batch','proposal':{'action':'check_theory','source_sha256':'first'}}
+        controller._record_proof_work(row,arguments)
+        self.assertEqual(controller._proof_work_version,1)
+        controller._record_proof_work(row,{**arguments,'proposal':{**arguments['proposal'],'reason':'new explanation'}})
+        self.assertEqual(controller._proof_work_version,1)
+        controller._record_proof_work(row,{'kind':'observe','proposal':{'action':'read_proof_state'}})
+        self.assertEqual(controller._proof_work_version,1)
+        controller._record_proof_work(row,{**arguments,'proposal':{**arguments['proposal'],'source_sha256':'second'}})
+        self.assertEqual(controller._proof_work_version,2)
+        full['result']={'feedback':{'status':'rejected_request'}}
+        controller._record_proof_work(row,{**arguments,'proposal':{**arguments['proposal'],'source_sha256':'third'}})
+        self.assertEqual(controller._proof_work_version,2)
+
+    def test_execution_policy_binds_finite_idle_limit(self):
+        from regen.planning.parallel_file_planner import _execution_policy
+        self.assertEqual(_execution_policy(None,['A'])['no_progress_turn_limit'],3)
+        self.assertEqual(_execution_policy({'no_progress_turn_limit':7},['A'])['no_progress_turn_limit'],7)
+        for invalid in [0,True,None,101,1.5]:
+            with self.subTest(invalid=invalid),self.assertRaises(ValueError):
+                _execution_policy({'no_progress_turn_limit':invalid},['A'])

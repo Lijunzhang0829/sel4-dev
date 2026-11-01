@@ -86,6 +86,8 @@
     "Node.from_intervals/from_sorted_intervals bulk construction is not translated. Tests start from empty_state and use actual incremental insertion paths.",
     "Python exceptions, allocation failure, arbitrary endpoint classes, user-defined hashing/equality, mutable payloads, object aliasing and runtime resource costs are outside this model.",
     "SortedDict behavior is modeled by boundary counters and sorted keys, not verified down to its concrete implementation.",
-    "No checked Python-to-Isabelle refinement theorem is provided; differential examples supply validation evidence only."
-  ]
+    "No checked Python-to-Isabelle refinement theorem is provided; differential examples supply validation evidence only.",
+    "tree_wf describes internal representation validity, not reachability from the public API. A valid 12-node source/model state refutes tree_remove_preserves_wf; the same pinned Python Node execution reproduces the unbalanced result."
+  ],
+  "semantic_feedback": "model-feedback.json"
 }

@@ -1,10 +1,19 @@
 {
   "stage": "preparation",
   "formal_evaluation_started": false,
+  "input_revision": "expanded-specs-v2",
+  "semantic_feedback_file": "model-feedback.json",
+  "spec_expansion_audit": {
+    "status": "passed",
+    "checked_targets": 91,
+    "method": "native definitional conversion; no target theorem proved",
+    "goals_sha256": "0526eab78fb9f0983d2499ae7e20e39e4915e3505fda8fc4c963bc6758fe100f",
+    "contracts_sha256": "b00e661ebc9790ba8253935da3fb438af94bb164ab9cde63c894342ef476348c"
+  },
   "full_build": {
     "status": "passed",
-    "finished_utc": "2026-10-27T11:32:06.229052+00:00",
-    "elapsed_seconds": 24.824341514999105,
+    "finished_utc": "2026-11-01T07:59:04.741245+00:00",
+    "elapsed_seconds": 30.729789139993954,
     "image": "sel4-public:tuned",
     "source_hashes": {
       "ROOT": "4cb338d80d1d6a0e0e397b0606ece835e277579e6816f3456fe93d154c7f1646",
@@ -19,11 +28,11 @@
   },
   "sanitized_build": {
     "status": "passed",
-    "finished_utc": "2026-10-27T11:32:17.198888+00:00",
-    "elapsed_seconds": 33.3898004319999,
+    "finished_utc": "2026-11-01T08:00:56.028273+00:00",
+    "elapsed_seconds": 38.225299575016834,
     "source_hashes": {
       "sanitized/ROOT": "ac8df8ed6959b314137e244747db7467dc8887af396fb4647381ed7193471a28",
-      "sanitized/goals/Interval_Goals.thy": "90e4f673567d90ddca3c5b1aebb9348b033a8d244817814f7ee241b7b17a4bb5",
+      "sanitized/goals/Interval_Goals.thy": "0526eab78fb9f0983d2499ae7e20e39e4915e3505fda8fc4c963bc6758fe100f",
       "sanitized/theories/Interval_Baseline.thy": "76129343f56ac89cbd5d98e3f80dcd9e1e16c34fd703cb8c85af6f084c8a9f5d",
       "sanitized/theories/Interval_Extensions.thy": "b3a5ecddf106c4d6f7ef6477904783a2742505702670c6cafd93f1f8b434e3a8",
       "sanitized/theories/Interval_Input.thy": "636dfc9833e84b356faf365b5dce787a76c2897fdcae57f0ec6b334a2ab4e8ca",
@@ -54,11 +63,12 @@
       "pending": 6
     }
   },
-  "targets_sha256": "ebc688884823afd1a386f4826aee9275c7355f22b4fb274c8d524ff607a621bd",
-  "input_manifest_sha256": "41abf98ac05e73bb355c865f6184ec2fc8d13482600714c8203fa762ef1dc02a",
+  "targets_sha256": "f429673a6c1c866d764ac37113e34e2f7ef53e4f5c09ed1c93afa8b59cb6533f",
+  "input_manifest_sha256": "67cd21cffddc14c897ec614cd8633fe72a2c78a3a5d0de12a14f4ac40c048340",
   "limitations": [
     "Pending contracts are not assumed or proved.",
     "No checked equivalence to Python source semantics.",
-    "No formal proof-generation experiment has been run."
+    "No proof-generation experiment has been run on this input revision.",
+    "A known refutation is retained; this is not a guaranteed all-true spec set."
   ]
 }

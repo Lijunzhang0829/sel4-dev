@@ -28,7 +28,8 @@ from regen.planning.proof_workspace_agent import WorkspaceController, workspace_
 INSTRUCTIONS = '''You are the continuing File Planner for the ONE assigned theory.
 Own its proof graph and work normally until a verified finish/seal. Freely explore
 contracts, helpers and coherent proof batches inside this theory. Ordinary proof
-failure is feedback, not a reason to migrate to another theory or stop exploring.
+failure is feedback. Fixed contracts are not assumed true or provable: preserve them
+and report unresolved work or submit a checked refutation when appropriate.
 Other theories have separate agents. Their work is readable as reference only.
 No arbitrary shell/files/ML or removed human proofs are available. Preserve fixed
 contracts and accepted proofs. Copied helpers require normal target checking.
@@ -49,8 +50,9 @@ completed results do not require another wait. cancel_check remains a compatibil
 control; normal actions finish before the next tool call. Accepted commits are
 never rolled back. proof_action uses the same serial execution path.
 Read failures and continue revising; do not assume unchanged failed candidates work.
-Before ending, successfully seal the theory; a final message alone does not seal it.
-If genuinely unable to finish, report the exact unresolved issue, never claim success.
+Before ending, seal the theory or use proof_action report_unresolved/check_refutation.
+A final message alone is neither a seal nor a checked refutation. An unresolved outcome
+preserves the accepted prefix and releases this worker for other dependency-ready theories.
 '''
 
 
@@ -129,7 +131,10 @@ facts are references only; copy helpers into this draft and validate in the targ
 Retain legal premise search, symbol resolution, diagnostic/attempt reads through proof_action
 using the observation formats below. context_entry_id is the stable entry ID of an accepted
 or original contract declaration; new unsaved/unaccepted helpers have no accepted retrieval context.
-Ordinary proof failure should lead to editing or retrieval, not abandoning the theory.
+Ordinary proof failure should lead to editing or retrieval. A fixed spec may also be false
+or unresolved under the current search. Use report_unresolved for a precise unresolved
+issue, or check_refutation for an independently checked negative result. Neither seals
+the theory or makes its unfinished contracts available as premises.
 '''
 
 
@@ -307,7 +312,8 @@ def _continuation_prompt(theory, state):
             f'but checker authority still reports status={state["status"]!r} with '
             f'{open_count} open declarations. A final message is not completion. '
             'Use the current draft and latest feedback to keep editing and '
-            'checking until proof_action finish seals the theory. '
+            'checking, or use proof_action report_unresolved/check_refutation when the fixed '
+            'goals cannot presently be completed. A model claim alone does not establish falsity. '
             'Do not repeatedly reread unchanged state or wait for another agent to edit this theory; '
             'you own its generation. Repeated reads and sleep are not progress.')
 
@@ -362,6 +368,9 @@ class TheoryController(WorkspaceController):
         self._abort_requested = threading.Event()
         self._provider_preparation_error = None
         self.framework_blocked = False
+        self.theory_outcome = None
+        self._proof_work_version = 0
+        self._proof_work_seen = set()
         self.focus_contract_id = focus_contract_id
         self.stop_at_focus_contract = stop_at_focus_contract
         if focus_contract_id is not None:
@@ -463,6 +472,9 @@ class TheoryController(WorkspaceController):
         # Receipt inspection/cancellation may be used by an external supervisor.
         # All mathematical/read tools share one theory-local serial boundary.
         mathematical = name in {'proof_action', 'submit_check'}
+        if mathematical and getattr(self, 'theory_outcome', None):
+            return {'theory_stop':True, 'theory_outcome':self.theory_outcome,
+                    'notice':'This theory session has stopped; accepted proofs remain unchanged.'}
         if mathematical and getattr(self, 'framework_blocked', False):
             return {'framework_blocked':True, 'failure_scope':'trusted_audit_target',
                     'notice':'Preserve accepted proofs; this worker requires trusted audit repair.'}
@@ -487,6 +499,8 @@ class TheoryController(WorkspaceController):
                 result = public_view(result)
             if getattr(self, 'framework_blocked', False):
                 result = {**result, 'framework_blocked':True, 'failure_scope':'trusted_audit_target'}
+            if getattr(self, 'theory_outcome', None):
+                result = {**result, 'theory_stop':True, 'theory_outcome':self.theory_outcome}
             if self.target_contract_green():
                 if not isinstance(result, dict):
                     result = {'result': result}
@@ -507,6 +521,12 @@ class TheoryController(WorkspaceController):
             **strategy_options(self.generation_strategy['name'])),state
 
     def _handle(self, name, arguments, metadata):
+        if (name == 'proof_action' and isinstance(arguments.get('proposal'), dict)
+                and arguments['proposal'].get('action') in {'report_unresolved','check_refutation'}):
+            if arguments.get('theory') != self.theory:
+                raise ValueError('only the assigned theory may report an outcome')
+            from regen.planning.theory_outcomes import handle_outcome
+            return handle_outcome(self, arguments['proposal'], metadata)
         if self.document_mode and name=='proof_tool_help':
             from regen.planning.document_interface import tool_contracts
             return tool_contracts(**arguments)
@@ -698,7 +718,27 @@ class TheoryController(WorkspaceController):
                 # Restore the infrastructure type before the session boundary:
                 # an unavailable/untrusted runtime is not candidate feedback.
                 raise CodexRuntimeError(row.get('diagnostic', 'trusted Codex runtime unavailable'))
+            self._record_proof_work(row, arguments)
             return self._public(row)
+
+    def _record_proof_work(self, row, arguments):
+        # Only trusted checker output for a new candidate counts. Reads, edits,
+        # invalid requests and identical retries do not keep a theory slot alive.
+        if row.get('status') != 'completed' or arguments.get('kind') not in {'proof_batch','sketch','statement','refutation'}:
+            return
+        def checked(value):
+            if isinstance(value, dict):
+                return (value.get('verdict') in {'green','red','timeout'}
+                        or any(checked(item) for item in value.values()))
+            return isinstance(value, list) and any(checked(item) for item in value)
+        full = self.executor.get(row['task_id'])
+        if not checked(full.get('result')):
+            return
+        proposal = {k:v for k,v in arguments['proposal'].items() if k not in {'reason','notes'}}
+        fingerprint = digest({'proposal':proposal, 'binding':full.get('binding')})
+        if fingerprint not in self._proof_work_seen:
+            self._proof_work_seen.add(fingerprint)
+            self._proof_work_version += 1
 
     def _submit_task(self, arguments, metadata):
         self._check_session_active()
@@ -867,10 +907,15 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                        generation_strategy_name='baseline', focus_contract_id=None,
                        stop_at_focus_contract=False, and_or_control=None, retry_context=None,
                        http_retry_mode=False, effective_budget=False,
-                       feedback_retry_mode=True, retry_failed_request_id=None):
+                       feedback_retry_mode=True, retry_failed_request_id=None,
+                       no_progress_turn_limit=3, retry_unresolved=False):
     from regen.infrastructure.codex_workspace_session import CodexWorkspaceSession
     from regen.infrastructure.workspace_transcript import audit_workspace_session
     from regen.planning.batch_file_planner import INSTRUCTIONS as FORMATS
+    if type(no_progress_turn_limit) is not int or not 1 <= no_progress_turn_limit <= 100:
+        raise ValueError('no_progress_turn_limit must be an integer from 1 to 100')
+    if type(retry_unresolved) is not bool:
+        raise ValueError('retry_unresolved must be boolean')
     strategy = generation_strategy(generation_strategy_name)
     controller_class = TheoryController
     controller_options = {}
@@ -901,16 +946,39 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                     'http_retry_mode':http_retry_mode,
                     'feedback_retry_mode':feedback_retry_mode,
                     'retry_failed_request_id':retry_failed_request_id,
+                    'retry_unresolved':retry_unresolved,
                     **resources.policy,'mode':'parallel-file-planner-v1','theory_tool_execution':'serial',
-                    'progress_policy':{'repeated_result_limit':None if effective_budget else 8,
+                    'progress_policy':{'no_progress_turn_limit':no_progress_turn_limit,
+                        'no_progress_authority':'accepted-proof-or-new-native-candidate-v1',
+                        'local_stop_preserves_global_budget':True,
+                        'repeated_result_limit':None if effective_budget else 8,
                         'no_information_timeout_seconds':None if effective_budget else call_timeout,
-                        'policy':'disabled-global-time-budget-v1' if effective_budget else 'information-progress-v1',
+                        'policy':'bounded-final-turns-v1',
+                        'information_guard_policy':'disabled-global-time-budget-v1' if effective_budget else 'information-progress-v1',
                         'callback_time_excluded':True,
                         'sleep_policy_version':2,'sleep_item_max_ms':60000,
                         'sleep_semantics':'protocol-display-only; not proof progress',
                         'deadline_authority':('global effective budget; native/action and transport deadlines remain active'
                             if effective_budget else 'no-information deadline and repeated-result limit; native/action deadlines govern callbacks')},
                     'file_planner_interface':'document' if document_mode else 'graph'},immutable=True)
+            # Direct session callers obey the same durable stop authority as the
+            # repository coordinator. A refutation cannot be retried as a positive
+            # goal; an UNKNOWN retry must be explicitly selected and recorded.
+            from regen.planning.theory_outcomes import current_outcome
+            retained = current_outcome(controller, theory)
+            if retained and (retained['status'] == 'refuted' or not retry_unresolved):
+                _, state = controller._state(theory)
+                result = {'theory':theory, 'status':retained['status'],
+                          'theory_status':state['status'], 'theory_outcome':retained,
+                          'retained_from_prior_invocation':True,
+                          'provider':{'status':'not_started_retained_theory_outcome'},
+                          'provider_turns':[], 'continuation_turns':0,
+                          'audit':{'terminal':False, 'provider_not_started':'retained_theory_outcome'},
+                          'task_ids':sorted(controller.task_ids), 'artifact_dir':str(directory)}
+                durable(directory/'result.json', result, immutable=True)
+                return result
+            # Do not install a retained UNKNOWN into the fresh controller on an
+            # authorized retry: doing so would latch its mathematical tool gate.
             with tempfile.TemporaryDirectory(prefix='regen-theory-auth-') as temp:
                 home = Path(temp)
                 auth = Path(codex_home or os.environ.get('CODEX_HOME',Path.home()/'.codex'))/'auth.json'
@@ -940,6 +1008,10 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                                feedback_retry_mode=feedback_retry_mode,
                                                retry_failed_request_id=retry_failed_request_id) as session:
                         next_prompt = prompt
+                        no_progress_turns = 0
+                        _, progress_state = controller._state(theory)
+                        progress_marker = (digest(progress_state.get('proofs', {})),
+                                           getattr(controller, '_proof_work_version', 0))
                         while True:
                             try:
                                 provider = session.run(next_prompt,controller.handle,artifact_dir=directory,model=controller.model,
@@ -948,6 +1020,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                                        on_abort=getattr(controller,'abort_pending',None),
                                                        stop_when=lambda value: (
                                                            'framework_blocked' if isinstance(value,dict) and value.get('framework_blocked')
+                                                           else 'theory_outcome' if isinstance(value,dict) and value.get('theory_stop')
                                                            else 'target_contract_green' if stop_at_focus_contract and isinstance(value,dict)
                                                            and value.get('target_contract_green') else None))
                             except BaseException as error:
@@ -966,22 +1039,36 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                             providers.append(provider)
                             _, state = controller._state(theory)
                             target_completed = controller.target_contract_green()
-                            if target_completed or state['status'] in {'sealed','retired'}:
+                            if (target_completed or state['status'] in {'sealed','retired'}
+                                    or getattr(controller, 'theory_outcome', None)):
                                 break
                             if (getattr(controller,'framework_blocked',False)
                                     or state.get('batch_feedback', {}).get('framework_blocked')):
                                 emit_event('generation_framework_blocked', theory=theory,
                                            failure_scope='trusted_audit_target')
                                 break
-                            # A model turn is not a proof or budget boundary.
-                            # The persistent session keeps its independent
-                            # inactivity/duplicate-result guards; the coordinator
-                            # owns cancellation and effective-generation limits.
+                            # Model prose is not progress. A bounded series of final
+                            # replies without new checker work yields an UNKNOWN
+                            # local outcome, never success or a global budget reset.
+                            marker = (digest(state.get('proofs', {})),
+                                      getattr(controller, '_proof_work_version', 0))
+                            no_progress_turns = no_progress_turns + 1 if marker == progress_marker else 0
+                            progress_marker = marker
+                            if no_progress_turns >= no_progress_turn_limit:
+                                from regen.planning.theory_outcomes import record_unresolved
+                                record_unresolved(controller, reason='no_progress', origin='controller',
+                                    classification='no_progress',
+                                    details={'completed_turns_without_proof_work':no_progress_turns,
+                                             'limit':no_progress_turn_limit})
+                                emit_event('theory_unresolved', theory=theory, reason='no_progress',
+                                           completed_turns=no_progress_turns)
+                                break
                             next_prompt = _continuation_prompt(theory,state)
                     if transport_anomaly is None:
                         audit = audit_workspace_session(
                             directory/'session-transcript.jsonl',
                             require_terminal=not target_completed and not getattr(controller,'framework_blocked',False)
+                                and not getattr(controller, 'theory_outcome', None)
                                 and not state.get('batch_feedback', {}).get('framework_blocked'),
                             require_real=True)
                     else:
@@ -995,8 +1082,9 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
             # A model ending a turn never upgrades pending work to success.
             _, state = controller._state(theory)
             target_completed = controller.target_contract_green()
+            outcome = getattr(controller, 'theory_outcome', None)
             status = ('target_green_completed'
-                      if target_completed else 'framework_blocked'
+                      if target_completed else outcome['status'] if outcome else 'framework_blocked'
                       if getattr(controller,'framework_blocked',False)
                          or state.get('batch_feedback', {}).get('framework_blocked') else state['status'])
             provider = (providers[-1] if providers else
@@ -1005,6 +1093,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                       'theory_status':state['status'],'provider':provider,
                       'provider_turns':providers,'continuation_turns':len(providers)-1,'audit':audit,
                       'task_ids':sorted(controller.task_ids),'artifact_dir':str(directory)}
+            if outcome:
+                result['theory_outcome'] = outcome
             if target_completed:
                 snapshot = controller._runtime()[3].replay_snapshot()
                 result['target_authority'] = {
@@ -1038,7 +1128,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
 def _execution_policy(value, selected):
     value = {} if value is None else deepcopy(value)
     if not isinstance(value, dict) or set(value) - {
-            'stages', 'session_stall_retries', 'provider_http_retries', 'provider_feedback_retries'}:
+            'stages', 'session_stall_retries', 'provider_http_retries', 'provider_feedback_retries',
+            'no_progress_turn_limit', 'retry_unresolved'}:
         raise ValueError('invalid execution policy keys')
     stages = value.get('stages', [])
     retries = value.get('session_stall_retries', 0)
@@ -1057,8 +1148,15 @@ def _execution_policy(value, selected):
     feedback_retries = value.get('provider_feedback_retries', 1)
     if type(feedback_retries) is not int or feedback_retries not in (0, 1):
         raise ValueError('provider_feedback_retries must be 0 or 1')
+    no_progress = value.get('no_progress_turn_limit', 3)
+    if type(no_progress) is not int or not 1 <= no_progress <= 100:
+        raise ValueError('no_progress_turn_limit must be an integer from 1 to 100')
+    retry_unresolved = value.get('retry_unresolved', False)
+    if type(retry_unresolved) is not bool:
+        raise ValueError('retry_unresolved must be boolean')
     out = {'stages':stages, 'session_stall_retries':retries,
-           'provider_feedback_retries':feedback_retries}
+           'provider_feedback_retries':feedback_retries, 'no_progress_turn_limit':no_progress,
+           'retry_unresolved':retry_unresolved}
     if 'provider_http_retries' in value:
         http_retries = value['provider_http_retries']
         if type(http_retries) is not int or http_retries not in (0, 1):
@@ -1229,6 +1327,14 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
         durable(root/'parallel-workspace-policy.json', workspace_policy, immutable=True)
         executor = CheckExecutor(root/'check-tasks',workers=max_parallel_theories)
         results, active, failures = [], {}, {}
+        from regen.planning.theory_outcomes import current_outcome
+        for row in rows:
+            if not row['selected'] or row['status'] in {'sealed','retired'}:
+                continue
+            outcome = current_outcome(overview, row['theory'])
+            if outcome and (outcome['status'] == 'refuted' or not policy['retry_unresolved']):
+                failures[row['theory']] = {'reason':'theory_'+outcome['status'],
+                    'status':outcome['status'], 'outcome':outcome, 'retained_from_prior_invocation':True}
         attempts, directories = {}, {}
         stall_attempts = {}
         from regen.infrastructure.provider_http_failure import recovery_streak, recovery_decision
@@ -1283,6 +1389,8 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                 retry_context=retry_summary(results,theory),
                                 http_retry_mode=bool(policy.get('provider_http_retries', 0)),
                                 feedback_retry_mode=bool(policy['provider_feedback_retries']),
+                                no_progress_turn_limit=policy['no_progress_turn_limit'],
+                                retry_unresolved=policy['retry_unresolved'],
                                 retry_failed_request_id=feedback_state['failed_request_id'],
                                 codex_home=codex_home,cancel_event=cancel_event,document_mode=file_planner_interface=='document',**overview.options)
                             active[future] = theory
@@ -1319,8 +1427,11 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                 results.append(completed)
                                 if completed.get('status') not in {'sealed','retired'}:
                                     failures[theory] = {'reason':('framework_blocked' if completed.get('status') == 'framework_blocked'
+                                                                  else 'theory_'+completed['status'] if completed.get('status') in {'unknown','refuted'}
                                                                   else 'session_returned_unsealed'),
                                                         'status':completed.get('status')}
+                                    if completed.get('theory_outcome'):
+                                        failures[theory]['outcome'] = completed['theory_outcome']
                             except Exception as error:
                                 from regen.infrastructure.codex_workspace_session import ProviderHTTPError, ProviderFeedbackError
                                 result = {'theory':theory,'status':'infrastructure_error',

@@ -1,0 +1,88 @@
+{
+  "observed_unix": 1793275713.2025533,
+  "remote_root": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261029-001",
+  "planning": {
+    "state": "complete",
+    "stage": "frozen"
+  },
+  "planning_timing": {
+    "started_unix": 1793251024.878194,
+    "ended_unix": 1793251648.7138562,
+    "elapsed_seconds": 623.8356626033783,
+    "returncode": 0
+  },
+  "planning_summary": {
+    "theories": 12,
+    "contracts": 91,
+    "plan_sha256": "ff19fde9589ebc5ad1a74cbf4c7fd7e1c47bcdaaf9be07a75ffef31f62399533",
+    "remaining_issues": [
+      {
+        "id": "measure_seal_scope",
+        "kind": "seal_barrier",
+        "theories": [
+          "Interval_Normalization",
+          "Interval_Measure",
+          "Repeated_Cutting"
+        ],
+        "contract_ids": [
+          "goal:8e6f72b4719e479f43b4f937",
+          "goal:f65a4b918c01c945264adb58",
+          "goal:c0d23c94396df9a90ba93e12"
+        ],
+        "evidence": "The plan explicitly makes Repeated_Cutting consume ext_canonical_exact_measure, whose described assumption is canonical input. That contract shares Interval_Measure with ext_merge_exact_measure, and the whole provider imports Interval_Normalization. Consequently, the canonical-measure interface waits for normalization even though the stated repeated-cut composition uses preserved canonical output rather than normalized output.",
+        "scenario": "If normalization or normalized-measure obligations remain unresolved, repeated-cut exact measure cannot legally consume a completed canonical-measure result until the entire provider seals.",
+        "suggested_change": "Retain this as an explicit accepted barrier, or consider placing canonical exact measure in a smaller provider if generation demonstrates material blocking. Preserve every fixed statement and revise imports explicitly if splitting.",
+        "tradeoff": "A smaller provider could release the restricted quantitative interface earlier, but adds a theory boundary and may separate useful shared cardinality helpers. The current grouping may remain preferable.",
+        "uncertainty": "This is a scheduling-risk hypothesis, not a demonstrated proof defect. The plan deliberately accepts the prerequisite, no proof latency is available, and the supplied exact statements do not expand the referenced predicates."
+      }
+    ]
+  },
+  "generation": {
+    "fixed_green": 26,
+    "sealed_theories": 1,
+    "wall_registrations": 1,
+    "wall_limit": {
+      "deadline_unix": 1793270485.941761,
+      "includes_downtime": true,
+      "refunds": false,
+      "seconds": 18834.0,
+      "started_unix": 1793251651.941761
+    },
+    "deadline_beijing": "2026-10-29T18:41:25.941761+08:00",
+    "elapsed_seconds": 24065.272889614105,
+    "checkpoint": {
+      "effective_seconds": 18511.850168198347,
+      "worker_seconds": 18511.850168198347,
+      "paused": true,
+      "finished": false,
+      "reason": "generation_wall_time_budget_exhausted",
+      "gate_open": false
+    },
+    "service": {
+      "unit": "regen-proof-1ec5b3a7beab9a3a6a8080a0.service",
+      "MainPID": "0",
+      "ExecMainStatus": "2",
+      "ActiveState": "failed",
+      "SubState": "failed",
+      "InvocationID": "2fa3bfc0ca4f4d479bcb06885c8ee7fe"
+    },
+    "running": false
+  },
+  "diagnosis": {
+    "status": "generation_wall_time_budget_exhausted",
+    "fixed_green": 26,
+    "helper_green": 2,
+    "sealed_theories": 1,
+    "total_theories": 12,
+    "baseline_green": 22,
+    "extension_green": 0,
+    "concrete_green": 4,
+    "unstarted_contracts": 61,
+    "started_unproved_contracts": 4,
+    "provider_429_failures": 5,
+    "provider_retries_succeeded": 5,
+    "repository_verified": false,
+    "seal_adapter_worked": true,
+    "runtime_changed_by_inspection": false
+  }
+}

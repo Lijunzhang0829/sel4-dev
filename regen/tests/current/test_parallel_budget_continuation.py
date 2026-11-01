@@ -18,6 +18,7 @@ class ParallelBudgetContinuationTests(unittest.TestCase):
         self.source=Path(self.tmp.name)/'source';self.target=Path(self.tmp.name)/'target'
         self.run={'run_id':'source'};self.new={'run_id':'target'}
         self.policy={'strategy':'helper-closure','native_slots':2,'candidate_timeout':120,
+                     'max_parallel_theories':3,'resident_limit':3,
                      'generation_strategy':{'name':'helper-closure-v1','instructions':'old frozen policy'}}
         self.theories={'A':['a'],'B':['b']}
         durable(self.source/'run.json',self.run)
@@ -65,6 +66,26 @@ class ParallelBudgetContinuationTests(unittest.TestCase):
         self.assertEqual(Ledger(self.source/'effective-generation-budget','source').rows,self.source_rows)
         with self.assertRaisesRegex(ValueError,'already exists'):self.carry()
 
+    def test_extended_budget_resume_keeps_original_base_argument(self):
+        source=Ledger(self.source/'effective-generation-budget','source')
+        extended=EffectiveTimeBudget(source,seconds=100,resume_authorization='extend',
+                                     extension_seconds=50,monotonic=lambda:100.)
+        extended.cancel('operator_pause');extended.close()
+        review={**self.review,'source_tail_event_id':source.rows[-1]['event_id']}
+        carried=carry_parallel_budget(self.source,self.target,authorization='continue',clock_review=review)
+        self.assertEqual(carried['total_limit_seconds'],150)
+        target=Ledger(self.target/'effective-generation-budget','target')
+        before=list(target.rows)
+        with self.assertRaisesRegex(ValueError,'binding changed'):
+            EffectiveTimeBudget(target,seconds=150,resume_authorization='continue')
+        self.assertEqual(target.rows,before)
+        resumed=EffectiveTimeBudget(target,seconds=100,resume_authorization='continue',
+                                    monotonic=lambda:10000.)
+        self.addCleanup(resumed.close)
+        self.assertEqual(resumed.snapshot()['seconds'],150)
+        self.assertEqual(resumed.snapshot()['effective_seconds'],20)
+        self.assertEqual(resumed.snapshot()['base_seconds'],100)
+
     def test_review_cannot_silently_drop_uncertainty_or_refund_step(self):
         for kw in ({'resolved_event_ids':[]},{'source_tail_event_id':'wrong'},
                    {'disposition':'refund_last_step'}):
@@ -99,6 +120,27 @@ class ParallelBudgetContinuationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'frozen implementation'):
             carry_parallel_budget(self.source,self.target,authorization='user-approved',
                 clock_review=self.review,target_strategy={'name':'baseline'})
+
+    def test_native_slots_migration_preserves_budget_and_binds_only_requested_slots(self):
+        result=carry_parallel_budget(self.source,self.target,authorization='user-approved',
+            clock_review=self.review,target_native_slots=3)
+        rows=Ledger(self.target/'effective-generation-budget','target').rows
+        binding=next(r['data'] for r in rows if r['kind']=='parallel_budget_binding')
+        self.assertEqual(binding['configuration_sha256'],digest({**self.policy,'native_slots':3}))
+        self.assertEqual(result['carried_effective_seconds'],20)
+        self.assertEqual(result['carried_worker_seconds'],40)
+        change=result['native_slots_update']
+        self.assertEqual(change['seconds_unchanged'],100)
+        self.assertEqual(change['refund_seconds'],0)
+        self.assertEqual(change['previous_native_slots'],2)
+        self.assertEqual(Ledger(self.source/'effective-generation-budget','source').rows,self.source_rows)
+
+    def test_native_slots_migration_rejects_invalid_or_unprovisioned_slots(self):
+        for value in [True,0,-1,2,4,3.0,'3']:
+            with self.subTest(value=value),self.assertRaisesRegex(ValueError,'frozen worker'):
+                carry_parallel_budget(self.source,self.target,authorization='user-approved',
+                    clock_review=self.review,target_native_slots=value)
+        self.assertFalse((self.target/'effective-generation-budget').exists())
 
     def test_candidate_timeout_increase_binds_launch_configuration_without_reset(self):
         result=carry_parallel_budget(self.source,self.target,authorization='user-approved',

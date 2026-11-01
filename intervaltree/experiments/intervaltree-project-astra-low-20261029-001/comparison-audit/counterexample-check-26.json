@@ -1,0 +1,301 @@
+{
+  "request": 26,
+  "verdict": "red",
+  "diagnostic": "RED\nFailed to apply initial proof method (line 505 of \"/candidate/Batch_Check_660c97378ac35e74.thy\"):\ngoal (1 subgoal):\n 1. tree_remove_preserves_wf\nAt command \"by\" (line 505 of \"/candidate/Batch_Check_660c97378ac35e74.thy\")",
+  "log": "REGEN_NODE goal:d74e8bede705529bae8a1e94\nval it = (): unit\nREGEN_COMMAND ML 1\nREGEN_COMMAND <ignored> 0\nREGEN_TIMING_START goal:d74e8bede705529bae8a1e94 1793265077.595\nval it = (): unit\nREGEN_COMMAND ML 2\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND lemma 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND proof 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND let 18\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND let 1\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND let 15\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND have 4\nREGEN_COMMAND <ignored> 0\nhave local.wf:\n       tree_wf\n        (Branch 19 [entry.make 13 21 0]\n          (Branch 13 [entry.make 1 15 1]\n            (Branch 5 [entry.make 4 10 2]\n              (Branch 2 [entry.make 0 3 3] Empty Empty 1 0)\n              (Branch 11 [entry.make 7 12 4]\n                (Branch 8 [entry.make 6 9 5] Empty Empty 1 0) Empty 2 (- 1))\n              3 1)\n            (Branch 15 [entry.make 14 17 6] Empty\n              (Branch 16 [entry.make 16 18 7] Empty Empty 1 0) 2 1)\n            4 (- 1))\n          (Branch 24 [entry.make 23 26 8]\n            (Branch 20 [entry.make 20 22 9] Empty Empty 1 0)\n            (Branch 27 [entry.make 25 29 10] Empty\n              (Branch 30 [entry.make 28 31 11] Empty Empty 1 0) 2 1)\n            3 1)\n          5 (- 1))\nREGEN_COMMAND by 337\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND have 5\nREGEN_COMMAND <ignored> 0\nhave member:\n       entry.make 13 21 0\n       \\<in> tree_entries\n              (Branch 19 [entry.make 13 21 0]\n                (Branch 13 [entry.make 1 15 1]\n                  (Branch 5 [entry.make 4 10 2]\n                    (Branch 2 [entry.make 0 3 3] Empty Empty 1 0)\n                    (Branch 11 [entry.make 7 12 4]\n                      (Branch 8 [entry.make 6 9 5] Empty Empty 1 0) Empty 2\n                      (- 1))\n                    3 1)\n                  (Branch 15 [entry.make 14 17 6] Empty\n                    (Branch 16 [entry.make 16 18 7] Empty Empty 1 0) 2 1)\n                  4 (- 1))\n                (Branch 24 [entry.make 23 26 8]\n                  (Branch 20 [entry.make 20 22 9] Empty Empty 1 0)\n                  (Branch 27 [entry.make 25 29 10] Empty\n                    (Branch 30 [entry.make 28 31 11] Empty Empty 1 0) 2 1)\n                  3 1)\n                5 (- 1))\nREGEN_COMMAND by 26\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND have 9\nREGEN_COMMAND <ignored> 0\nhave run: tree_remove 9 (entry.make 13 21 0)\n           (Branch 19 [entry.make 13 21 0]\n             (Branch 13 [entry.make 1 15 1]\n               (Branch 5 [entry.make 4 10 2]\n                 (Branch 2 [entry.make 0 3 3] Empty Empty 1 0)\n                 (Branch 11 [entry.make 7 12 4]\n                   (Branch 8 [entry.make 6 9 5] Empty Empty 1 0) Empty 2\n                   (- 1))\n                 3 1)\n               (Branch 15 [entry.make 14 17 6] Empty\n                 (Branch 16 [entry.make 16 18 7] Empty Empty 1 0) 2 1)\n               4 (- 1))\n             (Branch 24 [entry.make 23 26 8]\n               (Branch 20 [entry.make 20 22 9] Empty Empty 1 0)\n               (Branch 27 [entry.make 25 29 10] Empty\n                 (Branch 30 [entry.make 28 31 11] Empty Empty 1 0) 2 1)\n               3 1)\n             5 (- 1)) =\n          Some\n           (Branch 16 [entry.make 16 18 7, entry.make 14 17 6]\n             (Branch 11 [entry.make 7 12 4, entry.make 1 15 1]\n               (Branch 5 [entry.make 4 10 2]\n                 (Branch 2 [entry.make 0 3 3] Empty Empty 1 0)\n                 (Branch 8 [entry.make 6 9 5] Empty Empty 1 0) 2 0)\n               Empty 3 (- 2))\n             (Branch 24 [entry.make 23 26 8]\n               (Branch 20 [entry.make 20 22 9] Empty Empty 1 0)\n               (Branch 27 [entry.make 25 29 10] Empty\n                 (Branch 30 [entry.make 28 31 11] Empty Empty 1 0) 2 1)\n               3 1)\n             4 0)\nREGEN_COMMAND by 447\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND have 4\nREGEN_COMMAND <ignored> 0\nhave bad: \\<not> balanced_tree\n                  (Branch 16 [entry.make 16 18 7, entry.make 14 17 6]\n                    (Branch 11 [entry.make 7 12 4, entry.make 1 15 1]\n                      (Branch 5 [entry.make 4 10 2]\n                        (Branch 2 [entry.make 0 3 3] Empty Empty 1 0)\n                        (Branch 8 [entry.make 6 9 5] Empty Empty 1 0) 2 0)\n                      Empty 3 (- 2))\n                    (Branch 24 [entry.make 23 26 8]\n                      (Branch 20 [entry.make 20 22 9] Empty Empty 1 0)\n                      (Branch 27 [entry.make 25 29 10] Empty\n                        (Branch 30 [entry.make 28 31 11] Empty Empty 1 0) 2\n                        1)\n                      3 1)\n                    4 0)\nREGEN_COMMAND by 9\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND have 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND proof 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND assume 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND have 4\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND using 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND unfolding 3\nREGEN_COMMAND <ignored> 0\nhave tree_wf\n      (Branch 16 [entry.make 16 18 7, entry.make 14 17 6]\n        (Branch 11 [entry.make 7 12 4, entry.make 1 15 1]\n          (Branch 5 [entry.make 4 10 2]\n            (Branch 2 [entry.make 0 3 3] Empty Empty 1 0)\n            (Branch 8 [entry.make 6 9 5] Empty Empty 1 0) 2 0)\n          Empty 3 (- 2))\n        (Branch 24 [entry.make 23 26 8]\n          (Branch 20 [entry.make 20 22 9] Empty Empty 1 0)\n          (Branch 27 [entry.make 25 29 10] Empty\n            (Branch 30 [entry.make 28 31 11] Empty Empty 1 0) 2 1)\n          3 1)\n        4 0)\nREGEN_COMMAND by 7\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND then 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND show 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND using 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND unfolding 1\nREGEN_COMMAND <ignored> 0\nshow False\nSuccessful attempt to solve goal by exported rule:\n  (tree_remove_preserves_wf) \\<Longrightarrow> False\nREGEN_COMMAND by 1\nREGEN_COMMAND <ignored> 0\nhave counterexample: \\<not> tree_remove_preserves_wf\nREGEN_COMMAND qed 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND show 0\nREGEN_COMMAND <ignored> 0\nREGEN_COMMAND by 0\n\nRED\nFailed to apply initial proof method (line 505 of \"/candidate/Batch_Check_660c97378ac35e74.thy\"):\ngoal (1 subgoal):\n 1. tree_remove_preserves_wf\nAt command \"by\" (line 505 of \"/candidate/Batch_Check_660c97378ac35e74.thy\")",
+  "native_receipt": {
+    "candidate_execution_ms": 998,
+    "check_scope": "committed-prefix-and-incremental-batch",
+    "checker_binding_sha256": "42c2da254455b966ccbc3d43974a141f5d6ff7fefc2ad1635de96eadca8f166a",
+    "delta_sha256": "c49fa2370631b29d68a556549ae5aa5fde2dfd1b6794e874874e80beca5c81e6",
+    "log_sha256": "7473c00a7a61fba9b649efbf6f6abf89595dff3bb53c6a1e5e597df25f34f468",
+    "prefix_prepare_ms": 32591,
+    "prefix_sha256": "e172d839a54b033c7405c0fd67ba63c539eaa4502544b3f6c8c34dc97ff376ff",
+    "request_id": "regen-batch-e63a14d7c859402c:1",
+    "returncode": 1,
+    "schema": "native-check-receipt-v1",
+    "source_files_sha256": null,
+    "source_sha256": "ed5f3aa937d2f8a5b46fac5573ea8beb69544d962eed9783caf2c9bf5d8716e9",
+    "timeout_scope": null,
+    "timeout_seconds": 300,
+    "verdict": "red",
+    "wall_ms": 33589
+  },
+  "native_proof_state": {
+    "command": "by",
+    "executed_commands": [
+      {
+        "line": "482",
+        "name": "ML"
+      },
+      {
+        "line": "482",
+        "name": "<ignored>"
+      },
+      {
+        "line": "483",
+        "name": "ML"
+      },
+      {
+        "line": "483",
+        "name": "<ignored>"
+      },
+      {
+        "line": "484",
+        "name": "lemma"
+      },
+      {
+        "line": "484",
+        "name": "<ignored>"
+      },
+      {
+        "line": "485",
+        "name": "proof"
+      },
+      {
+        "line": "485",
+        "name": "<ignored>"
+      },
+      {
+        "line": "486",
+        "name": "let"
+      },
+      {
+        "line": "486",
+        "name": "<ignored>"
+      },
+      {
+        "line": "487",
+        "name": "let"
+      },
+      {
+        "line": "487",
+        "name": "<ignored>"
+      },
+      {
+        "line": "488",
+        "name": "let"
+      },
+      {
+        "line": "488",
+        "name": "<ignored>"
+      },
+      {
+        "line": "489",
+        "name": "have"
+      },
+      {
+        "line": "489",
+        "name": "<ignored>"
+      },
+      {
+        "line": "490",
+        "name": "by"
+      },
+      {
+        "line": "490",
+        "name": "<ignored>"
+      },
+      {
+        "line": "491",
+        "name": "have"
+      },
+      {
+        "line": "491",
+        "name": "<ignored>"
+      },
+      {
+        "line": "492",
+        "name": "by"
+      },
+      {
+        "line": "492",
+        "name": "<ignored>"
+      },
+      {
+        "line": "493",
+        "name": "have"
+      },
+      {
+        "line": "493",
+        "name": "<ignored>"
+      },
+      {
+        "line": "494",
+        "name": "by"
+      },
+      {
+        "line": "494",
+        "name": "<ignored>"
+      },
+      {
+        "line": "495",
+        "name": "have"
+      },
+      {
+        "line": "495",
+        "name": "<ignored>"
+      },
+      {
+        "line": "496",
+        "name": "by"
+      },
+      {
+        "line": "496",
+        "name": "<ignored>"
+      },
+      {
+        "line": "497",
+        "name": "have"
+      },
+      {
+        "line": "497",
+        "name": "<ignored>"
+      },
+      {
+        "line": "498",
+        "name": "proof"
+      },
+      {
+        "line": "498",
+        "name": "<ignored>"
+      },
+      {
+        "line": "499",
+        "name": "assume"
+      },
+      {
+        "line": "499",
+        "name": "<ignored>"
+      },
+      {
+        "line": "500",
+        "name": "have"
+      },
+      {
+        "line": "500",
+        "name": "<ignored>"
+      },
+      {
+        "line": "501",
+        "name": "using"
+      },
+      {
+        "line": "501",
+        "name": "<ignored>"
+      },
+      {
+        "line": "502",
+        "name": "unfolding"
+      },
+      {
+        "line": "502",
+        "name": "<ignored>"
+      },
+      {
+        "line": "502",
+        "name": "by"
+      },
+      {
+        "line": "502",
+        "name": "<ignored>"
+      },
+      {
+        "line": "503",
+        "name": "then"
+      },
+      {
+        "line": "503",
+        "name": "<ignored>"
+      },
+      {
+        "line": "503",
+        "name": "show"
+      },
+      {
+        "line": "503",
+        "name": "<ignored>"
+      },
+      {
+        "line": "503",
+        "name": "using"
+      },
+      {
+        "line": "503",
+        "name": "<ignored>"
+      },
+      {
+        "line": "503",
+        "name": "unfolding"
+      },
+      {
+        "line": "503",
+        "name": "<ignored>"
+      },
+      {
+        "line": "503",
+        "name": "by"
+      },
+      {
+        "line": "503",
+        "name": "<ignored>"
+      },
+      {
+        "line": "504",
+        "name": "qed"
+      },
+      {
+        "line": "504",
+        "name": "<ignored>"
+      },
+      {
+        "line": "505",
+        "name": "show"
+      },
+      {
+        "line": "505",
+        "name": "<ignored>"
+      }
+    ],
+    "goals": [
+      "tree_remove_preserves_wf"
+    ],
+    "line": "505",
+    "local_assumptions": [],
+    "origin": "before_failed_command"
+  },
+  "timing": {
+    "action": "submit_batch",
+    "action_completed": true,
+    "calls": [
+      {
+        "artifact_prefix": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261029-001/proof/theories/Tree_Execution/batch-requests/000026/call",
+        "audited_tool_call": true,
+        "audited_turn_completed": false,
+        "provider_called": false,
+        "state": "audited"
+      }
+    ],
+    "check_verdict": "red",
+    "dispatch_kind": "dynamic_tool_call",
+    "exception_type": null,
+    "measurement_notice": "Phases are disjoint wall intervals. Native and LLM event durations are subsets; do not add them again. Timing artifact publication is excluded.",
+    "model_attempts": 0,
+    "outcome": "completed",
+    "phase_seconds": {
+      "action": 35.65291826892644,
+      "charge": 0.3509093620814383,
+      "commit": 1.1991357887163758,
+      "input_and_prompt": 0.46405605506151915,
+      "progress": 1.1664797682315111,
+      "tool_source_audit": 1.9170611170120537
+    },
+    "request_number": 26,
+    "schema_version": 1,
+    "scope": "request",
+    "started_at_unix": 1793265040.7708857,
+    "status": "rejected_batch",
+    "theory": "Tree_Execution",
+    "total_wall_seconds": 40.75056036002934
+  }
+}

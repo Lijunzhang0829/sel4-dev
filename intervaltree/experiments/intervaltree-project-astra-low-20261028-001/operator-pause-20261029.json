@@ -1,0 +1,23 @@
+{
+  "status": "paused_by_user",
+  "authorization": "暂停实验，先去修复封存适配",
+  "paused_at_unix": 1793217569.5459876,
+  "paused_at_beijing": "2026-10-29T03:59:29.545988+08:00",
+  "budget_checkpoint_event_id": "6ddbd7a7521b1c91035db23d6a9cf9635d8b4456096a2463691db74407357a6e",
+  "effective_seconds": 6328.108728491701,
+  "wall_elapsed_at_pause": 6470.254950284958,
+  "remaining_wall_seconds_at_pause": 12363.745049715042,
+  "original_wall_limit": {
+    "deadline_unix": 1793229933.2910373,
+    "includes_downtime": true,
+    "refunds": false,
+    "seconds": 18834.0,
+    "started_unix": 1793211099.2910373
+  },
+  "fixed_green": 13,
+  "sealed_theories": 0,
+  "automatic_resume": false,
+  "budget_reset": false,
+  "deadline_changed": false,
+  "repair_directory": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001"
+}

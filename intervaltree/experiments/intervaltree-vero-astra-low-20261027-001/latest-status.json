@@ -1,0 +1,47 @@
+{
+  "run_id": "intervaltree-vero-astra-low-20261027-001",
+  "observed_at_beijing": "2026-10-28T15:31:26+08:00",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "current_stage": "finished",
+  "termination_reason": "retries_exhausted",
+  "agent_stop_reason": "contract_policy_finished",
+  "generation_elapsed_seconds": 18834.104907751083,
+  "counts": {
+    "proved": 80,
+    "exhausted": 11,
+    "pending": 0
+  },
+  "groups": {
+    "baseline": {
+      "proved": 56,
+      "total": 56
+    },
+    "extension": {
+      "proved": 9,
+      "total": 9
+    },
+    "concrete": {
+      "proved": 15,
+      "exhausted": 11,
+      "total": 26
+    }
+  },
+  "native_checks_allocated": 200,
+  "charged_attempts": 186,
+  "theory_seals": {
+    "sealed": 21,
+    "incomplete": 4
+  },
+  "evaluation": {
+    "verification_mode": "incremental",
+    "proved_specs": 80,
+    "disproved_specs": 0,
+    "total_specs": 91,
+    "complete": false,
+    "integration": null,
+    "artifact_sha256": "d75f6190578426514dffbb33e1f08b95aa569426a08d4d6be14f48b443a90539"
+  },
+  "active_check": null,
+  "source": "Read-only machine B controller, agent state and final evaluation report"
+}

@@ -112,6 +112,16 @@ def tool_contracts():
         'required':['helper_id','use_indices','domain_scope','premises','conclusion','generalization','burden','reduction'],
         'additionalProperties':False}
     source_actions={
+        'report_unresolved':{'type':'object',
+            'description':'Stop this theory with an unknown outcome, preserve accepted work and release its worker. Classifications are unverified reports, never proof that the spec is false.',
+            'properties':{'action':{'const':'report_unresolved'},'reason':sha,'entry_ids':ids,
+                'classification':{'enum':['proof_search_exhausted','suspected_counterexample',
+                    'missing_assumptions','unsupported_specification','no_progress']}},
+            'required':['action','reason'],'additionalProperties':False},
+        'check_refutation':{'type':'object',
+            'description':'Independently check a proof of the negation of the frozen fixed contract, including its quantifiers and assumptions. A verified refutation stops the theory but never proves the positive goal or seals its provider. The checker supplies the negative statement; do not submit a replacement spec. Only frozen parent and sealed imports are available, not the local positive prefix.',
+            'properties':{'action':{'const':'check_refutation'},'entry_id':sha,'proof_body':sha},
+            'required':['action','entry_id','proof_body'],'additionalProperties':False},
         'read_entry':{'type':'object',
             'description':'Read the exact draft proof for one stable entry ID, immutable declaration/context, and expected_hash for edit_proof. Read-only; does not submit a candidate proof check.',
             'properties':{'action':{'const':'read_entry'},'entry_id':sha},
@@ -168,7 +178,9 @@ def tool_contracts():
                 'snapshot_sha256':sha},
             'required':['action','index'],'additionalProperties':False},
     }
-    examples=[{'action':'read_entry','entry_id':'fixed entry ID'},
+    examples=[{'action':'report_unresolved','reason':'The fixed goal remains unresolved after the recorded checks','classification':'proof_search_exhausted'},
+        {'action':'check_refutation','entry_id':'fixed entry ID','proof_body':'complete proof of the checker-generated negative goal'},
+        {'action':'read_entry','entry_id':'fixed entry ID'},
         {'action':'edit_proof','entry_id':'fixed entry ID','expected_hash':'expected_hash returned by read_entry',
          'proof_body':'by simp'},
         {'action':'edit_theory','base_sha256':'hash returned by read_theory',
@@ -202,6 +214,7 @@ def tool_contracts():
             'check':'native declaration/proof checking; draft_checked is diagnostic only. Publication requires GREEN and preservation of every accepted entry; only committed evidence establishes accepted GREEN',
             'incremental':'entry_ids selects several draft proofs; every accepted proof is retained, the longest identical prefix is reused, and the affected suffix is checked',
             'finish':'complete checked unchanged theory required; independent audit/build before seal',
+            'outcomes':'unknown is a local scheduling stop, never unprovability; refuted requires an independently checked negation. Both preserve positive proofs and costs, keep the theory unsealed, and leave its hard dependants blocked while other ready theories can run.',
             'read_theory':'Default returns exact full source. Optional if_source_sha256 suppresses source '
                           'only on an exact hash match and marks source_unchanged; feedback remains current. '
                           'Cumulative fact/query indexes are paginated with explicit totals and next_action.',

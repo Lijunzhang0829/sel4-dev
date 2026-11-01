@@ -21,8 +21,8 @@ def body(source):
 
 
 def prefix_startup_budget(command_timeout, certified_facts):
-    """Bound cumulative replay separately; individual commands keep their limit."""
-    return max(command_timeout, min(3600, 60 + 30 * certified_facts))
+    """Certified prefix replay is separately accounted and has no deadline."""
+    return None
 
 
 class BatchWorker(PrefixWorker):
@@ -35,8 +35,8 @@ class BatchWorker(PrefixWorker):
         self.pending = None
         self.imports = list(imports)
         # Replaying many certified declarations is not one candidate action.
-        # Keep a finite overall bound, distinct from the unchanged per-command
-        # and candidate limits. No proof/context text is rewritten for speed.
+        # No startup deadline: cancellation and worker death remain observable.
+        # Candidate limits are unchanged; no proof/context is rewritten.
         self.prefix_timeout = prefix_startup_budget(checker.timeout, len(names))
         self.label = source.splitlines()[0].split()[1]
         self.checkpoints = {}
@@ -81,7 +81,7 @@ class BatchWorker(PrefixWorker):
             if self.process.poll() is not None:
                 raise RuntimeError((self.root/'worker.log').read_text()[-6000:])
             now = time.monotonic()
-            if now-start > limit:
+            if limit is not None and now-start > limit:
                 self.close()
                 error = TimeoutError('incremental batch worker timeout waiting for ' + path.name)
                 error.timeout_seconds = limit

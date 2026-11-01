@@ -1,0 +1,38 @@
+{
+  "schema": "intervaltree-semantic-feedback-v1",
+  "input_revision": "expanded-specs-v2",
+  "generator_input": false,
+  "scope": "Current fixed Isabelle definitions; no change to the pinned upstream algorithm.",
+  "definition_sources_sha256": {
+    "sanitized/theories/Interval_Baseline.thy": "76129343f56ac89cbd5d98e3f80dcd9e1e16c34fd703cb8c85af6f084c8a9f5d",
+    "sanitized/theories/Interval_Extensions.thy": "b3a5ecddf106c4d6f7ef6477904783a2742505702670c6cafd93f1f8b434e3a8",
+    "sanitized/theories/Interval_Input.thy": "636dfc9833e84b356faf365b5dce787a76c2897fdcae57f0ec6b334a2ab4e8ca",
+    "sanitized/theories/Interval_Model.thy": "95c53c926b2bfe9a9168d82d40bbf56aa70708ae272cae81d3660c2fe58b1d3c",
+    "sanitized/theories/Interval_Refinement.thy": "26930fd61318f968d2669d5d4ab1cd1dead2fe64c1d0d1746c05f67d80c5dcec",
+    "sanitized/theories/Interval_Tree.thy": "18a9eea413bf35b6782af2fb889e66e686532c523f9b7e404794f462f8c226dd"
+  },
+  "known_results": [
+    {
+      "contract": "tree_remove_preserves_wf",
+      "outcome": "refuted",
+      "named_statement": "lemma tree_remove_preserves_wf: \"Interval_Refinement.tree_remove_preserves_wf\"",
+      "expanded_statement_sha256": "e7e5b80b7e9128adf90f073c8f8e41bca1469593ed5cf5d9bea121bf4479ac6c",
+      "native_refutation": {
+        "path": "reports/regen/intervaltree-stability-validation-20261030-001/native-refutation/validation.json",
+        "sha256": "04ccd2cc7fa9e8add4fcd642995d41e8b19ba55f59f4ae83943f6fa28c42d936",
+        "status": "refuted"
+      },
+      "source_replay": {
+        "path": "intervaltree/build/model-feedback-20261101-001/validation.json",
+        "sha256": "e1e2f37dc835d3e7a055e43507f27f4e081fa46b2b5bbf09e70c1baec313649a",
+        "translation_matches": true,
+        "pre_wf": true,
+        "post_wf": false
+      },
+      "disposition": "Retain operation semantics and the false contract; no verified translation defect on this path.",
+      "domain": "Internal Node states satisfying tree_wf; public API reachability of this witness is not established."
+    }
+  ],
+  "other_unproved_contracts": "undetermined; timeout/exhaustion is not a refutation",
+  "evidence_boundary": "Definitional equivalence checked for all 91 expanded goals; concrete replay is only one execution."
+}

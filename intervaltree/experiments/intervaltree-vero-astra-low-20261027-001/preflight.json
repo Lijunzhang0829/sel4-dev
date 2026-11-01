@@ -1,0 +1,26 @@
+{
+  "status": "ok",
+  "returncode": 0,
+  "failure_kind": null,
+  "elapsed_seconds": 6.175196744967252,
+  "audited": [],
+  "log": "Loading theory \"Draft.Vero_Support\" (required by \"Draft.Vero_All\" via \"Draft.Vero_Interval_Baseline\")\n### theory \"Draft.Vero_Support\"\n### 0.193s elapsed time, 0.253s cpu time, 0.000s GC time\nLoading theory \"Draft.Vero_Interval_Baseline\" (required by \"Draft.Vero_All\")\nLoading theory \"Draft.Vero_Interval_Extensions\" (required by \"Draft.Vero_All\")\nVERO_THEORY_ENTER Vero_Interval_Extensions\nval it = (): unit\nVERO_THEORY_ENTER Vero_Interval_Baseline\nval it = (): unit\n### theory \"Draft.Vero_Interval_Extensions\"\n### 0.084s elapsed time, 0.154s cpu time, 0.028s GC time\nLoading theory \"Draft.Vero_Interval_Refinement\" (required by \"Draft.Vero_All\")\nVERO_THEORY_ENTER Vero_Interval_Refinement\nval it = (): unit\n### theory \"Draft.Vero_Interval_Baseline\"\n### 0.129s elapsed time, 0.259s cpu time, 0.000s GC time\n### theory \"Draft.Vero_Interval_Refinement\"\n### 0.088s elapsed time, 0.159s cpu time, 0.000s GC time\nLoading theory \"Draft.Vero_All\"\nVERO_THEORY_ENTER Vero_All\nval it = (): unit\n### theory \"Draft.Vero_All\"\n### 0.068s elapsed time, 0.068s cpu time, 0.000s GC time\nval it = (): unit\n",
+  "command": [
+    "runuser",
+    "-u",
+    "checker",
+    "--",
+    "/workspace/verification/isabelle/bin/isabelle",
+    "process",
+    "-o",
+    "threads=2",
+    "-l",
+    "Intervaltree_Definitions",
+    "-d",
+    "/semantic-base",
+    "-T",
+    "/tmp/intervaltree-preflight/Vero_All"
+  ],
+  "total_timeout_seconds": 300,
+  "timeout_limit": null
+}

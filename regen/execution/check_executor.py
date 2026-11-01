@@ -414,7 +414,7 @@ class CheckExecutor:
             self.condition.notify_all()
 
     def submit(self, *, kind, theory, binding, request, execute, owner=None, task_id=None):
-        if kind not in {'proof_batch','statement','symbol','seal','action','preflight','integration','sketch'}:
+        if kind not in {'proof_batch','statement','symbol','seal','action','preflight','integration','sketch','refutation'}:
             raise ValueError('unknown check task kind')
         task_id = task_id or uuid4().hex
         if not isinstance(task_id, str) or not task_id or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in task_id):

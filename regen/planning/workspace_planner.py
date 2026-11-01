@@ -27,7 +27,7 @@ from regen.preparation.refine_campaign import write_immutable_json
 ALLOWED_EVENTS={'reasoning','agent_message','error','command_execution','file_change','todo_list'}
 
 
-def instruction(payload, schema_version=6):
+def instruction(payload, schema_version=6, *, contract_file_access=True):
     # Reuse the proposal schema/goals, but put data in read-only files instead of
     # injecting the entire contract and shared-symbol catalog on every model call.
     minimal={**payload,'contract_cards':[],'contract_relation_candidates':[]}
@@ -44,7 +44,7 @@ def instruction(payload, schema_version=6):
     ownership = ('Original theory names are reference metadata; choose the new grouping freely.'
                  if payload.get('contract_visibility') == 'source-theory-visible-v1' else
                  'Original theory attribution is deliberately absent. Do not try to reconstruct it.')
-    return '''You are an autonomous repository architecture planner in an isolated worker.
+    text = '''You are an autonomous repository architecture planner in an isolated worker.
 Read /input/catalog.json and /input/contracts.json (all exact frozen declarations and owned contexts).
 ''' + ownership + '''
 Keep a parseable plan.json in /workspace; write a scaffold early and edit incrementally.
@@ -73,6 +73,9 @@ Exact new helpers and local proof DAGs belong to File Planner. This stage genera
 Validate and repair incrementally; validation returns errors without changing your file. Native preflight renders exact declarations with oops and real planned imports; it proves nothing. A successful final response alone does not submit anything: finish by calling submit on the complete plan, which also requires native preflight to pass. Only then give a brief final status.
 Do not use the network, install packages, access /codex-home, change /input, or modify /tool.py. They are not task inputs.
 ''' + template
+    if not contract_file_access:
+        text = text.replace('Read /input/catalog.json and /input/contracts.json (all exact frozen declarations and owned contexts).', 'Read /input/catalog.json for the complete compact catalog. Exact declarations and owned contexts are available only through /tool.py contracts PUBLIC_ID ...; choose batches yourself. /input/contracts.json is deliberately absent.').replace('in /input/contracts.json and /input/catalog.json', 'in /input/catalog.json and exact contract query results')
+    return text
 
 
 class RPCServer(socketserver.ThreadingUnixStreamServer):
@@ -330,9 +333,13 @@ def run_agent(payload, planning_input_path, policy, output):
         visibility=policy.get('contract_visibility','owner-blind-v1'))
     public=output/'public'; public.mkdir(exist_ok=True)
     workspace=output/'workspace'; workspace.mkdir(exist_ok=True)
-    save(public/'contracts.json',harness.view.payload['contracts'])
+    contract_file_access = policy.get('contract_file_access', True)
+    if type(contract_file_access) is not bool:
+        raise ValueError('contract_file_access must be boolean')
+    if contract_file_access:
+        save(public/'contracts.json',harness.view.payload['contracts'])
     save(public/'catalog.json',{'contracts':harness.view.payload['contract_cards'],'context_profiles':harness.view.payload['context_profiles']})
-    text=instruction(harness.view.payload,policy.get('proposal_schema_version',5))
+    text=instruction(harness.view.payload,policy.get('proposal_schema_version',5), contract_file_access=contract_file_access)
     revision_text = ''
     if policy.get('revision_context'):
         context = policy['revision_context']
@@ -361,7 +368,7 @@ def run_agent(payload, planning_input_path, policy, output):
                 return completed
             # Agent ended without explicit submission. Keep the same artifacts
             # and ask it to continue; no proposal retry ceiling is introduced.
-            text=instruction(harness.view.payload,policy.get('proposal_schema_version',5))+revision_text+'\nContinue your existing plan and notes. No successful submit was recorded; inspect, validate, repair, and explicitly submit.\n'
+            text=instruction(harness.view.payload,policy.get('proposal_schema_version',5), contract_file_access=contract_file_access)+revision_text+'\nContinue your existing plan and notes. No successful submit was recorded; inspect, validate, repair, and explicitly submit.\n'
     except BaseException as error:
         abort = getattr(harness.native_check, 'abort', None)
         if abort is not None:

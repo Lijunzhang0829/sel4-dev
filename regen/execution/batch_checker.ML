@@ -39,14 +39,16 @@ local
         ("command",Toplevel.name_of tr),("line",command_position tr)]),
         [XML.Elem (("goals",[]),goals), XML.Elem (("assumptions",[]),assumptions),
          XML.Elem (("executed_commands",[]),commands)]))) end);
+  val preparing_prefix = Unsynchronized.ref true;
   fun execute position text state =
     let val theory = Toplevel.theory_of state;
         val transitions = Outer_Syntax.parse_text theory (fn () => theory) position text;
         fun step tr st =
           let val started = Time.now ();
-              val out = Exn.capture (Timeout.apply
-                (Time.fromReal (the (Real.fromString (read "command_timeout"))))
-                (Toplevel.command_exception true tr)) st;
+              val command = Toplevel.command_exception true tr;
+              val out = Exn.capture
+                (if !preparing_prefix then command else Timeout.apply
+                  (Time.fromReal (the (Real.fromString (read "command_timeout")))) command) st;
           in writeln ("REGEN_COMMAND " ^ Toplevel.name_of tr ^ " " ^
                LargeInt.toString (Time.toMilliseconds (Time.- (Time.now (), started))));
              (case out of Exn.Res next =>
@@ -91,6 +93,7 @@ local
   val initial = execute (Position.line_file (the (Int.fromString (read "initial_line")))
     ("/candidate/" ^ theory_name ^ ".thy")) initial_text (Toplevel.make_state (SOME thy));
   val _ = audit (split_lines (read "prefix_facts")) initial;
+  val _ = preparing_prefix := false;
   val base = Unsynchronized.ref initial;
   val base_text = Unsynchronized.ref initial_text;
   val pending = Unsynchronized.ref (NONE : (Toplevel.state * string) option);

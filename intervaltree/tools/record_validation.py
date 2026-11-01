@@ -15,6 +15,7 @@ import subprocess
 import sys
 
 from build import PROJECT, source_hashes
+from prepare_benchmark import expansion_audit
 
 
 def sha(path: Path) -> str:
@@ -25,12 +26,55 @@ def checked_build(path: Path, directory: Path) -> dict:
     evidence = json.loads(path.read_text())
     if evidence.get("status") != "passed" or evidence.get("returncode") != 0:
         raise ValueError(f"Build did not pass: {path}")
+    # source_hashes binds all discovered files even when build.py selected only
+    # one session.  Such a receipt does not establish that the goals/audit ran.
+    command = evidence.get("command")
+    if not isinstance(command, list) or command[-2:] != ["-D", str(directory.resolve())]:
+        raise ValueError(f"Build did not cover the complete session directory: {path}")
     expected = source_hashes(directory)
     if not expected or evidence.get("sources_sha256") != expected:
         raise ValueError(f"Build evidence does not match the complete current sources: {path}")
     if not evidence.get("sources_unchanged_during_build"):
         raise ValueError(f"Build did not bind a stable snapshot: {path}")
     return evidence
+
+
+def checked_expansion(registry: dict, manifest: dict, directory: Path) -> dict | None:
+    """Bind the executed native expansion audit to the actual public goals."""
+    if manifest.get("input_revision") != "expanded-specs-v2":
+        return None
+    targets = registry["targets"]
+    ids = [target["id"] for target in targets]
+    if not ids or len(set(ids)) != len(ids) or len(ids) != manifest["target_count"]:
+        raise ValueError("Spec expansion target coverage does not match the manifest")
+    expected_root = (
+        'session Intervaltree_Definitions = HOL +\n'
+        '  options [document = false, threads = 2]\n'
+        '  directories "theories"\n'
+        '  theories Interval_Input\n'
+        'session Intervaltree_Goals in "goals" = Intervaltree_Definitions +\n'
+        '  options [document = false, threads = 2]\n'
+        '  theories Interval_Goals\n')
+    if (directory / "ROOT").read_text() != expected_root:
+        raise ValueError("Expanded input does not include the expected Goals session")
+    for target in targets:
+        if target["statement"] != f'lemma {target["id"]}: "{target["expanded_proposition"]}"':
+            raise ValueError("Spec expansion statement differs from its audited proposition")
+    expected_goals = (
+        "theory Interval_Goals\n  imports Intervaltree_Definitions.Interval_Input\nbegin\n\n"
+        + expansion_audit(targets) + "\n"
+        + "\n\n".join(t["statement"] + "\n  oops" for t in targets) + "\n\nend\n")
+    goals = directory / "goals/Interval_Goals.thy"
+    if goals.read_text() != expected_goals:
+        raise ValueError("Native spec expansion audit does not match the complete target registry")
+    contracts_path = directory / "contracts.jsonl"
+    contracts = [json.loads(line) for line in contracts_path.read_text().splitlines() if line.strip()]
+    if [(c.get("contract_id"), c.get("exact_statement")) for c in contracts] != [
+            (t["id"], t["statement"]) for t in targets]:
+        raise ValueError("Public contracts differ from the natively audited spec statements")
+    return {"status": "passed", "checked_targets": len(ids),
+            "method": "native definitional conversion; no target theorem proved",
+            "goals_sha256": sha(goals), "contracts_sha256": sha(contracts_path)}
 
 
 def main() -> None:
@@ -54,6 +98,7 @@ def main() -> None:
                     "--output", str(PROJECT / "build/audit.json")], check=True)
     registry_path = PROJECT / "targets.json"
     registry = json.loads(registry_path.read_text())
+    expansion = checked_expansion(registry, input_manifest, PROJECT / "sanitized")
     audit_source = (PROJECT / "theories/Interval_Audit.thy").read_text()
     if "Interval_Audit" not in (PROJECT / "ROOT").read_text():
         raise ValueError("Complete session does not include the native theorem audit")
@@ -67,7 +112,9 @@ def main() -> None:
         target["evidence_kind"] = "checked_preparation_proof" if proof else "unproved_contract"
     registry["status_note"] = (
         "proved means a disclosed preparation theorem checked by the full Isabelle session "
-        "and its exact-target/no-hypotheses/no-oracles audit; not an LLM experiment result")
+        "and its exact-target/no-hypotheses/no-oracles audit; not an LLM experiment result. "
+        "pending only means no preparation proof; known refutations are recorded separately "
+        "in model-feedback.json and are never supplied to generation.")
     registry_path.write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n")
     groups = {}
     for group in sorted({t["group"] for t in registry["targets"]}):
@@ -75,6 +122,9 @@ def main() -> None:
         groups[group] = {"total": len(targets), **dict(Counter(t["status"] for t in targets))}
     validation = {
         "stage": "preparation", "formal_evaluation_started": False,
+        "input_revision": input_manifest.get("input_revision", "named-specs-v1"),
+        "semantic_feedback_file": "model-feedback.json",
+        "spec_expansion_audit": expansion,
         "full_build": {"status": full["status"], "finished_utc": full["finished_utc"],
                        "elapsed_seconds": full["elapsed_seconds"],
                        "image": full.get("image"),
@@ -91,7 +141,8 @@ def main() -> None:
         "input_manifest_sha256": sha(PROJECT / "sanitized/input-manifest.json"),
         "limitations": ["Pending contracts are not assumed or proved.",
                         "No checked equivalence to Python source semantics.",
-                        "No formal proof-generation experiment has been run."],
+                        "No proof-generation experiment has been run on this input revision.",
+                        "A known refutation is retained; this is not a guaranteed all-true spec set."],
     }
     (PROJECT / "validation.json").write_text(json.dumps(validation, indent=2) + "\n")
     # Refresh the audit's displayed counts after acceptance as well.

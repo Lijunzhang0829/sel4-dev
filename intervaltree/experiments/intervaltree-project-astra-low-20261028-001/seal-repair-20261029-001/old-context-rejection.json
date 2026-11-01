@@ -1,0 +1,6 @@
+{
+  "status": "expected_infrastructure_error",
+  "diagnostic": "invalid premise audit context /data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/dataset/premise-audit-context.json: missing or invalid campaign_id",
+  "native_calls": 0,
+  "model_calls": 0
+}

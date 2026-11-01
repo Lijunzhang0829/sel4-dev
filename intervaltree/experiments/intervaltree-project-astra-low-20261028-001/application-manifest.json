@@ -1,0 +1,2784 @@
+{
+  "archive_sha256": "c791523e0fabaf97272fe6cd1431efaec6c92e3bc85e92bf355517307798335a",
+  "excludes": [
+    "reports",
+    "proof results",
+    "heaps",
+    "credentials",
+    ".git"
+  ],
+  "files": {
+    "regen/EXPERIMENT-ANOMALIES.md": {
+      "bytes": 42449,
+      "sha256": "18ae651ecb92189671ffc7518b2467e62f1367e51111d9ad7acce009f2a96688"
+    },
+    "regen/README.md": {
+      "bytes": 10352,
+      "sha256": "c5fb4771c95a6a67279f72f7801155ca7427b585af5966019f924c04b2774442"
+    },
+    "regen/__init__.py": {
+      "bytes": 32,
+      "sha256": "695178bfa1c380442f35a6e3810b65c7a93e80e0274a38b37d53f5caba2cab62"
+    },
+    "regen/analysis/__init__.py": {
+      "bytes": 16,
+      "sha256": "63de0d75a2a8a113b0f43e1146c0a4ed23288ddf51460ea1781a86839aa2382c"
+    },
+    "regen/analysis/retained_semantic_impact.py": {
+      "bytes": 13680,
+      "sha256": "b9df93a084f66f8379f2392d5889d4396dfa8da455f6edf167cceea2068aed0d"
+    },
+    "regen/config/CREFINE-LAUNCH-PROFILES.md": {
+      "bytes": 1985,
+      "sha256": "a9eed358a142bab89b9c5f38f64d60a2e41fa799f6090f6e991fcfc4bea97cf8"
+    },
+    "regen/config/codex-crefine-owner-blind-sol-xhigh-plan48h-20261025.sh": {
+      "bytes": 1205,
+      "sha256": "ae4c9445c22030369bc42a88931e7a4f23fb88e3c6b88c5e12523509e77ec7e9"
+    },
+    "regen/config/codex-crefine-owner-blind-sol-xhigh-plan48h-resume-20261025.sh": {
+      "bytes": 1469,
+      "sha256": "f4d4f0908261eb0afa4de29651c588e7be91cd68b2eaa361d1797d58089b5cf1"
+    },
+    "regen/config/codex-crefine-owner-blind-sol-xhigh-step-resume-20261027.sh": {
+      "bytes": 1375,
+      "sha256": "923c96a2660f8c33acead48682eb43a1c33809f8ff81c4abfbcc0746e4f94d2f"
+    },
+    "regen/config/codex-crefine-pool2-continue-20261020.sh": {
+      "bytes": 1475,
+      "sha256": "fcfe8239a6de69d76bba13b4d3f4e16d5ca3c1c0f4ef279af7454acd01869b24"
+    },
+    "regen/config/codex-crefine-pool2-fresh-20261021.sh": {
+      "bytes": 1146,
+      "sha256": "7924c40a056398287e7f254dfbd41bd3bb4ce35822fe92f6e29a0ee3706a1a67"
+    },
+    "regen/config/codex-crefine-pool2-resume-20261021.sh": {
+      "bytes": 1428,
+      "sha256": "58819f9ceeea15267b3b15eb32c4c8280de333c5b9787ed029586dbfe11b3916"
+    },
+    "regen/config/codex-crefine-sol-xhigh-effective48h-planning-included-20261024.sh": {
+      "bytes": 1105,
+      "sha256": "e5f54f9373156427789bc98e36c61bd0345a45bb34449e5871e8475e35d06592"
+    },
+    "regen/config/codex-crefine-sol-xhigh-plan48h-resume-20261024.sh": {
+      "bytes": 1684,
+      "sha256": "f8c350bff0f8cca73d59befe2f11342c620350b225132a1cc43a7c2a4328e669"
+    },
+    "regen/config/codex-runtime/b860051e15938770f4164177f2fc2d4e1af26b226c9b0c3ea75a36d1be33a3cf/runtime.json": {
+      "bytes": 167,
+      "sha256": "22e2be78c6c2f75554056894c7b0162ebd165c5eae9bbcbbafdf712d9a4d4c17"
+    },
+    "regen/config/crefine-owner-blind-sol-xhigh-local.sh": {
+      "bytes": 5436,
+      "sha256": "c641edf08f21930d18519b02686f9491c55acb503d1d206c56f0cad2fc8fdf33"
+    },
+    "regen/config/deployment-model-config-crefine-sol-xhigh-20261024.json": {
+      "bytes": 602,
+      "sha256": "70ccd07b05673b5cbbf52f20010ffd0bddf6bc6a301aaa0a6c1189b4c5d84a04"
+    },
+    "regen/config/proof-models-crefine-owner-blind-sol-xhigh-local.json": {
+      "bytes": 1128,
+      "sha256": "a15b4e98e46b6060ec4c83da66ae5e960c9b8c935674520d87422715616b55ea"
+    },
+    "regen/config/proof-models.json": {
+      "bytes": 1144,
+      "sha256": "97c0c913fc261e92a3b8acfcc1882c8c29940500cd2c65e53c4d110ca99e15f4"
+    },
+    "regen/config/provider-feedback-retry-local.json": {
+      "bytes": 83,
+      "sha256": "9e1d91ebad229aafefcd3ba7ba7b0d3f13e33966d886125e99d1d1872e9708a5"
+    },
+    "regen/config/refine-semantic-base-campaign.json": {
+      "bytes": 10315,
+      "sha256": "79919b671c96dc2ad6ad4e27b3ccf4eaaaf454690958db427ac0b81dec7abe73"
+    },
+    "regen/config/repository-planning-crefine-owner-blind-sol-xhigh-local.json": {
+      "bytes": 4514,
+      "sha256": "c959bad010974c18e4f0751c82f6dd7dfa1a2655edf1d1085d297bcef7fa625d"
+    },
+    "regen/config/repository-planning-policy-workspace.json": {
+      "bytes": 4857,
+      "sha256": "e32654082ac6861265777f4baf495d34a7c941e05e0ebfcf268ed3db0511cbb9"
+    },
+    "regen/config/repository-planning-policy.json": {
+      "bytes": 4857,
+      "sha256": "e32654082ac6861265777f4baf495d34a7c941e05e0ebfcf268ed3db0511cbb9"
+    },
+    "regen/config/theory-effective-inactivity.json": {
+      "bytes": 1685,
+      "sha256": "dc1f7584bd2da214f48b1a5d232ad1d3a60cd8bd6cffad53eb28d4c361aeb77d"
+    },
+    "regen/config/vero-crefine-effective2h-plan-audit-20261023.sh": {
+      "bytes": 1354,
+      "sha256": "747fe4882c90ae1d5b0130c2a7a069b7bd130ef2986cec474f4769a66d4df5f1"
+    },
+    "regen/config/vero-crefine-independent-auth-pool2-20261021.sh": {
+      "bytes": 1857,
+      "sha256": "625c1c0bcc3fbc395d7b6228465bfe639c78d70e78801f6904933777bfd50b5a"
+    },
+    "regen/config/vero-crefine-owner-blind-sol-xhigh-plan48h-20261025.sh": {
+      "bytes": 1424,
+      "sha256": "56afc0f12fdf554e4728d6e018d0bf540f969442c11d8b065d9e67e2684e303b"
+    },
+    "regen/config/vero-crefine-owner-blind-sol-xhigh-prefix-repair-resume-20261025.sh": {
+      "bytes": 1434,
+      "sha256": "85fbfe0269ee04a35b62acf5605bb17af294131d71ff0fa15c8ec404c41b14dc"
+    },
+    "regen/config/vero-crefine-owner-blind-sol-xhigh-runtime-repair-resume-20261027.sh": {
+      "bytes": 1420,
+      "sha256": "d7e8d054cd98732fb4c7f502cb3206c720b3ef1aaa78b91a70a0f614db891e7f"
+    },
+    "regen/config/vero-crefine-owner-blind-sol-xhigh-tool-repair-resume-20261026.sh": {
+      "bytes": 1424,
+      "sha256": "87d526c42751e03c05cc1119a84448a951bb92e764994aea33f8f76398f2f9f9"
+    },
+    "regen/config/vero-crefine-pool2-fresh-20261021.sh": {
+      "bytes": 1306,
+      "sha256": "9a55f72646a7f3d64e8fd4ce67163b70e61d99b8adda117063bf72311ad29853"
+    },
+    "regen/config/vero-crefine-pool2-resume-20261020.sh": {
+      "bytes": 1325,
+      "sha256": "90b16f2ec742c36fb9867fe0c6b7e70952826adc889a9aea67c36cfd22207687"
+    },
+    "regen/config/vero-crefine-slots2-20261019-launch.sh": {
+      "bytes": 1282,
+      "sha256": "448fe530d4919f4a110c4859e5484b6372bc6627acdd2433df77a230bc5dd831"
+    },
+    "regen/config/vero-crefine-sol-xhigh-effective48h-planning-included-20261024.sh": {
+      "bytes": 1365,
+      "sha256": "9b298a3014b1525fabb9a73f2d20bf7839375e01330f2bab3e776d4456ebc253"
+    },
+    "regen/config/vero-global-exploration-limits.json": {
+      "bytes": 2517,
+      "sha256": "13be2cfab8d4a1c59e7f807f8fd3ddcb3fbe91d19b72169ca095f2349aedc835"
+    },
+    "regen/docs/REPOSITORY-COLLABORATION-PLAN.md": {
+      "bytes": 4259,
+      "sha256": "894ea386a8bb176c6fd58fb95c8fe6c865dea7cec29d9764b419224b624f0fd4"
+    },
+    "regen/docs/design/CURRENT-REPOSITORY-PROOF-FLOW.md": {
+      "bytes": 6140,
+      "sha256": "9ea447d7bbb00371f3b80d4826595a7adb0c93e8d855a69faaabe7758d674695"
+    },
+    "regen/docs/design/PARALLEL-PROOF-PIPELINE.md": {
+      "bytes": 18235,
+      "sha256": "8425b60bf88142c961a0c91957e427858d4dccd2e8db0e59480f8bd5d16594c7"
+    },
+    "regen/docs/design/REPO-LEVEL-CONTRIBUTIONS.md": {
+      "bytes": 13528,
+      "sha256": "9cf18000db92359d120a9e0acd1d6db32c90d86c1ae74276d7245dcd00b316db"
+    },
+    "regen/docs/design/REPO-LEVEL-EVALUATION.md": {
+      "bytes": 15974,
+      "sha256": "663dd22a23a111f30c3e964b4a612995fbed8652b31e5956b72e94f5608c16e2"
+    },
+    "regen/docs/design/REPO-LEVEL-PROOF-HARNESS.md": {
+      "bytes": 11862,
+      "sha256": "117ed02b02aa5ae1d0b103d24e2602772b4b9323cd68d15bbaa4be77339d1b76"
+    },
+    "regen/docs/design/THEORY-SOURCE-WORKSPACE.md": {
+      "bytes": 11195,
+      "sha256": "63263f908d6b3b40566af2b3d4f78d328d9a10aa29ca8d90b2b194fd36ef8c39"
+    },
+    "regen/docs/experiments/KERNEL-OBJECT-ACCESS-LAB.md": {
+      "bytes": 10457,
+      "sha256": "0e166cca37dd5736f3fae6e088c3729fae7037b7b835ec845708f886bf12c36b"
+    },
+    "regen/docs/history/HARNESS-EVOLUTION.md": {
+      "bytes": 75511,
+      "sha256": "47cf33dadc16a5ac0f30143683dbd12caecbd87b6dbb8c308cbba2545271c03e"
+    },
+    "regen/docs/history/README.md": {
+      "bytes": 661,
+      "sha256": "012085ea92fca905cad4cc887a4217b09db219f6601a58e12fd1d81abd58ebea"
+    },
+    "regen/docs/history/REFINE-CREFINE-EXPERIMENT.md": {
+      "bytes": 7538,
+      "sha256": "11a37d7bfc8982b0d60b38fa4c1c80260a2062f6d5a119ac660a6b9f3702d4c8"
+    },
+    "regen/docs/history/deferred_harness_implementation.json": {
+      "bytes": 6428,
+      "sha256": "c9e1547542113587d0bbf5e82f2e9b109ac40106efa7a19530c7699a01b1b31f"
+    },
+    "regen/docs/implementation/BATCH-FILE-PLANNER.md": {
+      "bytes": 27923,
+      "sha256": "114b44dd80ff76e6ee1335e2bae22040dbd7ebd4ab43c81a779a20cd172f50da"
+    },
+    "regen/docs/implementation/CODEX-CLIENT-UPDATE-20260927.md": {
+      "bytes": 4062,
+      "sha256": "f69cc100662e5a82ab9c002cd5812ef6a61d7a86173dce5eaec1600b457184cd"
+    },
+    "regen/docs/implementation/CODEX-SESSION-WATCH.md": {
+      "bytes": 3900,
+      "sha256": "b763eefc3846ef9676333d6bf01f8bab9c69a7b177be38e1b993d141ad83ece2"
+    },
+    "regen/docs/implementation/CONDITIONAL-SKETCH-GROUPS.md": {
+      "bytes": 15153,
+      "sha256": "f0724d927e02d2fb3cfd9d5a84bb223459e6975168da0074d7f7d0260647f6ad"
+    },
+    "regen/docs/implementation/ENVIRONMENT-PREPARATION-IMPLEMENTATION.md": {
+      "bytes": 22678,
+      "sha256": "374112cf89a8c1f8a1a25b43718e9c358bde67e0bc1028110f011baa5063e0e5"
+    },
+    "regen/docs/implementation/EXPERIMENT-STABILITY-20261014.md": {
+      "bytes": 8989,
+      "sha256": "179c5211308aaee865e845a318182e7ed9c4aa876ae419344d6cc8d04f2cc272"
+    },
+    "regen/docs/implementation/FILE-PLANNER-RETRIEVAL.md": {
+      "bytes": 2808,
+      "sha256": "d202b231843e31ede94302fd0095ca46158f011090be7b1abb03167ad090ed79"
+    },
+    "regen/docs/implementation/GENERATION-STABILITY-20261027.md": {
+      "bytes": 6974,
+      "sha256": "bc1eaaff8669d75136bc107c91af00148d656901e23b056ccf00bd89d1963980"
+    },
+    "regen/docs/implementation/GREEN-CONTRACT-ACCOUNTING-20261015.md": {
+      "bytes": 10439,
+      "sha256": "883f8f5d92dba951e2f7b280c9f51ff9008594731a4ead1d31e84930db804b52"
+    },
+    "regen/docs/implementation/GUIDED-SKETCH-DECOMPOSITION.md": {
+      "bytes": 19015,
+      "sha256": "fb876f5be2ac5e40cbea564c11a2fb178ce9d66a4d6729a9182e0352439f2933"
+    },
+    "regen/docs/implementation/HARNESS-APPLICATION-FRAMEWORK.md": {
+      "bytes": 59384,
+      "sha256": "a3312ea7bdc15b3ebb9cafd4814fe2cfb28e6d00e977a6de1cef74933d37efa6"
+    },
+    "regen/docs/implementation/HARNESS-IMPROVEMENT-TODO.md": {
+      "bytes": 50217,
+      "sha256": "9684515deef11788f46c3fca5cd5b7eae7e3c6591a910a72de0a79bbf0e30b60"
+    },
+    "regen/docs/implementation/INCREMENTAL-LOGGING.md": {
+      "bytes": 7244,
+      "sha256": "1934158e7530e1b2e73d01f96f7cf878c63d87003cff9424a917e23dc848f7c5"
+    },
+    "regen/docs/implementation/INCREMENTAL-STORAGE-20260930.md": {
+      "bytes": 3066,
+      "sha256": "c55d61a83ac0d3ca8fb2a3f58f2d7167eeef6a348e78fe7fb53b6cce0caf25e9"
+    },
+    "regen/docs/implementation/ISABELLE-CHECKER-INTERFACES.md": {
+      "bytes": 6313,
+      "sha256": "6f261e8591e6df37fc20f955885993a29568e25f7818ea4d4d5c3ef9e94b12cf"
+    },
+    "regen/docs/implementation/MACHINE-B-EXPERIMENT-PATHS.md": {
+      "bytes": 2863,
+      "sha256": "5b2989277ed56279a836168086cdd722bb1aa070e4c4dfd13bc3a34e37ca8a0f"
+    },
+    "regen/docs/implementation/PARALLEL-FILE-PLANNERS.md": {
+      "bytes": 13453,
+      "sha256": "54406b457d93c09408c54ad133ae21c96d7875d3f26d5ab2c1a4594f5c6bb4ab"
+    },
+    "regen/docs/implementation/PARALLEL-PIPELINE-ACCEPTANCE.md": {
+      "bytes": 6215,
+      "sha256": "065af3c3f91de2ce3aef490ad1af0c333f7fbc2496bdd34f24c531ee6196ea6d"
+    },
+    "regen/docs/implementation/PARALLEL-PIPELINE-FULL-VERIFICATION.md": {
+      "bytes": 7321,
+      "sha256": "2bb31acaa601936615cd0b39e30151c5277385bff3e6c00f000704667853f3fb"
+    },
+    "regen/docs/implementation/PARALLEL-PIPELINE-IMPLEMENTATION.md": {
+      "bytes": 13062,
+      "sha256": "61bf2e7dcc0ffc9eb12160755d7d9377c41d1c0ad822eb60864d47a45dd711e0"
+    },
+    "regen/docs/implementation/PARALLEL-PIPELINE-REQUIREMENTS-REVIEW.md": {
+      "bytes": 7570,
+      "sha256": "d00577b9892148e46e959295f9929eacb4be0b0e9709561543130352ca76aac0"
+    },
+    "regen/docs/implementation/PARALLEL-RECOVERY-20260926.md": {
+      "bytes": 8445,
+      "sha256": "16ea1ab3128de4621b549f71ff5e16d48c7bd485a57a9740b58b5e8ce7692912"
+    },
+    "regen/docs/implementation/PLAN-INTERFACE-REVIEW.md": {
+      "bytes": 14285,
+      "sha256": "49e9ea66719d613f9e2f773aab1b59c2c8b83f55046163401d2a553739bdfb82"
+    },
+    "regen/docs/implementation/PREMISE-DATABASE-V2.md": {
+      "bytes": 6259,
+      "sha256": "7bb4dfc2ad73e0279ff075efb8a966f9e29805a7ca645e68d9feacb07941d35f"
+    },
+    "regen/docs/implementation/PROGRESS-SLEEP-RECOVERY-20260928.md": {
+      "bytes": 4413,
+      "sha256": "c8e4fdd6c579c5b4ac148e0a3fd386dd5ee25a3bc32bc7c2c73a77a890aeb43a"
+    },
+    "regen/docs/implementation/PROOF-EDIT-AND-FACT-AUDIT.md": {
+      "bytes": 4637,
+      "sha256": "c0994e707c6f62a966eae5b05aae681faa022d0f0710c879ed3c1a5bcb923554"
+    },
+    "regen/docs/implementation/PROOF-GENERATION-IMPLEMENTATION.md": {
+      "bytes": 18978,
+      "sha256": "46568293b114a03b7c9e34ae75c92f8b8098636aaeb11ea14427d4bbce6252ed"
+    },
+    "regen/docs/implementation/PROVIDER-FEEDBACK-RETRY.md": {
+      "bytes": 5656,
+      "sha256": "614c856cab2bb20e68d4f07886a925c5f5c27a52a4b918faa672e30322f4970d"
+    },
+    "regen/docs/implementation/REPLAY-MEMORY-RECOVERY.md": {
+      "bytes": 4412,
+      "sha256": "d19c20537d346325b3dc8cc55d57c5fa9e4bae2a9f52bc53982a21166deb84be"
+    },
+    "regen/docs/implementation/REPOSITORY-PLANNING-IMPLEMENTATION.md": {
+      "bytes": 19095,
+      "sha256": "0798bc7837a8048c96616768033a02e640e51f238c43ade23f0908f0d3a32f16"
+    },
+    "regen/docs/implementation/SHARED-PROOF-WORKSPACE.md": {
+      "bytes": 9831,
+      "sha256": "0871066ceef1f4ae2a6cceabc51df3434464db63b54d0f5fc34e471431f61aa5"
+    },
+    "regen/docs/implementation/WORKSPACE-PROTOCOL-REPAIR-20260929.md": {
+      "bytes": 4303,
+      "sha256": "0437ca41365f699c151dac618e79b2ae7ff2347d02e874120650be91f63565b2"
+    },
+    "regen/execution/__init__.py": {
+      "bytes": 17,
+      "sha256": "068adb844f4abb06b20b7d7d370e956ff535d8a10a362523c8f158135c914fd8"
+    },
+    "regen/execution/assembly_stabilizer.py": {
+      "bytes": 2017,
+      "sha256": "7bf8ec39df3d4db4aca7cef335c9d0adce9d9677856e0557d699b9a030ae45a4"
+    },
+    "regen/execution/auxiliary_reuse.py": {
+      "bytes": 1164,
+      "sha256": "38c850d293ffd578d392e0d4618444ecec7ecb709afe14854af6f88d69bfbd22"
+    },
+    "regen/execution/batch_audit.py": {
+      "bytes": 1813,
+      "sha256": "cba1a9b81fe49fed5a3fd36e781aaae20e8cc5592bcfe5aa2b33d534bffef569"
+    },
+    "regen/execution/batch_checker.ML": {
+      "bytes": 11168,
+      "sha256": "2e5d99c6c0e670ff8c7375a04189c0d0aa85338e450c05cafdd670af38d10372"
+    },
+    "regen/execution/batch_checker.py": {
+      "bytes": 17544,
+      "sha256": "6894b5f54c7ebca13241068a07041fd9bf88888eca9d545f0d5dc778440bf81d"
+    },
+    "regen/execution/check_executor.py": {
+      "bytes": 26603,
+      "sha256": "590cb803f62dfeb992ce300ac51cde04e2c0aa9d2054c0a5d469ed34d595d80b"
+    },
+    "regen/execution/check_tasks.py": {
+      "bytes": 1725,
+      "sha256": "d0ef6d3b6b661de45cfe78faf81ffec784763c3aa021b2ec47febb4cda984d1a"
+    },
+    "regen/execution/checker_policy.py": {
+      "bytes": 895,
+      "sha256": "b81348060e05685f5ba3806bf8a2959b27d61942aa419bf79da19108a2fcaeb5"
+    },
+    "regen/execution/declaration_cache.py": {
+      "bytes": 3598,
+      "sha256": "f1140109f6a7cb422c81bc5e22a221eacc2e4da2247e5e0a73ac069ea1b4e307"
+    },
+    "regen/execution/fact_context.py": {
+      "bytes": 1325,
+      "sha256": "d90b44141c9e2acd6f0cb41378b46cddff9315ff02d31552d5edf72ec2304ddb"
+    },
+    "regen/execution/file_planner_recall.py": {
+      "bytes": 4903,
+      "sha256": "b49711cac509b17e5908f160e6657100af8c0b660de10d628779b4ee791fc490"
+    },
+    "regen/execution/gra_input.py": {
+      "bytes": 6603,
+      "sha256": "784d64b0d6cb9a06db42c10158d1fba3f6eec652264adf961089df7be4a53cdb"
+    },
+    "regen/execution/graph_revision_agent.py": {
+      "bytes": 50557,
+      "sha256": "7df77af3d0715b8d3c3ad95e19816a716039495582eafb1a7f66f0dfbb757881"
+    },
+    "regen/execution/isabelle_node_checker.py": {
+      "bytes": 57769,
+      "sha256": "5ba12dcd2bd27ea9cc9350ea42feb6f23799a5a9e4511cc5e02c58891700fae6"
+    },
+    "regen/execution/legacy_seal_audit.py": {
+      "bytes": 7161,
+      "sha256": "a661dfc2a0e54aa1732ade682e7b5fe50a67acd4c97c42106b7e3bc9279f31cd"
+    },
+    "regen/execution/lemma_prover.py": {
+      "bytes": 40247,
+      "sha256": "05331b93f85d1b99e88507e3815c0e70bb105093fc460bc2833c9d32492cb1ba"
+    },
+    "regen/execution/native_check_receipt.py": {
+      "bytes": 3309,
+      "sha256": "c2dc978fd4c35f394910d15c47a505143a45c27de0b5274df3b4cd8c45b5bb47"
+    },
+    "regen/execution/native_container.py": {
+      "bytes": 3650,
+      "sha256": "5056ff2e89bab856755608b0f8a6a73aae39adec057b24a2c5aab34c393831ce"
+    },
+    "regen/execution/native_fact_audit.py": {
+      "bytes": 1957,
+      "sha256": "8f836b02e2a8e3935f8d0e17d4ce7e9324eb3c4508432fd4ac2e95b095adfecb"
+    },
+    "regen/execution/node_phase_timing.py": {
+      "bytes": 5825,
+      "sha256": "603b8a8a89e413df7f1a9fa299c1ea86623febbcf5a461170838d91ad9ca1a80"
+    },
+    "regen/execution/observation_context.py": {
+      "bytes": 6254,
+      "sha256": "e844fead645cfe45249a9ed86b8bb43334db92e7c29658aeaa4977e2c6b88a5d"
+    },
+    "regen/execution/persistent_checker.ML": {
+      "bytes": 2468,
+      "sha256": "e6e4ba3cc508ccf6e449c70949398235daeb2282dbb72f07db91e14dc1067d55"
+    },
+    "regen/execution/persistent_checker.py": {
+      "bytes": 7704,
+      "sha256": "256f744920c49124f088b74a853af1bdd8ce10fbc54b28f123916177469eaa82"
+    },
+    "regen/execution/premise_recall.py": {
+      "bytes": 9930,
+      "sha256": "b8456ccb10de3bbef863c7b576082c83972f24a4d93fcdaf725e8e817b400f8b"
+    },
+    "regen/execution/proof_batches.py": {
+      "bytes": 25141,
+      "sha256": "0ca526ed12e7b1f7807a16533b0cb3689e92f093805be31de301bf7edd913471"
+    },
+    "regen/execution/proof_commits.py": {
+      "bytes": 18520,
+      "sha256": "bbdc3a15d237de015c140927fe52dc5920fcc24dd9d1c62203467956f1105146"
+    },
+    "regen/execution/proof_feedback.py": {
+      "bytes": 1466,
+      "sha256": "e9c5b53d9b724d38dd305dc0335d694ea21d726a5f40cc2c3ddbadafc12fb4ed"
+    },
+    "regen/execution/proof_input.py": {
+      "bytes": 13772,
+      "sha256": "e1a419a31e5c75ef7f4dd0429a967adc4215314321e8f1107a90362c8fe8a3a7"
+    },
+    "regen/execution/proof_outline_salvage.py": {
+      "bytes": 18366,
+      "sha256": "414bc67f9d43092aa206fa939c2c22c4367e704252ed43b26640dfd066799e20"
+    },
+    "regen/execution/proof_session_runner.py": {
+      "bytes": 107333,
+      "sha256": "45669c9e89741997c531088fe3c2a173aa1e0f3b1866aeb1ea85604785b1e5b5"
+    },
+    "regen/execution/proof_state_recall.py": {
+      "bytes": 7184,
+      "sha256": "eb8185442bf888d45c447215d71dde1431ea17dac1f32591d37315c093f1eeba"
+    },
+    "regen/execution/repository_execution.py": {
+      "bytes": 83977,
+      "sha256": "d13ede0546bc2781ce1e14667708117f4ffd2e2f57ba18ec4df4e1ea91d919c4"
+    },
+    "regen/execution/repository_integration.py": {
+      "bytes": 12082,
+      "sha256": "fcffac33a959eb350b50a5369fd26474d4a60d14fb0d1ad24679209e5316d38c"
+    },
+    "regen/execution/retry_policy.py": {
+      "bytes": 1530,
+      "sha256": "9d7e3d65256b1d43edda7a487b05a4e81f6a48df1d82010346e45542d15c84ce"
+    },
+    "regen/execution/round_recall.py": {
+      "bytes": 6351,
+      "sha256": "52d0e3098e64b6b43af34c970a016743ba2887cf5a69ec8bc0fbbe2ce186c7ba"
+    },
+    "regen/execution/seal_evidence.py": {
+      "bytes": 8071,
+      "sha256": "d18ddc52e77e855d9c6b59cc69d4c6dd5e1ea0ea6ede0fc32278498d2d6068db"
+    },
+    "regen/execution/shared_proof_workspace.py": {
+      "bytes": 27921,
+      "sha256": "c45470c336a6c2a713797bcd3a3130f8c91133d3416cbd9b6a07e4cd0024163f"
+    },
+    "regen/execution/stepwise_codex.py": {
+      "bytes": 33926,
+      "sha256": "d101685b19c2c1439405a33840b39d08b0c3f4b7a8b37d295b396d5029aeea96"
+    },
+    "regen/execution/stepwise_lemma_backend.py": {
+      "bytes": 29641,
+      "sha256": "8a6e963a7b4e3a4e7d4358b2c3b06c2e04793f5b65861160c08136e1709b797b"
+    },
+    "regen/execution/symbol_resolution.py": {
+      "bytes": 5034,
+      "sha256": "3a39bd0a2a2223adfae927fe426a3dbe63dbc656af63a337d9212524421fd4c6"
+    },
+    "regen/execution/vero_checker_adapter.py": {
+      "bytes": 54713,
+      "sha256": "846cdd668f1bc0fe1a4b99f3c8fcf0b2b9414ef60f2c4dbb06f69a24198342d1"
+    },
+    "regen/execution/vero_import_graph.py": {
+      "bytes": 5186,
+      "sha256": "79089dc645db8605377dfffffd7e40f4ae9bc5ad315ca3bbf149b82481b398da"
+    },
+    "regen/execution/vero_prefix_revalidation.py": {
+      "bytes": 13674,
+      "sha256": "1b5fb7b1da69da1b367777a6741f6adefbb68ef315bac65a283860b99a3db215"
+    },
+    "regen/execution/worker_owner.sh": {
+      "bytes": 1164,
+      "sha256": "a57dade2f1613af6d3a16887e85b15fa6008fd6638a564ae69cbbab51fa39fd4"
+    },
+    "regen/fixtures/KHeap_R_lookupAround_salvage_request.json": {
+      "bytes": 32083,
+      "sha256": "e54c97713d9739b267b33f77d0aa6505ab2daf46e5e8fa7800df0c79c88b4c9a"
+    },
+    "regen/fixtures/Stepwise_Codex_Smoke.thy": {
+      "bytes": 121,
+      "sha256": "cc07506ec7eb2c5463eef94e7da1faf5673a9e8a53e470772b77b1a9034ffbc1"
+    },
+    "regen/fixtures/repository-planning-policy-iterative.json": {
+      "bytes": 4242,
+      "sha256": "5c22e7fa73bea053b4679b85fe3537178644c4925910a89c64f4130e50320fee"
+    },
+    "regen/fixtures/repository-planning-policy-v2.json": {
+      "bytes": 2358,
+      "sha256": "b7931b387a9545087945ef4bc0b96d38c40fbfcc8f4feed7b637daf208b95ff0"
+    },
+    "regen/fixtures/repository-planning-policy-v3-legacy.json": {
+      "bytes": 2687,
+      "sha256": "08f4c61561fed3ca1155fbbee185c81eda30f98c1812d6dd8769051ae2a8b6ac"
+    },
+    "regen/infrastructure/__init__.py": {
+      "bytes": 22,
+      "sha256": "1c96738a6afd96d759dc19ee0aec1e10907f0ebcf0e84ff6591cf5cc5da78e73"
+    },
+    "regen/infrastructure/active_wall_budget.py": {
+      "bytes": 3815,
+      "sha256": "4c89470f287a810396cda52894360ff45cf0bdab2bd74c766dd1e8fa9a326fb6"
+    },
+    "regen/infrastructure/audited_llm.py": {
+      "bytes": 14556,
+      "sha256": "8c0a25fb217d3aa8401def35777abb55831f9c9472841f1ff95b8482137c616b"
+    },
+    "regen/infrastructure/checkpoint_budget.py": {
+      "bytes": 8636,
+      "sha256": "c18b10e5a42ba874dd5a9f79420b7b63980af496e61519005f480a11ff5e60f8"
+    },
+    "regen/infrastructure/codex_runtime.py": {
+      "bytes": 9174,
+      "sha256": "55af936f2888bebc635cdb764951953e78f4a7b55564418c34f83529e46e3345"
+    },
+    "regen/infrastructure/codex_session_watch.py": {
+      "bytes": 20188,
+      "sha256": "60f1850e89b782ccf3ced425842681e650031a406778fc79598ffffa3d2c1c26"
+    },
+    "regen/infrastructure/codex_workspace_session.py": {
+      "bytes": 64770,
+      "sha256": "00b47ff07481e9c9f8bc00c5533bfabf1c16f30a1c1781836c0b866a21bf1a79"
+    },
+    "regen/infrastructure/effective_time_budget.py": {
+      "bytes": 35013,
+      "sha256": "e792d105c58f96c3e8ea638f896946ffcd8e7f015c5c2c707599d30fe8a8e72a"
+    },
+    "regen/infrastructure/experiment_activity.py": {
+      "bytes": 57562,
+      "sha256": "ae5f895f5f65ba771d89cc6e0f7be20af0b34c9d34d84e4fd358219026a0015c"
+    },
+    "regen/infrastructure/experiment_ledger.py": {
+      "bytes": 8095,
+      "sha256": "04e5661159f84b2ac61265426551f206521c15dcea077abff6a471dc40eae860"
+    },
+    "regen/infrastructure/generation_activity_bridge.py": {
+      "bytes": 5738,
+      "sha256": "63f3fe6678ebc8fc1a2107c548f2b14d3be6f48c222bc0d99742a168155690e8"
+    },
+    "regen/infrastructure/generic_continuation.py": {
+      "bytes": 34506,
+      "sha256": "c260855cd54455b4c651ebd7c20e7e884baaa0a037006cd7af946a737d06f07d"
+    },
+    "regen/infrastructure/incremental_log.py": {
+      "bytes": 18633,
+      "sha256": "100b827467855dbfb29977d23a2ec27521f7143ab15b0628807376ad9b65a8e3"
+    },
+    "regen/infrastructure/information_progress.py": {
+      "bytes": 3567,
+      "sha256": "86c1ce966b8eff84fd26f512f75308b03d711d62fc4a65122e0a083fa2806109"
+    },
+    "regen/infrastructure/llm_transcript.py": {
+      "bytes": 22149,
+      "sha256": "eb8070a7dc184753d44c5162029315b8de11962214a34b41f79c420c4f93d305"
+    },
+    "regen/infrastructure/model_isolation.py": {
+      "bytes": 6101,
+      "sha256": "a641ea36838c85a23c86e0c7791956da8b0f52501ba8bbbacd034126826c3a1e"
+    },
+    "regen/infrastructure/model_isolation_entry.py": {
+      "bytes": 1428,
+      "sha256": "b7edb291e8ec37e8358d7a938847e6cf97d00c711fe086f24b2516c6d1fc2ca9"
+    },
+    "regen/infrastructure/module_run_log.py": {
+      "bytes": 4202,
+      "sha256": "a259d93e0b8caaa3320df68b3aa6a95f49e7732ad00e01ef9a801e8dd18e908f"
+    },
+    "regen/infrastructure/parallel_generation_budget.py": {
+      "bytes": 43076,
+      "sha256": "31ddf72b24e3cc0223e9f403b297525c2f951a29d06b59ac4c997c0b18f1b901"
+    },
+    "regen/infrastructure/path_identity.py": {
+      "bytes": 1995,
+      "sha256": "f2a137b511dad09b79d5565c2e55bd957826a7c922b520921a1a44ed3d871ac9"
+    },
+    "regen/infrastructure/planning_retry.py": {
+      "bytes": 2584,
+      "sha256": "a108e35b64020b54facde3b4b6026f80eaa625c4f957b676eece1c8d2f149c42"
+    },
+    "regen/infrastructure/progress_events.py": {
+      "bytes": 5191,
+      "sha256": "a98c1661267fe97d527c8bcaa01c563e44e6c2c337b53a5315159e3591a5e8ea"
+    },
+    "regen/infrastructure/provider_feedback_continuation.py": {
+      "bytes": 16759,
+      "sha256": "9128188c1c82e67ce7efcaee65d597d08287679683004204b1370eb0fdaa8d70"
+    },
+    "regen/infrastructure/provider_http_failure.py": {
+      "bytes": 7278,
+      "sha256": "1ff8d4e1c7951e1905dfa0d2932e21d104c6c9a13da88e24d80f53ae47cc3470"
+    },
+    "regen/infrastructure/provider_recovery.py": {
+      "bytes": 820,
+      "sha256": "c63bf55c9cb1d38f5cef1c2556435e8a838751d2e4fc42127030538b65199e37"
+    },
+    "regen/infrastructure/provider_request_accounting.py": {
+      "bytes": 18892,
+      "sha256": "b25a662bc0e89440724d5ee226ca2b931a19d31426d4a5d0186387196e8f2f34"
+    },
+    "regen/infrastructure/resource_budget.py": {
+      "bytes": 12727,
+      "sha256": "7d0d0fa07ee2de82329358578175017ff7e64cfe089c8a1b0c899ce94b6c6f3b"
+    },
+    "regen/infrastructure/retrieval_utils.py": {
+      "bytes": 2157,
+      "sha256": "55591d13a5741a90b8d9abaf1bb9157b5b761329d8a729f7a90905119cae7cfb"
+    },
+    "regen/infrastructure/reviewed_planning_budget.py": {
+      "bytes": 11582,
+      "sha256": "6da8259d6555466ed3121bad4c5fc4972e6a4a7822c6afab022ba3da8c4c9c25"
+    },
+    "regen/infrastructure/runtime_budget_correction.py": {
+      "bytes": 15968,
+      "sha256": "c467269600a26a53bd248d5e4dca135712583bff420289224972c45fe9552c22"
+    },
+    "regen/infrastructure/theory_activity.py": {
+      "bytes": 17820,
+      "sha256": "f5f644737b782cbb7c92ea0a88da34fc681217cce3e4161713f35258f8c301ea"
+    },
+    "regen/infrastructure/vero_auth_state.py": {
+      "bytes": 8938,
+      "sha256": "8e77ea953ad34515d336fe27a22d47379051528e7c2f24cc109c25321981c734"
+    },
+    "regen/infrastructure/vero_cli_provider_failure.py": {
+      "bytes": 5585,
+      "sha256": "22a30bcc852c63db32d3d6bdee0d338cc18fdda32559fd25f12eda276c7d5636"
+    },
+    "regen/infrastructure/vero_experiment_observer.py": {
+      "bytes": 61466,
+      "sha256": "1ffde1697dd9f550a46b9cfdc48e3298c7e253c2c7e2ded427735519688aed34"
+    },
+    "regen/infrastructure/workspace_transcript.py": {
+      "bytes": 28395,
+      "sha256": "0c3489a08647157ae385151b7dbcc4f2d6fb5bb433c3161d16f68031d6080077"
+    },
+    "regen/legacy/README.md": {
+      "bytes": 1203,
+      "sha256": "c2866faaea182f30216e0abd535dd91dd48cdea99f163a5e6e603a701608f2a6"
+    },
+    "regen/legacy/__init__.py": {
+      "bytes": 14,
+      "sha256": "dfe4fc7dea8de2fc4393750bb85c20e42b5fbb056c4447fff168b7d8ffe7facf"
+    },
+    "regen/legacy/mode_r/__init__.py": {
+      "bytes": 23,
+      "sha256": "098bec0e0c5a38bf1d1ed40afdcd939a96a8f3b649cf4352a95ac0a1e03e2f3c"
+    },
+    "regen/legacy/mode_r/premise_db.py": {
+      "bytes": 7540,
+      "sha256": "ce6265248b43fba153e9670789f7b9715886a14d008c146cb13cb11847f77ff4"
+    },
+    "regen/legacy/mode_r/regen_incr.py": {
+      "bytes": 118688,
+      "sha256": "221ffbbf88e89709bb4c752ab6dc120daa313f5e3d1b9d56c0c7501d23ac587d"
+    },
+    "regen/legacy/mode_r/repo_metrics.py": {
+      "bytes": 5586,
+      "sha256": "667c45bd04dd7bf7d93dd49da12569f0c53e571c4cb88bce571acff61be26123"
+    },
+    "regen/legacy/mode_r/structural_composition_probe.py": {
+      "bytes": 19885,
+      "sha256": "8b2fe9a03f92ffa56549bef2de620e00b2695b2bb6e7ca3b3ae3dd4a223c7d6e"
+    },
+    "regen/legacy/refine_arm_session/__init__.py": {
+      "bytes": 35,
+      "sha256": "921d0b13e669e039f5fd989d5bf463c87994e9f103b3e4a842f2ad0ae6e7d82b"
+    },
+    "regen/legacy/refine_arm_session/archacc_milestone.py": {
+      "bytes": 268007,
+      "sha256": "3a3b652aa559ac03abe1a431e3e78056988730cbe5885a4b3ee75fcdb314fc87"
+    },
+    "regen/legacy/refine_arm_session/contract_milestone.py": {
+      "bytes": 31678,
+      "sha256": "e7ea35d9d684cca1d6d26aab4c7ded76f49cdc0ca5220562b5ef3511cbbda737"
+    },
+    "regen/legacy/refine_arm_session/framework_checkpoint.py": {
+      "bytes": 11340,
+      "sha256": "f84f3938c73805d5a5e71f937fb3c92c27900d2f9514a318081d85e3fc852707"
+    },
+    "regen/legacy/refine_arm_session/framework_inventory.py": {
+      "bytes": 20241,
+      "sha256": "1e54b699d3c6584fe588130e754bae795982cfc14bac5f0b3c69e7b57f566be5"
+    },
+    "regen/legacy/refine_arm_session/kheap_milestone.py": {
+      "bytes": 8234,
+      "sha256": "f9a701db4d0799b0d052b69c753d74f9ade38aee069c224ad277d5224fd6da75"
+    },
+    "regen/legacy/refine_arm_session/run_theory_generation.sh": {
+      "bytes": 13635,
+      "sha256": "db106b86a29f729a9a13717241a9b9eadfdba68bc858e5e08e9fd4250e825f76"
+    },
+    "regen/legacy/refine_arm_session/session_seal.py": {
+      "bytes": 12151,
+      "sha256": "d20034a248605b93199f2d8f2d144511fc180816b9097b43d91c33650a506076"
+    },
+    "regen/legacy/refine_arm_session/theory_audit.py": {
+      "bytes": 5700,
+      "sha256": "c964aa7113c2ceff71f50aa994fa1fe67a727af30e604bda3e29d9309f110030"
+    },
+    "regen/legacy/refine_arm_session/theory_checkpoint.py": {
+      "bytes": 18559,
+      "sha256": "0969958253f968aebc82735201cfa37d4e51a7ada0dda0f98140240ee6635402"
+    },
+    "regen/legacy/refine_arm_session/theory_export_planner.py": {
+      "bytes": 12311,
+      "sha256": "2f29a4b02e99b517530a64f9b390fcc75cf19d7871c3ec6099667d2612af9e0d"
+    },
+    "regen/legacy/refine_arm_session/theory_preflight.py": {
+      "bytes": 17562,
+      "sha256": "c8beff74a3ba4262d2d7a02c93a4bfa4a32e12b5bd5247ae5c79f47fc9600a8c"
+    },
+    "regen/legacy/refine_arm_session/theory_trace.py": {
+      "bytes": 15398,
+      "sha256": "ec44d727a0791c07975871e054a377a2c92af713c0dff5bd47c5d43129c54027"
+    },
+    "regen/legacy/refine_arm_session/transcript_inventory.py": {
+      "bytes": 5761,
+      "sha256": "91cb69c2c0510bb615120fdf3f8153c501dd2c3ecb424e02890bfbe6a5442f41"
+    },
+    "regen/legacy/repository_planning_compat.py": {
+      "bytes": 1117,
+      "sha256": "e811b163281eac7beddbc0af40965dac73bd0cf0745ac79a6584d9c7540876d6"
+    },
+    "regen/legacy/session_planner.py": {
+      "bytes": 39495,
+      "sha256": "4466dd6bb14a219fb9c4fe921e517332a2239aee9cbb26b38cf18b5a2c1fe610"
+    },
+    "regen/legacy/whole_theory/__init__.py": {
+      "bytes": 29,
+      "sha256": "8d5d13da20dd1fbeb7c4f3e8d2d682b182da0c59f604fd0f93d98bf58eb30b2a"
+    },
+    "regen/legacy/whole_theory/regen.sh": {
+      "bytes": 10533,
+      "sha256": "e10b23147a93c6d79567aa97d0c7189f283d1d9b447707ea7da7034a19f7b08a"
+    },
+    "regen/legacy/whole_theory/regen_agent.py": {
+      "bytes": 8858,
+      "sha256": "764d7a4689bb5601bffad67d4759eabbb93ac0d532df2353e06f6c9e12b8b36a"
+    },
+    "regen/legacy/whole_theory/regen_strip.py": {
+      "bytes": 4559,
+      "sha256": "3373a8b6d6924d053dc59b396b56b613340a320961a7bf54c86ca6b5d5f2c697"
+    },
+    "regen/legacy/whole_theory/regen_triage.py": {
+      "bytes": 6846,
+      "sha256": "cf6dca8a4ee502b892e83e69edf35a6a00daf63ad1978a71d8ea8bddab6e4582"
+    },
+    "regen/planning/__init__.py": {
+      "bytes": 16,
+      "sha256": "9eea281c197d8e1c83a29e606e20bad5d1220a87d024d29e698cc3703ed8b07c"
+    },
+    "regen/planning/and_or_file_planner_supervisor.py": {
+      "bytes": 28996,
+      "sha256": "e9cbe667fd7348531ce2ff411949606154e55053e1ad24ee7fce41838f8419ed"
+    },
+    "regen/planning/and_or_problem_planner.py": {
+      "bytes": 87087,
+      "sha256": "8a7c3fdce872091cc6bd56f86bc889b8be7aa47c88d48457a469daf7f4aafeee"
+    },
+    "regen/planning/async_observations.py": {
+      "bytes": 161,
+      "sha256": "3c7516132a247d862a4817d4861a8e1b8290882ba6e18e3b93aba7164c5d1131"
+    },
+    "regen/planning/attempt_memory.py": {
+      "bytes": 1746,
+      "sha256": "5f96296f421e6aca769b5a7826b1109b7e4b523207116b299975bb68914ccb0d"
+    },
+    "regen/planning/attempt_views.py": {
+      "bytes": 4727,
+      "sha256": "2859c5a54bb55cab6b6de874fd0bd7908aecc54c73ce7d9ac4894a694b19400c"
+    },
+    "regen/planning/automation_advisor.py": {
+      "bytes": 7823,
+      "sha256": "bda116f7196567b2cde9f1a7046a4df6483d43ee9ac47d325c2d24e5230856ca"
+    },
+    "regen/planning/batch_file_planner.py": {
+      "bytes": 91644,
+      "sha256": "7c2dd64033612da074f0aba74baa86faf87f2f2f868f615303fdcbad6f902f22"
+    },
+    "regen/planning/batch_routes.py": {
+      "bytes": 5409,
+      "sha256": "e0f441eb074868a69fe1218784aef26267844e1a68771fad01c005eb07ebf391"
+    },
+    "regen/planning/bounded_prefix.py": {
+      "bytes": 9380,
+      "sha256": "e8d91876e89b85168affbc62903a4549832f44e9438c2ca8b275d29ad034c175"
+    },
+    "regen/planning/contract_and_or.py": {
+      "bytes": 31651,
+      "sha256": "b78154666cd9e8f1bbf48c6494e6ade8b4b4c6f1f11842719931c3965dfa43c9"
+    },
+    "regen/planning/declaration_index.py": {
+      "bytes": 4684,
+      "sha256": "d202460c57c42fa258e2f9a81ea32dc70dd42b2f93bacb3ffa20aff011f23cfd"
+    },
+    "regen/planning/definition_queries.py": {
+      "bytes": 1574,
+      "sha256": "834440b1358f01f36734cd50290219f7d8bd2ef8ebd293d954db0fc61337819e"
+    },
+    "regen/planning/document_interface.py": {
+      "bytes": 16611,
+      "sha256": "291b8aace79ac1408dd696aa7dff23e43f1d557f07ca7e5170e230d251d8b41c"
+    },
+    "regen/planning/document_recall.py": {
+      "bytes": 6553,
+      "sha256": "925a110f1a05342f9007b96ad5cfa62809c74294e722e02308c5a17baa207833"
+    },
+    "regen/planning/file_planner.py": {
+      "bytes": 20452,
+      "sha256": "0cd85140889cdf623703812d5ea5cd2904c31f4e9ebe424e36075b88eb70296d"
+    },
+    "regen/planning/generic_codex_agent.py": {
+      "bytes": 39675,
+      "sha256": "45b3f18535e2dceb77bae3487d26d5332cc2dda0013f87d6becae092e9712e86"
+    },
+    "regen/planning/helper_purposes.py": {
+      "bytes": 3327,
+      "sha256": "a40c7014169cc19acc4d8e636d206f4bc900c758c6568056f9a370f8970bd4cf"
+    },
+    "regen/planning/helper_selection.py": {
+      "bytes": 10683,
+      "sha256": "82c48ea2ee1e8cdc5001b323ae66e45b1fae8e2079295f5b74ee12d2b962f298"
+    },
+    "regen/planning/helper_use_sites.py": {
+      "bytes": 6901,
+      "sha256": "5c81d907a56520b1795d73ff8002d5c82f5348dd1b8510397a7f06b23cb8599e"
+    },
+    "regen/planning/import_contract.py": {
+      "bytes": 18634,
+      "sha256": "d3d364605c68dcbe03d3627f0856dceeea8b631f669edc32cf97313dc8bb4b41"
+    },
+    "regen/planning/iterative_planner.py": {
+      "bytes": 13924,
+      "sha256": "1b741e1e8079d12656c303013a62119cd07649a3b32b37b240787fb066d9f4ba"
+    },
+    "regen/planning/local_proof_outline.py": {
+      "bytes": 9736,
+      "sha256": "2bf76d021d11dd82217387e895a5e927a3ed86c2f3487bcf31ed12286d531625"
+    },
+    "regen/planning/observation_memory.py": {
+      "bytes": 5682,
+      "sha256": "bda082b6036dda54347df74af8082658e33ba1c4c9bc6bbc0c808bc6a796b545"
+    },
+    "regen/planning/online_policy_composition.py": {
+      "bytes": 69389,
+      "sha256": "12de2948c5dd3b066dc7adbf9416614da488ffa8f10716b44a908744ff0b0b0d"
+    },
+    "regen/planning/owner_blind.py": {
+      "bytes": 6285,
+      "sha256": "d76539ecc6af0ad54f22d901a68f59d0bf24fcd035a8c9880cb6027b39e3f114"
+    },
+    "regen/planning/parallel_file_planner.py": {
+      "bytes": 98951,
+      "sha256": "fa407c26d0f2f17f4e7896a736fa7ebf255474cbabaa17493a8cae67dd3cf7ea"
+    },
+    "regen/planning/plan_review.py": {
+      "bytes": 15882,
+      "sha256": "6bb6a12bf6efa1290866459524a2fb0eb2b37e3af79c7471f28eadad5fdddb47"
+    },
+    "regen/planning/plan_revisions.py": {
+      "bytes": 6674,
+      "sha256": "689344955205ec66c483dbb2c97856bd4a2b91055303d41501f4254bb3a98a1f"
+    },
+    "regen/planning/planner_context.py": {
+      "bytes": 8701,
+      "sha256": "30267db258a505c13b351bb1d76a19925e2b2c35ab25aa58ed6514e6392094e0"
+    },
+    "regen/planning/planner_efficiency.py": {
+      "bytes": 9300,
+      "sha256": "d1432031f2301b4462628322f3ee4d1e02d318bb6776ccf540f62ce7941e8266"
+    },
+    "regen/planning/planner_io.py": {
+      "bytes": 1764,
+      "sha256": "cd0369dfca7f7cc7bdd069cd5abac59cec89cd0ecab68483bae20e4e7cc0f864"
+    },
+    "regen/planning/planner_owner_guard.py": {
+      "bytes": 1824,
+      "sha256": "29aff5e3acbb6cc39fdebe6bb45530a6fdd4401bd3916aea5a23708327eb5423"
+    },
+    "regen/planning/planner_workspace.py": {
+      "bytes": 19384,
+      "sha256": "0223f702891c5e1186c235260d23929e0e4e5f75f4f121ce8da285f5a5a55793"
+    },
+    "regen/planning/planning_freeze.py": {
+      "bytes": 3699,
+      "sha256": "ef3f13e3ca693a1d6bf4e07a7423c71fd85e9087e72c4ea93e58cd71bd062408"
+    },
+    "regen/planning/premise_retrieval.py": {
+      "bytes": 21754,
+      "sha256": "39f53f62d12a53548a7be15a8405ccbf1acd820b10c8a83b697b20c05facf48f"
+    },
+    "regen/planning/proof_graph.py": {
+      "bytes": 19295,
+      "sha256": "f427d0d7f0b5cf3acf163d8569cbc0c1b741c19280996dfd55736b16c626bb67"
+    },
+    "regen/planning/proof_workspace_agent.py": {
+      "bytes": 21705,
+      "sha256": "d4598348886659785072ed12227bb29467bee109da110b41c3fa073fc9a7d58a"
+    },
+    "regen/planning/repository_plan_contract.py": {
+      "bytes": 10762,
+      "sha256": "0d407e616fd7ab7fc8f20b7eadb61cc6088431c878b11c54c90a0a8edec8db92"
+    },
+    "regen/planning/repository_planner.py": {
+      "bytes": 49348,
+      "sha256": "0d410a29015e49741ed1c15c067ba1ccd3fc4a328b233c19b6941a400bac3270"
+    },
+    "regen/planning/revision_decisions.py": {
+      "bytes": 1224,
+      "sha256": "a6f87342cba2cfc62f034364645770b44546e46a1719d8d64e58b190025e6066"
+    },
+    "regen/planning/sketch_assessment.py": {
+      "bytes": 14388,
+      "sha256": "1955f4950c7073a28ddc43ff73ac1edd2629b2790bce0fbfbe6b52392d69ee4a"
+    },
+    "regen/planning/sketch_check.py": {
+      "bytes": 20609,
+      "sha256": "d7d7d0e29e7a708a44f755970042f6c18103b7f7818bd15bdebf40cd6bd4fc0c"
+    },
+    "regen/planning/sketch_phases.py": {
+      "bytes": 6186,
+      "sha256": "aad54d38614900b9c73e373aea03d83348f8231bb9b007fdce8381404dccce34"
+    },
+    "regen/planning/sketch_workflow.py": {
+      "bytes": 20069,
+      "sha256": "2db5bdf69d8e7b1735809c999a020e2e89b70d5fd6db2d5a61ac27876bf2b39e"
+    },
+    "regen/planning/theory_document.py": {
+      "bytes": 26257,
+      "sha256": "6ee6bb9df1c033d8accc01088c86263937c7232ed13a8529bf480f74444cdd00"
+    },
+    "regen/planning/theory_plan.py": {
+      "bytes": 32264,
+      "sha256": "993bfe88064d7f9eb443c6f0d801e159e22de18d7d91a82f5b18f969050684b1"
+    },
+    "regen/planning/vero_plan_audit.py": {
+      "bytes": 10078,
+      "sha256": "3c8bd04c7885fb17690c2535e8eb9be5b56b1c179497a22405b703a0acdce21a"
+    },
+    "regen/planning/workspace_harness.py": {
+      "bytes": 15976,
+      "sha256": "ef87cd12e028b7f4a48c45a84b31345d4554f551c9cc415f33f749cf7851d444"
+    },
+    "regen/planning/workspace_planner.py": {
+      "bytes": 24558,
+      "sha256": "d4319a4cb45d88922a72956d98c9a68dea11e636a408a45c908fd79967c9170f"
+    },
+    "regen/planning/workspace_preflight.py": {
+      "bytes": 6109,
+      "sha256": "b809a610fb451080e77fad810cd2d986b2ff521a758c8ef41a4c9cddba2df08c"
+    },
+    "regen/planning/workspace_tools.py": {
+      "bytes": 1657,
+      "sha256": "2f6262cc2aea53d3268ad8c82522ab6b7bb668a2e884ce33ab4b3b25beea7268"
+    },
+    "regen/planning/workspace_validation.py": {
+      "bytes": 9166,
+      "sha256": "50e6d281a810a254562bae4e1b2659d285cf15ca599d6e7887665f41388cf365"
+    },
+    "regen/preparation/__init__.py": {
+      "bytes": 19,
+      "sha256": "dc6400cd86e766eea972c93a327902cc320e4301485cc1ad8f1348d3f0fa4167"
+    },
+    "regen/preparation/checker_context.py": {
+      "bytes": 8049,
+      "sha256": "0f258074798aa981f150493b4be3486e749f3f712c635225577cf060a80901cd"
+    },
+    "regen/preparation/command_necessity.py": {
+      "bytes": 10729,
+      "sha256": "d4f8ac84ca5f6d11118454da644e21557184d445d2a87a8a298cee58a83b9e28"
+    },
+    "regen/preparation/contract_command_inventory.py": {
+      "bytes": 16283,
+      "sha256": "900d48717f26b34672c2f706f84d71f390a323e23fa1febb2cd1ed5947db07df"
+    },
+    "regen/preparation/contract_extractor.py": {
+      "bytes": 16997,
+      "sha256": "5f40007af91a9925d07d06e72e59d3f1e9eaf3ce32eb57c85dfcd6051827aa8b"
+    },
+    "regen/preparation/environment_dataflow.py": {
+      "bytes": 6126,
+      "sha256": "24e43c567b540368b4bfed4ee5cf71ad56413fb97a243707900e758921d80ec5"
+    },
+    "regen/preparation/environment_freeze.py": {
+      "bytes": 1740,
+      "sha256": "26ce7e71fd76bc9dff9df35fa454239b76cf21a2c2172bffa8170284648b6506"
+    },
+    "regen/preparation/environment_gate.py": {
+      "bytes": 21202,
+      "sha256": "d263c10a722df8d866ded6789bd32eb4ebb7f5b04dec079c9c382024d2eccc93"
+    },
+    "regen/preparation/environment_journal.py": {
+      "bytes": 10773,
+      "sha256": "94ff1d426be1c8f4093a9a4f96e723cd8ae9b48f8af4ec5ae17112e57f1e09c6"
+    },
+    "regen/preparation/environment_pipeline.py": {
+      "bytes": 13446,
+      "sha256": "61467e97c547616150247c95ff9253dd33cfb888713eb11b193e976625f39951"
+    },
+    "regen/preparation/environment_preparation.py": {
+      "bytes": 11871,
+      "sha256": "928ca0f7ba3e94db2fd33a4e15cc5d1f094e801d2a079a924ae67c9cddcce277"
+    },
+    "regen/preparation/intervaltree_dataset.py": {
+      "bytes": 11247,
+      "sha256": "ca5fcc3f90997220839056721bd288dfe9159bc873a124a0816c08f4707b4f48"
+    },
+    "regen/preparation/owner_blind_dataset.py": {
+      "bytes": 7102,
+      "sha256": "b5aafcce4d1e32e77d14351edbe15202b7247c136ec4534378b823c7ba6a0984"
+    },
+    "regen/preparation/planning_input.py": {
+      "bytes": 28222,
+      "sha256": "438a8ea18c47ad04d55b1d1f94f3ad8d8a871ac65f0bce374da1e5ee364cf48f"
+    },
+    "regen/preparation/premise_catalog.py": {
+      "bytes": 7578,
+      "sha256": "9122d33167613d4a85b0ffcac2d907f622fd51dd0147c643fdaee26a406eba64"
+    },
+    "regen/preparation/premise_database.py": {
+      "bytes": 8953,
+      "sha256": "0d959c3c16c28925628b3f64c29fd97d71b8892260c8548a063dbe48f9a422b6"
+    },
+    "regen/preparation/premise_export.py": {
+      "bytes": 20203,
+      "sha256": "917799fffffc0e8e256a24d55df5e6925088aa011357fa58ae54547ec01cc292"
+    },
+    "regen/preparation/premise_source_evidence.py": {
+      "bytes": 3791,
+      "sha256": "1fab4fa28afdaa939c072be1fd019d51174f5a19b7ed0dae7faf553e3f0fe1a0"
+    },
+    "regen/preparation/refine_campaign.py": {
+      "bytes": 13136,
+      "sha256": "2ad81800c89aa55b8a7039e5815f1dd93c5a5d58f03cc91f9e66fdb7d1ccfe19"
+    },
+    "regen/preparation/regen_extract.py": {
+      "bytes": 10808,
+      "sha256": "7b180179187e1ff0aa3bcfea0c2a70ef7c63f72c8c69e949e307b61468d77381"
+    },
+    "regen/preparation/semantic_base_builder.py": {
+      "bytes": 15096,
+      "sha256": "8814dd8a12ce3831758e87011b069f3c495d4ae6bbb565ec35f31235bcb1aa78"
+    },
+    "regen/preparation/upstream_heaps.py": {
+      "bytes": 2499,
+      "sha256": "a67d66407ae0b25cb2147bcbb40bb529c1bc03db8962a097ef8b9905955ff514"
+    },
+    "regen/replay/__init__.py": {
+      "bytes": 60,
+      "sha256": "43b40022e6537b1a13a82c98f16b55754d39cb3d6ed94d624a8b61efd05eb349"
+    },
+    "regen/replay/incident_checks_codex.py": {
+      "bytes": 12429,
+      "sha256": "6d54d338218507d4752fbd35bab47be1446f9116b7f624efb2b0f88e3b36b435"
+    },
+    "regen/replay/incident_checks_history.py": {
+      "bytes": 9096,
+      "sha256": "4f873c1e19a8de49b21913b68364551dfe64c03bb30a6e71a5c6c99fd09aaa43"
+    },
+    "regen/replay/incident_checks_state.py": {
+      "bytes": 10882,
+      "sha256": "ca2da3acadb4a3b32372f2ee5322c05fefa814290c10f9eef11586e497c1f3df"
+    },
+    "regen/replay/incident_checks_transport.py": {
+      "bytes": 19166,
+      "sha256": "cd0223b827bb7dabfd478ec8f1862ba2aef8b745e1f8f452b07499d1b38e7d84"
+    },
+    "regen/tests/__init__.py": {
+      "bytes": 13,
+      "sha256": "52ab956d2dfecee5d391ad381e5b8a8428b60473fe21f1f761ac7a91537fa579"
+    },
+    "regen/tests/current/__init__.py": {
+      "bytes": 23,
+      "sha256": "c4adba40c029e3dd0736ab2c04fad3a214332cadb2c62d820b6f4d4ca2c0c56f"
+    },
+    "regen/tests/current/fixtures/model_overlap_actual_notifications.json": {
+      "bytes": 1911,
+      "sha256": "e72e391e8f2e8fb39174fbfab96cc8d23e1b0cfad7b2c9611e30b7ccca3b32e3"
+    },
+    "regen/tests/current/fixtures/model_unclosed_delete_baseline.json": {
+      "bytes": 3193,
+      "sha256": "2812ad54895105835b283cc3d87af6f0329d2a4e8f645747949769a9121af65b"
+    },
+    "regen/tests/current/seal_fixture.py": {
+      "bytes": 2285,
+      "sha256": "ab793a57181df6c0fd9868edbc434ef7992b4a6cff2833bb053b920b7f1fa5c5"
+    },
+    "regen/tests/current/test_active_wall_budget.py": {
+      "bytes": 6684,
+      "sha256": "fba67d06ea537c0aecae1f90ef5ee30149b802db8c12fd0e86718828847b0027"
+    },
+    "regen/tests/current/test_activity_publication.py": {
+      "bytes": 8059,
+      "sha256": "73c2f016260add7b55b2e240b3d5f16f7049f3c9b0d8901f73d803adf4de74f7"
+    },
+    "regen/tests/current/test_and_or_problem_planner.py": {
+      "bytes": 25542,
+      "sha256": "692dd1a467a5fd7472259ef373877f8b71743ca8af63d87128ded9c8a2ef4bd1"
+    },
+    "regen/tests/current/test_application_release.py": {
+      "bytes": 1227,
+      "sha256": "425de4f444a301521fa6d6905d05cf1a34fba76251ea1aba449f28d6bfac5af6"
+    },
+    "regen/tests/current/test_arch_context_reuse.py": {
+      "bytes": 5536,
+      "sha256": "e97b0c43b158ee2301a996b2cfaa5a1fc1309f0b15877a4b9c069498f505a1b5"
+    },
+    "regen/tests/current/test_async_observation_memory.py": {
+      "bytes": 5185,
+      "sha256": "c05f30e4a82d93669136c9abb8f9b6db185b2e879f02e36be881461879799c52"
+    },
+    "regen/tests/current/test_attempt_memory.py": {
+      "bytes": 3153,
+      "sha256": "bf76e56582fa6563c73c5acff7c2e62af745b77d3880d7b9f5bb15cebf6d6f59"
+    },
+    "regen/tests/current/test_audited_provider_lifecycle.py": {
+      "bytes": 6835,
+      "sha256": "682106e2b31f06f3fbef2d0e925724bdd1b8cdf02ebb2f05285fb19f22b9091d"
+    },
+    "regen/tests/current/test_automation_advisor.py": {
+      "bytes": 4764,
+      "sha256": "b2380d3a1894331143a8574f20fae5edb8b7e85d79a8d5854615706aaae7ca9c"
+    },
+    "regen/tests/current/test_batch_audit_evidence.py": {
+      "bytes": 7853,
+      "sha256": "807fca8a9509a003b2b1ababb3a395a70f5f63982f2e3908f4d98cd7e4383e42"
+    },
+    "regen/tests/current/test_batch_declaration_coverage.py": {
+      "bytes": 7326,
+      "sha256": "f0106b651fac9f8769c5e9f456474f59a474c31a080dcd33c83c16c6ba8cb35e"
+    },
+    "regen/tests/current/test_batch_file_planner.py": {
+      "bytes": 20342,
+      "sha256": "baa3b92a2fbc7f37ba5f90c0402286a7471a31c7d8f941425cf2754069e06b37"
+    },
+    "regen/tests/current/test_batch_first_priority.py": {
+      "bytes": 7355,
+      "sha256": "bfa1133d5d9154b197cc7ed80116d9514744669141aaf8961dfe2e49bf7c7ad9"
+    },
+    "regen/tests/current/test_batch_malformed_memory.py": {
+      "bytes": 9015,
+      "sha256": "7c388cbe35bcda857a4a96ea984e0bea14f1703d326611db6211bf21a62c9fec"
+    },
+    "regen/tests/current/test_batch_memory_recovery.py": {
+      "bytes": 7330,
+      "sha256": "f01f3a190236170ef1d9d5a96eac3f778588d53add2d3c398a8b98d96a6fba3d"
+    },
+    "regen/tests/current/test_batch_query_memory.py": {
+      "bytes": 7972,
+      "sha256": "ca88933eb47da7f1420c22e9209930f4cbfb3094728e1074950571aa8a2615d3"
+    },
+    "regen/tests/current/test_batch_read_ids.py": {
+      "bytes": 6868,
+      "sha256": "924273a325a0855ede5bad09b87355192bd1c53d35042cb5d07601575404e511"
+    },
+    "regen/tests/current/test_batch_read_retention.py": {
+      "bytes": 6229,
+      "sha256": "99740d54046acf9e5464bf90cbe400caa54a23e6512a9c96e83840609d2e9649"
+    },
+    "regen/tests/current/test_batch_recovery_failures.py": {
+      "bytes": 6953,
+      "sha256": "0e520366a10293a10f136c1679561e0d6b111101c02ac21946f3b2ff9c5b866c"
+    },
+    "regen/tests/current/test_batch_recovery_memory.py": {
+      "bytes": 8484,
+      "sha256": "07682605878c61ff756d894b15da865e8d3b639bc018249dcf7576673f09ec16"
+    },
+    "regen/tests/current/test_batch_routes.py": {
+      "bytes": 3064,
+      "sha256": "933e1ec4375afb09a7d4bb891a192ba054f18a907c8b01c858d95c7f7985ae0e"
+    },
+    "regen/tests/current/test_batch_timeouts.py": {
+      "bytes": 10109,
+      "sha256": "087532baeede59cf0f62727db2b9f2b9ed2083a5773095b7df91610652f89572"
+    },
+    "regen/tests/current/test_batch_timings.py": {
+      "bytes": 8315,
+      "sha256": "51532372ce66cc3b660eb16bb544d455de74605e2aaecf14a126c4ccd2237726"
+    },
+    "regen/tests/current/test_batch_workspace_focus.py": {
+      "bytes": 5820,
+      "sha256": "2c92a7d1e88ed4cd524ebd2d309bd5807bf268dc847a5a2ab23ca1871ba04ed6"
+    },
+    "regen/tests/current/test_bounded_prefix_strategy.py": {
+      "bytes": 17102,
+      "sha256": "104012e75b6c2f614989f4cd9183fdd34cb1bd0fd6b79451a347af9495959050"
+    },
+    "regen/tests/current/test_check_executor.py": {
+      "bytes": 11379,
+      "sha256": "6a9bddb72a9415e5ca09ba0cd124235a1185f694cd0fc2683be0e4c2dd844995"
+    },
+    "regen/tests/current/test_check_executor_failures.py": {
+      "bytes": 12578,
+      "sha256": "bc9e653b936206b751059fc339f8ca1467832a9f84e475d6ec3f8dfe872cd8f4"
+    },
+    "regen/tests/current/test_checker_isolation.py": {
+      "bytes": 7843,
+      "sha256": "000eb7686d4ed844fbf05ff8ed51952b11e392e9d89f45b4ff3b823f3d9b4df0"
+    },
+    "regen/tests/current/test_checker_policy.py": {
+      "bytes": 6056,
+      "sha256": "b17ba035f0687e43fed265e271acfc6501f515faf117633c53e733816aa13964"
+    },
+    "regen/tests/current/test_checkpoint_budget.py": {
+      "bytes": 4684,
+      "sha256": "3d12ea7852ea8b6e6d0d3f8ea2756565a3c1635ebe49784f4ef4a94ba87abaf8"
+    },
+    "regen/tests/current/test_checkpoint_trial_budget.py": {
+      "bytes": 12499,
+      "sha256": "04457d1b9b6f08522e87f2dbd8e284e07bbd07d70c8a60287a2f3ab09453cde1"
+    },
+    "regen/tests/current/test_clock_method_parity.py": {
+      "bytes": 5855,
+      "sha256": "97abfd5e3c08208a4fa9c1ef5484803704e5d178c0ac564f42283f076224875c"
+    },
+    "regen/tests/current/test_codex_runtime.py": {
+      "bytes": 9321,
+      "sha256": "a82153b271e9fd24a1cf6b6f73beae0bf337e942de79effa33a0f8a13bff532b"
+    },
+    "regen/tests/current/test_codex_session_watch.py": {
+      "bytes": 10478,
+      "sha256": "cd0b5a5ae64bfcc0c7a7e44b8089231115de2d56b54edb6746e938c31471b708"
+    },
+    "regen/tests/current/test_codex_workspace_session.py": {
+      "bytes": 21803,
+      "sha256": "0b86fbfbdb86880aaae36d66620b4a9ff1c861fd70a0e999dc2f0987ea298f15"
+    },
+    "regen/tests/current/test_collaboration_plan.py": {
+      "bytes": 13406,
+      "sha256": "9c4306f6b4e8cff505853ea4c6722db431bcf39e3d42c68ae6c4bd5e294dd30c"
+    },
+    "regen/tests/current/test_commit_serialization.py": {
+      "bytes": 2768,
+      "sha256": "1c9660ea27987e84f968833ecf4ddd303417d77886a2fe706144c152cbbae7ad"
+    },
+    "regen/tests/current/test_compact_document_flow.py": {
+      "bytes": 8125,
+      "sha256": "e74133840eb7bbc6bb792f68c4fb6d8fa7d70b17e37282af8d2ef79f7f9dfdac"
+    },
+    "regen/tests/current/test_container_removal_race.py": {
+      "bytes": 2000,
+      "sha256": "64fb24f85413c9f50685ba9284fd487de0de5b17dc3c7a95b2604694a93ae9cb"
+    },
+    "regen/tests/current/test_continuation.py": {
+      "bytes": 1879,
+      "sha256": "3d04a96dadc6f2801e1490a380cb602e7ace04de358220ecb7e7371dee8da0b2"
+    },
+    "regen/tests/current/test_continuation_memory.py": {
+      "bytes": 7159,
+      "sha256": "3a63bfea61f10540f3ddf0602c52e0492efa84d641b327d7ab3c838cd4eea59f"
+    },
+    "regen/tests/current/test_continuation_policy_binding.py": {
+      "bytes": 1413,
+      "sha256": "6393d2b4e61a84d69b564cf86a83f35c36b89b834f181cc05a64335a79b2f612"
+    },
+    "regen/tests/current/test_continuation_providers.py": {
+      "bytes": 9468,
+      "sha256": "5467fe07e55df0e8ae8431d33d746b4494230ca9f68b57010fbdf6a281be5dcf"
+    },
+    "regen/tests/current/test_contract_and_or.py": {
+      "bytes": 26675,
+      "sha256": "73547186036a6408255eaa28b604acb1210d967ae25e1bdcb3351b0aae3b3698"
+    },
+    "regen/tests/current/test_contract_and_or_ab.py": {
+      "bytes": 32227,
+      "sha256": "432c6e7d7f1c294c244d999815cd801eff7b78f6d8bd41f46331e0950e18618e"
+    },
+    "regen/tests/current/test_contract_and_or_serial_workflow.py": {
+      "bytes": 18706,
+      "sha256": "16904d346cc2dba0481ebf1ea737c0dcbfecc302730fe9cc6400a2c3703e7a35"
+    },
+    "regen/tests/current/test_contract_closure_continuation.py": {
+      "bytes": 15372,
+      "sha256": "4317e371fbe79e1e8a78f876d42fc98b666c13af99901aff93fb4809be022641"
+    },
+    "regen/tests/current/test_contract_closure_validation.py": {
+      "bytes": 24880,
+      "sha256": "711a97f7d2eb921dd4ed3d8db69eba0ecbaa6378d5bd264186c2476b43ed8753"
+    },
+    "regen/tests/current/test_contract_extractor.py": {
+      "bytes": 3553,
+      "sha256": "f7d4f252696318115c605da9ce5558b90d32b5d6de31558e7787df0cf956027e"
+    },
+    "regen/tests/current/test_contract_only_inactivity.py": {
+      "bytes": 1914,
+      "sha256": "563b22b2c6d36884ff443c4f7acaf72bc5a7c162bc2d7783c388c4d0c8353404"
+    },
+    "regen/tests/current/test_controlled_checkpoint.py": {
+      "bytes": 2601,
+      "sha256": "ccea47228cbc1d2b5b75b7ab7177815c164067b2277bc4c35e3e465dd2122438"
+    },
+    "regen/tests/current/test_controlled_clock_trust.py": {
+      "bytes": 8132,
+      "sha256": "e0fc9961589e1a507339dd4f71bc39f2e61c3cff3e6e29d912d7c208a1716a88"
+    },
+    "regen/tests/current/test_controlled_native_replay.py": {
+      "bytes": 15490,
+      "sha256": "038e6d4c7ba34a090df26d5c77cbf6468dceddfcbd9ad7df1aba42e45a35bedd"
+    },
+    "regen/tests/current/test_controlled_proof_experiment.py": {
+      "bytes": 15472,
+      "sha256": "fbc026da51d56af63ba6166fe0e879b1afaf390b317aa5884e489affac8b4566"
+    },
+    "regen/tests/current/test_controller_memory_ordering.py": {
+      "bytes": 5150,
+      "sha256": "2db07c66aa0834da32fdc3c7154cafab550714e2396c00fc5f9da2fba4d2f145"
+    },
+    "regen/tests/current/test_declaration_cache.py": {
+      "bytes": 4183,
+      "sha256": "9de02dd34b520c798c70f4b50a76652dd9ad33036c6bba3b81a4251312331587"
+    },
+    "regen/tests/current/test_declaration_context_reuse.py": {
+      "bytes": 4889,
+      "sha256": "e80a8bea83540c8ee73c6791081352764d37623cc7d7af65a2ee228d44732400"
+    },
+    "regen/tests/current/test_deferred_workspace_handoff.py": {
+      "bytes": 7562,
+      "sha256": "a9d9f2cf69edd76420a7a8946877d1d3ce9b0655bd3f4daca536bb36ec9ab149"
+    },
+    "regen/tests/current/test_document_acceptance_validation.py": {
+      "bytes": 3342,
+      "sha256": "a61d4edead581cd29d9dade0427ccd7ecd1699337eb59b1dfae7f7b7d73ee425"
+    },
+    "regen/tests/current/test_document_concurrency.py": {
+      "bytes": 8435,
+      "sha256": "686fbcbe37b7cc9e0496c96f572ead116c6143f25b004854e5cc2bcc1a8d02b4"
+    },
+    "regen/tests/current/test_document_declaration_checks.py": {
+      "bytes": 6882,
+      "sha256": "9beee4858a576ad8ccbec52db0273f665a93c2b4f61880e21dfea7d5aae3334c"
+    },
+    "regen/tests/current/test_document_edit_transport.py": {
+      "bytes": 5406,
+      "sha256": "1b8e2cfa59fa94104657e3ec8ce3f75c0131ed67f6f28f6a669b3b3cfa0e73a2"
+    },
+    "regen/tests/current/test_document_feedback_pipeline.py": {
+      "bytes": 12607,
+      "sha256": "0afdffec5189a76c5900e21651c104bad7989637b42d4b308d485ba17dd7ce1c"
+    },
+    "regen/tests/current/test_document_interface.py": {
+      "bytes": 5239,
+      "sha256": "0d5220ded0043059e46d9bc273c18dc0a65256b0eaa1b6dfdf005bb21854103a"
+    },
+    "regen/tests/current/test_document_proof_edits.py": {
+      "bytes": 10420,
+      "sha256": "35a929fcd4176caeb1c534e88fb3266f6d92c0e4e297096f356fdb07d5ff7b6a"
+    },
+    "regen/tests/current/test_document_recovery_cancellation.py": {
+      "bytes": 8226,
+      "sha256": "e8ba6cf358b0e37b93d983f0af838fb4401086aa732a6552d3ffd83aee118487"
+    },
+    "regen/tests/current/test_document_registry_compatibility.py": {
+      "bytes": 6243,
+      "sha256": "78c00e877f05faadfcc71b52affb29474232e7f9db1292408b7bea15dc5aa575"
+    },
+    "regen/tests/current/test_dual_native_soak.py": {
+      "bytes": 11157,
+      "sha256": "029395b422c0a9b43cf5a3e305dc7575a510a83e3beba3fd6c78c89133526fdc"
+    },
+    "regen/tests/current/test_early_feedback_validation.py": {
+      "bytes": 2629,
+      "sha256": "a7b0edb9264f57212661b2d3115ac77ff1b8f039ba0ed33a3e3cedb657404954"
+    },
+    "regen/tests/current/test_effective_generation_events.py": {
+      "bytes": 9652,
+      "sha256": "b7cf4abc8bc90947661b79c61ca302cbde36cd69be1a7e1ff5cecc4531b9f07c"
+    },
+    "regen/tests/current/test_effective_time_budget.py": {
+      "bytes": 14197,
+      "sha256": "a5ddbaf5fcf13e9cea1eec3b2a3cd0290ad243ef43118d64e88fb27ad2ed4de9"
+    },
+    "regen/tests/current/test_environment_gate.py": {
+      "bytes": 17240,
+      "sha256": "3fc4f79b77811e8aff94456df737e5c4859bbe418ffcf03b8d2d2ca2518cbbaa"
+    },
+    "regen/tests/current/test_environment_pipeline.py": {
+      "bytes": 13774,
+      "sha256": "c1d7660caadf0abf1ae9f075f6d5d80b338aa2df8114f8fee782fd8f71a0382c"
+    },
+    "regen/tests/current/test_environment_preparation.py": {
+      "bytes": 12504,
+      "sha256": "fbb5a786c7971c2d3a112a3540dfdccb237afea5bf0a3632b059ce55e987bf1a"
+    },
+    "regen/tests/current/test_experiment_activity.py": {
+      "bytes": 37476,
+      "sha256": "e8ecfcf90f57386036b875fe80474d1b17e5739441ea65b703bf4bb9122139b3"
+    },
+    "regen/tests/current/test_experiment_continuation_accounting.py": {
+      "bytes": 5003,
+      "sha256": "20150099fd72e7022c568085f8a49a028d0ebab0f39406e5021f5914f045899b"
+    },
+    "regen/tests/current/test_experiment_logging_parity.py": {
+      "bytes": 6495,
+      "sha256": "cfd59bec17ea254af89611d889bd1fb84254a0dbc7e2cc0bdfd6bf4437e02493"
+    },
+    "regen/tests/current/test_experiment_summary_s5.py": {
+      "bytes": 8047,
+      "sha256": "9ca5371a5fee672ac08f9cd28f9100657dc6ea4c3d0454334f4d9d1e8f5c7b6d"
+    },
+    "regen/tests/current/test_file_planner_recall.py": {
+      "bytes": 4285,
+      "sha256": "9442257668196131437280387093f4df4d971613d318a8e6cc9ff1088ad80b82"
+    },
+    "regen/tests/current/test_generation_clock_trust_bridge.py": {
+      "bytes": 2285,
+      "sha256": "12c1a0530160b2afa1cf958f0b9fbfbf5baff74c6ff7b3dcad456920800d89c2"
+    },
+    "regen/tests/current/test_generation_strategy.py": {
+      "bytes": 3583,
+      "sha256": "45443e01a478265b4db5a63f359a6929b4ab84dabb5b7f2bee87eeec26b18d1d"
+    },
+    "regen/tests/current/test_generation_wall_limit.py": {
+      "bytes": 2494,
+      "sha256": "4b7aa0ec5c038e237a9446ed69f88e5de89ef605a54b7f472dc2513d4091c738"
+    },
+    "regen/tests/current/test_generic_continuation_entry.py": {
+      "bytes": 4497,
+      "sha256": "e8e34515e4a894e27cd26c6a70277188b2bd6858fcbc293622d1ce5d52c8bb02"
+    },
+    "regen/tests/current/test_generic_effective_activity.py": {
+      "bytes": 20547,
+      "sha256": "b090330680a3db670e17a8e2efe8559c651e60a2fce7d377c127ea8daedabf9f"
+    },
+    "regen/tests/current/test_generic_plan_lock.py": {
+      "bytes": 4425,
+      "sha256": "b3507dda5b499a49c7770020ad927bed4fb2df10ed55396324a40a637e81cc6a"
+    },
+    "regen/tests/current/test_generic_provider_overload_retry.py": {
+      "bytes": 13936,
+      "sha256": "e93dc1eae1804af1dc18cb5f68067e36f41b7a3078a1a917d51072bbb48ccfd6"
+    },
+    "regen/tests/current/test_generic_registry.py": {
+      "bytes": 773,
+      "sha256": "f82e0952ca4953f31f5450102b643946367c7f6b5652b39372b1f41d1d436aa4"
+    },
+    "regen/tests/current/test_generic_time_budget.py": {
+      "bytes": 24669,
+      "sha256": "8f882b60bde5e35c0e867e854a038f717f42779d547b2394edcb136b1ce8b445"
+    },
+    "regen/tests/current/test_generic_tool_contract.py": {
+      "bytes": 9359,
+      "sha256": "1f8cff1cee8ca5cc1b1f43b4116b6732e38c743e7446922f81906b15234b979b"
+    },
+    "regen/tests/current/test_gra_recall.py": {
+      "bytes": 6204,
+      "sha256": "ce6b1dd154a9078cc9b5c88a379e92aed2cfd7dda00b5589afda3849c25d975a"
+    },
+    "regen/tests/current/test_green_contract_ab.py": {
+      "bytes": 26232,
+      "sha256": "b0d4aa512e3449b4c76dc20d2afe129f7f5bef0c6d20c9e67a096b2a2771992c"
+    },
+    "regen/tests/current/test_guided_sketch_cli.py": {
+      "bytes": 1577,
+      "sha256": "55f4016f14249364a77e7b18a4553feb297df3b793d9ea199e1fd21850e4e429"
+    },
+    "regen/tests/current/test_harness_acceptance_baseline.py": {
+      "bytes": 1776,
+      "sha256": "eb06bee832fc09e427ff7b81346e59f175f5e7e86650232275e27b37e34c6288"
+    },
+    "regen/tests/current/test_heap_reclamation.py": {
+      "bytes": 5709,
+      "sha256": "ba9bde0e45e64fcd6d4e979e1dfd994a1a752c6ffde374f152fe4dabb7057f9d"
+    },
+    "regen/tests/current/test_helper_purposes.py": {
+      "bytes": 6923,
+      "sha256": "ae86878c4d7fa9bfd01f41d75fa310c2b3ef0349dbb35ad4969bc2975fbaaf28"
+    },
+    "regen/tests/current/test_helper_selection.py": {
+      "bytes": 8353,
+      "sha256": "0c9cceb6d9f82895a4528f026608c476d38201d3a574c2f8960dc3e31b15cce6"
+    },
+    "regen/tests/current/test_history_recall_repair.py": {
+      "bytes": 17085,
+      "sha256": "708e9c7e766b5d65dce4665746e384854b0457eaaab47466a8826b45bf39eecc"
+    },
+    "regen/tests/current/test_hot_worker_observations.py": {
+      "bytes": 6265,
+      "sha256": "02e02dff9f91eb515de4d9237627f11dbc29de644921319f73a08189126819c3"
+    },
+    "regen/tests/current/test_incident_replays.py": {
+      "bytes": 18777,
+      "sha256": "9f791d2cb19e9ac2c76808f9d6f2de530ca6f959ce5ea4926d40f06c4056b31d"
+    },
+    "regen/tests/current/test_incremental_batches.py": {
+      "bytes": 9515,
+      "sha256": "37535cb2f9be09e229188dfa64e0a5bbacea848d8785ad1efa673b0a48f0bc4d"
+    },
+    "regen/tests/current/test_incremental_log.py": {
+      "bytes": 11348,
+      "sha256": "9f9a661b4392c17e1efcb8ae952369978026a18e7af0b8c436d14865ab6d80b1"
+    },
+    "regen/tests/current/test_incremental_reference_cache.py": {
+      "bytes": 8633,
+      "sha256": "2e2172c0ccae1fb8407436474f528966ad724f1ab3c70a53aa574deaa6b1a7ad"
+    },
+    "regen/tests/current/test_input_repair.py": {
+      "bytes": 2707,
+      "sha256": "b9bba78091c9bd888e2b509e0f9632b5285d7bef6baf85bdb1c165b970565695"
+    },
+    "regen/tests/current/test_iterative_repository_planner.py": {
+      "bytes": 8699,
+      "sha256": "4c7db2ce8b956db769a3e4f374fcf36bf79394d0505f131e8179096f39605c10"
+    },
+    "regen/tests/current/test_legacy_seal_audit.py": {
+      "bytes": 7645,
+      "sha256": "26f636805a1e6a17db32b97ffa1b95f12a2c0630d276eb403388eaddb6ac96c1"
+    },
+    "regen/tests/current/test_local_proof_outline.py": {
+      "bytes": 3969,
+      "sha256": "f3aa0dd9080ae78347e015a1eb6dbfa8df4a406ff3921f66a992315a92d64922"
+    },
+    "regen/tests/current/test_merkle_copy_repair.py": {
+      "bytes": 6238,
+      "sha256": "a7cf18065212aa11e54b55e5cf11c44556d3271b44f4f2dcd07793a97f15c9fe"
+    },
+    "regen/tests/current/test_model_configuration.py": {
+      "bytes": 2168,
+      "sha256": "4d39661a46a7b56a16f8d3743fe9c2f36dce96eb79be7318c4ade10425cc4244"
+    },
+    "regen/tests/current/test_model_isolation.py": {
+      "bytes": 4492,
+      "sha256": "a9705c368ecca4e9b3ed964440595e01de8138ecde2215cb5a381f41543f4ed2"
+    },
+    "regen/tests/current/test_model_observation_lifecycle.py": {
+      "bytes": 9098,
+      "sha256": "aebb0e13f6e12b87019efc36984d0bbad10c8f398d390b6bcb04210d545acd81"
+    },
+    "regen/tests/current/test_modular_proof_pipeline.py": {
+      "bytes": 127630,
+      "sha256": "4172e844c7e03084e643f42de5bb9ec15b033e37087e972931019cd762784769"
+    },
+    "regen/tests/current/test_module_run_log.py": {
+      "bytes": 4737,
+      "sha256": "6774b9c37ed3ec1d465987eea40b07b912e20ce66915b60317134228623901ea"
+    },
+    "regen/tests/current/test_multifact_audit.py": {
+      "bytes": 2052,
+      "sha256": "1ecc8433f7fdc791d33f0cc3521e0865d65707a906a11a05cd2042e1c43ac708"
+    },
+    "regen/tests/current/test_native_backend_acceptance.py": {
+      "bytes": 5943,
+      "sha256": "a248437111a602f10a409adc6109957fd16fdae6b7d1c27788c1ea6aac5f1994"
+    },
+    "regen/tests/current/test_native_check_receipt.py": {
+      "bytes": 6639,
+      "sha256": "12a3ce26784a30341b00f411ac62a4ff234ff76efcadaabaa2cf70273fe9152f"
+    },
+    "regen/tests/current/test_native_container.py": {
+      "bytes": 6706,
+      "sha256": "3853dbc609a2337178a078170fd18d5169bfb20c0d30a98a513073869e3052b4"
+    },
+    "regen/tests/current/test_native_exit_inspection.py": {
+      "bytes": 5832,
+      "sha256": "fba9ab3325e676fa755d7a79051765cb616b4269cd42adf820f813fd222ed3b3"
+    },
+    "regen/tests/current/test_native_fact_audit.py": {
+      "bytes": 7278,
+      "sha256": "b819480f0150f678a8169829af72ae73da30262d71e87a761d2f4397110dbbc7"
+    },
+    "regen/tests/current/test_native_locale_repair.py": {
+      "bytes": 4400,
+      "sha256": "fd15fd292494283d2fd600c3c34dd4b620cf086401cab9a3e66c3096897d8934"
+    },
+    "regen/tests/current/test_native_protocol_repair_validation.py": {
+      "bytes": 4019,
+      "sha256": "0fe89bb06216a1a58f948e2ea93844af13f9dc3b645622a5f301ada26ace9c81"
+    },
+    "regen/tests/current/test_node_phase_timing.py": {
+      "bytes": 6710,
+      "sha256": "7fd1e50e628ab55b34386bf41a2054dca053b00f102b9ad2336279c0e56370f6"
+    },
+    "regen/tests/current/test_observation_context.py": {
+      "bytes": 8061,
+      "sha256": "250fb6d5c8a516d059c1bd583c9b7aada656de07e9772956dcf48c86c9803421"
+    },
+    "regen/tests/current/test_observe_integration.py": {
+      "bytes": 5890,
+      "sha256": "82bff8e6d6135614da22fa923284d4c0b0f2e93acc05475f43ff08a6922bb087"
+    },
+    "regen/tests/current/test_online_policy_composition.py": {
+      "bytes": 19802,
+      "sha256": "29b81d7e8533c299233187e61869acf1166f0149bd6e0f6c2e2179ccf5e00d5a"
+    },
+    "regen/tests/current/test_owner_blind_dataset.py": {
+      "bytes": 7261,
+      "sha256": "82b4675c2e11f85f0a681820471a5ee723ab05b148ad0c3cbbeb620ecc83fc1d"
+    },
+    "regen/tests/current/test_owner_blind_planning.py": {
+      "bytes": 4925,
+      "sha256": "607c0abca78e18a4a2f22e4862586990bd301dffbd86a8b44bd744776d41f7ba"
+    },
+    "regen/tests/current/test_parallel_acceptance_fixes.py": {
+      "bytes": 7047,
+      "sha256": "6fa10b794e4cc4da25b7d159b5fa6c6bb830d632526ea064bcdb2e47ccb6ddd4"
+    },
+    "regen/tests/current/test_parallel_budget_continuation.py": {
+      "bytes": 19768,
+      "sha256": "89d0969b4d322fa3984271fdef9bd4af4fe3d23836258815f6343136e2038b7e"
+    },
+    "regen/tests/current/test_parallel_cleanup_basics.py": {
+      "bytes": 2881,
+      "sha256": "5a3c162c18f6fcebf49e66107507c995f1ba036065b228039929e6ac9b40d1f7"
+    },
+    "regen/tests/current/test_parallel_cleanup_failures.py": {
+      "bytes": 8860,
+      "sha256": "262131d204a03a8b05e6f3be453ffe617fa78f1175539c26a514c36749159697"
+    },
+    "regen/tests/current/test_parallel_effective_budget.py": {
+      "bytes": 22894,
+      "sha256": "37c91e0be2568b30e69a562b35f7e02617f8d66fe8904ae34d1292f98e3e1e00"
+    },
+    "regen/tests/current/test_parallel_feedback_retry.py": {
+      "bytes": 9138,
+      "sha256": "c6ece76aa16b2e7388aa4c1ef67dbadf9db19d1f7b3ec6b52d54734db79f4dcc"
+    },
+    "regen/tests/current/test_parallel_file_planner.py": {
+      "bytes": 31358,
+      "sha256": "31f82beb98e2a907be5fcbe37a0568c887728f480d73f0c2da05f7ca6acb49b6"
+    },
+    "regen/tests/current/test_parallel_heap_reclamation.py": {
+      "bytes": 2039,
+      "sha256": "660f0508b6fd04661ad293ea0f4a23dcd4ba187775abeadac7c7f3aafdcb8e67"
+    },
+    "regen/tests/current/test_parallel_http_clock.py": {
+      "bytes": 3936,
+      "sha256": "14e994b6db2423ad571255faec6b2bcdf80498aad042894ea1c5e1dc8312471d"
+    },
+    "regen/tests/current/test_parallel_http_retry.py": {
+      "bytes": 5818,
+      "sha256": "7b35884b92bba439c6e19e23ba02eae73460a896b4bdec4f5720e91a7f947892"
+    },
+    "regen/tests/current/test_parallel_infrastructure_adjustment.py": {
+      "bytes": 12760,
+      "sha256": "5f7eb24a59d1c17ef60aab5288695fd0101024e3f95f4ee50a30e6ecc4c5069f"
+    },
+    "regen/tests/current/test_parallel_provider_cooldown.py": {
+      "bytes": 9918,
+      "sha256": "008c586819b7dd13f62c70e0492925440c59b63a32e4d0f6e999b66b0437f766"
+    },
+    "regen/tests/current/test_parallel_repair_continuation.py": {
+      "bytes": 2427,
+      "sha256": "8a932d71f0fc251f396c3ee52827197c0219ec619c9331f1f2bffce9c897151a"
+    },
+    "regen/tests/current/test_parallel_workspace_memory_guard.py": {
+      "bytes": 5933,
+      "sha256": "bf0c9a95f411958d89159ba9234b8511f64f82ff3f33f1e5d3fbbd1dbcb49bea"
+    },
+    "regen/tests/current/test_parallel_workspace_resource_guard.py": {
+      "bytes": 17407,
+      "sha256": "5a10171c671028cb12cc9757ea5fb8413632b48f057d59469bdb837d347bb86e"
+    },
+    "regen/tests/current/test_parallel_workspace_service.py": {
+      "bytes": 19626,
+      "sha256": "618c951b721a4e93bffd2cd19d35d122328b26765805f68847bc5e75a3aa6a0a"
+    },
+    "regen/tests/current/test_parallel_workspace_service_live.py": {
+      "bytes": 9455,
+      "sha256": "18527d1660dffeb7471fae61ee54563ceaa1f75c7783e2d69387014f13459736"
+    },
+    "regen/tests/current/test_parse_roots.py": {
+      "bytes": 1283,
+      "sha256": "9ae0bc3feb17f29ae38ae5dec541f4189cf0aa55d90e012556746164b2a63b1a"
+    },
+    "regen/tests/current/test_persistent_checker.py": {
+      "bytes": 4761,
+      "sha256": "f7372e133c2b01d23c933d9c4062ea69990b00b4357d0e21a8c916ffb1cb75e1"
+    },
+    "regen/tests/current/test_plan_review.py": {
+      "bytes": 9185,
+      "sha256": "486caa05c4d899225c2f3d6a68b09d6f49acb40e8bbcbef7b344168558d222fb"
+    },
+    "regen/tests/current/test_plan_revisions.py": {
+      "bytes": 4067,
+      "sha256": "95696c39503490010d234a611c7453650f2feb34b4d264336934101fd5f9542a"
+    },
+    "regen/tests/current/test_planner_context.py": {
+      "bytes": 9893,
+      "sha256": "53adb6fc447574fa29ca6d83a825b25c455bb1d8a5ba7df0457f56916a118c95"
+    },
+    "regen/tests/current/test_planner_efficiency.py": {
+      "bytes": 7543,
+      "sha256": "5aa7a62ea8538fb51d47593d786b5ccceeda8755f0fa2bf45c748d91699eb22f"
+    },
+    "regen/tests/current/test_planner_observe_batches.py": {
+      "bytes": 6493,
+      "sha256": "5fac6db575be8e00346f5278a71f9d645d5693616d896a195fe19f1537d32b6e"
+    },
+    "regen/tests/current/test_planner_owner_guard.py": {
+      "bytes": 1661,
+      "sha256": "78d5683ff3484dada107b218f1946d184f981c05f7a15d7b99a5d485c346078b"
+    },
+    "regen/tests/current/test_planner_recall_and_auxiliary_reuse.py": {
+      "bytes": 4631,
+      "sha256": "55394b02bc6668dafeb8f95c87da589d639f1f1e8582b7da2deb7a8e39aebd35"
+    },
+    "regen/tests/current/test_planner_workspace.py": {
+      "bytes": 5208,
+      "sha256": "02baae64be1b74b153ed4ade8d6fbae3dc6a9cb874318ba4984908465b0aae93"
+    },
+    "regen/tests/current/test_planning_abort.py": {
+      "bytes": 1986,
+      "sha256": "80fa8559ccd5d7906d5f9ffe10e38a4698cd8931e1e4cb2bcfe796af5d6dcf84"
+    },
+    "regen/tests/current/test_planning_budget_handoff.py": {
+      "bytes": 13369,
+      "sha256": "d1705a8c186490d5f08a55891a12aa616701a2cc84bd34d8812702f6701d04a7"
+    },
+    "regen/tests/current/test_planning_freeze.py": {
+      "bytes": 3225,
+      "sha256": "e47cd94253f246f9bd540b8c024aa30b206b88c308887b96b87fb5f28b2b3b23"
+    },
+    "regen/tests/current/test_planning_gap_repairs.py": {
+      "bytes": 7078,
+      "sha256": "ae586b18c74d529a7f1db90438a425c73b66d1d16801f7782f43551df0b4e487"
+    },
+    "regen/tests/current/test_planning_input.py": {
+      "bytes": 14936,
+      "sha256": "1584990392f142a80ca75c624c98982c502dfd7f7d7467c93d38fdd36d9352ba"
+    },
+    "regen/tests/current/test_prefix_batch_optimization_validation.py": {
+      "bytes": 1338,
+      "sha256": "b72f3302e8b139409eb40f0fc5d3718d970e83b593d0b78588633be4953c2763"
+    },
+    "regen/tests/current/test_premise_database_v2.py": {
+      "bytes": 8185,
+      "sha256": "f377e82e8108a3a55e734e6c0a67acebdc2ec4539f9ba64ea358c60f3a39d666"
+    },
+    "regen/tests/current/test_premise_export.py": {
+      "bytes": 3472,
+      "sha256": "46833d029719070b4fbc66038df49e7256888264fb1d3260a5066fa6e8ae7c76"
+    },
+    "regen/tests/current/test_premise_recall.py": {
+      "bytes": 11228,
+      "sha256": "b7c99f6a06bca6a36b4a209283799152bd473b24879706444d23da5de63ece85"
+    },
+    "regen/tests/current/test_prepared_checkpoint.py": {
+      "bytes": 3842,
+      "sha256": "e4a745493227ec632e6c7f5b8bf1beeb443340485aabbb314d5eeb48f852395f"
+    },
+    "regen/tests/current/test_progress_events.py": {
+      "bytes": 1761,
+      "sha256": "e68af85718b58d787812bf015ed331f1fc9dcde68ee68627ac0930046df6749f"
+    },
+    "regen/tests/current/test_progress_hotpath.py": {
+      "bytes": 11566,
+      "sha256": "e9a987a0f438ea43e3a2166f24ec0b2bb9b780fc84babedc9dcfc8e069fcb3a3"
+    },
+    "regen/tests/current/test_proof_batches.py": {
+      "bytes": 4615,
+      "sha256": "989714044f9c620a5895ceea56a5b3d85c2d39b8bac8b2909f88f58a6ce4fe0b"
+    },
+    "regen/tests/current/test_proof_commit_cache.py": {
+      "bytes": 8058,
+      "sha256": "d72d07a7c20dafa47c75af5a732e4d8eb939bf9f7ab8b7b622c5361ef80caabc"
+    },
+    "regen/tests/current/test_proof_commits.py": {
+      "bytes": 5611,
+      "sha256": "cb1611f88893a15233f231744d222c23cf3abb4a8f71c93e785ee3eb312bd0b5"
+    },
+    "regen/tests/current/test_proof_feedback.py": {
+      "bytes": 7113,
+      "sha256": "5f6f5149d11143feb5a090ede6fb97dee7e30cbb2b8116bc5e415ee93012c825"
+    },
+    "regen/tests/current/test_proof_idle_watch.py": {
+      "bytes": 6853,
+      "sha256": "6940be198264677703aa321d901cfc3aafbbb844e34c3afc4944215e4ab0dd0a"
+    },
+    "regen/tests/current/test_proof_input.py": {
+      "bytes": 11190,
+      "sha256": "17fb52b5978c9e71f1907e695ebbd01a40d53a2bfec1e2c47c54b210f9697302"
+    },
+    "regen/tests/current/test_proof_lab_journal.py": {
+      "bytes": 3196,
+      "sha256": "bdaf68e579b73c7f37c5314d27abbeafda1f5918771bbd1d15cbdaca5297521d"
+    },
+    "regen/tests/current/test_proof_workspace_agent.py": {
+      "bytes": 11479,
+      "sha256": "ba2f78a0aff9dd3b8ac459b07294d11d70cdec61fed8adec98b512e85d706f2d"
+    },
+    "regen/tests/current/test_protocol_acceptance_validation.py": {
+      "bytes": 5180,
+      "sha256": "2e13e1fdbc6b77119905bf69a47ba67f77a622a5a4a6cb85251c4ad6e7682894"
+    },
+    "regen/tests/current/test_provider_bootstrap_resources.py": {
+      "bytes": 5446,
+      "sha256": "773843cc2d7bf2d2f3605c8d9beb1008efd223b61adc807ab7a330645b9af401"
+    },
+    "regen/tests/current/test_provider_bootstrap_validation.py": {
+      "bytes": 1643,
+      "sha256": "b276a3023b1d119f6797d5a9178b002f72593e44905258daa02b24c0e0899a67"
+    },
+    "regen/tests/current/test_provider_build_policy.py": {
+      "bytes": 5296,
+      "sha256": "ec86b076709ea94fd90918ac3513040e8c92bb8358d39ff78b43e73a965461dd"
+    },
+    "regen/tests/current/test_provider_feedback_continuation.py": {
+      "bytes": 12324,
+      "sha256": "88ac824f656d366fd2006b2319e68c104d1becde3614839a0e8bc60981a95202"
+    },
+    "regen/tests/current/test_provider_feedback_session.py": {
+      "bytes": 11837,
+      "sha256": "264035474922690346450fe38c67c7f4a125b3109d94733dd3e516e3b2bcce1a"
+    },
+    "regen/tests/current/test_provider_http_failure.py": {
+      "bytes": 4648,
+      "sha256": "df3bc41b558959ea9dbb8ffabd5d4bb8c891c94fd09a86511ac0c02bdb428bdd"
+    },
+    "regen/tests/current/test_provider_http_transport_acceptance.py": {
+      "bytes": 8812,
+      "sha256": "5d9a8d019ce9e3cc7609048bd9af8326110a9d5f10862256e94382e00a8ae6dc"
+    },
+    "regen/tests/current/test_provider_overload_clock_acceptance.py": {
+      "bytes": 1516,
+      "sha256": "804525b247f8bf45ccfd89eabca82600d565816f2efd45dba3de0142d65508b2"
+    },
+    "regen/tests/current/test_provider_preparation_error.py": {
+      "bytes": 2700,
+      "sha256": "fe0b94f53448b90572c0ba56ea509cf0888a343461c69d26df5429163bb3c02c"
+    },
+    "regen/tests/current/test_provider_recovery_policy.py": {
+      "bytes": 3553,
+      "sha256": "a50e266733081cb45d15edd97a05df404ac8090604f252601254d4de699887d0"
+    },
+    "regen/tests/current/test_provider_request_accounting.py": {
+      "bytes": 18737,
+      "sha256": "8453fd419eb38b612889184171717de1ea92d0a3ecd64f37bc58efc08e69c810"
+    },
+    "regen/tests/current/test_provider_setup_failure_receipts.py": {
+      "bytes": 3799,
+      "sha256": "f182129f0491918ebc08d0d786f6fed3c2a863edd25a01c063141b31ac7f2966"
+    },
+    "regen/tests/current/test_reference_archive.py": {
+      "bytes": 1549,
+      "sha256": "218531295d66765c58ef3fb9ca2083b49ec88c32640aa3773ba3635deb1eb2ed"
+    },
+    "regen/tests/current/test_refine_campaign.py": {
+      "bytes": 5725,
+      "sha256": "3c508962b555700d18b003819ca0f1044f2d0dd080b02017c5164bb4e2287d63"
+    },
+    "regen/tests/current/test_regen_extract.py": {
+      "bytes": 1962,
+      "sha256": "0cd166cccd5e01ccb77d29c4039f1b69ae13a5c130fe0dcacee0243d0557ee53"
+    },
+    "regen/tests/current/test_replay_finish_step.py": {
+      "bytes": 21028,
+      "sha256": "a81f3617472a48de5dae43ae9f6fc2b9c95c35daf82b73fccec0f5030c879258"
+    },
+    "regen/tests/current/test_replay_prefix_cache.py": {
+      "bytes": 16831,
+      "sha256": "05431a715a2968f5bd696d43d1e4014bbef3876b36d9bd13598bb45e1b31c8c2"
+    },
+    "regen/tests/current/test_repository_execution.py": {
+      "bytes": 12407,
+      "sha256": "7d03d2154292b81d660c139734817bb3a9292d2d4be28d3582ca18ad73500dcd"
+    },
+    "regen/tests/current/test_repository_planner.py": {
+      "bytes": 13130,
+      "sha256": "fa0786bae853239a8aee391269c919873d1f9bba1b739eba19821bcfd0537a78"
+    },
+    "regen/tests/current/test_repository_planning_retry.py": {
+      "bytes": 3557,
+      "sha256": "637e6d81deb8ae151ffd4bb8e31d5f43ee46737a25476d91ec4f63226843cbd7"
+    },
+    "regen/tests/current/test_repository_visibility.py": {
+      "bytes": 10531,
+      "sha256": "bd95ea08fad79e17e514dd7baebf19cca44d86d32ad46df33a6c3101ee4915b3"
+    },
+    "regen/tests/current/test_resource_budget.py": {
+      "bytes": 9260,
+      "sha256": "38f283904f5c7527b3e53d69bbb5fd978d07776d1007c5904d93433aeb51693b"
+    },
+    "regen/tests/current/test_retained_semantic_impact.py": {
+      "bytes": 6544,
+      "sha256": "2272327ec41d4731cecd2bd8f0448db1598ed8265c4bbda3c68b33034c13c9ac"
+    },
+    "regen/tests/current/test_retry_policy.py": {
+      "bytes": 9499,
+      "sha256": "3cc67781b8ed95d40015b7650c9cca7da298e522c95c93e4b5caa0e1ca233161"
+    },
+    "regen/tests/current/test_reviewed_planning.py": {
+      "bytes": 2556,
+      "sha256": "bf49461b6356265fbedcf1537987c86ecdb9eee9005bf62df9e51c2a39c946f4"
+    },
+    "regen/tests/current/test_reviewed_planning_budget.py": {
+      "bytes": 17926,
+      "sha256": "bc069ccd5ee1279af858a5e007cb44067a55e50ebb151f1bb3dea632c3395708"
+    },
+    "regen/tests/current/test_round_recall.py": {
+      "bytes": 5455,
+      "sha256": "d77c7c1f285c5836480d6e19265cfcd5aa9d400ca80b3d977cc87a0197fcaf35"
+    },
+    "regen/tests/current/test_runtime_failure_pause.py": {
+      "bytes": 9142,
+      "sha256": "e4400f421045ea13c2ee7e9a80271622b3eb8b04acb5df6632891b1a1c178785"
+    },
+    "regen/tests/current/test_seal_evidence.py": {
+      "bytes": 3535,
+      "sha256": "4aca95c67be2c515a4482d1bacfe4f10c15f162d16f235eccbc6632e03b9d720"
+    },
+    "regen/tests/current/test_serial_acceptance_resources.py": {
+      "bytes": 1636,
+      "sha256": "5fb5a2030d1a050f6e4f7d137a99ef46fd0693c58d13d416b6c6274a3250ceb5"
+    },
+    "regen/tests/current/test_shared_host_launch_binding.py": {
+      "bytes": 4883,
+      "sha256": "0a05f67d795ad99ece5c68fcfdb351bdb65a0c27c6159425a97445b1c6b59241"
+    },
+    "regen/tests/current/test_shared_host_native_slots.py": {
+      "bytes": 8326,
+      "sha256": "65412be0a47ce5bee191a139590640679e3526429bb654acecef67f3db6c85a5"
+    },
+    "regen/tests/current/test_shared_proof_workspace.py": {
+      "bytes": 22687,
+      "sha256": "71d4f597fc49075139e1d0963a68af3f2efe5e647f11137012d34107c81bbdb4"
+    },
+    "regen/tests/current/test_sketch_assessment.py": {
+      "bytes": 12955,
+      "sha256": "49322b48513136816008e3386599c86619e8f44a7c3f68f8ed59f80149b64bd2"
+    },
+    "regen/tests/current/test_sketch_check.py": {
+      "bytes": 19800,
+      "sha256": "98e41c85738bc54fe803148c2550e331b03f84484a5a9b66cf50f50828a71a67"
+    },
+    "regen/tests/current/test_sketch_phases.py": {
+      "bytes": 3579,
+      "sha256": "c28bd1659548f4ccd272467cf07414c1f156689e023c2d8d5542e3dc9157a4d5"
+    },
+    "regen/tests/current/test_sketch_workflow.py": {
+      "bytes": 14007,
+      "sha256": "b2d6d21e430542e171b67ef7fa878f8cb2dfbbaf4b7f73e520efaff3b38a8c80"
+    },
+    "regen/tests/current/test_source_theory_visibility.py": {
+      "bytes": 3433,
+      "sha256": "99461d3a7e2e5d30e0a95e666d30324f345c02305440c0aaf4653b11e91b8083"
+    },
+    "regen/tests/current/test_staged_recovery.py": {
+      "bytes": 7293,
+      "sha256": "92248d040d16fba7a7c5f0ed3aa555d9d9c4ebcb799ead07cb88882f2a1a0c08"
+    },
+    "regen/tests/current/test_statement_repair.py": {
+      "bytes": 6278,
+      "sha256": "15020e5ca8c9b378d46c9aee332eecd2a6bb6283976eab9846f0c5424f9b6af7"
+    },
+    "regen/tests/current/test_stepwise_codex.py": {
+      "bytes": 2614,
+      "sha256": "dedb934ade0438d1f11e7f35bbdc25272d48041954a238521a389ebd3daee931"
+    },
+    "regen/tests/current/test_stratified_sketch_checkpoints.py": {
+      "bytes": 877,
+      "sha256": "4b41f36395b560bfcb4a912be028255c2789dffb6f9f01be9f24a74eddd0f294"
+    },
+    "regen/tests/current/test_supervised_resume.py": {
+      "bytes": 3995,
+      "sha256": "9a1bb872e434607d402fc50904b6c76452ce6a866cae5e29821ce9adf0de0261"
+    },
+    "regen/tests/current/test_supervisor_argv.py": {
+      "bytes": 3814,
+      "sha256": "7d8fe7c6de6d78d09c5c2075c784784d41d79f3c1cf04e25a37664e79c4939e2"
+    },
+    "regen/tests/current/test_symbol_resolution.py": {
+      "bytes": 4452,
+      "sha256": "e53463d3c8e561ad428e6c7296608e1a940096a895878adae7d83999943e8a69"
+    },
+    "regen/tests/current/test_target_pristine_checkpoint.py": {
+      "bytes": 12339,
+      "sha256": "513f5c28dd6a3f7b408fe516c25301c094dca1463f5dbb5d4ce14bddf16e0166"
+    },
+    "regen/tests/current/test_theory_activity.py": {
+      "bytes": 9983,
+      "sha256": "5fabd143c53ef257316a04c18fb46f43d8181db570fb573c2e9c91d0e471b666"
+    },
+    "regen/tests/current/test_theory_document.py": {
+      "bytes": 18315,
+      "sha256": "cbfd3023ecbfb2b811773764ee3350cbb4dc1917609b33257284991b7fbc7a58"
+    },
+    "regen/tests/current/test_theory_effective_clock.py": {
+      "bytes": 18987,
+      "sha256": "8ebef17bdcc6a8bd5a0d1243443d5dc96c1e3cc1b9e4a8a77063ae6b12eb0d7b"
+    },
+    "regen/tests/current/test_theory_plan.py": {
+      "bytes": 5949,
+      "sha256": "95e8d5df440774bc1ca2f203ec1eb6a243688cbb57a7d1bce772a663dcb1fb67"
+    },
+    "regen/tests/current/test_unlimited_gra.py": {
+      "bytes": 719,
+      "sha256": "96623f47e6ee2ba1a1db8e1be542dbb5d99c8f9e789a273815982607a1200a4a"
+    },
+    "regen/tests/current/test_upstream_heaps.py": {
+      "bytes": 1894,
+      "sha256": "8f1b46d2f18fad3c8116ed1df215ebaeb33fcee53d870f3520b904b08f8e1191"
+    },
+    "regen/tests/current/test_vero_activity_entry.py": {
+      "bytes": 6638,
+      "sha256": "e5adc48fda9273af2c588e6f86966586645f570fc7a40b888b394ba3bd09222e"
+    },
+    "regen/tests/current/test_vero_auth_state.py": {
+      "bytes": 6489,
+      "sha256": "1aa1e6ccbe4a8643f027eb33e66ea104662477c695346c845e835c6d98711b5e"
+    },
+    "regen/tests/current/test_vero_budget_publication.py": {
+      "bytes": 6074,
+      "sha256": "135ba71995b2d7f47cd50fdfa6ba5818a8bd5a2066c7775f87a6db7370be9783"
+    },
+    "regen/tests/current/test_vero_checker_adapter.py": {
+      "bytes": 25208,
+      "sha256": "c8daedcacbec78335f220d9ba57756ab5601f284a3c53d127600c7a8fef3bb71"
+    },
+    "regen/tests/current/test_vero_cli_fault_injection.py": {
+      "bytes": 9919,
+      "sha256": "847ae70a87fbd97f969ccd526101888fa2451be17039e009b481222b8f46e68d"
+    },
+    "regen/tests/current/test_vero_cli_provider_failure.py": {
+      "bytes": 4673,
+      "sha256": "d30e5a7299cf08cfc8657fb87ac2abef3b6e4ce5dc94b97a8e78812a0105bda5"
+    },
+    "regen/tests/current/test_vero_contract_receipt_retention.py": {
+      "bytes": 24708,
+      "sha256": "0be79f7e0b99e2bbd8a69ed8b91dc56d7f1ba03366a595e769da842a479037bd"
+    },
+    "regen/tests/current/test_vero_diagnostic_service.py": {
+      "bytes": 9130,
+      "sha256": "a5f28a83d0871f5e0f29091da9eb62f52c2dc7b0036ce81fad6a2d692dac84af"
+    },
+    "regen/tests/current/test_vero_dynamic_imports.py": {
+      "bytes": 33523,
+      "sha256": "e96a068555d01a86460f5d192ee710010da713550063b15d12302906375a6434"
+    },
+    "regen/tests/current/test_vero_effective_time_budget.py": {
+      "bytes": 11414,
+      "sha256": "3739fc5c006e9015b2ef97d2c89b7669922ecfed671f95444b1eb39f69641a82"
+    },
+    "regen/tests/current/test_vero_exact_green_reuse.py": {
+      "bytes": 9852,
+      "sha256": "f845ac842559711a49154db0673d411f33f396175fdb677550ee24eb65381573"
+    },
+    "regen/tests/current/test_vero_import_graph.py": {
+      "bytes": 878,
+      "sha256": "f95cef416808cc1d03de010cb332d8ca2ada9b3a66fc2049d2b9a0160427eb5d"
+    },
+    "regen/tests/current/test_vero_plan_audit.py": {
+      "bytes": 3088,
+      "sha256": "28088f40535c6ddee778cf211f75c1f08252ec7c09f2290f153469df2003ed1a"
+    },
+    "regen/tests/current/test_vero_post_native_race.py": {
+      "bytes": 24419,
+      "sha256": "730225a5924ce0d3d65fbd05a1df3a9391eaa12586f6b309b98ba54923a82a8b"
+    },
+    "regen/tests/current/test_vero_prefix_migration.py": {
+      "bytes": 4623,
+      "sha256": "c826532cc6c9a6338d9671dc8f60aabe803cbf6c5bb654af387fc8a2e0b5c323"
+    },
+    "regen/tests/current/test_vero_prefix_revalidation.py": {
+      "bytes": 19026,
+      "sha256": "d9ae742ef2d6592f91765798f9dca7a88c1ad52a9c984cfed58262f0b62efa9a"
+    },
+    "regen/tests/current/test_vero_runner_fault_injection.py": {
+      "bytes": 9511,
+      "sha256": "97a3b37a471d25d85bd9e07ad34cc26596154b0d93caf3c95f8d084fd1a33215"
+    },
+    "regen/tests/current/test_vero_runtime_binding.py": {
+      "bytes": 2273,
+      "sha256": "2422379ca50623c3c36adf6639539bcbbf49d70de4eda10bfa99ef539d094895"
+    },
+    "regen/tests/current/test_vero_serial_application.py": {
+      "bytes": 74925,
+      "sha256": "8864a2f111731f3ad65f9d14f20b137cf8efe720b682e556bc402a41021d09a4"
+    },
+    "regen/tests/current/test_vero_source_missing.py": {
+      "bytes": 5604,
+      "sha256": "a31ebc394f61784e9dddba47511e388d1dbc764c6dd29e460c46158b6f70a962"
+    },
+    "regen/tests/current/test_vero_tool_protocol.py": {
+      "bytes": 7456,
+      "sha256": "ffdbd58c15624d135421e568e31b06bd5ff5addfedf86cea9f9804a77970654f"
+    },
+    "regen/tests/current/test_vero_tool_runtime_migration.py": {
+      "bytes": 12773,
+      "sha256": "02f82eecc670aa4d1d5aa14da19962bdf1eb1024ade7fedccb5f1c6b6e2cde74"
+    },
+    "regen/tests/current/test_vero_tool_transport_migration.py": {
+      "bytes": 12701,
+      "sha256": "ab4dd2df84a299a3c49588c039a3bab40872f72a65496f2dd805d1044b8db3fc"
+    },
+    "regen/tests/current/test_worker_lifecycle.py": {
+      "bytes": 16555,
+      "sha256": "cc937f40011dcaff3087f01f3b5f59c161a299e9c9e69ea25c1b58b4b77e773e"
+    },
+    "regen/tests/current/test_workspace_argument_recovery.py": {
+      "bytes": 12755,
+      "sha256": "3bf3a6bb7f7f554c09ebdf2b5d1d937d3dd15dd12f3e8d6e93bbbc6f6ffca723"
+    },
+    "regen/tests/current/test_workspace_argument_recovery_audit.py": {
+      "bytes": 8581,
+      "sha256": "6ad992d9e8ef7469215eb5c3ff743a8c93d063ccbec99c5bf123d2e3321e88a5"
+    },
+    "regen/tests/current/test_workspace_checkpoint.py": {
+      "bytes": 3060,
+      "sha256": "d74b3a51f20829dd464416c31516f0973d31706c01102f1fe269c4ac18a1a040"
+    },
+    "regen/tests/current/test_workspace_controller_transport.py": {
+      "bytes": 7666,
+      "sha256": "1bfa5b5145fb7a80234228de1d3de4431eda387a38322ff9940ab297a9c14b23"
+    },
+    "regen/tests/current/test_workspace_event_pump.py": {
+      "bytes": 30929,
+      "sha256": "979f3402e611677532a54c7537aa097ddde122c2231a60e51a30258837c34db6"
+    },
+    "regen/tests/current/test_workspace_finish_prefix.py": {
+      "bytes": 4055,
+      "sha256": "f28c43aefc18b192f7b3eb73b4505375bf3fb1692c570b4718808d853d04321a"
+    },
+    "regen/tests/current/test_workspace_planning.py": {
+      "bytes": 9632,
+      "sha256": "1a9fa0f05bb1ad487311f675bcfb9786cb3a15767b8e1dd60b72f0d7f357e116"
+    },
+    "regen/tests/current/test_workspace_protocol.py": {
+      "bytes": 14249,
+      "sha256": "2d574846cdcf532f47490f73b1292c1b4c9981168126a8d55f1eaffe8df35ef3"
+    },
+    "regen/tests/current/test_workspace_protocol_cancellation.py": {
+      "bytes": 7436,
+      "sha256": "7b9547fb487707e018d0a8b7bcfdd53d2c088e5f355c3d13e519dba57f551fce"
+    },
+    "regen/tests/current/test_workspace_sealed_reuse.py": {
+      "bytes": 3092,
+      "sha256": "9cc6eb90c5fc762d34f9a7ddbf53b283d52024527d01672f0e1ca7c3ef7b4e99"
+    },
+    "regen/tests/current/test_workspace_sleep_policy_audit.py": {
+      "bytes": 8678,
+      "sha256": "096acbc5f825e883c75ab0da7017cacca942289ed2fca7c9f96e123b450afaf9"
+    },
+    "regen/tests/current/test_workspace_transcript.py": {
+      "bytes": 9296,
+      "sha256": "1006e67844f92eb3031aa3a96f923647ed7450d86b408ef3213745b561d6a4a2"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/README.md": {
+      "bytes": 10533,
+      "sha256": "da80f997f33c6f04de8c67db83691c6561131b6f5535baa210206caf664a73af"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/codex-batch628-proof-not-timeout.json": {
+      "bytes": 2194,
+      "sha256": "a265fc1f37d55305ea95621c6699ac9a06526ba212f75210d426ad1b1ba38144"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/codex-locale-fact-audit.json": {
+      "bytes": 3172,
+      "sha256": "f2303a5e63084e7ce2ef3276fe0dd33e9105a47265bcb3fd2ad9ec664b44e91e"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/codex-merkle-recovery-copy.json": {
+      "bytes": 2038,
+      "sha256": "0ba10c5aa6f2a7d81b056fb92228f66db4e1bf08eeae6092be3954f9b57dce18"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/codex-recovery-history-amplification.json": {
+      "bytes": 2862,
+      "sha256": "963b34160321eefc15afcf63a82f15b997b734cc1144f1992d650f169ecea64a"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/codex-step991-continuation.json": {
+      "bytes": 3457,
+      "sha256": "1f3f62a485bf277596572aff86fc27ac32ecb7878c18ca7076aba53d650f216a"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/history-a-green-gap-observations.json": {
+      "bytes": 10048,
+      "sha256": "e013970eacbb118f6646e81fe6f8d16bdf2efdc095669e712452dc8b749fd73c"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/state-artifact-reuse.json": {
+      "bytes": 2115,
+      "sha256": "0b036758f1b5f8b53c188e288b82c61f4785d8d7f0b1062d3cd149c0b1d71c0e"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/state-budget-union.json": {
+      "bytes": 2298,
+      "sha256": "eee0c29852d7f313fc030ce8c6bf96bc1a443291880de5459d51deba82843353"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/state-crash-clock.json": {
+      "bytes": 2237,
+      "sha256": "23880c6a5291678e90c53ddcbeac52fd9ac59a32b795fc38f37078b80acbef89"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/state-owner-visibility.json": {
+      "bytes": 2597,
+      "sha256": "a38f680b7d19fce1fb24622c5cc031091609b284719289489f79eb9723e10338"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/state-prefix-revocation.json": {
+      "bytes": 8738,
+      "sha256": "9141f31d5db91a9b1bfa526b16a756735ddb7c2d5554b70e67a4e9a9c7118146"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/state-storage-enospc.json": {
+      "bytes": 2449,
+      "sha256": "8acfe31ac4a312b4ff20f0e5345898b3295878bb140fd146110a3d5b12d3fdac"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/vero_runtime_binding.json": {
+      "bytes": 2353,
+      "sha256": "7f2b85588953a88ec3435736f6f87ba3c53c4920d1bd8fcb000a5e378961382c"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/vero_runtime_migration.json": {
+      "bytes": 2102,
+      "sha256": "959a6d4ccd36faae21b6cad78e77a3b0843fb928c8c6260b3135bf097d30cacd"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/vero_transport_archive.json": {
+      "bytes": 2583,
+      "sha256": "ee58b1df62c027cb371455fbcfd50640aba8d2d96878f405b124d0eeb43432fd"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/vero_transport_diagnostics.json": {
+      "bytes": 3188,
+      "sha256": "8238bbe96456f27ec025c9318c814b5d70e6bd599efa075e3294f3d85f0291d2"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/cases/vero_transport_frame.json": {
+      "bytes": 3108,
+      "sha256": "97d189002cb19006dbb3229cbcce20f5f4aa5f38ce5569a36b0a426b19a30584"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/coverage.json": {
+      "bytes": 28463,
+      "sha256": "2136ec6ad220fd7ee402a1101177b5910d96813101fc9532c6d0416c24990a19"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/codex-batch628-native-extract.json": {
+      "bytes": 187994,
+      "sha256": "1287f8a9a6ff68e1dbc42de1c91e0cf5b22d05552f3eb87c00de70faf6ef8810"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/codex-locale-native-extract.json": {
+      "bytes": 9028,
+      "sha256": "b546ba605bd7e19f81c622a854b2d5923349e58c1d94282312d6d0058a1141d5"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/codex-locale-native-regression.json": {
+      "bytes": 2740,
+      "sha256": "6c151dc1cf3712f92c4bda1739a0b72a8d95f1f546d85f5def83e2b6fa04cb6f"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/codex-merkle-recovery-receipt.json": {
+      "bytes": 1440,
+      "sha256": "6f09e48fe5e42c46e282c3392c531ca17bc3a2d630e323a28b37ca543789c849"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/codex-recovery-amplification.json": {
+      "bytes": 2191,
+      "sha256": "8f8320ae99b44a7df32fc6a1b99680a50016dcbb49a3adec026c834cb18544e2"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/codex-recovery-cost-paths.json": {
+      "bytes": 7888,
+      "sha256": "71a2022cacc9cf6878b3faeb82716745e95f4b8700f13a00c4a8bac4942d31c5"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/codex-step991-resume.json": {
+      "bytes": 6490,
+      "sha256": "98332acd7e85c059e0ef8a09e3930a7c45b5a963caf295f0509f25af2bc2a39d"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/history_a_auto_continue.json": {
+      "bytes": 5565,
+      "sha256": "0dc7a8512a60d7f54b5fb1a99ba133ae36c1588f3674e2ac3da52dff0e331d9b"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/history_a_blocked_episodes.json": {
+      "bytes": 7145,
+      "sha256": "f3a7535a24ad4f0cf1ddb42a8c15af1c02e03334e8c81eaba82a985afeabb415"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/history_a_budget_observation.json": {
+      "bytes": 530,
+      "sha256": "cd60e2c75e74712c75931eb8068aa67407a707fd61c73d68402840fbd42a45d8"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/history_a_oracle_summary.json": {
+      "bytes": 15780,
+      "sha256": "f99447c6b3d2fee21e37d2e762f340a619dd0cbab8d8ec20e8f9a0888c7f42ac"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/history_a_queue_components.json": {
+      "bytes": 189997,
+      "sha256": "63c024274d8c75d53240958136732e263497281f293817f46281bee61f1a711e"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/state-artifact-reuse.json": {
+      "bytes": 2986,
+      "sha256": "96da0902f30cf1816f086c2dc5264ea381f5662a274302c7fe83a9abce5461b7"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/state-budget-credits.json": {
+      "bytes": 43341,
+      "sha256": "9cb3bcb35268e0250d0f2a8827a2f16f6939be8643b4bf5d08a343ef33ad146b"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/state-owner-visibility.json": {
+      "bytes": 4388,
+      "sha256": "a6a5d4acf2de0233c50ab16050a25933190b5b1ba91fd5cf598fb6e08a19ed5a"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/state-prefix-after_first.thy": {
+      "bytes": 104419,
+      "sha256": "a3ac551a61a4a39e36079e547cd7206ccad9fa29b2b08c6764df5aa56ddd7601"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/state-prefix-after_second.thy": {
+      "bytes": 103361,
+      "sha256": "df001e7fba3e23602d0546a13d6f56e70ddfeb9878192c0013c934ab11a1dbd9"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/state-prefix-before_first.thy": {
+      "bytes": 104411,
+      "sha256": "04c006f6a83393c0d1ecc15d26ca0d2f0486db67777f897f437a24e32fe54a75"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/state-prefix-before_second.thy": {
+      "bytes": 104414,
+      "sha256": "572e56e7d4ddf3c7383efab3e3bc3af52ec2f9efa45db9a7a8cbb9d9e63d3c8d"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/state-prefix-revocations.json": {
+      "bytes": 13389,
+      "sha256": "fbc3fa639359cc280aa703a410589115e89059e7e33a3aa694c3dd3340bad052"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/state-storage-enospc.json": {
+      "bytes": 28887,
+      "sha256": "7d2cdef05fddad0bb7e957b7d8b2c298ba8d8dbf7bae7e52155699920c0f03b2"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/vero_runtime_container_probe.json": {
+      "bytes": 1060,
+      "sha256": "39088ed2f39e951881052006e8aa3ee0527bb401506226f34724d7130979b368"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/vero_runtime_migration_chain.json": {
+      "bytes": 6181,
+      "sha256": "90a908b07bcd9f0141a35fd58ff0f115e116d38c492e7296bc77db2fc2e46044"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/vero_runtime_stale_mount.json": {
+      "bytes": 1470,
+      "sha256": "494493fe66fde3db16d85624ad03cf25af6cf4dbf78ee193e1d3429076cd4dcd"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/vero_transport_archive_receipt.json": {
+      "bytes": 734,
+      "sha256": "3030563003bad80e87c7f42eccbcc3f3891a83f5c1514160770d651917c1cd32"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/vero_transport_live_pages.json": {
+      "bytes": 1321,
+      "sha256": "ba6270b97a0a4ccb0e1f42a5046c58d1244d37dff07bcdecb7a9c697a10e5b30"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/vero_transport_original_client.py.txt": {
+      "bytes": 1372,
+      "sha256": "47f4154c551399c7a8c0203f092a09acc91f9986aea820e41d668230976b4907"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/evidence/vero_transport_step1792.json": {
+      "bytes": 1312,
+      "sha256": "13e4c988efa931627783ed2b3829ee6494e924bf8ccf9d14229596108e67c269"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/inventory.json": {
+      "bytes": 162370,
+      "sha256": "a6f2480d00169097ffe5d2d3e08cc654f94856dba12b44e38e418673a3b5780d"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/manifest.json": {
+      "bytes": 6478,
+      "sha256": "e7ba66e518393c38b7ba6bc65060b607a779d3475b7a5cb74a355dbcdf8aadee"
+    },
+    "regen/tests/fixtures/crefine_incidents_v1/schema.json": {
+      "bytes": 1537,
+      "sha256": "9354ecc08d82edb62b25085481b6ea53cbfda90b17a93cfc71f95f93cb33d928"
+    },
+    "regen/tests/legacy/__init__.py": {
+      "bytes": 22,
+      "sha256": "39b353ff4d443ea8a001ed8d9f58770a2e69e32e923a6444ba1841d0590d431a"
+    },
+    "regen/tests/legacy/test_archacc_planner.py": {
+      "bytes": 63934,
+      "sha256": "fc707cf2fb2e018b8a7a27a70e250f28eb95784253f628a946ac7b147ff33e81"
+    },
+    "regen/tests/legacy/test_repository_planning_compat.py": {
+      "bytes": 1514,
+      "sha256": "2674449fe036d705cdf92df0eefdd8676aa606e09e5ee95ab9aec0b79b78669e"
+    },
+    "regen/tests/legacy/test_session_planner.py": {
+      "bytes": 11686,
+      "sha256": "ce6f2e46735a9e02157a1a7ccb3a767fe050b822eef880cd306ef1d2ec25c06b"
+    },
+    "regen/tests/legacy/test_theory_trace.py": {
+      "bytes": 17659,
+      "sha256": "586d81e20f84b0053395c9f21537caf03570ab53cd651f83f61c7e3b36ba8b9b"
+    },
+    "regen/tools/__init__.py": {
+      "bytes": 13,
+      "sha256": "1a38fa091e831d6e4ac96e9837fe68bcd6dad0ab8e8f66d35833e0b44e2b6440"
+    },
+    "regen/tools/application_release.py": {
+      "bytes": 3217,
+      "sha256": "b985760690ab65f859c1f445d334393ab41ee22714dae379c75174857fd24af0"
+    },
+    "regen/tools/arch_locale_profile.py": {
+      "bytes": 2782,
+      "sha256": "69904434a276967580b23cd048795342ed0d8e0ee608099f04c41a93e99c8935"
+    },
+    "regen/tools/arch_reuse_audit.py": {
+      "bytes": 5654,
+      "sha256": "52e0c5ccc2e98beb3d34c5005386d83904b942e1806422dd81f732e2312b3f10"
+    },
+    "regen/tools/arch_reuse_controls.py": {
+      "bytes": 1988,
+      "sha256": "04e31de63e0d12f725ac555bef9c34f2c43c74af2e196d88fc92afc8edf83bee"
+    },
+    "regen/tools/archive_reference_results.py": {
+      "bytes": 13164,
+      "sha256": "6b992886196209cf837537f410766bb63af1499a5ae056afa395375b4a704dc5"
+    },
+    "regen/tools/audit_planning_log.py": {
+      "bytes": 4080,
+      "sha256": "30665d517b6023d4177e48d6c2077c51aa6574ae0aefe671241aab6961b93a40"
+    },
+    "regen/tools/benchmark_attempt_memory.py": {
+      "bytes": 3010,
+      "sha256": "dd3725201167951b44f61f459e5b8b7abe16d4d6ebcef9423a9a0c9b2bc3e655"
+    },
+    "regen/tools/benchmark_incremental_log.py": {
+      "bytes": 11880,
+      "sha256": "fecec29dda305786d4a1b00b3733aae2dc902047efbf38ad30e8cbf8cf86126e"
+    },
+    "regen/tools/benchmark_prefix_checker.py": {
+      "bytes": 2210,
+      "sha256": "2c44e00fb2160870b0a9028c3cc8c171228416714222a6a626a42d34c15b1180"
+    },
+    "regen/tools/bounded_prefix_native_smoke.py": {
+      "bytes": 8728,
+      "sha256": "3b38c4d780e08ca19201ff0b1a8bcf5dcade177911cf81acdcae0052c66d208e"
+    },
+    "regen/tools/check_pool_smoke.py": {
+      "bytes": 4519,
+      "sha256": "24bcd47c00ce8e043899984af6f00bbe0fce9aa645003f0205b2294a3267bd06"
+    },
+    "regen/tools/checkpoint_trial_budget.py": {
+      "bytes": 15197,
+      "sha256": "1f8fe0f9f065783532f35a37b7fe0cb4608d21e3225ce0dde8082d6afa530637"
+    },
+    "regen/tools/compare_arch_reuse_heaps.py": {
+      "bytes": 8812,
+      "sha256": "f3ec60d864f6863528b0f8f10e374a14424590fc4579967f8c9c242db7a95840"
+    },
+    "regen/tools/compare_proof_models.py": {
+      "bytes": 5981,
+      "sha256": "bfda0c03eef08133a6cd494cf1ecccc979a0172a88392a48067ffde92802ff9c"
+    },
+    "regen/tools/contract_and_or_ab.py": {
+      "bytes": 82905,
+      "sha256": "44e99f25f5e9a5d01ad18c137f7df051534b3682c45c920f1bff45df520ac99c"
+    },
+    "regen/tools/contract_and_or_online_control.py": {
+      "bytes": 6791,
+      "sha256": "61fa41888286cbbd08ea1595dd6ec4f8184b043d06ca15845b4b0e1ab27f70d9"
+    },
+    "regen/tools/contract_and_or_replay.py": {
+      "bytes": 21713,
+      "sha256": "dce45f360027a6023b2e18230563a411956d38ad9cfdbe7af357b50df32908e3"
+    },
+    "regen/tools/contract_and_or_serial_workflow.py": {
+      "bytes": 42631,
+      "sha256": "c6d281170d611567557ee98cf7f51c7852e7901786bbb7d74c37348dee483dcb"
+    },
+    "regen/tools/contract_closure_checkpoint.py": {
+      "bytes": 3980,
+      "sha256": "eecbd1803e7a87cd837ec1ea1f7e19c56c5692973604383dc7fdfc71d6629ed2"
+    },
+    "regen/tools/contract_closure_continuation.py": {
+      "bytes": 13310,
+      "sha256": "aa0cf5d6839f1b210b6dce71e39a13e2d8a1a037a2c1ffa97719363d4ac1be5f"
+    },
+    "regen/tools/contract_closure_validation.py": {
+      "bytes": 27625,
+      "sha256": "161105e5260fe756558c353ad5d914b8f354e630ef1f4df5e5e7e55b97155990"
+    },
+    "regen/tools/contract_inactivity_guard.py": {
+      "bytes": 2911,
+      "sha256": "c8d7585aa15ccbb1c2976998b232392972e1bc60cf9957232d5e863b396bf969"
+    },
+    "regen/tools/controlled_checkpoint.py": {
+      "bytes": 4580,
+      "sha256": "8a257a7757c1dbff4df9e07825258a10139a9546145c590f1943be5eeb015374"
+    },
+    "regen/tools/controlled_native_replay.py": {
+      "bytes": 17792,
+      "sha256": "550b74d0f9403b4ecc9cbcc2295576c44197ae3b750761a5fd24ed18488fb3f4"
+    },
+    "regen/tools/controlled_proof_experiment.py": {
+      "bytes": 24174,
+      "sha256": "b852e8b28c5694848dd7dccb59312e77d43cfc085d82c56290c2a9f0ff4e543d"
+    },
+    "regen/tools/deferred_workspace_handoff.py": {
+      "bytes": 10806,
+      "sha256": "4e7fbd2da8c66841f53722965f241a04ff9470c55a459433580550e7e29212f5"
+    },
+    "regen/tools/document_acceptance_validation.py": {
+      "bytes": 20843,
+      "sha256": "49a36f679d54dfdb883a0bc9dfb80dc3481f6078aa164b627313f21fc1dcfef8"
+    },
+    "regen/tools/dual_native_soak.py": {
+      "bytes": 27129,
+      "sha256": "f84578216be093d5d369b0ee74f4dc2eca72d00ef8570df44cdd9d6dfc41663d"
+    },
+    "regen/tools/early_feedback_validation.py": {
+      "bytes": 9969,
+      "sha256": "0da3647610354394170343e8663b42cbbf5b7ce008c0373eda35b86b3fb3fa74"
+    },
+    "regen/tools/experiment_log.py": {
+      "bytes": 1884,
+      "sha256": "8e1434832b329280fd932a15985f76ea84733a56e92e14fa4e0d61cbaf36771b"
+    },
+    "regen/tools/extract_crefine_state_incidents.py": {
+      "bytes": 13841,
+      "sha256": "ea755a72a86664ea3defac6cf8f4312f845cb9620fcd7e80723a57cacd4bb448"
+    },
+    "regen/tools/finalize_kernel_object_access_lab.py": {
+      "bytes": 4429,
+      "sha256": "be8a7386eb9b56f2808320ae7805b7b7e66950f82bb91ba68a1cd22bbb57c27e"
+    },
+    "regen/tools/generic_serial_application.py": {
+      "bytes": 40804,
+      "sha256": "7015b34ab25744a2edfa6b9d559ec0b74cb3cd764142668257ca66498107a070"
+    },
+    "regen/tools/green_contract_ab.py": {
+      "bytes": 31069,
+      "sha256": "8cf200e96697e40b98cffd7620ae676bd104288dc1776f0a10c2c4e6ed97a506"
+    },
+    "regen/tools/harness_acceptance_baseline.py": {
+      "bytes": 8272,
+      "sha256": "c03ba4ce7a28d747b803b00781c64807a1eccde217a6a6ffa6c3fd46f2857036"
+    },
+    "regen/tools/harness_acceptance_report.py": {
+      "bytes": 5254,
+      "sha256": "942bd2c90a1d0d0e5877f16b725ab8298152177986a212f6fcd84b6eb5cb1d0b"
+    },
+    "regen/tools/hot_worker_validation.py": {
+      "bytes": 5716,
+      "sha256": "dca6013fd28912ecf1350ae02612760fb5a2ca6790cf5f287f1019a4063ad839"
+    },
+    "regen/tools/kernel_object_access_lab.py": {
+      "bytes": 5671,
+      "sha256": "d1b1746abe05735a71cec0521786345f980e2526397e7c2d2359f64cf84ce94e"
+    },
+    "regen/tools/native_backend_acceptance.py": {
+      "bytes": 23679,
+      "sha256": "2b7d9744cc014eeaab4008df815369da3d02716db95b7817619b562530b36eee"
+    },
+    "regen/tools/native_fact_audit_smoke.py": {
+      "bytes": 14305,
+      "sha256": "4ebfecaa1cc60b40cb378109e65e21887aa00b217a6ac7bee83533cbc273c047"
+    },
+    "regen/tools/native_incremental_log_smoke.py": {
+      "bytes": 4672,
+      "sha256": "a14158f1afdffba6068489bdb426a5742f9db7e285b0c14e6235d4a273b925d3"
+    },
+    "regen/tools/native_pipeline_validation.py": {
+      "bytes": 6782,
+      "sha256": "0554a9d6125c00a0911d142fa2530db62665541ae0aedb91eacd7a1d1b467dd1"
+    },
+    "regen/tools/native_protocol_repair_validation.py": {
+      "bytes": 15512,
+      "sha256": "a0ff94e75d6bde4f1eb7f9ab85111de24a7a8307150f05b8bd0bf135b044f68b"
+    },
+    "regen/tools/parallel_repair_continuation.py": {
+      "bytes": 6876,
+      "sha256": "842066db6fc0287ae94603adb32d7da7998875ee96843cb46488032c390002b8"
+    },
+    "regen/tools/parallel_workspace_memory_guard.py": {
+      "bytes": 14583,
+      "sha256": "d075b7917151b6c72f2fb538d5163df7458528ba5fa559e081b79fe5f5b6760f"
+    },
+    "regen/tools/parallel_workspace_service.py": {
+      "bytes": 16871,
+      "sha256": "fcd4d7b0734829c5be267bf4b5ae8d504a6d8196596e3c8ff12eee9cd2b11e69"
+    },
+    "regen/tools/prefix_batch_optimization_validation.py": {
+      "bytes": 9695,
+      "sha256": "efff9ca7faf19d0ffb9ca37b962bf5404a65ac08bdba3aa590e75cab93ed9417"
+    },
+    "regen/tools/prepare_vero_activity.py": {
+      "bytes": 2123,
+      "sha256": "66e759c8194327fa3b7d449ddfff1f3ea4c62444c1af9fc20732f41ca866dee9"
+    },
+    "regen/tools/prepare_vero_crefine.py": {
+      "bytes": 3317,
+      "sha256": "a8c5caac88043985ed0aff26e5af61c20d48a7949518b3efd0961e79a4b0c25c"
+    },
+    "regen/tools/prepared_checkpoint.py": {
+      "bytes": 23129,
+      "sha256": "7945307c2d2848f97dde13728e4ea281c877d6a7dba1cba9b640020cb7de4436"
+    },
+    "regen/tools/profile_saved_node_phases.py": {
+      "bytes": 14561,
+      "sha256": "ebea7e8ca79fa22947016e92860d965fa0ea5c42b1f7555c0849fa413c74851d"
+    },
+    "regen/tools/proof_idle_watch.py": {
+      "bytes": 17091,
+      "sha256": "6511395ea9a19a5b169a7ebc207650e6b163f0c70db4c323503088ca9d789c84"
+    },
+    "regen/tools/proof_lab_journal.py": {
+      "bytes": 3060,
+      "sha256": "6ce92e8822c7fb91de303530bd80d85381b1009ce9b2d3bf3c6a4e9642816b1c"
+    },
+    "regen/tools/protocol_acceptance_validation.py": {
+      "bytes": 20161,
+      "sha256": "346f4de022419b1785dd983e28929f7287180c17148eb290d0322a561b0f993e"
+    },
+    "regen/tools/provider_bootstrap_validation.py": {
+      "bytes": 12783,
+      "sha256": "76683fb6d11b4c1f303885123ada51c6d14a1463fcdfcff9a5a37e652b9ed209"
+    },
+    "regen/tools/provider_feedback_continuation.py": {
+      "bytes": 6630,
+      "sha256": "a7321b73ede7e5ec7d0716f2ab8250bf6d2941f3164732148fc45ac8c987269c"
+    },
+    "regen/tools/replay_finish_step.py": {
+      "bytes": 22820,
+      "sha256": "e9688c7eeca41618730204f1ad4459ad933cf0acc77249b1c811f8fb41b9ab89"
+    },
+    "regen/tools/replay_incidents.py": {
+      "bytes": 11870,
+      "sha256": "9eaec3eb55af32cb406473c90e7ff0ce757db8798cc05c24adb9955830d98319"
+    },
+    "regen/tools/repository_planning_retry.py": {
+      "bytes": 3104,
+      "sha256": "0f73b22dc4459e9e78fc284d4b97ffdb0b3880583ffa0ec42292fc5db97c7873"
+    },
+    "regen/tools/retire_planning_logs.py": {
+      "bytes": 3824,
+      "sha256": "f546642663a3602097e0f97e2687428bf083591a71d992c3fc07a9d7fe718874"
+    },
+    "regen/tools/retry_input_repair.py": {
+      "bytes": 2771,
+      "sha256": "0e82b4af57289d7f707c20053950e30f962e5b6aba8bf5702e507d0dabe9c47d"
+    },
+    "regen/tools/reviewed_planning.py": {
+      "bytes": 7932,
+      "sha256": "02e0a80645b06b2c67354d72115a3c6cb7604f151fae71f9c3a854414ce43ca5"
+    },
+    "regen/tools/run_automation_advisor_cases.py": {
+      "bytes": 4728,
+      "sha256": "d7be52183e0dca34c2860ab08262afb060a054447fb96667b8fe77c5c55f54f5"
+    },
+    "regen/tools/run_prepared_endpoint_comparison.py": {
+      "bytes": 3635,
+      "sha256": "b032a9ddbff8de8e1f89f4183fd7d305d3b8a828d9c2a090863156104d4c98f3"
+    },
+    "regen/tools/run_stepwise_codex.sh": {
+      "bytes": 2051,
+      "sha256": "a26cbd209d38233380984a1e9f0a95d126509d81f0d65d1a126e69bc28bb04a6"
+    },
+    "regen/tools/runtime_infrastructure_audit.py": {
+      "bytes": 1178,
+      "sha256": "5c9ae91b9d45f61abb15dab16004b2c21174aea47c396e880a5adde1a6294dc2"
+    },
+    "regen/tools/serial_application_acceptance.py": {
+      "bytes": 11389,
+      "sha256": "43f4643626eb031187c73344cf87e6a392bbcce3c6a3d18925e75ffcc9db66c3"
+    },
+    "regen/tools/setup_stepwise_codex.sh": {
+      "bytes": 617,
+      "sha256": "3615ffed347a30b342337d86ea6e2f2b9bd15d0e15511ab85f8ca0798105f722"
+    },
+    "regen/tools/sketch_failure_checkpoints.py": {
+      "bytes": 7124,
+      "sha256": "afd6f9567245d48dbe478a8668270f9b69edca5f016da20a0a390af135a1e453"
+    },
+    "regen/tools/sketch_guided_native_smoke.py": {
+      "bytes": 10968,
+      "sha256": "1a9f20ef7d59b38eb668bab75ad6fa61b23863db64234a6729e79a1495b053f4"
+    },
+    "regen/tools/sketch_native_smoke.py": {
+      "bytes": 19417,
+      "sha256": "c75ade0e2807febe244854a89cc75df8bfa56d54481656072f8d9a15cc8c3dc1"
+    },
+    "regen/tools/sketch_replay_ab.py": {
+      "bytes": 16861,
+      "sha256": "a5bdd1af270829226fa23dfa8fe8aedd922c5519f079803b859d11f1d486cb3a"
+    },
+    "regen/tools/smoke_stepwise_backend.py": {
+      "bytes": 2669,
+      "sha256": "8bcbf37261fd43a340a4e6277169ecd13d5fba9a513acfdb195559faf30762f4"
+    },
+    "regen/tools/stepwise-codex-requirements.txt": {
+      "bytes": 60,
+      "sha256": "345c451ea51d5414a43ab0cebf7cb716d171b4753c6419115223dc7bd544f2e3"
+    },
+    "regen/tools/stratified_sketch_checkpoints.py": {
+      "bytes": 10415,
+      "sha256": "d248bfd3f0e938eb940b630823b31fe345e4379b820dfeef745d3ab7a026b7f4"
+    },
+    "regen/tools/submit_graph_evidence.py": {
+      "bytes": 4591,
+      "sha256": "3f198bd7485fe5143517f97267bb5d9ce42db247605089890a49cf3754211d19"
+    },
+    "regen/tools/supervised_proof_run.py": {
+      "bytes": 7530,
+      "sha256": "90c63d50943be36644e9c4e140fa95ee2aa924090f4501c9838a75a87b434ba4"
+    },
+    "regen/tools/target_pristine_checkpoint.py": {
+      "bytes": 28072,
+      "sha256": "a858c957f7eb647aa122100c84e5a15cf67c7ad21cebeaeb712a70662486ff49"
+    },
+    "regen/tools/theory_effective_clock.py": {
+      "bytes": 19833,
+      "sha256": "14c70650228b46fe19be36006f72936632a19d91289d4d777b2890e5676375ec"
+    },
+    "regen/tools/validate_history_recall.py": {
+      "bytes": 13735,
+      "sha256": "1d81a3ffb3fd7c2394e80ec87719f976711494ec472eb52788a3f735b4d4622a"
+    },
+    "regen/tools/vero_accepted_prefix_native_smoke.py": {
+      "bytes": 8665,
+      "sha256": "331bd3ef7435bde1b1c55b1d481e9cb6d14d6fc9139cf6880f2ec0c027334f5d"
+    },
+    "regen/tools/vero_application_tool.py": {
+      "bytes": 3189,
+      "sha256": "9fbfa71861005cdb0add01b8785555fb6f4f4fa5dc58ee1a5e45844e71786bac"
+    },
+    "regen/tools/vero_dependency_native_smoke.py": {
+      "bytes": 17643,
+      "sha256": "8526e3eeec75e6419b23a2575ebfba1bdb7761625c5b829b3b55ec79935187ab"
+    },
+    "regen/tools/vero_exact_green_native_smoke.py": {
+      "bytes": 10760,
+      "sha256": "bbe331e094af87332541fa42625c281e288dd3c84cd046bab3e54d7a030f1ebb"
+    },
+    "regen/tools/vero_isolated_exec.py": {
+      "bytes": 2472,
+      "sha256": "52c0653b0160fa7248e9456131c9ea2e381d9be9170a574887a2d6ff96a96948"
+    },
+    "regen/tools/vero_serial_application.py": {
+      "bytes": 109943,
+      "sha256": "11e948b629120e523c2f15fc747546d101c8ebb100bb7d4105eae2e4d535bdb0"
+    },
+    "regen/tools/vero_tool_protocol.py": {
+      "bytes": 4308,
+      "sha256": "2336cf55b5b044b4d4a84fed95bcc4da0f99f3bbc8cfc8dc45c96514cc01e3b1"
+    },
+    "tools/golden_baseline/extract.py": {
+      "bytes": 10507,
+      "sha256": "95e3a136fc2d7dc1b965afca7773ec4f26528e30e81818adb169d571277679cb"
+    },
+    "tools/lemma_inventory/README.md": {
+      "bytes": 6905,
+      "sha256": "0ea1c4a165a1e83aadd0a1b752dca75bac93a066736e4c6d1b67d3e9a80b6f86"
+    },
+    "tools/lemma_inventory/build.py": {
+      "bytes": 10729,
+      "sha256": "6037f7f8df371a5756ed71a840e2203a00300655d4418a99434b8776dcb13435"
+    },
+    "tools/lemma_inventory/diff.py": {
+      "bytes": 11474,
+      "sha256": "a2380e400fab5f42f5801e5174cf72ca5c259f71c31741ac11c20cfc0bb27c3b"
+    },
+    "tools/lemma_inventory/extract_lemmas.py": {
+      "bytes": 12597,
+      "sha256": "1df06fd65e1c761cee3103a3d08a0386ce162d89a75ab6c5f4ce27feece76fa2"
+    },
+    "tools/lemma_inventory/parse_roots.py": {
+      "bytes": 9719,
+      "sha256": "66b0e8fb818f71b0a2d0f0985e68f20e7de002581e0f261c1d2ef27e1985a2bf"
+    },
+    "tools/theory_dag/dag_query.py": {
+      "bytes": 4390,
+      "sha256": "86eaf23d4b2d8114be5d9d1222a161216e7377e50283b4ef9c3336e05bcbb517"
+    },
+    "tools/theory_dag/parse_theory_imports.py": {
+      "bytes": 12092,
+      "sha256": "b20ac68cb291653e63a060d5f4ebad66accc702080c03bace91f3280f7552008"
+    },
+    "tools/theory_dag/test_parse_theory_imports.py": {
+      "bytes": 1330,
+      "sha256": "df27f01849f13c6099c2112322a91f8542813b13d5b9b18867a9c388c3422902"
+    }
+  },
+  "format": "harness-application-release-v1",
+  "includes_uncommitted_and_untracked_code": true,
+  "machine_b_accepted": false,
+  "vero_adapter_accepted": false
+}

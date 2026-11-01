@@ -1,0 +1,350 @@
+{
+  "schema": "intervaltree-model-feedback-fixture-v1",
+  "id": "delete_balance_counterexample",
+  "upstream_commit": "1bc406e1f441577c4e421fc51aba2ab67fbd97fb",
+  "python_source_sha256": {
+    "vendor/intervaltree/intervaltree/node.py": "0cb621d02a83e108c2dbb3b4417888f7ba3bb696768dad990acdcdb5afb5a3c3",
+    "vendor/intervaltree/intervaltree/interval.py": "63607e891e50e85382e34673b07d3cf6b17826a84ed0ad49dc6b959199704e50"
+  },
+  "provenance": {
+    "certificate_path": "reports/regen/intervaltree-stability-validation-20261030-001/native-refutation/native-check/negative/certificate.json",
+    "certificate_sha256": "231ec8fa0cc8bd19b30dca7de03915197f67784509d1ffba6e74bc08dda529ac",
+    "certificate_id": "refutation:b454aae36487bbc96f357946470eea0df851e9c81627445431cd92eca1552c24",
+    "contract_name": "tree_remove_preserves_wf",
+    "source_kind": "existing generated counterexample, data only; no proof imported",
+    "excluded_from_generation_inputs": true
+  },
+  "scope": "Internal Node state accepted by original Node.verify; public IntervalTree API reachability is not established.",
+  "initial_tree": {
+    "center": 19,
+    "entries": [
+      [
+        13,
+        21,
+        0
+      ]
+    ],
+    "left": {
+      "center": 13,
+      "entries": [
+        [
+          1,
+          15,
+          1
+        ]
+      ],
+      "left": {
+        "center": 5,
+        "entries": [
+          [
+            4,
+            10,
+            2
+          ]
+        ],
+        "left": {
+          "center": 2,
+          "entries": [
+            [
+              0,
+              3,
+              3
+            ]
+          ],
+          "left": null,
+          "right": null,
+          "height": 1,
+          "balance": 0
+        },
+        "right": {
+          "center": 11,
+          "entries": [
+            [
+              7,
+              12,
+              4
+            ]
+          ],
+          "left": {
+            "center": 8,
+            "entries": [
+              [
+                6,
+                9,
+                5
+              ]
+            ],
+            "left": null,
+            "right": null,
+            "height": 1,
+            "balance": 0
+          },
+          "right": null,
+          "height": 2,
+          "balance": -1
+        },
+        "height": 3,
+        "balance": 1
+      },
+      "right": {
+        "center": 15,
+        "entries": [
+          [
+            14,
+            17,
+            6
+          ]
+        ],
+        "left": null,
+        "right": {
+          "center": 16,
+          "entries": [
+            [
+              16,
+              18,
+              7
+            ]
+          ],
+          "left": null,
+          "right": null,
+          "height": 1,
+          "balance": 0
+        },
+        "height": 2,
+        "balance": 1
+      },
+      "height": 4,
+      "balance": -1
+    },
+    "right": {
+      "center": 24,
+      "entries": [
+        [
+          23,
+          26,
+          8
+        ]
+      ],
+      "left": {
+        "center": 20,
+        "entries": [
+          [
+            20,
+            22,
+            9
+          ]
+        ],
+        "left": null,
+        "right": null,
+        "height": 1,
+        "balance": 0
+      },
+      "right": {
+        "center": 27,
+        "entries": [
+          [
+            25,
+            29,
+            10
+          ]
+        ],
+        "left": null,
+        "right": {
+          "center": 30,
+          "entries": [
+            [
+              28,
+              31,
+              11
+            ]
+          ],
+          "left": null,
+          "right": null,
+          "height": 1,
+          "balance": 0
+        },
+        "height": 2,
+        "balance": 1
+      },
+      "height": 3,
+      "balance": 1
+    },
+    "height": 5,
+    "balance": -1
+  },
+  "operation": {
+    "name": "remove",
+    "entry": [
+      13,
+      21,
+      0
+    ],
+    "isabelle_fuel": 9
+  },
+  "expected_final_tree": {
+    "center": 16,
+    "entries": [
+      [
+        16,
+        18,
+        7
+      ],
+      [
+        14,
+        17,
+        6
+      ]
+    ],
+    "left": {
+      "center": 11,
+      "entries": [
+        [
+          7,
+          12,
+          4
+        ],
+        [
+          1,
+          15,
+          1
+        ]
+      ],
+      "left": {
+        "center": 5,
+        "entries": [
+          [
+            4,
+            10,
+            2
+          ]
+        ],
+        "left": {
+          "center": 2,
+          "entries": [
+            [
+              0,
+              3,
+              3
+            ]
+          ],
+          "left": null,
+          "right": null,
+          "height": 1,
+          "balance": 0
+        },
+        "right": {
+          "center": 8,
+          "entries": [
+            [
+              6,
+              9,
+              5
+            ]
+          ],
+          "left": null,
+          "right": null,
+          "height": 1,
+          "balance": 0
+        },
+        "height": 2,
+        "balance": 0
+      },
+      "right": null,
+      "height": 3,
+      "balance": -2
+    },
+    "right": {
+      "center": 24,
+      "entries": [
+        [
+          23,
+          26,
+          8
+        ]
+      ],
+      "left": {
+        "center": 20,
+        "entries": [
+          [
+            20,
+            22,
+            9
+          ]
+        ],
+        "left": null,
+        "right": null,
+        "height": 1,
+        "balance": 0
+      },
+      "right": {
+        "center": 27,
+        "entries": [
+          [
+            25,
+            29,
+            10
+          ]
+        ],
+        "left": null,
+        "right": {
+          "center": 30,
+          "entries": [
+            [
+              28,
+              31,
+              11
+            ]
+          ],
+          "left": null,
+          "right": null,
+          "height": 1,
+          "balance": 0
+        },
+        "height": 2,
+        "balance": 1
+      },
+      "height": 3,
+      "balance": 1
+    },
+    "height": 4,
+    "balance": 0
+  },
+  "expected_pre_wf": true,
+  "expected_post_wf": false,
+  "query_points": [
+    -1,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "run_id": "intervaltree-project-astra-low-20261028-001",
+  "status": "paused_by_user",
+  "user_authorized": true,
+  "method": "existing project repository-level proof-generation harness",
+  "machine": "serverb",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "dataset": "intervaltree/sanitized",
+  "target_count": 91,
+  "reference_run": "intervaltree-vero-astra-low-20261027-001",
+  "comparison_axis": "generation_phase_elapsed_time",
+  "reference_generation_seconds": 18834.104907751083,
+  "planned_generation_limit_seconds": 18834,
+  "budget_semantics": {
+    "exclude_repository_planning": true,
+    "include_local_planning_and_revision": true,
+    "include_proving_and_native_check_waits": true,
+    "do_not_equate_effective_time_or_summed_worker_time_with_elapsed_time": true,
+    "validate_supported_budget_configuration_before_launch": true
+  },
+  "planning_artifacts_required": [
+    "frozen input and configuration identities",
+    "model requests and responses with timing and usage",
+    "draft plan and revisions",
+    "exact contract allocation and theory dependencies",
+    "structural and native preflight results",
+    "accepted immutable plan"
+  ],
+  "proof_isolation": {
+    "reference_preparation_proofs_allowed": false,
+    "prior_vero_generated_proofs_allowed": false,
+    "supervisor_written_target_proofs_allowed": false
+  },
+  "remaining_prelaunch_work": [],
+  "execution_blocker": null,
+  "remote_root": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001",
+  "planning_directory": "planning-002",
+  "launch_service": "intervaltree-project-20261028-001-launch-002.service",
+  "active_generation_unit": "intervaltree-project-20261028-001-generation-resume-001.service",
+  "deadline_beijing": "2026-10-29T07:25:33.291037+08:00",
+  "automatic_resume": false,
+  "pause_receipt": "operator-pause-20261029.json",
+  "seal_repair_validation": "seal-repair-20261029-001/validation.json"
+}

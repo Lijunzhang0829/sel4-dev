@@ -1,0 +1,26 @@
+{
+  "adjustments": [
+    {
+      "at_utc": "2026-10-27T13:36:03.144695+00:00",
+      "kind": "deployment_permissions",
+      "change": "Set checker group inheritance on private result directories; pre-create world-traversable read-only-plan publication directory.",
+      "reason": "Supervisor umask 027 must not prevent checker traversing fresh evaluation directories or generator reading accepted public benchmark.",
+      "proofs_changed": false,
+      "contracts_changed": false,
+      "backend_code_changed": false,
+      "model_interrupted": false
+    },
+    {
+      "at_utc": "2026-10-27T13:40:04.375039+00:00",
+      "kind": "deployment_permissions_resume",
+      "change": "Resume unchanged VERO pipeline with supervisor UID 0 / primary GID 1002; repair current result file group to checker.",
+      "reason": "New preflight subdirectories did not retain setgid and were inaccessible to checker.",
+      "preserved_evidence": "/results/operator-recovery/preflight-permission-failure",
+      "contracts_changed": false,
+      "plan_changed": false,
+      "backend_code_changed": false,
+      "planning_model_call_repeated": false,
+      "resume": true
+    }
+  ]
+}

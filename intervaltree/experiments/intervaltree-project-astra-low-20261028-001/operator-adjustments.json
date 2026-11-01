@@ -1,0 +1,36 @@
+{
+  "recorded_unix": 1793210406.1114197,
+  "kind": "infrastructure_adapter_fix_before_generation",
+  "planning_attempt": "planning/draft",
+  "disposition": "interrupted_and_retained_not_reused",
+  "reason": "Additional regression tests found the seal replay renderer missing base_session after plain-HOL audit adaptation.",
+  "fix": "Bind replay renderer base_session from sealed evidence; preserve default Semantic_Base for legacy renderers.",
+  "initial_invocation": {
+    "command": [
+      "/data/zljj/miniconda3/bin/python",
+      "-u",
+      "-m",
+      "regen.tools.reviewed_planning",
+      "--input",
+      "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/dataset/repository-planning-input.json",
+      "--policy",
+      "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/config/planning-policy.json",
+      "--output",
+      "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/planning",
+      "--model",
+      "gpt-6-astra",
+      "--reasoning-effort",
+      "low",
+      "--allow-external-call"
+    ],
+    "started_unix": 1793210262.228343,
+    "included_in_generation_budget": false
+  },
+  "proof_generation_started": false,
+  "target_proofs_injected": false,
+  "generation_budget_started": false,
+  "next_planning_directory": "planning-002",
+  "prior_release_manifest": "planning-001-application-manifest.json",
+  "fixed_release_manifest": "application-003-manifest.json",
+  "accounting": "Retain interrupted planning call duration and partial usage separately; exclude all repository planning from generation comparison."
+}

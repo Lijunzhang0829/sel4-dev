@@ -1,0 +1,386 @@
+{
+  "before": {
+    "coverage": 91,
+    "theories": [
+      {
+        "theory": "Interval_Normalization",
+        "contracts": 13,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "Normalization_Algebra",
+          "Interval_Run_Geometry",
+          "Interval_Measure",
+          "Normalized_Cutting",
+          "Repeated_Cutting",
+          "Interval_Components"
+        ],
+        "blocked_contracts_if_unsealed": 41,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "Tree_Executor",
+        "contracts": 8,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "State_Invariants_And_Traces"
+        ],
+        "blocked_contracts_if_unsealed": 5,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "State_Update_Interface",
+        "contracts": 7,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "State_Invariants_And_Traces"
+        ],
+        "blocked_contracts_if_unsealed": 5,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "Interval_Cutting",
+        "contracts": 11,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "Normalized_Cutting",
+          "Repeated_Cutting"
+        ],
+        "blocked_contracts_if_unsealed": 8,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "Tree_Queries",
+        "contracts": 6,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "State_Invariants_And_Traces"
+        ],
+        "blocked_contracts_if_unsealed": 5,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "Normalization_Algebra",
+        "contracts": 11,
+        "required_imports": [
+          "Interval_Normalization"
+        ],
+        "transitive_providers": [
+          "Interval_Normalization"
+        ],
+        "blocked_theories_if_unsealed": [
+          "Normalized_Cutting"
+        ],
+        "blocked_contracts_if_unsealed": 5,
+        "provider_contracts_waited_for": 13
+      },
+      {
+        "theory": "Interval_Run_Geometry",
+        "contracts": 15,
+        "required_imports": [
+          "Interval_Normalization"
+        ],
+        "transitive_providers": [
+          "Interval_Normalization"
+        ],
+        "blocked_theories_if_unsealed": [
+          "Interval_Components"
+        ],
+        "blocked_contracts_if_unsealed": 3,
+        "provider_contracts_waited_for": 13
+      },
+      {
+        "theory": "Interval_Measure",
+        "contracts": 4,
+        "required_imports": [
+          "Interval_Normalization"
+        ],
+        "transitive_providers": [
+          "Interval_Normalization"
+        ],
+        "blocked_theories_if_unsealed": [
+          "Repeated_Cutting"
+        ],
+        "blocked_contracts_if_unsealed": 3,
+        "provider_contracts_waited_for": 13
+      },
+      {
+        "theory": "Normalized_Cutting",
+        "contracts": 5,
+        "required_imports": [
+          "Normalization_Algebra",
+          "Interval_Cutting"
+        ],
+        "transitive_providers": [
+          "Interval_Cutting",
+          "Interval_Normalization",
+          "Normalization_Algebra"
+        ],
+        "blocked_theories_if_unsealed": [],
+        "blocked_contracts_if_unsealed": 0,
+        "provider_contracts_waited_for": 35
+      },
+      {
+        "theory": "Repeated_Cutting",
+        "contracts": 3,
+        "required_imports": [
+          "Interval_Cutting",
+          "Interval_Measure"
+        ],
+        "transitive_providers": [
+          "Interval_Cutting",
+          "Interval_Measure",
+          "Interval_Normalization"
+        ],
+        "blocked_theories_if_unsealed": [],
+        "blocked_contracts_if_unsealed": 0,
+        "provider_contracts_waited_for": 28
+      },
+      {
+        "theory": "Interval_Components",
+        "contracts": 3,
+        "required_imports": [
+          "Interval_Run_Geometry"
+        ],
+        "transitive_providers": [
+          "Interval_Normalization",
+          "Interval_Run_Geometry"
+        ],
+        "blocked_theories_if_unsealed": [],
+        "blocked_contracts_if_unsealed": 0,
+        "provider_contracts_waited_for": 28
+      },
+      {
+        "theory": "State_Invariants_And_Traces",
+        "contracts": 5,
+        "required_imports": [
+          "Tree_Executor",
+          "State_Update_Interface",
+          "Tree_Queries"
+        ],
+        "transitive_providers": [
+          "State_Update_Interface",
+          "Tree_Executor",
+          "Tree_Queries"
+        ],
+        "blocked_theories_if_unsealed": [],
+        "blocked_contracts_if_unsealed": 0,
+        "provider_contracts_waited_for": 21
+      }
+    ],
+    "interpretation": "Reachability and waiting scope only; not proof necessity or measured latency."
+  },
+  "after": {
+    "coverage": 91,
+    "theories": [
+      {
+        "theory": "Interval_Normalization",
+        "contracts": 13,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "Normalization_Algebra",
+          "Interval_Run_Geometry",
+          "Interval_Measure",
+          "Normalized_Cutting",
+          "Interval_Components"
+        ],
+        "blocked_contracts_if_unsealed": 37,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "Canonical_Measure",
+        "contracts": 1,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "Interval_Measure",
+          "Repeated_Cutting"
+        ],
+        "blocked_contracts_if_unsealed": 6,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "Tree_Executor",
+        "contracts": 8,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "State_Invariants_And_Traces"
+        ],
+        "blocked_contracts_if_unsealed": 5,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "State_Update_Interface",
+        "contracts": 7,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "State_Invariants_And_Traces"
+        ],
+        "blocked_contracts_if_unsealed": 5,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "Interval_Cutting",
+        "contracts": 11,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "Normalized_Cutting",
+          "Repeated_Cutting"
+        ],
+        "blocked_contracts_if_unsealed": 8,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "Tree_Queries",
+        "contracts": 6,
+        "required_imports": [],
+        "transitive_providers": [],
+        "blocked_theories_if_unsealed": [
+          "State_Invariants_And_Traces"
+        ],
+        "blocked_contracts_if_unsealed": 5,
+        "provider_contracts_waited_for": 0
+      },
+      {
+        "theory": "Normalization_Algebra",
+        "contracts": 11,
+        "required_imports": [
+          "Interval_Normalization"
+        ],
+        "transitive_providers": [
+          "Interval_Normalization"
+        ],
+        "blocked_theories_if_unsealed": [
+          "Normalized_Cutting"
+        ],
+        "blocked_contracts_if_unsealed": 5,
+        "provider_contracts_waited_for": 13
+      },
+      {
+        "theory": "Interval_Run_Geometry",
+        "contracts": 15,
+        "required_imports": [
+          "Interval_Normalization"
+        ],
+        "transitive_providers": [
+          "Interval_Normalization"
+        ],
+        "blocked_theories_if_unsealed": [
+          "Interval_Components"
+        ],
+        "blocked_contracts_if_unsealed": 3,
+        "provider_contracts_waited_for": 13
+      },
+      {
+        "theory": "Interval_Measure",
+        "contracts": 3,
+        "required_imports": [
+          "Interval_Normalization",
+          "Canonical_Measure"
+        ],
+        "transitive_providers": [
+          "Canonical_Measure",
+          "Interval_Normalization"
+        ],
+        "blocked_theories_if_unsealed": [],
+        "blocked_contracts_if_unsealed": 0,
+        "provider_contracts_waited_for": 14
+      },
+      {
+        "theory": "Normalized_Cutting",
+        "contracts": 5,
+        "required_imports": [
+          "Normalization_Algebra",
+          "Interval_Cutting"
+        ],
+        "transitive_providers": [
+          "Interval_Cutting",
+          "Interval_Normalization",
+          "Normalization_Algebra"
+        ],
+        "blocked_theories_if_unsealed": [],
+        "blocked_contracts_if_unsealed": 0,
+        "provider_contracts_waited_for": 35
+      },
+      {
+        "theory": "Repeated_Cutting",
+        "contracts": 3,
+        "required_imports": [
+          "Interval_Cutting",
+          "Canonical_Measure"
+        ],
+        "transitive_providers": [
+          "Canonical_Measure",
+          "Interval_Cutting"
+        ],
+        "blocked_theories_if_unsealed": [],
+        "blocked_contracts_if_unsealed": 0,
+        "provider_contracts_waited_for": 12
+      },
+      {
+        "theory": "Interval_Components",
+        "contracts": 3,
+        "required_imports": [
+          "Interval_Run_Geometry"
+        ],
+        "transitive_providers": [
+          "Interval_Normalization",
+          "Interval_Run_Geometry"
+        ],
+        "blocked_theories_if_unsealed": [],
+        "blocked_contracts_if_unsealed": 0,
+        "provider_contracts_waited_for": 28
+      },
+      {
+        "theory": "State_Invariants_And_Traces",
+        "contracts": 5,
+        "required_imports": [
+          "Tree_Executor",
+          "State_Update_Interface",
+          "Tree_Queries"
+        ],
+        "transitive_providers": [
+          "State_Update_Interface",
+          "Tree_Executor",
+          "Tree_Queries"
+        ],
+        "blocked_theories_if_unsealed": [],
+        "blocked_contracts_if_unsealed": 0,
+        "provider_contracts_waited_for": 21
+      }
+    ],
+    "interpretation": "Reachability and waiting scope only; not proof necessity or measured latency."
+  },
+  "moved_contracts": [
+    {
+      "contract_id": "goal:8e6f72b4719e479f43b4f937",
+      "before": "Interval_Measure",
+      "after": "Canonical_Measure"
+    }
+  ],
+  "decisions": [
+    {
+      "issue_id": "measure_interface_seal",
+      "decision": "revise",
+      "reason": "Inspected canonical exact-measure, canonicality, coverage and length definitions show a restricted list interface with no normalization operation. Move only C0020 to Canonical_Measure and commit both measure consumers to it.",
+      "tradeoff": "One additional single-contract theory exposes a concrete interface to two consumers and removes the normalization seal from repeated cutting; shared cardinality bookkeeping may cross a new boundary.",
+      "remaining_risk": "Semantic separation is not proof certification. Finite union and length arguments still need File Planner investigation; no helper is proved."
+    },
+    {
+      "issue_id": "executor_adequacy_seal",
+      "decision": "retain",
+      "reason": "Success-conditioned preservation and existential adequacy differ, and successful traces need only preservation. However inspected execute_tree equations interleave rotation, promoted-entry removal, pruning and popping; no independent intermediate-state helper interface has been established. Retain the combined executor under the review instruction to preserve uncertain boundaries.",
+      "tradeoff": "Keeps potentially shared executor invariants local and avoids speculative mandatory imports or helper exports, at the cost of state consumers waiting for both adequacy contracts.",
+      "remaining_risk": "Adequacy could become the sealing bottleneck. Definitions do not establish proof dependencies; a future evidence-backed split may be warranted, but no proof-latency evidence is available."
+    }
+  ],
+  "quality_improvement_certified": false
+}

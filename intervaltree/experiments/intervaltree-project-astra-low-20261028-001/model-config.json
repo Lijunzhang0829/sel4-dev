@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "model_isolation": {
+    "required": true,
+    "image": "sha256:5d617d87925d3af2acb4b145faa27dea0e454ef9e87b091b97ac8bcfdadafe95",
+    "transport_proxy": "http://127.0.0.1:17890"
+  },
+  "codex_bin": "/data/zljj/vero-a-unified/20260928-001/client/codex",
+  "codex_runtime_root": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/runtime",
+  "codex_sha256": "a969c7c42b842c759d157d2500bbf33a562ff95f22dcb7112aa4d8f9e68833d3",
+  "codex_code_mode_host_sha256": "247262ac00b0ea6009b0c062dd87e407af0f0c70f9ed761621e5cf204e2ffac1",
+  "codex_version": "codex-cli 0.155.0-alpha.16.3",
+  "reasoning_effort": "low",
+  "role_models": {
+    "File Planner": "gpt-6-astra",
+    "Graph Revision Agent": "gpt-6-astra",
+    "Lemma Prover": "gpt-6-astra"
+  },
+  "comparison_models": [
+    "gpt-6-astra"
+  ]
+}

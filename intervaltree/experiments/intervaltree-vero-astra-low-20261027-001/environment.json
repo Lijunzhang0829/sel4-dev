@@ -1,0 +1,14 @@
+{
+  "files": {
+    "/public/premises.jsonl": "4192140f5a72820cce1ef598cb6a74fc64d82b7c1fd8d0244c05204ee86301d4",
+    "/workspace/verification/isabelle/bin/isabelle": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc",
+    "/workspace/verification/isabelle/src/Pure/ROOT.ML": "159c1f4433b5ee159f8fd66878cc652c1e28c8cb9b13e53b7937e157e14ee8c7",
+    "/root/.isabelle/heaps/polyml-5.9.1_x86_64_32-linux/Intervaltree_Definitions": "338a0fa7d93afc90e8fe4e08c50479fea1499c108c014f812061c43ee5abb315"
+  },
+  "premise_count": 29357,
+  "backend": "fresh-process-v1",
+  "checker_timeout_seconds": 300,
+  "native_threads": 2,
+  "container_cpus": 4,
+  "container_memory_gib": 8
+}

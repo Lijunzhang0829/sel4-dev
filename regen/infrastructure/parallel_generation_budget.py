@@ -515,7 +515,8 @@ def review_parallel_budget_clock(source_dir):
 
 def carry_parallel_budget(source_dir, destination, *, authorization, clock_review,
                           target_strategy=None, provider_feedback_review=None,
-                          target_execution_policy=None, target_candidate_timeout=None):
+                          target_execution_policy=None, target_candidate_timeout=None,
+                          target_native_slots=None):
     """Carry a stopped full-workspace continuation's ledger, never reset costs.
 
     Caller owns the source mutation lock and must establish stopped liveness.
@@ -567,6 +568,22 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
                 or target_strategy != generation_strategy(target_strategy['name'])):
             raise ValueError('strategy update must match the new frozen implementation of the same strategy')
         target_policy['generation_strategy'] = target_strategy
+    native_slots_change = None
+    if target_native_slots is not None:
+        previous = source_policy.get('native_slots')
+        if (type(target_native_slots) is not int or target_native_slots <= 0
+                or type(previous) is not int or target_native_slots <= previous
+                or target_native_slots > source_policy.get('max_parallel_theories', 0)
+                or target_native_slots > source_policy.get('resident_limit', 0)):
+            raise ValueError('native slots increase must fit frozen worker and resident limits')
+        if state['effective_seconds'] >= state['seconds']:
+            raise ValueError('native slots migration cannot extend an exhausted experiment budget')
+        target_policy['native_slots'] = target_native_slots
+        native_slots_change = dict(previous_native_slots=previous,
+            target_native_slots=target_native_slots, authorization=authorization,
+            effective_seconds_unchanged=state['effective_seconds'],
+            worker_seconds_unchanged=state['worker_seconds'],
+            seconds_unchanged=state['seconds'], refund_seconds=0)
     candidate_timeout_change = None
     if target_candidate_timeout is not None:
         previous = source_policy.get('candidate_timeout')
@@ -642,6 +659,10 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
             previous_configuration_sha256=digest(source_policy),
             target_configuration_sha256=digest(target_policy),
             effective_seconds_unchanged=state['effective_seconds'], seconds_unchanged=state['seconds'])
+    if native_slots_change is not None:
+        native_slots_change.update(previous_configuration_sha256=digest(source_policy),
+                                   target_configuration_sha256=digest(target_policy))
+        target.append('parallel_budget_native_slots_update', **native_slots_change)
     if candidate_timeout_change is not None:
         target.append('parallel_budget_candidate_timeout_update', **candidate_timeout_change)
     if inherited_clock_reviews:
@@ -664,6 +685,8 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
         carried_effective_seconds=state['effective_seconds'],
         carried_worker_seconds=state['worker_seconds'], total_limit_seconds=state['seconds'],
         historical_uncertainty_retained=True, refund_seconds=0)
+    if native_slots_change is not None:
+        receipt['native_slots_update'] = native_slots_change
     if candidate_timeout_change is not None:
         receipt['candidate_timeout_update'] = candidate_timeout_change
     if inherited_clock_reviews:

@@ -2,20 +2,26 @@
 
 这是用于 Isabelle 仓库级证明生成的项目。已实现两部分：将 VERO 的固定区间模型和 56 个原始目标移植到 Isabelle 并扩展；加入上游 Python centered AVL 的人工翻译及精化目标。它是部分验证的第一版，尚未证明整个 Python 库。
 
+当前输入版本为 **`expanded-specs-v2`**。91 个目标声明直接展示 spec 定义中的量词、前提和结论；原命名布尔定义及算法均保留。独立输入构建逐条用 Isabelle 的定义转换检查新声明与原 spec 等价，检查不会证明目标本身。此修订解决规划和审查仅看到命题名称的问题，相关操作定义仍通过查询获取。
+
+**已知反证：`tree_remove_preserves_wf` 不成立，未通过改写算法或削弱前提消除。** 同一个 12 节点输入在固定 Python `Node` 实现中也出现删除后的平衡因子 −2；输入通过 Python 自身的 `verify()`。新跨语言回放确认该例的结构、缓存、内容和查询结果一致，但尚未证明它能由公开 `IntervalTree` API 构造。见 [model-feedback.json](model-feedback.json) 和 [本轮修订报告](../reports/regen/intervaltree-model-repair-20261101-001/REPORT.md)。该反馈及反例 fixture 不进入 `sanitized/`，也不作为生成器的答案。
+
+旧输入已归档，本轮没有重写历史实验。新声明会改变 benchmark/contract 身份，后续实验须重新准备数据集和规划，不能直接续用旧运行的冻结绑定。数学模型的定义文件保持原哈希，因此旧反证仍有意义。
+
 **建模阶段只完善模型、证明目标及其与源码的对应关系，不继续手工编写目标证明。** 验收关注定义、类型、必要终止性、目标可解析性和模型行为检查；目标是否被证明不作为建模阶段完成条件。现有 91 个目标均已设置并通过独立输入构建。
 
 用户随后授权在机器 B 使用 VERO、`gpt-6-astra / low` 运行生成。独立运行编号为 `intervaltree-vero-astra-low-20261027-001`，远端目录为 `/data/zljj/vero-runs/intervaltree-vero-astra-low-20261027-001`。只迁移 `sanitized/` 和未修改的 VERO Isabelle backend，使用原生 `vero.isabelle plan-run`；历史准备证明不作为模型输入。部署、配置和最近观察见 [实验记录](experiments/intervaltree-vero-astra-low-20261027-001/latest-status.json)。该记录是观察时刻的快照，不是实时进度或完成声明。
 
 历史准备证明的检查结果以 [validation.json](validation.json) 和逐目标的 [targets.json](targets.json) 为准；以下证明数量不是当前建模任务的完成率：
 
-| 部分 | 固定目标 | 已检查的准备证明 | 待证明 |
+| 部分 | 固定目标 | 已检查的准备证明 | 无准备证明 |
 | --- | ---: | ---: | ---: |
 | VERO 基线 | 56 | 13 | 43 |
 | 模型扩展 | 9 | 3 | 6 |
 | 具体实现与精化 | 26 | 14 | 12 |
 | 合计 | 91 | 30 | 61 |
 
-这些准备证明由本次 Codex 协作编写，用于检查模型与目标的可用性，**不能计入后续证明生成实验的成绩**。未完成的目标是封闭的布尔命题定义，没有作为假设或已证明事实导入。完整 session 的 [Interval_Audit.thy](theories/Interval_Audit.thy) 检查每个已标记目标的精确命题、未解除假设和 oracle 依赖；工程中没有使用 `sorry` 或新增公理。
+这些准备证明由本次 Codex 协作编写，用于检查模型与目标的可用性，**不能计入后续证明生成实验的成绩**。目标由封闭的布尔命题定义固定，当前输入展开其正文；没有将未证明目标作为假设或已证明事实导入。`pending` 只表示没有准备证明，并不表示性质一定成立；已证伪状态另见 `model-feedback.json`。完整 session 的 [Interval_Audit.thy](theories/Interval_Audit.thy) 检查每个已标记目标的精确命题、未解除假设和 oracle 依赖；工程中没有使用 `sorry` 或新增公理。
 
 ## 第一部分：扩展现有模型
 
@@ -61,7 +67,7 @@
 
 已证明的主要功能性质是：在 `state_wf` 下，点查询、重叠查询、包含查询均精确返回满足条件的所有条目。还证明了覆盖投影、空状态、缓存深度、重复插入和缺失删除的行为，以及公开状态包装层的部分集合记账性质。
 
-**更新后的不变量保持仍是核心待证明内容。** 包装层 `all_items` 的集合等式不代表树节点更新已正确；已有查询定理也不能自动扩展为任意更新序列的正确性。待证明目标包括：
+**更新后的不变量保持仍是核心验证内容，其中删除保持 `tree_wf` 已被证伪。** 包装层 `all_items` 的集合等式不代表树节点更新已正确；已有查询定理也不能自动扩展为任意更新序列的正确性。没有准备证明的目标包括：
 
 - `tree_rotation_content`、`tree_add_content`、`tree_remove_content`。
 - `tree_add_preserves_wf`、`tree_remove_preserves_wf`。
@@ -92,6 +98,14 @@ python3 intervaltree/tools/audit.py --require-build --build-result intervaltree/
 默认构建使用本机已有的 `sel4-public:tuned` 镜像和 `/home/lijun/seL4-docker-main/verification/isabelle`；其他环境可用 `--image`、`--isabelle` 或 `--backend host` 指定安装。Docker 构建关闭网络，挂载冻结的只读源文件快照，使用容器内临时 heaps，不写共享 Isabelle heaps。`build.log` 与 `build-result.json` 位于对应构建目录。工具会拒绝源码已变的构建证据。
 
 `prepare_benchmark.py` 会重新生成输入并把状态重置为 `pending`；须在匹配的完整构建和独立输入构建通过后，运行 `record_validation.py` 才能恢复准备证明状态。`sanitized/goals/Interval_Goals.thy` 的 `oops` 仅检查目标能否正确解释，不证明任何目标。
+
+回放已知建模反馈（核对实际 Python 与 Isabelle 执行结果，包括失败的不变量）：
+
+```bash
+python3 intervaltree/tools/check_model_feedback.py --output-dir intervaltree/build/model-feedback
+```
+
+该检查分别报告 `translation_matches` 和 `post_wf`；本例预期前者为 `true`、后者为 `false`。它是有限执行的一致性检查，不是新的目标证明，也不是完整翻译等价证明。
 
 实际 Python→Isabelle 差分检查：
 

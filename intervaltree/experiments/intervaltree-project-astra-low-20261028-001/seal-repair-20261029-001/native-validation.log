@@ -1,0 +1,49 @@
+[regen-event] {"time": "2026-10-28T20:05:56.823455+00:00", "event": "generation_exclusion_started", "phase_id": "84830cf948bc4b9a912a12f880dca663", "category": "heap_preparation"}
+[regen-event] {"time": "2026-10-28T20:05:57.394842+00:00", "event": "generation_exclusion_finished", "phase_id": "84830cf948bc4b9a912a12f880dca663", "category": "heap_preparation"}
+[regen-event] {"time": "2026-10-28T20:05:57.404611+00:00", "event": "native_queued", "checker": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001/native-validation/checks"}
+[regen-event] {"time": "2026-10-28T20:05:57.404728+00:00", "event": "native_slot_acquired", "checker": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001/native-validation/checks", "queue_seconds": 0.0, "host_queue_seconds": 0.0, "host_slot": null}
+[regen-event] {"time": "2026-10-28T20:05:57.405721+00:00", "event": "isabelle_started", "label": "Complete_Interval_Normalization", "session": "Intervaltree_Project_Base", "timeout_seconds": 900, "container": "regen-isabelle-check-1455583-604b62f8cfd340b3a1c90c8428a5d1f7"}
+[regen-event] {"time": "2026-10-28T20:06:11.005792+00:00", "event": "isabelle_finished", "label": "Complete_Interval_Normalization", "session": "Intervaltree_Project_Base", "verdict": "green", "returncode": 0, "wall_ms": 13598, "log": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001/native-validation/checks/Complete_Interval_Normalization.log"}
+[regen-event] {"time": "2026-10-28T20:06:11.005912+00:00", "event": "native_slot_released", "elapsed_seconds": 13.601}
+[regen-event] {"time": "2026-10-28T20:06:11.007507+00:00", "event": "native_queued", "checker": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001/native-validation/checks"}
+[regen-event] {"time": "2026-10-28T20:06:11.007581+00:00", "event": "native_slot_acquired", "checker": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001/native-validation/checks", "queue_seconds": 0.0, "host_queue_seconds": 0.0, "host_slot": null}
+[regen-event] {"time": "2026-10-28T20:06:11.008101+00:00", "event": "isabelle_started", "label": "Complete_Audit_Interval_Normalization", "session": "Intervaltree_Project_Base", "timeout_seconds": 900, "container": "regen-isabelle-check-1455583-0a029f3cb79e4505b749e07736a4e336"}
+[regen-event] {"time": "2026-10-28T20:06:27.146935+00:00", "event": "isabelle_finished", "label": "Complete_Audit_Interval_Normalization", "session": "Intervaltree_Project_Base", "verdict": "green", "returncode": 0, "wall_ms": 16138, "log": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001/native-validation/checks/Complete_Audit_Interval_Normalization.log"}
+[regen-event] {"time": "2026-10-28T20:06:27.147045+00:00", "event": "native_slot_released", "elapsed_seconds": 16.139}
+[regen-event] {"time": "2026-10-28T20:06:27.256091+00:00", "event": "native_queued", "checker": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001/native-validation/checks"}
+[regen-event] {"time": "2026-10-28T20:06:27.256184+00:00", "event": "native_slot_acquired", "checker": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001/native-validation/checks", "queue_seconds": 0.0, "host_queue_seconds": 0.0, "host_slot": null}
+[regen-event] {"time": "2026-10-28T20:06:27.256262+00:00", "event": "generation_exclusion_started", "phase_id": "eeef48be08ff48278bb6cc021ac6be0c", "category": "seal"}
+[regen-event] {"time": "2026-10-28T20:06:27.256976+00:00", "event": "isabelle_build_started", "session": "Sealed_Refine", "timeout_seconds": 900, "container": "regen-isabelle-build-1455583-82ee40f506e04214b7645a94202ff1d0", "resource_policy": {"native_slots": 1, "threads": 2, "resident_limit": 1, "cpus": 4, "memory_mb": 8192, "pids_limit": 1024, "provider_build_timeout": 900, "build_ml_heap_mb": 2048, "build_java_heap_mb": 1024}}
+[regen-event] {"time": "2026-10-28T20:06:52.585210+00:00", "event": "isabelle_build_finished", "session": "Sealed_Refine", "verdict": "green", "returncode": 0, "wall_ms": 25328, "log": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001/native-validation/generated/seal-build.log", "timeout_seconds": 900, "resource_policy": {"native_slots": 1, "threads": 2, "resident_limit": 1, "cpus": 4, "memory_mb": 8192, "pids_limit": 1024, "provider_build_timeout": 900, "build_ml_heap_mb": 2048, "build_java_heap_mb": 1024}}
+[regen-event] {"time": "2026-10-28T20:06:52.585279+00:00", "event": "generation_exclusion_finished", "phase_id": "eeef48be08ff48278bb6cc021ac6be0c", "category": "seal"}
+[regen-event] {"time": "2026-10-28T20:06:52.585320+00:00", "event": "native_slot_released", "elapsed_seconds": 25.329}
+{
+  "status": "pass",
+  "started_unix": 1793217953.1090832,
+  "finished_unix": 1793218012.9561958,
+  "original_experiment": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001",
+  "repair_directory": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001",
+  "theory": "Interval_Normalization",
+  "validated_contracts": 13,
+  "source_commit_id": "2825eb703a5b1cc8e454cb3068a693d8441239b98ff27ac4d9118fe8ae644fff",
+  "proofs_sha256": "905cba79088cfbc94204e7f342ff2af0bbe7e26c0361f8a1d72e8c71b42702f8",
+  "graph_sha256": "ecc7ad30aa526161cdaed4f2aec6624199c0222ce159026aab30f3d81b5d2662",
+  "complete_check": "green",
+  "native_dependency_audit": "green",
+  "semantic_impact": "pass",
+  "native_sealed_build": "green",
+  "seal_certificate_replay": "pass",
+  "validation_seal_id": "theory-seal:a718c7388e8fa4e2b1d7",
+  "source_unchanged": true,
+  "source_files_verified": 1028,
+  "published_to_experiment": false,
+  "model_calls": 0,
+  "new_target_proofs": 0,
+  "experiment_resumed": false,
+  "service": {
+    "unit": "intervaltree-project-20261028-001-generation-resume-001.service",
+    "MainPID": "0",
+    "ActiveState": "failed",
+    "SubState": "failed"
+  }
+}

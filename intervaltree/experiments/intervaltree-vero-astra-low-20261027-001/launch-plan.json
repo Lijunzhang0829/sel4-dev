@@ -1,0 +1,16 @@
+{
+  "run_id": "intervaltree-vero-astra-low-20261027-001",
+  "machine": "serverb",
+  "remote_release": "/data/zljj/vero-runs/intervaltree-vero-astra-low-20261027-001",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "target_count": 91,
+  "engine": "unmodified vero.isabelle plan-run",
+  "max_contract_retries": 5,
+  "plan_seconds": 600,
+  "checker_timeout_seconds": 300,
+  "total_agent_seconds": null,
+  "status": "retries_exhausted",
+  "archive_sha256": "14c64718111b1584da2b27c3cb64328d38a563a403b3d7c3e9525b68f1cfd0c6",
+  "accepted_plan_modules": 25
+}

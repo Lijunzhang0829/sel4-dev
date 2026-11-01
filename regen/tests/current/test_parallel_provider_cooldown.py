@@ -53,7 +53,7 @@ class ProviderCooldownTests(unittest.TestCase):
                 'candidate_timeout':120}
 
             def __init__(self, *args, **kwargs):
-                pass
+                self.root = root
 
             def list_workspace(self):
                 with test.lock:

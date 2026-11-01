@@ -1,0 +1,2396 @@
+{
+  "all_specs_resolved": false,
+  "artifact_sha256": "d75f6190578426514dffbb33e1f08b95aa569426a08d4d6be14f48b443a90539",
+  "auxiliary_errors": {},
+  "benchmark_id": "266022fb68e0c6f4f2ab910ef7b4e2914386810980629443e6bb0d91cd60a48a",
+  "complete": false,
+  "context_error": null,
+  "contracts": {
+    "c0001": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0002": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0003": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0004": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0005": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0006": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0007": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0008": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0009": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0010": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0011": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0012": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0013": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0014": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0015": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0016": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0017": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0018": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0019": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0020": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0021": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0022": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0023": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0024": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0025": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0026": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0027": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0028": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0029": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0030": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0031": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0032": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0033": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0034": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0035": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0036": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0037": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0038": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0039": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0040": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0041": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0042": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0043": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0044": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0045": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0046": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0047": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0048": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0049": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0050": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0051": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0052": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0053": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0054": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0055": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0056": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0057": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0058": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0059": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0060": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0061": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0062": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0063": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0064": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0065": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0066": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0067": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0068": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0069": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0070": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0071": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0072": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0073": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0074": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0075": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0076": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0077": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0078": {
+      "status": "unfilled"
+    },
+    "c0079": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0080": {
+      "status": "unfilled"
+    },
+    "c0081": {
+      "status": "unfilled"
+    },
+    "c0082": {
+      "status": "unfilled"
+    },
+    "c0083": {
+      "status": "unfilled"
+    },
+    "c0084": {
+      "status": "unfilled"
+    },
+    "c0085": {
+      "status": "unfilled"
+    },
+    "c0086": {
+      "status": "unfilled"
+    },
+    "c0087": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0088": {
+      "polarity": "prove",
+      "status": "proved"
+    },
+    "c0089": {
+      "status": "unfilled"
+    },
+    "c0090": {
+      "status": "unfilled"
+    },
+    "c0091": {
+      "status": "unfilled"
+    }
+  },
+  "disproved_specs": 0,
+  "effective_imports": {
+    "Vero_Canonical_Uniqueness": [
+      "Vero_Merge_Core"
+    ],
+    "Vero_Chop_Accounting": [],
+    "Vero_Chop_Canonical": [
+      "Vero_Merge_Order_Count"
+    ],
+    "Vero_Chop_Coverage": [],
+    "Vero_Chop_Fixpoint": [
+      "Vero_Chop_Canonical",
+      "Vero_Canonical_Uniqueness"
+    ],
+    "Vero_Cut_Fragments": [
+      "Vero_Chop_Canonical"
+    ],
+    "Vero_Cut_Measure": [
+      "Vero_Chop_Canonical",
+      "Vero_Chop_Coverage",
+      "Vero_Exact_Measure"
+    ],
+    "Vero_Exact_Measure": [
+      "Vero_Merge_Core",
+      "Vero_Merge_Order_Count"
+    ],
+    "Vero_Interval_Components": [
+      "Vero_Merge_Endpoints",
+      "Vero_Canonical_Uniqueness"
+    ],
+    "Vero_Merge_Algebra": [
+      "Vero_Canonical_Uniqueness"
+    ],
+    "Vero_Merge_Chop_Algebra": [
+      "Vero_Canonical_Uniqueness",
+      "Vero_Chop_Coverage"
+    ],
+    "Vero_Merge_Chop_Coverage": [
+      "Vero_Merge_Core",
+      "Vero_Chop_Coverage"
+    ],
+    "Vero_Merge_Core": [],
+    "Vero_Merge_Coverage_Consequences": [
+      "Vero_Merge_Core"
+    ],
+    "Vero_Merge_Endpoints": [
+      "Vero_Merge_Order_Count"
+    ],
+    "Vero_Merge_Order_Count": [
+      "Vero_Merge_Core"
+    ],
+    "Vero_Overlap": [],
+    "Vero_State_Invariants": [
+      "Vero_Tree_Mutations",
+      "Vero_State_Wrappers"
+    ],
+    "Vero_State_Traces": [
+      "Vero_State_Invariants",
+      "Vero_Tree_Point_Queries"
+    ],
+    "Vero_State_Wrappers": [],
+    "Vero_Tree_Fuel": [
+      "Vero_Tree_Mutations",
+      "Vero_Tree_Metadata"
+    ],
+    "Vero_Tree_Metadata": [],
+    "Vero_Tree_Mutations": [],
+    "Vero_Tree_Point_Queries": [],
+    "Vero_Tree_Range_Queries": [
+      "Vero_Tree_Point_Queries"
+    ]
+  },
+  "elapsed_seconds": 0.09368536993861198,
+  "integration": null,
+  "modules": {
+    "Vero_Canonical_Uniqueness": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0026:prove",
+        "c0027:prove",
+        "c0015:prove",
+        "c0017:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/080a359d0e1fbfe73077b69c210092a854b1d15b914b0be5761533574b42e679.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000082/eval/prefix/Vero_Canonical_Uniqueness/Vero_Canonical_Uniqueness"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000082/eval/prefix/Vero_Canonical_Uniqueness",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Chop_Accounting": {
+      "audited": [
+        "c0056:prove",
+        "c0054:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/b0c01eaf92c2364cb0468129b3c653f5aa80b55b24766d81c8731c7b94f576fc.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000043/eval/prefix/Vero_Chop_Accounting/Vero_Chop_Accounting"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000043/eval/prefix/Vero_Chop_Accounting",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Chop_Canonical": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0046:prove",
+        "c0043:prove",
+        "c0044:prove",
+        "c0041:prove",
+        "c0042:prove",
+        "c0047:prove",
+        "c0050:prove",
+        "c0051:prove",
+        "c0052:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/2e7906ef5f41569efd089289683d516da2dbf387b9a913cef780f2be22fe1483.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000095/eval/prefix/Vero_Chop_Canonical/Vero_Chop_Canonical"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000095/eval/prefix/Vero_Chop_Canonical",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Chop_Coverage": {
+      "audited": [
+        "c0023:prove",
+        "c0022:prove",
+        "c0024:prove",
+        "c0025:prove",
+        "c0055:prove",
+        "c0059:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/866f8d2c7a2b81208c80b629af8ce91de7d31ae072fa90f44ed3ea18f3cf10ad.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000042/eval/prefix/Vero_Chop_Coverage/Vero_Chop_Coverage"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000042/eval/prefix/Vero_Chop_Coverage",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Chop_Fixpoint": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0046:prove",
+        "c0043:prove",
+        "c0026:prove",
+        "c0044:prove",
+        "c0027:prove",
+        "c0015:prove",
+        "c0041:prove",
+        "c0017:prove",
+        "c0042:prove",
+        "c0047:prove",
+        "c0050:prove",
+        "c0051:prove",
+        "c0052:prove",
+        "c0053:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/a0e91107cf71905d67540d718bf41ce65f79df97f33261b96ba801dd963773a4.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000096/eval/prefix/Vero_Chop_Fixpoint/Vero_Chop_Fixpoint"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000096/eval/prefix/Vero_Chop_Fixpoint",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Cut_Fragments": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0046:prove",
+        "c0043:prove",
+        "c0044:prove",
+        "c0041:prove",
+        "c0042:prove",
+        "c0047:prove",
+        "c0050:prove",
+        "c0051:prove",
+        "c0052:prove",
+        "c0061:prove",
+        "c0062:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/eedda6b168bf6052abc74ec269083cc95cf67257cff35dcce5ebc13022be35c7.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000099/eval/prefix/Vero_Cut_Fragments/Vero_Cut_Fragments"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000099/eval/prefix/Vero_Cut_Fragments",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Cut_Measure": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0023:prove",
+        "c0022:prove",
+        "c0006:prove",
+        "c0024:prove",
+        "c0025:prove",
+        "c0055:prove",
+        "c0059:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0046:prove",
+        "c0043:prove",
+        "c0044:prove",
+        "c0041:prove",
+        "c0042:prove",
+        "c0047:prove",
+        "c0058:prove",
+        "c0057:prove",
+        "c0016:prove",
+        "c0050:prove",
+        "c0051:prove",
+        "c0052:prove",
+        "c0060:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/b331102761820a05fdc3441282b5b69eb22225a9ac3e69c5374d4cfe6fbbc782.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000107/eval/prefix/Vero_Cut_Measure/Vero_Cut_Measure"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000107/eval/prefix/Vero_Cut_Measure",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Exact_Measure": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0046:prove",
+        "c0043:prove",
+        "c0044:prove",
+        "c0041:prove",
+        "c0042:prove",
+        "c0047:prove",
+        "c0058:prove",
+        "c0057:prove",
+        "c0016:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/61bb6524dd007c4182c0ecbf5643fd5c054c5a091ecb41b5415f887bd95d772d.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000079/eval/prefix/Vero_Exact_Measure/Vero_Exact_Measure"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000079/eval/prefix/Vero_Exact_Measure",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Interval_Components": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0046:prove",
+        "c0043:prove",
+        "c0026:prove",
+        "c0044:prove",
+        "c0027:prove",
+        "c0015:prove",
+        "c0041:prove",
+        "c0017:prove",
+        "c0042:prove",
+        "c0047:prove",
+        "c0033:prove",
+        "c0034:prove",
+        "c0028:prove",
+        "c0031:prove",
+        "c0018:prove",
+        "c0019:prove",
+        "c0064:prove",
+        "c0065:prove",
+        "c0063:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/baf08fc0b73ab76c0e16437af27ed99b79ee6c1cb90e35a0f6788055b93cd2cd.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000113/eval/prefix/Vero_Interval_Components/Vero_Interval_Components"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000113/eval/prefix/Vero_Interval_Components",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Merge_Algebra": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0026:prove",
+        "c0027:prove",
+        "c0015:prove",
+        "c0017:prove",
+        "c0021:prove",
+        "c0045:prove",
+        "c0029:prove",
+        "c0036:prove",
+        "c0037:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/82e02a66a8ff545d66aace346a28471a186697b10b50cf4ac3be03d224b863f9.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000091/eval/prefix/Vero_Merge_Algebra/Vero_Merge_Algebra"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000091/eval/prefix/Vero_Merge_Algebra",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Merge_Chop_Algebra": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0023:prove",
+        "c0022:prove",
+        "c0006:prove",
+        "c0024:prove",
+        "c0025:prove",
+        "c0055:prove",
+        "c0059:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0026:prove",
+        "c0027:prove",
+        "c0015:prove",
+        "c0017:prove",
+        "c0038:prove",
+        "c0039:prove",
+        "c0040:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/d78703c50ec40e4d2281d2f5a5ce20f6353ce3b197c6215105c6fe81f0a18d50.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000094/eval/prefix/Vero_Merge_Chop_Algebra/Vero_Merge_Chop_Algebra"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000094/eval/prefix/Vero_Merge_Chop_Algebra",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Merge_Chop_Coverage": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0023:prove",
+        "c0022:prove",
+        "c0006:prove",
+        "c0024:prove",
+        "c0025:prove",
+        "c0055:prove",
+        "c0059:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0020:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/756b99f590ea67ef83813278e24282a0e252a5ef093b6fcd573c29dfe349a626.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000086/eval/prefix/Vero_Merge_Chop_Coverage/Vero_Merge_Chop_Coverage"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000086/eval/prefix/Vero_Merge_Chop_Coverage",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Merge_Core": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/9315a1909df9839577d2264936fb40026539945cb5cd5d0061cbc1c0a2c00129.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000041/eval/prefix/Vero_Merge_Core/Vero_Merge_Core"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000041/eval/prefix/Vero_Merge_Core",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Merge_Coverage_Consequences": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0010:prove",
+        "c0014:prove",
+        "c0032:prove",
+        "c0035:prove",
+        "c0048:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/1242195bb9a3daf1984a69a670f73ffa4171ed0e6b8063594d2ee22cd054363e.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000041/eval/prefix/Vero_Merge_Coverage_Consequences/Vero_Merge_Coverage_Consequences"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000041/eval/prefix/Vero_Merge_Coverage_Consequences",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Merge_Endpoints": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0046:prove",
+        "c0043:prove",
+        "c0044:prove",
+        "c0041:prove",
+        "c0042:prove",
+        "c0047:prove",
+        "c0033:prove",
+        "c0034:prove",
+        "c0028:prove",
+        "c0031:prove",
+        "c0018:prove",
+        "c0019:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/1ff6a40159191416c71dc5431c470d559e6649113dd7b1b39e4eab1a9f96269f.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000076/eval/prefix/Vero_Merge_Endpoints/Vero_Merge_Endpoints"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000076/eval/prefix/Vero_Merge_Endpoints",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Merge_Order_Count": {
+      "audited": [
+        "c0008:prove",
+        "c0009:prove",
+        "c0006:prove",
+        "c0030:prove",
+        "c0007:prove",
+        "c0011:prove",
+        "c0012:prove",
+        "c0013:prove",
+        "c0046:prove",
+        "c0043:prove",
+        "c0044:prove",
+        "c0041:prove",
+        "c0042:prove",
+        "c0047:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/f9480dba7c1b050bc089f38ce923c3773c508ae7ec99ef004c6e02e692139ced.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000072/eval/prefix/Vero_Merge_Order_Count/Vero_Merge_Order_Count"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000072/eval/prefix/Vero_Merge_Order_Count",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Overlap": {
+      "audited": [
+        "c0001:prove",
+        "c0002:prove",
+        "c0003:prove",
+        "c0004:prove",
+        "c0005:prove",
+        "c0049:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/1a784622e24f1b01d030cd23f6f528db7a7ac43a501bfec89f4131a3e0984589.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000008/eval/prefix/Vero_Overlap/Vero_Overlap"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000008/eval/prefix/Vero_Overlap",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_State_Wrappers": {
+      "audited": [
+        "c0071:prove",
+        "c0074:prove",
+        "c0075:prove",
+        "c0076:prove",
+        "c0077:prove",
+        "c0072:prove",
+        "c0073:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/e27123bca43d16a005c2195a584c1985f7d37e2f5e73c8f7ec670e60c49c3f3b.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000032/eval/prefix/Vero_State_Wrappers/Vero_State_Wrappers"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000032/eval/prefix/Vero_State_Wrappers",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Tree_Metadata": {
+      "audited": [
+        "c0069:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/1d45e50b81ab460626edce15925d334468e3c2cc211072d39dc1ca9eba6280d3.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000105/eval/prefix/Vero_Tree_Metadata/Vero_Tree_Metadata"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000105/eval/prefix/Vero_Tree_Metadata",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Tree_Mutations": {
+      "audited": [
+        "c0079:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/0f5b004f32f17edbf494442763aa5349e8402b92aa2d6643588a9b9231fdf725.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000146/eval/prefix/Vero_Tree_Mutations/Vero_Tree_Mutations"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000146/eval/prefix/Vero_Tree_Mutations",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Tree_Point_Queries": {
+      "audited": [
+        "c0067:prove",
+        "c0066:prove",
+        "c0068:prove",
+        "c0070:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/bf9ba12801d80ac12dc393e297bc65d4098ac4bef26e8772bcf592f14b240016.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000104/eval/prefix/Vero_Tree_Point_Queries/Vero_Tree_Point_Queries"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000104/eval/prefix/Vero_Tree_Point_Queries",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    },
+    "Vero_Tree_Range_Queries": {
+      "audited": [
+        "c0067:prove",
+        "c0066:prove",
+        "c0068:prove",
+        "c0070:prove",
+        "c0087:prove",
+        "c0088:prove"
+      ],
+      "cache_evidence": "/results/trial/generation/contract-retries/incremental-cache/prefix/8573c2513eacb068a581acb15a55ef900280dc02c790491a7c33229669318295.json",
+      "cache_hit": true,
+      "check_kind": "prefix",
+      "command": [
+        "runuser",
+        "-u",
+        "checker",
+        "--",
+        "/workspace/verification/isabelle/bin/isabelle",
+        "process",
+        "-o",
+        "threads=2",
+        "-l",
+        "Intervaltree_Definitions",
+        "-d",
+        "/semantic-base",
+        "-T",
+        "/results/trial/generation/contract-retries/check-000115/eval/prefix/Vero_Tree_Range_Queries/Vero_Tree_Range_Queries"
+      ],
+      "elapsed_seconds": 0.0,
+      "failure_kind": null,
+      "returncode": 0,
+      "source_directory": "/results/trial/generation/contract-retries/check-000115/eval/prefix/Vero_Tree_Range_Queries",
+      "status": "ok",
+      "timeout_limit": null,
+      "total_timeout_seconds": 300
+    }
+  },
+  "passed_specs": 80,
+  "proved_specs": 80,
+  "resolved_specs": 80,
+  "schema_version": 1,
+  "seals": {
+    "Vero_Canonical_Uniqueness": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000082/eval/Vero_Canonical_Uniqueness.seal.log",
+      "key": "080a359d0e1fbfe73077b69c210092a854b1d15b914b0be5761533574b42e679",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0026:prove",
+          "c0027:prove",
+          "c0015:prove",
+          "c0017:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000082/eval/source/Vero_Canonical_Uniqueness"
+        ],
+        "elapsed_seconds": 10.433497590944171,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793110595.2739704,
+      "status": "sealed"
+    },
+    "Vero_Chop_Accounting": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000043/eval/Vero_Chop_Accounting.seal.log",
+      "key": "b0c01eaf92c2364cb0468129b3c653f5aa80b55b24766d81c8731c7b94f576fc",
+      "result": {
+        "audited": [
+          "c0056:prove",
+          "c0054:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000043/eval/source/Vero_Chop_Accounting"
+        ],
+        "elapsed_seconds": 9.115039627067745,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793109577.7605262,
+      "status": "sealed"
+    },
+    "Vero_Chop_Canonical": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000095/eval/Vero_Chop_Canonical.seal.log",
+      "key": "2e7906ef5f41569efd089289683d516da2dbf387b9a913cef780f2be22fe1483",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0046:prove",
+          "c0043:prove",
+          "c0044:prove",
+          "c0041:prove",
+          "c0042:prove",
+          "c0047:prove",
+          "c0050:prove",
+          "c0051:prove",
+          "c0052:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000095/eval/source/Vero_Chop_Canonical"
+        ],
+        "elapsed_seconds": 13.000614032149315,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793111089.854565,
+      "status": "sealed"
+    },
+    "Vero_Chop_Coverage": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000042/eval/Vero_Chop_Coverage.seal.log",
+      "key": "866f8d2c7a2b81208c80b629af8ce91de7d31ae072fa90f44ed3ea18f3cf10ad",
+      "result": {
+        "audited": [
+          "c0023:prove",
+          "c0022:prove",
+          "c0024:prove",
+          "c0025:prove",
+          "c0055:prove",
+          "c0059:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000042/eval/source/Vero_Chop_Coverage"
+        ],
+        "elapsed_seconds": 7.774921865668148,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793109558.6721785,
+      "status": "sealed"
+    },
+    "Vero_Chop_Fixpoint": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000096/eval/Vero_Chop_Fixpoint.seal.log",
+      "key": "a0e91107cf71905d67540d718bf41ce65f79df97f33261b96ba801dd963773a4",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0046:prove",
+          "c0043:prove",
+          "c0026:prove",
+          "c0044:prove",
+          "c0027:prove",
+          "c0015:prove",
+          "c0041:prove",
+          "c0017:prove",
+          "c0042:prove",
+          "c0047:prove",
+          "c0050:prove",
+          "c0051:prove",
+          "c0052:prove",
+          "c0053:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000096/eval/source/Vero_Chop_Fixpoint"
+        ],
+        "elapsed_seconds": 13.33020090404898,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793111117.7611547,
+      "status": "sealed"
+    },
+    "Vero_Cut_Fragments": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000099/eval/Vero_Cut_Fragments.seal.log",
+      "key": "eedda6b168bf6052abc74ec269083cc95cf67257cff35dcce5ebc13022be35c7",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0046:prove",
+          "c0043:prove",
+          "c0044:prove",
+          "c0041:prove",
+          "c0042:prove",
+          "c0047:prove",
+          "c0050:prove",
+          "c0051:prove",
+          "c0052:prove",
+          "c0061:prove",
+          "c0062:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000099/eval/source/Vero_Cut_Fragments"
+        ],
+        "elapsed_seconds": 14.653877103235573,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793111176.884887,
+      "status": "sealed"
+    },
+    "Vero_Cut_Measure": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000107/eval/Vero_Cut_Measure.seal.log",
+      "key": "b331102761820a05fdc3441282b5b69eb22225a9ac3e69c5374d4cfe6fbbc782",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0023:prove",
+          "c0022:prove",
+          "c0006:prove",
+          "c0024:prove",
+          "c0025:prove",
+          "c0055:prove",
+          "c0059:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0046:prove",
+          "c0043:prove",
+          "c0044:prove",
+          "c0041:prove",
+          "c0042:prove",
+          "c0047:prove",
+          "c0058:prove",
+          "c0057:prove",
+          "c0016:prove",
+          "c0050:prove",
+          "c0051:prove",
+          "c0052:prove",
+          "c0060:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000107/eval/source/Vero_Cut_Measure"
+        ],
+        "elapsed_seconds": 13.436192862689495,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793111679.334244,
+      "status": "sealed"
+    },
+    "Vero_Exact_Measure": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000079/eval/Vero_Exact_Measure.seal.log",
+      "key": "61bb6524dd007c4182c0ecbf5643fd5c054c5a091ecb41b5415f887bd95d772d",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0046:prove",
+          "c0043:prove",
+          "c0044:prove",
+          "c0041:prove",
+          "c0042:prove",
+          "c0047:prove",
+          "c0058:prove",
+          "c0057:prove",
+          "c0016:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000079/eval/source/Vero_Exact_Measure"
+        ],
+        "elapsed_seconds": 11.78239331394434,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793110551.740655,
+      "status": "sealed"
+    },
+    "Vero_Interval_Components": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000113/eval/Vero_Interval_Components.seal.log",
+      "key": "baf08fc0b73ab76c0e16437af27ed99b79ee6c1cb90e35a0f6788055b93cd2cd",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0046:prove",
+          "c0043:prove",
+          "c0026:prove",
+          "c0044:prove",
+          "c0027:prove",
+          "c0015:prove",
+          "c0041:prove",
+          "c0017:prove",
+          "c0042:prove",
+          "c0047:prove",
+          "c0033:prove",
+          "c0034:prove",
+          "c0028:prove",
+          "c0031:prove",
+          "c0018:prove",
+          "c0019:prove",
+          "c0064:prove",
+          "c0065:prove",
+          "c0063:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000113/eval/source/Vero_Interval_Components"
+        ],
+        "elapsed_seconds": 14.163843759801239,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793111789.8894453,
+      "status": "sealed"
+    },
+    "Vero_Merge_Algebra": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000091/eval/Vero_Merge_Algebra.seal.log",
+      "key": "82e02a66a8ff545d66aace346a28471a186697b10b50cf4ac3be03d224b863f9",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0026:prove",
+          "c0027:prove",
+          "c0015:prove",
+          "c0017:prove",
+          "c0021:prove",
+          "c0045:prove",
+          "c0029:prove",
+          "c0036:prove",
+          "c0037:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000091/eval/source/Vero_Merge_Algebra"
+        ],
+        "elapsed_seconds": 11.280251524876803,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793111015.3608909,
+      "status": "sealed"
+    },
+    "Vero_Merge_Chop_Algebra": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000094/eval/Vero_Merge_Chop_Algebra.seal.log",
+      "key": "d78703c50ec40e4d2281d2f5a5ce20f6353ce3b197c6215105c6fe81f0a18d50",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0023:prove",
+          "c0022:prove",
+          "c0006:prove",
+          "c0024:prove",
+          "c0025:prove",
+          "c0055:prove",
+          "c0059:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0026:prove",
+          "c0027:prove",
+          "c0015:prove",
+          "c0017:prove",
+          "c0038:prove",
+          "c0039:prove",
+          "c0040:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000094/eval/source/Vero_Merge_Chop_Algebra"
+        ],
+        "elapsed_seconds": 11.305891696829349,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793111062.7005155,
+      "status": "sealed"
+    },
+    "Vero_Merge_Chop_Coverage": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000086/eval/Vero_Merge_Chop_Coverage.seal.log",
+      "key": "756b99f590ea67ef83813278e24282a0e252a5ef093b6fcd573c29dfe349a626",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0023:prove",
+          "c0022:prove",
+          "c0024:prove",
+          "c0006:prove",
+          "c0025:prove",
+          "c0055:prove",
+          "c0059:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0020:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000086/eval/source/Vero_Merge_Chop_Coverage"
+        ],
+        "elapsed_seconds": 9.872946060728282,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793110944.3944428,
+      "status": "sealed"
+    },
+    "Vero_Merge_Core": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000041/eval/Vero_Merge_Core.seal.log",
+      "key": "9315a1909df9839577d2264936fb40026539945cb5cd5d0061cbc1c0a2c00129",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000041/eval/source/Vero_Merge_Core"
+        ],
+        "elapsed_seconds": 9.45891587389633,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793109530.9898417,
+      "status": "sealed"
+    },
+    "Vero_Merge_Coverage_Consequences": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000041/eval/Vero_Merge_Coverage_Consequences.seal.log",
+      "key": "1242195bb9a3daf1984a69a670f73ffa4171ed0e6b8063594d2ee22cd054363e",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0010:prove",
+          "c0014:prove",
+          "c0032:prove",
+          "c0035:prove",
+          "c0048:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000041/eval/source/Vero_Merge_Coverage_Consequences"
+        ],
+        "elapsed_seconds": 10.433153219055384,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793109541.856171,
+      "status": "sealed"
+    },
+    "Vero_Merge_Endpoints": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000076/eval/Vero_Merge_Endpoints.seal.log",
+      "key": "1ff6a40159191416c71dc5431c470d559e6649113dd7b1b39e4eab1a9f96269f",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0046:prove",
+          "c0043:prove",
+          "c0044:prove",
+          "c0041:prove",
+          "c0042:prove",
+          "c0047:prove",
+          "c0033:prove",
+          "c0034:prove",
+          "c0028:prove",
+          "c0031:prove",
+          "c0018:prove",
+          "c0019:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000076/eval/source/Vero_Merge_Endpoints"
+        ],
+        "elapsed_seconds": 12.875728903338313,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793110501.6484072,
+      "status": "sealed"
+    },
+    "Vero_Merge_Order_Count": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000072/eval/Vero_Merge_Order_Count.seal.log",
+      "key": "f9480dba7c1b050bc089f38ce923c3773c508ae7ec99ef004c6e02e692139ced",
+      "result": {
+        "audited": [
+          "c0008:prove",
+          "c0009:prove",
+          "c0006:prove",
+          "c0030:prove",
+          "c0007:prove",
+          "c0011:prove",
+          "c0012:prove",
+          "c0013:prove",
+          "c0046:prove",
+          "c0043:prove",
+          "c0044:prove",
+          "c0041:prove",
+          "c0042:prove",
+          "c0047:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000072/eval/source/Vero_Merge_Order_Count"
+        ],
+        "elapsed_seconds": 11.006967541761696,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793110436.5456202,
+      "status": "sealed"
+    },
+    "Vero_Overlap": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000008/eval/Vero_Overlap.seal.log",
+      "key": "1a784622e24f1b01d030cd23f6f528db7a7ac43a501bfec89f4131a3e0984589",
+      "result": {
+        "audited": [
+          "c0001:prove",
+          "c0002:prove",
+          "c0003:prove",
+          "c0004:prove",
+          "c0005:prove",
+          "c0049:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000008/eval/source/Vero_Overlap"
+        ],
+        "elapsed_seconds": 7.008781990967691,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793108824.323104,
+      "status": "sealed"
+    },
+    "Vero_State_Invariants": {
+      "status": "incomplete"
+    },
+    "Vero_State_Traces": {
+      "status": "incomplete"
+    },
+    "Vero_State_Wrappers": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000032/eval/Vero_State_Wrappers.seal.log",
+      "key": "e27123bca43d16a005c2195a584c1985f7d37e2f5e73c8f7ec670e60c49c3f3b",
+      "result": {
+        "audited": [
+          "c0071:prove",
+          "c0074:prove",
+          "c0075:prove",
+          "c0076:prove",
+          "c0077:prove",
+          "c0072:prove",
+          "c0073:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000032/eval/source/Vero_State_Wrappers"
+        ],
+        "elapsed_seconds": 6.834120257757604,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793109391.4046652,
+      "status": "sealed"
+    },
+    "Vero_Tree_Fuel": {
+      "status": "incomplete"
+    },
+    "Vero_Tree_Metadata": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000105/eval/Vero_Tree_Metadata.seal.log",
+      "key": "1d45e50b81ab460626edce15925d334468e3c2cc211072d39dc1ca9eba6280d3",
+      "result": {
+        "audited": [
+          "c0069:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000105/eval/source/Vero_Tree_Metadata"
+        ],
+        "elapsed_seconds": 6.0476080952212214,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793111241.6774735,
+      "status": "sealed"
+    },
+    "Vero_Tree_Mutations": {
+      "status": "incomplete"
+    },
+    "Vero_Tree_Point_Queries": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000104/eval/Vero_Tree_Point_Queries.seal.log",
+      "key": "bf9ba12801d80ac12dc393e297bc65d4098ac4bef26e8772bcf592f14b240016",
+      "result": {
+        "audited": [
+          "c0067:prove",
+          "c0066:prove",
+          "c0068:prove",
+          "c0070:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000104/eval/source/Vero_Tree_Point_Queries"
+        ],
+        "elapsed_seconds": 7.5922250910662115,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793111228.3379433,
+      "status": "sealed"
+    },
+    "Vero_Tree_Range_Queries": {
+      "build": null,
+      "cache_hit": true,
+      "evidence": "/results/trial/generation/contract-retries/check-000115/eval/Vero_Tree_Range_Queries.seal.log",
+      "key": "8573c2513eacb068a581acb15a55ef900280dc02c790491a7c33229669318295",
+      "result": {
+        "audited": [
+          "c0067:prove",
+          "c0066:prove",
+          "c0068:prove",
+          "c0070:prove",
+          "c0087:prove",
+          "c0088:prove"
+        ],
+        "command": [
+          "runuser",
+          "-u",
+          "checker",
+          "--",
+          "/workspace/verification/isabelle/bin/isabelle",
+          "process",
+          "-o",
+          "threads=2",
+          "-l",
+          "Intervaltree_Definitions",
+          "-d",
+          "/semantic-base",
+          "-T",
+          "/results/trial/generation/contract-retries/check-000115/eval/source/Vero_Tree_Range_Queries"
+        ],
+        "elapsed_seconds": 8.070582166779786,
+        "failure_kind": null,
+        "returncode": 0,
+        "status": "ok",
+        "timeout_limit": null,
+        "total_timeout_seconds": 300
+      },
+      "sealed_at": 1793111913.5222101,
+      "status": "sealed"
+    }
+  },
+  "total_specs": 91,
+  "verification_mode": "incremental"
+}

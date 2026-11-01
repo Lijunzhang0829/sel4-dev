@@ -1,0 +1,16 @@
+{
+  "original_dataset": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/dataset",
+  "original_checker_context_id": "checker-context:30ac143811fdd104f72c",
+  "new_checker_context_id": "checker-context:bf0a4ec6712c7f180117",
+  "changed_metadata": [
+    "campaign_id",
+    "premise_audit_context_sha256",
+    "checker_context_id"
+  ],
+  "original_audit_sha256": "60aa3a65693fb8740b2324faff3b78d4d139a9a32b65337d52dceb9302798566",
+  "new_audit_sha256": "69d90b3a595a83e8277caac8cf65c3b1902475e01a69388b46f552725ebe634a",
+  "contracts_sha256": "ea82766ca76a5b8f5b539c6a1bd763869a66b3b29b4899ae199cc5ca4c207ac9",
+  "parent_database_sha256": "9bfc0515a3a7903d20ec6577eb4356c6e4388ddbed1dc6603b238875409562b0",
+  "semantic_inputs_changed": false,
+  "target_proofs_changed": false
+}

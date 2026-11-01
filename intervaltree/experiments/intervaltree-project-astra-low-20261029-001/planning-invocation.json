@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/data/zljj/vero-a-unified/20260928-004/venv/bin/python",
+    "-u",
+    "-m",
+    "regen.tools.reviewed_planning",
+    "--input",
+    "/data/zljj/regen-runs/intervaltree-project-astra-low-20261029-001/dataset/repository-planning-input.json",
+    "--policy",
+    "/data/zljj/regen-runs/intervaltree-project-astra-low-20261029-001/config/planning-policy.json",
+    "--output",
+    "/data/zljj/regen-runs/intervaltree-project-astra-low-20261029-001/planning",
+    "--model",
+    "gpt-6-astra",
+    "--reasoning-effort",
+    "low",
+    "--allow-external-call"
+  ],
+  "started_unix": 1793250861.0475848,
+  "included_in_generation_budget": false
+}

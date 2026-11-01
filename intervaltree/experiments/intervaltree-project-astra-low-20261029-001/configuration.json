@@ -1,0 +1,19 @@
+{
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "targets": 91,
+  "comparison_axis": "generation_elapsed_seconds",
+  "wall_seconds": 18834,
+  "reference_generation_seconds": 18834.104907751083,
+  "include_repository_planning": false,
+  "generation_strategy": "sketch-reviewed-v1",
+  "max_parallel_theories": 1,
+  "native_slots": 1,
+  "resident_limit": 1,
+  "native_threads": 2,
+  "native_cpus": 4,
+  "native_memory_mb": 8192,
+  "resource_caveat": "Project model worker has a separate 2 CPU / 2 GiB cap; VERO used one shared 4 CPU / 8 GiB container.",
+  "attempt_comparison": "Time matched, not per-contract attempts: helper and revision work use the project policy.",
+  "prior_proofs_accessible": false
+}

@@ -1,0 +1,31 @@
+{
+  "run_id": "intervaltree-project-astra-low-20261029-001",
+  "prepared_unix": 1793250786.4550946,
+  "authorization": "重新完成Ours对intervaltree的证明生成，模型使用gpt-6-astra / low",
+  "fresh_run": true,
+  "previous_run_preserved": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001",
+  "application_source": "validated seal repair, original frozen release plus adapter fix",
+  "application_sha256": "b4730a0f90fb0af4d695b0fa470000b18a777f615380923f1ba73b584000ac14",
+  "target_count": 91,
+  "planning_input_sha256": "ea82766ca76a5b8f5b539c6a1bd763869a66b3b29b4899ae199cc5ca4c207ac9",
+  "sanitized_manifest_sha256": "41abf98ac05e73bb355c865f6184ec2fc8d13482600714c8203fa762ef1dc02a",
+  "reused_parent_heaps_only": [
+    "polyml-5.9.1_x86_64_32-linux/HOL",
+    "polyml-5.9.1_x86_64_32-linux/Intervaltree_Definitions",
+    "polyml-5.9.1_x86_64_32-linux/Intervaltree_Project_Base",
+    "polyml-5.9.1_x86_64_32-linux/Pure",
+    "polyml-5.9.1_x86_64_32-linux/log/HOL.db",
+    "polyml-5.9.1_x86_64_32-linux/log/HOL.gz",
+    "polyml-5.9.1_x86_64_32-linux/log/Intervaltree_Definitions.db",
+    "polyml-5.9.1_x86_64_32-linux/log/Intervaltree_Definitions.gz",
+    "polyml-5.9.1_x86_64_32-linux/log/Intervaltree_Project_Base.db",
+    "polyml-5.9.1_x86_64_32-linux/log/Intervaltree_Project_Base.gz",
+    "polyml-5.9.1_x86_64_32-linux/log/Pure.db",
+    "polyml-5.9.1_x86_64_32-linux/log/Pure.gz"
+  ],
+  "accepted_proofs_copied": 0,
+  "old_planning_copied": false,
+  "budget": "new independent 18834-second generation budget; planning excluded",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low"
+}

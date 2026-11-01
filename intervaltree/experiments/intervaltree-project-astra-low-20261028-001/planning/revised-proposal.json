@@ -1,0 +1,392 @@
+{
+  "collaboration_groups": [
+    {
+      "contract_ids": [
+        "goal:64a116fc0aa0b4c26bc7af2f",
+        "goal:d7b23bf8e1f662dc8f4a028d",
+        "goal:47eddcb732e91026c22b50ce",
+        "goal:2ebf1147d50cd3fc4520c650",
+        "goal:def509675414991d24029439",
+        "goal:e4b9a60ced0935eb2121586f",
+        "goal:e7998738fb14084a5c625b20",
+        "goal:b4c8feecc26844fa7d5e5d53",
+        "goal:a60bba5bea492da015967562",
+        "goal:1db466218a055cbb87ed0ad3",
+        "goal:14173a6ae8420189753cba3a",
+        "goal:d74e8bede705529bae8a1e94",
+        "goal:b28480a84b0ea49f1bc02a9d"
+      ],
+      "id": "MutatingTreeAndState",
+      "reason": "Explore recursive executor invariants jointly with restricted singleton progress and explicit wrapper content; advisory scope does not make pending results premises."
+    },
+    {
+      "contract_ids": [
+        "goal:f067755a7fa1ceb05c3c201b",
+        "goal:c8830f38335b6cb3fda89b17",
+        "goal:8e6f72b4719e479f43b4f937",
+        "goal:07f9c52d0be542ae9149d1b0",
+        "goal:19fdca1666ea33d1af3ae47f",
+        "goal:0efd285788a186bb31002c2c",
+        "goal:653f67f6e4bccf4f1591f58c",
+        "goal:52a9b0160dd6887908270845",
+        "goal:a5a5fbc5e07163ba87ceb789",
+        "goal:82d78c967a38d4f26c86ffe3",
+        "goal:be63261346da4d096d3d756c"
+      ],
+      "id": "CanonicalOperations",
+      "reason": "Normalization and cutting both manipulate canonical ordered interval lists; investigate shared structural reasoning without requiring either primitive package to await the other. Restricted canonical measure and proper-cut cases deserve early exploration."
+    },
+    {
+      "contract_ids": [
+        "goal:0c4491312ffd90ee2d6a8ff0",
+        "goal:209eb9a06b297dc7d64662a4",
+        "goal:c61f18b4cbcd1846d713cedc",
+        "goal:d41334526dce8ee29e5d62e2",
+        "goal:0cd2cd56d61e329f635f93a0",
+        "goal:02091a693e5915cbea70919b",
+        "goal:a1178f101618a0ecbec4c58a",
+        "goal:d5279e57f5b506b1d83295f7",
+        "goal:2b7e601acd33406f0149ab42",
+        "goal:6eca9d48308656705667f246"
+      ],
+      "id": "RunsAndComponents",
+      "reason": "Touching connectivity and maximal run endpoints offer related geometric questions; strict overlap must remain distinguished from touching."
+    }
+  ],
+  "contract_relations": [],
+  "ordering_rationale": "Boundaries follow interval normalization, cutting, run geometry, measurement, connected components, recursive tree execution, and synchronized state operations rather than predicate namespaces. All 91 frozen contracts occur exactly once. Independent ready roots are ordered normalization, executor, restricted state interface, cutting, and read-only queries; this prioritizes broad semantic interfaces while keeping restricted progress independent of general adequacy. Hard imports deliberately commit consumers to sealed result packages: normalized algebra/geometry/measure use output invariants; mixed and repeated cuts use primitive cut semantics; components use run geometry; state traces use executor, wrapper and query interfaces. These form an acyclic DAG and are not scheduling-only edges. The recursive executor stays physically together because rotation/removal/pruning interact; separate add/remove providers would risk artificial cycles. Canonical primitive operations instead collaborate across physical theories with reciprocal advisory reuse. Alternatives considered include a single interval theory (too broad), separate primitive executor commands (premature interfaces), and a single refinement theory (would delay static queries and assumption-free wrapper behavior). Definition equations and specification bodies are evidence about semantics, not proofs of the pending specifications. No exact helpers or local proof DAG is imposed; the inspected coalesce.induct fact remains available without committing a proof route. Shared parent context alone creates no generated import. Proof feasibility and availability of shared auxiliary facts remain File Planner questions. Pre-freeze revision: Canonical_Measure now appears immediately after Interval_Normalization as an independent ready root, exposing C0020 to Interval_Measure and Repeated_Cutting. Other relative priorities remain unchanged. Repeated_Cutting now has no hard path through normalization or general merge measure. These two canonical-measure imports commit to a concrete restricted interface, not priority. The executor adequacy split was considered but retained as one package because shared intermediate-state reasoning remains uncertain; successful trace invariants do not themselves require adequacy. No proof-independence claim follows from these definitions.",
+  "reuse_suggestions": [
+    {
+      "consumer": "Interval_Normalization",
+      "provider": "Interval_Cutting",
+      "reason": "Canonical-list ordering or disjoint coverage reasoning might transfer; not an import commitment or assumed result."
+    },
+    {
+      "consumer": "Interval_Cutting",
+      "provider": "Interval_Normalization",
+      "reason": "Canonical output analysis may suggest reusable structural facts for proper cuts; explore without blocking independent primitive work."
+    },
+    {
+      "consumer": "Tree_Executor",
+      "provider": "State_Update_Interface",
+      "reason": "The fixed-fuel empty-state insertion case offers a restricted progress sanity check; it is not a general adequacy premise."
+    },
+    {
+      "consumer": "Interval_Measure",
+      "provider": "Normalization_Algebra",
+      "reason": "Canonical uniqueness or exact idempotence may simplify the canonical-input length equality, but the existing normalization interface may suffice."
+    }
+  ],
+  "schema_version": 6,
+  "theories": [
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:546ec97300e06132f4d4e92b",
+        "goal:8a8e0cb667243631249e807a",
+        "goal:0716aa095c1ef56fd1be9b12",
+        "goal:c8830f38335b6cb3fda89b17",
+        "goal:07f9c52d0be542ae9149d1b0",
+        "goal:c48e5a206c814df6cb15e434",
+        "goal:cdc194998c3d7e3ca4120254",
+        "goal:6376eeb36e35818f15134aee",
+        "goal:1ac4a6f045992b9b7991019b",
+        "goal:813a22e5868872c36635177e",
+        "goal:9bd499998ebf6cac9a5757bd",
+        "goal:b200cd02ed8d842de50150fd",
+        "goal:2fa7e3ce6dfd42c50c8f1267"
+      ],
+      "grouping_reason": "merge_overlaps_def (fact:c2aac811d028f92797cc42be), insert_by_lo.simps and coalesce.simps(3) (fact:99fd60a18a5b784f9c73c1f0) filter invalid intervals, sort, and join touching runs. Coverage, strict gaps, positivity and multiplicity are one output-invariant package. Splitting sorting from coalescing would allocate no corresponding fixed contracts and prematurely choose auxiliary interfaces. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context.",
+      "helper_decisions": [],
+      "name": "Interval_Normalization",
+      "purpose": "Coverage and canonical output structure of sorting and coalescing intervals.",
+      "required_imports": []
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:8e6f72b4719e479f43b4f937"
+      ],
+      "grouping_reason": "ext_canonical_exact_measure_def (fact:f2a5d53badff3c401b1a14f4) assumes only canonical_intervals. canonical_intervals_def (fact:7a7cf6a7323f732519fcea82), coverage_def (fact:8c10b0fb058a824e7e3c1e48), iv_points_def (fact:df6eea00e11dcd7b22dce115) and total_len_def (fact:44063a51634b706bf2dd8a8b) describe positive separated intervals, their finite point union and summed lengths without normalization. This small provider exposes an existing fixed restricted interface to two consumers; finite-cardinality reasoning remains local and no helper statement is imposed. Keeping it with normalized measure would force repeated cutting to await unrelated normalization results. Uses only intervaltree-fixed-parent-v1; no owned contexts.",
+      "helper_decisions": [],
+      "name": "Canonical_Measure",
+      "purpose": "Exact length of canonical interval lists as finite coverage cardinality.",
+      "required_imports": []
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:64a116fc0aa0b4c26bc7af2f",
+        "goal:d7b23bf8e1f662dc8f4a028d",
+        "goal:e7998738fb14084a5c625b20",
+        "goal:b4c8feecc26844fa7d5e5d53",
+        "goal:a60bba5bea492da015967562",
+        "goal:14173a6ae8420189753cba3a",
+        "goal:d74e8bede705529bae8a1e94",
+        "goal:b28480a84b0ea49f1bc02a9d"
+      ],
+      "grouping_reason": "execute_tree.simps(2-9), especially fact:abf65c043ef814a5e89f1bf8 and fact:5c865c65e410204929bd06e9, show rotation removes promoted entries while removal prunes, pops and rotates. Keep primitive add/remove/rotation contracts together for joint exploration rather than cyclic imports. tree_rotation_content assumes routing_ok and metadata_ok, weaker than tree_wf in tree_add_content/tree_remove_content; do not assume balancedness during intermediate rotations. tree_metadata_depth_exact concerns the cached metadata read by this executor. Fuel adequacy asserts existence, not a fixed fuel bound. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context. Pre-freeze review retains adequacy here: tree_add/remove_preserves_wf definitions (fact:a9554c9bc0b5df0ba602a72a, fact:9a2a8d70687dc2a196cb0e9d) condition on success, whereas adequacy (fact:760d67a086af487ffe45cb29, fact:8369547a9f0003900a45d594) asserts existence. This distinguishes obligations but does not certify separate intermediate-state interfaces. Keeping jointly explored executor invariants local avoids speculative helper exports, accepting the full-seal delay for state consumers.",
+      "helper_decisions": [],
+      "name": "Tree_Executor",
+      "purpose": "Content, well-formedness and fuel existence for recursive tree mutation and rebalancing.",
+      "required_imports": []
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:b1dda7bb5c7897beb9e833f5",
+        "goal:2ebf1147d50cd3fc4520c650",
+        "goal:def509675414991d24029439",
+        "goal:e4b9a60ced0935eb2121586f",
+        "goal:7a87767af1e840dfc74385d3",
+        "goal:44631ae7457e691422b61fee",
+        "goal:548f63259f1f45f9e0de47e5"
+      ],
+      "grouping_reason": "state_add_def (fact:90b28490933a6735321fb62d) and state_remove_def (fact:3ce0971438271addc44b1348) update all_items explicitly. refine_add_abstract_content and refine_remove_abstract_content have no state_wf premise and need not await tree correspondence. Duplicate insert and missing discard bypass execution. tree_singleton_insert_progress restricts insertion to empty_state and fuel 1; it can be investigated directly before general tree_add_fuel_adequacy. Group these observable wrapper cases instead of imposing a dependency on the general executor package. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context.",
+      "helper_decisions": [],
+      "name": "State_Update_Interface",
+      "purpose": "State initialization, wrapper content updates, status behavior and restricted progress.",
+      "required_imports": []
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:f8064ed99ebce2c9415bdadc",
+        "goal:1a74b2ae3d767e7979213ebc",
+        "goal:0efd285788a186bb31002c2c",
+        "goal:653f67f6e4bccf4f1591f58c",
+        "goal:75b1592be98ea0a29b407d6d",
+        "goal:c3b66f9ef04fd5de84c496d8",
+        "goal:a5a5fbc5e07163ba87ceb789",
+        "goal:82d78c967a38d4f26c86ffe3",
+        "goal:be63261346da4d096d3d756c",
+        "goal:f487afe42d39a62e875caf90",
+        "goal:1237fe5dd6368eaccf8ddcae"
+      ],
+      "grouping_reason": "chop_def and chop_one_def (fact:2412e9ef87fb87b25e8c15d2, fact:a5b17891b91afdcf6e3cf296) form filtered left/right fragments. Canonical preservation and the restricted one-cut fragment bound share the same geometry and remain with pointwise behavior. Strict b<e assumptions on canonical results differ from b<=e on counts and clamped length; unconditional coverage results must not silently acquire those premises. Independent from normalization; possible shared canonical reasoning remains advisory. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context.",
+      "helper_decisions": [],
+      "name": "Interval_Cutting",
+      "purpose": "One-cut coverage, canonical preservation, fragment growth and length bounds.",
+      "required_imports": []
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:bf829b0ce54f7ad851601d7b",
+        "goal:48f9dab541367c619023cd4c",
+        "goal:44077e0fa2131860a9641b42",
+        "goal:c33d8c26c316071b79f9963b",
+        "goal:0736febc8ddc5ec204b3f6e1",
+        "goal:bc0fbb077f774e204ff85247"
+      ],
+      "grouping_reason": "tree_at.simps(2) (fact:aa9bf23dd1763f5d60a4b676) branches by center; tree_point_query_exact and refine_point_coverage_bridge require routing_ok only. tree_overlap_def (fact:778ddd3c7b20ca8b5983b5d8) samples boundary keys, while tree_envelop filters its answer. state_wf supplies list/root equality and endpoint counts. These are static state assumptions, not a reason to wait for mutation preservation. Payload erasure preserves endpoints in tree_entry_list. Keeping primitive and state query contracts together avoids a tiny bridge-only theory. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context.",
+      "helper_decisions": [],
+      "name": "Tree_Queries",
+      "purpose": "Read-only routing queries, boundary-index range queries and payload erasure.",
+      "required_imports": []
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:7a54d91e9fd18f2f59cf0946",
+        "goal:a4bf01cff0c18efb767e93d9",
+        "goal:f067755a7fa1ceb05c3c201b",
+        "goal:804aa6ec1909676580e76cc4",
+        "goal:19fdca1666ea33d1af3ae47f",
+        "goal:2f3effee104bb773dcbe87c4",
+        "goal:b500978a5239fe0dd83a46fa",
+        "goal:59ca59cee74a367a820ef0f4",
+        "goal:150ab9314570ead06722fc16",
+        "goal:8c25325db110d73cc95141bf",
+        "goal:4a06b077898fe157d4335c55"
+      ],
+      "grouping_reason": "spec_merge_canonical_unique (fact:0b3c857981595247cfff6c33) relates canonical representatives and coverage. Keep coverage-determines and exact equality laws together; spec_merge_idempotent is only pointwise, whereas spec_merge_exact_idempotent is list equality. The imported output package is the chosen canonical/coverage interface, while precise intermediate arguments remain open. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context.",
+      "helper_decisions": [],
+      "name": "Normalization_Algebra",
+      "purpose": "Canonical uniqueness and extensional laws of normalization.",
+      "required_imports": [
+        {
+          "reason": "Commit to the sealed coverage and canonical-output interface for uniqueness and extensional normalization laws, including spec_merge_coverage and spec_merge_is_canonical.",
+          "theory": "Interval_Normalization"
+        }
+      ]
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:fb293b7f702c0bd4d0bb4258",
+        "goal:209eb9a06b297dc7d64662a4",
+        "goal:1c48203651bd3c811a31f1aa",
+        "goal:c61f18b4cbcd1846d713cedc",
+        "goal:9d3b99c883988ad7d8f9e7fe",
+        "goal:d41334526dce8ee29e5d62e2",
+        "goal:0cd2cd56d61e329f635f93a0",
+        "goal:02091a693e5915cbea70919b",
+        "goal:9ef9c29b52284bf66a948145",
+        "goal:d5279e57f5b506b1d83295f7",
+        "goal:d90eeaeb7b2a0b5b83708d50",
+        "goal:2b7e601acd33406f0149ab42",
+        "goal:43709130ffa73063bf09ff2a",
+        "goal:19b1f9cd1d1a9f143d5e49c0",
+        "goal:ab2597bcb26d24ae14845ea7"
+      ],
+      "grouping_reason": "overlaps_def (fact:823f523dc1867e7a466c14ea) is strict intersection, while coalesce merges touching endpoints. spec_overlaps_iff_common_point requires both inputs nonempty; run saturation/hulls track endpoints back to valid input intervals. This package couples elementary overlap geometry with run-boundary properties, rather than dispersing endpoint witnesses across algebra and components. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context.",
+      "helper_decisions": [],
+      "name": "Interval_Run_Geometry",
+      "purpose": "Overlap predicates, run endpoints, saturation and uncovered gaps.",
+      "required_imports": [
+        {
+          "reason": "Retain sealed coverage, positivity and strict-gap results as the shared output interface for run solidity, gap witnesses and endpoint geometry.",
+          "theory": "Interval_Normalization"
+        }
+      ]
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:f65a4b918c01c945264adb58",
+        "goal:07703849a99b755be2140b44",
+        "goal:141b6a27f5331e5a851e91dc"
+      ],
+      "grouping_reason": "Normalized-output exact measure, canonical-input normalization length equality and clamped input bounds share the merge_overlaps operation. ext_merge_exact_measure_def (fact:0e9533afd50b16137a0231cc) concerns arbitrary inputs after normalization; spec_merge_totalLen_disjoint_eq_def (fact:38b76f7a5c84e381f20d4e0d) assumes canonical input. Retain normalization coverage/canonicality and the separate canonical exact-measure interface. C0020 is isolated so repeated cutting need not await this normalization-dependent package. Shared cardinality bookkeeping may need local development; no exact helper export is prescribed. Uses intervaltree-fixed-parent-v1; no owned contexts.",
+      "helper_decisions": [],
+      "name": "Interval_Measure",
+      "purpose": "Relate interval lengths to coverage cardinality and normalization bounds.",
+      "required_imports": [
+        {
+          "reason": "Commit to canonicality and coverage preservation of normalized output as the interface connecting canonical exact measure to ext_merge_exact_measure.",
+          "theory": "Interval_Normalization"
+        },
+        {
+          "reason": "Commit to ext_canonical_exact_measure as the length/cardinality interface for canonical normalized outputs and canonical input length comparisons.",
+          "theory": "Canonical_Measure"
+        }
+      ]
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:8d14007da0062e634c147b23",
+        "goal:33c16cc07a1f23ab345d0be4",
+        "goal:1eaa6b15b59159d1c91b476a",
+        "goal:52a9b0160dd6887908270845",
+        "goal:9320040c17a6b9b5484ff849"
+      ],
+      "grouping_reason": "spec_merge_chop_merge and spec_merge_chop_coverage_determines compare normalized cuts; spec_chop_canonical_merge_fixpoint additionally assumes proper cut and canonical input. Keep this mixed-operation interface separate from either primitive package. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context.",
+      "helper_decisions": [],
+      "name": "Normalized_Cutting",
+      "purpose": "Interaction of cutting with normalization and extensional equality.",
+      "required_imports": [
+        {
+          "reason": "Retain canonical uniqueness and coverage-determines as the equality interface for normalized cuts.",
+          "theory": "Normalization_Algebra"
+        },
+        {
+          "reason": "Retain pointwise cut semantics and canonical preservation for cutting/normalization interaction.",
+          "theory": "Interval_Cutting"
+        }
+      ]
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:c0d23c94396df9a90ba93e12",
+        "goal:8d658bef4f5130f7c9083df6",
+        "goal:828cd9caf4704403cfbbb41a"
+      ],
+      "grouping_reason": "cut_all.simps(2) (fact:81c067ca76376b07bdac9f32) repeatedly applies chop. ext_cut_all_coverage is unconditional, while exact measure and fragment bound require proper_cuts and canonical inputs. A separate consumer keeps repeated-cut reasoning from expanding the one-cut package. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context. ext_cut_all_exact_measure_def (fact:5a3bc2ee0176f920ebe10099) uses proper_cuts and canonical input; proper_cuts_def (fact:94ed1d11e7120b0a8ab2e8ad) supplies strict ranges required by spec_chop_canonical_preserves_canonical_def (fact:e789aeb10aab2014ee65e460). Import the restricted Canonical_Measure interface directly, without a normalization dependency.",
+      "helper_decisions": [],
+      "name": "Repeated_Cutting",
+      "purpose": "Coverage, exact measure and fragment bounds across a list of cuts.",
+      "required_imports": [
+        {
+          "reason": "Retain the one-cut coverage, canonical-preservation and fragment-bound interface for repeated cuts.",
+          "theory": "Interval_Cutting"
+        },
+        {
+          "reason": "Retain ext_canonical_exact_measure as the cardinality/length interface for canonical cut output.",
+          "theory": "Canonical_Measure"
+        }
+      ]
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:0c4491312ffd90ee2d6a8ff0",
+        "goal:a1178f101618a0ecbec4c58a",
+        "goal:6eca9d48308656705667f246"
+      ],
+      "grouping_reason": "interval_component_def (fact:e8307bea31ad5aa780cfb278) uses reflexive transitive closure of touch_edges; fact:796290b122663ca8ac742d77 uses non-strict endpoint contact on valid indexed vertices. Component hull image, bijection and count belong together and are not merely strict-overlap theorems. A graph semantics package is more manageable than merging it with all normalization proofs. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context.",
+      "helper_decisions": [],
+      "name": "Interval_Components",
+      "purpose": "Identify normalized runs with connected components and their hulls.",
+      "required_imports": [
+        {
+          "reason": "Commit to sealed run endpoint, saturation and gap geometry as the interval-side interface for component hull correspondence.",
+          "theory": "Interval_Run_Geometry"
+        }
+      ]
+    },
+    {
+      "context_profile_ids": [
+        "intervaltree-fixed-parent-v1"
+      ],
+      "contract_ids": [
+        "goal:147a01b8491399e86c1e79db",
+        "goal:47eddcb732e91026c22b50ce",
+        "goal:c48c04ef387f8e12f69c0255",
+        "goal:208a4b394aeb50aa7a7fd4fd",
+        "goal:1db466218a055cbb87ed0ad3"
+      ],
+      "grouping_reason": "state_wf_def (fact:3461d2dfe77d7f836729717a) couples tree_wf, distinct all_items, tree content and positive endpoint multiplicities. boundary_inc/dec update the two endpoints. run_updates.simps(2) (fact:3b34f5da6233b73ae95d7dc1) composes wrapper updates; abstract_apply_update distinguishes invalid insert, missing delete and discard. Keep single-step synchronization and trace preservation together; a further three-contract trace theory adds little isolation. Uses the fixed intervaltree-fixed-parent-v1 context; no additional owned context.",
+      "helper_decisions": [],
+      "name": "State_Invariants_And_Traces",
+      "purpose": "Preserve synchronized tree/list/boundary state and expose successful trace behavior.",
+      "required_imports": [
+        {
+          "reason": "Retain tree mutation content and well-formedness guarantees to synchronize root_node with state lists and boundary counts.",
+          "theory": "Tree_Executor"
+        },
+        {
+          "reason": "Retain wrapper content, initialization and status/no-op semantics for state and abstract trace behavior.",
+          "theory": "State_Update_Interface"
+        },
+        {
+          "reason": "Retain refine_state_point_query as the observational interface for successful trace query correctness.",
+          "theory": "Tree_Queries"
+        }
+      ]
+    }
+  ],
+  "unresolved_retrieval_questions": [
+    "No general content/invariant theorem for execute_tree was established by retrieval; intermediate rotation and promotion states may need weaker properties than tree_wf, to be explored within Tree_Executor.",
+    "Unconditional chop coverage allows reversed ranges, while count/canonical contracts impose b<=e or b<e. File Planner must preserve this distinction and investigate edge cases without strengthening immutable statements.",
+    "Canonical structural reasoning shared by normalization and cutting is an advisory opportunity; no cross-theory helper is assumed available.",
+    "Component hull correspondence uses touching connectivity, not strict overlaps; the exact reusable geometric interface beyond imported run results remains open.",
+    "Canonical measure is semantically independent of normalization; proof feasibility and whether shared finite-cardinality helpers merit later export remain open. Executor correctness/adequacy helper separation is unconfirmed; the retained seal may delay state consumers."
+  ]
+}

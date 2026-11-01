@@ -1,0 +1,150 @@
+{
+  "observed_unix": 1793218205.3723757,
+  "remote_root": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001",
+  "planning": {
+    "state": "complete",
+    "stage": "frozen"
+  },
+  "planning_timing": {
+    "started_unix": 1793210454.4018586,
+    "ended_unix": 1793211096.3792164,
+    "elapsed_seconds": 641.9773585796356,
+    "returncode": 0
+  },
+  "planning_summary": {
+    "theories": 13,
+    "contracts": 91,
+    "plan_sha256": "fa806e5ff4c16b9e23fda70a4045210ace9ba04975d44f8c6e0ec9a3dcf1b633",
+    "remaining_issues": [
+      {
+        "id": "executor_adequacy_seal",
+        "kind": "seal_barrier",
+        "theories": [
+          "Tree_Executor",
+          "State_Invariants_And_Traces"
+        ],
+        "contract_ids": [
+          "goal:d7b23bf8e1f662dc8f4a028d",
+          "goal:b28480a84b0ea49f1bc02a9d",
+          "goal:a60bba5bea492da015967562",
+          "goal:d74e8bede705529bae8a1e94",
+          "goal:208a4b394aeb50aa7a7fd4fd"
+        ],
+        "evidence": "The plan explicitly distinguishes success-conditional preservation from existential fuel adequacy, yet places both in the same sealed executor package. State_Invariants_And_Traces imports that entire package for mutation content and preservation, and the plan acknowledges that successful trace invariants do not themselves require adequacy.",
+        "scenario": "If content and preservation are completed while fuel existence remains unresolved, successful state and trace consumers still cannot use the completed interfaces through a sealed provider.",
+        "suggested_change": "Treat this as an explicit seal checkpoint: investigate whether adequacy can occupy a downstream theory while preserving the jointly developed executor helpers. Split only if those helpers admit an acyclic ownership boundary; otherwise retain and document the accepted barrier.",
+        "tradeoff": "A split could release conditional-correctness consumers earlier, but could also force premature helper exports or duplicate intermediate-state reasoning.",
+        "uncertainty": "The waiting barrier follows from the plan; its practical cost and the feasibility of separating adequacy are unestablished. This is a planning risk, not a certified grouping defect."
+      },
+      {
+        "id": "touching_component_bridge",
+        "kind": "missing_interface",
+        "theories": [
+          "Interval_Run_Geometry",
+          "Interval_Components"
+        ],
+        "contract_ids": [
+          "goal:209eb9a06b297dc7d64662a4",
+          "goal:c61f18b4cbcd1846d713cedc",
+          "goal:0c4491312ffd90ee2d6a8ff0",
+          "goal:6eca9d48308656705667f246"
+        ],
+        "evidence": "The plan describes component connectivity using reflexive transitive closure of non-strict endpoint contact on valid indexed vertices, while overlaps is strict intersection. It leaves the exact reusable component-side geometry interface open. Neither a strict-overlap same-run contract nor run solidity, as described, explicitly supplies both directions between touching connectivity and run membership.",
+        "scenario": "Two valid intervals [0,1) and [1,2) touch and normalize into one run but have no common point. A component consumer relying solely on strict-overlap same-run behavior cannot cover that edge; it also needs a path argument for arbitrary vertices assigned to one run.",
+        "suggested_change": "Allocate the touching-edge and same-run connectivity bridge explicitly as local work in Interval_Components. Request an exported run-geometry helper only if that work demonstrably requires provider-internal invariants unavailable through the sealed contracts.",
+        "tradeoff": "Local ownership preserves the current DAG and avoids speculative exports, but may require substantial graph/interval reasoning. Exporting a justified bridge later could reduce duplication while enlarging the provider's seal.",
+        "uncertainty": "The exact statements expose only named specification predicates, and the described run interfaces may suffice with local arguments. This identifies an unallocated interface obligation, not proof that a new external theorem is required."
+      }
+    ]
+  },
+  "generation": {
+    "fixed_green": 13,
+    "sealed_theories": 0,
+    "wall_registrations": 1,
+    "wall_limit": {
+      "deadline_unix": 1793229933.2910373,
+      "includes_downtime": true,
+      "refunds": false,
+      "seconds": 18834.0,
+      "started_unix": 1793211099.2910373
+    },
+    "deadline_beijing": "2026-10-29T07:25:33.291037+08:00",
+    "elapsed_seconds": 7106.684751033783,
+    "checkpoint": {
+      "effective_seconds": 6328.108728491701,
+      "worker_seconds": 6328.108728491701,
+      "paused": true,
+      "finished": false,
+      "reason": "operator_pause",
+      "gate_open": false
+    },
+    "service": {
+      "unit": "intervaltree-project-20261028-001-generation-resume-001.service",
+      "MainPID": "0",
+      "ExecMainStatus": "2",
+      "ActiveState": "failed",
+      "SubState": "failed",
+      "InvocationID": "037ab76c15fb445c9d6f9c34a57e0313"
+    },
+    "running": false
+  },
+  "operator_pause": {
+    "status": "paused_by_user",
+    "authorization": "暂停实验，先去修复封存适配",
+    "paused_at_unix": 1793217569.5459876,
+    "paused_at_beijing": "2026-10-29T03:59:29.545988+08:00",
+    "budget_checkpoint_event_id": "6ddbd7a7521b1c91035db23d6a9cf9635d8b4456096a2463691db74407357a6e",
+    "effective_seconds": 6328.108728491701,
+    "wall_elapsed_at_pause": 6470.254950284958,
+    "remaining_wall_seconds_at_pause": 12363.745049715042,
+    "original_wall_limit": {
+      "deadline_unix": 1793229933.2910373,
+      "includes_downtime": true,
+      "refunds": false,
+      "seconds": 18834.0,
+      "started_unix": 1793211099.2910373
+    },
+    "fixed_green": 13,
+    "sealed_theories": 0,
+    "automatic_resume": false,
+    "budget_reset": false,
+    "deadline_changed": false,
+    "repair_directory": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001"
+  },
+  "seal_repair": {
+    "status": "pass",
+    "started_unix": 1793217953.1090832,
+    "finished_unix": 1793218012.9561958,
+    "original_experiment": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001",
+    "repair_directory": "/data/zljj/regen-runs/intervaltree-project-astra-low-20261028-001/seal-repair-20261029-001",
+    "theory": "Interval_Normalization",
+    "validated_contracts": 13,
+    "source_commit_id": "2825eb703a5b1cc8e454cb3068a693d8441239b98ff27ac4d9118fe8ae644fff",
+    "proofs_sha256": "905cba79088cfbc94204e7f342ff2af0bbe7e26c0361f8a1d72e8c71b42702f8",
+    "graph_sha256": "ecc7ad30aa526161cdaed4f2aec6624199c0222ce159026aab30f3d81b5d2662",
+    "complete_check": "green",
+    "native_dependency_audit": "green",
+    "semantic_impact": "pass",
+    "native_sealed_build": "green",
+    "seal_certificate_replay": "pass",
+    "validation_seal_id": "theory-seal:a718c7388e8fa4e2b1d7",
+    "source_unchanged": true,
+    "source_files_verified": 1028,
+    "published_to_experiment": false,
+    "model_calls": 0,
+    "new_target_proofs": 0,
+    "experiment_resumed": false,
+    "service": {
+      "unit": "intervaltree-project-20261028-001-generation-resume-001.service",
+      "MainPID": "0",
+      "ActiveState": "failed",
+      "SubState": "failed"
+    }
+  },
+  "diagnosis": {
+    "status": "paused_by_user_repair_validated",
+    "original_error": "KeyError: 'campaign_id'",
+    "repair_published_to_experiment": false,
+    "automatic_resume": false
+  }
+}

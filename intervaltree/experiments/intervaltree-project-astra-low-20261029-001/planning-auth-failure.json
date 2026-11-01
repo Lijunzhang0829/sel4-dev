@@ -1,0 +1,39 @@
+{
+  "state": "failed",
+  "provider": "codex-workspace-audited",
+  "scope": "repository-planning-only",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "started_at": "2026-10-29T05:14:22.122240+00:00",
+  "prompt_sha256": "a2a2d075e2db98d1ee4ea7be098b6be636cc1c69c28868cb5d30e57ed7c3b901",
+  "external_isolation": "model-os-isolation-v1",
+  "timed_out": false,
+  "container": "regen-model-d1a300178d70435896e9bc9d37f5b1f6",
+  "isolation": {
+    "version": "model-os-isolation-v1",
+    "container": "regen-model-d1a300178d70435896e9bc9d37f5b1f6",
+    "image": "sha256:5d617d87925d3af2acb4b145faa27dea0e454ef9e87b091b97ac8bcfdadafe95",
+    "network": "none",
+    "egress_hosts": [
+      "api.openai.com",
+      "auth.openai.com",
+      "chatgpt.com"
+    ],
+    "egress_port": 443,
+    "filesystem": "sanitized-input-readonly-tool-rpc-private-draft-clean-auth-home",
+    "exclusive_os_isolation": true,
+    "resources": {
+      "cpus": 2,
+      "memory_bytes": 2147483648,
+      "pids": 128
+    }
+  },
+  "returncode": 1,
+  "wall_ms": 20477,
+  "finished_at": "2026-10-29T05:14:42.599816+00:00",
+  "codex_sha256": "a969c7c42b842c759d157d2500bbf33a562ff95f22dcb7112aa4d8f9e68833d3",
+  "raw_sha256": "a7450ace68a797782c324828dc4b86c3bce106be710c412a459a799f5855ae1d",
+  "stderr_sha256": "516b6bdee2ac1475557f6a315514058b508d47058413c877cae626205b7857b6",
+  "final_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "audit_sha256": "eea36c6741679670e8252da4124b60c799c5426f16252c60b609791d828ef55b"
+}

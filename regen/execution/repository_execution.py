@@ -1216,6 +1216,120 @@ def _carry_workspace_continuation(source_dir, source, destination, run, descript
             'status':state['status']}
 
 
+def _unstarted_outcome_state(package, run, *, document_mode):
+    """Use the controller's actual empty-state encoding; create no proof commit."""
+    from types import SimpleNamespace
+    from regen.planning.proof_workspace_agent import WorkspaceController
+    view = SimpleNamespace(run=run, document_mode=document_mode, shared=SimpleNamespace(
+        _package=lambda _: package, _snapshot=lambda _: None))
+    return WorkspaceController._state(view, package['theory'])[1]
+
+
+def _continuation_outcome(source_dir, source, entry):
+    """Read a stop against verified latest commits or the exact empty state.
+
+    This deliberately avoids constructing a running WorkspaceController: a
+    harness repair may change implementation hashes, but must replay the old
+    journals under their original bindings before transferring their results.
+    """
+    from types import SimpleNamespace
+    from regen.planning.theory_outcomes import current_outcome
+    prepared = _workspace_continuation_input(source_dir, source, entry, None)
+    if prepared is None:
+        package = package_for(source, entry['file_slot'])
+        policy_path = source_dir/'parallel-workspace-policy.json'
+        mode = read(policy_path)['file_planner_interface'] if policy_path.exists() else 'document'
+        if mode not in {'document', 'graph'}:
+            raise ValueError('invalid unstarted outcome interface')
+        state = _unstarted_outcome_state(package, source, document_mode=mode == 'document')
+        imports_path = source_dir/'theories'/Path(entry['file_slot']).stem/'imports.json'
+        imports = read(imports_path) if imports_path.exists() else None
+        descriptor = {'source_commit':None, 'package_sha256':package['package_payload_sha256'],
+                      'unstarted_interface':mode}
+    else:
+        package, origin, _continued, descriptor = prepared
+        state = origin['commits'][-1]['state']
+        imports = origin['imports']
+    controller = SimpleNamespace(root=source_dir, run=source, theory=entry['theory'],
+        _state=lambda _: (deepcopy(package), deepcopy(state)))
+    outcome = current_outcome(controller)
+    if outcome is None:
+        if prepared is None and (source_dir/'theory-outcomes'/digest(entry['theory'])/'events').exists():
+            raise ValueError('unstarted theory outcome does not match its frozen empty state')
+        return None  # An obsolete UNKNOWN is not a current scheduling stop.
+    if outcome['status'] == 'refuted':
+        from regen.execution.contract_refutation import validate_refutation_certificate
+        contract = next(c for c in package['contracts']
+                        if c['contract_id'] == outcome['entry_ids'][0])
+        # All imported providers must retain independently verified seals.
+        if imports is None:
+            raise ValueError('refuted outcome lacks frozen checker imports')
+        _sealed_provider_inputs(source_dir, source, imports)
+        expected_imports = ([f'Generated_Refine.{name}' for name in imports]
+                            if imports else [source['base_import']])
+        validate_refutation_certificate(outcome['details']['certificate'], contract,
+                                        expected_imports=expected_imports)
+    return {'entry':entry, 'outcome':outcome, 'descriptor':descriptor,
+            'imports':imports, 'accepted_state_sha256':digest({
+                k:state.get(k) for k in ('graph','proofs','accepted_order')})}
+
+
+def _carry_theory_outcomes(source_dir, source, destination, run, prepared):
+    """Transfer validated stops without granting proof credit or resetting costs."""
+    from types import SimpleNamespace
+    from regen.planning.theory_outcomes import _publish, current_outcome
+    carried = []
+    for expected in prepared:
+        entry = expected['entry']
+        current = _continuation_outcome(source_dir, source, entry)
+        if current != expected:
+            raise ValueError('theory outcome source changed after preflight')
+        package = package_for(run, entry['file_slot'])
+        state = journal(destination, run, package).replay()
+        imports_path = destination/'theories'/Path(entry['file_slot']).stem/'imports.json'
+        if 'unstarted_interface' in expected['descriptor']:
+            if state is not None or imports_path.exists():
+                raise ValueError('unstarted outcome acquired a destination proof state')
+            state = _unstarted_outcome_state(package, run,
+                document_mode=expected['descriptor']['unstarted_interface'] == 'document')
+            # Only the controller-generated run identifier and its derived hash
+            # differ. Compare against the exact old initial state, never strip
+            # arbitrary fields from an accepted mathematical graph.
+            comparison = _unstarted_outcome_state(package, source,
+                document_mode=expected['descriptor']['unstarted_interface'] == 'document')
+            imports = expected['imports']
+            if imports is not None:
+                durable(imports_path, imports, immutable=True)
+        else:
+            comparison = state
+            imports = read(imports_path)
+        if (package['package_payload_sha256'] != expected['descriptor']['package_sha256']
+                or imports != expected['imports'] or state is None
+                or digest({k:comparison.get(k) for k in ('graph','proofs','accepted_order')})
+                   != expected['accepted_state_sha256']):
+            raise ValueError('theory outcome continuation changed accepted state or imports')
+        outcome = current['outcome']
+        provenance = {'source_run':str(source_dir), 'source_run_sha256':digest(source),
+            'source_receipt':outcome['receipt'], 'source_outcome_sha256':digest(outcome),
+            'source_commit':expected['descriptor']['source_commit'],
+            'positive_proofs_added':0, 'refund_seconds':0}
+        controller = SimpleNamespace(root=destination, run=run, theory=entry['theory'],
+            _state=lambda _, p=package, s=state: (deepcopy(p), deepcopy(s)))
+        result = _publish(controller, status=outcome['status'], reason=outcome['reason'],
+            origin=outcome['origin'], details=outcome['details'],
+            entry_ids=outcome['entry_ids'] or None, classification=outcome['classification'],
+            metadata={**outcome['metadata'], 'continuation':provenance})
+        if result['entry_ids'] != outcome['entry_ids'] or current_outcome(controller) != result:
+            raise ValueError('theory outcome continuation failed replay')
+        carried.append({'theory':entry['theory'], 'status':result['status'],
+                        **provenance, 'receipt':result['receipt'], 'binding':result['binding']})
+    if carried:
+        durable(destination/'theory-outcomes-continuation.json', {
+            'source_run':str(source_dir), 'theories':carried,
+            'positive_proofs_added':0, 'refund_seconds':0,
+            'policy':'revalidate latest stops and rebind to unchanged continued proof state'}, immutable=True)
+
+
 def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
     """Fork verified states, retaining at most one decoded theory origin at a time."""
     source_dir, destination = Path(source_dir).resolve(), Path(destination).resolve()
@@ -1228,6 +1342,27 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
         names = {e['theory'] for e in read(source_dir/'execution-input.json')['files']}
         if set(checkpoint['theories']) - names:
             raise ValueError('unknown checkpoint theory')
+    entries = read(source_dir/'execution-input.json')['files']
+    outcome_names = {entry['theory'] for entry in entries
+        if (source_dir/'theory-outcomes'/digest(entry['theory'])/'events').exists()}
+    # Older controllers completed a native task before publishing the stop.
+    # Let current_outcome authenticate and reconcile that receipt under the
+    # caller's source mutation lock; no candidate is executed again.
+    for path in (source_dir/'check-tasks').glob('*/task.json'):
+        task = json.loads(path.read_text())
+        if (task.get('kind') == 'refutation' and task.get('status') == 'completed'
+                and isinstance(task.get('binding'), dict)
+                and task['binding'].get('run_id') == source['run_id']):
+            outcome_names.add(task.get('theory'))
+    if outcome_names - {entry['theory'] for entry in entries}:
+        raise ValueError('theory outcome names an unknown continuation theory')
+    outcome_entries = [entry for entry in entries if entry['theory'] in outcome_names]
+    # Checkpoint replay must not silently import later negative knowledge or
+    # discard a stop. Its temporal outcome policy needs a separate audit.
+    if checkpoint is not None and outcome_entries:
+        raise ValueError('checkpoint continuation with theory outcomes is unsupported')
+    outcomes = [outcome for entry in outcome_entries
+                if (outcome := _continuation_outcome(source_dir, source, entry)) is not None]
     sealed = []
     continuing = []
     for entry in read(source_dir/'execution-input.json')['files']:
@@ -1238,8 +1373,8 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
         if descriptor is None:
             continue
         (sealed if descriptor['status'] == 'sealed' else continuing).append(descriptor)
-    if not sealed and not continuing:
-        raise ValueError('source contains no verified theory state')
+    if not sealed and not continuing and not outcomes:
+        raise ValueError('source contains no verified theory state or current outcome')
     if checkpoint is not None:
         from regen.execution.proof_session_runner import generated_checkpoint_theory
         available = {generated_checkpoint_theory(d['entry']['file_slot']) for d in sealed}
@@ -1263,6 +1398,9 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
     if reused:
         durable(destination/'sealed-reuse.json', {'source_run':str(source_dir), 'theories':reused,
             'policy':'verify embedded source chains and seals; preserve accepted proofs and cumulative costs'}, immutable=True)
+    # Publish stops before the continuation-completed receipt used by budget
+    # transfer. An interrupted transfer cannot masquerade as a complete fork.
+    _carry_theory_outcomes(source_dir, source, destination, run, outcomes)
     durable(destination/'workspace-continuation.json', {
         'source_run':str(source_dir), 'theories':carried,
         'sealed_theories':[d['entry']['theory'] for d in sealed],

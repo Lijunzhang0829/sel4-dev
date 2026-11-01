@@ -92,6 +92,52 @@ def write_json(path: Path, data):
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
 
 
+def spec_body(goal: str, block: str) -> str:
+    """Expose the closed spec body, without unfolding its implementation.
+
+    This deliberately accepts only our nullary bool definitions. The native
+    audit below checks the parsed proposition against the defining equation;
+    this text extraction is not trusted to establish semantic equivalence.
+    """
+    match = re.match(
+        r'\s*definition\s+' + re.escape(goal) +
+        r'\s*::\s*bool\s+where\s*"((?:\\.|[^"\\])*)"', block, re.S)
+    if not match:
+        raise ValueError("unsupported closed spec definition: " + goal)
+    equation = re.fullmatch(
+        r'\s*' + re.escape(goal) + r'\s*\\<longleftrightarrow>\s*(.+?)\s*',
+        match[1], re.S)
+    if not equation:
+        raise ValueError("spec is not a named bool equivalence: " + goal)
+    return equation[1]
+
+
+def expansion_audit(targets: list[dict]) -> str:
+    pairs = ",\n".join(
+        '    ("' + t["id"] + '", @{prop "' + t["theory"] + "." + t["definition"] +
+        '"}, @{prop "' + t["expanded_proposition"] + '"}, @{thm ' +
+        t["theory"] + "." + t["definition"] + '_def})' for t in targets)
+    return r'''ML \<open>
+  val ctxt = @{context};
+  fun check_expansion (id, original, expanded, equation) =
+    let
+      val conversion = Simplifier.rewrite
+        (put_simpset HOL_basic_ss ctxt addsimps [equation])
+        (Thm.cterm_of ctxt original);
+      val actual = Thm.term_of (Thm.rhs_of conversion);
+      val _ = if actual aconv expanded then ()
+        else error ("Spec expansion changed the proposition: " ^ id);
+      val _ = if null (Thm.hyps_of conversion) andalso
+                 null (Thm_Deps.all_oracles [conversion]) then ()
+        else error ("Untrusted spec expansion: " ^ id);
+    in writeln ("INTERVALTREE_SPEC_EXPANSION " ^ id) end;
+  val _ = List.app check_expansion [
+''' + pairs + r'''
+  ];
+\<close>
+'''
+
+
 def main():
     sanitized = ROOT / "sanitized"
     theories_out = sanitized / "theories"
@@ -122,12 +168,15 @@ def main():
                     goal = m[1]
                     group = "baseline" if goal.startswith("spec_") else (
                         "extension" if goal.startswith("ext_") else "concrete")
+                    body = spec_body(goal, block)
                     targets.append({
                         "id": goal,
                         "definition": goal,
                         "theory": name,
                         "group": group,
-                        "statement": f'lemma {goal}: "{name}.{goal}"',
+                        "statement": f'lemma {goal}: "{body}"',
+                        "named_statement": f'lemma {goal}: "{name}.{goal}"',
+                        "expanded_proposition": body,
                         # Only a completed kernel audit can upgrade this status.
                         "status": "pending",
                         "proof_theorem": proof_names.get(goal),
@@ -161,6 +210,8 @@ def main():
     write_json(ROOT / "source-lock.json", {"files": source_hashes})
     write_json(ROOT / "targets.json", {
         "stage": "preparation", "formal_evaluation_started": False,
+        "input_revision": "expanded-specs-v2",
+        "semantic_feedback_file": "model-feedback.json",
         "status_note": "pending until a matching full build and native theorem audit succeed",
         "baseline_name_map": rename, "targets": targets,
     })
@@ -177,6 +228,7 @@ def main():
     (sanitized / "Interval_Goals.thy").unlink(missing_ok=True)
     (goals_out / "Interval_Goals.thy").write_text(
         "theory Interval_Goals\n  imports Intervaltree_Definitions.Interval_Input\nbegin\n\n" +
+        expansion_audit(targets) + "\n" +
         "\n\n".join(t["statement"] + "\n  oops" for t in targets) + "\n\nend\n")
     contracts = [{
         "contract_id": t["id"], "name": t["id"],
@@ -195,13 +247,16 @@ def main():
         harness.prepare(sanitized / "contracts.jsonl", sanitized,
                         base_import="Intervaltree_Definitions.Interval_Input",
                         provenance={"project": "intervaltree", "stage": "preparation",
+                                    "input_revision": "expanded-specs-v2",
                                     "python_commit": "1bc406e1f441577c4e421fc51aba2ab67fbd97fb",
                                     "formal_evaluation_started": False})
     write_json(sanitized / "input-manifest.json", {
         "base_import": "Intervaltree_Definitions.Interval_Input",
+        "input_revision": "expanded-specs-v2",
+        "contract_representation": "closed spec bodies, definitionally equivalent to named bool goals",
         "target_count": len(targets), "reference_proofs_included": False,
         "helper_statements_included": False,
-        "validation": "requires an independent build; oops establishes no theorem",
+        "validation": "requires an independent build; native ML checks every spec expansion; oops establishes no target theorem",
         "files": {
             str(p.relative_to(sanitized)): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(sanitized.rglob("*")) if p.is_file()

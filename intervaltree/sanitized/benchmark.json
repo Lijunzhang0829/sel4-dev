@@ -1,7 +1,7 @@
 {
   "backend": "isabelle",
   "base_import": "Intervaltree_Definitions.Interval_Input",
-  "benchmark_id": "1992ddc22bcd2c5f0643aa2a980284754d0ba646e0b23d38dce1c2341a7fbe52",
+  "benchmark_id": "39b86338d045c17c1e8a0b677d531a9c4612e4631f9ea9d4deba1955722953ff",
   "contracts": [
     {
       "context": [],
@@ -9,7 +9,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_overlaps_symm",
       "source_id": "spec_overlaps_symm",
-      "statement": "lemma spec_overlaps_symm: \"Interval_Baseline.spec_overlaps_symm\""
+      "statement": "lemma spec_overlaps_symm: \"(\\<forall>a b. overlaps a b = overlaps b a)\""
     },
     {
       "context": [],
@@ -17,7 +17,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_overlaps_self_nonempty",
       "source_id": "spec_overlaps_self_nonempty",
-      "statement": "lemma spec_overlaps_self_nonempty: \"Interval_Baseline.spec_overlaps_self_nonempty\""
+      "statement": "lemma spec_overlaps_self_nonempty: \"(\\<forall>a. overlaps a a = (lo a < hi a))\""
     },
     {
       "context": [],
@@ -25,7 +25,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_overlaps_self_empty",
       "source_id": "spec_overlaps_self_empty",
-      "statement": "lemma spec_overlaps_self_empty: \"Interval_Baseline.spec_overlaps_self_empty\""
+      "statement": "lemma spec_overlaps_self_empty: \"(\\<forall>a. \\<not> lo a < hi a \\<longrightarrow> \\<not> overlaps a a)\""
     },
     {
       "context": [],
@@ -33,7 +33,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_overlaps_disjoint_false",
       "source_id": "spec_overlaps_disjoint_false",
-      "statement": "lemma spec_overlaps_disjoint_false: \"Interval_Baseline.spec_overlaps_disjoint_false\""
+      "statement": "lemma spec_overlaps_disjoint_false: \"(\\<forall>a b. (\\<not> overlaps a b) = (hi a \\<le> lo b \\<or> hi b \\<le> lo a))\""
     },
     {
       "context": [],
@@ -41,7 +41,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_overlaps_iff_common_point",
       "source_id": "spec_overlaps_iff_common_point",
-      "statement": "lemma spec_overlaps_iff_common_point: \"Interval_Baseline.spec_overlaps_iff_common_point\""
+      "statement": "lemma spec_overlaps_iff_common_point: \"(\\<forall>a b. lo a < hi a \\<longrightarrow> lo b < hi b \\<longrightarrow>\n      overlaps a b = (\\<exists>x. covered x [a] \\<and> covered x [b]))\""
     },
     {
       "context": [],
@@ -49,7 +49,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_coverage",
       "source_id": "spec_merge_coverage",
-      "statement": "lemma spec_merge_coverage: \"Interval_Baseline.spec_merge_coverage\""
+      "statement": "lemma spec_merge_coverage: \"(\\<forall>xs x. covered x (merge_overlaps xs) = covered x xs)\""
     },
     {
       "context": [],
@@ -57,7 +57,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_disjoint_strict",
       "source_id": "spec_merge_disjoint_strict",
-      "statement": "lemma spec_merge_disjoint_strict: \"Interval_Baseline.spec_merge_disjoint_strict\""
+      "statement": "lemma spec_merge_disjoint_strict: \"(\\<forall>xs.\n    (\\<forall>i\\<in>set (merge_overlaps xs). lo i < hi i) \\<and>\n    (\\<forall>k. Suc k < length (merge_overlaps xs) \\<longrightarrow>\n      hi (merge_overlaps xs ! k) < lo (merge_overlaps xs ! Suc k)))\""
     },
     {
       "context": [],
@@ -65,7 +65,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_nil",
       "source_id": "spec_merge_nil",
-      "statement": "lemma spec_merge_nil: \"Interval_Baseline.spec_merge_nil\""
+      "statement": "lemma spec_merge_nil: \"merge_overlaps [] = []\""
     },
     {
       "context": [],
@@ -73,7 +73,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_singleton",
       "source_id": "spec_merge_singleton",
-      "statement": "lemma spec_merge_singleton: \"Interval_Baseline.spec_merge_singleton\""
+      "statement": "lemma spec_merge_singleton: \"(\\<forall>a.\n    merge_overlaps [a] = (if lo a < hi a then [a] else []))\""
     },
     {
       "context": [],
@@ -81,7 +81,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_all_empty_nil",
       "source_id": "spec_merge_all_empty_nil",
-      "statement": "lemma spec_merge_all_empty_nil: \"Interval_Baseline.spec_merge_all_empty_nil\""
+      "statement": "lemma spec_merge_all_empty_nil: \"(\\<forall>xs.\n    (merge_overlaps xs = []) = (\\<forall>a\\<in>set xs. \\<not> lo a < hi a))\""
     },
     {
       "context": [],
@@ -89,7 +89,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_output_nonempty",
       "source_id": "spec_merge_output_nonempty",
-      "statement": "lemma spec_merge_output_nonempty: \"Interval_Baseline.spec_merge_output_nonempty\""
+      "statement": "lemma spec_merge_output_nonempty: \"(\\<forall>xs. \\<forall>a\\<in>set (merge_overlaps xs). lo a < hi a)\""
     },
     {
       "context": [],
@@ -97,7 +97,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_sorted_lo",
       "source_id": "spec_merge_sorted_lo",
-      "statement": "lemma spec_merge_sorted_lo: \"Interval_Baseline.spec_merge_sorted_lo\""
+      "statement": "lemma spec_merge_sorted_lo: \"(\\<forall>xs k.\n    Suc k < length (merge_overlaps xs) \\<longrightarrow>\n    lo (merge_overlaps xs ! k) < lo (merge_overlaps xs ! Suc k))\""
     },
     {
       "context": [],
@@ -105,7 +105,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_length_le",
       "source_id": "spec_merge_length_le",
-      "statement": "lemma spec_merge_length_le: \"Interval_Baseline.spec_merge_length_le\""
+      "statement": "lemma spec_merge_length_le: \"(\\<forall>xs.\n    length (merge_overlaps xs) \\<le> length (filter (\\<lambda>i. lo i < hi i) xs))\""
     },
     {
       "context": [],
@@ -113,7 +113,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_idempotent",
       "source_id": "spec_merge_idempotent",
-      "statement": "lemma spec_merge_idempotent: \"Interval_Baseline.spec_merge_idempotent\""
+      "statement": "lemma spec_merge_idempotent: \"(\\<forall>xs x.\n    covered x (merge_overlaps (merge_overlaps xs)) = covered x (merge_overlaps xs))\""
     },
     {
       "context": [],
@@ -121,7 +121,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_exact_idempotent",
       "source_id": "spec_merge_exact_idempotent",
-      "statement": "lemma spec_merge_exact_idempotent: \"Interval_Baseline.spec_merge_exact_idempotent\""
+      "statement": "lemma spec_merge_exact_idempotent: \"(\\<forall>xs. merge_overlaps (merge_overlaps xs) = merge_overlaps xs)\""
     },
     {
       "context": [],
@@ -129,7 +129,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_totalLen_le",
       "source_id": "spec_merge_totalLen_le",
-      "statement": "lemma spec_merge_totalLen_le: \"Interval_Baseline.spec_merge_totalLen_le\""
+      "statement": "lemma spec_merge_totalLen_le: \"(\\<forall>xs. total_len (merge_overlaps xs) \\<le> clamped_total_len xs)\""
     },
     {
       "context": [],
@@ -137,7 +137,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_totalLen_disjoint_eq",
       "source_id": "spec_merge_totalLen_disjoint_eq",
-      "statement": "lemma spec_merge_totalLen_disjoint_eq: \"Interval_Baseline.spec_merge_totalLen_disjoint_eq\""
+      "statement": "lemma spec_merge_totalLen_disjoint_eq: \"(\\<forall>xs.\n    canonical_intervals xs \\<longrightarrow> total_len (merge_overlaps xs) = total_len xs)\""
     },
     {
       "context": [],
@@ -145,7 +145,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_hull_lo",
       "source_id": "spec_merge_hull_lo",
-      "statement": "lemma spec_merge_hull_lo: \"Interval_Baseline.spec_merge_hull_lo\""
+      "statement": "lemma spec_merge_hull_lo: \"(\\<forall>xs out_iv rest.\n    merge_overlaps xs = out_iv # rest \\<longrightarrow>\n    (\\<forall>i\\<in>set xs. lo i < hi i \\<longrightarrow> lo out_iv \\<le> lo i) \\<and>\n    (\\<exists>i\\<in>set xs. lo i < hi i \\<and> lo out_iv = lo i))\""
     },
     {
       "context": [],
@@ -153,7 +153,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_hull_hi",
       "source_id": "spec_merge_hull_hi",
-      "statement": "lemma spec_merge_hull_hi: \"Interval_Baseline.spec_merge_hull_hi\""
+      "statement": "lemma spec_merge_hull_hi: \"(\\<forall>xs pre last.\n    merge_overlaps xs = pre @ [last] \\<longrightarrow>\n    (\\<forall>i\\<in>set xs. lo i < hi i \\<longrightarrow> hi i \\<le> hi last) \\<and>\n    (\\<exists>i\\<in>set xs. lo i < hi i \\<and> hi last = hi i))\""
     },
     {
       "context": [],
@@ -161,7 +161,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_chop_coverage",
       "source_id": "spec_merge_chop_coverage",
-      "statement": "lemma spec_merge_chop_coverage: \"Interval_Baseline.spec_merge_chop_coverage\""
+      "statement": "lemma spec_merge_chop_coverage: \"(\\<forall>b e xs x.\n    covered x (merge_overlaps (chop b e xs)) =\n    (covered x (merge_overlaps xs) \\<and> \\<not> (b \\<le> x \\<and> x < e)))\""
     },
     {
       "context": [],
@@ -169,7 +169,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_reverse_eq",
       "source_id": "spec_merge_reverse_eq",
-      "statement": "lemma spec_merge_reverse_eq: \"Interval_Baseline.spec_merge_reverse_eq\""
+      "statement": "lemma spec_merge_reverse_eq: \"(\\<forall>xs. merge_overlaps xs = merge_overlaps (rev xs))\""
     },
     {
       "context": [],
@@ -177,7 +177,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_removes",
       "source_id": "spec_chop_removes",
-      "statement": "lemma spec_chop_removes: \"Interval_Baseline.spec_chop_removes\""
+      "statement": "lemma spec_chop_removes: \"(\\<forall>b e xs x.\n    b \\<le> x \\<longrightarrow> x < e \\<longrightarrow> \\<not> covered x (chop b e xs))\""
     },
     {
       "context": [],
@@ -185,7 +185,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_pointwise",
       "source_id": "spec_chop_pointwise",
-      "statement": "lemma spec_chop_pointwise: \"Interval_Baseline.spec_chop_pointwise\""
+      "statement": "lemma spec_chop_pointwise: \"(\\<forall>b e xs x.\n    covered x (chop b e xs) = (covered x xs \\<and> \\<not> (b \\<le> x \\<and> x < e)))\""
     },
     {
       "context": [],
@@ -193,7 +193,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_empty_range_id",
       "source_id": "spec_chop_empty_range_id",
-      "statement": "lemma spec_chop_empty_range_id: \"Interval_Baseline.spec_chop_empty_range_id\""
+      "statement": "lemma spec_chop_empty_range_id: \"(\\<forall>b e xs x.\n    e \\<le> b \\<longrightarrow> covered x (chop b e xs) = covered x xs)\""
     },
     {
       "context": [],
@@ -201,7 +201,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_idempotent",
       "source_id": "spec_chop_idempotent",
-      "statement": "lemma spec_chop_idempotent: \"Interval_Baseline.spec_chop_idempotent\""
+      "statement": "lemma spec_chop_idempotent: \"(\\<forall>b e xs x.\n    covered x (chop b e (chop b e xs)) = covered x (chop b e xs))\""
     },
     {
       "context": [],
@@ -209,7 +209,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_canonical_unique",
       "source_id": "spec_merge_canonical_unique",
-      "statement": "lemma spec_merge_canonical_unique: \"Interval_Baseline.spec_merge_canonical_unique\""
+      "statement": "lemma spec_merge_canonical_unique: \"(\\<forall>xs c.\n    canonical_intervals c \\<longrightarrow> (\\<forall>x. covered x c = covered x xs) \\<longrightarrow>\n    merge_overlaps xs = c)\""
     },
     {
       "context": [],
@@ -217,7 +217,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_coverage_determines",
       "source_id": "spec_merge_coverage_determines",
-      "statement": "lemma spec_merge_coverage_determines: \"Interval_Baseline.spec_merge_coverage_determines\""
+      "statement": "lemma spec_merge_coverage_determines: \"(\\<forall>a b.\n    (\\<forall>x. covered x a = covered x b) \\<longrightarrow> merge_overlaps a = merge_overlaps b)\""
     },
     {
       "context": [],
@@ -225,7 +225,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_saturated_lo",
       "source_id": "spec_merge_saturated_lo",
-      "statement": "lemma spec_merge_saturated_lo: \"Interval_Baseline.spec_merge_saturated_lo\""
+      "statement": "lemma spec_merge_saturated_lo: \"(\\<forall>xs. \\<forall>out_iv\\<in>set (merge_overlaps xs).\n    \\<exists>i\\<in>set xs. lo i < hi i \\<and> lo out_iv = lo i)\""
     },
     {
       "context": [],
@@ -233,7 +233,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_concat_closure",
       "source_id": "spec_merge_concat_closure",
-      "statement": "lemma spec_merge_concat_closure: \"Interval_Baseline.spec_merge_concat_closure\""
+      "statement": "lemma spec_merge_concat_closure: \"(\\<forall>xs ys.\n    merge_overlaps (merge_overlaps xs @ merge_overlaps ys) = merge_overlaps (xs @ ys))\""
     },
     {
       "context": [],
@@ -241,7 +241,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_is_canonical",
       "source_id": "spec_merge_is_canonical",
-      "statement": "lemma spec_merge_is_canonical: \"Interval_Baseline.spec_merge_is_canonical\""
+      "statement": "lemma spec_merge_is_canonical: \"(\\<forall>xs. canonical_intervals (merge_overlaps xs))\""
     },
     {
       "context": [],
@@ -249,7 +249,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_saturated_hi",
       "source_id": "spec_merge_saturated_hi",
-      "statement": "lemma spec_merge_saturated_hi: \"Interval_Baseline.spec_merge_saturated_hi\""
+      "statement": "lemma spec_merge_saturated_hi: \"(\\<forall>xs. \\<forall>out_iv\\<in>set (merge_overlaps xs).\n    \\<exists>i\\<in>set xs. lo i < hi i \\<and> hi out_iv = hi i)\""
     },
     {
       "context": [],
@@ -257,7 +257,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_run_solid",
       "source_id": "spec_merge_run_solid",
-      "statement": "lemma spec_merge_run_solid: \"Interval_Baseline.spec_merge_run_solid\""
+      "statement": "lemma spec_merge_run_solid: \"(\\<forall>xs x. \\<forall>out_iv\\<in>set (merge_overlaps xs).\n    lo out_iv \\<le> x \\<longrightarrow> x < hi out_iv \\<longrightarrow> covered x xs)\""
     },
     {
       "context": [],
@@ -265,7 +265,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_lo_pred_uncovered",
       "source_id": "spec_merge_lo_pred_uncovered",
-      "statement": "lemma spec_merge_lo_pred_uncovered: \"Interval_Baseline.spec_merge_lo_pred_uncovered\""
+      "statement": "lemma spec_merge_lo_pred_uncovered: \"(\\<forall>xs. \\<forall>out_iv\\<in>set (merge_overlaps xs). \\<not> covered (lo out_iv - 1) xs)\""
     },
     {
       "context": [],
@@ -273,7 +273,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_hi_uncovered",
       "source_id": "spec_merge_hi_uncovered",
-      "statement": "lemma spec_merge_hi_uncovered: \"Interval_Baseline.spec_merge_hi_uncovered\""
+      "statement": "lemma spec_merge_hi_uncovered: \"(\\<forall>xs. \\<forall>out_iv\\<in>set (merge_overlaps xs). \\<not> covered (hi out_iv) xs)\""
     },
     {
       "context": [],
@@ -281,7 +281,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_append_coverage",
       "source_id": "spec_merge_append_coverage",
-      "statement": "lemma spec_merge_append_coverage: \"Interval_Baseline.spec_merge_append_coverage\""
+      "statement": "lemma spec_merge_append_coverage: \"(\\<forall>xs ys x.\n    covered x (merge_overlaps (xs @ ys)) =\n    (covered x (merge_overlaps xs) \\<or> covered x (merge_overlaps ys)))\""
     },
     {
       "context": [],
@@ -289,7 +289,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_concat_closure_right",
       "source_id": "spec_merge_concat_closure_right",
-      "statement": "lemma spec_merge_concat_closure_right: \"Interval_Baseline.spec_merge_concat_closure_right\""
+      "statement": "lemma spec_merge_concat_closure_right: \"(\\<forall>xs ys.\n    merge_overlaps (xs @ merge_overlaps ys) = merge_overlaps (xs @ ys))\""
     },
     {
       "context": [],
@@ -297,7 +297,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_self_union_idem",
       "source_id": "spec_merge_self_union_idem",
-      "statement": "lemma spec_merge_self_union_idem: \"Interval_Baseline.spec_merge_self_union_idem\""
+      "statement": "lemma spec_merge_self_union_idem: \"(\\<forall>xs.\n    merge_overlaps (merge_overlaps xs @ merge_overlaps xs) = merge_overlaps xs)\""
     },
     {
       "context": [],
@@ -305,7 +305,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_chop_merge",
       "source_id": "spec_merge_chop_merge",
-      "statement": "lemma spec_merge_chop_merge: \"Interval_Baseline.spec_merge_chop_merge\""
+      "statement": "lemma spec_merge_chop_merge: \"(\\<forall>b e xs.\n    merge_overlaps (chop b e (merge_overlaps xs)) = merge_overlaps (chop b e xs))\""
     },
     {
       "context": [],
@@ -313,7 +313,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_chop_idempotent",
       "source_id": "spec_merge_chop_idempotent",
-      "statement": "lemma spec_merge_chop_idempotent: \"Interval_Baseline.spec_merge_chop_idempotent\""
+      "statement": "lemma spec_merge_chop_idempotent: \"(\\<forall>b e xs.\n    merge_overlaps (chop b e (chop b e xs)) = merge_overlaps (chop b e xs))\""
     },
     {
       "context": [],
@@ -321,7 +321,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_chop_coverage_determines",
       "source_id": "spec_merge_chop_coverage_determines",
-      "statement": "lemma spec_merge_chop_coverage_determines: \"Interval_Baseline.spec_merge_chop_coverage_determines\""
+      "statement": "lemma spec_merge_chop_coverage_determines: \"(\\<forall>b e a c.\n    (\\<forall>x. covered x a = covered x c) \\<longrightarrow>\n    merge_overlaps (chop b e a) = merge_overlaps (chop b e c))\""
     },
     {
       "context": [],
@@ -329,7 +329,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_coveredCount_le_one",
       "source_id": "spec_merge_coveredCount_le_one",
-      "statement": "lemma spec_merge_coveredCount_le_one: \"Interval_Baseline.spec_merge_coveredCount_le_one\""
+      "statement": "lemma spec_merge_coveredCount_le_one: \"(\\<forall>xs x. covered_count x (merge_overlaps xs) \\<le> 1)\""
     },
     {
       "context": [],
@@ -337,7 +337,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_coveredCount_exact",
       "source_id": "spec_merge_coveredCount_exact",
-      "statement": "lemma spec_merge_coveredCount_exact: \"Interval_Baseline.spec_merge_coveredCount_exact\""
+      "statement": "lemma spec_merge_coveredCount_exact: \"(\\<forall>xs x.\n    covered_count x (merge_overlaps xs) = (if covered x xs then 1 else 0))\""
     },
     {
       "context": [],
@@ -345,7 +345,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_loEndpoints_nodup",
       "source_id": "spec_merge_loEndpoints_nodup",
-      "statement": "lemma spec_merge_loEndpoints_nodup: \"Interval_Baseline.spec_merge_loEndpoints_nodup\""
+      "statement": "lemma spec_merge_loEndpoints_nodup: \"(\\<forall>xs. distinct (map lo (merge_overlaps xs)))\""
     },
     {
       "context": [],
@@ -353,7 +353,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_getElem_lo_split",
       "source_id": "spec_merge_getElem_lo_split",
-      "statement": "lemma spec_merge_getElem_lo_split: \"Interval_Baseline.spec_merge_getElem_lo_split\""
+      "statement": "lemma spec_merge_getElem_lo_split: \"(\\<forall>xs k.\n    k < length (merge_overlaps xs) \\<longrightarrow>\n    \\<not> covered (lo (merge_overlaps xs ! k)) (take k (merge_overlaps xs)) \\<and>\n    covered (lo (merge_overlaps xs ! k)) (drop k (merge_overlaps xs)))\""
     },
     {
       "context": [],
@@ -361,7 +361,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_perm_eq_any",
       "source_id": "spec_merge_perm_eq_any",
-      "statement": "lemma spec_merge_perm_eq_any: \"Interval_Baseline.spec_merge_perm_eq_any\""
+      "statement": "lemma spec_merge_perm_eq_any: \"(\\<forall>xs ys. (\\<forall>i. count_list xs i = count_list ys i) \\<longrightarrow>\n      merge_overlaps xs = merge_overlaps ys)\""
     },
     {
       "context": [],
@@ -369,7 +369,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_pairwise_strict_gap_all",
       "source_id": "spec_merge_pairwise_strict_gap_all",
-      "statement": "lemma spec_merge_pairwise_strict_gap_all: \"Interval_Baseline.spec_merge_pairwise_strict_gap_all\""
+      "statement": "lemma spec_merge_pairwise_strict_gap_all: \"(\\<forall>xs i j.\n    i < length (merge_overlaps xs) \\<longrightarrow> j < length (merge_overlaps xs) \\<longrightarrow>\n    i < j \\<longrightarrow> hi (merge_overlaps xs ! i) < lo (merge_overlaps xs ! j))\""
     },
     {
       "context": [],
@@ -377,7 +377,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_consecutive_gap_witness",
       "source_id": "spec_merge_consecutive_gap_witness",
-      "statement": "lemma spec_merge_consecutive_gap_witness: \"Interval_Baseline.spec_merge_consecutive_gap_witness\""
+      "statement": "lemma spec_merge_consecutive_gap_witness: \"(\\<forall>xs i.\n    Suc i < length (merge_overlaps xs) \\<longrightarrow> (\\<exists>x.\n    hi (merge_overlaps xs ! i) \\<le> x \\<and> x < lo (merge_overlaps xs ! Suc i) \\<and>\n    \\<not> covered x (merge_overlaps xs)))\""
     },
     {
       "context": [],
@@ -385,7 +385,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_merge_coverage_monotone",
       "source_id": "spec_merge_coverage_monotone",
-      "statement": "lemma spec_merge_coverage_monotone: \"Interval_Baseline.spec_merge_coverage_monotone\""
+      "statement": "lemma spec_merge_coverage_monotone: \"(\\<forall>xs ys.\n    (\\<forall>x. covered x xs \\<longrightarrow> covered x ys) \\<longrightarrow>\n    (\\<forall>x. covered x (merge_overlaps xs) \\<longrightarrow> covered x (merge_overlaps ys)))\""
     },
     {
       "context": [],
@@ -393,7 +393,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_overlaps_merge_same_run",
       "source_id": "spec_overlaps_merge_same_run",
-      "statement": "lemma spec_overlaps_merge_same_run: \"Interval_Baseline.spec_overlaps_merge_same_run\""
+      "statement": "lemma spec_overlaps_merge_same_run: \"(\\<forall>a b.\n    lo a < hi a \\<longrightarrow> lo b < hi b \\<longrightarrow> overlaps a b \\<longrightarrow>\n    (\\<exists>out_iv\\<in>set (merge_overlaps [a,b]).\n      (\\<forall>x. covered x [a] \\<longrightarrow> covered x [out_iv]) \\<and>\n      (\\<forall>x. covered x [b] \\<longrightarrow> covered x [out_iv])))\""
     },
     {
       "context": [],
@@ -401,7 +401,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_canonical_preserves_canonical",
       "source_id": "spec_chop_canonical_preserves_canonical",
-      "statement": "lemma spec_chop_canonical_preserves_canonical: \"Interval_Baseline.spec_chop_canonical_preserves_canonical\""
+      "statement": "lemma spec_chop_canonical_preserves_canonical: \"(\\<forall>b e xs.\n    b < e \\<longrightarrow> canonical_intervals xs \\<longrightarrow>\n    canonical_intervals (chop b e xs))\""
     },
     {
       "context": [],
@@ -409,7 +409,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_canonical_sorted_lo",
       "source_id": "spec_chop_canonical_sorted_lo",
-      "statement": "lemma spec_chop_canonical_sorted_lo: \"Interval_Baseline.spec_chop_canonical_sorted_lo\""
+      "statement": "lemma spec_chop_canonical_sorted_lo: \"(\\<forall>b e xs.\n    b < e \\<longrightarrow> canonical_intervals xs \\<longrightarrow>\n    (\\<forall>i. Suc i < length (chop b e xs) \\<longrightarrow>\n      lo (chop b e xs ! i) < lo (chop b e xs ! Suc i)))\""
     },
     {
       "context": [],
@@ -417,7 +417,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_canonical_pairwise_strict_gap",
       "source_id": "spec_chop_canonical_pairwise_strict_gap",
-      "statement": "lemma spec_chop_canonical_pairwise_strict_gap: \"Interval_Baseline.spec_chop_canonical_pairwise_strict_gap\""
+      "statement": "lemma spec_chop_canonical_pairwise_strict_gap: \"(\\<forall>b e xs.\n    b < e \\<longrightarrow> canonical_intervals xs \\<longrightarrow>\n    (\\<forall>i j. i < length (chop b e xs) \\<longrightarrow> j < length (chop b e xs) \\<longrightarrow>\n      i < j \\<longrightarrow> hi (chop b e xs ! i) < lo (chop b e xs ! j)))\""
     },
     {
       "context": [],
@@ -425,7 +425,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_canonical_merge_fixpoint",
       "source_id": "spec_chop_canonical_merge_fixpoint",
-      "statement": "lemma spec_chop_canonical_merge_fixpoint: \"Interval_Baseline.spec_chop_canonical_merge_fixpoint\""
+      "statement": "lemma spec_chop_canonical_merge_fixpoint: \"(\\<forall>b e xs.\n    b < e \\<longrightarrow> canonical_intervals xs \\<longrightarrow>\n    merge_overlaps (chop b e xs) = chop b e xs)\""
     },
     {
       "context": [],
@@ -433,7 +433,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_totalLen_le_clamped",
       "source_id": "spec_chop_totalLen_le_clamped",
-      "statement": "lemma spec_chop_totalLen_le_clamped: \"Interval_Baseline.spec_chop_totalLen_le_clamped\""
+      "statement": "lemma spec_chop_totalLen_le_clamped: \"(\\<forall>b e xs.\n    b \\<le> e \\<longrightarrow> total_len (chop b e xs) \\<le> clamped_total_len xs)\""
     },
     {
       "context": [],
@@ -441,7 +441,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_append_coverage",
       "source_id": "spec_chop_append_coverage",
-      "statement": "lemma spec_chop_append_coverage: \"Interval_Baseline.spec_chop_append_coverage\""
+      "statement": "lemma spec_chop_append_coverage: \"(\\<forall>b e xs ys x.\n    covered x (chop b e (xs @ ys)) = (covered x (chop b e xs) \\<or> covered x (chop b e ys)))\""
     },
     {
       "context": [],
@@ -449,7 +449,7 @@
       "module": "Vero_Interval_Baseline",
       "name": "spec_chop_coveredCount_cut_complement",
       "source_id": "spec_chop_coveredCount_cut_complement",
-      "statement": "lemma spec_chop_coveredCount_cut_complement: \"Interval_Baseline.spec_chop_coveredCount_cut_complement\""
+      "statement": "lemma spec_chop_coveredCount_cut_complement: \"(\\<forall>b e xs x.\n    b \\<le> e \\<longrightarrow> covered_count x (chop b e xs) =\n      (if b \\<le> x \\<and> x < e then 0 else covered_count x xs))\""
     },
     {
       "context": [],
@@ -457,7 +457,7 @@
       "module": "Vero_Interval_Extensions",
       "name": "ext_merge_exact_measure",
       "source_id": "ext_merge_exact_measure",
-      "statement": "lemma ext_merge_exact_measure: \"Interval_Extensions.ext_merge_exact_measure\""
+      "statement": "lemma ext_merge_exact_measure: \"(\\<forall>xs. total_len (merge_overlaps xs) = int (card (coverage xs)))\""
     },
     {
       "context": [],
@@ -465,7 +465,7 @@
       "module": "Vero_Interval_Extensions",
       "name": "ext_canonical_exact_measure",
       "source_id": "ext_canonical_exact_measure",
-      "statement": "lemma ext_canonical_exact_measure: \"Interval_Extensions.ext_canonical_exact_measure\""
+      "statement": "lemma ext_canonical_exact_measure: \"(\\<forall>xs::iv list. canonical_intervals xs \\<longrightarrow>\n      total_len xs = int (card (coverage xs)))\""
     },
     {
       "context": [],
@@ -473,7 +473,7 @@
       "module": "Vero_Interval_Extensions",
       "name": "ext_cut_all_coverage",
       "source_id": "ext_cut_all_coverage",
-      "statement": "lemma ext_cut_all_coverage: \"Interval_Extensions.ext_cut_all_coverage\""
+      "statement": "lemma ext_cut_all_coverage: \"(\\<forall>rs xs. coverage (cut_all rs xs) = coverage xs - coverage rs)\""
     },
     {
       "context": [],
@@ -481,7 +481,7 @@
       "module": "Vero_Interval_Extensions",
       "name": "ext_cut_all_exact_measure",
       "source_id": "ext_cut_all_exact_measure",
-      "statement": "lemma ext_cut_all_exact_measure: \"Interval_Extensions.ext_cut_all_exact_measure\""
+      "statement": "lemma ext_cut_all_exact_measure: \"(\\<forall>rs xs. proper_cuts rs \\<longrightarrow> canonical_intervals xs \\<longrightarrow>\n      total_len (cut_all rs xs) = int (card (coverage xs - coverage rs)))\""
     },
     {
       "context": [],
@@ -489,7 +489,7 @@
       "module": "Vero_Interval_Extensions",
       "name": "ext_one_cut_fragment_bound",
       "source_id": "ext_one_cut_fragment_bound",
-      "statement": "lemma ext_one_cut_fragment_bound: \"Interval_Extensions.ext_one_cut_fragment_bound\""
+      "statement": "lemma ext_one_cut_fragment_bound: \"(\\<forall>b e xs. b < e \\<longrightarrow> canonical_intervals xs \\<longrightarrow>\n      length (chop b e xs) \\<le> length xs + 1)\""
     },
     {
       "context": [],
@@ -497,7 +497,7 @@
       "module": "Vero_Interval_Extensions",
       "name": "ext_cut_all_fragment_bound",
       "source_id": "ext_cut_all_fragment_bound",
-      "statement": "lemma ext_cut_all_fragment_bound: \"Interval_Extensions.ext_cut_all_fragment_bound\""
+      "statement": "lemma ext_cut_all_fragment_bound: \"(\\<forall>rs xs. proper_cuts rs \\<longrightarrow> canonical_intervals xs \\<longrightarrow>\n      length (cut_all rs xs) \\<le> length xs + length rs)\""
     },
     {
       "context": [],
@@ -505,7 +505,7 @@
       "module": "Vero_Interval_Extensions",
       "name": "ext_merge_component_count",
       "source_id": "ext_merge_component_count",
-      "statement": "lemma ext_merge_component_count: \"Interval_Extensions.ext_merge_component_count\""
+      "statement": "lemma ext_merge_component_count: \"(\\<forall>xs. length (merge_overlaps xs) = card (interval_components xs))\""
     },
     {
       "context": [],
@@ -513,7 +513,7 @@
       "module": "Vero_Interval_Extensions",
       "name": "ext_merge_component_hulls",
       "source_id": "ext_merge_component_hulls",
-      "statement": "lemma ext_merge_component_hulls: \"Interval_Extensions.ext_merge_component_hulls\""
+      "statement": "lemma ext_merge_component_hulls: \"(\\<forall>xs. set (merge_overlaps xs) = component_hull xs ` interval_components xs)\""
     },
     {
       "context": [],
@@ -521,7 +521,7 @@
       "module": "Vero_Interval_Extensions",
       "name": "ext_merge_component_bijection",
       "source_id": "ext_merge_component_bijection",
-      "statement": "lemma ext_merge_component_bijection: \"Interval_Extensions.ext_merge_component_bijection\""
+      "statement": "lemma ext_merge_component_bijection: \"(\\<forall>xs. bij_betw (component_hull xs) (interval_components xs)\n      (set (merge_overlaps xs)))\""
     },
     {
       "context": [],
@@ -529,7 +529,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "tree_point_query_exact",
       "source_id": "tree_point_query_exact",
-      "statement": "lemma tree_point_query_exact: \"Interval_Refinement.tree_point_query_exact\""
+      "statement": "lemma tree_point_query_exact: \"(\\<forall>t p. routing_ok t \\<longrightarrow>\n      tree_at p t = {e \\<in> tree_entries t. entry_hit e p})\""
     },
     {
       "context": [],
@@ -537,7 +537,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_payload_erasure_coverage",
       "source_id": "refine_payload_erasure_coverage",
-      "statement": "lemma refine_payload_erasure_coverage: \"Interval_Refinement.refine_payload_erasure_coverage\""
+      "statement": "lemma refine_payload_erasure_coverage: \"(\\<forall>t. coverage (map erase_payload (tree_entry_list t)) =\n          coverage (tree_entry_list t))\""
     },
     {
       "context": [],
@@ -545,7 +545,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_point_coverage_bridge",
       "source_id": "refine_point_coverage_bridge",
-      "statement": "lemma refine_point_coverage_bridge: \"Interval_Refinement.refine_point_coverage_bridge\""
+      "statement": "lemma refine_point_coverage_bridge: \"(\\<forall>t p. routing_ok t \\<longrightarrow>\n      (covered p (tree_entry_list t) \\<longleftrightarrow> tree_at p t \\<noteq> {}))\""
     },
     {
       "context": [],
@@ -553,7 +553,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "tree_metadata_depth_exact",
       "source_id": "tree_metadata_depth_exact",
-      "statement": "lemma tree_metadata_depth_exact: \"Interval_Refinement.tree_metadata_depth_exact\""
+      "statement": "lemma tree_metadata_depth_exact: \"(\\<forall>t. metadata_ok t \\<longrightarrow> cached_depth t = actual_depth t)\""
     },
     {
       "context": [],
@@ -561,7 +561,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_state_point_query",
       "source_id": "refine_state_point_query",
-      "statement": "lemma refine_state_point_query: \"Interval_Refinement.refine_state_point_query\""
+      "statement": "lemma refine_state_point_query: \"(\\<forall>s p. state_wf s \\<longrightarrow>\n      state_at p s = {e \\<in> set (all_items s). entry_hit e p})\""
     },
     {
       "context": [],
@@ -569,7 +569,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_empty_state",
       "source_id": "refine_empty_state",
-      "statement": "lemma refine_empty_state: \"Interval_Refinement.refine_empty_state\""
+      "statement": "lemma refine_empty_state: \"state_wf empty_state\""
     },
     {
       "context": [],
@@ -577,7 +577,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_add_abstract_content",
       "source_id": "refine_add_abstract_content",
-      "statement": "lemma refine_add_abstract_content: \"Interval_Refinement.refine_add_abstract_content\""
+      "statement": "lemma refine_add_abstract_content: \"(\\<forall>fuel e s u. state_add fuel e s = Some u \\<longrightarrow>\n      set (all_items u) = insert e (set (all_items s)))\""
     },
     {
       "context": [],
@@ -585,7 +585,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_remove_abstract_content",
       "source_id": "refine_remove_abstract_content",
-      "statement": "lemma refine_remove_abstract_content: \"Interval_Refinement.refine_remove_abstract_content\""
+      "statement": "lemma refine_remove_abstract_content: \"(\\<forall>fuel e s u. state_remove fuel e s = Some u \\<longrightarrow>\n      set (all_items u) = set (all_items s) - {e})\""
     },
     {
       "context": [],
@@ -593,7 +593,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_duplicate_insert_noop",
       "source_id": "refine_duplicate_insert_noop",
-      "statement": "lemma refine_duplicate_insert_noop: \"Interval_Refinement.refine_duplicate_insert_noop\""
+      "statement": "lemma refine_duplicate_insert_noop: \"(\\<forall>fuel e s. e \\<in> set (all_items s) \\<longrightarrow> state_add fuel e s = Some s)\""
     },
     {
       "context": [],
@@ -601,7 +601,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_missing_discard_noop",
       "source_id": "refine_missing_discard_noop",
-      "statement": "lemma refine_missing_discard_noop: \"Interval_Refinement.refine_missing_discard_noop\""
+      "statement": "lemma refine_missing_discard_noop: \"(\\<forall>fuel e s. e \\<notin> set (all_items s) \\<longrightarrow> state_discard fuel e s = Some s)\""
     },
     {
       "context": [],
@@ -609,7 +609,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_missing_remove_error",
       "source_id": "refine_missing_remove_error",
-      "statement": "lemma refine_missing_remove_error: \"Interval_Refinement.refine_missing_remove_error\""
+      "statement": "lemma refine_missing_remove_error: \"(\\<forall>fuel e s. e \\<notin> set (all_items s) \\<longrightarrow>\n      state_remove_status fuel e s = MissingInterval)\""
     },
     {
       "context": [],
@@ -617,7 +617,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "tree_singleton_insert_progress",
       "source_id": "tree_singleton_insert_progress",
-      "statement": "lemma tree_singleton_insert_progress: \"Interval_Refinement.tree_singleton_insert_progress\""
+      "statement": "lemma tree_singleton_insert_progress: \"(\\<forall>e. entry_valid e \\<longrightarrow> (\\<exists>u. state_add 1 e empty_state = Some u))\""
     },
     {
       "context": [],
@@ -625,7 +625,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "tree_rotation_content",
       "source_id": "tree_rotation_content",
-      "statement": "lemma tree_rotation_content: \"Interval_Refinement.tree_rotation_content\""
+      "statement": "lemma tree_rotation_content: \"(\\<forall>fuel t u. routing_ok t \\<and> metadata_ok t \\<and>\n      tree_rotate fuel t = Some u \\<longrightarrow> tree_entries u = tree_entries t)\""
     },
     {
       "context": [],
@@ -633,7 +633,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "tree_add_content",
       "source_id": "tree_add_content",
-      "statement": "lemma tree_add_content: \"Interval_Refinement.tree_add_content\""
+      "statement": "lemma tree_add_content: \"(\\<forall>fuel e t u. tree_wf t \\<and> entry_valid e \\<and>\n      tree_add fuel e t = Some u \\<longrightarrow>\n      tree_entries u = insert e (tree_entries t))\""
     },
     {
       "context": [],
@@ -641,7 +641,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "tree_remove_content",
       "source_id": "tree_remove_content",
-      "statement": "lemma tree_remove_content: \"Interval_Refinement.tree_remove_content\""
+      "statement": "lemma tree_remove_content: \"(\\<forall>fuel e t u. tree_wf t \\<and> e \\<in> tree_entries t \\<and>\n      tree_remove fuel e t = Some u \\<longrightarrow>\n      tree_entries u = tree_entries t - {e})\""
     },
     {
       "context": [],
@@ -649,7 +649,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "tree_add_preserves_wf",
       "source_id": "tree_add_preserves_wf",
-      "statement": "lemma tree_add_preserves_wf: \"Interval_Refinement.tree_add_preserves_wf\""
+      "statement": "lemma tree_add_preserves_wf: \"(\\<forall>fuel e t u. tree_wf t \\<and> entry_valid e \\<and>\n      tree_add fuel e t = Some u \\<longrightarrow> tree_wf u)\""
     },
     {
       "context": [],
@@ -657,7 +657,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "tree_remove_preserves_wf",
       "source_id": "tree_remove_preserves_wf",
-      "statement": "lemma tree_remove_preserves_wf: \"Interval_Refinement.tree_remove_preserves_wf\""
+      "statement": "lemma tree_remove_preserves_wf: \"(\\<forall>fuel e t u. tree_wf t \\<and> e \\<in> tree_entries t \\<and>\n      tree_remove fuel e t = Some u \\<longrightarrow> tree_wf u)\""
     },
     {
       "context": [],
@@ -665,7 +665,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "tree_add_fuel_adequacy",
       "source_id": "tree_add_fuel_adequacy",
-      "statement": "lemma tree_add_fuel_adequacy: \"Interval_Refinement.tree_add_fuel_adequacy\""
+      "statement": "lemma tree_add_fuel_adequacy: \"(\\<forall>t e. tree_wf t \\<and> entry_valid e \\<longrightarrow>\n      (\\<exists>fuel u. tree_add fuel e t = Some u))\""
     },
     {
       "context": [],
@@ -673,7 +673,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "tree_remove_fuel_adequacy",
       "source_id": "tree_remove_fuel_adequacy",
-      "statement": "lemma tree_remove_fuel_adequacy: \"Interval_Refinement.tree_remove_fuel_adequacy\""
+      "statement": "lemma tree_remove_fuel_adequacy: \"(\\<forall>t e. tree_wf t \\<and> e \\<in> tree_entries t \\<longrightarrow>\n      (\\<exists>fuel u. tree_remove fuel e t = Some u))\""
     },
     {
       "context": [],
@@ -681,7 +681,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_add_state_invariant",
       "source_id": "refine_add_state_invariant",
-      "statement": "lemma refine_add_state_invariant: \"Interval_Refinement.refine_add_state_invariant\""
+      "statement": "lemma refine_add_state_invariant: \"(\\<forall>fuel e s u. state_wf s \\<and> entry_valid e \\<and>\n      state_add fuel e s = Some u \\<longrightarrow> state_wf u)\""
     },
     {
       "context": [],
@@ -689,7 +689,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_remove_state_invariant",
       "source_id": "refine_remove_state_invariant",
-      "statement": "lemma refine_remove_state_invariant: \"Interval_Refinement.refine_remove_state_invariant\""
+      "statement": "lemma refine_remove_state_invariant: \"(\\<forall>fuel e s u. state_wf s \\<and> e \\<in> set (all_items s) \\<and>\n      state_remove fuel e s = Some u \\<longrightarrow> state_wf u)\""
     },
     {
       "context": [],
@@ -697,7 +697,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_overlap_query",
       "source_id": "refine_overlap_query",
-      "statement": "lemma refine_overlap_query: \"Interval_Refinement.refine_overlap_query\""
+      "statement": "lemma refine_overlap_query: \"(\\<forall>s a b. state_wf s \\<longrightarrow>\n      tree_overlap a b s =\n        {e \\<in> set (all_items s). a < b \\<and> lo e < b \\<and> a < hi e})\""
     },
     {
       "context": [],
@@ -705,7 +705,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_envelop_query",
       "source_id": "refine_envelop_query",
-      "statement": "lemma refine_envelop_query: \"Interval_Refinement.refine_envelop_query\""
+      "statement": "lemma refine_envelop_query: \"(\\<forall>s a b. state_wf s \\<longrightarrow>\n      tree_envelop a b s =\n        {e \\<in> set (all_items s). a < b \\<and> a \\<le> lo e \\<and> hi e \\<le> b})\""
     },
     {
       "context": [],
@@ -713,7 +713,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_successful_trace_invariant",
       "source_id": "refine_successful_trace_invariant",
-      "statement": "lemma refine_successful_trace_invariant: \"Interval_Refinement.refine_successful_trace_invariant\""
+      "statement": "lemma refine_successful_trace_invariant: \"(\\<forall>fuel ops s u. state_wf s \\<and> run_updates fuel ops s = Some u\n       \\<longrightarrow> state_wf u)\""
     },
     {
       "context": [],
@@ -721,7 +721,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_successful_trace_point_query",
       "source_id": "refine_successful_trace_point_query",
-      "statement": "lemma refine_successful_trace_point_query: \"Interval_Refinement.refine_successful_trace_point_query\""
+      "statement": "lemma refine_successful_trace_point_query: \"(\\<forall>fuel ops s u p. state_wf s \\<and> run_updates fuel ops s = Some u\n      \\<longrightarrow> state_at p u = {e \\<in> set (all_items u). entry_hit e p})\""
     },
     {
       "context": [],
@@ -729,7 +729,7 @@
       "module": "Vero_Interval_Refinement",
       "name": "refine_trace_abstract_content",
       "source_id": "refine_trace_abstract_content",
-      "statement": "lemma refine_trace_abstract_content: \"Interval_Refinement.refine_trace_abstract_content\""
+      "statement": "lemma refine_trace_abstract_content: \"(\\<forall>fuel ops s u. state_wf s \\<and> run_updates fuel ops s = Some u\n      \\<longrightarrow> abstract_run_updates ops (set (all_items s)) =\n          Some (tree_entries (root_node u)))\""
     }
   ],
   "mode": "proof",
@@ -742,6 +742,7 @@
   },
   "provenance": {
     "formal_evaluation_started": false,
+    "input_revision": "expanded-specs-v2",
     "project": "intervaltree",
     "python_commit": "1bc406e1f441577c4e421fc51aba2ab67fbd97fb",
     "stage": "preparation"

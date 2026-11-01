@@ -1,0 +1,248 @@
+{
+  "status": "frozen",
+  "theory_count": 13,
+  "contract_count": 91,
+  "planning_seconds": 641.9773585796356,
+  "theories": [
+    {
+      "name": "Interval_Normalization",
+      "contracts": [
+        "spec_merge_pairwise_strict_gap_all",
+        "spec_merge_length_le",
+        "spec_merge_sorted_lo",
+        "spec_merge_is_canonical",
+        "spec_merge_coverage",
+        "spec_merge_nil",
+        "spec_merge_loEndpoints_nodup",
+        "spec_merge_all_empty_nil",
+        "spec_merge_singleton",
+        "spec_merge_output_nonempty",
+        "spec_merge_coveredCount_le_one",
+        "spec_merge_coveredCount_exact",
+        "spec_merge_disjoint_strict"
+      ],
+      "required_imports": []
+    },
+    {
+      "name": "Canonical_Measure",
+      "contracts": [
+        "ext_canonical_exact_measure"
+      ],
+      "required_imports": []
+    },
+    {
+      "name": "Tree_Executor",
+      "contracts": [
+        "tree_remove_content",
+        "tree_add_fuel_adequacy",
+        "tree_add_content",
+        "tree_metadata_depth_exact",
+        "tree_add_preserves_wf",
+        "tree_rotation_content",
+        "tree_remove_preserves_wf",
+        "tree_remove_fuel_adequacy"
+      ],
+      "required_imports": []
+    },
+    {
+      "name": "State_Update_Interface",
+      "contracts": [
+        "refine_missing_discard_noop",
+        "refine_remove_abstract_content",
+        "tree_singleton_insert_progress",
+        "refine_add_abstract_content",
+        "refine_missing_remove_error",
+        "refine_duplicate_insert_noop",
+        "refine_empty_state"
+      ],
+      "required_imports": []
+    },
+    {
+      "name": "Interval_Cutting",
+      "contracts": [
+        "spec_chop_coveredCount_cut_complement",
+        "spec_chop_empty_range_id",
+        "spec_chop_canonical_pairwise_strict_gap",
+        "spec_chop_canonical_sorted_lo",
+        "spec_chop_totalLen_le_clamped",
+        "spec_chop_removes",
+        "ext_one_cut_fragment_bound",
+        "spec_chop_canonical_preserves_canonical",
+        "spec_chop_pointwise",
+        "spec_chop_idempotent",
+        "spec_chop_append_coverage"
+      ],
+      "required_imports": []
+    },
+    {
+      "name": "Tree_Queries",
+      "contracts": [
+        "refine_overlap_query",
+        "refine_payload_erasure_coverage",
+        "tree_point_query_exact",
+        "refine_state_point_query",
+        "refine_point_coverage_bridge",
+        "refine_envelop_query"
+      ],
+      "required_imports": []
+    },
+    {
+      "name": "Normalization_Algebra",
+      "contracts": [
+        "spec_merge_append_coverage",
+        "spec_merge_self_union_idem",
+        "spec_merge_canonical_unique",
+        "spec_merge_coverage_monotone",
+        "spec_merge_coverage_determines",
+        "spec_merge_reverse_eq",
+        "spec_merge_exact_idempotent",
+        "spec_merge_concat_closure_right",
+        "spec_merge_idempotent",
+        "spec_merge_perm_eq_any",
+        "spec_merge_concat_closure"
+      ],
+      "required_imports": [
+        {
+          "reason": "Commit to the sealed coverage and canonical-output interface for uniqueness and extensional normalization laws, including spec_merge_coverage and spec_merge_is_canonical.",
+          "theory": "Interval_Normalization"
+        }
+      ]
+    },
+    {
+      "name": "Interval_Run_Geometry",
+      "contracts": [
+        "spec_merge_hull_hi",
+        "spec_overlaps_merge_same_run",
+        "spec_overlaps_self_nonempty",
+        "spec_merge_run_solid",
+        "spec_overlaps_iff_common_point",
+        "spec_merge_lo_pred_uncovered",
+        "spec_merge_saturated_lo",
+        "spec_merge_saturated_hi",
+        "spec_overlaps_symm",
+        "spec_merge_consecutive_gap_witness",
+        "spec_overlaps_disjoint_false",
+        "spec_merge_hi_uncovered",
+        "spec_merge_getElem_lo_split",
+        "spec_merge_hull_lo",
+        "spec_overlaps_self_empty"
+      ],
+      "required_imports": [
+        {
+          "reason": "Retain sealed coverage, positivity and strict-gap results as the shared output interface for run solidity, gap witnesses and endpoint geometry.",
+          "theory": "Interval_Normalization"
+        }
+      ]
+    },
+    {
+      "name": "Interval_Measure",
+      "contracts": [
+        "ext_merge_exact_measure",
+        "spec_merge_totalLen_disjoint_eq",
+        "spec_merge_totalLen_le"
+      ],
+      "required_imports": [
+        {
+          "reason": "Commit to canonicality and coverage preservation of normalized output as the interface connecting canonical exact measure to ext_merge_exact_measure.",
+          "theory": "Interval_Normalization"
+        },
+        {
+          "reason": "Commit to ext_canonical_exact_measure as the length/cardinality interface for canonical normalized outputs and canonical input length comparisons.",
+          "theory": "Canonical_Measure"
+        }
+      ]
+    },
+    {
+      "name": "Normalized_Cutting",
+      "contracts": [
+        "spec_merge_chop_coverage_determines",
+        "spec_merge_chop_coverage",
+        "spec_merge_chop_merge",
+        "spec_chop_canonical_merge_fixpoint",
+        "spec_merge_chop_idempotent"
+      ],
+      "required_imports": [
+        {
+          "reason": "Retain canonical uniqueness and coverage-determines as the equality interface for normalized cuts.",
+          "theory": "Normalization_Algebra"
+        },
+        {
+          "reason": "Retain pointwise cut semantics and canonical preservation for cutting/normalization interaction.",
+          "theory": "Interval_Cutting"
+        }
+      ]
+    },
+    {
+      "name": "Repeated_Cutting",
+      "contracts": [
+        "ext_cut_all_exact_measure",
+        "ext_cut_all_coverage",
+        "ext_cut_all_fragment_bound"
+      ],
+      "required_imports": [
+        {
+          "reason": "Retain the one-cut coverage, canonical-preservation and fragment-bound interface for repeated cuts.",
+          "theory": "Interval_Cutting"
+        },
+        {
+          "reason": "Retain ext_canonical_exact_measure as the cardinality/length interface for canonical cut output.",
+          "theory": "Canonical_Measure"
+        }
+      ]
+    },
+    {
+      "name": "Interval_Components",
+      "contracts": [
+        "ext_merge_component_bijection",
+        "ext_merge_component_count",
+        "ext_merge_component_hulls"
+      ],
+      "required_imports": [
+        {
+          "reason": "Commit to sealed run endpoint, saturation and gap geometry as the interval-side interface for component hull correspondence.",
+          "theory": "Interval_Run_Geometry"
+        }
+      ]
+    },
+    {
+      "name": "State_Invariants_And_Traces",
+      "contracts": [
+        "refine_successful_trace_point_query",
+        "refine_remove_state_invariant",
+        "refine_trace_abstract_content",
+        "refine_successful_trace_invariant",
+        "refine_add_state_invariant"
+      ],
+      "required_imports": [
+        {
+          "reason": "Retain tree mutation content and well-formedness guarantees to synchronize root_node with state lists and boundary counts.",
+          "theory": "Tree_Executor"
+        },
+        {
+          "reason": "Retain wrapper content, initialization and status/no-op semantics for state and abstract trace behavior.",
+          "theory": "State_Update_Interface"
+        },
+        {
+          "reason": "Retain refine_state_point_query as the observational interface for successful trace query correctness.",
+          "theory": "Tree_Queries"
+        }
+      ]
+    }
+  ],
+  "review_changes": [
+    {
+      "issue_id": "measure_interface_seal",
+      "decision": "revise",
+      "reason": "Inspected canonical exact-measure, canonicality, coverage and length definitions show a restricted list interface with no normalization operation. Move only C0020 to Canonical_Measure and commit both measure consumers to it.",
+      "tradeoff": "One additional single-contract theory exposes a concrete interface to two consumers and removes the normalization seal from repeated cutting; shared cardinality bookkeeping may cross a new boundary.",
+      "remaining_risk": "Semantic separation is not proof certification. Finite union and length arguments still need File Planner investigation; no helper is proved."
+    },
+    {
+      "issue_id": "executor_adequacy_seal",
+      "decision": "retain",
+      "reason": "Success-conditioned preservation and existential adequacy differ, and successful traces need only preservation. However inspected execute_tree equations interleave rotation, promoted-entry removal, pruning and popping; no independent intermediate-state helper interface has been established. Retain the combined executor under the review instruction to preserve uncertain boundaries.",
+      "tradeoff": "Keeps potentially shared executor invariants local and avoids speculative mandatory imports or helper exports, at the cost of state consumers waiting for both adequacy contracts.",
+      "remaining_risk": "Adequacy could become the sealing bottleneck. Definitions do not establish proof dependencies; a future evidence-backed split may be warranted, but no proof-latency evidence is available."
+    }
+  ]
+}

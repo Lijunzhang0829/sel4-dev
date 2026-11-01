@@ -1,0 +1,94 @@
+{
+  "container": "intervaltree-vero-astra-low-20261027-001",
+  "container_id": "740870f1e2ad51aef82c62f6b80f4a5a25c4d44580416b06c1dfcbd83f3e7415",
+  "image_id": "sha256:65933e97a11542321961efe22999550b79e12cd909d147e50b3554c7517b3f9f",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "release": "/data/zljj/vero-runs/intervaltree-vero-astra-low-20261027-001",
+  "target_count": 91,
+  "engine": "vero.isabelle plan-run",
+  "reference_proofs_transferred": false,
+  "config": {
+    "instruction_profile": "vero",
+    "sandbox": "/sandbox",
+    "sandbox_uid": 1001,
+    "max_iterations": null,
+    "iteration_time_chunk_seconds": null,
+    "iteration_max_time_seconds": null,
+    "total_agent_seconds": null,
+    "max_contract_retries": 5,
+    "sample_interval_seconds": 120,
+    "completion_metric": "positive",
+    "feedback": true,
+    "resume_artifact": false,
+    "plan_seconds": 600,
+    "plan_preflight_seconds": 300,
+    "plan_public_benchmark": "/run/vero-plan/benchmark.json",
+    "agent": {
+      "codex": "/opt/vero/codex",
+      "model": "gpt-6-astra",
+      "reasoning_effort": "low",
+      "sandbox_mode": "danger-full-access",
+      "external_isolation": "docker-nonroot",
+      "timeout_seconds": null,
+      "home": "/home/agent",
+      "user": "agent",
+      "command_prefix": [
+        "runuser",
+        "-u",
+        "agent",
+        "--"
+      ],
+      "metrics": {
+        "directory": "/results/trial/metrics",
+        "run_id": "intervaltree-vero-astra-low-20261027-001",
+        "manifest": {
+          "method": "vero",
+          "dataset": "intervaltree-91",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "low",
+          "lineage": {
+            "fresh": true,
+            "parent_run": null
+          }
+        }
+      }
+    },
+    "checker": {
+      "backend": "fresh-process-v1",
+      "incremental": true,
+      "session": "Intervaltree_Definitions",
+      "session_dirs": [
+        "/semantic-base"
+      ],
+      "isabelle": "/workspace/verification/isabelle/bin/isabelle",
+      "timeout_seconds": 300,
+      "total_timeout_seconds": 300,
+      "threads": 2,
+      "env": {
+        "HOME": "/home/checker",
+        "USER_HOME": "/home/checker"
+      },
+      "command_prefix": [
+        "runuser",
+        "-u",
+        "checker",
+        "--"
+      ]
+    },
+    "metrics": {
+      "directory": "/results/trial/metrics",
+      "run_id": "intervaltree-vero-astra-low-20261027-001",
+      "manifest": {
+        "method": "vero",
+        "dataset": "intervaltree-91",
+        "model": "gpt-6-astra",
+        "reasoning_effort": "low",
+        "lineage": {
+          "fresh": true,
+          "parent_run": null
+        }
+      }
+    }
+  }
+}
