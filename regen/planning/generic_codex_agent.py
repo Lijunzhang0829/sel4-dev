@@ -39,9 +39,13 @@ One check can include multiple contracts and helpers. Unproved entries are never
 premises. If all active entries of a theory are GREEN, attempt its seal before
 further proof generation. A failed seal returns feedback. Once every theory is
 sealed, request repository integration; only verified integration establishes
-complete success. Once the initial plan is accepted, its theories, contract allocation
-and imports are frozen. Do not split, merge, move contracts or replan. Explore and
-revise proofs and helper lemmas only within each existing theory.
+complete success. Once the initial plan is accepted, its theories and contract allocation
+are frozen. Do not split, merge, move contracts or replan. Within an unpublished theory,
+edit_theory may set a complete draft imports list. Edits accumulate until the next
+native check, which validates certified provider versions and unchanged fixed target
+meanings before applying the context. Old proof text is retained but requires fresh
+certification in changed imports. finish checks a complete pending draft before sealing.
+Explore and revise proofs and helper lemmas within each existing theory.
 
 Only the frozen legal parent context and this experiment's generated material are
 available. Imported facts require the appropriate sealed theory context. Other

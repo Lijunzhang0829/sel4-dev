@@ -239,7 +239,7 @@ def validator(package, runtime=None, frozen_imports=None, *, disposition_check=N
             validate_continuation(package, runtime, new, evidence['continuation'])
         if event=='initial' and 'sealed_reuse' in evidence:
             validate_continuation(package, runtime, new, evidence['sealed_reuse'], sealed_reuse=True)
-        if event in {'initial','revision','revoke','green','batch','document'}:
+        if event in {'initial','revision','revoke','green','batch','document','imports'}:
             check=evidence.get('check',{})
             if (check.get('returncode')!=0 or not check.get('source_content')
                     or 'log_content' not in check):
@@ -261,7 +261,7 @@ def validator(package, runtime=None, frozen_imports=None, *, disposition_check=N
         if graph['accepted_order']!=order: raise ValueError('graph prefix differs from accepted proofs')
         if old:
             if theory_finished(old['status']): raise ValueError('terminal theory is immutable')
-            if event != 'document':
+            if event not in {'document', 'imports'}:
                 assert_green_nodes_unchanged(old['graph'], graph, set(old['proofs']))
                 if order[:len(old['accepted_order'])]!=old['accepted_order'] or any(proofs.get(k)!=v for k,v in old['proofs'].items()):
                     raise ValueError('GREEN proof/prefix changed')
@@ -315,6 +315,9 @@ def validator(package, runtime=None, frozen_imports=None, *, disposition_check=N
             if nodes[key]['statement'] not in source or proofs[key] not in source:
                 raise ValueError('GREEN evidence does not bind statement and proof')
             if evidence['visibility']!=fact_manifest(old['graph'],old['proofs'],key): raise ValueError('GREEN context mismatch')
+        elif event == 'imports':
+            from regen.execution.import_revisions import validate_import_event
+            validate_import_event(package, runtime, frozen_imports or [], old, new, evidence)
         elif event == 'document':
             if not evidence.get('sealable_generation'):
                 raise ValueError('document lacks audited provider evidence')
@@ -327,6 +330,15 @@ def validator(package, runtime=None, frozen_imports=None, *, disposition_check=N
             validate_batch_commit(old, new, evidence)
         elif event not in {'attempt','revision-attempt','red','failed','seal','resume','planner-request','planner-feedback'}:
             raise ValueError('unknown commit event')
+        from regen.execution.import_revisions import CONTEXT_FIELDS, effective_imports, native_imports
+        if (old is None and any(key in new for key in CONTEXT_FIELDS)
+                and not any(key in evidence for key in ('continuation', 'sealed_reuse'))):
+            raise ValueError('initial context revisions require validated continuation')
+        if old and event != 'imports' and any(new.get(key) != old.get(key) for key in CONTEXT_FIELDS):
+            raise ValueError('context changed outside an imports revision')
+        if (event in {'document', 'batch'} and new.get('context_revision', 0)
+                and evidence.get('imports') != native_imports(runtime, effective_imports(new, frozen_imports or []))):
+            raise ValueError('proof evidence uses a different imports context')
         if event in {'attempt','revision-attempt','red','failed','seal','resume','planner-request','planner-feedback'} and old:
             if graph!=old['graph'] or proofs!=old['proofs']: raise ValueError('non-proof event changed graph/proofs')
         if old and new.get('runtime_policy',{}).get('retry_policy')=='residual-context-v1':
@@ -345,8 +357,7 @@ def validator(package, runtime=None, frozen_imports=None, *, disposition_check=N
             from regen.execution.seal_evidence import validate_seal
             expected_imports = None
             if frozen_imports is not None and runtime and runtime.get('base_import'):
-                expected_imports = ([f'Generated_Refine.{name}' for name in frozen_imports]
-                                    if frozen_imports else [runtime['base_import']])
+                expected_imports = native_imports(runtime, effective_imports(new, frozen_imports))
             validate_seal(new, evidence, expected_imports=expected_imports,
                           base_session=(runtime or {}).get('base_session'), runtime=runtime,
                           expected_package=package)
@@ -386,7 +397,7 @@ def journal(run_dir, run, package):
             from regen.planning.theory_outcomes import _saved_dispositions
             view = SimpleNamespace(root=run_dir, run=run,
                 _state=lambda _: (package, state))
-            dispositions = _saved_dispositions(view, package['theory'])
+            dispositions = _saved_dispositions(view, package['theory'], historical_context=True)
             if state.get('status') == 'exported_partial' and state.get('contract_dispositions') != dispositions:
                 raise ValueError('partial export differs from durable contract dispositions')
     return ProofCommits(run_dir/'theories'/Path(package['file_slot']).stem/'acceptance',
@@ -440,6 +451,9 @@ def _progress_unlocked(run_dir):
             entry.update(status=state['status'],
                 generation_ids=[run['run_id']+'--'+Path(entry['file_slot']).stem],
                 seal_id=state.get('seal_id'), reason=state.get('reason',''))
+            if 'context_imports' in state:
+                entry.update(context_imports=list(state['context_imports']),
+                             context_revision=state['context_revision'])
         if contract_policy_binding(run):
             from types import SimpleNamespace
             from regen.planning.theory_outcomes import current_dispositions
@@ -523,6 +537,9 @@ def publish_theory_progress(run_dir, theory, state):
         entry['document_revision' if document else 'graph_revision'] = state['graph']['revision']
         entry.update(status=state['status'], generation_ids=[run['run_id']+'--'+theory],
                      seal_id=state.get('seal_id'), reason=state.get('reason', ''))
+        if 'context_imports' in state:
+            entry.update(context_imports=list(state['context_imports']),
+                         context_revision=state['context_revision'])
         value['checked_contracts'] = sum(item.get('checked_contracts', 0) for item in value['files'])
         value['session_status'] = 'partial'
         value['repository_verified'] = False
@@ -570,7 +587,7 @@ def sealed_import_closure(run_dir, states, ancestors):
         path = run_dir/'theories'/Path(provider['file_slot']).stem/'imports.json'
         if not path.is_file():
             raise ValueError('sealed provider is missing frozen imports: ' + name)
-        imports = read(path)
+        imports = provider.get('context_imports', read(path))
         if (not isinstance(imports, list) or not all(isinstance(item, str) for item in imports)
                 or len(set(imports)) != len(imports)):
             raise ValueError('invalid frozen provider imports: ' + name)
@@ -603,7 +620,7 @@ class ProviderPreparationError(NativePreparationError):
                          str(self.result.get('diagnostic', ''))[-12000:])
 
 
-def setup(run_dir, theory, timeout):
+def setup(run_dir, theory, timeout, *, context_imports=None):
     from regen.execution.proof_session_runner import generated_checkpoint_theory
     run=read(run_dir/'run.json'); data=read(run_dir/'execution-input.json')
     # Execution implementation is frozen separately from preparation, which is already sealed.
@@ -643,18 +660,33 @@ def setup(run_dir, theory, timeout):
     else:
         # Compatibility for pre-schema-4 runs.
         ancestors=[generated_checkpoint_theory(f['file_slot']) for f in states if f['status']=='sealed' and f['theory']!=theory]
+    durable(ancestry_path,ancestors,immutable=True)
+    from regen.execution.import_revisions import effective_imports
+    current = journal(run_dir,run,package).replay(repair=False)
+    ancestors = effective_imports(current, ancestors)
+    if context_imports is not None:
+        ancestors = effective_imports({'context_imports': context_imports}, [])
     governed = package['repository_projection'].get('schema_version',0)>=4
     visible_imports = sealed_import_closure(run_dir, states, ancestors) if governed else ancestors
-    durable(ancestry_path,ancestors,immutable=True)
     visible=[record for record in catalog if any(record['canonical_name'].startswith(name+'.') for name in visible_imports)]
-    durable(directory/'sealed-premises.json',{'records':visible})
+    # Candidate preparation must not widen the current world's recall before
+    # the imports event has been accepted. The root directory is the stable
+    # theory workspace; native artifacts use an immutable per-context folder.
+    candidate = context_imports is not None
+    if not candidate:
+        durable(directory/'sealed-premises.json',{'records':visible})
+    versioned = candidate or bool((current or {}).get('context_revision'))
+    native_directory = directory/'contexts'/digest({'imports':ancestors}) if versioned else directory
+    native_directory.mkdir(parents=True, exist_ok=True)
+    if versioned:
+        durable(native_directory/'sealed-premises.json',{'records':visible})
     heaps=run_dir/'heaps'
     if package['repository_projection'].get('schema_version',0)>=4:
-        heaps=directory/'heaps'
+        heaps=native_directory/'heaps'
         if not heaps.exists():
             from regen.infrastructure.resource_budget import clone_heaps
-            durable(directory/'heap-copy-budget.json', clone_heaps(run_dir/'heaps',heaps))
-    checker=checker_for(run_dir,run,directory/'isabelle',timeout,ancestors,heaps_dir=heaps)
+            durable(native_directory/'heap-copy-budget.json', clone_heaps(run_dir/'heaps',heaps))
+    checker=checker_for(run_dir,run,native_directory/'isabelle',timeout,ancestors,heaps_dir=heaps)
     if run.get('execution_input_kind')=='refine-dataset':
         # Freeze only the providers and their transitive imports. ROOT, logs and
         # Generated_Refine heaps belong to this theory, never to other workers.
@@ -665,7 +697,7 @@ def setup(run_dir, theory, timeout):
             if target.exists() and target.read_bytes()!=source.read_bytes():
                 raise ValueError('frozen provider source drift')
             if not target.exists(): shutil.copy2(source,target)
-        ready=directory/'provider-session.json'
+        ready=native_directory/'provider-session.json'
         if ready.exists() and read(ready)!={'imports':ancestors}:
             raise ValueError('frozen provider session drift')
         if ancestors and not ready.exists():
@@ -1095,7 +1127,8 @@ def _sealed_provider_inputs(source_dir, source, imports):
         origin = {'run':source, 'imports':read(directory/'imports.json'),
                   'commits':[read(p) for p in sorted((directory/'acceptance/commits').glob('*.json'))]}
         state = continuation_state(package, origin, sealed_reuse=True)
-        for dependency in origin['imports']:
+        from regen.execution.import_revisions import effective_imports
+        for dependency in effective_imports(state, origin['imports']):
             visit(dependency)
         active.remove(name); visited.add(name)
         prepared.append((package, origin, state))
@@ -1151,7 +1184,8 @@ def fork_continuation(source_dir, destination, theory):
     origin={'run':source,'imports':read(old_dir/'imports.json'),
             'commits':[read(p) for p in sorted((old_dir/'acceptance/commits').glob('*.json'))]}
     state=continuation_state(package,origin)
-    providers=_sealed_provider_inputs(source_dir,source,origin['imports'])
+    from regen.execution.import_revisions import effective_imports
+    providers=_sealed_provider_inputs(source_dir,source,effective_imports(state,origin['imports']))
     input_root=Path(source.get('checker_context_root') or source['environment_run'])
     run=init_run(destination,input_root,destination.name,
                  Path(source['session_schedule']['source']), **policy_binding(source),
@@ -1225,7 +1259,8 @@ def _workspace_continuation_input(source_dir, source, entry, selection, *, expec
     if (_fingerprint(imports_path) != imports_fingerprint
             or tuple(_fingerprint(p) for p in paths[:len(records)]) != tuple(fingerprints)):
         raise ValueError('continuation source changed during validation')
-    descriptor = {'entry':entry, 'imports':imports, 'status':status,
+    from regen.execution.import_revisions import effective_imports
+    descriptor = {'entry':entry, 'imports':imports, 'effective_imports':effective_imports(state, imports), 'status':status,
                   'source_commit':records[-1]['commit_id'], 'state_sha256':digest(state),
                   'package_sha256':package['package_payload_sha256'],
                   'fingerprints':tuple(fingerprints), 'imports_fingerprint':imports_fingerprint}
@@ -1315,7 +1350,8 @@ def _continuation_outcome(source_dir, source, entry):
     else:
         package, origin, _continued, descriptor = prepared
         state = origin['commits'][-1]['state']
-        imports = origin['imports']
+        from regen.execution.import_revisions import effective_imports
+        imports = effective_imports(state, origin['imports'])
     controller = SimpleNamespace(root=source_dir, run=source, theory=entry['theory'],
         _state=lambda _: (deepcopy(package), deepcopy(state)))
     outcome = current_outcome(controller)
@@ -1368,7 +1404,8 @@ def _carry_theory_outcomes(source_dir, source, destination, run, prepared):
                 durable(imports_path, imports, immutable=True)
         else:
             comparison = state
-            imports = read(imports_path)
+            from regen.execution.import_revisions import effective_imports
+            imports = effective_imports(state, read(imports_path))
         if (package['package_payload_sha256'] != expected['descriptor']['package_sha256']
                 or imports != expected['imports'] or state is None
                 or digest({k:comparison.get(k) for k in ('graph','proofs','accepted_order')})
@@ -1446,10 +1483,10 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
         from regen.execution.proof_session_runner import generated_checkpoint_theory
         available = {generated_checkpoint_theory(d['entry']['file_slot']) for d in sealed}
         for descriptor in sealed:
-            if not set(descriptor['imports']) <= available:
+            if not set(descriptor['effective_imports']) <= available:
                 raise ValueError('checkpoint excludes a sealed dependency')
         for descriptor in continuing:
-            if not set(descriptor['imports']) <= available:
+            if not set(descriptor['effective_imports']) <= available:
                 raise ValueError('checkpoint excludes a frozen dependency')
     run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
                    destination.name, Path(source['session_schedule']['source']), **policy_binding(source),

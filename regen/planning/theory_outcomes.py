@@ -7,6 +7,7 @@ New runs isolate dispositions to fixed contracts; legacy runs retain the origina
 whole-theory stop behavior. Export authorization is handled by seal evidence.
 """
 from copy import deepcopy
+from contextlib import nullcontext
 import json
 from pathlib import Path
 
@@ -73,7 +74,7 @@ def validate_dispositions(package, state, dispositions, *, expected_imports=None
                            ('run_id', 'run_sha256', 'package_sha256', 'accepted_state_sha256'))):
             raise ValueError('invalid contract disposition binding')
         if (expected_binding is not None
-                and _refutation_binding(binding) != _refutation_binding(expected_binding)):
+                and _disposition_binding(binding) != _disposition_binding(expected_binding)):
             raise ValueError('contract disposition binding mismatch')
         expected_contracts = {cid:contract_binding(contracts[cid]) for cid in ids}
         if outcome.get('contract_bindings') != expected_contracts:
@@ -109,7 +110,7 @@ def validate_dispositions(package, state, dispositions, *, expected_imports=None
     return True
 
 
-def _saved_dispositions(controller, theory):
+def _saved_dispositions(controller, theory, *, historical_context=False):
     package, state, binding = _snapshot(controller, theory)
     directory = _disposition_ledger_path(controller, theory)
     if not (directory/'events').exists():
@@ -125,6 +126,22 @@ def _saved_dispositions(controller, theory):
             raise ValueError('contract disposition overwritten in journal')
         for key in ids:
             outcomes[key] = outcome
+    if historical_context:
+        # An import event may retire old GREENs before the planner records an
+        # UNKNOWN in the new context. That later receipt cannot contradict the
+        # earlier checked prefix during cold replay. Revisions are monotonic;
+        # current-context appends still enforce every existing disposition.
+        revision = state.get('context_revision', 0)
+        if type(revision) is not int or revision < 0:
+            raise ValueError('invalid disposition context revision')
+        for key, outcome in list(outcomes.items()):
+            recorded = outcome.get('binding', {}).get('context_revision', 0)
+            if type(recorded) is not int or recorded < 0:
+                raise ValueError('invalid disposition context revision')
+            if recorded > revision:
+                del outcomes[key]
+    # This reader is also used against historical states during journal replay.
+    # A later negative receipt must not rewrite those earlier context bindings.
     validate_dispositions(package, state, outcomes, expected_binding=binding)
     return outcomes
 
@@ -135,7 +152,12 @@ def current_dispositions(controller, theory=None):
         return {}
     theory = theory or controller.theory
     saved = _saved_dispositions(controller, theory)
-    if controller._state(theory)[1].get('status') not in {'sealed', 'retired', 'exported_partial'}:
+    package, state = controller._state(theory)
+    if 'context_revision' in state:
+        from regen.execution.import_revisions import native_imports
+        validate_dispositions(package, state, saved,
+                              expected_imports=native_imports(controller.run, state['context_imports']))
+    if state.get('status') not in {'sealed', 'retired', 'exported_partial'}:
         while _recover_completed_refutation(controller, theory) is not None:
             saved = _saved_dispositions(controller, theory)
     return saved
@@ -209,6 +231,9 @@ def _snapshot(controller, theory=None):
                'theory': theory, 'package_sha256': digest(package),
                'accepted_state_sha256': digest({k: state.get(k) for k in
                                                ('graph', 'proofs', 'accepted_order')})}
+    if 'context_revision' in state:
+        binding.update(context_revision=state['context_revision'],
+                       context_imports=list(state['context_imports']))
     return package, state, binding
 
 
@@ -295,6 +320,12 @@ def _refutation_binding(binding):
     return {k:v for k,v in binding.items() if k != 'accepted_state_sha256'}
 
 
+def _disposition_binding(binding):
+    # UNKNOWN remains a scheduling decision across checked context revisions;
+    # negative proof evidence is independently bound to its checked imports.
+    return {key:binding.get(key) for key in ('run_id', 'run_sha256', 'theory', 'package_sha256')}
+
+
 def _saved_outcome(controller, theory):
     """Read the stop journal without reconciling older native task receipts."""
     theory = theory or controller.theory
@@ -359,7 +390,7 @@ def _recover_completed_refutation(controller, theory):
         if state.get('status') in {'sealed', 'retired', 'exported_partial'}:
             return None
         if (not isinstance(row.get('binding'), dict)
-                or _refutation_binding(row['binding']) != _refutation_binding(binding)):
+                or _disposition_binding(row['binding']) != _disposition_binding(binding)):
             continue
         identity = {key:row[key] for key in ('kind', 'theory', 'binding', 'request')}
         metadata = row['request'].get('metadata', {})
@@ -377,13 +408,22 @@ def _recover_completed_refutation(controller, theory):
             raise ValueError('completed refutation result binding mismatch')
         if result.get('status') != 'refuted':
             continue
+        checked_binding = result.get('checked_binding', row['binding'])
+        if (not isinstance(checked_binding, dict)
+                or _refutation_binding(checked_binding) != _refutation_binding(binding)):
+            continue
         proposal = row['request'].get('proposal', {})
         if set(proposal) != {'action', 'entry_id', 'proof_body'} or proposal['action'] != 'check_refutation':
             raise ValueError('invalid completed refutation request')
         ids = _entry_ids(package, state, [proposal['entry_id']])
         contract = next(c for c in package['contracts'] if c['contract_id'] == ids[0])
         from regen.execution.contract_refutation import validate_refutation_certificate
-        validate_refutation_certificate(result['certificate'], contract)
+        expected_imports = None
+        if 'context_revision' in checked_binding:
+            from regen.execution.import_revisions import native_imports
+            expected_imports = native_imports(controller.run, checked_binding['context_imports'])
+        validate_refutation_certificate(result['certificate'], contract,
+                                        expected_imports=expected_imports)
         if ids[0] in disposed:
             previous = disposed[ids[0]]
             if (previous['status'] != 'refuted'
@@ -454,25 +494,32 @@ def _check_refutation(controller, proposal, metadata):
         try:
             controller._check_session_active()
             check_cancelled()
-            if _snapshot(controller)[2] != binding:
-                raise ValueError('refutation context changed before native check')
-            runtime = controller._runtime()
-            result = check_refutation(runtime[4], contract, proof, directory/'negative-check')
-            if result.get('status') == 'refuted':
-                validate_refutation_certificate(result['certificate'], contract)
-                # Publish before executor completion, under the same cancellation
-                # authority used by positive commits. A cancellation that wins
-                # this guard publishes nothing; an accepted receipt survives a
-                # later cancellation, transport error, or executor restart.
-                with acceptance_guard():
-                    controller._check_session_active()
-                    if _snapshot(controller)[2] != binding:
-                        raise ValueError('refutation context changed during native check')
-                    _publish(controller, status='refuted',
-                        reason='Native-checked negation of the frozen contract', origin='native_checker',
-                        details={'task_id':task_id, 'certificate':result['certificate']},
-                        entry_ids=ids, metadata=metadata)
-            return result
+            with getattr(controller, '_action_lock', nullcontext()):
+                if _snapshot(controller)[2] != binding:
+                    raise ValueError('refutation context changed before native check')
+                runtime = controller._runtime()
+                if getattr(controller, 'document_mode', False):
+                    _, current_state = controller._state(controller.theory)
+                    runtime, _, rejected = controller._apply_pending_imports(runtime, current_state, directory)
+                    if rejected is not None:
+                        return {**rejected, 'checked_binding': _snapshot(controller)[2]}
+                checked_binding = _snapshot(controller)[2]
+                result = check_refutation(runtime[4], contract, proof, directory/'negative-check')
+                result = {**result, 'checked_binding': checked_binding}
+                if result.get('status') == 'refuted':
+                    validate_refutation_certificate(result['certificate'], contract, runtime[4])
+                    # Publish under the same transaction/cancellation authority
+                    # as positive checks. The task's submitted binding remains
+                    # intact; checked_binding records any accepted import event.
+                    with acceptance_guard():
+                        controller._check_session_active()
+                        if _snapshot(controller)[2] != checked_binding:
+                            raise ValueError('refutation context changed during native check')
+                        _publish(controller, status='refuted',
+                            reason='Native-checked negation of the frozen contract', origin='native_checker',
+                            details={'task_id':task_id, 'certificate':result['certificate']},
+                            entry_ids=ids, metadata=metadata)
+                return result
         finally:
             CURRENT_RESOURCES.reset(marker)
 
@@ -495,7 +542,7 @@ def _check_refutation(controller, proposal, metadata):
     result = row['result']
     if result.get('status') != 'refuted':
         controller._check_session_active()
-        if _snapshot(controller)[2] != binding:
+        if _snapshot(controller)[2] != result.get('checked_binding', binding):
             raise ValueError('refutation context changed during native check')
         return {**result, 'task_id': task_id, 'theory_stop': False,
                 'notice': 'No refutation accepted. Revise the negative proof or report_unresolved; positive goals are unchanged.'}

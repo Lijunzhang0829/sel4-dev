@@ -23,6 +23,47 @@ ALLOWED_TOOLS = {'list_workspace','read_theory','list_generated','read_generated
                  'submit_check','get_check_result','wait_checks','cancel_check'}
 PASSIVE_ITEMS = {'agentMessage','reasoning','userMessage','dynamicToolCall','contextCompaction','plan'}
 
+# Exact registries exported at 763b620, including its 32 explicitly supported
+# history/delta/sketch/help/proof-edit variants. Imports schemas and the planning
+# vocabulary have since changed. These hashes authorize historical audit replay
+# only; they neither restore removed tools nor relax a current action schema.
+# The original registry is frozen in the import-registry compatibility fixture.
+PRE_IMPORT_GENERIC_REGISTRY_SHA256 = frozenset({
+    '002547d780bb942ce441ab989e1e8cc431cf18123d92bc17bfa42da38486713e',
+    '0a0afff4730232f4e4ef661d25de9596c04e1bc77b23769970d7266a60adf0c2',
+    '0a30e68670df1851d2437f114592e93d6b11f66f51846c89e9b16517db2645a7',
+    '0dcbbe11bd8d1fa2fb161f582e35fcb9f203398d3304fd7e6b8f95a537fad172',
+    '27bb3ea88026e4d9506094b59e192516b047aa468fc54b2ae76b34e80992a869',
+    '312c605bb4e1ab7728d32d5cabc936b9ddc7649d6775f0117e50a2617b665baa',
+    '32d0a545124e995952b28ae0e4b8252042a4a853fb6cb05ad16a5883783196cd',
+    '34056dea79544069e6756c014de26bc1f534d4fb09c67218152b8fb40fcc820d',
+    '38ca240f1e828cf3b7b8ee73692b7b9b487d40f9c9c3dfb661bcec2dd3e090e1',
+    '3f555c78000afe923b6d866af1c228a5ca5eff8b4293c5589f9ec5ba4c2f1e96',
+    '409df355d0cec3b0b16cd4628f78af63419499c6d95c20f63a1ece67635498c7',
+    '43f1a45038f68b3577a5f96347c734a5460aedcf582f253bdf447901d87867b7',
+    '514e5b0e2f360cfdd279a32bcc58096f767ce8a6cb0b4fa9784063a4cf04dfb9',
+    '5276f18d30ade1c173463ed5b70ed39574e66d4571a2a7f3bf4fe6ba5a9c3ba0',
+    '5ace3bce1523a1f836271d82d3a295af5f6a4fdedf588caa91c6195c3c7404aa',
+    '5bdf26c432acaa794be911fdd72eeaa5954b7850a7b4bb1a3f947f4bdc9a3842',
+    '5c62b5d84c8d749d652169668aadd2dab96c286b44bfbac4b52750f0768a84a8',
+    '661683d7e3db204619126e764aa6f7bd849b914ba5cd85bb85cc3a516cdc42c8',
+    '7a37f211d19eacce55329e85d8a1761d74f500194faeff1dc7a781e9320ea0c3',
+    '7caaae7aee4fcd1ab886179996494387097f480447ff8809775ebfee363fb6ea',
+    '7e63c821d23e0c363409494f13813be24047d971c1a895cd5cb4c76fc7a31089',
+    '8b81435d5ed4017868033156583e77258c45161ede1f35d81b5052cead9fc7c2',
+    '8d68b90e92dcb693fcb632ed24fbc03cf809c9902c1643b6865ca3ad3f1da0b0',
+    '9d4bf2bb0c0bde0a828f38099f9b9585566981b9da5a4725585b2a86384585df',
+    'a5bc5cabc6d19c839d399007fbaaa0cb82bc9707a7ddddaa63f650b8309db7a3',
+    'ab5db6e11603949b6f66c64ccc2440295403cdda242c67e2810db255f0403f22',
+    'b2be44aeb178e2c2aaa7047a2db0b992f3305cbc8d9c69b6bb3dbd7d26a373d0',
+    'd654ab2ea5b5faa19924005ae110a802248d725aeab894d683ab2fcafbfeb1b0',
+    'e212cdb643315610fe83155309feb62c65be5add2d957785f6246dc5c24e75c8',
+    'e9d43b550dab178f2ad8828a96670eec7e5b794fecae6a06d4f70edcf93ccec1',
+    'ec3767db2fa50448c0b180cd7f8d2edb11b75d95b0aac46a09698f1c6b600c4a',
+    'f7954f177055026d77339a61216ac1941918705e671633865f7fb7c6d9e673f9',
+})
+
+
 def _pre_history_registry(registry):
     legacy = deepcopy([tool for tool in registry if tool['name'] != 'list_attempts'])
     for tool in legacy:
@@ -117,6 +158,10 @@ def approved_registry(tools):
     if not names or len(set(names)) != len(names) or any(t.get('type') != 'function' for t in tools):
         return False
     if set(names) <= ALLOWED_TOOLS:
+        return True
+    fingerprint = hashlib.sha256(json.dumps(
+        tools, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()).hexdigest()
+    if fingerprint in PRE_IMPORT_GENERIC_REGISTRY_SHA256:
         return True
     # The document help extension is accepted only with the exact shared registry.
     from regen.planning.parallel_file_planner import tools as document_tools

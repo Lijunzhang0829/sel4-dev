@@ -78,10 +78,12 @@ def integration_manifest(run_dir):
         if generated in sources:
             raise ValueError('duplicate generated theory name')
         imports_path = Path(directory)/'imports.json'
-        imports = json.loads(imports_path.read_text()) if imports_path.exists() else []
+        initial_imports = json.loads(imports_path.read_text()) if imports_path.exists() else []
+        from regen.execution.import_revisions import effective_imports
+        imports = effective_imports(state, initial_imports)
         planned = [generated_checkpoint_theory(workspace.entries[row['theory']]['file_slot'])
                    for row in required_imports(package['repository_projection'])]
-        if package['repository_projection'].get('schema_version',0)>=5 and imports!=planned:
+        if package['repository_projection'].get('schema_version',0)>=5 and initial_imports!=planned:
             raise ValueError('actual imports differ from the frozen plan')
         expected_source = expected_sealed_source(run, state['graph'], state['proofs'], imports, generated)
         if source != expected_source:
@@ -92,9 +94,14 @@ def integration_manifest(run_dir):
             raise ValueError('published source differs from accepted seal: '+name)
         sources[generated] = source
         contracts.extend(sorted(expected))
+        by_checkpoint = {generated_checkpoint_theory(entry['file_slot']): theory
+                         for theory, entry in workspace.entries.items()}
+        if any(provider not in by_checkpoint for provider in imports):
+            raise ValueError('unknown provider in effective integration imports')
         theories.append({'theory':name,'generated_theory':generated,'commit_id':snapshot['commit_id'],
             'seal_id':state['seal_id'],'source_sha256':hashlib.sha256(source.encode()).hexdigest(),
-            'contract_ids':sorted(expected),'required_imports':[row['theory'] for row in required_imports(package['repository_projection'])],
+            'contract_ids':sorted(expected),'required_imports':[by_checkpoint[provider] for provider in imports],
+            **({'context_revision':state['context_revision']} if 'context_revision' in state else {}),
             'seal_evidence_sha256':digest(evidence)})
     environment = verify_environment(run)
     fixed = workspace.fixed_contract_ids

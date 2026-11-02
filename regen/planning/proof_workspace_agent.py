@@ -135,8 +135,10 @@ class WorkspaceController:
                          'status':state['status'], 'green_count':len(state['proofs']),
                          'contracts':[{'id':c['contract_id'], 'name':c.get('name', c['contract_id'])}
                                       for c in package['contracts']],
-                         'required_imports':[p['theory'] for p in required_imports(projection)],
+                         'required_imports':self._effective_providers(package,state),
                          **{k:deepcopy(projection[k]) for k in ('collaboration_groups','reuse_suggestions') if k in projection}})
+            if getattr(self, 'document_mode', False):
+                rows[-1]['import_option'] = self._import_option(package, state)
             from regen.planning.theory_outcomes import contract_dispositions_enabled, current_dispositions
             if contract_dispositions_enabled(self.run):
                 dispositions = current_dispositions(self, theory)
@@ -152,6 +154,13 @@ class WorkspaceController:
                 'all_selected_sealed':all(states[t] in {'sealed','retired'} for t in self.selected),
                 'all_selected_exported':all(theory_finished(states[t]) for t in self.selected)}
 
+    def _import_option(self, package, state):
+        """A discovery hint; the import transaction revalidates the provider."""
+        from regen.execution.proof_session_runner import generated_checkpoint_theory
+        return {'import_name':'Generated_Refine.' + generated_checkpoint_theory(package['file_slot']),
+                'exports_available':exports_available(state['status']),
+                'seal_id':state.get('seal_id')}
+
     def _theory_readiness(self, theory, *, package=None, state=None):
         """Read only a target and its hard providers, not the whole repository."""
         from regen.planning.import_contract import required_imports
@@ -159,11 +168,20 @@ class WorkspaceController:
             raise ValueError('proof target is outside selected theories')
         if package is None or state is None:
             package, state = self._state(theory)
-        providers = [p['theory'] for p in required_imports(package['repository_projection'])]
+        providers = self._effective_providers(package,state)
         unsealed = [provider for provider in providers
                     if provider not in self.shared.entries or not exports_available(self._state(provider)[1]['status'])]
         return {'theory':theory, 'status':state['status'], 'unsealed_providers':unsealed,
                 'ready_for_proof_action':not unsealed and not theory_finished(state['status'])}
+
+    def _effective_providers(self, package, state):
+        from regen.planning.import_contract import required_imports
+        if 'context_imports' not in state:
+            return [p['theory'] for p in required_imports(package['repository_projection'])]
+        from regen.execution.proof_session_runner import generated_checkpoint_theory
+        names = {generated_checkpoint_theory(entry['file_slot']): theory
+                 for theory,entry in self.shared.entries.items()}
+        return [names[name] for name in state['context_imports']]
 
     def _all_selected_sealed(self, theory, state):
         # Most actions leave their target generating; that alone proves false.

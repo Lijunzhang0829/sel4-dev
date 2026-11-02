@@ -1,0 +1,1320 @@
+[
+  {
+    "type": "function",
+    "name": "list_workspace",
+    "description": "Read contract distribution, hard dependencies, advisory groups and current progress.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "read_theory",
+    "description": "Read the persistent Isabelle draft, source hash, accepted entries and check feedback.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "theory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "if_source_sha256": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "theory"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "list_generated",
+    "description": "Search accepted generated examples across this run, including unsealed theories.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "theory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "query": {
+          "type": "string"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "read_generated",
+    "description": "Read exact declarations, contexts and proof bodies from immutable source references.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "minItems": 1,
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "source_refs"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "list_attempts",
+    "description": "Page verified failed history; filter explicitly by entry ID/status before reading details. Submitted does not mean failed.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "theory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entry_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "rejected_batch",
+            "rejected_request",
+            "checked_not_committed"
+          ]
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "snapshot_commit_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "theory"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "read_attempt",
+    "description": "Read a verified failed-attempt summary by default. Use view=full for exact original candidate, context and feedback. Reference only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "theory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "view": {
+          "enum": [
+            "summary",
+            "full"
+          ]
+        }
+      },
+      "required": [
+        "theory",
+        "request_number"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "proof_action",
+    "description": "Edit/check/seal the persistent theory source, or execute a read-only observation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "theory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposal": {
+          "description": "Read a stable entry with read_entry; change its proof with edit_proof. Source-changing actions use the exact edit_proof/edit_theory/check_theory/finish schemas. The enumerated observation actions remain read-only and receive their detailed runtime contracts from proof_tool_help.",
+          "oneOf": [
+            {
+              "type": "object",
+              "description": "Read the exact draft proof for one stable entry ID, immutable declaration/context, and expected_hash for edit_proof. Read-only; does not submit a candidate proof check.",
+              "properties": {
+                "action": {
+                  "const": "read_entry"
+                },
+                "entry_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "action",
+                "entry_id"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "description": "Replace one complete proof body by entry ID while the harness preserves declaration, context and markers. expected_hash is the entire document source hash returned by read_entry, not proof_sha256. Use oops for an open slot; saving never accepts a proof.",
+              "properties": {
+                "action": {
+                  "const": "edit_proof"
+                },
+                "entry_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "proof_body": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "expected_hash": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "notes": {
+                  "type": "string"
+                },
+                "sketches": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "target_entry_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "helper_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
+                      },
+                      "use_sites": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "helper_id": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "consumer_line": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "fact": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "helper_id",
+                            "consumer_line",
+                            "fact"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "required": [
+                      "target_entry_id",
+                      "helper_ids"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "helper_purposes": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "contract_id": {
+                        "type": "string"
+                      },
+                      "gap": {
+                        "type": "string"
+                      },
+                      "expected_use": {
+                        "type": "string"
+                      },
+                      "remaining_gap": {
+                        "type": "string"
+                      },
+                      "used_in_target": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "contract_id",
+                      "gap",
+                      "expected_use",
+                      "remaining_gap"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "action",
+                "entry_id",
+                "proof_body",
+                "expected_hash"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "edit_theory"
+                },
+                "base_sha256": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source": {
+                  "type": "string"
+                },
+                "edits": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "old": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "new": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "old",
+                      "new"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                },
+                "notes": {
+                  "type": "string"
+                },
+                "sketches": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "target_entry_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "helper_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
+                      },
+                      "use_sites": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "helper_id": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "consumer_line": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "fact": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "helper_id",
+                            "consumer_line",
+                            "fact"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "required": [
+                      "target_entry_id",
+                      "helper_ids"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "helper_purposes": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "contract_id": {
+                        "type": "string"
+                      },
+                      "gap": {
+                        "type": "string"
+                      },
+                      "expected_use": {
+                        "type": "string"
+                      },
+                      "remaining_gap": {
+                        "type": "string"
+                      },
+                      "used_in_target": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "contract_id",
+                      "gap",
+                      "expected_use",
+                      "remaining_gap"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "action",
+                "base_sha256"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "required": [
+                    "source"
+                  ],
+                  "not": {
+                    "required": [
+                      "edits"
+                    ]
+                  }
+                },
+                {
+                  "required": [
+                    "edits"
+                  ],
+                  "not": {
+                    "required": [
+                      "source"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "check_theory"
+                },
+                "source_sha256": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "entry_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "action",
+                "source_sha256"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "check_sketch"
+                },
+                "source_sha256": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "target_entry_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "action",
+                "source_sha256"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "read_sketch"
+                },
+                "receipt_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "view": {
+                  "enum": [
+                    "summary",
+                    "full"
+                  ]
+                }
+              },
+              "required": [
+                "action",
+                "receipt_id"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "probe_helpers"
+                },
+                "source_sha256": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entry_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "action",
+                "source_sha256"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "transition_proof"
+                },
+                "source_sha256": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "failure_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "decision": {
+                  "enum": [
+                    "formal_leaf",
+                    "revise_consumer",
+                    "revise_interface",
+                    "decompose_helper"
+                  ]
+                },
+                "plan": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "action",
+                "source_sha256",
+                "failure_id",
+                "decision",
+                "plan"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "assess_sketch"
+                },
+                "source_sha256": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "target_entry_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "action",
+                "source_sha256"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "read_failure"
+                },
+                "failure_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "action",
+                "failure_id"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "review_sketch"
+                },
+                "source_sha256": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "target_entry_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "receipt_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reviews": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "helper_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "use_indices": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
+                      },
+                      "domain_scope": {
+                        "enum": [
+                          "local",
+                          "generalized"
+                        ]
+                      },
+                      "premises": {
+                        "enum": [
+                          "local",
+                          "generalized"
+                        ]
+                      },
+                      "conclusion": {
+                        "enum": [
+                          "local",
+                          "generalized"
+                        ]
+                      },
+                      "generalization": {
+                        "enum": [
+                          "none",
+                          "induction",
+                          "reuse"
+                        ]
+                      },
+                      "burden": {
+                        "enum": [
+                          "isolated",
+                          "delegated",
+                          "proved",
+                          "unchanged"
+                        ]
+                      },
+                      "reduction": {
+                        "type": "string"
+                      },
+                      "generalization_evidence": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "variable": {
+                                "type": "string"
+                              },
+                              "invariant": {
+                                "type": "string"
+                              },
+                              "base_case": {
+                                "type": "string"
+                              },
+                              "step_case": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "variable",
+                              "invariant",
+                              "base_case",
+                              "step_case"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "consumers": {
+                                "type": "string"
+                              },
+                              "shared_pattern": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "consumers",
+                              "shared_pattern"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "probe_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "child_review_id": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "helper_id",
+                      "use_indices",
+                      "domain_scope",
+                      "premises",
+                      "conclusion",
+                      "generalization",
+                      "burden",
+                      "reduction"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "action",
+                "source_sha256",
+                "target_entry_id",
+                "receipt_id",
+                "reviews"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "diagnose_failure"
+                },
+                "failure_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "classification": {
+                  "enum": [
+                    "script",
+                    "known_fact",
+                    "mathematical",
+                    "candidate_timeout"
+                  ]
+                },
+                "plan": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "action",
+                "failure_id",
+                "classification",
+                "plan"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "finish"
+                },
+                "source_sha256": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "action",
+                "source_sha256"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "enum": [
+                    "observe",
+                    "query",
+                    "read_facts",
+                    "read_proofs",
+                    "read_attempts",
+                    "read_queries",
+                    "read_diagnostic",
+                    "read_proof_state",
+                    "resolve_symbols",
+                    "read_context_index"
+                  ]
+                }
+              },
+              "required": [
+                "action"
+              ],
+              "additionalProperties": true
+            }
+          ]
+        }
+      },
+      "required": [
+        "theory",
+        "proposal"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "proof_tool_help",
+    "description": "Read shared document tool schemas, examples and result semantics without opening a theory or calling Isabelle.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "repository_plan",
+    "description": "Inspect fixed contracts/parents or validate, preflight and submit one immutable initial plan. action=schema returns operation contracts and proposal format. Retrieval uses values (a list of strings). Inspect valid/errors: a returned result is not necessarily accepted.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "request": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "schema"
+                }
+              },
+              "required": [
+                "action"
+              ],
+              "additionalProperties": false,
+              "description": "Read operation schemas, examples, plan format, public aliases and context profiles.",
+              "examples": [
+                {
+                  "action": "schema"
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "contracts"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "required": [
+                "action"
+              ],
+              "additionalProperties": false,
+              "description": "Omit values or use [] for the catalog. Supply public contract IDs for exact declarations and inspection receipts.",
+              "examples": [
+                {
+                  "action": "contracts",
+                  "values": [
+                    "C0001"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "search"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 50
+                }
+              },
+              "required": [
+                "action",
+                "values"
+              ],
+              "additionalProperties": false,
+              "description": "Search legal parent facts. values are joined into a query; inspect returned record IDs for complete facts.",
+              "examples": [
+                {
+                  "action": "search",
+                  "values": [
+                    "fact_name_or_concept"
+                  ],
+                  "limit": 20
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "definitions"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 50
+                },
+                "offset": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9223372036854775807
+                }
+              },
+              "required": [
+                "action",
+                "values"
+              ],
+              "additionalProperties": false,
+              "description": "Retrieve complete legal definition records by identifiers. Continue with returned next_offset.",
+              "examples": [
+                {
+                  "action": "definitions",
+                  "values": [
+                    "definition_name"
+                  ],
+                  "limit": 20,
+                  "offset": 0
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "inspect"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1,
+                  "maxItems": 50
+                }
+              },
+              "required": [
+                "action",
+                "values"
+              ],
+              "additionalProperties": false,
+              "description": "Read complete parent facts using record IDs returned by search/definitions, and record inspection receipts.",
+              "examples": [
+                {
+                  "action": "inspect",
+                  "values": [
+                    "returned-premise-record-id"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "related"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 50
+                },
+                "offset": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9223372036854775807
+                }
+              },
+              "required": [
+                "action",
+                "values"
+              ],
+              "additionalProperties": false,
+              "description": "Read relation candidates for public contract IDs; candidates do not establish dependencies.",
+              "examples": [
+                {
+                  "action": "related",
+                  "values": [
+                    "C0001"
+                  ],
+                  "limit": 20,
+                  "offset": 0
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "read_prior"
+                },
+                "epoch": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "theory": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "action",
+                "epoch",
+                "theory"
+              ],
+              "additionalProperties": false,
+              "description": "Read an accepted theory-state snapshot (not an unaccepted draft) from an earlier accepted epoch of this experiment, as reference only. Get epochs and theory names from experiment_status.prior_plans.",
+              "examples": [
+                {
+                  "action": "read_prior",
+                  "epoch": 1,
+                  "theory": "Generated_Example"
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "validate"
+                },
+                "proposal": {
+                  "type": "object",
+                  "description": "Complete repository proposal. Obtain proposal_schema and schema_help with action=schema. Versions 4, 5 and 6 retain common-harness validation and detailed semantic errors."
+                }
+              },
+              "required": [
+                "action",
+                "proposal"
+              ],
+              "additionalProperties": false,
+              "description": "Validate plan structure, coverage and inspected evidence; does not prove or publish. The initial accepted allocation and imports are immutable for this run.",
+              "examples": [
+                {
+                  "action": "validate",
+                  "proposal": {
+                    "schema_version": 6,
+                    "ordering_rationale": "Example order rationale.",
+                    "contract_relations": [],
+                    "theories": [
+                      {
+                        "name": "Generated_Example",
+                        "purpose": "Example purpose.",
+                        "grouping_reason": "Example grouping rationale.",
+                        "contract_ids": [
+                          "C0001"
+                        ],
+                        "context_profile_ids": [
+                          "returned-context-profile-id"
+                        ],
+                        "helper_decisions": [],
+                        "required_imports": []
+                      }
+                    ],
+                    "unresolved_retrieval_questions": [],
+                    "collaboration_groups": [],
+                    "reuse_suggestions": []
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "preflight"
+                },
+                "proposal": {
+                  "type": "object",
+                  "description": "Complete repository proposal. Obtain proposal_schema and schema_help with action=schema. Versions 4, 5 and 6 retain common-harness validation and detailed semantic errors."
+                }
+              },
+              "required": [
+                "action",
+                "proposal"
+              ],
+              "additionalProperties": false,
+              "description": "Validate plan and load declarations/imports in Isabelle; does not prove or publish. The initial accepted allocation and imports are immutable for this run.",
+              "examples": [
+                {
+                  "action": "preflight",
+                  "proposal": {
+                    "schema_version": 6,
+                    "ordering_rationale": "Example order rationale.",
+                    "contract_relations": [],
+                    "theories": [
+                      {
+                        "name": "Generated_Example",
+                        "purpose": "Example purpose.",
+                        "grouping_reason": "Example grouping rationale.",
+                        "contract_ids": [
+                          "C0001"
+                        ],
+                        "context_profile_ids": [
+                          "returned-context-profile-id"
+                        ],
+                        "helper_decisions": [],
+                        "required_imports": []
+                      }
+                    ],
+                    "unresolved_retrieval_questions": [],
+                    "collaboration_groups": [],
+                    "reuse_suggestions": []
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "const": "submit"
+                },
+                "proposal": {
+                  "type": "object",
+                  "description": "Complete repository proposal. Obtain proposal_schema and schema_help with action=schema. Versions 4, 5 and 6 retain common-harness validation and detailed semantic errors."
+                }
+              },
+              "required": [
+                "action",
+                "proposal"
+              ],
+              "additionalProperties": false,
+              "description": "Validate, preflight and publish the immutable initial plan. The initial accepted allocation and imports are immutable for this run.",
+              "examples": [
+                {
+                  "action": "submit",
+                  "proposal": {
+                    "schema_version": 6,
+                    "ordering_rationale": "Example order rationale.",
+                    "contract_relations": [],
+                    "theories": [
+                      {
+                        "name": "Generated_Example",
+                        "purpose": "Example purpose.",
+                        "grouping_reason": "Example grouping rationale.",
+                        "contract_ids": [
+                          "C0001"
+                        ],
+                        "context_profile_ids": [
+                          "returned-context-profile-id"
+                        ],
+                        "helper_decisions": [],
+                        "required_imports": []
+                      }
+                    ],
+                    "unresolved_retrieval_questions": [],
+                    "collaboration_groups": [],
+                    "reuse_suggestions": []
+                  }
+                }
+              ]
+            }
+          ],
+          "description": "repository_plan request. Each action accepts only its documented fields."
+        }
+      },
+      "required": [
+        "request"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "experiment_status",
+    "description": "Read deadline, accounting, plan and previous revision identities; optional notes are retained in this run; launch wrapper is fresh-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "set_work_scope",
+    "description": "Label intended subsequent work; shared labels do not duplicate token costs.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "theory_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "phase": {
+          "enum": [
+            "planning",
+            "proof",
+            "helper",
+            "retrieval",
+            "seal",
+            "integration",
+            "analysis"
+          ]
+        }
+      },
+      "required": [
+        "target_ids",
+        "theory_ids",
+        "phase"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "function",
+    "name": "integrate_repository",
+    "description": "Build and certify the entire currently sealed repository.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  }
+]

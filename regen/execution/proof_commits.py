@@ -20,7 +20,7 @@ _CACHE_LOCK = threading.RLock()
 # evidence. Serialize decoding/validation, not hot prefix reads, across journals.
 _COLD_REPLAY_LOCK = threading.RLock()
 _JOURNAL_LOCKS = {}
-ACCEPTANCE_EVENTS = frozenset({'batch', 'document', 'green', 'seal'})
+ACCEPTANCE_EVENTS = frozenset({'batch', 'document', 'green', 'seal', 'imports'})
 
 
 def journal_lock(directory):

@@ -6,7 +6,7 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 
-from regen.planning.document_interface import public_view, internal_request, observation_instructions
+from regen.planning.document_interface import public_view, internal_request, observation_instructions, tool_contracts
 from regen.planning.observation_memory import merge
 from regen.planning.declaration_index import initial_index, accepted_declarations
 from regen.tests.current.test_proof_commits import fixture
@@ -14,6 +14,17 @@ from regen.tests.current import test_theory_document as document_fixtures
 
 
 class DocumentInterfaceTests(unittest.TestCase):
+    def test_import_edits_are_a_separate_draft_update_shape(self):
+        from jsonschema import Draft202012Validator
+        validator=Draft202012Validator(tool_contracts()['source_action_schemas']['edit_theory'])
+        request={'action':'edit_theory','base_sha256':'current-hash',
+                 'imports':['Generated_Refine.Provider']}
+        self.assertEqual(list(validator.iter_errors(request)),[])
+        for extra in ({'source':'theory text'}, {'edits':[{'old':'a','new':'b'}]},
+                      {'imports':[]}, {'imports':['Base','Base']}):
+            with self.subTest(extra=extra):
+                self.assertTrue(list(validator.iter_errors({**request,**extra})))
+
     def test_selectors_and_source_refs_roundtrip_without_rewriting_ids_or_proofs(self):
         raw={'source_refs':[{'run_id':'graph-node-run','node_id':'graph','node_sha256':'abc',
                             'theory':'T','proof_sha256':'def','commit_id':'ghi'}],

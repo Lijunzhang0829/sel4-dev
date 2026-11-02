@@ -236,9 +236,20 @@ def authorize_reviews(store, nodes, proofs, needed):
             raise ValueError('diagnose the failed proof before continuing: ' + failure)
 
 
+def _pending_path(store):
+    return store.root/'workflow'/'pending-failures-by-imports'/(digest(store.imports)+'.json')
+
+
 def _pending(store):
-    path = store.root/'workflow'/'pending-failures.json'
-    return json.loads(path.read_text()) if path.exists() else {}
+    path = _pending_path(store)
+    if not path.exists():
+        path = store.root/'workflow'/'pending-failures.json'
+    pending = json.loads(path.read_text()) if path.exists() else {}
+    # A changed import can repair an unchanged script. Keep historical receipts
+    # and per-environment pointers, including when an old environment returns.
+    return {key:identity for key,identity in pending.items()
+            if _read(store,'failures',identity).get('obstacle_context',{}).get(
+                'imports',store.imports) == store.imports}
 
 
 def _roots(groups, key):
@@ -278,7 +289,7 @@ def _failure(store, nodes, key, proof, check, evidence_id, candidate_proofs=None
         record['phase_failures'] = (previous.get('phase_failures',1)+1 if previous and not transition_record(store,previous_id) else 1)
     identity = _save(store, 'failures', record)
     pending[key] = identity
-    durable(store.root/'workflow'/'pending-failures.json', pending)
+    durable(_pending_path(store), pending)
     return identity
 
 
@@ -292,7 +303,7 @@ def record_formal_result(store, source, evidence):
     if evidence['check']['verdict'] == 'green':
         for key in proofs:
             pending.pop(key, None)
-        durable(store.root/'workflow'/'pending-failures.json', pending)
+        durable(_pending_path(store), pending)
     else:
         for row in evidence.get('node_results', []):
             if row['status'] == 'failed' and row['node_id'] in proofs:
@@ -311,7 +322,7 @@ def record_conditional_result(store, nodes, proofs, target, check, receipt_id, c
         identity = pending.get(target)
         if identity and _read(store,'failures',identity)['evidence_id'].startswith('sketch:'):
             pending.pop(target)
-            durable(store.root/'workflow'/'pending-failures.json',pending)
+            durable(_pending_path(store),pending)
 
 
 def _diagnosis(store, failure_id):

@@ -138,7 +138,9 @@ class HistoryViewsTests(unittest.TestCase):
         from regen.planning.parallel_file_planner import TheoryController
         controller = TheoryController.__new__(TheoryController)
         controller.document_mode = True; controller.theory = 'Source'
+        controller.run = self.run
         store = Mock(); store.read.return_value = {'source': 'exact draft', 'source_sha256': 'sha'}
+        store.package = self.packages[0]
         controller._document = Mock(return_value=(store, self.state))
         controller.shared = Mock(); controller.shared._package.return_value = self.packages[0]
         value = controller._handle('read_theory', {'theory': 'Source'}, {})

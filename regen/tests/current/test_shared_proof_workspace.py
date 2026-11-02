@@ -36,6 +36,7 @@ def setup_run(root, *, source_context=None, contract_dependency=False, target_st
                           'revisions': {}, 'status': 'planned', 'seal_id': None}
     listing = {'files': [{'theory': p['theory'], 'file_slot': p['file_slot']} for p in packages]}
     run = {'run_id': 'test-run', 'execution_mode': 'repository-projection-v1',
+           'base_import': 'Semantic_Base.Semantic_Root',
            'contract_package_dir': str(root / 'packages'), 'implementation': {},
            'session_schedule': {'file_list_sha256': digest(listing), 'plan_id': 'test-plan'}}
     durable(root / 'run.json', run)

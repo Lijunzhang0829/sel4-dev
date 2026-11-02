@@ -104,11 +104,24 @@ failed history, then read_attempt or read_attempts with view="full" for exact ev
 Do not scan request numbers blindly. read_theory restores notes, recent actions and
 target navigation, not all selected historical draft bodies. A batch containing an
 entry does not prove that entry failed; follow checker_failed_entry_ids when available.
-{"action":"finish","source_sha256":"accepted current draft hash"}
-Seal requires every fixed goal and retained helper proved, unchanged since successful check,
-then complete-theory verification, semantic audit and build. A final message is not a seal.
+{"action":"finish","source_sha256":"current complete draft hash"}
+Finish checks any pending complete draft, then runs complete-theory verification,
+semantic audit and build. Every fixed goal and retained helper must pass before seal.
+A final message is not a seal.
 
-Preserve header/imports, fixed contract identity markers, exact statements and contexts.
+Preserve the theory name, fixed contract identity markers, exact statements and contexts.
+To change imports, use edit_theory with base_sha256 and imports (a complete ordered
+list), instead of source/edits. Draft edits accumulate without rebuilding Isabelle.
+At the next native check the harness applies the final list, checks provider versions
+and fixed target meanings, and revalidates proofs in that context. Use the base import
+or certified generated provider imports. read_theory exposes the base import and
+the provider directory; list_workspace and reads of another theory expose exact
+import names and whether certified exports exist. Never import the current theory.
+Old proof bodies are retained, but old-context GREEN is not current proof authority.
+finish can check a complete pending draft before the full seal. Published theories
+are immutable. An accepted native refutation also pins its certified imports;
+refutation recertification in another environment is not supported. Plain reads
+do not apply pending imports.
 The REGEN-BEGIN metadata has only id, role (contract/helper/theorem), context (an available
 context list). REGEN-PROOF separates declaration and proof; REGEN-END closes the entry.
 A helper is an ordinary named lemma entry with a unique ID/name. Copy a block layout,
@@ -449,6 +462,8 @@ class TheoryController(WorkspaceController):
             rows = [self.executor.get(key) for key in self.task_ids
                     if key not in applied and self.executor.records[key]['status']=='completed'
                     and self.executor.records[key]['kind'] in {'action','symbol'}]
+        rows = [row for row in rows if row.get('result',{}).get('context_revision',
+            row.get('binding',{}).get('context_revision',0)) == state.get('context_revision',0)]
         return merge(state,rows,self.executor.root)
 
     def _state(self, theory):
@@ -461,6 +476,12 @@ class TheoryController(WorkspaceController):
         from regen.execution.repository_execution import setup, ProviderPreparationError
         key = (str(self.root),self.theory,self.options['check_timeout'])
         with self._runtime_lock:
+            if key in self.runtime_cache:
+                cached = self.runtime_cache[key]
+                current = cached[3].replay()
+                if current and 'context_imports' in current and current['context_imports'] != cached[5]:
+                    self.runtime_cache.pop(key)
+                    cached[4].close_prefix()
             if key not in self.runtime_cache:
                 if self._provider_preparation_error is not None:
                     raise self._provider_preparation_error
@@ -530,7 +551,7 @@ class TheoryController(WorkspaceController):
             raise ValueError('disposed contracts cannot receive positive proofs or checks: '
                              +', '.join(sorted(selected & disposed)))
         if action == 'edit_theory':
-            from regen.planning.theory_document import parse
+            from regen.planning.theory_document import parse, source_imports
             store, _ = self._document(); current = store.read()
             source = proposal.get('source', current['source'])
             if 'edits' in proposal:
@@ -546,7 +567,7 @@ class TheoryController(WorkspaceController):
             if not isinstance(source, str):
                 return
             _, before = parse(current['source'], store.package, store.imports)
-            _, after = parse(source, store.package, store.imports)
+            _, after = parse(source, store.package, source_imports(source,store.package['theory']))
             changed = [key for key in disposed if key in after and after[key] != before.get(key)]
             if changed:
                 raise ValueError('disposed contract proof slots must stay oops: '+', '.join(sorted(changed)))
@@ -603,7 +624,84 @@ class TheoryController(WorkspaceController):
         runtime = self._runtime()
         from regen.planning.sketch_check import strategy_options
         return DocumentStore(runtime[2]/'document',package,state,runtime[4].imports(),
-            **strategy_options(self.generation_strategy['name'])),state
+            allow_import_edits=True, **strategy_options(self.generation_strategy['name'])),state
+
+    @staticmethod
+    def _uses_native_context(kind, proposal):
+        if kind != 'observe':
+            return True
+        for read in proposal.get('reads', []):
+            if read.get('action') == 'resolve_symbols':
+                return True
+            if read.get('action') == 'query':
+                request = read.get('request', {})
+                if request.get('goal_query') or request.get('proof_state_query'):
+                    continue  # These retrieve already captured propositions.
+                queries = request.get('premise_queries', [request])
+                if any(q.get('mode', 'auto') in {'auto', 'definition'} for q in queries):
+                    return True  # Such queries may invoke the native term resolver.
+        return False
+
+    def _apply_pending_imports(self, runtime, state, directory):
+        """One staged context transition at a native operation boundary."""
+        store, _ = self._document(state=state)
+        document = store.read()
+        if not document['imports_pending']:
+            return runtime, state, None
+        if runtime[3].replay(repair=False) is None:
+            # A new draft may choose imports before its first proof request.
+            # Establish the same checked fixed scaffold as the ordinary batch
+            # entry point before recording the first context revision.
+            from regen.planning.batch_file_planner import initialize_batch_state
+            state = self._observation_state(initialize_batch_state(runtime))
+        from regen.execution.import_revisions import prepare_import_change, commit_import_change
+        from regen.execution.import_semantics import check_import_semantics
+        from regen.execution.proof_commits import durable
+        prepared = None
+        committed = False
+        try:
+            prepared = prepare_import_change(self.root, self.theory,
+                document['draft_imports'], self.options['check_timeout'])
+            if not prepared['changed']:
+                return runtime, state, None
+            candidate = prepared['runtime']
+            semantics = check_import_semantics(runtime[4], candidate[4], runtime[1])
+            durable(directory/'imports-semantics.json', semantics, immutable=True)
+            if not semantics['valid']:
+                return runtime, state, {'status':'imports_rejected',
+                    'stage':semantics.get('stage'), 'semantic_check':semantics,
+                    'notice':'Draft retained; the previous effective imports and accepted state are unchanged.'}
+            self._check_session_active()
+            check_cancelled()
+            authority = candidate[3].replay(repair=False)
+            new = commit_import_change(candidate, authority,
+                {'check':semantics['after']['check'], 'semantic_check':semantics},
+                prepared['provider_bindings'])
+            committed = True
+            # Runtime tuples retain the same document/journal directory; only
+            # the checker and provider context are replaced.
+            key = (str(self.root), self.theory, self.options['check_timeout'])
+            self.runtime_cache[key] = candidate
+            self._provider_preparation_error = None
+            runtime[4].close_prefix()
+            candidate = self._runtime()
+            from regen.execution.repository_execution import progress
+            progress(self.root)
+            return candidate, self._observation_state(new), None
+        except (ValueError, KeyError) as error:
+            if prepared is not None:
+                latest = prepared['runtime'][3].replay(repair=False)
+                committed = committed or bool(latest and latest.get('context_revision',0)
+                    != state.get('context_revision',0))
+            if committed:
+                raise  # Never describe an accepted context event as rejected.
+            return runtime, state, {'status':'imports_rejected', 'diagnostic':str(error),
+                'notice':'Correct the draft imports; no new context was accepted.'}
+        finally:
+            if prepared is not None and prepared.get('changed'):
+                candidate = prepared['runtime']
+                if not any(value is candidate for value in self.runtime_cache.values()):
+                    candidate[4].close_prefix()
 
     def _handle(self, name, arguments, metadata):
         if (name == 'proof_action' and isinstance(arguments.get('proposal'), dict)
@@ -628,6 +726,11 @@ class TheoryController(WorkspaceController):
                 document = {key:value for key,value in document.items() if key != 'source'}
                 document['source_unchanged'] = True
             return {'theory':self.theory,'document':document,
+                    'context_revision':state.get('context_revision',0),
+                    'import_options':{'base_import':self.run['base_import'],
+                        'provider_directory':{'tool':'list_workspace','arguments':{}},
+                        'notice':'Use the base import alone, or generated import names with certified exports. '
+                                 'The next native action validates provider versions and applies the final draft list.'},
                     'accepted_ids':list(state['accepted_order']),
                     'accepted_source_sha256':state.get('document_source_sha256'),
                     'status':state['status'],'feedback':compact_history_feedback(state.get('batch_feedback',{}),state),
@@ -638,6 +741,7 @@ class TheoryController(WorkspaceController):
                 raise ValueError('if_source_sha256 applies only to the assigned draft')
             package,state = self._state(arguments['theory'])
             return {'theory':arguments['theory'], 'status':state['status'],
+                    'import_option':self._import_option(package,state),
                     'reference_only':True, 'repository_projection':package['repository_projection'],
                     'declarations':state['graph']['nodes'], 'proofs':state['proofs'],
                     'accepted_ids':state['accepted_order'],
@@ -735,28 +839,26 @@ class TheoryController(WorkspaceController):
                             or pending_contract_ids(self)
                             or any(draft_proofs.get(key) != value for key,value in state['proofs'].items())):
                         raise ValueError('partial export requires every fixed contract proved/disposed and preserves every accepted proof')
-                elif (proposal.get('source_sha256')!=current['source_sha256']
-                        or state.get('document_source_sha256')!=current['source_sha256']
-                        or current['open_ids']):
-                    raise ValueError('seal requires the current draft checked successfully with no open proof slots')
+                elif (proposal.get('source_sha256')!=current['source_sha256'] or current['open_ids']):
+                    raise ValueError('seal requires the current source hash and complete proof bodies with no open slots')
         if self.document_mode and name == 'prepare_reuse':
             raise ValueError('read_generated and copy source entries into the document for fresh checking')
         if name == 'list_workspace':
             if arguments.get('assigned_only') is True:
                 package,state = self._state(self.theory)
                 ready = self._theory_readiness(self.theory,package=package,state=state)
-                from regen.planning.import_contract import required_imports
                 return {'run_id':self.run['run_id'],'assigned_theory':self.theory,
                     'status':state['status'],'contract_count':len(package['contracts']),
                     'accepted_entry_count':len(state['proofs']),
-                    'required_imports':[p['theory'] for p in required_imports(package['repository_projection'])],
+                    'required_imports':self._effective_providers(package,state),
                     'ready_for_proof_action':ready['ready_for_proof_action'],
                     'unsealed_providers':ready['unsealed_providers'],
                     **_contract_view(self),
                     'assigned_writer_count':1,'theory_tool_execution':'serial',
                     'notice':'Read this theory for exact goals/draft and feedback. list_workspace '
                              'lists other theories on demand; list_generated/read_generated expose '
-                             'reference-only material. Current source imports govern legal facts.'}
+                             'reference-only material. Effective checked imports govern legal facts; '
+                             'pending draft imports apply at the next native action.'}
             result = super().handle(name,arguments,metadata)
             result.pop('worker_count', None)
             result['assigned_theory'] = self.theory
@@ -862,9 +964,10 @@ class TheoryController(WorkspaceController):
         row = self._theory_readiness(self.theory, package=package, state=snapshot)
         if not row['ready_for_proof_action']:
             raise ValueError('theory is not ready for checks: '+json.dumps(row['unsealed_providers']))
-        binding = {key:snapshot[key] for key in ('graph','proofs','accepted_order')}
+        binding = {key:snapshot.get(key) for key in ('graph','proofs','accepted_order','context_revision','context_imports')}
         binding = {'state_sha256':digest(binding),'run_id':self.run['run_id'],
-                   'package_sha256':package['package_payload_sha256']}
+                   'package_sha256':package['package_payload_sha256'],
+                   'context_revision':snapshot.get('context_revision',0)}
         metadata = deepcopy(metadata)
         task_id = digest({'thread':metadata['thread_id'],'turn':metadata['turn_id'],
                           'call':metadata['call_id'],'theory':self.theory})
@@ -877,13 +980,35 @@ class TheoryController(WorkspaceController):
                     emit_event('check_task_started',kind=kind)
                     runtime = self._runtime()
                     check_cancelled()
+                    expected_state = binding['state_sha256']
+                    if self.document_mode and self._uses_native_context(kind, proposal):
+                        with self._action_lock:
+                            _, current_state = self._state(self.theory)
+                            actual = digest({key:current_state.get(key) for key in
+                                ('graph','proofs','accepted_order','context_revision','context_imports')})
+                            if actual != binding['state_sha256']:
+                                raise ValueError('submitted candidate context is stale')
+                            if proposal.get('action') in {'check_theory','check_sketch','assess_sketch','probe_helpers','finish'}:
+                                store, _ = self._document(state=current_state)
+                                store.checked_source(proposal.get('source_sha256'))
+                            runtime, snapshot_after, rejected = self._apply_pending_imports(
+                                runtime, current_state, directory)
+                            if rejected is not None:
+                                return rejected
+                            # The context change is an independently validated
+                            # journal event within this same tool request.
+                            expected_state = digest({key:snapshot_after.get(key) for key in
+                                ('graph','proofs','accepted_order','context_revision','context_imports')})
+                    else:
+                        snapshot_after = snapshot
                     if kind in {'proof_batch','seal','sketch'}:
                         with self._action_lock:
                             # Read-only observations never mutate this accepted snapshot.
                             _, now = self._state(self.theory)
-                            actual = digest({key:now[key] for key in ('graph','proofs','accepted_order')})
+                            actual = digest({key:now.get(key) for key in
+                                ('graph','proofs','accepted_order','context_revision','context_imports')})
                             # Initial scaffold creation happens inside proof_action below.
-                            if actual != binding['state_sha256']:
+                            if actual != expected_state:
                                 raise ValueError('submitted candidate context is stale')
                             runtime[4].work_dir = directory/'isabelle'
                             runtime[4].work_dir.mkdir(exist_ok=True)
@@ -917,7 +1042,8 @@ class TheoryController(WorkspaceController):
                                 if kind == 'seal' and result.get('framework_blocked'):
                                     self.framework_blocked = True
                     else:
-                        result = self._observe(kind,proposal,snapshot,package,directory)
+                        result = self._observe(kind,proposal,snapshot_after,package,directory)
+                        result['context_revision'] = snapshot_after.get('context_revision',0)
                     emit_event('check_task_result_ready',kind=kind)
                     return result
             finally:

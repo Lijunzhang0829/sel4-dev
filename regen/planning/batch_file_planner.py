@@ -815,7 +815,9 @@ def query_identity(run, state, directory, request):
         'sealed':digest((directory.parent.parent/'sealed-premises.json').read_text())
             if (directory.parent.parent/'sealed-premises.json').is_file() else None,
         'context':{k:node.get(k) for k in ('id', 'statement', 'context')} if node else None,
-        'accepted_prefix':[(n, digest(state['proofs'][n])) for n in state['accepted_order']]})
+        'accepted_prefix':[(n, digest(state['proofs'][n])) for n in state['accepted_order']],
+        'context_revision':state.get('context_revision',0),
+        'context_imports':state.get('context_imports')})
 
 
 def cached_query_feedback(state, directory, identity):
@@ -1054,14 +1056,41 @@ def _record_termination(run_dir, theory, directory, journal, state, error):
         logging.getLogger(__name__).exception('Unable to publish controller termination')
 
 
+def initialize_batch_state(runtime):
+    """Certify the fixed scaffold once in this runtime's current environment.
+
+    Native context changes also need this initial authority before their first
+    planner request. Initialization neither charges a request nor inspects draft
+    proofs, and existing acceptance history is returned without native work.
+    """
+    from regen.planning.declaration_index import accepted_declarations, initial_index
+    from regen.execution.proof_batches import check_declarations
+    run, package, _, journal, checker, _ = runtime
+    state = journal.replay()
+    if state is not None:
+        return state
+    if getattr(checker, 'document_mode', False) is True:
+        graph = initial_index(package, run_id=run['run_id']+'--'+package['theory'])
+    else:
+        graph = build_graph(package, {'generated_nodes':[], 'contract_dependencies':{}},
+                            run_id=run['run_id']+'--'+package['theory'], revision=1)
+    graph.update(initial_graph_owner='File Planner', runtime_graph_owner='File Planner',
+                 execution_mode='file-planner-batch-v1')
+    graph = accepted_declarations(graph, [])
+    check = freeze_evidence(check_declarations(checker, graph))
+    if check['verdict'] != 'green':
+        raise RuntimeError('fixed-contract scaffold failed native elaboration: '+check.get('diagnostic',''))
+    return journal.append('initial', {'graph':graph, 'proofs':{}, 'accepted_order':[],
+        'rounds':{}, 'revisions':{}, 'status':'planned', 'seal_id':None}, {'check':check})
+
+
 def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     call_timeout=600, check_timeout=900, candidate_timeout=300, max_requests=0,
                     decision_source=None, runtime_cache=None, observation_source=None, observation_order=None,
                     state_sink=None, incremental_progress=False, helper_attempt=None):
     from regen.execution.repository_execution import setup, progress
-    from regen.planning.declaration_index import accepted_declarations
     from regen.execution.proof_session_runner import frozen_role_model
-    from regen.execution.proof_batches import prepare_batch, check_batch, check_declarations
+    from regen.execution.proof_batches import prepare_batch, check_batch
     if call_timeout <= 0 or check_timeout <= 0 or candidate_timeout <= 0 or max_requests < 0:
         raise ValueError('invalid batch controller limits')
     checker = journal = directory = None
@@ -1101,22 +1130,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
             if getattr(checker, 'generation_strategy_name', 'baseline') == 'bounded-audited-prefix-v1':
                 policy['generation_strategy'] = 'bounded-audited-prefix-v1'
             durable(directory/'batch-policy.json', policy, immutable=True)
-            state = journal.replay()
-            if state is None:
-                if getattr(checker, 'document_mode', False) is True:
-                    from regen.planning.declaration_index import initial_index
-                    graph = initial_index(package, run_id=run['run_id']+'--'+theory)
-                else:
-                    graph = build_graph(package, {'generated_nodes':[], 'contract_dependencies':{}},
-                                        run_id=run['run_id']+'--'+theory, revision=1)
-                graph.update(initial_graph_owner='File Planner', runtime_graph_owner='File Planner',
-                             execution_mode='file-planner-batch-v1')
-                graph = accepted_declarations(graph, [])
-                check = freeze_evidence(check_declarations(checker, graph))
-                if check['verdict'] != 'green':
-                    raise RuntimeError('fixed-contract scaffold failed native elaboration: '+check.get('diagnostic',''))
-                state = journal.append('initial', {'graph':graph, 'proofs':{}, 'accepted_order':[],
-                    'rounds':{}, 'revisions':{}, 'status':'planned', 'seal_id':None}, {'check':check})
+            state = initialize_batch_state(cached)
             if state['status'] in {'sealed', 'exported_partial'}:
                 initialization.mark('progress')
                 return progress(run_dir)
@@ -1210,10 +1224,20 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 bounded_start_order = None
                 try:
                     document_check_requested = False
+                    finish_after_check = False
                     proposal = parse_json_response(response)
                     if not isinstance(proposal, dict):
                         proposal = None
                         raise ValueError('expected one JSON action object')
+                    if (proposal.get('action') == 'finish' and getattr(checker,'document_mode',False)
+                            and proposal.get('source_sha256') != state.get('document_source_sha256')):
+                        # The audited agent request remains finish. Checking its
+                        # exact draft is a trusted implementation step, never a
+                        # fabricated check_theory tool call/model response.
+                        durable(request_dir/'finish-proposal.json',proposal,immutable=True)
+                        finish_after_check = True
+                        proposal = {'action':'check_theory', 'source_sha256':proposal.get('source_sha256'),
+                                    'reason':'Validate the complete current draft before sealing.'}
                     if proposal.get('action') == 'check_theory':
                         document_check_requested = True
                         from regen.planning.theory_document import DocumentStore, candidate as document_candidate
@@ -1222,6 +1246,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         durable(request_dir/'model-proposal.json',proposal,immutable=True)
                         from regen.planning.sketch_check import strategy_options
                         store=DocumentStore(directory/'document',package,state,checker.imports(),
+                            allow_import_edits=True,
                             **strategy_options(getattr(checker,'generation_strategy_name','baseline')))
                         requested_source=store.checked_source(proposal.get('source_sha256'))
                         source, selected_ids = disposition_check_source(package, state, requested_source,
@@ -1255,7 +1280,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         validate_workspace(state, proposal['workspace'])
                     bounded_feedback = None
                     bounded_fallback = None
-                    if (document_check_requested and decision_source is not None
+                    if (document_check_requested and not finish_after_check and decision_source is not None
                             and getattr(checker, 'generation_strategy_name', 'baseline') == 'bounded-audited-prefix-v1'):
                         from regen.planning.bounded_prefix import run_prefix, STRATEGY
                         durable(request_dir/'document-source.json', {'source':proposal['document_source']}, immutable=True)
@@ -1386,6 +1411,22 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                             timing.metadata.update(status='accepted', action_completed=True, check_verdict='green')
                             timing.mark('progress')
                             projection = progress(run_dir)
+                            if finish_after_check:
+                                new, seal_evidence = seal_theory(run_dir,run,package,directory,checker,ancestors,state,
+                                    **({'dispositions':dispositions} if dispositions is not None else {}))
+                                durable(request_dir/'seal.json',seal_evidence,immutable=True)
+                                if new is not None:
+                                    state = journal.append('seal',new,seal_evidence)
+                                    timing.metadata.update(status=state['status'],action_completed=True)
+                                    timing.mark('progress')
+                                    return progress(run_dir)
+                                feedback = {'status':'seal_failed',**seal_evidence}
+                                durable(request_dir/'feedback.json',feedback,immutable=True)
+                                state = journal.append('planner-feedback',
+                                    apply_feedback(state,proposal,feedback,count,observation_order=observation_order),
+                                    {'request_number':count,'feedback':feedback})
+                                timing.metadata.update(status='seal_failed',action_completed=True)
+                                projection = progress(run_dir)
                             if max_requests and executed >= max_requests:
                                 return {'status':'checkpoint', **projection}
                             continue

@@ -9,6 +9,7 @@ from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
+import re
 
 from regen.execution.proof_commits import digest, durable
 from regen.planning.declaration_index import DECLARATION, build_index, index_payload_sha256
@@ -33,6 +34,43 @@ def source_hash(source):
 
 def header(theory, imports):
     return 'theory '+theory+'\nimports '+' '.join(json.dumps(x) for x in imports)+'\nbegin\n\nunbundle l4v_word_context\n\n'
+
+
+def _import_names(imports):
+    if (not isinstance(imports, list) or not imports
+            or any(not isinstance(name, str) or not re.fullmatch(
+                r"[A-Za-z][A-Za-z0-9_'-]*(?:\.[A-Za-z][A-Za-z0-9_'-]*)*", name)
+                for name in imports)
+            or len(set(imports)) != len(imports)):
+        raise ValueError('imports must be a nonempty list of unique theory names')
+    return list(imports)
+
+
+def source_imports(source, theory):
+    """Read only the harness's canonical header, never arbitrary Isar commands."""
+    prefix = 'theory '+theory+'\nimports '
+    if not isinstance(source, str) or not source.startswith(prefix):
+        raise ValueError('preserve the theory name and canonical imports header')
+    line, separator, _ = source[len(prefix):].partition('\n')
+    if not separator:
+        raise ValueError('incomplete theory imports header')
+    decoder = json.JSONDecoder()
+    names = []
+    while line:
+        try:
+            name, end = decoder.raw_decode(line)
+        except (ValueError, TypeError) as error:
+            raise ValueError('imports header requires quoted theory names') from error
+        names.append(name)
+        line = line[end:]
+        if line:
+            if not line.startswith(' '):
+                raise ValueError('imports header requires separated theory names')
+            line = line[1:]
+    names = _import_names(names)
+    if not source.startswith(header(theory, names)):
+        raise ValueError('preserve the canonical imports header and context setup')
+    return names
 
 
 def block(entry, proof=None):
@@ -127,12 +165,22 @@ def candidate(package, state, source, imports, *, legacy=False):
         initial_graph_owner='File Planner',runtime_graph_owner='File Planner',execution_mode='file-planner-batch-v1')
     index['graph_payload_sha256']=index_payload_sha256(index)
     result=deepcopy(state)
-    result.update(graph=index,proofs=proofs,accepted_order=order,document_source_sha256=source_hash(source))
+    result.update(graph=index,proofs=proofs,accepted_order=order,
+                  document_source_sha256=source_hash(source),document_imports=list(imports))
     return result
 
 
 def baseline(old, new):
     """Reuse the longest identical proof prefix; recheck the affected suffix."""
+    if (any(old.get(key) != new.get(key) for key in ('context_revision', 'context_imports'))
+            or ('document_imports' in old
+                and old['document_imports'] != new.get('document_imports'))):
+        fresh = deepcopy(old)
+        fresh['proofs'] = {}
+        fresh['accepted_order'] = []
+        fresh['graph']['accepted_order'] = []
+        fresh['graph']['graph_payload_sha256'] = index_payload_sha256(fresh['graph'])
+        return fresh, 'full'
     before = {n['id']:n for n in old['graph']['nodes']}
     after = {n['id']:n for n in new['graph']['nodes']}
     try:
@@ -191,6 +239,8 @@ def selected_source(package, state, source, imports, entry_ids=None):
 
 def check_document(checker, old, new, source):
     from regen.execution.proof_batches import check_batch, _binding
+    if 'document_imports' in new and new['document_imports'] != checker.imports():
+        raise ValueError('document imports differ from the active checker context')
     base,mode=baseline(old,new)
     evidence=check_batch(checker,base,new)
     evidence.update(document_source=source,document_source_sha256=source_hash(source),
@@ -233,6 +283,9 @@ def validate_document_commit(package, old, new, evidence):
             raise ValueError('diagnostic draft cannot remove accepted proofs')
     expected=candidate(package,old,source,evidence['imports'],
                        legacy='declaration_index_version' not in new['graph'])
+    if ('document_imports' in new and new['document_imports'] != evidence['imports']
+            or any(new.get(key) != old.get(key) for key in ('context_revision', 'context_imports'))):
+        raise ValueError('document commit cannot change its bound imports context')
     if (_binding(expected)!=_binding(new) or new.get('document_source_sha256')!=source_hash(source)
             or evidence.get('document_source_sha256')!=source_hash(source)):
         raise ValueError('document evidence differs from exact source')
@@ -249,8 +302,9 @@ def validate_document_commit(package, old, new, evidence):
 
 
 class DocumentStore:
-    def __init__(self, directory, package, state, imports, *, require_sketch=False, require_use_sites=False, require_review=False, require_assessment=False, require_phases=False):
-        self.root=Path(directory);self.package=package;self.imports=list(imports)
+    def __init__(self, directory, package, state, imports, *, require_sketch=False, require_use_sites=False, require_review=False, require_assessment=False, require_phases=False, allow_import_edits=False):
+        self.root=Path(directory);self.package=package;self.checked_imports=list(imports)
+        self.allow_import_edits=allow_import_edits
         self.state=state
         self.require_sketch=require_sketch
         self.require_use_sites=require_use_sites
@@ -262,13 +316,27 @@ class DocumentStore:
         if not self.path.exists():
             self._write(render(package,state,imports),{'origin':'accepted-state'})
 
+    @property
+    def imports(self):
+        if self.allow_import_edits and self.path.exists():
+            return source_imports(self.path.read_text(), self.package['theory'])
+        return list(self.checked_imports)
+
+    def _source_imports(self, source):
+        return (source_imports(source, self.package['theory'])
+                if self.allow_import_edits else list(self.checked_imports))
+
     def read(self):
         source=self.path.read_text()
-        entries,proofs=parse(source,self.package,self.imports)
+        imports=self._source_imports(source)
+        entries,proofs=parse(source,self.package,imports)
         from regen.planning.helper_purposes import view
         from regen.planning.sketch_check import group_view
         from regen.planning.sketch_workflow import workflow_view
         return {'source':source,'source_sha256':source_hash(source),
+                'draft_imports':imports,'checked_imports':list(self.checked_imports),
+                'imports_pending':imports != self.checked_imports,
+                'imports_editable':self.allow_import_edits,
                 'sketch_required':self.require_sketch,
                 'helper_use_sites_required':self.require_use_sites,
                 'decomposition_review_required':self.require_review,
@@ -281,7 +349,7 @@ class DocumentStore:
 
     def _entry(self, source, entry_id):
         locations = {}
-        entries, proofs = parse(source, self.package, self.imports, locations=locations)
+        entries, proofs = parse(source, self.package, self._source_imports(source), locations=locations)
         if not isinstance(entry_id, str) or entry_id not in locations:
             raise DocumentEditError('unknown document entry; read_theory for current entry IDs',
                 code='unknown_entry', current_sha256=source_hash(source), entry_id=entry_id,
@@ -307,7 +375,8 @@ class DocumentStore:
                 'proof_body':proof, 'proof_sha256':source_hash(proof),
                 'source_sha256':sha, 'expected_hash':sha, 'hash_scope':'document_source',
                 'open_proof_slot':entry_id not in proofs,
-                'accepted_proof_matches_draft':self.state['proofs'].get(entry_id) == proof,
+                'accepted_proof_matches_draft':(self._source_imports(source) == self.checked_imports
+                    and self.state['proofs'].get(entry_id) == proof),
                 'entry_location':self._position(source, location['entry_start'], location['entry_end']),
                 'proof_location':self._position(source, location['proof_start'], location['proof_end']),
                 'notice':'Only proof_body is editable with edit_proof. expected_hash binds the entire current document, not proof_sha256. Saving a draft never accepts a proof.'}
@@ -340,15 +409,22 @@ class DocumentStore:
         temp=self.path.with_suffix('.tmp');temp.write_text(source);temp.replace(self.path)
 
     def edit(self, proposal, origin):
-        if set(proposal)-{'action','base_sha256','source','edits','notes','helper_purposes','sketches'}:
-            raise ValueError('edit_theory accepts base_sha256 and either source or exact-text edits')
+        if set(proposal)-{'action','base_sha256','source','edits','imports','notes','helper_purposes','sketches'}:
+            raise ValueError('edit_theory accepts base_sha256 and one of source, exact-text edits or imports')
         current=self.read()
         if proposal.get('base_sha256')!=current['source_sha256']:
             raise DocumentEditError('stale document; read_theory and apply edits to the current source hash',
                 code='stale_document', current_sha256=current['source_sha256'],
                 expected_hash=proposal.get('base_sha256'), hash_scope='document_source', draft_unchanged=True)
-        if ('source' in proposal)==('edits' in proposal): raise ValueError('provide source OR edits')
+        if sum(key in proposal for key in ('source','edits','imports')) != 1:
+            raise ValueError('provide exactly one of source, edits or imports')
         source=proposal.get('source',current['source'])
+        if 'imports' in proposal:
+            if not self.allow_import_edits:
+                raise ValueError('imports edits are not enabled for this document')
+            names = _import_names(proposal['imports'])
+            prefix = header(self.package['theory'], current['draft_imports'])
+            source = header(self.package['theory'], names) + current['source'][len(prefix):]
         if 'edits' in proposal:
             if not isinstance(proposal['edits'],list) or not proposal['edits']: raise ValueError('edits must be a nonempty list')
             for edit_index, edit in enumerate(proposal['edits']):
@@ -360,7 +436,7 @@ class DocumentStore:
                               else 'old_not_found' if match_count == 0 else 'old_not_unique')
                     locations = {}
                     try:
-                        parse(source, self.package, self.imports, locations=locations)
+                        parse(source, self.package, self._source_imports(source), locations=locations)
                     except ValueError:
                         locations = {}  # Earlier sequential edits may temporarily break framing.
                     matches, start = [], 0
@@ -421,7 +497,8 @@ class DocumentStore:
                 draft_unchanged=True) from error
 
     def _validate_and_save(self, source, current, proposal, origin):
-        entries,proofs=parse(source,self.package,self.imports)
+        imports=self._source_imports(source)
+        entries,proofs=parse(source,self.package,imports)
         if self.require_sketch:
             accepted = {n['id']:n for n in self.state['graph']['nodes'] if n['id'] in self.state['proofs']}
             for node in entries:
@@ -438,6 +515,8 @@ class DocumentStore:
                        entries,proofs,source_hash(source))
         self._write(source,origin,purposes,sketches)
         return {'status':'draft_saved','source_sha256':source_hash(source),'checked':False,
+                'draft_imports':imports,'checked_imports':list(self.checked_imports),
+                'imports_pending':imports != self.checked_imports,
                 'helper_purposes':view(purposes,entries,proofs,self.state)}
 
     def checked_source(self, sha):

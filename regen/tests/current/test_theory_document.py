@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch
 
 from regen.planning.theory_document import (DocumentStore,block,render,parse,candidate,
-    baseline,check_document,validate_document_commit,source_hash)
+    baseline,check_document,validate_document_commit,source_hash,source_imports,header)
 from regen.tests.current.test_proof_commits import fixture
 from regen.tests.current.test_proof_batches import Checker
 from regen.execution.repository_execution import validator
@@ -101,6 +101,65 @@ class TheoryDocumentTests(unittest.TestCase):
             with self.subTest(source=source),self.assertRaises(ValueError):
                 parse(source,self.package,self.imports)
 
+    def test_import_header_parser_accepts_only_canonical_theory_names(self):
+        self.assertEqual(source_imports(self.source, self.package['theory']), self.imports)
+        original = header(self.package['theory'], self.imports)
+        names = ['HOL-Library.Multiset']
+        self.assertEqual(source_imports(header(self.package['theory'], names)
+            + self.source[len(original):], self.package['theory']), names)
+        for imports in ([], ['Base', 'Base'], ['Base; ML'], ['../Secret'], ['Base\nML'], [42]):
+            source = header(self.package['theory'], imports) + self.source[len(original):]
+            with self.subTest(imports=imports), self.assertRaises(ValueError):
+                source_imports(source, self.package['theory'])
+        with self.assertRaises(ValueError):
+            source_imports(self.source.replace('imports ', 'imports ML ', 1), self.package['theory'])
+
+    def test_draft_import_edits_accumulate_and_cancel_without_changing_checked_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store=DocumentStore(tmp,self.package,self.old,self.imports,allow_import_edits=True)
+            initial=store.read()
+            proof_source=initial['source'].replace('oops','by simp')
+            edited=store.edit({'action':'edit_theory','base_sha256':initial['source_sha256'],
+                              'source':proof_source},{})
+            for names in (['Generated_Refine.B'], ['Generated_Refine.C'], self.imports):
+                edited=store.edit({'action':'edit_theory','base_sha256':edited['source_sha256'],
+                                  'imports':names},{})
+                self.assertFalse(edited['checked'])
+                self.assertEqual(edited['draft_imports'],names)
+                self.assertEqual(edited['checked_imports'],self.imports)
+                self.assertEqual(edited['imports_pending'],names != self.imports)
+                reopened=DocumentStore(tmp,self.package,self.old,self.imports,allow_import_edits=True)
+                self.assertEqual(reopened.imports,names)
+                self.assertEqual(parse(reopened.read()['source'],self.package,names)[1],
+                                 {'helper':'by simp','contract':'by simp'})
+            self.assertEqual(store.read()['source'],proof_source)
+            with self.assertRaisesRegex(ValueError,'exactly one'):
+                store.edit({'action':'edit_theory','base_sha256':edited['source_sha256'],
+                            'source':proof_source,'imports':self.imports},{})
+
+    def test_prefix_is_not_reused_when_imports_or_context_revision_change(self):
+        source=self.source.replace('oops','by simp')
+        old,_=self.accept(source)
+        changed=['Generated_Refine.Provider']
+        modified=header(self.package['theory'],changed)+source[len(header(self.package['theory'],self.imports)):]
+        new=candidate(self.package,old,modified,changed)
+        empty,mode=baseline(old,new)
+        self.assertEqual(mode,'full')
+        self.assertEqual(empty['proofs'],{})
+        self.assertEqual(old['accepted_order'],['helper','contract'])
+        with self.assertRaisesRegex(ValueError,'active checker'):
+            check_document(self.checker,old,new,modified)
+        same=candidate(self.package,old,source,self.imports)
+        same['context_revision']=1
+        self.assertEqual(baseline(old,same)[1],'full')
+
+    def test_document_import_metadata_cannot_be_tampered_in_accepted_evidence(self):
+        source=self.source.replace('oops','by simp')
+        new,evidence=self.accept(source)
+        changed=deepcopy(new);changed['document_imports']=['Generated_Refine.Other']
+        with self.assertRaisesRegex(ValueError,'bound imports'):
+            validate_document_commit(self.package,self.old,changed,evidence)
+
     def test_native_not_cosmetic_heuristics_decides_helper_validity(self):
         source=self.source.replace('lemma helper: "True & True"','lemma helper: "True"').replace('oops','by simp')
         new,_=self.accept(source)
@@ -189,7 +248,8 @@ class DocumentControllerTests(unittest.TestCase):
     def call(self,proposal):
         self.serial+=1
         return self.controller.handle('proof_action',{'theory':'Target','proposal':proposal},
-            {'thread_id':'t','turn_id':'u','call_id':str(self.serial),'transcript_path':'synthetic-test-transcript'})
+            {'thread_id':'t','turn_id':'u','call_id':str(self.serial),
+             'transcript_path':'synthetic-test-transcript','transcript_offset':1})
 
     def read(self):
         return self.controller.handle('read_theory',{'theory':'Target'},{})
@@ -261,8 +321,14 @@ class DocumentControllerTests(unittest.TestCase):
         self.assertEqual(failed['feedback']['status'],'rejected_batch',failed)
         self.assertEqual(self.controller._state('Target')[1]['proofs'],state['proofs'])
         self.assertIn('by fail',self.read()['document']['source'])
-        with self.assertRaisesRegex(ValueError,'seal requires'):
-            self.call({'action':'finish','source_sha256':saved['source_sha256']})
+        with patch('regen.infrastructure.workspace_transcript.audit_workspace_session',return_value={}), \
+             patch('regen.planning.batch_file_planner.seal_theory') as seal:
+            result=self.call({'action':'finish','source_sha256':saved['source_sha256']})
+            seal.assert_not_called()
+        self.assertEqual(result['feedback']['status'],'rejected_batch',result)
+        self.assertFalse(result['all_selected_sealed'])
+        self.assertEqual(self.controller._state('Target')[1]['proofs'],state['proofs'])
+        self.assertIn('by fail',self.read()['document']['source'])
         self.fixture.llm.assert_not_called()
 
     def test_green_diagnostic_draft_cannot_remove_accepted_proof(self):

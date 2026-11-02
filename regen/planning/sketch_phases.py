@@ -19,8 +19,12 @@ def budget_key(node):
 
 
 def probes(store, node):
-    return [r for r in records(store,'probes') if r['entry']['id']==node['id']
-            or budget_key(r['entry'])==budget_key(node)]
+    # The short diagnostic allowance applies to this import environment. All
+    # receipts and actual costs remain recorded; returning to old imports also
+    # restores their already consumed allowance.
+    return [r for r in records(store,'probes') if r['imports']==store.imports
+            and (r['entry']['id']==node['id']
+                 or budget_key(r['entry'])==budget_key(node))]
 
 
 def transition_record(store, failure_id):

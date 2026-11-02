@@ -51,7 +51,8 @@ class ContractDispositionsTests(unittest.TestCase):
         self.c.task_ids = set(); self.c.resources = None
         self.c._abort_requested = threading.Event(); self.c._check_session_active = Mock()
         self.c._theory_readiness = lambda *a, **kw:{'ready_for_proof_action':True}
-        self.c._runtime = lambda:[None, None, None, None, object()]
+        checker = SyntheticNativeChecker(self.root, 'b')
+        self.c._runtime = lambda:[None, None, None, None, checker]
         return {'thread_id':'thread', 'turn_id':'turn', 'call_id':'negative-b'}
 
     def refute(self):
