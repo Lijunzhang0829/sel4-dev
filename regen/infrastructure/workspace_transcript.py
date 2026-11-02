@@ -130,8 +130,44 @@ def _pre_proof_edit_registry(registry):
     return previous
 
 
+def _pre_retrieval_registry(registry):
+    """Exact generic schema before unified evidence recovery; replay only.
+
+    Transform only the reviewed replacement schema and exact observation enum.
+    Nothing supplied by an audited transcript is normalized into an approval.
+    """
+    from regen.planning.evidence_reads import evidence_schema
+    previous = deepcopy(registry)
+    new_observations = ['observe', 'query', 'read_attempts', 'read_diagnostic',
+                        'read_proof_state', 'resolve_symbols']
+    old_observations = ['observe', 'query', 'read_facts', 'read_proofs',
+                        'read_attempts', 'read_queries', 'read_diagnostic',
+                        'read_proof_state', 'resolve_symbols', 'read_context_index']
+    replacement = evidence_schema()
+    for tool in previous:
+        if tool['name'] != 'proof_action':
+            continue
+        proposal = tool['inputSchema']['properties'].get('proposal', {})
+        alternatives = proposal.get('oneOf', [])
+        if sum(action == replacement for action in alternatives) != 1:
+            continue
+        observations = [action for action in alternatives
+            if action.get('properties', {}).get('action', {}).get('enum') == new_observations]
+        if len(observations) != 1:
+            continue
+        proposal['oneOf'] = [action for action in alternatives if action != replacement]
+        observations[0]['properties']['action']['enum'] = old_observations
+    return previous
+
+
 def _approved_generic_registry(tools, current):
-    """Compare against a trusted registry and its exact historical shapes."""
+    """Compare complete registries, including the exact pre-retrieval variants."""
+    return any(_approved_generic_registry_shapes(tools, candidate)
+               for candidate in (current, _pre_retrieval_registry(current)))
+
+
+def _approved_generic_registry_shapes(tools, current):
+    """Compare against a trusted version and its exact historical shapes."""
     if tools == current or tools == _pre_history_registry(current):return True
     before_sketch = _pre_sketch_registry(current)
     for previous_sketch in (before_sketch, _pre_delta_registry(before_sketch)):

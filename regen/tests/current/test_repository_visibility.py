@@ -51,7 +51,8 @@ class RepositoryVisibilityTest(unittest.TestCase):
         self.addCleanup(self.stack.close)
         self.stack.enter_context(patch.object(execution, 'progress', return_value={'files': self.states}))
         self.stack.enter_context(patch.object(execution, 'package_for', return_value=self.package))
-        self.stack.enter_context(patch.object(execution, 'journal'))
+        journal = self.stack.enter_context(patch.object(execution, 'journal'))
+        journal.return_value.replay.return_value = None
         self.build = self.stack.enter_context(patch(
             'regen.execution.isabelle_node_checker.IsabelleChecker.build_generated_session',
             return_value={'verdict': 'green'}))

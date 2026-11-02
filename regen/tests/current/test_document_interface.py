@@ -39,7 +39,10 @@ class DocumentInterfaceTests(unittest.TestCase):
     def test_observation_prompt_uses_document_selectors(self):
         prompt=observation_instructions()
         self.assertIn('context_entry_id',prompt)
-        self.assertIn('entry_ids',prompt)
+        self.assertIn('"kind":"proof"',prompt)
+        self.assertIn('read_evidence',prompt)
+        for removed in ('read_facts', 'read_queries', 'read_proofs', 'read_context_index'):
+            self.assertNotIn(removed,prompt)
         for old in ('context_node_id','node_ids','graph node','submit_batch','dependencies'):
             self.assertNotIn(old,prompt)
 

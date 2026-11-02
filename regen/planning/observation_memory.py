@@ -34,7 +34,7 @@ def task_order(row):
     return [row.get('submission_sequence',0),row['submitted_at'],row['task_id']]
 
 
-def merge(state, rows, directory):
+def merge(state, rows, directory, *, history_rows=None):
     from regen.planning.batch_file_planner import apply_feedback
     new=deepcopy(state)
     query_field, version_field, task_field = memory_fields(new)
@@ -58,6 +58,10 @@ def merge(state, rows, directory):
                     'observation_order':task_order(row),'cache':{'task_id':row['task_id'],
                         'result_path':str(Path(directory)/row['task_id']/'result.json'),
                         'result_sha256':row['result_sha256'],'observation_path':list(path)}}
+                from regen.planning.retrieval_usage import candidate_identity
+                queries[identity]['returned_candidates'] = [candidate_identity(f) for f in result.get('records', [])]
+                if isinstance(result.get('query_binding'), dict):
+                    queries[identity]['query_binding'] = deepcopy(result['query_binding'])
             else:previous['task_ids']=tasks
         if 'workspace' in proposal:touched.add('batch_workspace')
         if 'notes' in proposal:touched.add('batch_notes')
@@ -95,6 +99,10 @@ def merge(state, rows, directory):
         applied.add(row['task_id'])
     new['batch_facts']=list(facts.values());new[query_field]=list(queries.values())
     new[task_field]=sorted(applied)
+    from regen.planning.retrieval_usage import observation_history
+    history, reads = observation_history(new, rows if history_rows is None else history_rows)
+    new['retrieval_history_queries'] = history
+    new['retrieval_read_events'] = reads
     return new
 
 

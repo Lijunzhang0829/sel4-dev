@@ -214,9 +214,9 @@ class WorkspaceController:
                             dispositions=current_dispositions(self, arguments['theory']) or None)),
                         'repository_projection':context}
             if name == 'list_generated':
-                return self.shared.index(**arguments)
+                return self.shared.index(**arguments, target_theory=getattr(self, 'theory', None))
             if name == 'read_generated':
-                return self.shared.read(arguments['source_refs'])
+                return self.shared.read(arguments['source_refs'], target_theory=getattr(self, 'theory', None))
             if name == 'read_attempt':
                 return self.shared.read_attempt(**arguments)
             if name == 'list_attempts':

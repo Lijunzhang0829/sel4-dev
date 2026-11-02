@@ -60,26 +60,43 @@ def build_vectors(database, output, *, fields=FIELDS, dimensions=65536):
     return metadata
 
 
-def recall_for_proof_state(database, proof_state, *, limit=5, vector_index=None, attributes=()):
+def recall_for_proof_state(database, proof_state, *, limit=5, vector_index=None, attributes=(),
+                           retrieval_policy='legacy-v1', candidate_budget=100, lexical_index=None):
+    from regen.execution.indexed_retrieval import validate_policy, POLICY
+    validate_policy(retrieval_policy, candidate_budget)
+    if lexical_index is not None and retrieval_policy != POLICY:
+        raise ValueError('normalized lexical index requires indexed-v1')
     if not isinstance(proof_state, str) or not proof_state.strip() or len(proof_state) > 200000:
         raise ValueError('a nonempty proof state of at most 200000 characters is required')
-    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 50:
-        raise ValueError('recall limit must be 1..50')
+    maximum = 500 if retrieval_policy == POLICY else 50
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= maximum:
+        raise ValueError(f'recall limit must be 1..{maximum}')
     database = Path(database).resolve()
     if verify_database(database) != 2:
         raise ValueError('proof-state recall requires a verified v2 catalog')
     terms = sorted(set(tokens(proof_state)))
     scores = {}
+    vector_candidates_scored = 0
     with closing(sqlite3.connect(database.as_uri()+'?mode=ro', uri=True)) as db:
         db.row_factory = sqlite3.Row
-        # Batch long states instead of truncating propositions or identifiers.
-        for start in range(0, len(terms), 64):
-            query = ' OR '.join('"'+t.replace('"','""')+'"' for t in terms[start:start+64])
-            rows = db.execute('SELECT p.record_id, bm25(premise_search) AS rank FROM premise_search '
-                              'JOIN premises p ON p.rowid=premise_search.rowid WHERE premise_search MATCH ? '
-                              "AND p.source_class IN ('frozen_parent','retained_semantic_export') ORDER BY rank, p.record_id LIMIT 500", (query,))
-            for rank, row in enumerate(rows):
-                scores[row['record_id']] = scores.get(row['record_id'],0) + 1/(60+rank)
+        if lexical_index is not None:
+            from regen.execution.indexed_retrieval import upstream_candidate_scores
+            scores = upstream_candidate_scores(database, lexical_index, proof_state)
+        else:
+            # Batch long states instead of truncating propositions or identifiers.
+            for start in range(0, len(terms), 64):
+                query = ' OR '.join('"'+t.replace('"','""')+'"' for t in terms[start:start+64])
+                rows = db.execute('SELECT p.record_id, bm25(premise_search) AS rank FROM premise_search '
+                                  'JOIN premises p ON p.rowid=premise_search.rowid WHERE premise_search MATCH ? '
+                                  "AND p.source_class IN ('frozen_parent','retained_semantic_export') ORDER BY rank, p.record_id LIMIT 500", (query,))
+                for rank, row in enumerate(rows):
+                    scores[row['record_id']] = scores.get(row['record_id'],0) + 1/(60+rank)
+        fts_candidate_count = len(scores)
+        if retrieval_policy == POLICY:
+            # Candidate selection precedes every optional expensive feature.
+            # A reranker cannot recover facts that were absent from this pool.
+            candidates = sorted(scores, key=lambda rid: (-scores[rid], rid))[:candidate_budget]
+            scores = {rid: scores[rid] for rid in candidates}
         if vector_index:
             path = Path(vector_index).resolve()
             if digest(path) != path.with_suffix(path.suffix+'.sha256').read_text().strip():
@@ -89,8 +106,18 @@ def recall_for_proof_state(database, proof_state, *, limit=5, vector_index=None,
                 if meta['database_sha256'] != digest(database) or meta['encoder'] != 'sha256-feature-hashing-logtf-l2-v1':
                     raise ValueError('incompatible or stale vector index')
                 q = vector(proof_state, meta['dimensions'])
-                ranked = heapq.nlargest(500, ((sum(q.get(str(k),0)*v for k,v in struct.iter_unpack('<If',raw)), rid)
-                    for rid,raw in vectors.execute('SELECT record_id,vector_blob FROM vectors')))
+                if retrieval_policy == POLICY:
+                    ids = list(scores)
+                    rows = (vectors.execute('SELECT record_id,vector_blob FROM vectors WHERE record_id IN (' +
+                                            ','.join('?' for _ in ids) + ')', ids) if ids else ())
+                else:
+                    rows = vectors.execute('SELECT record_id,vector_blob FROM vectors')
+                def similarities():
+                    nonlocal vector_candidates_scored
+                    for rid, raw in rows:
+                        vector_candidates_scored += 1
+                        yield sum(q.get(str(k), 0) * v for k, v in struct.iter_unpack('<If', raw)), rid
+                ranked = heapq.nlargest(500, similarities())
                 for rank,(score,rid) in enumerate(ranked):
                     if score > 0:
                         scores[rid] = scores.get(rid,0) + 1/(60+rank)
@@ -104,10 +131,20 @@ def recall_for_proof_state(database, proof_state, *, limit=5, vector_index=None,
             selected.append({**item,'score':score,'match_kind':'proof_state',
                              'availability':'sealed_base_candidate_requires_current_context_check'})
             if len(selected)==limit: break
-    return {'query':proof_state, 'scope':'upstream', 'mode':'proof_state', 'effective_mode':'proof_state',
+    result = {'query':proof_state, 'scope':'upstream', 'mode':'proof_state', 'effective_mode':'proof_state',
             'status':'matched' if selected else 'no_match', 'records':selected,
             'matched_candidates':len(scores), 'ranking':'fts5-rrf'+('+hash-vector-rrf' if vector_index else ''),
             'proof_state_sha256':hashlib.sha256(proof_state.encode()).hexdigest()}
+    if retrieval_policy == POLICY:
+        result.update(retrieval_policy=POLICY,
+                      ranking='bounded-' + result['ranking'],
+                      candidate_pipeline={'candidate_budget': candidate_budget,
+                          'candidate_index': 'normalized-fts-v1' if lexical_index is not None else 'legacy-fts',
+                          'fts_candidates': fts_candidate_count, 'selected_candidates': len(scores),
+                          'vector_candidates_scored': vector_candidates_scored,
+                          'candidate_truncated': fts_candidate_count > len(scores),
+                          'candidate_count_semantics': 'union-of-top-500-per-token-chunk'})
+    return result
 
 
 if __name__ == '__main__':

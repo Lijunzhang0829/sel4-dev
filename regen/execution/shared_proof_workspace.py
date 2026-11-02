@@ -182,7 +182,7 @@ class SharedProofWorkspace:
             raise ValueError('source node/proof hash mismatch')
         return snapshot, node
 
-    def index(self, *, theory=None, query='', offset=0, limit=20):
+    def index(self, *, theory=None, query='', offset=0, limit=20, target_theory=None):
         if (not isinstance(query, str) or type(offset) is not int or offset < 0
                 or type(limit) is not int or not 1 <= limit <= 100):
             raise ValueError('workspace index requires text query and a valid page')
@@ -204,7 +204,9 @@ class SharedProofWorkspace:
                                 if h.get('status') in {'rejected_batch', 'rejected_request', 'checked_not_committed'}]
                     summary = {'theory': owner, 'status': state['status'],
                                'accepted': len(state['proofs']), 'failed_attempt_count': len(failures),
-                               'failed_attempts': failures[-8:]}
+                               'failed_attempts': failures[-8:],
+                               'pending_contract_count': sum(node['role'] == 'contract'
+                                   and node['id'] not in state['proofs'] for node in state['graph']['nodes'])}
                     records = []
                     for node in state['graph']['nodes']:
                         if node['id'] in state['proofs']:
@@ -216,11 +218,14 @@ class SharedProofWorkspace:
                     self._index_cache[owner] = cached
                 summaries.append(deepcopy(cached['summary']))
                 rows.extend(deepcopy(row) for text,row in cached['records'] if query.lower() in text)
-        return {'kind': SCHEMA, 'status': 'available', 'theories': summaries,
+        result = {'kind': SCHEMA, 'status': 'available', 'theories': summaries,
                 'total': len(rows), 'offset': offset, 'records': rows[offset:offset + limit],
+                'next_offset': offset + limit if offset + limit < len(rows) else None,
                 'notice': 'Source examples only; no theorem is imported or accepted in the target.'}
+        from regen.planning.premise_visibility import annotate_generated_result
+        return annotate_generated_result(self, result, target_theory)
 
-    def read(self, refs):
+    def read(self, refs, *, target_theory=None):
         if not isinstance(refs, list) or not 1 <= len(refs) <= 8:
             raise ValueError('read_workspace requires 1-8 exact source references')
         records = []
@@ -229,8 +234,10 @@ class SharedProofWorkspace:
             records.append({'source_ref': deepcopy(ref), **deepcopy(node),
                             'proof_body': snapshot['state']['proofs'][node['id']],
                             'status': 'source_green_reference', 'reference_only': True})
-        return {'status': 'available', 'records': records,
+        result = {'status': 'available', 'records': records,
                 'notice': 'Original contexts are retained. Copying requires a new target-native check.'}
+        from regen.planning.premise_visibility import annotate_generated_result
+        return annotate_generated_result(self, result, target_theory)
 
     def list_attempts(self, theory, *, entry_id=None, status=None, offset=0, limit=20,
                       snapshot_commit_id=None):

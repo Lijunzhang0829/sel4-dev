@@ -71,6 +71,9 @@ which earlier proven declarations are available; oops slots export no theorem.
 Use proof_action(theory, proposal):
 {"action":"read_entry","entry_id":"stable entry ID"}
 Read one entry's proof_body and expected_hash without rereading the complete draft.
+Its retrieval_memory restores explicitly target-bound queries and complete recalled
+candidates, with read_evidence navigation for older items. Global unbound queries
+are kept separate. Retrieved or previously read facts are not proof authority.
 For proof-only changes prefer:
 {"action":"edit_proof","entry_id":"stable entry ID","proof_body":"complete replacement proof","expected_hash":"hash from read_entry or current source_sha256"}
 expected_hash binds the whole current document. The harness preserves the entry's
@@ -93,13 +96,13 @@ This checks all supplied proof bodies in file order. A successful version is ato
 accepted only if it retains every previously accepted entry. A GREEN diagnostic draft
 with removed proofs/helpers or oops replacing accepted bodies returns draft_checked;
 it does not publish proofs or replace the accepted version. Restore the missing entries
-(read_proofs retrieves accepted bodies), then check the complete draft. Unchanged accepted
+(read_evidence with proof refs retrieves accepted bodies), then check the complete draft. Unchanged accepted
 prefixes are reused. Editing/reordering accepted bodies rechecks the affected suffix.
 Read_theory returns the draft and last check feedback. You may edit a failed draft directly.
 Pass if_source_sha256 to read_theory when you already hold that exact source; an unchanged
 draft then returns source_unchanged=true without repeating its text. Omit the hash to
 retrieve the complete source. Observation indexes are paginated; use the returned
-read_context_index actions for older fact/query addresses, not repeated whole-file reads.
+read_evidence index actions for older fact/query addresses, not repeated whole-file reads.
 Historical reads default to summaries. Use list_attempts with an entry_id to navigate
 failed history, then read_attempt or read_attempts with view="full" for exact evidence.
 Do not scan request numbers blindly. read_theory restores notes, recent actions and
@@ -463,12 +466,13 @@ class TheoryController(WorkspaceController):
         from regen.planning.observation_memory import merge, memory_value
         applied = set(memory_value(state,2,[]))
         with self.executor.lock:
-            rows = [self.executor.get(key) for key in self.task_ids
-                    if key not in applied and self.executor.records[key]['status']=='completed'
+            history_rows = [self.executor.get(key) for key in self.task_ids
+                    if self.executor.records[key]['status']=='completed'
                     and self.executor.records[key]['kind'] in {'action','symbol'}]
-        rows = [row for row in rows if row.get('result',{}).get('context_revision',
+        rows = [row for row in history_rows if row['task_id'] not in applied
+            and row.get('result',{}).get('context_revision',
             row.get('binding',{}).get('context_revision',0)) == state.get('context_revision',0)]
-        return merge(state,rows,self.executor.root)
+        return merge(state,rows,self.executor.root,history_rows=history_rows)
 
     def _state(self, theory):
         package,state = super()._state(theory)
@@ -639,6 +643,8 @@ class TheoryController(WorkspaceController):
                 return True
             if read.get('action') == 'query':
                 request = read.get('request', {})
+                if request.get('goal_query') and request.get('structural_rerank'):
+                    return True  # Typed candidate matching elaborates the target natively.
                 if request.get('goal_query') or request.get('proof_state_query'):
                     continue  # These retrieve already captured propositions.
                 queries = request.get('premise_queries', [request])
@@ -769,12 +775,49 @@ class TheoryController(WorkspaceController):
                     raise ValueError('read_entry accepts entry_id only')
                 store, state = self._document()
                 result = store.read_entry(proposal['entry_id'])
+                from regen.planning.retrieval_memory import entry_retrieval_memory
+                result['retrieval_memory'] = entry_retrieval_memory(state, proposal['entry_id'],
+                    current_entry=result, directory=self.root/'theories'/Path(store.package['file_slot']).stem)
                 advice = planning_advice(self, store, state, entry_id=proposal['entry_id'])
                 if advice:
                     result['planning_advice'] = advice
                 if contract_dispositions_enabled(self.run):
                     result['contract_disposition'] = _contract_view(self)['contract_dispositions'].get(proposal['entry_id'])
                 return result
+            if proposal.get('action') == 'read_evidence':
+                from regen.planning.evidence_reads import evidence_reads
+                reads = evidence_reads(proposal)
+                if 'index' in proposal:
+                    from regen.planning.batch_file_planner import planner_input
+                    from regen.planning.document_recall import context_index_page
+                    from regen.planning.retrieval_memory import retrieval_index_context
+                    package, state = self._state(self.theory)
+                    request = dict(reads[0])
+                    entry_id = request.pop('entry_id', None)
+                    context = (retrieval_index_context(state, entry_id) if entry_id is not None
+                               else planner_input(package, state))
+                    result = context_index_page(context, request)
+                    if entry_id is not None:
+                        result['entry_id'] = entry_id
+                        if result['next_action']:
+                            result['next_action']['entry_id'] = entry_id
+                    return result
+                # Reuse the existing serial observation transaction and its
+                # durable recovery. Public consolidation changes no authority.
+                return self._handle(name, {**arguments, 'proposal': {
+                    'action': 'observe', 'reads': reads}}, metadata)
+            if proposal.get('action') == 'observe' and isinstance(proposal.get('reads'), list):
+                from regen.planning.evidence_reads import evidence_reads
+                reads = []
+                for request in proposal['reads']:
+                    if isinstance(request, dict) and request.get('action') == 'read_evidence':
+                        if 'index' in request:
+                            raise ValueError('read_evidence index is a standalone navigation action')
+                        reads.extend(evidence_reads(request))
+                    else:
+                        reads.append(request)
+                proposal = {**proposal, 'reads': reads}
+                arguments = {**arguments, 'proposal': proposal}
             if proposal.get('action') == 'read_sketch':
                 from regen.planning.sketch_check import read_receipt
                 if set(proposal)-{'action','receipt_id','view'}:

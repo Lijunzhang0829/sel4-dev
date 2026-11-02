@@ -35,9 +35,9 @@ def context_index_page(context, proposal):
     return {'status':'available','index':kind,'records':records[offset:end],
         'total':len(records),'offset':offset,'limit':limit,'has_more':has_more,
         'next_offset':end if has_more else None,'snapshot_sha256':snapshot,
-        'next_action':({'action':'read_context_index','index':kind,'offset':end,
+        'next_action':({'action':'read_evidence','index':kind,'offset':end,
                         'limit':limit,'snapshot_sha256':snapshot} if has_more else None),
-        'notice':'Navigation only, not proof authority. read_facts/read_queries retrieve the '
+        'notice':'Navigation only, not proof authority. read_evidence retrieves the '
                  'complete evidence identified here; no proposition or proof body is shortened.'}
 
 
@@ -108,7 +108,8 @@ def document_observations(context, state):
         'target_memory locates the last batch CONTAINING an entry, not necessarily its failure. '
         'requested_attempts are summaries even after explicit full reads; persisted originals are intact. '
         'Use list_attempts for paginated failed history, and read_attempt/read_attempts view=full '
-        'for exact proof/context/feedback. Fact/query indexes include their first page only; '
+        'for exact proof/context/feedback. read_entry restores the selected target\'s retrieval memory. '
+        'Fact/query indexes include their first page only; '
         'follow indexes.*.next_action through proof_action for all addresses. '
         'References here are relative to observations.')
     return out

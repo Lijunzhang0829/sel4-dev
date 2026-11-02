@@ -34,6 +34,10 @@ checking, observations and finish/seal. Saving a draft is not proof acceptance.
 For proof-only edits, read_entry returns the stable entry ID, proof_body and
 expected_hash of the current document. Use edit_proof with that ID, hash and the
 complete replacement proof; the harness retains declaration/context/markers.
+read_entry also restores explicitly target-bound retrieval_memory. Use query for
+new candidates and read_evidence for saved facts, queries, accepted proofs and
+paginated indexes. Bind a target-specific query with context_entry_id; global
+queries remain unassigned. Restored candidates still require context checking.
 Use edit_theory for helper declarations and structural changes. Edit errors give
 matching counts and source positions; fix the indicated edit against current text.
 One check can include multiple contracts and helpers. Unproved entries are never
@@ -177,16 +181,15 @@ def registry():
     proof_action=next(tool for tool in tools if tool['name']=='proof_action')
     source_actions=tool_contracts()['source_action_schemas']
     observation={'type':'object','properties':{
-        'action':{'enum':['observe','query','read_facts','read_proofs','read_attempts',
-                          'read_queries','read_diagnostic','read_proof_state','resolve_symbols',
-                          'read_context_index']}},
+        'action':{'enum':['observe','query','read_attempts',
+                          'read_diagnostic','read_proof_state','resolve_symbols']}},
         'required':['action'],'additionalProperties':True}
     proof_action['inputSchema']['properties']['proposal']={
         'description':('Read a stable entry with read_entry; change its proof with edit_proof. '
                        'Source-changing actions use the exact edit_proof/edit_theory/check_theory/finish schemas. '
                        'The enumerated observation actions remain read-only and receive their detailed '
                        'runtime contracts from proof_tool_help.'),
-        'oneOf':[deepcopy(source_actions[action]) for action in ('read_entry','edit_proof','edit_theory','check_theory','check_sketch','read_sketch','probe_helpers','transition_proof','assess_sketch','read_failure','review_sketch','diagnose_failure','finish')]
+        'oneOf':[deepcopy(source_actions[action]) for action in ('read_entry','read_evidence','edit_proof','edit_theory','check_theory','check_sketch','read_sketch','probe_helpers','transition_proof','assess_sketch','read_failure','review_sketch','diagnose_failure','finish')]
                 +[observation]}
     return tools+[
         _tool('repository_plan','Inspect fixed contracts/parents or validate, preflight and submit one immutable initial plan. action=schema returns operation contracts and proposal format. Retrieval uses values (a list of strings). Inspect valid/errors: a returned result is not necessarily accepted.',{'request':request_schema(allow_revision=False)},('request',)),
@@ -519,7 +522,7 @@ class Controller:
                 finally:c.selected=selected
             if name=='proof_action':
                 due=self.seal_due()
-                if due and args['proposal'].get('action') not in ('finish','observe','query','read_facts','read_diagnostic','read_attempts','read_proofs','read_queries','read_proof_state','resolve_symbols','read_entry'):
+                if due and args['proposal'].get('action') not in ('finish','observe','query','read_evidence','read_context_index','read_facts','read_diagnostic','read_attempts','read_proofs','read_queries','read_proof_state','resolve_symbols','read_entry'):
                     raise ValueError('Complete GREEN drafts must attempt seal first: '+', '.join(due))
             from contextlib import nullcontext
             sealing=name=='proof_action' and args['proposal'].get('action')=='finish'

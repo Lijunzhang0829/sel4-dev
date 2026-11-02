@@ -29,6 +29,17 @@ def historical_registry(*, proof_edit=True, history=True, delta=True, sketch=Tru
         if tool['name'] != 'proof_action':
             continue
         proposal = properties['proposal']
+        # Restore the previously published retrieval vocabulary independently
+        # of the production compatibility helper before older transformations.
+        proposal['oneOf'] = [action for action in proposal['oneOf']
+            if not any(branch.get('properties', {}).get('action', {}).get('const') == 'read_evidence'
+                       for branch in action.get('oneOf', []))]
+        for action in proposal['oneOf']:
+            selector = action.get('properties', {}).get('action', {})
+            if 'enum' in selector:
+                selector['enum'] = ['observe', 'query', 'read_facts', 'read_proofs',
+                    'read_attempts', 'read_queries', 'read_diagnostic', 'read_proof_state',
+                    'resolve_symbols', 'read_context_index']
         if not proof_edit:
             proposal['description'] = (
                 'Source-changing actions use the exact edit_theory/check_theory/finish schemas. '

@@ -203,7 +203,7 @@ def compact_feedback(value):
     return deepcopy(value)
 
 
-def action_record(proposal, feedback, number):
+def action_record(proposal, feedback, number, *, state=None):
     proposal = proposal if isinstance(proposal, dict) else {}
     record = {'request_number':number, 'action':proposal.get('action'),
               'status':feedback.get('status'), 'proposal_sha256':digest(proposal),
@@ -214,9 +214,13 @@ def action_record(proposal, feedback, number):
     if feedback.get('query_identity'):
         record['query_identity'] = feedback['query_identity']
         record['query_feedback_sha256'] = digest(feedback)
+        if isinstance(feedback.get('query_binding'), dict):
+            record['query_binding'] = deepcopy(feedback['query_binding'])
     if feedback.get('kind') == 'fact_selection':
         record['query_results'] = compact_feedback(feedback.get('queries', []))
         record['returned_record_ids'] = [r['record_id'] for r in feedback.get('records', [])]
+        from regen.planning.retrieval_usage import candidate_identity
+        record['returned_candidates'] = [candidate_identity(r) for r in feedback.get('records', [])]
     if proposal.get('action') == 'observe':
         record['observations'] = [dict(action_record(item['request'], item['result'], number),
             item_index=i, parent_feedback_sha256=record['feedback_sha256'])
@@ -224,6 +228,19 @@ def action_record(proposal, feedback, number):
     if proposal.get('action') == 'submit_batch':
         proofs = proposal.get('proofs', {})
         record['proof_node_ids'] = list(proofs) if isinstance(proofs, dict) else []
+        if state is not None:
+            from regen.planning.retrieval_usage import target_identity
+            proposed_graph = proposal.get('graph')
+            nodes = (proposed_graph.get('nodes') if isinstance(proposed_graph, dict) else None)
+            if not isinstance(nodes, list):
+                nodes = state.get('graph', {}).get('nodes', [])
+            record['attempt_binding'] = {
+                'context_revision': state.get('context_revision', 0),
+                'context_imports': deepcopy(state.get('context_imports')),
+                'provider_bindings_sha256': digest(state.get('context_provider_bindings')),
+                'target_sha256': {node['id']: target_identity(node) for node in nodes
+                                  if isinstance(node, dict) and node.get('id') in record['proof_node_ids']},
+            }
         record['candidate_signature'] = digest({'proofs':proofs,'graph':proposal.get('graph')})
         check = feedback.get('check',{})
         if check.get('verdict') == 'red':
@@ -256,7 +273,7 @@ def apply_feedback(state, proposal, feedback, number, *, observation_order=None)
     # History records the original request, even when its selection is obsolete.
     for item in new.get('batch_history', []):
         if item.get('request_number', item.get('request')) == number:
-            item.update(action_record(proposal or {}, feedback, number))
+            item.update(action_record(proposal or {}, feedback, number, state=state))
     def touched(request, result):
         if not isinstance(request, dict):return set()
         keys = set()
@@ -563,6 +580,9 @@ def observation_summary(state):
             ids = item.get('returned_record_ids', [])
             entry['returned_record_ids'] = ids
             entry['last_status'] = item.get('status')
+            for key in ('query_binding', 'returned_candidates'):
+                if key in item:
+                    entry[key] = deepcopy(item[key])
             if set(ids) - seen:
                 last_fact = number
             seen.update(ids)
@@ -572,7 +592,7 @@ def observation_summary(state):
                 last_green = number
     count = state.get('batch_requests', 0)
     from regen.planning.observation_memory import memory_value
-    for query in memory_value(state,0,[]):
+    for query in [*state.get('retrieval_history_queries', []), *memory_value(state,0,[])]:
         queries[query['query_id']] = {**queries.get(query['query_id'],{}),
             **{key:value for key,value in query.items() if key not in {'cache','observation_order'}}}
     return list(queries.values()), {
@@ -794,7 +814,8 @@ def read_diagnostic(directory, state, proposal):
         'next_offset':end if end < len(value) else None}}
 
 
-def query_identity(run, state, directory, request):
+def query_binding(run, state, directory, request):
+    """Exact legacy identity payload, exposed separately for verifiable memory."""
     def file_identity(path):
         path = Path(path)
         if not path.is_file():
@@ -812,7 +833,7 @@ def query_identity(run, state, directory, request):
     if 'proof_state_query' in request:
         from regen.planning.planner_workspace import intermediate_target
         node, observation = intermediate_target(directory.parent.parent, state, request)
-    return digest({'request':request, 'observation':observation, 'run_id':run.get('run_id'),
+    binding = {'request':request, 'observation':observation, 'run_id':run.get('run_id'),
         'database':file_identity(run.get('premise_database', '')),
         'database_wal':file_identity(str(run.get('premise_database', ''))+'-wal'),
         'vectors':[file_identity(Path(run.get('premise_database', '')).parent/name)
@@ -823,7 +844,16 @@ def query_identity(run, state, directory, request):
         'context':{k:node.get(k) for k in ('id', 'statement', 'context')} if node else None,
         'accepted_prefix':[(n, digest(state['proofs'][n])) for n in state['accepted_order']],
         'context_revision':state.get('context_revision',0),
-        'context_imports':state.get('context_imports')})
+        'context_imports':state.get('context_imports')}
+    if request.get('retrieval_policy') == 'indexed-v1':
+        from regen.planning.retrieval_usage import indexed_implementation_binding
+        binding['retrieval_implementation'] = indexed_implementation_binding(request)
+    return binding
+
+
+def query_identity(run, state, directory, request):
+    # Keep historical IDs byte-for-byte compatible; metadata is only a projection.
+    return digest(query_binding(run, state, directory, request))
 
 
 def cached_query_feedback(state, directory, identity):
@@ -858,7 +888,8 @@ def execute_query(run, package, state, checker, directory, request, item_index=N
         raise ValueError('query request must be an object')
     audit_path = (audit_directory or directory)/('fact-selection.json' if item_index is None
                             else f'fact-selection-{item_index:02d}.json')
-    identity = query_identity(run, state, directory, request)
+    binding = query_binding(run, state, directory, request)
+    identity = digest(binding)
     page, reused_request = cached_query_feedback(state, directory, identity)
     reused_task = None
     if page is None:
@@ -872,7 +903,9 @@ def execute_query(run, package, state, checker, directory, request, item_index=N
     previous = [h['request_number'] for h in history_actions(state)
                 if h.get('query_identity') == identity]
     known = {f['record_id'] for f in state.get('batch_facts', [])}
+    from regen.planning.retrieval_usage import public_query_binding
     return {**page, 'status':'available', 'query_identity':identity,
+        'query_binding':public_query_binding(binding, state),
         'query_progress':{'previous_identical_requests':previous,
             'reused_request':reused_request,'reused_task_id':reused_task,
             'new_record_ids':[f['record_id'] for f in page.get('records', []) if f['record_id'] not in known]}}
@@ -883,16 +916,27 @@ def batch_query(run, package, state, checker, directory, request, *, audit_path=
     audit_path = audit_path if audit_path is not None else directory/'fact-selection.json'
     if not isinstance(request, dict):
         raise ValueError('query request must be an object')
+    structural = request.get('structural_rerank', False)
+    if type(structural) is not bool:
+        raise ValueError('structural_rerank must be boolean')
+    if structural and (request.get('retrieval_policy') != 'indexed-v1'
+                       or not any(key in request for key in ('goal_query', 'proof_state_query'))):
+        raise ValueError('structural_rerank requires an indexed-v1 target query')
+    clean_request = {k: v for k, v in request.items() if k != 'structural_rerank'}
+    rerank_arguments = {}
+    if structural:
+        from regen.execution.premise_structure import rerank
+        rerank_arguments['candidate_reranker'] = lambda context, records: rerank(checker, context, records)
     nodes = {n['id']: n for n in state['graph']['nodes']}
     if 'proof_state_query' in request:
         from regen.planning.planner_workspace import intermediate_target
         from regen.execution.file_planner_recall import recall_for_node
         node, observation = intermediate_target(directory.parent.parent, state, request)
-        clean = {k:v for k,v in request.items() if k != 'proof_state_query'}
+        clean = {k:v for k,v in clean_request.items() if k != 'proof_state_query'}
         clean['goal_query'] = True
         return recall_for_node(run['premise_database'], node, clean,
             generated_records=directory.parent.parent/'sealed-premises.json',
-            audit_path=audit_path, observation=observation)
+            audit_path=audit_path, observation=observation, **rerank_arguments)
     context_id = request.get('context_node_id')
     if context_id is not None and (not isinstance(context_id, str) or context_id not in nodes):
         raise ValueError('context_node_id must be an actual current graph ID or omitted')
@@ -900,9 +944,9 @@ def batch_query(run, package, state, checker, directory, request, *, audit_path=
         if context_id is None:
             raise ValueError('goal_query requires an actual context_node_id')
         from regen.execution.file_planner_recall import recall_for_node
-        return recall_for_node(run['premise_database'], nodes[context_id], request,
+        return recall_for_node(run['premise_database'], nodes[context_id], clean_request,
             generated_records=directory.parent.parent/'sealed-premises.json',
-            audit_path=audit_path)
+            audit_path=audit_path, **rerank_arguments)
     if not is_fact_request(request) or 'proof_state_query' in request:
         raise ValueError('use explicit premise_queries or goal_query with context_node_id')
     queries = request.get('premise_queries', [request])

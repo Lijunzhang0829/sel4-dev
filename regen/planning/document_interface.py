@@ -74,12 +74,46 @@ def internal_request(value):
 def observation_instructions():
     # Share observation semantics while removing legacy planner action schemas.
     from regen.planning.batch_file_planner import INSTRUCTIONS
+    from regen.planning.evidence_reads import EVIDENCE_INSTRUCTIONS
     text = INSTRUCTIONS.split('Observation actions',1)[1].split('{"action":"finish"',1)[0]
+    # Historical journal readers remain supported; new document agents see one
+    # evidence-recovery operation instead of four independent lookup actions.
+    text = '\n'.join(line for line in text.splitlines() if not any(
+        line.startswith('{"action":"' + action + '"')
+        for action in ('read_facts', 'read_queries', 'read_proofs')))
+    text = text.replace('read_proofs', 'read_evidence with proof refs').replace(
+        'read_facts', 'read_evidence with fact refs')
+    text = text.replace('(all may be used alone or within observe):',
+                        '(independent query/diagnostic reads may be grouped with observe):')
+    text = text.replace('Omit context_node_id for global context.',
+        'For a target-specific query include context_node_id so read_entry can restore its retrieval history. '
+        'Omit it for genuinely global queries; the harness will not guess their target.')
     for old,new in sorted(PUBLIC_NAMES.items(),key=lambda pair:-len(pair[0])):
         import re
         text = re.sub(r'\b'+re.escape(old)+r'\b',new,text)
     return text.replace('graph node ID','entry ID').replace('node ID','entry ID').replace(
-        'submitted node','submitted entry').replace('multi-node','multi-entry').replace("node's declaration","entry's declaration")
+        'submitted node','submitted entry').replace('multi-node','multi-entry').replace("node's declaration","entry's declaration") + '\n' + EVIDENCE_INSTRUCTIONS + '''
+For bounded goal retrieval, explicitly select retrieval_policy="indexed-v1".
+It indexes upstream/generated candidates before scoring. candidate_budget (1..500,
+default 100) bounds the candidate pool before optional native structural reranking;
+only the first five ranked records are displayed. This is a retrieval horizon,
+not a claim that other useful facts do not exist. Legacy requests retain their
+previous ranking. Exact-name and definition lookup are unchanged.
+{"action":"query","request":{"goal_query":true,"context_entry_id":"target entry ID","retrieval_policy":"indexed-v1","candidate_budget":50,"structural_rerank":true}}
+structural_rerank elaborates the complete owned declaration in checked imports
+and its owned context, then uses native typed matching on this candidate pool.
+It can report a conclusion match, a left-to-right rewrite match, and outstanding
+premises; it neither discharges those premises nor publishes a proof. Indirect
+use and reverse rewriting may still work when no direct match is reported.
+Historical printed residuals retain lexical results and report that native
+structural matching is unavailable; they are never reparsed as a live context.
+Generated discovery is reference-only. Inspect visibility and provider versions
+from list_generated/read_generated before choosing imports or copying a proof.
+read_entry retrieval memory distinguishes returned candidates, explicit reads,
+proof-text mentions in attempts and accepted proof-text mentions. Textual mentions
+are not native dependency certificates. Old target/environment bindings remain
+historical evidence, not current applicability judgments or permanent exclusions.
+'''
 
 
 def tool_contracts():
@@ -87,6 +121,7 @@ def tool_contracts():
     import json
     import re
     from regen.planning.parallel_file_planner import tools
+    from regen.planning.evidence_reads import evidence_schema
     text={'type':'string'}
     sha={'type':'string','minLength':1}
     edit={'type':'object','properties':{'old':{'type':'string','minLength':1},'new':text},
@@ -177,12 +212,7 @@ def tool_contracts():
             'description':'Check the complete current draft if necessary, then run full verification, audit and build before publishing. Failed checks return feedback without sealing.',
             'properties':{'action':{'const':'finish'},'source_sha256':sha},
             'required':['action','source_sha256'],'additionalProperties':False},
-        'read_context_index':{'type':'object',
-            'description':'Page saved fact/query addresses without rereading the draft or invoking Isabelle.',
-            'properties':{'action':{'const':'read_context_index'},'index':{'enum':['facts','queries']},
-                'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':100},
-                'snapshot_sha256':sha},
-            'required':['action','index'],'additionalProperties':False},
+        'read_evidence':evidence_schema(),
     }
     examples=[{'action':'report_unresolved','reason':'The fixed goal remains unresolved after the recorded checks','classification':'proof_search_exhausted'},
         {'action':'check_refutation','entry_id':'fixed entry ID','proof_body':'complete proof of the checker-generated negative goal'},
@@ -201,7 +231,8 @@ def tool_contracts():
         {'action':'diagnose_failure','failure_id':'ID from read_theory.workflow',
          'classification':'script','plan':'repair the existing proof against the actual native goal'},
         {'action':'finish','source_sha256':'current complete draft hash'},
-        {'action':'read_context_index','index':'facts','offset':0,'limit':32}]
+        {'action':'read_evidence','refs':[{'kind':'fact','id':'record ID returned by query'}]},
+        {'action':'read_evidence','index':'facts','offset':0,'limit':32}]
     instructions=observation_instructions()
     decoder=json.JSONDecoder()
     for match in re.finditer(r'\{"action":',instructions):
@@ -234,6 +265,10 @@ def tool_contracts():
                 'Pending contracts may be proved earlier in the same batch; they are never assumed. '
                 'Adopt, adapt or discard suggestions based on actual proof feedback. Suggestions create '
                 'no imports, facts or mandatory waiting dependencies.',
+            'retrieval_memory':'read_entry restores explicitly target-bound query history and a bounded set '
+                'of complete recalled candidates, with totals and read_evidence navigation. Unbound queries '
+                'remain global. These records are retrieval observations, not proof authority or evidence '
+                'of actual premise use; historical environment changes require current-context checking.',
             'references':'unsealed generated material is reference-only, never an implicit premise'},
         'helper_format':{'description':'Use the same shared document markers as fixed entries; only helpers may introduce new statements.',
             'example':'(* REGEN-BEGIN {"id":"h1","role":"helper","context":[]} *)\nlemma helper_name: "proposition"\n(* REGEN-PROOF *)\noops\n(* REGEN-END *)'},

@@ -139,6 +139,35 @@ class DynamicDocumentImportControllerTests(unittest.TestCase):
         self.assertEqual(self.read()['document']['source'], desired['source'])
         self.assertTrue(self.read()['document']['imports_pending'])
 
+    def test_structural_goal_query_applies_pending_imports_before_observing(self):
+        self.edit_imports([SOURCE])
+        request = {'goal_query': True, 'context_node_id': 'target_contract',
+                   'retrieval_policy': 'indexed-v1', 'structural_rerank': True}
+        with patch('regen.execution.import_revisions.prepare_import_change',
+                   side_effect=ValueError('synthetic unsealed provider')) as prepare, \
+                patch.object(self.controller, '_observe') as observe:
+            result = self.action({'action': 'observe',
+                                  'reads': [{'action': 'query', 'request': request}]})
+            prepare.assert_called_once()
+            observe.assert_not_called()
+        self.assertEqual(result['status'], 'imports_rejected')
+        self.assertIn('synthetic unsealed provider', result['diagnostic'])
+        self.assertTrue(self.read()['document']['imports_pending'])
+        self.assertEqual(self.controller._state('Target')[1].get('context_revision', 0), 0)
+
+    def test_lexical_goal_query_retains_checked_context_with_pending_imports(self):
+        self.edit_imports([SOURCE])
+        request = {'goal_query': True, 'context_node_id': 'target_contract',
+                   'retrieval_policy': 'indexed-v1'}
+        with patch('regen.execution.import_revisions.prepare_import_change') as prepare, \
+                patch.object(self.controller, '_observe', return_value={'status': 'available'}) as observe:
+            result = self.action({'action': 'query', 'request': request})
+            prepare.assert_not_called()
+            observe.assert_called_once()
+        self.assertEqual(result['status'], 'available')
+        self.assertEqual(result['context_revision'], 0)
+        self.assertTrue(self.read()['document']['imports_pending'])
+
     def assert_first_import_action_initializes_scaffold(self, action):
         saved = self.prove_draft()
         self.edit_imports([SOURCE])
