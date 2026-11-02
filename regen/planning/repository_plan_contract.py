@@ -56,7 +56,16 @@ def proposal_schema(version=6):
             })),
             reuse_suggestions=array(obj({'provider': TEXT, 'consumer': TEXT, 'reason': TEXT})),
         )
-    return obj(fields)
+    required = list(fields)
+    if version == 6:
+        fields['proof_direction_suggestions'] = array(obj({
+            'id': TEXT, 'target_contract_id': TEXT, 'direction': TEXT,
+            'candidate_premise_ids': {**STRINGS, 'uniqueItems': True},
+            'candidate_contract_ids': {**STRINGS, 'uniqueItems': True},
+            'open_questions': STRINGS,
+        }), description='Optional hypotheses for File Planner to adopt, revise or ignore. '
+            'Candidate IDs do not certify availability, create imports or become premises.')
+    return obj(fields, required)
 
 
 def example_proposal():
@@ -92,9 +101,6 @@ def operations(*, allow_revision=True):
         'inspect': operation('inspect', {'values': {**STRINGS, 'minItems': 1, 'maxItems': 50}}, ['values'],
             'Read complete parent facts using record IDs returned by search/definitions, and record inspection receipts.',
             {'values': ['returned-premise-record-id']}),
-        'related': operation('related', {'values': {**STRINGS, 'minItems': 1}, 'limit': LIMIT, 'offset': OFFSET}, ['values'],
-            'Read relation candidates for public contract IDs; candidates do not establish dependencies.',
-            {'values': ['C0001'], 'limit': 20, 'offset': 0}),
         'read_prior': operation('read_prior', {'epoch': {'type': 'integer', 'minimum': 1}, 'theory': TEXT}, ['epoch', 'theory'],
             'Read an accepted theory-state snapshot (not an unaccepted draft) from an earlier accepted epoch of this experiment, as reference only. Get epochs and theory names from experiment_status.prior_plans.',
             {'epoch': 1, 'theory': 'Generated_Example'}),
@@ -132,8 +138,8 @@ def contracts(*, allow_revision=True):
         'call_shape': {'request': {'action': 'contracts'}},
         'field_conventions': {
             'values': 'A JSON list of strings, never query/name/ids. Use public contract IDs or returned premise IDs as the selected action requires.',
-            'limit': 'Default 20, maximum 50; supported by search, definitions and related.',
-            'offset': 'Default 0; supported by definitions and related; use returned next_offset.',
+            'limit': 'Default 20, maximum 50; supported by search and definitions.',
+            'offset': 'Default 0; supported by definitions; use returned next_offset.',
             'proposal': 'Complete plan object. schema_help and proposal_schema describe version 6; common validation also supports legacy plan formats.',
         },
         'result_semantics': {
@@ -172,16 +178,24 @@ def schema_help(*, allow_revision=True):
         'Submit a complete proposal using the supplied proposal_schema. Assign every fixed contract exactly once. '
         'Preserve the exact statements and contexts. Choose theory count, grouping, order and helpers yourself. '
         'required_imports form an acyclic graph; imported generated providers must be sealed before use, '
-        'and imports freeze when a theory starts. Theory array order is ready priority, not a proof dependency. '
+        'and the initial import manifest freezes when a theory starts. During document proof generation, '
+        'effective generated imports can change through checked context transactions before theory publication. '
+        'Theory array order is ready priority, not a proof dependency. '
         'context_profile_ids must refer to the supplied legal context profiles. '
         'contract_relations require returned evidence IDs; similarity alone does not certify applicability. '
         'helper_decisions, collaboration_groups and reuse_suggestions are optional intentions/advice; '
         'empty lists are valid and unproved material never becomes a premise. '
+        'The optional proof_direction_suggestions list records tentative directions for individual contracts. '
+        'candidate_premise_ids must have been inspected; candidate_contract_ids may identify other fixed '
+        'contracts still awaiting proof. The theory proof agent decides whether to use a suggestion and must check '
+        'candidate availability in the current proof context before reuse. Advice creates no imports, '
+        'readiness dependencies or premises; failed candidates do not remove the target obligation. '
         'validate checks the proposal, preflight elaborates its declarations, and submit publishes the plan. '
         'Inspect returned valid/errors/submitted/accepted fields; a tool response does not imply acceptance. '
         'No proof has been established by plan acceptance. '
         + ('Use begin_revision before replacing an accepted plan; a replacement invalidates existing proof authority '
            'until rechecked in the new context.' if allow_revision else
            'This interface accepts one initial plan only; after acceptance its theories, contract allocation, '
-           'dependencies and imports are immutable for the run.')
+           'dependencies and imports are immutable as the initial plan. Runtime document import revisions '
+           'are recorded separately and cannot change fixed contract allocation.')
     )

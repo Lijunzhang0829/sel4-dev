@@ -153,17 +153,13 @@ class WorkspaceHarness:
         if not isinstance(values,list) or not all(isinstance(x,str) for x in values): raise ValueError('values must be strings')
         if isinstance(limit,bool) or not isinstance(limit,int) or not 1<=limit<=50: raise ValueError('limit must be 1 to 50')
         if isinstance(offset,bool) or not isinstance(offset,int) or not 0<=offset<=2**63-1: raise ValueError('offset must be a nonnegative integer')
-        if offset and action not in {'related','definitions'}: raise ValueError('offset is supported by definitions and related only')
+        if offset and action != 'definitions': raise ValueError('offset is supported by definitions only')
         if action=='contracts':
             if not values: return {'records':self.view.payload['contract_cards']}
             if not set(values)<=self.view.public_contracts.keys(): raise ValueError('Unknown public contract ID; use contracts with no arguments for the catalog.')
             records=[self.view.public_contracts[x] for x in values]
             self.state['inspected_contracts'].update({x['contract_id']:x for x in records})
             return {'records':records}
-        if action=='related':
-            if not values or not set(values)<=self.view.public_contracts.keys(): raise ValueError('related requires public contract IDs')
-            rows=[r for r in self.view.payload['contract_relation_candidates'] if r['left_contract_id'] in values or r['right_contract_id'] in values]
-            return {'records':rows[offset:offset+limit], 'next_offset':offset+limit if offset+limit<len(rows) else None, 'notice':'Shared symbols are clues, not proven dependencies.'}
         if action in {'search','definitions'}:
             query=' '.join(values).strip()
             if not query: raise ValueError('Provide a fact name, definition name, or concept.')

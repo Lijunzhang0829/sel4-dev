@@ -8,10 +8,10 @@ from pathlib import Path
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('action', choices=['contracts','definitions','search','inspect','related','validate','preflight','submit'])
+    p.add_argument('action', choices=['contracts','definitions','search','inspect','validate','preflight','submit'])
     p.add_argument('values', nargs='*')
     p.add_argument('--limit', type=int, default=20)
-    p.add_argument('--offset', type=int, default=0, help='pagination for definitions/related')
+    p.add_argument('--offset', type=int, default=0, help='pagination for definitions')
     a = p.parse_args()
     request = {'action':a.action, 'values':a.values, 'limit':a.limit, 'offset':a.offset}
     if a.action in {'validate','preflight','submit'}:

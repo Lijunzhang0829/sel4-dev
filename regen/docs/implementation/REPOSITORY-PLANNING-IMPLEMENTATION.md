@@ -1,5 +1,7 @@
 # 仓库规划实现
 
+2026-11-02：当前输入已移除 `related`、`principal_symbols` 和 `logical_shape`。目录只负责目标身份与公共环境，完整契约详情通过 ID 或显式启用的文件读取。当前 document 路径由持续运行的 File Planner 处理失败后的证明和局部结构修订，没有独立 GRA 阶段；支持在草稿中累计增删生成 provider imports，在下一次原生操作前统一应用，finish 可先复检完整草稿再 seal。规划流程与交接见 [规划输入、顺序与候选复用](PLANNING-INPUT-AND-PROOF-RELATIONS.md)。旧实验产物和冻结策略不重写。
+
 2026-09-25：当前端到端控制流及本模块 TODO 见 [M1 仓库规划](../design/PARALLEL-PROOF-PIPELINE.md#m1) 与 [M2 规划验收](../design/PARALLEL-PROOF-PIPELINE.md#m2)。owner-visible/blind prompt 已按可见性策略修正，规划预检已接统一执行器；实际模型生成及架构质量评价仍需实验。
 
 当前默认链路只支持独立的 Refine 实验。Refine 与 CRefine 是两份数据集；Refine 的输入、
@@ -20,8 +22,8 @@ python3 -m regen.preparation.planning_input \
 准备模块直接消费已经去除 Refine 普通人类证明的 seL4 树，不创建或暴露 environment ID。
 它输出：
 
-- `repository-planning-input.json`：完整 contracts、紧凑 contract cards、ROOT session closure、
-  Refine theory import graph、context profiles 和确定性 relation candidates；
+- `repository-planning-input.json`：完整 contracts、只含 ID/name/owner 的最小 contract cards、ROOT session closure、
+  Refine theory import graph 和 context profiles；兼容字段 `contract_relation_candidates` 为空，不再生成词法关系候选；
 - `parent-premises.sqlite`：只读父 session premise 库；
 - `parent-premises-manifest.json`：记录数、内容身份和过滤政策。
 
@@ -46,7 +48,7 @@ harness 查询证据、验证和提交，详见第 9 节。当前 workspace 政�
 - `resolve_symbols`：在父 premise 索引中报告唯一、歧义或未找到；
 - `validate_repository_plan`：由结构 validator 实现，不交给模型自报。
 
-旧模式使用 `interaction: agent-iterative`。Agent 从紧凑契约 cards、关系候选和上下文摘要开始，
+历史旧模式使用 `interaction: agent-iterative`，旧冻结输入曾包含紧凑契约 cards、关系候选和上下文摘要；这些历史字段不再进入当前公开规划视图。旧控制器允许 agent
 自主选择检查、检索、验证、修改、提交或停止；不限制检索轮数或提案修改次数，也不要求先完成
 固定的两阶段 inspection 流程。单次请求仍有分页上限，避免一次注入整个数据库。
 
@@ -80,7 +82,7 @@ Agent 可以在验证失败后补充检索，也可以在验证通过后继续�
 
 当前 workspace 政策的 proposal、plan 与 projection 使用 schema 6，file-generation-list 使用 schema 7，增加 advisory collaboration_groups/reuse_suggestions；旧 schema 4/5 仍按原语义兼容读取。它包含：
 
-- evidence-backed `contract_relations`；
+- evidence-backed `contract_relations`：agent 可引用本次已 inspect 的合法事实表达语义关系；它不是已删除的词法 `related` 查询结果；
 - 每个生成 theory 的完整 contract 分配和 context profile；
 - `reuse_existing_fact` 或 `propose_auxiliary_intent` 两类 helper 决策；
 - 显式 theory provider 边、ready tie-break priority 和简短理由。
@@ -108,11 +110,22 @@ repository-plan.json                 # 当前投影
 
 ## 5. File Planner 与执行交接
 
-File projection 只冻结该 theory 的 contracts、context profile、显式 provider theories、已检查的
-父 premise IDs 和辅助 intents。File Planner 在 theory 第一次 ready 时运行一次，补出精确的
-局部 statements 与 DAG。每个生成节点必须记录 semantic role、reasoning gap、intended
-consumers，以及 premise evidence IDs 或明确查询。初始图经真实 statement elaboration 后提交为
-revision 1；此后只有 Graph Revision Agent 能修订图。
+File projection 固定该 theory 的 contracts、context profile、初始显式 provider theories、已检查的
+父 premise IDs 和辅助 intents。当前 `parallel-workspace` 默认使用 document 接口：File Planner
+持续维护该 theory 的 `.thy` 草稿，通过 `edit_proof` / `edit_theory` 修改证明、helpers 和顺序，
+通过原生检查获取反馈后继续修订，直到完成或按运行策略停止。当前流程没有独立 GRA 阶段，
+也不要求先建立精确的局部调度 DAG。`generic_codex_agent` 同样复用该 document controller。
+
+旧 `run-file` / `run-session` 的图执行路径仍保留独立 revision agent；这是旧执行模式，
+不能据此描述当前 File Planner 的失败处理。固定 contract 陈述、上下文和基础语义不因修订而改变。
+当前 document 工作区可通过 `edit_theory` 的 `imports` 列表累计修改生成 provider 导入；
+实际上下文只在下一次原生操作前切换。新增 provider 必须是同运行内已认证的固定版本，
+导入变化不得改变固定目标的原生含义。已 seal 或部分认证导出的 theory 保持不可变。
+
+`read_theory` 区分 `draft_imports`、`checked_imports` 和 `imports_pending`。应用新上下文时
+旧证明文本和历史保留，当前认证 prefix 清空以等待重新检查；查询范围与 checker 按新版本更新。
+原始 `imports.json` 不覆盖，有效导入由日志中的 `context_revision` / `context_imports` 决定。
+`finish` 可将有完整证明文本但尚未检查的草稿先送原生检查，成功后继续完整审计和 seal。
 
 直接 file list 使用 schema 5，并把每份 projection 绑定到同一个 plan revision。Runner 只导入
 显式且已 seal 的 provider theories。`--max-parallel-theories N` 可并行执行 DAG 中同时 ready 的
@@ -138,13 +151,13 @@ python3 -m regen.planning.repository_planner \
 主要测试为 `test_planning_input.py`、`test_plan_revisions.py`、`test_theory_plan.py`、
 `test_repository_planner.py` 和 `test_repository_execution.py`。
 
-并行 theory 使用独立的容器名称、generated 构建目录、ROOT、日志和 heaps；启动前复制冻结 provider 的传递导入源文件，并在本地构建 provider session。仅 sealed 源文件发布到运行级 generated 目录。
+并行 theory 使用独立的容器名称、generated 构建目录、ROOT、日志和 heaps；启动前复制认证 provider 的传递导入源文件，并在本地构建 provider session。document 路径更换 imports 时按版本准备新的 checker/provider 上下文，工作区及证明草稿保留。只有认证导出发布到运行级 generated 目录。
 
-首次运行使用 `python3 -m regen.tools.repository_planning_retry --planning-input … --policy … --output … --allow-external-call`。直接入口也使用同一传输重试逻辑：每个逻辑请求超时后按原请求重试一次，两次连续超时暂停；成功重试丢弃前次部分响应并保留时间与用量摘要。重复元数据以表格和符号索引编码，完整契约陈述保持不变。`planner-policy.json` 与输入一起冻结。
+首次运行使用 `python3 -m regen.tools.repository_planning_retry --planning-input … --policy … --output … --allow-external-call`。直接入口也使用同一传输重试逻辑：每个逻辑请求超时后按原请求重试一次，两次连续超时暂停；成功重试丢弃前次部分响应并保留时间与用量摘要。目录身份字段以紧凑表格编码，完整契约陈述保持不变；当前不再编码词法符号摘要。`planner-policy.json` 与输入一起冻结。
 
 New preparations finalize their premise catalog through the native-verified
 [schema v2 builder](PREMISE-DATABASE-V2.md). Planner inspection supports the
-minimal schema and verifies the catalog hash; proof/GRA rounds can explicitly
+minimal schema and verifies the catalog hash; the generation agent can explicitly
 retrieve candidates from their goal/context via `proof_state_query`.
 
 迭代控制器及回归测试分别位于 `regen/planning/iterative_planner.py` 和 `regen/tests/current/test_iterative_repository_planner.py`。
@@ -152,10 +165,10 @@ retrieve candidates from their goal/context via `proof_state_query`.
 
 ## 7. 无原始归属的契约视图
 
-新规划默认 `contract_visibility: owner-blind-v1`。`owner_blind.py` 在 agent 边界构造白名单视图：
-保留契约名称、完整陈述、必要上下文和属性；去掉 owner_theory、owner_file_slot、原始带归属 ID、
+可见性由冻结策略选择 `owner-blind-v1` 或 `source-theory-visible-v1`；后者仅额外公开原始 owner 标签。`owner_blind.py` 在 agent 边界构造白名单视图：
+两种视图均保留契约名称、完整陈述、必要上下文和属性；owner-blind 视图去掉 owner_theory，二者均去掉 owner_file_slot、原始带归属 ID、
 owner_groups、原 theory import graph 和 same-owner 特征。契约使用语义内容派生的不透明 ID，
-按该 ID 排列。关系候选重新由共享语义符号生成，不复用受旧分组影响的候选集合或顺序。
+按该 ID 排列。当前公开目录从契约身份重新构造，即使读取旧输入，也剥离 `principal_symbols`、`logical_shape` 和旧关系候选；不再生成共享符号关系。
 
 `agent-input.json`、逐轮 prompt 和查询结果是实际模型输入。`planner-input.json` 保留原始冻结输入，
 `private-contract-map.json` 与 `planner-validation-input.json` 仅供 harness 验证和输出回映射，
@@ -178,7 +191,8 @@ Agent 应审视全量契约目录，在依赖具体语义或上下文兼容性�
 
 - `purpose` / `grouping_reason`：职责、内部关联、与邻近 theory 的边界及拆分/合并取舍。
 - `helper_decisions`：已有 helper 的可信复用，或新共享结果的粗粒度意图与受益契约。
-- `suggested_predecessors`：有理由的跨 theory 协作与预期帮助。
+- `required_imports`：必须等待 provider seal 的硬导入边；旧 schema 名称为 `suggested_predecessors`。
+- `collaboration_groups` / `reuse_suggestions`：可选协作或复用建议，不建立可用事实或启动屏障。
 - `ordering_rationale`：全局分解、共享结果策略、DAG、ready 优先级和剩余不确定性。
 
 参考本机 VERO 的 `.claude/skills/vero-plan/SKILL.md`（模块职责、全局覆盖和供下游执行的
@@ -194,15 +208,15 @@ VERO 流程；VERO 的 generation 模板本身使用固定模块，不能据此�
 
 ## 9. 文件型规划 agent（默认入口）
 
-`regen/config/repository-planning-policy.json` 默认选择 `agent-workspace`，显式 workspace 策略也保留；旧迭代策略保持可重放。模型仍为 gpt-5.6-sol / medium。
+`regen/config/repository-planning-policy.json` 默认选择 `agent-workspace`，显式 workspace 策略也保留；旧迭代策略保持可重放。当前默认模型为 gpt-6-astra / medium；已有运行遵循其冻结绑定。
 
 `workspace_planner.py` 启动独立的非 root Docker worker，只挂载只读去归属输入、工具客户端、RPC socket、固定 Codex runtime，以及可写工作区。原仓库、契约私有映射、checker 资产和 Docker socket 不进入 worker。Codex 使用临时独立认证目录，结束时删除；认证不属于模型任务输入。外层容器提供隔离，内层 CLI 可执行脚本和修改工作区文件。审计允许这些工具事件，但该审计类型仅用于仓库规划，不替代 proof-generation 的 no-tool 审计。
 
-全量简洁目录与精确契约是只读文件，不逐轮注入大量共享符号候选。契约按语义 hash 排序映射为 C0001 等短 ID；私有 harness 映射回冻结原 ID。模型通过 `/tool.py` 查询 contracts、definitions、search、inspect、related，增量编辑 plan.json，并运行 validate/preflight/submit。定义查询复用经 native 来源认证的 v2 premise 库，按公开名字查找定义/方程候选；命名匹配不是证明依赖认证。Premise 完整记录必须经过可信查询回执才能在提案中复用。服务在模型容器外运行，查询与提交记录不受 agent 工作区修改影响。
+`catalog.json` 提供全量最小目录：目标条目仅含 `contract_id`、`name` 和可见性策略允许的 `owner_theory`，公共 `context_profiles` 置于单独的顶层字段。它没有完整命题、owned context 或属性，也没有 `principal_symbols`、`logical_shape`。`contracts ID...` 返回完整声明、owned context、属性和允许的 owner；`contract_file_access` 默认为 true，启用时另外提供同等内容的只读 `contracts.json`，设为 false 时不发布该文件。当前目录仍不分页，尚未增加目标全文搜索或原生常量索引。契约按语义 hash 排序映射为 C0001 等短 ID；私有 harness 映射回冻结原 ID。模型通过 `/tool.py` 查询 contracts、definitions、search、inspect，增量编辑 plan.json，并运行 validate/preflight/submit；`related` 已移除。定义查询复用经 native 来源认证的 v2 premise 库，按公开名字查找定义/方程候选；命名匹配不是证明依赖认证。Premise 完整记录必须经过可信查询回执才能在提案中复用。服务在模型容器外运行，查询与提交记录不受 agent 工作区修改影响。
 
 validate 一次返回可定位的格式/覆盖错误，原权威 validator 继续检查 schema、上下文 profile、合法已检查前提和 DAG。preflight 根据冻结契约和模型 provider 边渲染 theory，以 oops 检查原生声明及 imports；不证明任何目标。相邻完全相同的 owned context 共用一个作用域，避免重复 interpretation；声明以 oops 结束，不建立新事实。900 秒原生检查超时独立于模型调用超时。submit 必须同时通过结构检查与原生预检查，最终自然语言回复不能发布计划。
 
-当前字段 required_imports（旧格式名 suggested_predecessors）明确表示后续要等待 seal 并冻结导入的 provider；数组顺序仅用于 ready theory 优先级。Agent 应根据查询到的定义、契约和可复用事实分析潜在循环及跨模块协作，并记录不确定关系。没有 theory 数量、helper 数量或修正轮数配额。
+当前字段 required_imports（旧格式名 suggested_predecessors）表示首次启动前需要认证导出的初始 provider；document 生成期可经独立验收事件修订有效导入。数组顺序仅用于 ready theory 优先级。`contract_relations` 和复用意图是规划建议；实际 contract/helper 引用要等原生证明审计后才能确认，不能从计划边推定。Agent 应根据查询到的定义、契约和可复用事实分析潜在循环及跨模块协作，并记录不确定关系。没有 theory 数量、helper 数量或修正轮数配额。
 
 模型调用仍有单次超时，并按相同请求重试一次；重试前恢复调用前的工作区与查询证据状态，保留已发生请求日志供审计，不消费部分最终响应。计划文件每两秒保存变化快照（不保证捕获每次写入）；快照读取拒绝 symlink。原生预检查失败可重试，同一提案成功的原生检查可复用。发布仍使用原有 plan_id/revision 日志和文件投影。
 
@@ -221,6 +235,6 @@ validate 一次返回可定位的格式/覆盖错误，原权威 validator 继�
 
 新规划以 `required_imports: [{"theory": "Provider", "reason": "..."}]` 表达强制导入；没有 provider 时填空数组。计划输出使用 `required_import_edges`，文件投影使用 `required_providers` 描述 provider 的目的和理由。旧 `suggested_*` 字段只用于旧 schema 的兼容读取，不出现在新规划的接口中。
 
-Agent 在提交前可以修改 import 方案。计划接受后，每个 provider 都必须 sealed，消费者才能开始；实际导入列表在 theory 启动时冻结。串行和并行调度采用相同规则，retired 或 failed provider 均不能满足依赖。READY 优先级不产生 import，也不能绕过依赖。强制导入不要求证明引用其中每个事实；validator 不认证导入最小性或证明充分性。
+Agent 在提交前可以修改初始 import 方案。计划接受后，初始 provider 必须已有合法认证导出，消费者才能首次启动；retired 或 failed provider 均不能满足依赖。当前 document 路径允许尚未发布的消费者累计修改草稿 imports，由下一次原生操作统一验证并记录新的有效上下文。初始导入绑定及历史证据不改写，普通读取不应用待处理编辑。READY 优先级不产生 import，也不能绕过依赖。强制导入不要求证明引用其中每个事实；validator 不认证导入最小性或证明充分性。
 
 原生规划预检显式导入基础语义环境和各 provider；实际证明时有 provider 则导入其 `Generated_Refine.Regen_*` checkpoint，基础语义环境通过 provider 传递继承，无 provider 则直接导入基础环境。预检用 oops 不产生事实，后续证明只能使用已 seal 的真实结果。

@@ -16,6 +16,7 @@ from regen.planning.workspace_harness import WorkspaceHarness
 from regen.planning.workspace_preflight import native_checker
 from regen.planning.repository_plan_contract import contracts as planning_contracts, request_schema, proposal_schema, validate_request
 from regen.planning.document_interface import observation_instructions,tool_contracts
+from regen.planning.planning_advice import ADVICE_INSTRUCTIONS
 
 PROMPT_TEMPLATE = """Prove all fixed contracts in this repository using the supplied Isabelle harness.
 You are one Codex agent responsible for theory planning, proof generation and revision.
@@ -129,7 +130,7 @@ Use proof_tool_help for shared proof/read schemas and examples, and repository_p
 
 def instructions(inactivity_seconds=3600, *, effective_seconds=None, wall_seconds=None,
                  include_planning=False):
-    prompt = PROMPT_TEMPLATE.replace('{inactivity_seconds}', str(inactivity_seconds))
+    prompt = PROMPT_TEMPLATE.replace('{inactivity_seconds}', str(inactivity_seconds)) + '\n' + ADVICE_INSTRUCTIONS
     if effective_seconds is not None and wall_seconds is not None:
         raise ValueError('select one experiment time basis')
     if effective_seconds is not None or wall_seconds is not None:

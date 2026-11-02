@@ -7,7 +7,7 @@ from jsonschema import Draft202012Validator
 from regen.planning.generic_codex_agent import Controller,registry,instructions
 from regen.planning.parallel_file_planner import TheoryController,tools
 from regen.planning.document_interface import tool_contracts
-from regen.planning.repository_plan_contract import schema_help
+from regen.planning.repository_plan_contract import schema_help, validate_request
 from regen.infrastructure.experiment_ledger import Ledger
 from regen.infrastructure.experiment_activity import ActivityStop,UsageSnapshots,observed_usage
 from regen.infrastructure.workspace_transcript import approved_registry
@@ -59,6 +59,16 @@ class GenericContractTests(unittest.TestCase):
             {'theory':'T','proposal':{'action':'finish'}},
         ]
         for value in invalid:self.assertFalse(Draft202012Validator(schema).is_valid(value))
+
+    def test_repository_planning_rejects_removed_related_operation(self):
+        schema=next(t for t in registry() if t['name']=='repository_plan')['inputSchema']
+        request={'action':'related','values':['C0001']}
+        self.assertFalse(Draft202012Validator(schema).is_valid({'request':request}))
+        with self.assertRaisesRegex(ValueError,'action must be one of'):
+            validate_request(request,allow_revision=False)
+        validate_request({'action':'definitions','values':['operation'],'offset':20},allow_revision=False)
+        with self.assertRaisesRegex(ValueError,'Additional properties'):
+            validate_request({'action':'search','values':['operation'],'offset':20},allow_revision=False)
 
     def test_prompt_uses_configured_stop_and_neutral_schema_help(self):
         self.assertIn('123 seconds',instructions(123))

@@ -25,6 +25,7 @@ from regen.execution.checker_policy import exports_available, theory_finished
 from regen.infrastructure.codex_runtime import CodexRuntimeError, runtime_verified_settings
 from regen.infrastructure.progress_events import event_scope, emit_event, generation_exclusion, observe_events
 from regen.planning.proof_workspace_agent import WorkspaceController, workspace_tools, _tool
+from regen.planning.planning_advice import ADVICE_INSTRUCTIONS, planning_advice
 from regen.planning.theory_outcomes import (
     contract_dispositions_enabled, current_dispositions, pending_contract_ids,
 )
@@ -154,6 +155,9 @@ issue, or check_refutation for an independently checked negative result. Neither
 the theory or makes its unfinished contracts available as premises.
 '''
 
+
+INSTRUCTIONS += '\n' + ADVICE_INSTRUCTIONS
+DOCUMENT_INSTRUCTIONS += '\n' + ADVICE_INSTRUCTIONS
 
 GENERATION_STRATEGIES = {
     'baseline': '',
@@ -719,6 +723,7 @@ class TheoryController(WorkspaceController):
             from regen.planning.document_recall import compact_history_feedback, document_observations
             context = planner_input(self.shared._package(self.theory),state)
             document = store.read()
+            advice = planning_advice(self, store, state)
             known_source = arguments.get('if_source_sha256')
             if known_source is not None and (not isinstance(known_source,str) or not known_source):
                 raise ValueError('if_source_sha256 must be a nonempty source hash')
@@ -735,6 +740,7 @@ class TheoryController(WorkspaceController):
                     'accepted_source_sha256':state.get('document_source_sha256'),
                     'status':state['status'],'feedback':compact_history_feedback(state.get('batch_feedback',{}),state),
                     'observations':document_observations(context,state),
+                    **({'planning_advice':advice} if advice else {}),
                     **_contract_view(self)}
         if self.document_mode and name=='read_theory':
             if 'if_source_sha256' in arguments:
@@ -761,8 +767,11 @@ class TheoryController(WorkspaceController):
             if proposal.get('action') == 'read_entry':
                 if set(proposal) != {'action','entry_id'}:
                     raise ValueError('read_entry accepts entry_id only')
-                store, _ = self._document()
+                store, state = self._document()
                 result = store.read_entry(proposal['entry_id'])
+                advice = planning_advice(self, store, state, entry_id=proposal['entry_id'])
+                if advice:
+                    result['planning_advice'] = advice
                 if contract_dispositions_enabled(self.run):
                     result['contract_disposition'] = _contract_view(self)['contract_dispositions'].get(proposal['entry_id'])
                 return result

@@ -29,7 +29,7 @@ ALLOWED_EVENTS={'reasoning','agent_message','error','command_execution','file_ch
 
 def instruction(payload, schema_version=6, *, contract_file_access=True):
     # Reuse the proposal schema/goals, but put data in read-only files instead of
-    # injecting the entire contract and shared-symbol catalog on every model call.
+    # injecting the entire contract catalog on every model call.
     minimal={**payload,'contract_cards':[],'contract_relation_candidates':[]}
     template=({5: prompt_v5, 6: prompt_v6}[schema_version])(minimal,[]).split('\nPREVIOUS VALIDATION ERRORS:')[0]
     template=template.replace('Use only the supplied legal input and any explicit harness operations offered by the enclosing interaction. Do not read files, history, removed proofs, or external sources.',
@@ -39,13 +39,13 @@ def instruction(payload, schema_version=6, *, contract_file_access=True):
         template=template.replace('do not reconstruct original source ownership.',
             'original theory names are provided as reference metadata; choose a new allocation freely.')
         template += '\nOriginal Refine theory names are explicitly available as owner_theory in /input/contracts.json and /input/catalog.json. You may use them for comparison and planning; they do not prescribe the new grouping or supply an import graph. No original proof bodies or deleted helper declarations are provided.\n'
-    template=template.replace('Return JSON only matching this schema (all fields required):',
-        'Write plan.json matching this schema (all fields required):')
+    template=template.replace('Return JSON only matching this schema',
+        'Write plan.json matching this schema')
     ownership = ('Original theory names are reference metadata; choose the new grouping freely.'
                  if payload.get('contract_visibility') == 'source-theory-visible-v1' else
                  'Original theory attribution is deliberately absent. Do not try to reconstruct it.')
     text = '''You are an autonomous repository architecture planner in an isolated worker.
-Read /input/catalog.json and /input/contracts.json (all exact frozen declarations and owned contexts).
+Read /input/catalog.json for target IDs, names, optional source owners and common context profiles. Read /input/contracts.json for exact frozen declarations, owned contexts and attributes.
 ''' + ownership + '''
 Keep a parseable plan.json in /workspace; write a scaffold early and edit incrementally.
 Use Python or shell scripts to assemble IDs, maintain coverage, and edit JSON; do not recopy whole plans in chat.
@@ -57,7 +57,6 @@ Use /tool.py to query the trusted harness. For example:
   python /tool.py definitions FUNCTION_NAME --offset 20
   python /tool.py search 'PUBLIC_FACT_NAME or concept'
   python /tool.py inspect PREMISE_ID
-  python /tool.py related C0001
   python /tool.py validate plan.json
   python /tool.py preflight plan.json
   python /tool.py submit plan.json
@@ -67,14 +66,14 @@ Read actual definitions when boundaries depend on operation composition. Examine
 Distinguish a restricted-case contract from a more general contract for the same operation: the restricted result may be provable first and remove an apparent circular waiting dependency. Decide this from the actual assumptions and definitions; do not assume every implementation call requires the general correspondence theorem. Do not hard-code any existing repository decomposition.
 Query order and theory count are yours to choose. Do not manufacture helper intents or provider edges to fill quotas.
 Theories have unique names and helper IDs matching [A-Za-z][A-Za-z0-9_]* (no hyphens).
-IMPORTANT: required_imports are the planned PROVIDERS used by downstream execution to freeze imports after those theories seal. Once accepted, these are mandatory imports, not optional scheduling suggestions. All providers must seal before this theory starts, then imports are frozen. Individual fact citations are not mandatory. Do not add edges merely to prioritize work. The theories array separately breaks ties among ready theories.
+IMPORTANT: required_imports are initial mandatory PROVIDERS, not optional scheduling suggestions. All providers must publish certified exports before this theory starts. The unpublished document proof agent may later revise imports using certified providers, with native context validation and proof rechecking. Individual fact citations are not mandatory. Do not add edges merely to prioritize work. The theories array separately breaks ties among ready theories.
 For schema 6, collaboration_groups and reuse_suggestions express opportunities without freezing imports, readiness dependencies or proof routes. A collaboration group can span physical theories; only sealed imported results become legal cross-theory premises. Keep uncertain relations explicit, and promote a suggestion to required_imports only when committing to that context. Review whether hard imports and ready priority agree with your rationale. The fields name, purpose, grouping_reason, helper_decisions and required_imports describe a handoff to File Planner, not a local proof graph. The native-checker entry name Planner_Preflight_All is reserved.
 Exact new helpers and local proof DAGs belong to File Planner. This stage generates no proofs and uses no proof-state retrieval.
 Validate and repair incrementally; validation returns errors without changing your file. Native preflight renders exact declarations with oops and real planned imports; it proves nothing. A successful final response alone does not submit anything: finish by calling submit on the complete plan, which also requires native preflight to pass. Only then give a brief final status.
 Do not use the network, install packages, access /codex-home, change /input, or modify /tool.py. They are not task inputs.
 ''' + template
     if not contract_file_access:
-        text = text.replace('Read /input/catalog.json and /input/contracts.json (all exact frozen declarations and owned contexts).', 'Read /input/catalog.json for the complete compact catalog. Exact declarations and owned contexts are available only through /tool.py contracts PUBLIC_ID ...; choose batches yourself. /input/contracts.json is deliberately absent.').replace('in /input/contracts.json and /input/catalog.json', 'in /input/catalog.json and exact contract query results')
+        text = text.replace('Read /input/catalog.json for target IDs, names, optional source owners and common context profiles. Read /input/contracts.json for exact frozen declarations, owned contexts and attributes.', 'Read /input/catalog.json for the complete compact catalog. Exact declarations, owned contexts and attributes are available only through /tool.py contracts PUBLIC_ID ...; choose batches yourself. /input/contracts.json is deliberately absent.').replace('in /input/contracts.json and /input/catalog.json', 'in /input/catalog.json and exact contract query results')
     return text
 
 

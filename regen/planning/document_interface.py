@@ -227,6 +227,13 @@ def tool_contracts():
             'read_theory':'Default returns exact full source. Optional if_source_sha256 suppresses source '
                           'only on an exact hash match and marks source_unchanged; feedback remains current. '
                           'Cumulative fact/query indexes are paginated with explicit totals and next_action.',
+            'planning_advice':'Optional unverified directions, not mandatory proof routes. read_theory shows '
+                'candidate status summaries; read_entry expands the target candidates and their fixed declarations. '
+                'Status is recomputed from current accepted snapshots, draft order and checked imports; '
+                'can_use_as_current_premise describes certified visibility, not applicability. '
+                'Pending contracts may be proved earlier in the same batch; they are never assumed. '
+                'Adopt, adapt or discard suggestions based on actual proof feedback. Suggestions create '
+                'no imports, facts or mandatory waiting dependencies.',
             'references':'unsealed generated material is reference-only, never an implicit premise'},
         'helper_format':{'description':'Use the same shared document markers as fixed entries; only helpers may introduce new statements.',
             'example':'(* REGEN-BEGIN {"id":"h1","role":"helper","context":[]} *)\nlemma helper_name: "proposition"\n(* REGEN-PROOF *)\noops\n(* REGEN-END *)'},

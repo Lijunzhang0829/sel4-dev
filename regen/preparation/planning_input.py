@@ -316,46 +316,8 @@ def parent_record(
 
 
 def contract_card(contract: dict[str, Any]) -> dict[str, Any]:
-    statement = contract["exact_statement"]
-    return {
-        "contract_id": contract["contract_id"],
-        "name": contract["name"],
-        "owner_theory": contract["owner_theory"],
-        "normalized_statement_sha256": contract["normalized_statement_sha256"],
-        "principal_symbols": symbols(statement)[:32],
-        "logical_shape": logical_shape(statement),
-    }
-
-
-def relation_hints(cards: list[dict[str, Any]], limit: int = 2000) -> list[dict[str, Any]]:
-    hints = []
-    for index, left in enumerate(cards):
-        for right in cards[index + 1:]:
-            shared = sorted(set(left["principal_symbols"]).intersection(right["principal_symbols"]))
-            same_owner = left["owner_theory"] == right["owner_theory"]
-            if not shared and not same_owner:
-                continue
-            evidence = {
-                "shared_symbols": shared[:16],
-                "same_owner_theory": same_owner,
-            }
-            hints.append({
-                "relation_id": "relation:" + sha256_json({
-                    "left": left["contract_id"], "right": right["contract_id"],
-                    "evidence": evidence,
-                })[:16],
-                "left_contract_id": left["contract_id"],
-                "right_contract_id": right["contract_id"],
-                "candidate_relation": "same-owner" if same_owner else "shared-symbols",
-                "evidence": evidence,
-            })
-    return sorted(
-        hints,
-        key=lambda item: (
-            -len(item["evidence"]["shared_symbols"]),
-            item["left_contract_id"], item["right_contract_id"],
-        ),
-    )[:limit]
+    """Directory metadata only; declarations and contexts stay in contracts."""
+    return {key: contract[key] for key in ("contract_id", "name", "owner_theory")}
 
 
 def _parent_row(record: dict[str, Any]) -> tuple[Any, ...]:
@@ -448,7 +410,7 @@ def build_refine_input(
             "upstream_sessions": upstream,
             "generated_import": "Semantic_Base.Semantic_Root",
         }],
-        "contract_relation_candidates": relation_hints(cards),
+        "contract_relation_candidates": [],
         "parent_premises": {
             "database": "parent-premises.sqlite",
             "manifest": "parent-premises-manifest.json",

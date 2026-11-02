@@ -70,6 +70,45 @@ class WorkspacePlanningTest(unittest.TestCase):
             if c['contract_id']==old:c['contract_id']='contract:Refine.Other_R:x'
         self.assertEqual(short_view(changed).payload,v.payload)
 
+    def test_old_dataset_summaries_do_not_enter_catalog_or_exact_records(self):
+        source=json.loads(self.input.read_text())
+        source['contract_cards'][0].update(principal_symbols=['obsolete'], logical_shape={'has_equality':True})
+        source['contract_relation_candidates']=[{'relation_id':'obsolete-relation'}]
+        for visibility in ('owner-blind-v1', 'source-theory-visible-v1'):
+            view=short_view(source, visibility=visibility)
+            expected={'contract_id','name'} | ({'owner_theory'} if visibility=='source-theory-visible-v1' else set())
+            self.assertEqual(set(view.payload['contract_cards'][0]), expected)
+            self.assertEqual(view.payload['contract_relation_candidates'], [])
+            self.assertEqual(view.canonical_payload['contract_relation_candidates'], [])
+            self.assertNotIn('principal_symbols', json.dumps(view.payload))
+            self.assertNotIn('logical_shape', json.dumps(view.payload))
+            full=view.public_contracts['C0001']
+            self.assertEqual(full['exact_statement'], source['contracts'][0]['exact_statement'])
+            self.assertEqual(full['contract_owned_context'], source['contracts'][0]['contract_owned_context'])
+            self.assertNotIn('obsolete', json.dumps(view.canonical_payload['contract_cards']))
+        catalog=self.h.dispatch({'action':'contracts'})['records']
+        self.assertNotIn('exact_statement', catalog[0])
+        full=self.h.dispatch({'action':'contracts','values':['C0001']})['records'][0]
+        self.assertIn('exact_statement', full)
+        self.assertIn('contract_owned_context', full)
+        text=instruction(self.h.view.payload, contract_file_access=False)
+        self.assertIn('available only through /tool.py contracts', text)
+        self.assertNotIn('python /tool.py related', text)
+
+    def test_related_is_removed_but_inspected_semantic_relations_are_valid(self):
+        result=self.h.dispatch({'action':'related','values':['C0001']})
+        self.assertFalse(result['valid'])
+        self.assertIn('Unknown operation',result['error'])
+        second={**self.h.view.payload['contracts'][0], 'contract_id':'C0002', 'name':'second'}
+        self.h.view.payload['contracts'].append(second)
+        proposal=copy.deepcopy(self.proposal)
+        proposal['theories'][0]['contract_ids'].append('C0002')
+        proposal['contract_relations']=[{'left_contract_id':'C0001','right_contract_id':'C0002',
+            'relation':'common-premise','evidence_ids':['p1']}]
+        self.assertFalse(self.h.validate(proposal)['valid'])
+        self.h.dispatch({'action':'inspect','values':['p1']})
+        self.assertTrue(self.h.validate(proposal)['valid'])
+
     def test_aggregate_errors_and_no_automatic_fix(self):
         proposal=copy.deepcopy(self.proposal);t=proposal['theories'][0]
         t['name']='bad-name';t['contract_ids']=['Unknown','Unknown']

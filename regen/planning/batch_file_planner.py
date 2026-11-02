@@ -19,6 +19,7 @@ from regen.infrastructure.llm_transcript import allocate_artifact_prefix, call_l
 from regen.execution.check_tasks import NativePreparationError
 from regen.planning.proof_graph import build_graph, parse_json_response
 from regen.planning.attempt_memory import compact_target_memory, target_attempts
+from regen.planning.planning_advice import ADVICE_INSTRUCTIONS, static_advice
 
 
 INSTRUCTIONS = '''You are the continuing File Planner for ONE Isabelle theory. Plan and revise its
@@ -147,6 +148,8 @@ Weak retrieval or uncertainty alone is insufficient; exploratory candidates are
 allowed and no meaningless helper is required. Use actual IDs, not placeholders.
 '''
 
+
+INSTRUCTIONS += '\n' + ADVICE_INSTRUCTIONS
 
 DIAGNOSTIC_CHARS = 12000
 PROMPT_CHARS = 800000
@@ -672,6 +675,9 @@ def planner_input(package, state, *, dispositions=None):
     payload['resolved_symbols'] = state.get('batch_symbols')
     payload['requested_proof_states'] = state.get('batch_requested_proof_states', [])
     payload['symbol_observations'] = state.get('batch_symbol_observations', [])
+    advice = static_advice(package)
+    if advice:
+        payload['planning_advice'] = advice
     return payload
 
 

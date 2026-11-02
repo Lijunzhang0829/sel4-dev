@@ -11,10 +11,10 @@
     "timeout_seconds": 1800
   },
   "allowed_planner_inputs": [
-    "compact cards for every verified Refine contract",
-    "exact contract records returned by bounded inspect_contracts requests",
+    "Minimal catalog of every fixed contract ID and name, with owner_theory only when the visibility policy permits it",
+    "Exact contract declarations, owned contexts and attributes returned by explicit contract-ID queries, or read from the complete file when enabled",
     "Native-verified static frozen-parent and retained-semantic premise records returned by explicit searches and inspection",
-    "Owner-independent contract semantic summaries, legal context profiles and shared-symbol relation candidates",
+    "Legal public context profiles; no principal_symbols, logical_shape or automatically generated contract-relation candidates",
     "previous structural validation diagnostics",
     "Original Refine theory names as owner_theory metadata on fixed contracts; informative, not a required grouping"
   ],
@@ -32,9 +32,9 @@
     "premises": "Retrieve established lemmas by name, definition or concept; inspect full statements before reuse. No proof-state query at repository planning time. Pending contracts and new helpers are never premises.",
     "failure": "File Planner may revise exploratory candidates and non-contract helpers using Isabelle feedback. Fixed contracts cannot be deleted or weakened; accepted proof dependencies must remain valid. Preserve attempt history and distinguish failed proofs from infrastructure errors.",
     "validation": "Agent incrementally edits plan.json and calls trusted validate/preflight/submit tools. Exact coverage, legal inspected facts, acyclic providers and native declaration/import preflight are required before publication.",
-    "context_budget": "Whole public contract catalog and exact records are read-only files. Definitions and premises are explicit queries. Related-symbol candidates are on demand. No query-turn or proposal-correction cap.",
+    "context_budget": "The public catalog contains contract IDs, names and policy-permitted owner labels, plus common context profiles. Complete statements, owned contexts and attributes are read by contract ID or from the complete read-only file when enabled. Definitions and premises use explicit queries. No related operation, lexical summaries, query-turn cap or proposal-correction cap.",
     "auxiliary_intents": "Optional shared-result intentions; precise statements and local dependencies belong to File Planner.",
-    "theory_dependencies": "Only required_imports create mandatory provider imports and readiness dependencies. Providers must seal before consumer startup and imports then freeze. collaboration_groups and reuse_suggestions are advisory and grant no premise visibility; reciprocal reuse suggestions do not enter the hard DAG.",
+    "theory_dependencies": "Only required_imports create initial mandatory provider imports and readiness dependencies. Initial providers must publish certified exports before consumer startup. The initial import manifest stays immutable; an unpublished document theory may revise its effective generated imports through native context validation and proof rechecking. Published theories cannot revise imports. collaboration_groups and reuse_suggestions are advisory and grant no premise visibility; reciprocal reuse suggestions do not enter the hard DAG.",
     "priority": "Theory array order is the explicit tie-break among ready theories; predecessor edges take precedence.",
     "iteration": "Agent edits its durable plan and notes, chooses inspection, retrieval, validation, native preflight and explicit submission. No query or correction limit. Transport timeouts are separate from validation failures.",
     "architecture_review": "Review shared-operation families and restricted/general cases before broad protocol groupings. Distinguish semantic/context requirements from possible proof reuse; only the former justify mandatory imports. Leave uncertain assistance advisory, and resolve real import cycles by regrouping or a common lower layer. Local helpers and proof routes evolve in File Planner."

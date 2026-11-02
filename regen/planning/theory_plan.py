@@ -140,40 +140,19 @@ def build_bundle(payload,proposal):
 
 
 def compact_input(payload):
-    """Losslessly tabulate repeated planner metadata; retain every candidate."""
-    cards = payload['contract_cards']
-    indexes = {card['contract_id']: index for index, card in enumerate(cards)}
-    symbols = sorted({symbol for card in cards for symbol in card['principal_symbols']}
-                     | {symbol for item in payload['contract_relation_candidates']
-                        for symbol in item['evidence']['shared_symbols']})
-    symbol_indexes = {symbol: index for index, symbol in enumerate(symbols)}
+    """Tabulate only target identity; exact records arrive through inspection."""
     blind = payload.get('contract_visibility') == 'owner-blind-v1'
     sanitized = payload.get('contract_visibility') in {'owner-blind-v1','source-theory-visible-v1'}
-    card_columns = ['contract_id', 'name'] + ([] if blind else ['owner_theory']) + [
-        'principal_symbol_indexes', 'logical_shape']
+    columns = ['contract_id', 'name'] + ([] if blind else ['owner_theory'])
     metadata = ('benchmark', 'context_profiles', 'parent_premises') if sanitized else (
         'benchmark', 'owner_groups', 'session_graph', 'theory_import_graph',
         'context_profiles', 'parent_premises')
     compact = {key: payload[key] for key in metadata}
     if sanitized:
         compact['contract_visibility'] = payload['contract_visibility']
-    compact['symbols'] = symbols
-    compact['symbol_encoding'] = 'zero-based indexes in symbols; exact inspected statements are unchanged'
     compact['contract_cards'] = {
-        'columns': card_columns,
-        'rows': [[card['contract_id'], card['name']] + ([] if blind else [card['owner_theory']]) + [
-                  [symbol_indexes[symbol] for symbol in card['principal_symbols']],
-                  card['logical_shape']] for card in cards],
-    }
-    compact['contract_relation_candidates'] = {
-        'endpoint_encoding': 'zero-based row indexes in contract_cards.rows',
-        'columns': ['relation_id', 'left_contract_index', 'right_contract_index',
-                    'candidate_relation', 'shared_symbol_indexes'] + ([] if sanitized else ['same_owner_theory']),
-        'rows': [[item['relation_id'], indexes[item['left_contract_id']],
-                  indexes[item['right_contract_id']], item['candidate_relation'],
-                  [symbol_indexes[symbol] for symbol in item['evidence']['shared_symbols']]] +
-                  ([] if sanitized else [item['evidence']['same_owner_theory']])
-                 for item in payload['contract_relation_candidates']],
+        'columns': columns,
+        'rows': [[card[column] for column in columns] for card in payload['contract_cards']],
     }
     return compact
 
@@ -197,7 +176,7 @@ def prompt_v4(payload, feedback):
             'left_contract_id': 'contract ID',
             'right_contract_id': 'contract ID',
             'relation': 'shared-invariant|semantic-chain|common-premise|other',
-            'evidence_ids': ['returned relation or parent-premise ID'],
+            'evidence_ids': ['inspected parent-premise ID'],
         }],
         'theories': [{
             'name': 'Generated_SemanticRole',

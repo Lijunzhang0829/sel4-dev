@@ -36,32 +36,21 @@ class OwnerBlindView:
         if visibility == 'source-theory-visible-v1':
             for contract in contracts:
                 contract['owner_theory'] = originals[self.to_original[contract['contract_id']]]['owner_theory']
-        source_cards = {c['contract_id']:c for c in source['contract_cards']}
-        cards = []
-        for contract in contracts:
-            old = source_cards[self.to_original[contract['contract_id']]]
-            cards.append({'contract_id':contract['contract_id'], 'name':contract['name'],
-                          'principal_symbols':deepcopy(old['principal_symbols']),
-                          'logical_shape':deepcopy(old['logical_shape'])})
-        if visibility == 'source-theory-visible-v1':
-            for card, contract in zip(cards, contracts):
-                card['owner_theory'] = contract['owner_theory']
-        relations = []
-        for index,left in enumerate(cards):
-            for right in cards[index+1:]:
-                shared = sorted(set(left['principal_symbols']) & set(right['principal_symbols']))
-                if not shared: continue
-                item = {'left_contract_id':left['contract_id'], 'right_contract_id':right['contract_id'],
-                        'candidate_relation':'shared-symbols', 'evidence':{'shared_symbols':shared[:16]}}
-                relations.append({'relation_id':'relation:'+sha256_json(item)[:16], **item})
-        relations.sort(key=lambda x:(-len(x['evidence']['shared_symbols']), x['left_contract_id'],x['right_contract_id']))
-        relations = relations[:2000]
+        # A catalog identifies targets; exact declarations live in contracts.
+        # Rebuild from contracts so older datasets cannot reintroduce removed
+        # lexical summaries or source-derived relation candidates.
+        cards = [{k: deepcopy(contract[k]) for k in
+                  ('contract_id', 'name', 'owner_theory') if k in contract}
+                 for contract in contracts]
         self.payload = {k:deepcopy(source[k]) for k in ('schema_version','artifact_type','benchmark',
             'context_profiles','parent_premises','planner_interfaces','planning_input_id')}
         self.payload.update(contract_visibility=visibility, contracts=contracts,
-                            contract_cards=cards, contract_relation_candidates=relations)
+                            contract_cards=cards, contract_relation_candidates=[])
         # This payload is private and supports exact canonical file projections.
-        self.canonical_payload['contract_relation_candidates'] = self.decode(relations)
+        self.canonical_payload['contract_relation_candidates'] = []
+        self.canonical_payload['contract_cards'] = [
+            {k: deepcopy(c[k]) for k in ('contract_id', 'name', 'owner_theory')}
+            for c in source['contracts']]
         self.public_contracts = {c['contract_id']:c for c in contracts}
         labels = {x['owner_theory'] for x in source['contracts']}
         # The benchmark/session name is public; its occurrence is not a mapping

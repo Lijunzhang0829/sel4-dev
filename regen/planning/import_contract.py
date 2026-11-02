@@ -72,6 +72,7 @@ PROPOSAL_V6_FIELDS = {
     'schema_version', 'ordering_rationale', 'contract_relations', 'theories',
     'unresolved_retrieval_questions', 'collaboration_groups', 'reuse_suggestions',
 }
+PROPOSAL_V6_OPTIONAL_FIELDS = {'proof_direction_suggestions'}
 
 
 def proposal_v5(proposal):
@@ -82,12 +83,14 @@ def proposal_v5(proposal):
     """
     if not isinstance(proposal, dict) or proposal.get('schema_version') != 6:
         return proposal
-    if set(proposal) != PROPOSAL_V6_FIELDS:
+    if (not PROPOSAL_V6_FIELDS <= proposal.keys()
+            or set(proposal) - PROPOSAL_V6_FIELDS - PROPOSAL_V6_OPTIONAL_FIELDS):
         raise ValueError('expected repository proposal schema 6 fields')
     result = deepcopy(proposal)
     result['schema_version'] = 5
     result.pop('collaboration_groups')
     result.pop('reuse_suggestions')
+    result.pop('proof_direction_suggestions', None)
     return result
 
 
@@ -153,6 +156,44 @@ def normalize_v6(payload, proposal):
         normalized_suggestions.append(deepcopy(suggestion))
     result.update(collaboration_groups=normalized_groups,
                   reuse_suggestions=normalized_suggestions)
+    # Optional so proposals accepted before directions existed retain identical
+    # artifacts and identities. These references never enter the hard-import core.
+    if 'proof_direction_suggestions' in proposal:
+        suggestions = proposal['proof_direction_suggestions']
+        if not isinstance(suggestions, list):
+            raise ValueError('proof_direction_suggestions must be a list')
+        inspected = {item['record_id'] for item in payload.get('planner_evidence', {}).get(
+            'inspected_parent_premises', [])}
+        direction_ids, normalized_directions = set(), []
+        for suggestion in suggestions:
+            if not isinstance(suggestion, dict) or set(suggestion) != {
+                'id', 'target_contract_id', 'direction', 'candidate_premise_ids',
+                'candidate_contract_ids', 'open_questions',
+            }:
+                raise ValueError('invalid proof direction suggestion fields')
+            key = suggestion['id']
+            if not isinstance(key, str) or not NAME.fullmatch(key) or key in direction_ids:
+                raise ValueError('invalid/duplicate proof direction suggestion ID')
+            direction_ids.add(key)
+            target = suggestion['target_contract_id']
+            if not isinstance(target, str) or target not in owners:
+                raise ValueError('proof direction references unknown target contract')
+            prose(suggestion['direction'], key + ' direction')
+            candidates = id_list(suggestion['candidate_contract_ids'], key + ' candidate contracts')
+            if not set(candidates) <= owners.keys() or target in candidates:
+                raise ValueError('proof direction references unknown/self candidate contract')
+            premises = id_list(suggestion['candidate_premise_ids'], key + ' candidate premises')
+            if not set(premises) <= inspected:
+                raise ValueError('proof direction lacks inspected parent premise')
+            questions = suggestion['open_questions']
+            if not isinstance(questions, list):
+                raise ValueError('proof direction open_questions must be a list')
+            for question in questions:
+                prose(question, key + ' open question')
+            normalized_directions.append({**deepcopy(suggestion),
+                'candidate_contract_ids': sorted(candidates),
+                'candidate_premise_ids': sorted(premises)})
+        result['proof_direction_suggestions'] = normalized_directions
     return deepcopy(result)
 
 
@@ -198,7 +239,20 @@ def build_bundle_v6(payload, proposal):
     listing.update(schema_version=7,
                    collaboration_groups=deepcopy(plan['collaboration_groups']),
                    reuse_suggestions=deepcopy(plan['reuse_suggestions']))
+    if 'proof_direction_suggestions' in normalized:
+        plan['proof_direction_suggestions'] = deepcopy(normalized['proof_direction_suggestions'])
+        listing['proof_direction_suggestions'] = deepcopy(plan['proof_direction_suggestions'])
+        semantics.update(
+            proof_direction_suggestions_are_advisory=True,
+            proof_direction_suggestions_create_imports=False,
+            proof_direction_suggestions_create_readiness_dependencies=False,
+            proof_direction_suggestions_grant_premise_visibility=False,
+        )
     profiles = {item['context_profile_id']: item for item in payload['context_profiles']}
+    contracts = {item['contract_id']: item for item in payload['contracts']}
+    owners = {cid: theory['name'] for theory in normalized['theories'] for cid in theory['contract_ids']}
+    premises = {item['record_id']: item for item in payload.get('planner_evidence', {}).get(
+        'inspected_parent_premises', [])}
     for entry in listing['files']:
         projection = artifacts[entry['projection']]
         name = projection['theory']
@@ -208,6 +262,22 @@ def build_bundle_v6(payload, proposal):
                                   if name in group['member_theories']],
             reuse_suggestions=[deepcopy(item) for item in plan['reuse_suggestions']
                                if name in (item['provider'], item['consumer'])])
+        if 'proof_direction_suggestions' in plan:
+            directions = [deepcopy(item) for item in plan['proof_direction_suggestions']
+                          if owners[item['target_contract_id']] == name]
+            candidate_ids = sorted({cid for item in directions for cid in item['candidate_contract_ids']})
+            premise_ids = sorted({pid for item in directions for pid in item['candidate_premise_ids']})
+            projection.update(
+                proof_direction_suggestions=directions,
+                # Copy immutable declarations, never planner-authored statements
+                # or original source owners. The allocation supplies the provider.
+                proof_direction_contracts=[{
+                    **{key: deepcopy(value) for key, value in contracts[cid].items()
+                       if key != 'owner_theory'},
+                    'provider_theory': owners[cid],
+                } for cid in candidate_ids],
+                proof_direction_premises=[deepcopy(premises[pid]) for pid in premise_ids],
+            )
     return _bind_bundle_identity(artifacts)
 
 
@@ -246,7 +316,7 @@ def safe_repartition(payload, previous_plan, replacement_proposal):
 
 
 def prompt_v6(payload, feedback):
-    """Owner-blind semantics-first planning, without prescribing a proof route."""
+    """Owner-blind planning with optional, explicitly unproved direction hints."""
     import json
     from regen.planning.theory_plan import compact_input, compact_evidence
     schema = {
@@ -254,11 +324,16 @@ def prompt_v6(payload, feedback):
         'ordering_rationale': 'Explain semantic boundaries, alternatives, hard imports, ready priority and uncertainties.',
         'contract_relations': [{'left_contract_id': 'contract ID', 'right_contract_id': 'contract ID',
             'relation': 'shared-operation|shared-invariant|semantic-chain|common-premise|other',
-            'evidence_ids': ['returned relation or inspected parent-premise ID']}],
+            'evidence_ids': ['inspected parent-premise ID']}],
         'collaboration_groups': [{'id': 'RelatedOperations', 'contract_ids': ['contract ID', 'another contract ID'],
             'reason': 'Shared semantic operations or state relations that warrant joint exploration; not a proof dependency.'}],
         'reuse_suggestions': [{'provider': 'Generated_Foundation', 'consumer': 'Generated_Operations',
             'reason': 'Potential established results to investigate; not a required import.'}],
+        'proof_direction_suggestions': [{'id': 'TryRelatedOperation', 'target_contract_id': 'contract ID',
+            'direction': 'Tentative reasoning direction for File Planner to evaluate, revise or ignore.',
+            'candidate_premise_ids': ['inspected parent-premise ID'],
+            'candidate_contract_ids': ['another fixed contract ID, possibly still unproved'],
+            'open_questions': ['Which assumptions or instantiations need checking?']}],
         'theories': [{'name': 'Generated_Operations', 'purpose': 'Semantic responsibility',
             'grouping_reason': 'Why these operations belong together; explain alternatives and required contexts.',
             'contract_ids': ['contract ID'], 'context_profile_ids': ['allowed context profile ID'],
@@ -281,6 +356,14 @@ def prompt_v6(payload, feedback):
         'source ownership. A multi-contract repository normally needs multiple coherent theories, but do not '
         'invent arbitrary splits or empty placeholders. Explain alternatives and manageable proof-planning scope. '
         'Do not prescribe exact helper statements, a local proof DAG, tactics or a fixed proof route. '
+        'Optional proof_direction_suggestions may propose tentative reasoning for a target contract, '
+        'with inspected candidate_premise_ids, other fixed candidate_contract_ids and open_questions. '
+        'Use a unique suggestion id; multiple alternative directions for one target are allowed. '
+        'Candidate contracts may still be unproved, including reciprocal advisory opportunities. '
+        'These suggestions create no imports, readiness edges or legal premises. File Planner decides '
+        'whether to adopt, revise or ignore each direction, and checks candidate availability in the '
+        'actual context before reuse. A pending candidate may be scheduled and proved first; it cannot '
+        'be assumed. Failed candidates invalidate only that reuse hypothesis, never the target obligation. '
         'Optional helper_decisions describe open shared-result intentions or inspected existing facts. '
         'File Planner discovers, tests, revises and removes non-contract helpers using proof feedback. '
         'The physical theories and the collaboration scope are separate: collaboration_groups identify related '
@@ -307,7 +390,7 @@ def prompt_v6(payload, feedback):
         'Search helpers by names, definitions or concepts and inspect full legal facts before declaring reuse; '
         'there is no proof-state retrieval at repository planning time. Similarity does not certify applicability. '
         'Zero helper intentions, collaboration groups, reuse suggestions or hard imports are allowed when justified. '
-        'Return JSON only matching this schema (all fields required):\n'
+        'Return JSON only matching this schema (proof_direction_suggestions is optional; all other fields required):\n'
         + json.dumps(schema, ensure_ascii=False, sort_keys=True)
         + '\nPREVIOUS VALIDATION ERRORS:\n' + json.dumps(feedback or [], ensure_ascii=False)
         + '\nCOMPACT LEGAL INPUT:\n' + json.dumps(compact, ensure_ascii=False, sort_keys=True, separators=(',', ':'))

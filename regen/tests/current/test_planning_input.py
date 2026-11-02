@@ -94,20 +94,17 @@ session CRefine in "crefine/$L4V_ARCH" = Refine +
         resolved = query.resolve_symbols(["Base.base_rule"], "context:Refine:parents")
         self.assertEqual(resolved[0]["status"], "resolved")
 
-    def test_compact_metadata_keeps_all_relations_and_exact_statements(self):
+    def test_catalog_is_identity_only_and_inspection_keeps_exact_statements(self):
         second = {**self.contract, "contract_id": "second", "name": "second"}
         payload, _ = build_refine_input(self.l4v, [self.contract, second], [self.premise])
+        self.assertEqual(payload['contract_relation_candidates'], [])
+        for card in payload['contract_cards']:
+            self.assertEqual(set(card), {'contract_id', 'name', 'owner_theory'})
         compact = theory_plan.compact_input(payload)
-        cards = compact['contract_cards']['rows']
-        for old, row in zip(payload['contract_relation_candidates'],
-                            compact['contract_relation_candidates']['rows']):
-            self.assertEqual(old['relation_id'], row[0])
-            self.assertEqual(old['left_contract_id'], cards[row[1]][0])
-            self.assertEqual(old['right_contract_id'], cards[row[2]][0])
-            self.assertEqual(old['evidence']['shared_symbols'],
-                             [compact['symbols'][index] for index in row[4]])
-        self.assertEqual(len(payload['contract_relation_candidates']),
-                         len(compact['contract_relation_candidates']['rows']))
+        self.assertEqual(compact['contract_cards']['columns'], ['contract_id', 'name', 'owner_theory'])
+        self.assertEqual(len(compact['contract_cards']['rows']), 2)
+        self.assertNotIn('symbols', compact)
+        self.assertNotIn('contract_relation_candidates', compact)
         evidence = theory_plan.compact_evidence({'inspected_contracts': payload['contracts']})
         for old, new in zip(payload['contracts'], evidence['inspected_contracts']):
             self.assertEqual(old['exact_statement'], new['exact_statement'])
