@@ -1,6 +1,0 @@
-{
- "ok": false,
- "reason": "could not parse a Hoare pre",
- "claim": null,
- "dropped_conjuncts": []
-}
