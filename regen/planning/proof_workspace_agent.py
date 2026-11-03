@@ -150,6 +150,11 @@ class WorkspaceController:
         for row in rows:
             row['unsealed_providers'] = [t for t in row['required_imports'] if not exports_available(states.get(t))]
             row['ready_for_proof_action'] = row['selected'] and not row['unsealed_providers'] and not theory_finished(row['status'])
+            from regen.planning.provider_waits import current_wait
+            wait = current_wait(self,row['theory'])
+            if wait:
+                row['provider_wait'] = wait
+                row['ready_for_proof_action'] = row['ready_for_proof_action'] and wait['ready']
         return {'run_id':self.run['run_id'], 'worker_count':1, 'theories':rows,
                 'all_selected_sealed':all(states[t] in {'sealed','retired'} for t in self.selected),
                 'all_selected_exported':all(theory_finished(states[t]) for t in self.selected)}
@@ -210,7 +215,9 @@ class WorkspaceController:
                     'theory','file_slot','purpose','grouping_reason','context_profile_ids','context_profiles',
                     'required_imports','required_providers','suggested_predecessors','suggested_providers',
                     'collaboration_groups','reuse_suggestions','auxiliary_intents','import_semantics') if key in projection}
-                return {'status':'available', 'input':project_context(planner_input(package,state,
+                from regen.planning.review_handoff import review_context
+                return {'status':'available', 'planning_review':review_context(self,arguments['theory']),
+                        'input':project_context(planner_input(package,state,
                             dispositions=current_dispositions(self, arguments['theory']) or None)),
                         'repository_projection':context}
             if name == 'list_generated':

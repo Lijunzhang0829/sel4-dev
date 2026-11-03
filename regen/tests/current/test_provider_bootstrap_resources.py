@@ -31,7 +31,7 @@ class BootstrapResourceTests(unittest.TestCase):
         resources = NativeResources()
         value = controller(resources)
         checker = SimpleNamespace()
-        result = (None, None, None, None, checker, None)
+        result = (None, None, None, SimpleNamespace(replay=lambda: None), checker, [])
         sentinel = object()
         marker = CURRENT_RESOURCES.set(sentinel)
         try:

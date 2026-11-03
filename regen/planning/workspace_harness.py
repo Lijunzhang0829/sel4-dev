@@ -68,6 +68,8 @@ class WorkspaceHarness:
         })
         self.active_call=None
         self.revision_review=None
+        self.revision_initial_plan=None
+        self.revision_strict=False
         self.state_path=self.output/'control/state.json'
         self.state=json.loads(self.state_path.read_text()) if self.state_path.exists() else {'inspected_contracts':{},'inspected_premises':{},'sequence':0}
         from regen.infrastructure.incremental_log import find_root, read_artifact
@@ -179,10 +181,13 @@ class WorkspaceHarness:
             return {'records':records,'withheld_records':len(values)-len(records),'notice':'Only records respecting the public input boundary are returned and eligible for reuse.'}
         if action in {'validate','preflight','submit'}:
             proposal=request.get('proposal'); result=self.validate(proposal)
+            if not result['valid']:
+                return result
             if self.revision_review is not None:
                 from regen.planning.revision_decisions import decisions_valid
                 try:
-                    decisions_valid(request.get('revision_decisions'), self.revision_review)
+                    decisions_valid(request.get('revision_decisions'), self.revision_review,
+                        before=self.revision_initial_plan, after=proposal, strict=self.revision_strict)
                 except ValueError as error:
                     return {'valid':False, 'stage':'revision-decisions', 'error':str(error),
                         'notice':'Repair revision-decisions.json and validate/submit again. No plan was published.'}
@@ -229,7 +234,8 @@ class WorkspaceHarness:
         if self.revision_review is not None:
             from regen.planning.revision_decisions import decisions_valid
             decisions = self.submitted.get('revision_decisions')
-            decisions_valid(decisions, self.revision_review)
+            decisions_valid(decisions, self.revision_review,
+                before=self.revision_initial_plan, after=public, strict=self.revision_strict)
             save(self.output/'revision-decisions.json', decisions)
         evidence=self.view.canonical_evidence(self.evidence()); canonical=self.view.decode(public)
         bundle=build_bundle({**self.view.canonical_payload,'planner_evidence':evidence},canonical)

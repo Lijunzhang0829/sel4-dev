@@ -294,7 +294,7 @@ class ParallelBudgetRunnerTests(unittest.TestCase):
                     run = {'run_id':'test', 'execution_input_kind':'refine-dataset',
                         'checker_context_root':str(root), 'checker_context_id':'fixture'}
                     options = {'model':'fixture','call_timeout':900,'check_timeout':900,'candidate_timeout':120}
-                    def __init__(self, *args, **kwargs): pass
+                    def __init__(self, *args, **kwargs): self.root = root
                     def list_workspace(self):
                         return {'theories':[{'theory':'A','contracts':['a'],'status':status,
                             'selected':True,'ready_for_proof_action':False}]}
@@ -330,7 +330,7 @@ class ParallelBudgetRunnerTests(unittest.TestCase):
                 run = {'run_id':'test','execution_input_kind':'refine-dataset',
                     'checker_context_root':str(root),'checker_context_id':'fixture'}
                 options = {'model':'fixture','call_timeout':900,'check_timeout':900,'candidate_timeout':120}
-                def __init__(self, *args, **kwargs): pass
+                def __init__(self, *args, **kwargs): self.root = root
                 def list_workspace(self):
                     return {'theories':[{'theory':'A','contracts':['a'],'status':'pending',
                         'selected':True,'ready_for_proof_action':True}]}
@@ -364,7 +364,7 @@ class ParallelBudgetRunnerTests(unittest.TestCase):
                     'checker_context_root':str(root), 'checker_context_id':'fixture'}
                 options = {'model':'fixture', 'call_timeout':900, 'check_timeout':900,
                            'candidate_timeout':120}
-                def __init__(self, *args, **kwargs): pass
+                def __init__(self, *args, **kwargs): self.root = root
                 def list_workspace(self):
                     return {'theories':[{'theory':'A','contracts':['a'], 'status':'pending',
                         'selected':True,'ready_for_proof_action':True}]}

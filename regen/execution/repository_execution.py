@@ -58,7 +58,7 @@ def is_repository(run_dir):
     return path.is_file() and read(path).get('execution_mode') == 'repository-projection-v1'
 
 
-def projection_package(projection, plan):
+def projection_package(projection, plan, *, review_handoff=None):
     if projection['schema_version']>=3:
         targets={c['contract_id']:c for t in plan['theories'] for c in t['contracts']}
         intents=projection['auxiliary_intents']
@@ -78,6 +78,8 @@ def projection_package(projection, plan):
     for field in ('collaboration_groups', 'reuse_suggestions', 'context_profiles'):
         if field in projection:
             body[field] = deepcopy(projection[field])
+    if review_handoff is not None:
+        body['review_obligations'] = deepcopy(review_handoff['theories'][projection['theory']])
     return {**body, 'package_payload_sha256':digest(body)}
 
 
@@ -132,7 +134,13 @@ def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=I
         context = environment_context(input_root)
         runtime = context['gate']['runtime']
     run_dir.mkdir(parents=True, exist_ok=True)
-    packages = [projection_package(read(schedule.parent/f['projection']), plan) for f in listing['files']]
+    review_handoff = None
+    if (schedule.parent/'review-handoff.json').exists():
+        from regen.planning.review_handoff import validate_handoff
+        review_handoff = read(schedule.parent/'review-handoff.json')
+        validate_handoff(review_handoff, plan)
+    packages = [projection_package(read(schedule.parent/f['projection']), plan,
+                review_handoff=review_handoff) for f in listing['files']]
     files = [{'theory':p['theory'], 'file_slot':p['file_slot'], 'order':i, 'layer':i,
               'contract_ids':[c['contract_id'] for c in p['contracts']], 'status':'pending',
               'generation_ids':[], 'seal_id':None} for i,p in enumerate(packages)]
@@ -1357,7 +1365,10 @@ def _continuation_outcome(source_dir, source, entry):
     outcome = current_outcome(controller)
     if outcome is None:
         if prepared is None and (source_dir/'theory-outcomes'/digest(entry['theory'])/'events').exists():
-            raise ValueError('unstarted theory outcome does not match its frozen empty state')
+            from regen.infrastructure.experiment_ledger import Ledger
+            rows=Ledger(source_dir/'theory-outcomes'/digest(entry['theory']),source['run_id']).rows
+            if rows[-1]['kind'] != 'theory_outcome_reopened':
+                raise ValueError('unstarted theory outcome does not match its frozen empty state')
         return None  # An obsolete UNKNOWN is not a current scheduling stop.
     if outcome['status'] == 'refuted':
         from regen.execution.contract_refutation import validate_refutation_certificate
@@ -1433,13 +1444,19 @@ def _carry_theory_outcomes(source_dir, source, destination, run, prepared):
             'policy':'revalidate latest stops and rebind to unchanged continued proof state'}, immutable=True)
 
 
-def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
+def fork_workspace_continuation(source_dir, destination, *, checkpoint=None, run_id=None):
     """Fork verified states, retaining at most one decoded theory origin at a time."""
     source_dir, destination = Path(source_dir).resolve(), Path(destination).resolve()
     if destination.exists():
         raise ValueError('continuation destination already exists')
     source = read(source_dir/'run.json')
+    selected_run_id = destination.name if run_id is None else run_id
+    if (not isinstance(selected_run_id,str) or not selected_run_id.strip()
+            or selected_run_id == source['run_id']):
+        raise ValueError('continuation run_id must be nonempty and differ from source')
     _check_disposition_fork_support(source_dir, source)
+    if checkpoint is not None and any((source_dir/folder).exists() for folder in ('provider-waits','review-handoff','review-decisions')):
+        raise ValueError('checkpoint continuation with coordination receipts is unsupported')
     if checkpoint is not None:
         if checkpoint.get('source_run') != str(source_dir):
             raise ValueError('checkpoint source mismatch')
@@ -1489,7 +1506,7 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
             if not set(descriptor['effective_imports']) <= available:
                 raise ValueError('checkpoint excludes a frozen dependency')
     run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
-                   destination.name, Path(source['session_schedule']['source']), **policy_binding(source),
+                   selected_run_id, Path(source['session_schedule']['source']), **policy_binding(source),
                    **contract_policy_binding(source),
                    **({'execution_models':source['execution_models']} if 'execution_models' in source else {}),
                    **log_policy_arguments(source))
@@ -1506,6 +1523,11 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None):
     # Publish stops before the continuation-completed receipt used by budget
     # transfer. An interrupted transfer cannot masquerade as a complete fork.
     _carry_theory_outcomes(source_dir, source, destination, run, outcomes)
+    if any((source_dir/folder).exists() for folder in ('provider-waits','review-handoff','review-decisions')):
+        if checkpoint is not None:
+            raise ValueError('checkpoint continuation with coordination receipts is unsupported')
+        from regen.planning.provider_waits import carry_coordination
+        carry_coordination(source_dir,destination)
     durable(destination/'workspace-continuation.json', {
         'source_run':str(source_dir), 'theories':carried,
         'sealed_theories':[d['entry']['theory'] for d in sealed],

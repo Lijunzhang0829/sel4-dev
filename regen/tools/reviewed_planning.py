@@ -10,7 +10,9 @@ from pathlib import Path
 import subprocess
 import sys
 from regen.planning.plan_review import analyze, digest, read, write, OUTPUT_REPAIR_POLICY
-from regen.planning.revision_decisions import decisions_valid
+from regen.planning.revision_decisions import (
+    decisions_valid, prior_dispositions, unresolved_review_issues,
+    build_review_handoff, REVIEW_POLICY)
 
 
 def replace_ids(value, mapping):
@@ -45,9 +47,12 @@ def main():
                    help='Charge draft, review repairs and revision to the shared effective budget')
     p.add_argument('--effective-seconds',type=float,default=172800,
                    help='Total planning plus proof allowance; handed off without resetting costs')
+    p.add_argument('--max-revision-rounds',type=int,default=3,
+                   help='Bound actual plan revisions; unresolved final review prevents freezing')
     p.add_argument('--allow-external-call',action='store_true')
     a=p.parse_args()
     if not a.allow_external_call: p.error('Explicit external-call authorization required')
+    if a.max_revision_rounds < 1: p.error('At least one actual revision round is required')
     root=a.output.resolve(); root.mkdir(parents=True,exist_ok=False)
     source=a.input.resolve();policy=read(a.policy)
     policy['model'].update(model=a.model,reasoning_effort=a.reasoning_effort)
@@ -56,7 +61,8 @@ def main():
     binding={'input_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),
         'policy_sha256':digest(policy),'model':a.model,'reasoning_effort':a.reasoning_effort,
         'review_max_repairs':None,'review_output_repair_policy':OUTPUT_REPAIR_POLICY,
-        'final_plan_review_required':True,
+        'final_plan_review_required':True,'review_closure_policy':REVIEW_POLICY,
+        'max_revision_rounds':a.max_revision_rounds,
         'include_planning_time':a.include_planning_time,
         'historical_execution_inputs':False,'proof_generation':False,
         'implementation':{str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in
@@ -79,43 +85,84 @@ def main():
         run_command(root,'review',['regen.planning.plan_review','--plan',str(root/'draft/planner-proposal.json'),
             '--input',str(source),'--output',str(root/'review'),'--allow-external-call',
             '--model',a.model,'--reasoning-effort',a.reasoning_effort,'--timeout','600'],budget=budget)
-        review=read(root/'review/review.json')
-        mapping={original:public for public,original in read(root/'draft/private-contract-map.json').items()}
-        policy['revision_context']={'initial_plan':read(root/'draft/agent-proposal.json'),
-            'review':replace_ids(review,mapping),
-            'notice':'Review hypotheses are not proof failures; keep local proof work local. No historical execution evidence.'}
-        write(root/'revision-policy.json',policy)
-        planner('revision',root/'revision-policy.json')
-        decisions=read(root/'revision/revision-decisions.json')
-        decisions_valid(decisions,review)
-        # The first review concerns the draft. Review the exact submitted
-        # revision too; record remaining risks without pretending a model
-        # judgment certifies provability or automatically changing the plan.
-        run_command(root,'final-review',['regen.planning.plan_review',
-            '--plan',str(root/'revision/planner-proposal.json'),
-            '--input',str(source),'--output',str(root/'final-review'),'--allow-external-call',
-            '--model',a.model,'--reasoning-effort',a.reasoning_effort,'--timeout','600'],budget=budget)
-        final_review=read(root/'final-review/review.json')
-        before=read(root/'draft/planner-proposal.json');after=read(root/'revision/planner-proposal.json')
+        initial_review=read(root/'review/review.json')
+        review = initial_review
+        previous_stage = 'draft'
+        dispositions = {}
+        rounds = []
+        artifact_folders = ['draft', 'review']
+        for round_number in range(1, a.max_revision_rounds + 1):
+            revision_stage = 'revision' if round_number == 1 else f'revision-{round_number:04d}'
+            review_stage = 'final-review' if round_number == 1 else f'final-review-{round_number:04d}'
+            mapping={original:public for public,original in read(root/previous_stage/'private-contract-map.json').items()}
+            policy['revision_context']={
+                'initial_plan':read(root/previous_stage/'agent-proposal.json'),
+                'review':replace_ids(review,mapping), 'review_policy':REVIEW_POLICY,
+                'notice':'Review hypotheses are not proof failures. Allocate concrete local obligations or justified '
+                         'providers. Every issue needs a disposition; no historical execution evidence.'}
+            config = root/(revision_stage+'-policy.json')
+            write(config,policy)
+            planner(revision_stage,config)
+            before_revision=read(root/previous_stage/'planner-proposal.json')
+            after=read(root/revision_stage/'planner-proposal.json')
+            # The workspace speaks public IDs; canonicalize structured duties
+            # using its frozen map, without rewriting its submitted artifacts.
+            public_map = read(root/previous_stage/'private-contract-map.json')
+            decisions=replace_ids(read(root/revision_stage/'revision-decisions.json'),public_map)
+            decisions_valid(decisions,review,before=before_revision,after=after,strict=True)
+            for item in prior_dispositions(review,decisions):
+                dispositions[item['issue_id']] = item
+            dispositions_path=root/(revision_stage+'-dispositions.json')
+            write(dispositions_path,list(dispositions.values()))
+            run_command(root,review_stage,['regen.planning.plan_review',
+                '--plan',str(root/revision_stage/'planner-proposal.json'),
+                '--input',str(source),'--output',str(root/review_stage),'--allow-external-call',
+                '--prior-dispositions',str(dispositions_path),
+                '--model',a.model,'--reasoning-effort',a.reasoning_effort,'--timeout','600'],budget=budget)
+            final_review=read(root/review_stage/'review.json')
+            unresolved=unresolved_review_issues(final_review,list(dispositions.values()))
+            rounds.append({'round':round_number,'revision':revision_stage,'review':review_stage,
+                           'decisions':decisions,'unresolved_issue_ids':[i['id'] for i in unresolved]})
+            artifact_folders.extend([revision_stage,review_stage])
+            write(root/'review-closure.json',{'policy':REVIEW_POLICY,'rounds':rounds,
+                  'state':'needs_revision' if unresolved else 'closed'})
+            if not unresolved:
+                break
+            if round_number == a.max_revision_rounds:
+                write(root/'review-blocked.json',{'policy':REVIEW_POLICY,'state':'blocked',
+                      'reason':'unresolved_final_review','issues':unresolved,'rounds':rounds})
+                raise ValueError('Final review has unhandled issues; revision bound reached; no plan frozen')
+            previous_stage, review = revision_stage, final_review
+        before=read(root/'draft/planner-proposal.json')
+        published_plan=read(root/revision_stage/'repository-plan.json')
+        handoff=build_review_handoff(published_plan,final_review,
+                                    accepted_dispositions=list(dispositions.values()))
+        write(root/revision_stage/'review-handoff.json',handoff)
         contracts=read(source)['contracts']
         old=analyze(before,contracts);new=analyze(after,contracts)
         owner=lambda plan:{c:t['name'] for t in plan['theories'] for c in t['contract_ids']}
         b,e=owner(before),owner(after)
         write(root/'comparison.json',{'before':old,'after':new,
             'moved_contracts':[{'contract_id':c,'before':b[c],'after':e[c]} for c in b if b[c]!=e[c]],
-            'decisions':decisions,'quality_improvement_certified':False})
+            'decisions':decisions,'review_rounds':rounds,'quality_improvement_certified':False})
         # Only freeze after genuine planner completion, native validation and review decisions.
         artifacts={str(f.relative_to(root)):hashlib.sha256(f.read_bytes()).hexdigest()
-            for folder in ['draft','review','revision','final-review'] for f in sorted((root/folder).rglob('*')) if f.is_file()}
-        artifacts['comparison.json']=hashlib.sha256((root/'comparison.json').read_bytes()).hexdigest()
-        frozen={'state':'frozen','plan':str(root/'revision/repository-plan.json'),
-            'file_generation_list':str(root/'revision/file-generation-list.json'),
-            'plan_sha256':hashlib.sha256((root/'revision/repository-plan.json').read_bytes()).hexdigest(),
-            'review_sha256':digest(review),'artifacts':artifacts,
+            for folder in artifact_folders for f in sorted((root/folder).rglob('*')) if f.is_file()}
+        for name in ['comparison.json','review-closure.json',
+                     *[f.name for f in root.glob('*-dispositions.json')],
+                     *[f.name for f in root.glob('*-policy.json')]]:
+            artifacts[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+        frozen={'state':'frozen','plan':str(root/revision_stage/'repository-plan.json'),
+            'file_generation_list':str(root/revision_stage/'file-generation-list.json'),
+            'plan_sha256':hashlib.sha256((root/revision_stage/'repository-plan.json').read_bytes()).hexdigest(),
+            'review_sha256':digest(initial_review),'artifacts':artifacts,
             'final_review_sha256':digest(final_review),
-            'final_review_plan_sha256':hashlib.sha256((root/'revision/planner-proposal.json').read_bytes()).hexdigest(),
+            'final_review_plan_sha256':hashlib.sha256((root/revision_stage/'planner-proposal.json').read_bytes()).hexdigest(),
             'final_review_issues':final_review['issues'], 'quality_improvement_certified':False,
-            'proof_generation_started':False,'remaining_risks':[d['remaining_risk'] for d in decisions]}
+            'review_closure_policy':REVIEW_POLICY,'review_rounds':len(rounds),
+            'review_handoff':str(root/revision_stage/'review-handoff.json'),
+            'review_handoff_sha256':hashlib.sha256((root/revision_stage/'review-handoff.json').read_bytes()).hexdigest(),
+            'proof_generation_started':False,'remaining_risks':[d['disposition']['remaining_risk'] for d in dispositions.values()]}
         if budget is None: write(root/'frozen-plan.json',frozen)
         else: budget.complete(frozen)
         write(root/'status.json',{'state':'complete','stage':'frozen'})

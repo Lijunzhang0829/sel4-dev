@@ -139,6 +139,8 @@ class HistoryViewsTests(unittest.TestCase):
         controller = TheoryController.__new__(TheoryController)
         controller.document_mode = True; controller.theory = 'Source'
         controller.run = self.run
+        controller.root = self.root
+        controller._state = lambda theory: (self.packages[0], self.state)
         store = Mock(); store.read.return_value = {'source': 'exact draft', 'source_sha256': 'sha'}
         store.package = self.packages[0]
         controller._document = Mock(return_value=(store, self.state))

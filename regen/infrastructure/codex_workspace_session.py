@@ -248,7 +248,7 @@ class CodexWorkspaceSession:
             except BaseException as timing_error:
                 error.add_note('runtime failure publication failed: ' + str(timing_error))
 
-    def _generation_stop(self, reason):
+    def _generation_stop(self, reason, *, handler_stop=False):
         if self._generation_active:
             self._generation_active = False
             self._finish_stream_retry()
@@ -257,13 +257,14 @@ class CodexWorkspaceSession:
                 # Cancellation/protocol errors do not authorize a refund. Close
                 # the pending attribution interval as retained work instead.
                 self._provider_request_finish('retained', reason=reason)
-            if (self._http_interrupted or self._overload_interrupted or self._feedback_interrupted
+            if (handler_stop or self._http_interrupted or self._overload_interrupted or self._feedback_interrupted
                     or (self._cancel_event is not None and self._cancel_event.is_set())):
-                # An explicit local pause is a known interruption, not a claim
+                # A trusted handler stop or explicit pause is a known interruption, not a claim
                 # that the provider completed its open items. A later successful
                 # resend may exclude only its explicitly failed request interval.
                 emit_event('generation_items_interrupted', generation_id=self._generation_id,
                            thread_id=self.thread_id, turn_id=self.turn_id, reason=reason,
+                           interruption_origin='handler' if handler_stop else 'session_interrupt',
                            item_ids=sorted(str(key[-1]) for key in self._model_work_items))
                 self._finish_model_work(clear_items=True)
             else:
@@ -1065,7 +1066,7 @@ class CodexWorkspaceSession:
                         if not isinstance(stop_reason, str):
                             raise ValueError(
                                 'stop_when must return a string reason or false')
-                        self._generation_stop(stop_reason)
+                        self._generation_stop(stop_reason, handler_stop=True)
                         result = {
                             'thread_id': self.thread_id,
                             'turn_id': self.turn_id,

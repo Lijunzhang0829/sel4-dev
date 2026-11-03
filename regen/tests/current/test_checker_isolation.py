@@ -48,11 +48,12 @@ class CheckerIsolationTest(unittest.TestCase):
             with patch('regen.execution.repository_execution.progress',
                        return_value={'files': states}), \
                  patch('regen.execution.repository_execution.package_for', return_value=package), \
-                 patch('regen.execution.repository_execution.journal'), \
+                 patch('regen.execution.repository_execution.journal') as journal, \
                  patch('regen.execution.isabelle_node_checker.IsabelleChecker.build_generated_session',
                        return_value={'verdict': 'green'}) as build:
+                journal.return_value.replay.return_value = None
                 states[1]['status'] = 'retired'
-                with self.assertRaisesRegex(ValueError, 'providers are not sealed'):
+                with self.assertRaisesRegex(ValueError, 'providers have no checked exports'):
                     setup(root, 'C', 10)
                 states[1]['status'] = 'sealed'
                 checker = setup(root, 'C', 10)[4]

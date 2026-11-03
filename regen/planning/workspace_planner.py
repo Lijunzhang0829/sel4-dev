@@ -343,6 +343,8 @@ def run_agent(payload, planning_input_path, policy, output):
     if policy.get('revision_context'):
         context = policy['revision_context']
         harness.revision_review = context['review']
+        harness.revision_initial_plan = context['initial_plan']
+        harness.revision_strict = context.get('review_policy') == 'review-obligations-v1'
         save(public/'revision.json', context)
         save(workspace/'plan.json', context['initial_plan'])
         revision_text = ('\nRevise the existing plan using /input/revision.json. This is a pre-freeze review, not a new architecture search. '
@@ -353,6 +355,18 @@ def run_agent(payload, planning_input_path, policy, output):
             'The validate/preflight/submit tools automatically read revision-decisions.json; '
             'repair any decision errors before submitting. Explain actual final changes. '
             'Do not claim a helper is proved. Do not use historical experiments.\n')
+        if harness.revision_strict:
+            revision_text += (
+                'Each decision also requires obligations: a nonempty array of objects with exactly theory, '
+                'contract_ids (owned consumer IDs), provider_contract_ids (external candidate IDs, possibly empty), '
+                'route (import, local, retain), task, and completion_condition (nonempty concrete text). '
+                'Use public contract IDs. An import route requires its providers in the actual transitive imports. '
+                'A local decision uses local routes and allocates the exact missing mechanism and check needed. '
+                'A retain decision records why the boundary is kept and what evidence or failure would require reevaluation. '
+                'A revise decision must change actual affected membership, imports, helpers, context or proof directions; '
+                'rewriting purpose/grouping prose is not a revision. Inspect EVERY theory assessment, not just a summary. '
+                'All duties remain unproved and will be handed to File Planner. The final reviewer will explicitly '
+                'accept or reject your allocations; a new or rejected issue returns for another revision.\n')
         text += revision_text
     harness.view.assert_no_owner_disclosure(text)
     api=Path(tempfile.mkdtemp(prefix='regen-planner-api-')); server,thread=start_service(harness,api)

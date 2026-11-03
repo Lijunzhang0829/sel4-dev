@@ -48,6 +48,8 @@ class WorkspaceControllerTransportTest(unittest.TestCase):
             root=Path(tmp)
             controller=object.__new__(WorkspaceController)
             controller.root=root;controller.selected=['Demo'];controller.model='test'
+            controller.run={'run_id':'transport-fixture'}
+            controller.run={'run_id':'transport-fixture'}
             controller.options={'model':'test','call_timeout':2,'check_timeout':1800,'candidate_timeout':120}
             controller.runtime_cache={};controller.verify_implementation=Mock()
             controller._state=Mock(side_effect=lambda theory:(package,deepcopy(state)))

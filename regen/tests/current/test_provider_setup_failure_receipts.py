@@ -39,6 +39,7 @@ class ProviderSetupFailureReceiptTests(unittest.TestCase):
         stack.enter_context(patch('regen.execution.repository_execution.package_for', return_value=package))
         stack.enter_context(patch('regen.execution.repository_execution.checker_for', return_value=checker))
         journal = stack.enter_context(patch('regen.execution.repository_execution.journal'))
+        journal.return_value.replay.return_value = None
         return root, checker, journal
 
     def assert_failure(self, returncode, category):
@@ -50,7 +51,10 @@ class ProviderSetupFailureReceiptTests(unittest.TestCase):
         self.assertEqual(caught.exception.result, result)
         checker.build_generated_session.assert_called_once_with(['Regen_Provider'])
         self.assertFalse((root/'theories'/'Target'/'provider-session.json').exists())
-        journal.assert_not_called()
+        # Setup now reads accepted import revisions before preparing providers;
+        # a failed build may read authority but must never append proof state.
+        journal.return_value.replay.assert_called_once_with(repair=False)
+        journal.return_value.append.assert_not_called()
         self.assertTrue((root/'theories'/'Target'/'imports.json').exists())
 
     def test_timeout_has_no_ready_receipt(self):
@@ -69,7 +73,9 @@ class ProviderSetupFailureReceiptTests(unittest.TestCase):
                          {'imports':['Regen_Provider']})
         setup(root, 'Target', 900)
         checker.build_generated_session.assert_called_once()
-        self.assertEqual(journal.call_count, 2)
+        self.assertEqual(journal.call_count, 4)
+        self.assertEqual(journal.return_value.replay.call_count, 2)
+        journal.return_value.append.assert_not_called()
 
 
 if __name__ == '__main__':

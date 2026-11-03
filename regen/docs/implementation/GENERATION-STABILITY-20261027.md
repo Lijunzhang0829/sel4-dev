@@ -75,3 +75,14 @@ workspace重发前回滚本请求的工作区草稿、inspected状态和提交�
 规划1次timeout和证明3次无完整反馈均恢复，成功重试后的有效时间冲正已核对。原生probe预检13/13通过；本轮4次封存均成功，未复现此前的locale目标审计故障。这些证据不等于系统不存在bug。监控遗漏嵌套工具RED和请求拒绝仍需修复；长时间无contract GREEN也不能直接判为反馈利用停滞。
 
 本次提交按该稳定性运行冻结的源码版本整理。后续Intervaltree适配、可选墙钟截止及其他独立工作不包含在此版本中。审计来源见 `reports/regen/refine-astra-log-audit-20261029-001/REPORT.md`；正式规划比较必须另建独立运行。
+
+
+## 2026-11-03 补充：消费审查处置闭环
+
+上文的单次 revision 和“终审只记录风险”描述属于历史流程。当前 `review-obligations-v1` 移除 issues 的八条上限，并检查每个 theory 声明消费、但不在 transitive imports 中的外部 contract 都有正式 issue；逐 theory 评估中的具体缺口不能只留在摘要文字里。问题身份按 kind 与 contract IDs 稳定绑定，跨轮重新编号或分组不会使同一问题消失。
+
+修订除了 revise/local/retain，还必须给出按 theory/contract 绑定的 obligations，包括候选 provider、import/local/retain 路线、具体任务及完成条件。选择 import 必须落实到实际 import 闭包；声称 revise 必须有实际分组、imports、helpers、上下文或相关证明方向变化。旧格式仍可读取，新的 reviewed workflow 在提交前强制此规则。
+
+最终评审显式接受或拒绝上一轮处置。新问题或被拒绝的处置进入下一轮真实 revision；默认最多三轮（`--max-revision-rounds`），达到上限仍有未处置问题时不产生 frozen-plan。schema 输出修复仍与实际计划修订轮次分开计数。所有轮次计入同一有效预算，最终receipt指向实际最后一轮目录。
+
+`review-handoff.json` 在冻结前写入最终计划目录，绑定完整 published plan 摘要；按 theory 保存评估、问题、处置和仍待证明的局部任务。已接受 local/retain 表示责任分配被认可，不表示证明完成；即使问题不再出现在终审 issues 中，已分配局部任务仍交给 File Planner。旧实验升级使用 `build_review_handoff(..., legacy=True)`，保留未决状态，不伪造已解决，也不改已接受计划或证明。

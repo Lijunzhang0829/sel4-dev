@@ -55,8 +55,8 @@ class RepositoryPrefixCacheTest(unittest.TestCase):
             calls = []
             original = repository_execution.validator
 
-            def observed(package, runtime, imports=None):
-                validate = original(package, runtime, imports)
+            def observed(package, runtime, imports=None, *, disposition_check=None):
+                validate = original(package, runtime, imports, disposition_check=disposition_check)
 
                 def check(*arguments):
                     calls.append(package['theory'])
@@ -82,8 +82,8 @@ class RepositoryPrefixCacheTest(unittest.TestCase):
             calls = []
             original = repository_execution.validator
 
-            def observed(package, runtime, imports=None):
-                validate = original(package, runtime, imports)
+            def observed(package, runtime, imports=None, *, disposition_check=None):
+                validate = original(package, runtime, imports, disposition_check=disposition_check)
 
                 def check(*arguments):
                     calls.append(arguments[2])

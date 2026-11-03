@@ -10,6 +10,7 @@ from itertools import count
 from pathlib import Path
 
 from regen.planning.import_contract import required_imports
+from regen.planning.revision_decisions import stable_issue_id, decisions_valid, REVIEW_POLICY
 
 
 OUTPUT_REPAIR_POLICY = 'audited-schema-feedback-unlimited-v2'
@@ -80,22 +81,35 @@ and what can remain a local helper. Do not infer proof dependencies from shared 
 Pending contracts are proposed interfaces, never established facts. Transitive imports count as available after sealing.
 Evaluate seal barriers, misplaced tightly related contracts, speculative hard imports and unmet interface needs.
 A large group or long chain is a risk signal, not automatically an error. A shared name is not a matching theorem.
-Return JSON with exactly two arrays:
+Return JSON with the following two arrays (plus decision_reviews when prior_dispositions is provided):
 "theory_reviews": one object for EVERY theory, with "theory", "assessment" (nonempty text),
 "consumed_contract_ids" (list of concrete expected external interfaces; may be empty).
 For each row, every consumed_contract_id must belong to a DIFFERENT theory in the supplied plan.
 Do not list that theory's own contracts or its provided interfaces as external consumption.
-"issues": at most 8 objects, each with "id", "kind" (missing_interface, precondition_gap, seal_barrier,
+"issues": an exhaustive list with no numeric cap, each with "id", "kind" (missing_interface, precondition_gap, seal_barrier,
 speculative_import, or grouping), "theories" (list), "contract_ids" (nonempty list),
 "evidence" (nonempty explanation based on exact statements/plan), "scenario" (concrete downstream consequence),
 "suggested_change", "tradeoff", "uncertainty" (all nonempty strings).
+Every concrete gap in a theory assessment must appear in issues; never omit a gap to shorten the report.
+Every consumed external contract absent from the transitive import closure requires an issue naming that
+contract and its consumer theory, even when independent local reasoning is a possible alternative.
+Merge duplicate issues with identical kind/contract_ids. These grounded fields define stable identity across theory regrouping.
 These are hypotheses, not certified defects. Report no issue if evidence is inadequate.
+If the input includes prior_dispositions, also return decision_reviews: one object per prior issue_id,
+with issue_id (copy its stable review: ID), status (accepted or needs_revision), and nonempty reason.
+Check the actual revised plan and concrete obligations. Accept a local/retain choice only when its task,
+provider choices and completion condition address the gap; this accepts allocation, never proves the task.
+For every needs_revision, include the corresponding issue in issues with the same grounded identity.
+A disappeared local obligation is still pending File Planner work; do not call it proved.
 Do not optimize a numeric score or remove an import just because its use is unproved.
 '''
 
 
-def validate_review(value, plan, contracts):
-    if not isinstance(value, dict) or set(value) != {'theory_reviews', 'issues'}:
+def validate_review(value, plan, contracts, *, require_coverage=False, prior_dispositions=None):
+    expected_fields = {'theory_reviews', 'issues'}
+    if prior_dispositions is not None:
+        expected_fields.add('decision_reviews')
+    if not isinstance(value, dict) or set(value) != expected_fields:
         raise ValueError('Unexpected review fields')
     names = {t['name'] for t in plan['theories']}
     owner = {c: t['name'] for t in plan['theories'] for c in t['contract_ids']}
@@ -116,8 +130,8 @@ def validate_review(value, plan, contracts):
         if invalid:
             raise ValueError(f"theory_reviews[{row['theory']}].consumed_contract_ids: "
                              + '; '.join(invalid) + '; only external contract IDs are allowed')
-    if not isinstance(value['issues'], list) or len(value['issues']) > 8:
-        raise ValueError('Too many issues')
+    if not isinstance(value['issues'], list):
+        raise ValueError('Issues must be a list')
     seen = set()
     for issue in value['issues']:
         if (not isinstance(issue, dict) or not isinstance(issue.get('id'), str)
@@ -134,6 +148,40 @@ def validate_review(value, plan, contracts):
         for key in ['evidence','scenario','suggested_change','tradeoff','uncertainty']:
             if not isinstance(issue.get(key), str) or not issue[key].strip():
                 raise ValueError('Missing issue explanation')
+    stable = [stable_issue_id(i) for i in value['issues']]
+    if len(set(stable)) != len(stable):
+        raise ValueError('Merge duplicate grounded review issues')
+    if require_coverage:
+        closure = {r['theory']: set(r['transitive_providers'])
+                   for r in analyze(plan, contracts)['theories']}
+        for row in rows:
+            missing = [c for c in row['consumed_contract_ids']
+                       if owner[c] not in closure[row['theory']] and not any(
+                           row['theory'] in i['theories'] and c in i['contract_ids']
+                           for i in value['issues'])]
+            if missing:
+                raise ValueError(f"Unresolved external interfaces in {row['theory']} require issues: {missing}")
+    if prior_dispositions is not None:
+        expected = {r['issue_id'] for r in prior_dispositions}
+        assessments = value['decision_reviews']
+        if (not isinstance(assessments, list) or any(not isinstance(r, dict)
+                or not isinstance(r.get('issue_id'), str) for r in assessments)
+                or Counter(r.get('issue_id') for r in assessments) != Counter(expected)):
+            raise ValueError('Review every prior disposition exactly once')
+        for row in assessments:
+            if (set(row) != {'issue_id', 'status', 'reason'}
+                    or not isinstance(row['status'], str)
+                    or row['status'] not in {'accepted', 'needs_revision'}
+                    or not isinstance(row['reason'], str) or not row['reason'].strip()):
+                raise ValueError('Invalid disposition review')
+            if row['status'] == 'needs_revision' and row['issue_id'] not in stable:
+                raise ValueError('A rejected disposition needs a corresponding grounded issue')
+            if row['status'] == 'accepted':
+                previous = next(v for v in prior_dispositions if v['issue_id'] == row['issue_id'])
+                # An accepted allocation must still name current owners and
+                # available import paths after later structural revisions.
+                decisions_valid([{**previous['disposition'], 'decision':'retain'}],
+                    {'issues':[previous['issue']]}, before=plan, after=plan, strict=True)
     return value
 
 
@@ -180,7 +228,8 @@ def run_review(packet, plan, contracts, output, *, model, reasoning_effort,
         receipt = {'attempt':attempt + 1, 'transcript_prefix':prefix.name,
                    'response_sha256':hashlib.sha256(text.encode()).hexdigest()}
         try:
-            review = validate_review(parse_model_json(text), plan, contracts)
+            review = validate_review(parse_model_json(text), plan, contracts,
+                require_coverage=True, prior_dispositions=packet.get('prior_dispositions'))
         except ValueError as error:
             receipt.update(valid=False, error=str(error))
             write(output/f'validation-{attempt + 1:04d}.json', receipt)
@@ -238,6 +287,8 @@ def main():
     parser.add_argument('--input', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--history', type=Path)
+    parser.add_argument('--prior-dispositions', type=Path,
+                        help='Audited previous decisions to explicitly assess against this exact plan')
     parser.add_argument('--allow-external-call', action='store_true')
     parser.add_argument('--model', default='gpt-6-astra')
     parser.add_argument('--reasoning-effort', default='medium')
@@ -250,12 +301,15 @@ def main():
     structural = analyze(plan, contracts)
     args.output.mkdir(parents=True, exist_ok=False)
     packet = review_input(plan, contracts, structural)
+    if args.prior_dispositions is not None:
+        packet['prior_dispositions'] = read(args.prior_dispositions)
     write(args.output/'structural.json', structural)
     write(args.output/'review-input.json', packet)
     binding = {'plan_sha256': digest(plan), 'input_sha256': digest(payload),
                'review_input_sha256': digest(packet), 'implementation_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                'model': args.model, 'reasoning_effort': args.reasoning_effort, 'timeout': args.timeout,
                'max_repairs':None, 'output_repair_policy':OUTPUT_REPAIR_POLICY,
+               'review_coverage_policy':REVIEW_POLICY,
                'historical_data_in_review': False, 'mutates_plan': False}
     write(args.output/'binding.json', binding)
     if not args.allow_external_call:

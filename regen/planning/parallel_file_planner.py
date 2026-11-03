@@ -159,8 +159,21 @@ the theory or makes its unfinished contracts available as premises.
 '''
 
 
-INSTRUCTIONS += '\n' + ADVICE_INSTRUCTIONS
-DOCUMENT_INSTRUCTIONS += '\n' + ADVICE_INSTRUCTIONS
+REVIEW_WAIT_INSTRUCTIONS = '''
+read_theory includes planning_review obligations. Before finish or report_unresolved,
+record_review_decision for each pending assigned issue: issue_id, decision (import,
+local, retain), reason, entry_ids and concrete remaining obligations. Import decisions
+require accepted imports. A local decision allocates proof work; it does not establish it.
+If selected generated providers are not yet exported, use proof_action with
+{"action":"wait_for_providers","providers":["provider theory"],"entry_ids":["target ID"],
+"reason":"exact interface needed","review_issue_ids":["matching issue ID"]}.
+This releases your worker and resumes after all named providers publish certified
+exports. It preserves proofs and costs and adds no imports. Do not report_unresolved
+merely to wait for an unsealed provider. Waiting edges must remain acyclic. On resume,
+check provider premises, select imports or a local alternative, and update review decisions.
+'''
+INSTRUCTIONS += '\n' + ADVICE_INSTRUCTIONS + REVIEW_WAIT_INSTRUCTIONS
+DOCUMENT_INSTRUCTIONS += '\n' + ADVICE_INSTRUCTIONS + REVIEW_WAIT_INSTRUCTIONS
 
 GENERATION_STRATEGIES = {
     'baseline': '',
@@ -422,6 +435,7 @@ class TheoryController(WorkspaceController):
         self._provider_preparation_error = None
         self.framework_blocked = False
         self.theory_outcome = None
+        self.provider_wait = None
         self._proof_work_version = 0
         self._proof_work_seen = set()
         self.focus_contract_id = focus_contract_id
@@ -584,6 +598,9 @@ class TheoryController(WorkspaceController):
         # Receipt inspection/cancellation may be used by an external supervisor.
         # All mathematical/read tools share one theory-local serial boundary.
         mathematical = name in {'proof_action', 'submit_check'}
+        if mathematical and getattr(self, 'provider_wait', None):
+            return {'theory_wait':True, 'provider_wait':self.provider_wait,
+                    'notice':'This worker is waiting for provider publication; accepted work is retained.'}
         if mathematical and getattr(self, 'theory_outcome', None):
             return {'theory_stop':True, 'theory_outcome':self.theory_outcome,
                     'notice':'This theory session has stopped; accepted proofs remain unchanged.'}
@@ -605,6 +622,9 @@ class TheoryController(WorkspaceController):
             self._check_session_active()
             if mathematical:
                 self._guard_disposed_write(arguments.get('proposal'))
+                if arguments.get('proposal',{}).get('action') in {'finish','report_unresolved'}:
+                    from regen.planning.review_handoff import require_review_decisions
+                    require_review_decisions(self)
             self._completed_action_state = None
             self._helper_attempt = None
             result = self._handle(name, arguments, metadata)
@@ -613,6 +633,8 @@ class TheoryController(WorkspaceController):
                 result = public_view(result)
             if getattr(self, 'framework_blocked', False):
                 result = {**result, 'framework_blocked':True, 'failure_scope':'trusted_audit_target'}
+            if getattr(self, 'provider_wait', None):
+                result = {**result, 'theory_wait':True, 'provider_wait':self.provider_wait}
             if getattr(self, 'theory_outcome', None):
                 result = {**result, 'theory_stop':True, 'theory_outcome':self.theory_outcome}
             if self.target_contract_green():
@@ -714,6 +736,16 @@ class TheoryController(WorkspaceController):
                     candidate[4].close_prefix()
 
     def _handle(self, name, arguments, metadata):
+        if name == 'proof_action' and isinstance(arguments.get('proposal'),dict):
+            action=arguments['proposal'].get('action')
+            if action in {'wait_for_providers','record_review_decision'}:
+                if arguments.get('theory') != self.theory:
+                    raise ValueError('only the assigned theory may make a scheduling/review decision')
+                if action=='wait_for_providers':
+                    from regen.planning.provider_waits import record_wait
+                    return record_wait(self,arguments['proposal'],metadata)
+                from regen.planning.review_handoff import record_review_decision
+                return record_review_decision(self,arguments['proposal'],metadata)
         if (name == 'proof_action' and isinstance(arguments.get('proposal'), dict)
                 and arguments['proposal'].get('action') in {'report_unresolved','check_refutation'}):
             if arguments.get('theory') != self.theory:
@@ -736,7 +768,9 @@ class TheoryController(WorkspaceController):
             if known_source == document.get('source_sha256'):
                 document = {key:value for key,value in document.items() if key != 'source'}
                 document['source_unchanged'] = True
+            from regen.planning.review_handoff import review_context
             return {'theory':self.theory,'document':document,
+                    'planning_review':review_context(self),
                     'context_revision':state.get('context_revision',0),
                     'import_options':{'base_import':self.run['base_import'],
                         'provider_directory':{'tool':'list_workspace','arguments':{}},
@@ -1258,6 +1292,15 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                           'task_ids':sorted(controller.task_ids), 'artifact_dir':str(directory)}
                 durable(directory/'result.json', result, immutable=True)
                 return result
+            from regen.planning.provider_waits import current_wait, claim_ready_wait
+            waiting = current_wait(controller,theory)
+            if waiting and not waiting['ready']:
+                result = {'theory':theory,'status':'waiting_for_provider','provider_wait':waiting,
+                          'provider':{'status':'not_started_waiting_for_provider'},
+                          'task_ids':sorted(controller.task_ids),'artifact_dir':str(directory)}
+                durable(directory/'result.json',result,immutable=True)
+                return result
+            resumed_wait = claim_ready_wait(controller,theory) if waiting else None
             # Do not install a retained UNKNOWN into the fresh controller on an
             # authorized retry: doing so would latch its mathematical tool gate.
             with tempfile.TemporaryDirectory(prefix='regen-theory-auth-') as temp:
@@ -1281,6 +1324,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                         'proved or disposed, use finish to publish only the checked positive subset. '
                         'An exported_partial theory is usable by consumers but is not fully proved. '
                         'Do not retry or strengthen/weaken disposed contracts.\n')
+                if resumed_wait is not None:
+                    prompt += '\nPROVIDER WAIT RESUMED (imports unchanged):\n'+json.dumps(resumed_wait,ensure_ascii=False)
                 if retry_context is not None:
                     prompt += '\nRECOVERY RECEIPT (not mathematical advice):\n'+json.dumps(retry_context,ensure_ascii=False)
                 if focus_contract_id is not None:
@@ -1309,6 +1354,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                                        on_abort=getattr(controller,'abort_pending',None),
                                                        stop_when=lambda value: (
                                                            'framework_blocked' if isinstance(value,dict) and value.get('framework_blocked')
+                                                           else 'waiting_for_provider' if isinstance(value,dict) and value.get('theory_wait')
                                                            else 'theory_outcome' if isinstance(value,dict) and value.get('theory_stop')
                                                            else 'target_contract_green' if stop_at_focus_contract and isinstance(value,dict)
                                                            and value.get('target_contract_green') else None))
@@ -1329,7 +1375,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                             _, state = controller._state(theory)
                             target_completed = controller.target_contract_green()
                             if (target_completed or theory_finished(state['status'])
-                                    or getattr(controller, 'theory_outcome', None)):
+                                    or getattr(controller, 'theory_outcome', None)
+                                    or getattr(controller, 'provider_wait', None)):
                                 break
                             if (getattr(controller,'framework_blocked',False)
                                     or state.get('batch_feedback', {}).get('framework_blocked')):
@@ -1378,6 +1425,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                             directory/'session-transcript.jsonl',
                             require_terminal=not target_completed and not getattr(controller,'framework_blocked',False)
                                 and not getattr(controller, 'theory_outcome', None)
+                                and not getattr(controller, 'provider_wait', None)
                                 and not state.get('batch_feedback', {}).get('framework_blocked'),
                             require_real=True)
                     else:
@@ -1392,7 +1440,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
             _, state = controller._state(theory)
             target_completed = controller.target_contract_green()
             outcome = getattr(controller, 'theory_outcome', None)
-            status = ('target_green_completed'
+            waiting = getattr(controller,'provider_wait',None)
+            status = ('waiting_for_provider' if waiting else 'target_green_completed'
                       if target_completed else 'unpublished' if session_stop_reason else outcome['status'] if outcome else 'framework_blocked'
                       if getattr(controller,'framework_blocked',False)
                          or state.get('batch_feedback', {}).get('framework_blocked') else state['status'])
@@ -1406,6 +1455,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                 result.update(_contract_view(controller))
             if session_stop_reason:
                 result['session_stop_reason'] = session_stop_reason
+            if waiting:
+                result['provider_wait'] = waiting
             if outcome:
                 result['theory_outcome'] = outcome
             if target_completed:
@@ -1481,13 +1532,31 @@ def _execution_policy(value, selected):
 def _stage_eligible(rows, policy, active=()):
     states = {row['theory']:row for row in rows}
     publication_pending = set()
+    def include_wait_providers(selected):
+        selected=set(selected); todo=list(selected)
+        while todo:
+            name=todo.pop(); row=states.get(name,{})
+            wait=row.get('provider_wait',{})
+            dependencies=[p['theory'] for p in wait.get('providers',[])]
+            if name not in selected:
+                selected.add(name)
+            if wait or name not in original:
+                dependencies += [p['theory'] if isinstance(p,dict) else p
+                                 for p in row.get('required_imports',[])]
+            for provider in dependencies:
+                if provider in states and provider not in selected:
+                    selected.add(provider); todo.append(provider)
+        return selected
+    original=set()
+
     def finished(theory):
         row = states.get(theory, {})
         return (theory_finished(row.get('status'))
                 or (row.get('pending_contract_ids') == [] and bool(row.get('contract_dispositions'))))
     for stage in policy['stages']:
         if any(not finished(theory) or theory in active for theory in stage):
-            return set(stage) | publication_pending
+            original=set(stage) | publication_pending
+            return include_wait_providers(original)
         # A stopped contract scope can release independent later work before its
         # positive exports are published. Keep that publication runnable on a
         # later invocation too: the coordinator's per-invocation failures exclude
@@ -1754,7 +1823,8 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                 # before removing any worker-mounted heap cache.
                                 _reclaim_completed_heaps(root, completed)
                                 results.append(completed)
-                                if not theory_finished(completed.get('status')):
+                                if (not theory_finished(completed.get('status'))
+                                        and completed.get('status') != 'waiting_for_provider'):
                                     failures[theory] = {'reason':('framework_blocked' if completed.get('status') == 'framework_blocked'
                                                                   else 'positive_exports_not_published' if completed.get('status') == 'unpublished'
                                                                   else 'theory_'+completed['status'] if completed.get('status') in {'unknown','refuted'}
@@ -1892,6 +1962,14 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                        if row['theory'] not in eligible else 'dependency_blocked'),
                        'unsealed_providers':row.get('unsealed_providers',[])}
                        for row in incomplete if row['theory'] not in failures}
+            for row in incomplete:
+                waiting=row.get('provider_wait')
+                if waiting and row['theory'] not in failures:
+                    unavailable=waiting['unavailable_providers']
+                    blocked[row['theory']]={'reason':'waiting_for_provider',
+                        'unsealed_providers':unavailable,'wait_receipt_id':waiting['receipt_id'],
+                        'provider_failures':{name:failures[name] for name in unavailable if name in failures},
+                        'notice':'No proof success claimed; wait resumes only after certified provider publication.'}
             result = {'status':'partial','workspace':final,'results':results,'repository_verified':False,
                       'integration_required':integrate,'failures':failures,'blocked':blocked,
                       'session_attempts':attempts,'execution_policy':policy,

@@ -40,6 +40,9 @@ for line in sys.stdin:
   elif mode=='approval':
    send({'id':900,'method':'item/commandExecution/requestApproval','params':{}})
   else:
+   if mode in ('open_handler','open_terminal'):
+    send({'method':'item/started','params':{'threadId':'thread-one','turnId':tid,
+      'item':{'type':'agentMessage','id':'open-commentary','phase':'commentary'}}})
    if mode.startswith('sleep'):
     duration=-1 if mode=='sleep_negative' else 50000
     owner='wrong-thread' if mode=='sleep_wrong_owner' else 'thread-one'
@@ -56,7 +59,8 @@ for line in sys.stdin:
       'callId':'call-'+str(turn),'namespace':None,'tool':'exec' if mode=='unknown' else 'proof_action','arguments':{'bad':'argument'} if mode=='schema' else {'action':'inspect'}}})
  elif 'result' in m:
   assert m['result']['contentItems'][0]['type']=='inputText'
-  if mode=='readloop':
+  if mode=='open_handler': time.sleep(30)
+  elif mode=='readloop':
    turn+=1
    send({'id':100+turn,'method':'item/tool/call','params':{'threadId':'thread-one','turnId':tid,
       'callId':'call-'+str(turn),'namespace':None,'tool':'proof_action','arguments':{'action':'inspect'}}})
@@ -88,6 +92,25 @@ class CodexWorkspaceSessionTest(unittest.TestCase):
                 Path(tmp)/'session-transcript.jsonl',
                 require_terminal=False, require_real=False)
             self.assertEqual(report['tool_calls'], 1)
+
+    def test_handler_stop_preserves_open_items_as_interrupted_without_clock_fault(self):
+        from regen.infrastructure.progress_events import observe_events
+        events = []
+        with tempfile.TemporaryDirectory() as tmp, observe_events(
+                lambda name, fields: events.append((name, fields))), self.session('open_handler') as session:
+            result = session.run('x', lambda *args: {'theory_stop': True},
+                artifact_dir=tmp, model='test', timeout=2,
+                stop_when=lambda value: 'theory_outcome')
+            self.assertEqual(result['status'], 'stopped_by_handler')
+            self.assertFalse(session._model_work_items)
+        names = [name for name, _ in events]
+        self.assertNotIn('generation_clock_untrusted', names)
+        interruptions = [fields for name, fields in events if name == 'generation_items_interrupted']
+        self.assertEqual(len(interruptions), 1)
+        self.assertEqual(interruptions[0]['item_ids'], ['open-commentary'])
+        self.assertEqual(interruptions[0]['interruption_origin'], 'handler')
+        self.assertEqual(interruptions[0]['reason'], 'theory_outcome')
+        self.assertNotIn('provider_feedback_retry_succeeded', names)
 
     def test_native_preparation_failure_stops_session_without_model_feedback(self):
         from regen.execution.check_tasks import NativePreparationError

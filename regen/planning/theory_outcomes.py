@@ -338,6 +338,14 @@ def _saved_outcome(controller, theory):
     if not ledger.rows:
         return None
     row = ledger.rows[-1]
+    if row['kind'] == 'theory_outcome_reopened':
+        previous = ledger.rows[-2] if len(ledger.rows) > 1 else None
+        if (previous is None or previous['kind'] != 'theory_outcome'
+                or previous['data'].get('status') != 'unknown'
+                or row['data'].get('outcome_event_id') != previous['event_id']
+                or not row['data'].get('authorization') or not row['data'].get('reason')):
+            raise ValueError('invalid unresolved retry authorization')
+        return None  # Retire exactly the named UNKNOWN; later stops remain binding.
     outcome = row['data']
     if row['kind'] != 'theory_outcome' or outcome.get('status') not in {'unknown', 'refuted'}:
         raise ValueError('invalid theory outcome record')
@@ -436,6 +444,27 @@ def _recover_completed_refutation(controller, theory):
                      'recovered_from_completed_task':True}, entry_ids=ids,
             metadata=metadata, theory=theory)
     return None
+
+
+def reopen_unresolved(controller, theory, *, authorization, reason):
+    """Explicit one-time recovery of a legacy UNKNOWN; never erase its receipt."""
+    if contract_dispositions_enabled(controller.run):
+        raise ValueError('contract dispositions cannot be reopened by a theory retry')
+    if not all(isinstance(v,str) and v.strip() for v in (authorization,reason)):
+        raise ValueError('retry requires explicit authorization and repair reason')
+    outcome = current_outcome(controller,theory)
+    if outcome is None or outcome['status'] != 'unknown':
+        raise ValueError('only a current UNKNOWN can be reopened')
+    ledger = _ledger(controller,theory)
+    row = ledger.rows[-1]
+    if row['kind'] != 'theory_outcome':
+        raise ValueError('retry outcome is not the latest stop')
+    receipt = ledger.append('theory_outcome_reopened',outcome_event_id=row['event_id'],
+        authorization=authorization,reason=reason,binding=_snapshot(controller,theory)[2],
+        accepted_state_preserved=True,positive_proofs_added=0,budget_reset=False)
+    if getattr(controller,'theory',None) == theory:
+        controller.theory_outcome = None
+    return receipt
 
 
 def current_outcome(controller, theory=None):

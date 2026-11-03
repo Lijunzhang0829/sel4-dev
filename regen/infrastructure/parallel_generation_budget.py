@@ -428,6 +428,14 @@ def _review_parallel_budget_clock(source_dir, ledger, ancestors=()):
     if not unsupported:
         return dict(clock_review=review, inherited_reviews=[])
     starts = [row for row in ledger.rows if row['kind'] == 'parallel_budget_continuation_started']
+    if not starts and all(row['data'].get('evidence', {}).get('reason') ==
+                          'session_stopped_with_open_model_item' for row in unsupported):
+        from regen.infrastructure.handler_stop_review import review_handler_stop
+        try:
+            witnesses = [review_handler_stop(source_dir, row) for row in unsupported]
+        except ValueError as error:
+            raise ValueError('unsupported uncertainty: '+str(error)) from error
+        return dict(clock_review=review, inherited_reviews=witnesses)
     completions = [row for row in ledger.rows if row['kind'] == 'parallel_budget_continuation_completed']
     if len(starts) != 1 or len(completions) != 1 or starts[0]['sequence'] >= completions[0]['sequence']:
         raise ValueError('unsupported uncertainty requires separate accounting review')
@@ -492,6 +500,13 @@ def _review_parallel_budget_clock(source_dir, ledger, ancestors=()):
         legacy_review_id = proposal['review_id']
     else:
         inherited = _review_parallel_budget_clock(previous_dir, previous, (*ancestors, source_dir))['inherited_reviews']
+        witnesses = [row['data'] for row in metadata if row['kind'] == 'parallel_budget_clock_review_inherited']
+        if inherited and (len(witnesses) != 1
+                or witnesses[0].get('clock_review') != previous_review
+                or witnesses[0].get('reviews') != inherited
+                or witnesses[0].get('refund_seconds') != 0
+                or witnesses[0].get('authorization') != complete['data']['authorization']):
+            raise ValueError('inherited clock transcript witness changed')
     receipt = dict(policy='inherited-verified-clock-review-v1', source_run=str(source_dir),
         source_tail_event_id=ledger.rows[-1]['event_id'],
         continuation_completed_event_id=complete['event_id'], reviewed_source_run=str(previous_dir),

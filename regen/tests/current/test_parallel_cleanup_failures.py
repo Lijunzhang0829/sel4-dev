@@ -65,7 +65,7 @@ class ParallelCleanupFailuresTests(unittest.TestCase):
                 options = {'model': 'fixture', 'call_timeout': 1,
                            'check_timeout': 1, 'candidate_timeout': 1}
                 def __init__(self, *args, **kwargs):
-                    pass
+                    self.root = root
                 def list_workspace(self):
                     return {'theories': [{'theory': 'Target', 'status': 'pending',
                         'selected': True, 'contracts': ['target'], 'ready_for_proof_action': True}]}

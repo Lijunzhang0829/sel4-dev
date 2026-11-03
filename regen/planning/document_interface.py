@@ -147,6 +147,17 @@ def tool_contracts():
         'required':['helper_id','use_indices','domain_scope','premises','conclusion','generalization','burden','reduction'],
         'additionalProperties':False}
     source_actions={
+        'wait_for_providers':{'type':'object',
+            'description':'Release this worker while named generated providers lack certified exports. Preserve all work; the coordinator resumes after publication. This neither imports facts nor declares an unresolved outcome.',
+            'properties':{'action':{'const':'wait_for_providers'},'providers':ids,'entry_ids':ids,
+                'reason':sha,'review_issue_ids':{'type':'array','items':sha,'uniqueItems':True}},
+            'required':['action','providers','entry_ids','reason'],'additionalProperties':False},
+        'record_review_decision':{'type':'object',
+            'description':'Record how an assigned planning-review obligation will be handled. This is a proof-work allocation, never a proof. Import requires accepted imports; wait requires a registered wait.',
+            'properties':{'action':{'const':'record_review_decision'},'issue_id':sha,
+                'decision':{'enum':['import','local','retain','wait']},'reason':sha,
+                'entry_ids':ids,'obligations':ids,'providers':{'type':'array','items':sha,'uniqueItems':True}},
+            'required':['action','issue_id','decision','reason','entry_ids','obligations'],'additionalProperties':False},
         'report_unresolved':{'type':'object',
             'description':'Stop this theory with an unknown outcome, preserve accepted work and release its worker. Classifications are unverified reports, never proof that the spec is false.',
             'properties':{'action':{'const':'report_unresolved'},'reason':sha,'entry_ids':ids,

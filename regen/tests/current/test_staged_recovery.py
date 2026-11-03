@@ -61,7 +61,7 @@ class RecoveryTests(unittest.TestCase):
                 run = {'run_id':'test', 'execution_input_kind':'refine-dataset',
                        'checker_context_root':str(root),'checker_context_id':'fixture'}
                 options = {'model':'test','call_timeout':900,'check_timeout':900,'candidate_timeout':120}
-                def __init__(self,*args,**kwargs): pass
+                def __init__(self,*args,**kwargs): self.root = root
                 def list_workspace(self):
                     with mutex:
                         return {'theories':[{'theory':name,'status':state,'selected':True,

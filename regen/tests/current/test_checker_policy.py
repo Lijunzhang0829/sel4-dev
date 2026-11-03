@@ -88,6 +88,7 @@ class CheckerPolicyTests(unittest.TestCase):
                 _init_run_unlocked(Path('/unused'),Path('/input'),run_id='test',
                     schedule_path=Path('/schedule'),complete_context_policy=policy)
                 init.assert_called_once_with(Path('/unused'),Path('/input'),'test',Path('/schedule'),
+                    contract_outcome_policy=None,
                     **policy_binding({'complete_context_policy':policy}))
 
     def test_unsupported_legacy_init_fails_without_loading_environment(self):
