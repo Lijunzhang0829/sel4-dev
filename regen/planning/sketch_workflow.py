@@ -174,12 +174,18 @@ def review_sketch(store, sha, target, receipt_id, reviews):
     children = {g['target_entry_id'] for g in load_groups(store)}
     for row in reviews:
         allowed = {'helper_id','use_indices','domain_scope','premises','conclusion','generalization',
-                   'burden','reduction','probe_id','child_review_id'}
-        required = allowed - {'probe_id','child_review_id'}
-        if getattr(store, 'require_assessment', False):
-            allowed.add('generalization_evidence')
-        if set(row) - allowed or not required <= set(row):
-            raise ValueError('incomplete local-demand and burden review')
+                   'burden','reduction','probe_id','child_review_id','generalization_evidence'}
+        required = allowed - {'probe_id','child_review_id','generalization_evidence'}
+        if set(row) - allowed:
+            raise ValueError('unknown decomposition review fields: ' + ', '.join(sorted(set(row) - allowed)))
+        if not required <= set(row):
+            raise ValueError('missing decomposition review fields: ' + ', '.join(sorted(required - set(row))))
+        if 'generalization_evidence' in row:
+            evidence = row['generalization_evidence']
+            if (not isinstance(evidence, dict) or set(evidence) not in (
+                    {'variable','invariant','base_case','step_case'}, {'consumers','shared_pattern'})
+                    or not all(isinstance(value, str) for value in evidence.values())):
+                raise ValueError('invalid generalization_evidence structure')
         key = row['helper_id']
         uses = {u['index'] for u in cert.get('helper_uses', []) if u['helper_id'] == key}
         if (not uses or not isinstance(row['use_indices'], list)

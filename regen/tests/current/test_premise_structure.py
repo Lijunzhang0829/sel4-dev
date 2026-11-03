@@ -28,7 +28,8 @@ class Observer:
     def imports(self):
         return ['Semantic_Base.Semantic_Root']
 
-    def _check_observation(self, rendered, label, *, writable_mounts, timeout):
+    def _check_observation(self, rendered, label, *, writable_mounts, timeout, output_files):
+        assert output_files == ('structure.tsv',)
         self.calls.append({'source': rendered, 'label': label, 'mounts': writable_mounts, 'timeout': timeout})
         output = writable_mounts[0][0] / 'structure.tsv'
         if self.write_output:
@@ -163,6 +164,59 @@ class PremiseStructureTests(unittest.TestCase):
                 return result
         with self.assertRaisesRegex(ValueError, 'different source'):
             rerank(WrongSource(self.root, self.rows), self.context, self.records)
+
+    def test_hot_worker_path_runs_the_same_reranker_and_preserves_pending_proof(self):
+        from regen.execution.batch_checker import BatchWorker
+        from regen.execution.isabelle_node_checker import IsabelleChecker
+        from unittest.mock import Mock
+        checker = object.__new__(IsabelleChecker)
+        checker.timeout, checker.work_dir = 120, self.root
+        checker.imports = lambda: ['Semantic_Base.Semantic_Root']
+        worker = object.__new__(BatchWorker)
+        worker.root = self.root / 'worker'
+        worker.root.mkdir()
+        worker.index, worker.name, worker.closed = 0, 'fixture-worker', False
+        worker.imports = checker.imports()
+        worker.base, worker.pending = 'accepted prefix', 'unaccepted pending proof'
+        worker.checker, worker.process = checker, Mock()
+        worker.process.poll.return_value = None
+        def transaction(action, text, **kwargs):
+            import re
+            self.assertEqual(action, 'observe')
+            self.assertNotIn('/symbol-output/', text)
+            path = re.search(r'"/worker/([^"]+\.structure\.tsv)"', text)[1]
+            (worker.root / path).write_text(''.join('MATCH\t' + '\t'.join(
+                str(v).encode().hex() for v in row) + '\n' for row in self.rows))
+            worker.index += 1
+            return 'OBSERVED', 'isolated fixture observation'
+        worker.transaction = transaction
+        checker._batch_worker = worker
+        checker._check = Mock(side_effect=AssertionError('must execute hot path'))
+        result = rerank(checker, self.context, self.records)
+        self.assertEqual(result['ordered_record_ids'], ['direct', 'rewrite', 'unrelated'])
+        self.assertEqual((worker.base, worker.pending), ('accepted prefix', 'unaccepted pending proof'))
+        receipt = json.loads(next(self.root.rglob('observation.json')).read_text())
+        binding = receipt['observation_output_binding']
+        self.assertEqual(binding['output_paths'], {'structure.tsv': '/worker/1.structure.tsv'})
+        self.assertNotEqual(binding['logical_source_sha256'], binding['executed_source_sha256'])
+
+    def test_hot_binding_cannot_authorize_changed_declaration_or_extra_path(self):
+        from regen.execution.observation_outputs import worker_source, validate_source
+        logical = source(self.node, ['Base'], self.records, 'Probe')
+        executed, binding = worker_source(logical, ('structure.tsv',), 4)
+        check = {'source_content': executed, 'source_sha256': hashlib.sha256(executed.encode()).hexdigest(),
+                 'check_scope':'isolated-imports-observation', 'observation_output_binding':binding}
+        validate_source(check, logical, ('structure.tsv',))
+        tampered = executed.replace(self.node['statement'], 'lemma injected: True')
+        wrong = deepcopy(check)
+        wrong.update(source_content=tampered, source_sha256=hashlib.sha256(tampered.encode()).hexdigest())
+        wrong['observation_output_binding']['executed_source_sha256'] = wrong['source_sha256']
+        with self.assertRaisesRegex(ValueError, 'different source'):
+            validate_source(wrong, logical, ('structure.tsv',))
+        wrong = deepcopy(check)
+        wrong['observation_output_binding']['output_paths']['structure.tsv'] = '/worker/../structure.tsv'
+        with self.assertRaisesRegex(ValueError, 'different source'):
+            validate_source(wrong, logical, ('structure.tsv',))
 
     def test_multifact_index_and_names_are_encoded_in_exact_source(self):
         rendered = source(self.node, ['Base.Root'], [

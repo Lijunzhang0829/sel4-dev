@@ -101,6 +101,27 @@ class WorkflowTests(unittest.TestCase):
         self.review([{**row,'domain_scope':'generalized','generalization':'induction',
                       'reduction':'Quantify the changing index to support induction.'}])
 
+    def test_reviewed_accepts_and_preserves_advertised_optional_generalization_evidence(self):
+        before = deepcopy(self.state)
+        row = {**self.row(self.probe()), 'domain_scope':'generalized', 'generalization':'induction',
+               'generalization_evidence':{'variable':'remaining', 'invariant':'relation after prefix',
+                                          'base_case':'empty suffix', 'step_case':'remove one item'}}
+        result = self.review([row])
+        from regen.planning.sketch_workflow import _read
+        saved = _read(self.store, 'reviews', result['review_id'])
+        self.assertEqual(saved['reviews'][0]['generalization_evidence'], row['generalization_evidence'])
+        authorize(self.store, self.source, ['helper'])
+        self.assertEqual(self.state, before)
+
+    def test_review_errors_distinguish_missing_unknown_and_invalid_evidence(self):
+        row = self.row(self.probe())
+        missing = dict(row); missing.pop('reduction')
+        for fields, error in ((missing, 'missing decomposition review fields: reduction'),
+                              ({**row, 'unexpected':True}, 'unknown decomposition review fields: unexpected'),
+                              ({**row, 'generalization_evidence':42}, 'invalid generalization_evidence')):
+            with self.subTest(error=error), self.assertRaisesRegex(ValueError, error):
+                self.review([fields])
+
     def test_interfaces_invalidate_probe_and_review(self):
         probe=self.probe();self.review([self.row(probe)])
         changed=self.source.replace('"True & True"','"True"')

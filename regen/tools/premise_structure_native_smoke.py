@@ -22,7 +22,7 @@ locale lab_locale = fixes z :: nat assumes lab_zero: "z = 0"
 '''
 
 
-def run(dataset, output):
+def run(dataset, output, *, hot_worker=False):
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
     ctx = load_context(Path(dataset))
@@ -41,7 +41,8 @@ def run(dataset, output):
                 for value in command(*args, **kwargs)]
     checker._command = readonly_heap
     report = {'model_calls': 0, 'benchmark_contracts_proved': 0,
-              'scope': 'synthetic native matching only, no GREEN publication', 'cases': []}
+              'scope': 'synthetic native matching only, no GREEN publication',
+              'hot_worker': hot_worker, 'cases': []}
     started = time.monotonic()
     def record(name, statement, names, expected, context=()):
         candidates = [{'record_id': n, 'canonical_name': n, 'exact_statement': 'synthetic fixture'} for n in names]
@@ -64,6 +65,20 @@ def run(dataset, output):
         print(json.dumps({'case': name, 'passed': passed, 'statuses': statuses}), flush=True)
         (output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
     try:
+        if hot_worker:
+            from regen.execution.batch_checker import BatchWorker
+            prefix = '\n'.join(['theory Structure_Hot_Worker', 'imports',
+                *[json.dumps(name) for name in checker.imports()], 'begin',
+                'unbundle l4v_word_context', 'lemma worker_accepted: "True" by simp', 'end', ''])
+            worker = BatchWorker(checker, prefix, ['worker_accepted'], checker.imports())
+            checker._batch_worker = worker
+            pending = prefix.replace('\nend\n', '\nlemma worker_pending: "True" by simp\nend\n')
+            checked = worker.check_batch(pending, ['worker_pending'])
+            if checked['verdict'] != 'green':
+                raise RuntimeError('synthetic pending prefix failed: ' + checked['diagnostic'])
+            before = (worker.base, worker.pending)
+            record('prefix_isolation', 'lemma target: "True"', ['worker_accepted', 'worker_pending'],
+                   {'worker_accepted':'unresolved', 'worker_pending':'unresolved'})
         record('type_distinction', 'lemma target: "(n::nat) + 0 = n"',
                ['lab_word','lab_nat','lab_missing'],
                {'lab_word':'no_direct_match','lab_nat':'conclusion_match','lab_missing':'unresolved'})
@@ -106,6 +121,19 @@ def run(dataset, output):
         report['cases'].append({'case':'indexed_query_to_native', 'passed':passed,
                                 'catalog_records':len(rows), 'result':result})
         print(json.dumps({'case':'indexed_query_to_native', 'passed':passed}), flush=True)
+        if hot_worker:
+            preserved = (worker.base, worker.pending) == before
+            observations = [json.loads(path.read_text()) for path in
+                            (checker.work_dir/'premise-structure').rglob('check.json')]
+            routed = all(check.get('check_scope') == 'isolated-imports-observation'
+                         and check.get('observation_output_binding') for check in observations)
+            # Exercise the legacy output protocol in the same live worker too.
+            term = checker.resolve_symbols(['True'], [])['True']
+            passed = preserved and routed and term['status'] == 'resolved'
+            report['cases'].append({'case':'hot_route_and_prefix_preserved', 'passed':passed,
+                'all_structural_observations_hot':routed, 'observation_count':len(observations),
+                'accepted_and_pending_preserved':preserved, 'symbol_resolution':term})
+            print(json.dumps({'case':'hot_route_and_prefix_preserved', 'passed':passed}), flush=True)
         report['passed'] = all(case['passed'] for case in report['cases'])
         report['wall_seconds'] = time.monotonic() - started
         (output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
@@ -121,5 +149,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dataset', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--hot-worker', action='store_true',
+                        help='Prewarm a real batch worker and verify observation isolation/output transport')
     args = parser.parse_args()
-    run(args.dataset, args.output)
+    run(args.dataset, args.output, hot_worker=args.hot_worker)

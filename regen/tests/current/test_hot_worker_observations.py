@@ -56,6 +56,33 @@ class ObservationTests(unittest.TestCase):
                 w.observe_source('theory P\nimports "Main"\nbegin\nend\n', 'P', timeout=1)
             w.close.assert_called_once()
 
+    def test_unknown_or_undeclared_output_protocol_uses_cold_path(self):
+        c = object.__new__(IsabelleChecker)
+        c.timeout = 90
+        c.imports = lambda: ['Main']
+        c._batch_worker = Mock(closed=False, imports=['Main'])
+        c._batch_worker.process.poll.return_value = None
+        c._check = Mock(return_value={'verdict':'green'})
+        for files in ((), ('future.tsv',)):
+            c._check_observation('source', 'Probe', writable_mounts=[('/tmp/output','/symbol-output')],
+                                 output_files=files)
+        self.assertEqual(c._check.call_count, 2)
+        c._batch_worker.observe_source.assert_not_called()
+
+    def test_missing_declared_output_is_transport_failure_not_green(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            w = object.__new__(BatchWorker)
+            w.root, w.index, w.name = Path(tmp), 0, 'worker'
+            w.imports = ['Main']
+            w.transaction = Mock(return_value=('OBSERVED', 'log'))
+            w.close = Mock()
+            source = ('theory P\nimports "Main"\nbegin\n'
+                      'ML \\<open>val stream = TextIO.openOut "/symbol-output/structure.tsv";\\<close>\nend\n')
+            with self.assertRaises(FileNotFoundError):
+                w.observe_source(source, 'P', timeout=1, output_directory=tmp,
+                                 output_files=('structure.tsv',))
+            w.close.assert_called_once()
+
     def test_task_checker_borrows_owner_lease_not_another_resident(self):
         from regen.execution.check_executor import CURRENT_RESOURCES, NativeResources
         owner = object.__new__(IsabelleChecker)

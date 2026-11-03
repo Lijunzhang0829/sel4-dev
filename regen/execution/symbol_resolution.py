@@ -65,9 +65,13 @@ end
                       'begin','unbundle l4v_word_context',wrap_context(context,block),'end',''])
     observe = getattr(type(checker), '_check_observation', None)
     execute = checker._check if observe is None else checker._check_observation
+    options = {} if observe is None else {'output_files': ('resolution.tsv',)}
     check=execute(source,label,writable_mounts=[(directory,'/symbol-output')],
-                         timeout=min(checker.timeout,120))
+                         timeout=min(checker.timeout,120), **options)
     evidence=freeze_evidence(check)
+    if check['verdict'] == 'green':
+        from regen.execution.observation_outputs import validate_source
+        validate_source(evidence, source, ('resolution.tsv',))
     durable(directory/'check.json',evidence)
     evidence_id=digest({'source_sha256':evidence.get('source_sha256'),'log_sha256':evidence.get('log_sha256')})
     if check['verdict']!='green':

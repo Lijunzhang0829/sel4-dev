@@ -610,7 +610,8 @@ class IsabelleChecker:
         )
         return check
 
-    def _check_observation(self, source_text, label, *, writable_mounts=None, timeout=None):
+    def _check_observation(self, source_text, label, *, writable_mounts=None, timeout=None,
+                           output_files=()):
         owner = getattr(self, '_observation_owner', None)
         if owner is not None:
             # Observation tasks keep independent paths/caches. Borrow the owning
@@ -621,23 +622,28 @@ class IsabelleChecker:
                 if (worker is not None and not worker.closed and worker.process.poll() is None
                         and worker.imports == self.imports() == owner.imports()):
                     return owner._check_observation_native(source_text, label,
-                        writable_mounts=writable_mounts, timeout=timeout)
+                        writable_mounts=writable_mounts, timeout=timeout, output_files=output_files)
         return self._check_observation_native(source_text, label,
-            writable_mounts=writable_mounts, timeout=timeout)
+            writable_mounts=writable_mounts, timeout=timeout, output_files=output_files)
 
     @native_operation
-    def _check_observation_native(self, source_text, label, *, writable_mounts=None, timeout=None):
+    def _check_observation_native(self, source_text, label, *, writable_mounts=None, timeout=None,
+                                  output_files=()):
         """Reuse only the process, never its accepted or speculative context."""
         worker = getattr(self, '_batch_worker', None)
         mounts = writable_mounts or []
-        supported = not mounts or (len(mounts) == 1 and mounts[0][1] == '/symbol-output')
+        from regen.execution.observation_outputs import supported as supported_outputs
+        supported = ((not mounts and not output_files) or
+                     (len(mounts) == 1 and mounts[0][1] == '/symbol-output'
+                      and supported_outputs(output_files)))
         if (supported and worker is not None and not worker.closed
                 and worker.process.poll() is None and worker.imports == self.imports()):
             emit_event('isabelle_observation_started', worker=worker.name, label=label)
             try:
                 result = worker.observe_source(source_text, label,
                     timeout=self.timeout if timeout is None else timeout,
-                    output_directory=mounts[0][0] if mounts else None)
+                    output_directory=mounts[0][0] if mounts else None,
+                    output_files=output_files)
             except BaseException as error:
                 emit_event('isabelle_observation_failed', worker=worker.name, label=label,
                            error_type=type(error).__name__)

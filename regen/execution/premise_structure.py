@@ -124,16 +124,19 @@ def rerank(checker, context, candidates):
     label = 'Premise_Structure_' + key[:16]
     rendered = source(node, binding['imports'], candidates, label)
     observe = checker._check_observation if getattr(type(checker), '_check_observation', None) else checker._check
+    options = {'output_files': ('structure.tsv',)} if getattr(type(checker), '_check_observation', None) else {}
     check = freeze_evidence(observe(rendered, label, writable_mounts=[(directory, '/symbol-output')],
-                                    timeout=min(checker.timeout, 120)))
-    if check.get('verdict') == 'green' and (check.get('source_content') != rendered
-                                          or check.get('source_sha256') != hashlib.sha256(rendered.encode()).hexdigest()):
-        raise ValueError('native structure observation checked a different source')
+                                    timeout=min(checker.timeout, 120), **options))
+    if check.get('verdict') == 'green':
+        from regen.execution.observation_outputs import validate_source
+        validate_source(check, rendered, ('structure.tsv',))
     durable(directory / 'check.json', check)
     output = directory / 'structure.tsv'
     output_sha256 = hashlib.sha256(output.read_bytes()).hexdigest() if check.get('verdict') == 'green' and output.is_file() else None
     receipt = {'binding': binding, 'source_sha256': check.get('source_sha256'),
                'log_sha256': check.get('log_sha256'), 'output_sha256': output_sha256}
+    if check.get('observation_output_binding') is not None:
+        receipt['observation_output_binding'] = check['observation_output_binding']
     evidence_id = digest(receipt)
     durable(directory / 'observation.json', receipt)
     if check.get('verdict') != 'green':

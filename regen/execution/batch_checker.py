@@ -109,25 +109,37 @@ class BatchWorker(PrefixWorker):
             stream.seek(offset); log = stream.read().decode(errors='replace')
         return answer, log
 
-    def observe_source(self, source, label, *, timeout, output_directory=None):
+    def observe_source(self, source, label, *, timeout, output_directory=None, output_files=()):
         """Trusted harness observation in an imports-only, disposable theory.
 
         The exact executed source is saved. This is not a proof certificate and
-        cannot promote pending work. Only the fixed symbol output is exported.
+        cannot promote pending work. Only declared observation outputs are exported.
         """
         header, separator, content = source.partition('\nbegin\n')
         if (not separator or shlex.split(header) != ['theory', label, 'imports', *self.imports]
                 or not source.endswith('\nend\n')):
             raise ValueError('observation header must match frozen worker imports')
         stem = str(self.index + 1)
-        output = self.root/(stem+'.resolution.tsv')
         executed = source
+        binding = None
+        outputs = {}
         if output_directory is not None:
-            executed = source.replace('/symbol-output/resolution.tsv', '/worker/'+output.name)
+            from regen.execution.observation_outputs import worker_source
+            executed, binding = worker_source(source, output_files, self.index + 1)
+            outputs = {name: self.root/Path(path).name
+                       for name, path in binding['output_paths'].items()}
+            if any(path.exists() for path in outputs.values()):
+                raise ValueError('observation request output already exists')
+        elif output_files:
+            raise ValueError('observation outputs require an output directory')
         started = time.monotonic()
         try:
             answer, log = self.transaction('observe', executed.partition('\nbegin\n')[2],
                 fields={'observation_name':label, 'observation_timeout':timeout}, timeout=timeout+10)
+            if answer == 'OBSERVED' and output_directory is not None:
+                # Missing output is a transport error, not a successful lookup.
+                for name, output in outputs.items():
+                    (Path(output_directory)/name).write_bytes(output.read_bytes())
         except (TimeoutError, RuntimeError, OSError):
             self.close()
             raise
@@ -135,9 +147,6 @@ class BatchWorker(PrefixWorker):
         path.write_text(executed)
         log_path = self.root/(stem+'.observation.log')
         log_path.write_text(log+'\n'+answer)
-        if answer == 'OBSERVED' and output_directory is not None:
-            # Missing output is a transport error, not a successful lookup.
-            (Path(output_directory)/'resolution.tsv').write_bytes(output.read_bytes())
         result = {'verdict':'green' if answer == 'OBSERVED' else 'red',
             'returncode':0 if answer == 'OBSERVED' else 124 if answer.startswith('TIMEOUT\n') else 1,
             'diagnostic':answer, 'source':str(path), 'log':str(log_path),
@@ -146,6 +155,8 @@ class BatchWorker(PrefixWorker):
             'worker':self.name, 'worker_preserved':True,
             'timeout_seconds':timeout,
             'timeout_scope':'isolated-imports-observation' if answer.startswith('TIMEOUT\n') else None}
+        if binding is not None:
+            result['observation_output_binding'] = binding
         from regen.execution.native_check_receipt import native_check_receipt
         result['native_receipt'] = native_check_receipt(
             self.checker, result, source=executed, scope='isolated-imports-observation',

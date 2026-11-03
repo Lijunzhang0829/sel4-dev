@@ -1,4 +1,5 @@
 from pathlib import Path
+import hashlib
 import tempfile
 import unittest
 from types import SimpleNamespace
@@ -19,7 +20,8 @@ class SymbolResolutionTest(unittest.TestCase):
             self.assertEqual(checker.timeout,900)
             path=kwargs['writable_mounts'][0][0]/'resolution.tsv'
             path.write_text(output)
-            return {'verdict':verdict,'diagnostic':'infrastructure failure' if verdict!='green' else ''}
+            return {'verdict':verdict,'diagnostic':'infrastructure failure' if verdict!='green' else '',
+                    'source_content':source,'source_sha256':hashlib.sha256(source.encode()).hexdigest()}
         checker._check=check
         return checker
 
