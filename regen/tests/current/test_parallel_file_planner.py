@@ -79,6 +79,38 @@ class ParallelControllerTests(unittest.TestCase):
         self.assertEqual(row['error_type'], 'ImplementationChangedError')
         self.assertEqual(self.controller._state('Target')[1]['proofs'], {})
 
+    def test_native_evidence_mismatch_blocks_worker_without_recording_unknown(self):
+        from regen.execution.proof_batches import NativeEvidenceError
+        with patch('regen.execution.proof_batches.validate_batch_commit',
+                   side_effect=NativeEvidenceError('declaration checker source mismatch')):
+            result=self.controller.handle('proof_action',{'theory':'Target',
+                'proposal':{'action':'submit_batch','proofs':{'target_contract':'by simp'}}},self.metadata)
+        self.assertTrue(result['framework_blocked'])
+        self.assertEqual(result['feedback']['status'],'infrastructure_error')
+        self.assertEqual(result['feedback']['failure_scope'],'trusted_audit_target')
+        self.assertEqual(self.controller._proof_work_version,0)
+        self.assertEqual(self.controller._state('Target')[1]['proofs'],{})
+        stopped=self.controller.handle('proof_action',{'theory':'Target','proposal':{
+            'action':'report_unresolved','reason':'Source mismatch is not mathematical failure'}},self.metadata)
+        self.assertTrue(stopped['framework_blocked'])
+        self.assertNotIn('theory_stop',stopped)
+        self.assertFalse((self.root/'theory-outcomes').exists())
+
+    def test_framework_block_retains_native_failure_scope_on_initial_and_followup_tools(self):
+        with patch('regen.planning.proof_workspace_agent.WorkspaceController.proof_action',return_value={
+                'feedback':{'status':'infrastructure_error','framework_blocked':True,
+                            'failure_scope':'native_preparation','native_failure_stage':'native-io',
+                            'diagnostic':'native disk full'}}):
+            result=self.controller.handle('proof_action',{'theory':'Target',
+                'proposal':{'action':'submit_batch','proofs':{'target_contract':'by simp'}}},self.metadata)
+        self.assertEqual(result['failure_scope'],'native_preparation')
+        stopped=self.controller.handle('proof_action',{'theory':'Target','proposal':{
+            'action':'report_unresolved','reason':'This is an infrastructure failure'}},self.metadata)
+        self.assertEqual(stopped['failure_scope'],'native_preparation')
+        self.assertEqual(stopped['native_failure_stage'],'native-io')
+        self.assertNotIn('theory_stop',stopped)
+        self.assertEqual(self.controller._state('Target')[1]['proofs'],{})
+
     def test_unresolved_action_stops_only_assigned_theory_without_proof_changes(self):
         before=deepcopy(self.controller._state('Target')[1])
         with self.assertRaisesRegex(ValueError,'only the assigned theory'):
@@ -683,6 +715,19 @@ class TheoryOutcomeSchedulingTests(unittest.TestCase):
         self.assertEqual(controller._proof_work_version,2)
         full['result']={'feedback':{'status':'rejected_request'}}
         controller._record_proof_work(row,{**arguments,'proposal':{**arguments['proposal'],'source_sha256':'third'}})
+        self.assertEqual(controller._proof_work_version,2)
+        for scope in ('native_preparation','native_transport','trusted_audit_target'):
+            full['result']={'feedback':{'check':{'verdict':'red','failure_scope':scope}}}
+            controller._record_proof_work(row,{**arguments,'proposal':{**arguments['proposal'],'source_sha256':scope}})
+            self.assertEqual(controller._proof_work_version,2)
+        full['result']={'framework_blocked':True,'check':{'verdict':'green'}}
+        controller._record_proof_work(row,{**arguments,'proposal':{**arguments['proposal'],'source_sha256':'blocked'}})
+        self.assertEqual(controller._proof_work_version,2)
+        full['result']={'feedback':{'cached_failure':True,'check':{'verdict':'red'}}}
+        controller._record_proof_work(row,{**arguments,'proposal':{**arguments['proposal'],'source_sha256':'cached-new-source'}})
+        self.assertEqual(controller._proof_work_version,2)
+        controller._proof_work_seen.clear()  # A fresh worker must not count old cached work either.
+        controller._record_proof_work(row,arguments)
         self.assertEqual(controller._proof_work_version,2)
 
     def test_execution_policy_binds_finite_idle_limit(self):

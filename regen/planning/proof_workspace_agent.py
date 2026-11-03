@@ -131,8 +131,11 @@ class WorkspaceController:
             package, state = self._state(theory)
             states[theory] = state['status']
             projection = package['repository_projection']
+            checked_contracts = len(set(state['proofs']) & {c['contract_id'] for c in package['contracts']})
             rows.append({'theory':theory, 'selected':theory in self.selected,
                          'status':state['status'], 'green_count':len(state['proofs']),
+                         'checked_contracts':checked_contracts,
+                         'checked_auxiliaries':len(state['proofs'])-checked_contracts,
                          'contracts':[{'id':c['contract_id'], 'name':c.get('name', c['contract_id'])}
                                       for c in package['contracts']],
                          'required_imports':self._effective_providers(package,state),
@@ -186,7 +189,12 @@ class WorkspaceController:
         from regen.execution.proof_session_runner import generated_checkpoint_theory
         names = {generated_checkpoint_theory(entry['file_slot']): theory
                  for theory,entry in self.shared.entries.items()}
-        return [names[name] for name in state['context_imports']]
+        result = [names[name] for name in state['context_imports']]
+        from regen.execution.replan_continuation import pending_replanned_providers
+        for name in pending_replanned_providers(self.root,self.run,package,state):
+            if name not in result:
+                result.append(name)
+        return result
 
     def _all_selected_sealed(self, theory, state):
         # Most actions leave their target generating; that alone proves false.

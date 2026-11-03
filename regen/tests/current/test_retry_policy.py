@@ -105,7 +105,7 @@ class ContextRetryIntegrationTest(unittest.TestCase):
         from regen.planning.proof_graph import build_graph
         f=fixtures.RepositoryPlannerTest();f.setUp();self.addCleanup(f.doCleanups)
         f.call([f.proposal],allow=True)
-        root=f.root/'execution';run=execution.init_run(root,f.root,'r',f.output/'file-generation-list.json')
+        root=f.root/'execution';run=execution.init_run(root,f.root,'r',f.output/'file-generation-list.json',contract_outcome_policy=None)
         package=execution.package_for(run,'Generated_Read.thy')
         graph=build_graph(package,{'generated_nodes':[]},run_id='r',revision=1)
         key=graph['nodes'][0]['id'];calls=[]

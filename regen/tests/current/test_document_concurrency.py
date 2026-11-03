@@ -53,6 +53,60 @@ class DocumentConcurrencyTests(unittest.TestCase):
         row = self.executor.get(next(iter(controller.task_ids)))
         self.assertEqual(row['error_type'], 'NativePreparationError')
 
+    def _assert_source_binding_failure_is_framework_feedback(self, action):
+        from regen.execution.proof_batches import NativeEvidenceError
+        controller = self.controllers['Target']
+        metadata = {'thread_id':'test','turn_id':'test','call_id':'edit-source-failure',
+                    'transcript_path':'synthetic-test-transcript', 'transcript_offset':1}
+        draft = controller.handle('read_theory', {'theory':'Target'}, {})['document']
+        saved = controller.handle('proof_action', {'theory':'Target','proposal':{
+            'action':'edit_theory','base_sha256':draft['source_sha256'],
+            'edits':[{'old':'oops','new':'by simp'}]}}, metadata)
+        with patch('regen.planning.theory_document.check_document',
+                   side_effect=NativeEvidenceError('declaration checker source mismatch')):
+            result = controller.handle('proof_action', {'theory':'Target','proposal':{
+                'action':action,'source_sha256':saved['source_sha256']}},
+                {**metadata, 'call_id':'check-source-failure'})
+        self.assertEqual(result['feedback']['status'], 'infrastructure_error')
+        self.assertEqual(result['feedback']['failure_scope'], 'trusted_audit_target')
+        self.assertTrue(result['feedback']['framework_blocked'])
+        self.assertTrue(result['framework_blocked'])
+        self.assertEqual(controller._state('Target')[1]['proofs'], {})
+
+    def test_source_binding_failure_is_framework_feedback_not_rejected_proof(self):
+        self._assert_source_binding_failure_is_framework_feedback('check_theory')
+
+    def test_finish_source_binding_failure_is_framework_feedback(self):
+        self._assert_source_binding_failure_is_framework_feedback('finish')
+
+    def test_invalid_model_edit_is_not_framework_blocked(self):
+        controller = self.controllers['Target']
+        draft = controller.handle('read_theory', {'theory':'Target'}, {})['document']
+        with self.assertRaises(ValueError):
+            controller.handle('proof_action', {'theory':'Target', 'proposal':{
+                'action':'edit_theory','base_sha256':draft['source_sha256'],
+                'edits':[{'old':'oops','new':'sorry'}]}}, {})
+        self.assertFalse(getattr(controller, 'framework_blocked', False))
+
+    def test_legacy_cached_response_timeout_is_infrastructure_not_proof_red(self):
+        from regen.execution.check_tasks import NativePreparationError
+        controller = self.controllers['Target']
+        draft = controller.handle('read_theory', {'theory':'Target'}, {})['document']
+        metadata = {'transcript_path':'synthetic-test-transcript','call_id':'edit-cached',
+                    'thread_id':'test','turn_id':'test'}
+        saved = controller.handle('proof_action', {'theory':'Target','proposal':{
+            'action':'edit_theory','base_sha256':draft['source_sha256'],
+            'edits':[{'old':'oops','new':'by simp'}]}}, metadata)
+        cached = {'reused_request':1, 'check':{'verdict':'red',
+            'timeout_scope':'candidate-watchdog', 'diagnostic':'missing native response'}}
+        with patch('regen.planning.planner_efficiency.reused_failure', return_value=cached):
+            with self.assertRaisesRegex(NativePreparationError, 'missing native response'):
+                controller.handle('proof_action', {'theory':'Target','proposal':{
+                    'action':'check_theory','source_sha256':saved['source_sha256']}},
+                    {**metadata,'call_id':'check-cached'})
+        self.assertEqual(cached['check']['verdict'], 'red')
+        self.assertEqual(controller._state('Target')[1]['proofs'], {})
+
     def test_same_theory_observation_blocks_document_reads_and_edits(self):
         controller = self.controllers['Target']
         draft = controller.handle('read_theory', {'theory': 'Target'}, {})['document']

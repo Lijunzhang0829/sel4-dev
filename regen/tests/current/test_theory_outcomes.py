@@ -327,6 +327,18 @@ class TheoryOutcomesTests(unittest.TestCase):
                 self.assertFalse(hasattr(self.c,'theory_outcome'))
                 self.assertIsNone(current_outcome(self.c))
 
+    def test_refutation_infrastructure_failure_cannot_become_an_outcome(self):
+        from regen.execution.check_tasks import NativePreparationError
+        metadata=self._native_controller();before=deepcopy(self.state)
+        with patch('regen.execution.contract_refutation.check_refutation',return_value={
+                'status':'infrastructure_error','framework_blocked':True,
+                'failure_scope':'native_preparation','diagnostic':'native disk full','certificate':None}):
+            with self.assertRaisesRegex(NativePreparationError,'native disk full'):
+                handle_outcome(self.c,{'action':'check_refutation','entry_id':'b','proof_body':'by simp'},metadata)
+        self.assertEqual(before,self.state)
+        self.assertIsNone(current_outcome(self.c))
+        self.assertFalse(hasattr(self.c,'theory_outcome'))
+
     def test_outcome_schemas_exclude_model_supplied_truth_or_target(self):
         from regen.planning.document_interface import tool_contracts
         from jsonschema import Draft202012Validator

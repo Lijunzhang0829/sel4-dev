@@ -33,7 +33,13 @@ class BatchTimeoutTest(unittest.TestCase):
 
     def assert_timeout_evidence(self, old, new, evidence, scope):
         check = evidence['check']
-        self.assertEqual(check['verdict'], 'infrastructure_error' if scope == 'prefix-startup' else 'red')
+        infrastructure = scope in {'prefix-startup', 'candidate-watchdog'}
+        self.assertEqual(check['verdict'], 'infrastructure_error' if infrastructure else 'red')
+        if infrastructure:
+            self.assertEqual(check['failure_scope'], 'native_preparation')
+            self.assertTrue(check['framework_blocked'])
+        else:
+            self.assertFalse(check.get('framework_blocked', False))
         self.assertEqual(check['returncode'], 124)
         self.assertTrue(check['timed_out'])
         self.assertEqual(check['timeout_scope'], scope)
@@ -73,6 +79,9 @@ class BatchTimeoutTest(unittest.TestCase):
             self.assertTrue(checker._batch_worker.closed)
             checker._batch_worker.close.assert_called_once()
             self.assertEqual(evidence['check']['watchdog_grace_seconds'], 10)
+            self.assertEqual(evidence['check']['native_failure_stage'], 'candidate-response-watchdog')
+            self.assertEqual(evidence['check']['native_receipt']['verdict'], 'infrastructure_error')
+            self.assertTrue(all(row['status'] == 'not_checked' for row in evidence['node_results']))
 
     def test_prefix_startup_timeout_has_distinct_scope_without_cold_repeat(self):
         with tempfile.TemporaryDirectory() as tmp:

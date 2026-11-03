@@ -57,6 +57,7 @@ class AdviceControllerTests(unittest.TestCase):
         before = deepcopy(self.controller._state('Target')[1])
         calls = self.checkers['Target'].calls
         result = self.entry()
+        self.assertTrue(result['refutation_capability']['can_attempt'])
         expanded = result['planning_advice']['proof_direction_suggestions'][0]
         candidate = expanded['candidate_contracts'][0]
         fixed = self.fixture.packages[0]['contracts'][0]

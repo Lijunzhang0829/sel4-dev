@@ -4,7 +4,8 @@ import hashlib
 import unittest
 
 from regen.execution.isabelle_node_checker import IsabelleChecker
-from regen.execution.proof_batches import check_batch, check_declarations, prepare_batch, validate_batch_commit
+from regen.execution.proof_batches import (NativeEvidenceError, check_batch,
+    check_declarations, prepare_batch, validate_batch_commit)
 from regen.planning.theory_document import candidate, check_document, render, validate_document_commit
 from regen.tests.current.test_proof_batches import Checker
 from regen.tests.current.test_proof_commits import fixture
@@ -75,6 +76,44 @@ class DocumentDeclarationChecksTest(unittest.TestCase):
         self.assertEqual(self.checker.labels, ['Declaration_Check_v2'])
         self.assertEqual(evidence['graph_check']['check_scope'], 'all-document-declarations')
         validate_document_commit(self.package, self.old, current, evidence)
+
+    def test_complete_accepted_arch_document_can_be_checked_before_seal(self):
+        # With all proofs already accepted, finish checks declarations only.
+        context = ['context begin interpretation Arch .']
+        self.package['contracts'][0]['contract_owned_context'] = context
+        for node in self.old['graph']['nodes']:
+            node['context'] = context
+        source = render(self.package, self.old, self.checker.imports()).replace(
+            '\noops\n', '\nby simp\n')
+        accepted = candidate(self.package, self.old, source, self.checker.imports())
+        first = check_document(self.checker, self.old, accepted, source)
+        validate_document_commit(self.package, self.old, accepted, first)
+        current = candidate(self.package, accepted, source, self.checker.imports())
+        evidence = check_document(self.checker, accepted, current, source)
+        graph_check = evidence['graph_check']
+        self.assertEqual(graph_check['declaration_context_policy'], 'arch-declarations-reuse-v1')
+        self.assertEqual(graph_check['source_content'].count('interpretation Arch .'), 1)
+        self.assertEqual(graph_check['source_content'].count('oops'), 2)
+        self.assertEqual(evidence['node_results'], [])
+        validate_document_commit(self.package, accepted, current, evidence)
+        self.assertEqual(current['proofs'], accepted['proofs'])
+        for policy in ('isolated-v1', 'invented-policy'):
+            bad = deepcopy(evidence)
+            bad['graph_check']['declaration_context_policy'] = policy
+            with self.subTest(policy=policy), self.assertRaises(NativeEvidenceError) as caught:
+                validate_document_commit(self.package, accepted, current, bad)
+            self.assertTrue(caught.exception.framework_blocked)
+            self.assertEqual(caught.exception.failure_scope, 'trusted_audit_target')
+
+    def test_native_io_during_declaration_check_is_infrastructure(self):
+        current = candidate(self.package, self.old, self.edited, self.checker.imports())
+        self.checker.verdict = 'red'
+        self.checker.diagnostic = ('RED\nexception Io {cause = SysErr ("No space left on device", NONE), '
+            'function = "TextIO.openOut", name = "/native/audit.tsv"} raised')
+        evidence = check_document(self.checker, self.old, current, self.edited)
+        self.assertEqual(evidence['check']['verdict'], 'infrastructure_error')
+        self.assertEqual(evidence['check']['native_failure_stage'], 'native-io')
+        self.assertTrue(evidence['check']['framework_blocked'])
 
     def test_old_document_journal_and_checker_adapter_still_replay(self):
         for legacy in (False, True):

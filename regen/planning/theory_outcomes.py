@@ -309,6 +309,10 @@ def record_unresolved(controller, *, reason, origin, details=None, entry_ids=Non
         raise ValueError('an unresolved report requires a nonempty reason')
     if origin not in {'model', 'controller'} or classification not in CLASSIFICATIONS:
         raise ValueError('invalid unresolved outcome origin or classification')
+    from regen.planning.unresolved_evidence import strict_policy_enabled, require_unresolved_evidence
+    if strict_policy_enabled(controller.run):
+        evidence = require_unresolved_evidence(controller, entry_ids)
+        details = {**(details or {}), 'unresolved_evidence':evidence}
     # Classification and narrative are reports only; they never certify a false
     # specification, missing premise, or mathematical impossibility.
     return _publish(controller, status='unknown', reason=reason, origin=origin,
@@ -569,6 +573,8 @@ def _check_refutation(controller, proposal, metadata):
     if hasattr(controller, '_record_proof_work'):
         controller._record_proof_work(row, {'kind':'refutation', 'proposal':proposal})
     result = row['result']
+    if result.get('framework_blocked') or result.get('status') == 'infrastructure_error':
+        raise NativePreparationError(result.get('diagnostic', 'native refutation infrastructure failed'))
     if result.get('status') != 'refuted':
         controller._check_session_active()
         if _snapshot(controller)[2] != result.get('checked_binding', binding):

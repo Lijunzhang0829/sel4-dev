@@ -289,6 +289,12 @@ def main():
     parser.add_argument('--history', type=Path)
     parser.add_argument('--prior-dispositions', type=Path,
                         help='Audited previous decisions to explicitly assess against this exact plan')
+    parser.add_argument('--recovery-evidence', type=Path,
+                        help='Authorized hash-bound generated execution observations, never removed human proofs')
+    parser.add_argument('--recovery-baseline-plan', type=Path,
+                        help='Predecessor proposal identifying the theories in recovery observations')
+    parser.add_argument('--revision-constraints', type=Path,
+                        help='Hard preservation bounds of the explicitly authorized recovery revision')
     parser.add_argument('--allow-external-call', action='store_true')
     parser.add_argument('--model', default='gpt-6-astra')
     parser.add_argument('--reasoning-effort', default='medium')
@@ -296,6 +302,8 @@ def main():
     args = parser.parse_args()
     if args.timeout <= 0:
         parser.error('Timeout must be positive')
+    if (args.recovery_evidence or args.revision_constraints) and not args.recovery_baseline_plan:
+        parser.error('Recovery evidence/constraints require --recovery-baseline-plan')
     plan, payload = read(args.plan), read(args.input)
     contracts = payload['contracts']
     structural = analyze(plan, contracts)
@@ -303,6 +311,20 @@ def main():
     packet = review_input(plan, contracts, structural)
     if args.prior_dispositions is not None:
         packet['prior_dispositions'] = read(args.prior_dispositions)
+    if args.recovery_baseline_plan:
+        from regen.planning.recovery_revision import recovery_evidence, validate_revision_constraints
+        baseline=read(args.recovery_baseline_plan)
+        analyze(baseline,contracts)
+        packet['recovery_notice']='This is an authorized revision after generated proof attempts. Assess the '
+        packet['recovery_notice']+='concrete decisions using only supplied observations, fixed contracts and plan. '
+        packet['recovery_notice']+='Removed human proofs remain excluded. Failures are not necessity claims. '
+        packet['recovery_notice']+='Respect preservation bounds; request a concrete feasible repair or explicit local duties.'
+        if args.recovery_evidence:
+            packet['recovery_evidence']=recovery_evidence(read(args.recovery_evidence),baseline)
+        if args.revision_constraints:
+            constraints=read(args.revision_constraints)
+            validate_revision_constraints(baseline,plan,constraints)
+            packet['revision_constraints']=constraints
     write(args.output/'structural.json', structural)
     write(args.output/'review-input.json', packet)
     binding = {'plan_sha256': digest(plan), 'input_sha256': digest(payload),
@@ -310,7 +332,8 @@ def main():
                'model': args.model, 'reasoning_effort': args.reasoning_effort, 'timeout': args.timeout,
                'max_repairs':None, 'output_repair_policy':OUTPUT_REPAIR_POLICY,
                'review_coverage_policy':REVIEW_POLICY,
-               'historical_data_in_review': False, 'mutates_plan': False}
+               'historical_data_in_review': bool(args.recovery_evidence),
+               'removed_human_proofs_in_review': False, 'mutates_plan': False}
     write(args.output/'binding.json', binding)
     if not args.allow_external_call:
         write(args.output/'status.json', {'state': 'prepared', 'model_called': False})

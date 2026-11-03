@@ -268,6 +268,8 @@ class BatchWorker(PrefixWorker):
             'prefix_sha256':hashlib.sha256(self.base.encode()).hexdigest(),
             'delta_sha256':hashlib.sha256(suffix.encode()).hexdigest(),
             'audited_facts':list(names), 'worker':self.name}
+        from regen.execution.proof_batches import classify_native_failure
+        classify_native_failure(result)
         from regen.execution.native_check_receipt import native_check_receipt
         result['native_receipt'] = native_check_receipt(
             self.checker, result, source=source,

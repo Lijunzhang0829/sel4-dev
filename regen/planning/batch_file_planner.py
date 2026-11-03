@@ -974,27 +974,26 @@ def seal_theory(run_dir, run, package, directory, checker, ancestors, state, *, 
     elif dispositions:
         raise ValueError('fully proved theory cannot retain unproved contract dispositions')
     load_audit_context(Path(run['premise_snapshot']))
-    complete = freeze_evidence(checker.check_complete(graph, proofs))
+    complete = freeze_evidence(classify_native_failure(deepcopy(checker.check_complete(graph, proofs))))
     if complete['verdict'] != 'green':
-        return None, {'stage': 'complete', 'check': complete}
+        return None, {'stage': 'complete', 'check': complete, **infrastructure_feedback(complete)}
     try:
         impact = audit_theory(checker=checker, graph=graph, proofs=proofs,
             premise_snapshot_path=Path(run['premise_snapshot']), output_path=directory/'retained-semantic-impact.json')
     except ValueError as error:
-        audit = freeze_evidence(getattr(checker, 'last_complete_audit', {}))
+        audit = freeze_evidence(classify_native_failure(deepcopy(getattr(checker, 'last_complete_audit', {}))))
         return None, {'stage':'semantic-audit', 'diagnostic':str(error),
-                      'check':audit,
-                      **({'framework_blocked':True, 'failure_scope':'trusted_audit_target'}
-                         if audit.get('failure_scope') == 'trusted_audit_target' else {})}
+                      'check':audit, **infrastructure_feedback(audit)}
     name = generated_checkpoint_theory(package['file_slot'])
     source = checker.complete_source(graph, proofs, theory_name=name)
     path = checker.generated_dir/(name+'.thy'); path.write_text(source)
-    build = freeze_evidence(getattr(checker, 'build_sealed_session', checker.build_generated_session)([*ancestors, name]))
-    deps = checker.last_complete_audit
+    build = freeze_evidence(classify_native_failure(
+        deepcopy(getattr(checker, 'build_sealed_session', checker.build_generated_session)([*ancestors, name]))))
+    deps = classify_native_failure(deepcopy(checker.last_complete_audit))
     evidence = freeze_evidence({'complete':complete, 'impact':impact, 'build':build,
         'dependencies':deps, 'source':str(path), 'source_text':source, 'source_hash':digest(source)})
     if build['verdict'] != 'green' or impact.get('verdict') != 'pass' or deps.get('verdict') != 'green':
-        return None, {'stage':'seal', 'evidence':evidence}
+        return None, {'stage':'seal', 'evidence':evidence, **infrastructure_feedback(build, deps)}
     from regen.execution.seal_evidence import bind_seal, validate_seal
     evidence = bind_seal(state, evidence, checker, **(
         {'export_scope': export_scope} if export_scope is not None else {}))
@@ -1420,6 +1419,10 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                                      'reused_request':cached['reused_request']} if cached else
                                     (check_document(checker,state,candidate,document_source) if document_source is not None
                                      else check_batch(checker, state, candidate)))
+                        # A recovered legacy response-watchdog/IO receipt must
+                        # not reappear as a mathematical RED through the cache.
+                        from regen.execution.proof_batches import classify_native_failure
+                        evidence['check'] = classify_native_failure(deepcopy(evidence['check']))
                         evidence.update(sealable_generation=bool(meta.get('sealable_generation')),
                                         transcript_prefix=str(prefix), reason=proposal.get('reason',''))
                         if document_source is not None:
@@ -1522,7 +1525,12 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     else:
                         raise ValueError('unknown action; use query/read_queries/read_attempts/read_diagnostic/read_facts/read_proofs/submit_batch/finish/pause')
                 except (ValueError, KeyError, TypeError) as error:
-                    feedback = {'status':'rejected_request', 'diagnostic':str(error)}
+                    from regen.execution.proof_batches import NativeEvidenceError
+                    feedback = ({'status':'infrastructure_error', 'diagnostic':str(error),
+                                 'failure_scope':error.failure_scope, 'framework_blocked':True,
+                                 'native_failure_stage':'evidence-source-binding'}
+                                if isinstance(error, NativeEvidenceError) else
+                                {'status':'rejected_request', 'diagnostic':str(error)})
                     if isinstance(error, ReadIdError):
                         feedback.update(error.details)
                 except NativePreparationError:

@@ -13,6 +13,42 @@ MODE = 'file-planner-batch-v1'
 UNSAFE = re.compile(r"\b(?:ML\w*|SML\w*|setup|local_setup|attribute_setup|method_setup|oracle|axiomatization|sorry|oops|admit|tactic|simproc_setup|use|external_file|theory|context|locale|end|lemma|theorem|corollary|proposition|definition|axioms|declare|lemmas|interpretation|syntax|translations|notation|bundle|unbundle)\b")
 
 
+class NativeEvidenceError(ValueError):
+    """Trusted checker evidence failed binding; this is not a proof rejection."""
+
+    failure_scope = 'trusted_audit_target'
+    framework_blocked = True
+
+
+def classify_native_failure(result):
+    """Separate a missing native response / native I/O failure from proof RED.
+
+    An ML-reported candidate execution deadline remains proof feedback. A host
+    watchdog without a response has not established a native candidate verdict.
+    The receipt is descriptive metadata, so preserve its original source/log
+    binding while updating its failure classification alongside the result.
+    """
+    diagnostic = result.get('diagnostic', '')
+    stage = None
+    if result.get('timeout_scope') == 'candidate-watchdog':
+        stage = 'candidate-response-watchdog'
+    elif result.get('timeout_scope') == 'prefix-startup':
+        stage = 'prefix-startup-or-alignment'
+    elif (isinstance(diagnostic, str) and result.get('verdict') != 'green'
+          and re.search(r'\bexception\s+(?:Io\s*\{|SysErr\s*\()', diagnostic)):
+        stage = 'native-io'
+    if stage is not None or result.get('verdict') == 'infrastructure_error':
+        scope = result.get('failure_scope')
+        result.update(verdict='infrastructure_error',
+                      failure_scope=scope if scope and scope != 'candidate' else 'native_preparation',
+                      framework_blocked=True)
+        if stage is not None:
+            result['native_failure_stage'] = stage
+        if isinstance(result.get('native_receipt'), dict):
+            result['native_receipt']['verdict'] = 'infrastructure_error'
+    return result
+
+
 def _safe_text(text, *, statement=False):
     # Ignore quoted terms: command words inside propositions are harmless. Raw
     # ML/tactic methods remain forbidden, including cartouche payloads.
@@ -170,8 +206,8 @@ def check_declarations(checker, index):
     """Use the document checker API, keeping old checker adapters replayable."""
     method = getattr(checker, 'check_declarations', None)
     if index.get('declaration_index_version') == 1 and callable(method):
-        return method(index)
-    return checker.check_graph(index)
+        return classify_native_failure(method(index))
+    return classify_native_failure(checker.check_graph(index))
 
 
 @native_operation
@@ -326,6 +362,7 @@ def check_batch(checker, old, candidate):
             result['timeout_seconds'] = candidate_timeout
             result['check_scope'] = 'accepted-prefix-and-batch'
             result['incremental'] = False
+        classify_native_failure(result)
         if result.get('native_receipt') is None:
             # Prefix startup and transport failures have no successful worker
             # transaction, but their saved diagnostic still needs a bound
@@ -390,13 +427,23 @@ def validate_batch_commit(old, new, evidence):
         # Accept only exact renderings of the candidate for the allowed names;
         # this does not relax statement, context, imports or byte binding.
         index = new['graph']
-        labels = [f"Graph_Check_v{index['revision']}"]
-        if index.get('declaration_index_version') == 1:
-            labels.append(f"Declaration_Check_v{index['revision']}")
+        policy = graph_check.get('declaration_context_policy', 'isolated-v1')
+        reuse_context = policy == 'arch-declarations-reuse-v1'
+        if policy not in ('isolated-v1', 'arch-declarations-reuse-v1'):
+            raise NativeEvidenceError('unsupported declaration checker context policy')
+        if reuse_context:
+            if index.get('declaration_index_version') != 1:
+                raise NativeEvidenceError('declaration context reuse requires a document index')
+            labels = [f"Declaration_Check_v{index['revision']}"]
+        else:
+            labels = [f"Graph_Check_v{index['revision']}"]
+            if index.get('declaration_index_version') == 1:
+                labels.append(f"Declaration_Check_v{index['revision']}")
         expected_sources = [renderer._source(index, {}, theory_name=label,
-                            statements_only=True) for label in labels]
+                            statements_only=True,
+                            reuse_declaration_context=reuse_context) for label in labels]
         if graph_check['source_content'] not in expected_sources:
-            raise ValueError('declaration checker source mismatch')
+            raise NativeEvidenceError('declaration checker source mismatch')
     elif _declarations(old) != _declarations(new) and coverage is None:
         raise ValueError('changed declarations lack native evidence')
     _green(evidence['check'])

@@ -180,8 +180,12 @@ while not Path({str(pidfile)!r}).exists():
         # already have exited and released stdout, rather than still sleeping.
         pid = int(pidfile.read_text())
         status = Path(f'/proc/{pid}/stat')
-        if status.exists():
-            self.assertIn(status.read_text().rsplit(')', 1)[1].split()[0], {'Z','X'})
+        try:
+            process_status = status.read_text()
+        except (FileNotFoundError, ProcessLookupError):
+            pass  # Reaped before or during the /proc read: already exited.
+        else:
+            self.assertIn(process_status.rsplit(')', 1)[1].split()[0], {'Z','X'})
         self.assertIsNone(budget.process)
         self.assert_unfrozen(budget, frozen)
 

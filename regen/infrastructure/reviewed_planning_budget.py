@@ -120,6 +120,10 @@ class ReviewedPlanningBudget:
 
     def run(self, command, log):
         """Charge live child activity, including all schema-repair attempts."""
+        from regen.infrastructure.progress_events import current_event_monitor
+        # ContextVars do not propagate into the stdout reader thread. Capture
+        # the caller's monitor without replacing the accounting observer.
+        monitor = current_event_monitor()
         self.stage.check()
         bridge = GenerationActivityBridge(self.stage)
         errors = []
@@ -143,6 +147,10 @@ class ReviewedPlanningBudget:
                             self.request_event(event['event'], event)
                         else:
                             bridge.handle(event['event'], event)
+                        if monitor is not None:
+                            # These trusted events have already been charged.
+                            # emit_event would notify the budget observer again.
+                            monitor.emit(event['event'], event)
             except BaseException as error:
                 errors.append(error)
                 try:

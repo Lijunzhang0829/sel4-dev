@@ -48,7 +48,7 @@ class ContinuationMemoryTests(unittest.TestCase):
             source_reads.append((owner, path.name))
             return record
 
-        def initialize(*args):
+        def initialize(*args, **kwargs):
             self.assertTrue(all(ref() is None for refs in observed.values() for ref in refs),
                             'preflight retained raw origin records')
             return self.initialize(*args)
@@ -84,7 +84,7 @@ class ContinuationMemoryTests(unittest.TestCase):
     def test_changed_commit_between_preflight_and_copy_is_rejected(self):
         path = self.source/'theories/Base/acceptance/commits/000003.json'
 
-        def initialize(*args):
+        def initialize(*args, **kwargs):
             run = self.initialize(*args)
             record = execution.read(path)
             record['evidence']['build']['verdict'] = 'red'
@@ -96,7 +96,7 @@ class ContinuationMemoryTests(unittest.TestCase):
         self.assertFalse((self.root/'bounded-continuation/theories/Base/acceptance/commits').exists())
 
     def test_changed_imports_between_phases_are_rejected(self):
-        def initialize(*args):
+        def initialize(*args, **kwargs):
             run = self.initialize(*args)
             durable(self.source/'theories/Base/imports.json', ['Regen_Unknown'])
             return run

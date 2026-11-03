@@ -67,7 +67,7 @@ class RepositoryExecutionTest(unittest.TestCase):
         from regen.execution.proof_commits import freeze_evidence
         from regen.planning.proof_graph import build_graph
         f=fixtures.RepositoryPlannerTest();f.setUp();self.addCleanup(f.doCleanups);f.call([f.proposal],allow=True)
-        root=f.root/'execution';run=execution.init_run(root,f.root,'r',f.output/'file-generation-list.json')
+        root=f.root/'execution';run=execution.init_run(root,f.root,'r',f.output/'file-generation-list.json',contract_outcome_policy=None)
         p=execution.package_for(run,'Generated_Bridges.thy')
         _,initial=fixture(False)
         graph=build_graph(p,{'generated_nodes':initial['graph']['nodes']},run_id='r',revision=1)
@@ -109,7 +109,7 @@ class RepositoryExecutionTest(unittest.TestCase):
         self.enterContext(patch('regen.execution.seal_evidence.bind_seal',side_effect=mock_bind))
         from regen.planning.proof_graph import build_graph
         f=fixtures.RepositoryPlannerTest();f.setUp();self.addCleanup(f.doCleanups);f.call([f.proposal],allow=True)
-        root=f.root/'execution';run=execution.init_run(root,f.root,'r',f.output/'file-generation-list.json')
+        root=f.root/'execution';run=execution.init_run(root,f.root,'r',f.output/'file-generation-list.json',contract_outcome_policy=None)
         p=execution.package_for(run,'Generated_Read.thy')
         graph=build_graph(p,{'generated_nodes':[]},run_id='r',revision=1)
         class Checker(IsabelleChecker):

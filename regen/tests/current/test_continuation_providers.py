@@ -53,7 +53,7 @@ class ContinuationProvidersTest(unittest.TestCase):
                 journal.append('seal', sealed, seal(sealed))
         durable(self.source/'theories/Target/batch-requests/000319/feedback.json', {'status':'available'})
 
-    def initialize(self, destination, *_args):
+    def initialize(self, destination, *_args, **_kwargs):
         import shutil
         destination.mkdir()
         shutil.copytree(self.source/'packages', destination/'packages')

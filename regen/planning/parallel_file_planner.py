@@ -24,6 +24,7 @@ from regen.execution.proof_commits import digest, durable
 from regen.execution.checker_policy import exports_available, theory_finished
 from regen.infrastructure.codex_runtime import CodexRuntimeError, runtime_verified_settings
 from regen.infrastructure.progress_events import event_scope, emit_event, generation_exclusion, observe_events
+from regen.infrastructure.generation_monitor import GenerationMonitor
 from regen.planning.proof_workspace_agent import WorkspaceController, workspace_tools, _tool
 from regen.planning.planning_advice import ADVICE_INSTRUCTIONS, planning_advice
 from regen.planning.theory_outcomes import (
@@ -350,6 +351,7 @@ def _contract_view(controller, theory=None):
     dispositions = current_dispositions(controller, theory)
     pending = pending_contract_ids(controller, theory)
     return {'contract_outcome_policy':controller.run['contract_outcome_policy'],
+            'unresolved_evidence_policy':controller.run.get('unresolved_evidence_policy'),
             'contract_dispositions':{key:{'status':value['status'], 'reason':value['reason'],
                 'classification':value['classification'], 'receipt_id':value['receipt']['event_id'],
                 'available_as_positive_fact':False} for key,value in dispositions.items()},
@@ -594,6 +596,10 @@ class TheoryController(WorkspaceController):
             if changed:
                 raise ValueError('disposed contract proof slots must stay oops: '+', '.join(sorted(changed)))
 
+    def _framework_block_view(self):
+        return {'framework_blocked':True, **getattr(self, '_framework_failure',
+                                                   {'failure_scope':'trusted_audit_target'})}
+
     def handle(self, name, arguments, metadata):
         # Receipt inspection/cancellation may be used by an external supervisor.
         # All mathematical/read tools share one theory-local serial boundary.
@@ -605,8 +611,8 @@ class TheoryController(WorkspaceController):
             return {'theory_stop':True, 'theory_outcome':self.theory_outcome,
                     'notice':'This theory session has stopped; accepted proofs remain unchanged.'}
         if mathematical and getattr(self, 'framework_blocked', False):
-            return {'framework_blocked':True, 'failure_scope':'trusted_audit_target',
-                    'notice':'Preserve accepted proofs; this worker requires trusted audit repair.'}
+            return {**self._framework_block_view(),
+                    'notice':'Preserve accepted proofs; this worker requires infrastructure repair.'}
         if self.stop_at_focus_contract and mathematical:
             if self.target_contract_green():
                 raise ValueError(
@@ -617,7 +623,7 @@ class TheoryController(WorkspaceController):
                     'target-contract mode does not seal the whole theory')
         if name in {'get_check_result','wait_checks','cancel_check'}:
             result = self._handle(name, arguments, metadata)
-            return {**result, **({'framework_blocked':True} if getattr(self, 'framework_blocked', False) else {})}
+            return {**result, **(self._framework_block_view() if getattr(self, 'framework_blocked', False) else {})}
         with self._tool_lock:
             self._check_session_active()
             if mathematical:
@@ -632,7 +638,7 @@ class TheoryController(WorkspaceController):
                 from regen.planning.document_interface import public_view
                 result = public_view(result)
             if getattr(self, 'framework_blocked', False):
-                result = {**result, 'framework_blocked':True, 'failure_scope':'trusted_audit_target'}
+                result = {**result, **self._framework_block_view()}
             if getattr(self, 'provider_wait', None):
                 result = {**result, 'theory_wait':True, 'provider_wait':self.provider_wait}
             if getattr(self, 'theory_outcome', None):
@@ -809,12 +815,20 @@ class TheoryController(WorkspaceController):
                     raise ValueError('read_entry accepts entry_id only')
                 store, state = self._document()
                 result = store.read_entry(proposal['entry_id'])
+                from regen.execution.contract_refutation import refutation_capability
+                fixed = next((c for c in store.package['contracts']
+                              if c['contract_id'] == proposal['entry_id']), None)
+                result['refutation_capability'] = (refutation_capability(fixed) if fixed else
+                    {'can_attempt':False, 'reason':'not_fixed_contract'})
                 from regen.planning.retrieval_memory import entry_retrieval_memory
                 result['retrieval_memory'] = entry_retrieval_memory(state, proposal['entry_id'],
                     current_entry=result, directory=self.root/'theories'/Path(store.package['file_slot']).stem)
                 advice = planning_advice(self, store, state, entry_id=proposal['entry_id'])
                 if advice:
                     result['planning_advice'] = advice
+                from regen.planning.unresolved_evidence import strict_policy_enabled, eligibility_view
+                if strict_policy_enabled(self.run):
+                    result['unresolved_eligibility'] = eligibility_view(self, proposal['entry_id'])
                 if contract_dispositions_enabled(self.run):
                     result['contract_disposition'] = _contract_view(self)['contract_dispositions'].get(proposal['entry_id'])
                 return result
@@ -1004,6 +1018,9 @@ class TheoryController(WorkspaceController):
                 # Restore the infrastructure type before the session boundary:
                 # an unavailable/untrusted runtime is not candidate feedback.
                 raise CodexRuntimeError(row.get('diagnostic', 'trusted Codex runtime unavailable'))
+            if row.get('error_type') == 'NativePreparationError':
+                from regen.execution.check_tasks import NativePreparationError
+                raise NativePreparationError(row.get('diagnostic', 'native execution infrastructure failed'))
             self._record_proof_work(row, arguments)
             return self._public(row)
 
@@ -1014,6 +1031,11 @@ class TheoryController(WorkspaceController):
             return
         def checked(value):
             if isinstance(value, dict):
+                if (value.get('framework_blocked')
+                        or value.get('cached_failure')
+                        or value.get('failure_scope') not in (None, '', 'candidate', 'proof-search')
+                        or value.get('verdict') == 'infrastructure_error'):
+                    return False
                 return (value.get('verdict') in {'green','red','timeout'}
                         or any(checked(item) for item in value.values()))
             return isinstance(value, list) and any(checked(item) for item in value)
@@ -1125,8 +1147,13 @@ class TheoryController(WorkspaceController):
                                 result = super(TheoryController,self).proof_action(
                                     {'theory':self.theory,'proposal':proposal},metadata,
                                     state_snapshot=now, helper_attempt=helper_attempt)
-                                if kind == 'seal' and result.get('framework_blocked'):
-                                    self.framework_blocked = True
+                            blocked = next((value for value in (result, result.get('feedback', {}))
+                                            if value.get('framework_blocked')), None)
+                            if blocked is not None:
+                                self.framework_blocked = True
+                                self._framework_failure = {key:blocked[key] for key in
+                                    ('failure_scope','native_failure_stage','diagnostic') if key in blocked}
+                                self._framework_failure.setdefault('failure_scope','trusted_audit_target')
                     else:
                         result = self._observe(kind,proposal,snapshot_after,package,directory)
                         result['context_revision'] = snapshot_after.get('context_revision',0)
@@ -1248,7 +1275,11 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
         model=model,call_timeout=call_timeout,check_timeout=check_timeout,
         candidate_timeout=candidate_timeout, **controller_options)
     try:
+        from regen.execution.checker_policy import validate_outcome_upgrade_readiness
+        validate_outcome_upgrade_readiness(controller.run, root)
         contract_mode = contract_dispositions_enabled(controller.run)
+        from regen.planning.unresolved_evidence import strict_policy_enabled, INSTRUCTIONS as EVIDENCE_INSTRUCTIONS
+        evidence_mode = strict_policy_enabled(controller.run)
         if contract_mode and not document_mode:
             raise ValueError('contract-dispositions-v1 requires the document File Planner interface')
         if contract_mode and retry_unresolved:
@@ -1324,6 +1355,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                         'proved or disposed, use finish to publish only the checked positive subset. '
                         'An exported_partial theory is usable by consumers but is not fully proved. '
                         'Do not retry or strengthen/weaken disposed contracts.\n')
+                if evidence_mode:
+                    prompt += '\n'+EVIDENCE_INSTRUCTIONS+'\n'
                 if resumed_wait is not None:
                     prompt += '\nPROVIDER WAIT RESUMED (imports unchanged):\n'+json.dumps(resumed_wait,ensure_ascii=False)
                 if retry_context is not None:
@@ -1344,6 +1377,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                                retry_failed_request_id=retry_failed_request_id) as session:
                         next_prompt = prompt
                         no_progress_turns = 0
+                        idle_targets = set()
                         _, progress_state = controller._state(theory)
                         progress_marker = _progress_marker(controller, progress_state)
                         while True:
@@ -1380,13 +1414,18 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                 break
                             if (getattr(controller,'framework_blocked',False)
                                     or state.get('batch_feedback', {}).get('framework_blocked')):
+                                blocked_feedback = {**state.get('batch_feedback', {}),
+                                                    **getattr(controller, '_framework_failure', {})}
                                 emit_event('generation_framework_blocked', theory=theory,
-                                           failure_scope='trusted_audit_target')
+                                           failure_scope=blocked_feedback.get('failure_scope', 'trusted_audit_target'),
+                                           native_failure_stage=blocked_feedback.get('native_failure_stage'))
                                 break
-                            # Model prose is not progress. A bounded series of final
-                            # replies without new checker work yields an UNKNOWN
-                            # local outcome, never success or a global budget reset.
+                            # Idle turns are not mathematical failure evidence.
+                            # New runs rotate through pending goals before pausing
+                            # the worker; historical policies retain their fallback.
                             marker = _progress_marker(controller, state)
+                            if marker != progress_marker:
+                                idle_targets.clear()
                             no_progress_turns = no_progress_turns + 1 if marker == progress_marker else 0
                             progress_marker = marker
                             if no_progress_turns >= no_progress_turn_limit:
@@ -1398,6 +1437,27 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                         emit_event('contract_exports_unpublished', theory=theory,
                                                    reason='no_progress_with_no_pending_contracts')
                                         break
+                                    if evidence_mode:
+                                        other = next((key for key in pending if key not in idle_targets), None)
+                                        if other is None:
+                                            session_stop_reason = 'planner_idle_without_outcome_evidence'
+                                            emit_event('planner_idle', theory=theory,
+                                                reason=session_stop_reason, pending_contract_ids=pending,
+                                                completed_turns=no_progress_turns,
+                                                positive_proofs_added=0, dispositions_added=0)
+                                            break
+                                        idle_targets.add(other)
+                                        no_progress_turns = 0
+                                        next_prompt = _continuation_prompt(theory, state,
+                                            contract_view=_contract_view(controller))
+                                        next_prompt += ('\nThe previous turn added no native proof work. '
+                                            'Try this still-pending contract next: '+other+'. '
+                                            'Read its entry and latest failure evidence, revise a candidate '
+                                            'or perform a native check. Idle replies do not justify UNKNOWN. '
+                                            +EVIDENCE_INSTRUCTIONS)
+                                        emit_event('planner_idle_target_selected', theory=theory,
+                                            entry_id=other, pending_contract_ids=pending)
+                                        continue
                                     record_unresolved(controller, reason='no_progress', origin='controller',
                                         entry_ids=[pending[0]], classification='no_progress',
                                         details={'completed_turns_without_proof_work':no_progress_turns,
@@ -1690,6 +1750,8 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                    run_dir=str(root))
         overview = WorkspaceController(root,theories=theories,model=model,
             call_timeout=call_timeout,check_timeout=check_timeout,candidate_timeout=candidate_timeout)
+        from regen.execution.checker_policy import validate_outcome_upgrade_readiness
+        validate_outcome_upgrade_readiness(overview.run, root)
         overview.document_mode = file_planner_interface == 'document'
         selected = overview.selected
         policy = _execution_policy(execution_policy, selected)
@@ -1716,6 +1778,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
             workspace_policy['generation_wall_seconds'] = wall_seconds
         from regen.infrastructure.parallel_generation_budget import initialize_parallel_budget
         rows = overview.list_workspace()['theories']
+        rows_observed_at = GenerationMonitor.now()
         budget, bridge = initialize_parallel_budget(root, overview, workspace_policy,
             seconds=effective_seconds, resume_authorization=resume_authorization,
             extension_seconds=extend_effective_seconds, rows=rows,
@@ -1740,15 +1803,18 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
         cancel_event = budget.event
         budget.start(abort=cancel_event.set)
         sessions = root/'parallel-sessions'/uuid4().hex
-        with event_scope(sessions,run_id=overview.run['run_id']), \
+        with event_scope(sessions,run_id=overview.run['run_id'],phase='proof') as monitor, \
                 observe_events(bridge.handle, publication_guard=bridge.acceptance):
             with ThreadPoolExecutor(max_workers=max_parallel_theories,thread_name_prefix='file-planner') as agents:
                 try:
+                    if monitor is not None:
+                        monitor.transition('proof_construction')
                     refresh = False
                     while True:
                         budget.check()
                         if refresh:
                             rows = overview.list_workspace()['theories']
+                            rows_observed_at = GenerationMonitor.now()
                         eligible = _stage_eligible(rows, policy, active.values())
                         for row in rows:
                             if len(active)>=max_parallel_theories:
@@ -1792,6 +1858,11 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                 retry_failed_request_id=feedback_state['failed_request_id'],
                                 codex_home=codex_home,cancel_event=cancel_event,document_mode=file_planner_interface=='document',**overview.options)
                             active[future] = theory
+                        if monitor is not None:
+                            monitor.update_workspace(rows,active=active.values(),failures=failures,
+                                observed_at=rows_observed_at,
+                                limits={'max_parallel_theories':max_parallel_theories,
+                                        'native_slots':native_slots})
                         if not active:
                             deferred = [retry_not_before[row['theory']] for row in rows
                                 if row['theory'] in retry_not_before and row['theory'] in eligible
@@ -1826,7 +1897,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                                 if (not theory_finished(completed.get('status'))
                                         and completed.get('status') != 'waiting_for_provider'):
                                     failures[theory] = {'reason':('framework_blocked' if completed.get('status') == 'framework_blocked'
-                                                                  else 'positive_exports_not_published' if completed.get('status') == 'unpublished'
+                                                                  else completed.get('session_stop_reason','positive_exports_not_published') if completed.get('status') == 'unpublished'
                                                                   else 'theory_'+completed['status'] if completed.get('status') in {'unknown','refuted'}
                                                                   else 'session_returned_unsealed'),
                                                         'status':completed.get('status')}
@@ -1946,10 +2017,16 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                             'error_type':type(error).__name__,'diagnostic':str(error),
                             'active_theories':list(active.values()),
                             'generation_budget':budget.snapshot()}),
+                        *([lambda: monitor.transition('proof_construction','paused',
+                            reason=str(error),active_theories=list(active.values()),
+                            generation_budget=budget.snapshot())] if monitor is not None else []),
                     ], primary=error)
                     raise
             final = overview.list_workspace()
             final['worker_count'] = max_parallel_theories
+            if monitor is not None:
+                monitor.update_workspace(final['theories'],failures=failures,
+                    limits={'max_parallel_theories':max_parallel_theories,'native_slots':native_slots})
             incomplete = [row for row in final['theories']
                           if row['selected'] and not theory_finished(row['status'])]
             eligible = _stage_eligible(final['theories'], policy)
@@ -1980,8 +2057,15 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                 from regen.execution.repository_integration import integrate_repository
                 marker = CURRENT_RESOURCES.set(resources)
                 try:
+                    if monitor is not None:
+                        monitor.transition('integration')
                     with bridge.integration():
                         result['integration'] = integrate_repository(root,timeout=check_timeout)
+                except BaseException as error:
+                    if monitor is not None:
+                        _cleanup_all([lambda: monitor.transition('integration','failed',
+                            error_type=type(error).__name__)], primary=error)
+                    raise
                 finally:
                     CURRENT_RESOURCES.reset(marker)
                 result['repository_verified'] = result['integration']['repository_verified']
@@ -2001,6 +2085,10 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, n
                 result['resume_requires_authorization'] = True
             result['generation_budget'] = budget.snapshot()
             durable(sessions/'result.json',result,immutable=True)
+            if monitor is not None:
+                monitor.transition('repository','completed' if result['repository_verified'] else 'paused',
+                    outcome=result['status'],repository_verified=result['repository_verified'],
+                    result_path=str(sessions/'result.json'),generation_budget=result['generation_budget'])
             return result
     finally:
         primary = sys.exc_info()[1]

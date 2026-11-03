@@ -332,7 +332,11 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
     """Bind the clock before launch; never give a legacy continuation zero cost."""
     from regen.infrastructure.effective_time_budget import EffectiveTimeBudget, POLICY, CHECKPOINT_KIND
     root = Path(root)
+    from regen.execution.checker_policy import validate_outcome_upgrade_readiness
+    validate_outcome_upgrade_readiness(overview.run, root)
     ledger = Ledger(root/'effective-generation-budget', overview.run['run_id'])
+    from regen.infrastructure.replanning_budget import validate_replanning_imports
+    validate_replanning_imports(root, ledger=ledger)
     diagnostic = [row for row in ledger.rows if row['kind']=='checkpoint_diagnostic_window_authorized']
     prepared = [row for row in ledger.rows if row['kind']=='checkpoint_diagnostic_window_prepared']
     if diagnostic or prepared:
@@ -417,6 +421,8 @@ def _review_parallel_budget_clock(source_dir, ledger, ancestors=()):
     from regen.infrastructure.incremental_log import read_artifact
     from regen.infrastructure.effective_time_budget import CHECKPOINT_KIND
     source_dir = Path(source_dir).resolve()
+    from regen.infrastructure.replanning_budget import validate_replanning_imports
+    validate_replanning_imports(source_dir, ledger=ledger)
     if source_dir in ancestors:
         raise ValueError('cyclic clock review continuation ancestry')
     uncertain = [row for row in ledger.rows if row['kind'] == 'generation_clock_untrusted']

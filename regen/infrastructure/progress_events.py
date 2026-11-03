@@ -4,12 +4,11 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import datetime, timezone
 import json
-import os
 from pathlib import Path
 import threading
 from uuid import uuid4
 
-from regen.execution.proof_commits import durable
+from regen.infrastructure.generation_monitor import GenerationMonitor
 
 _SINK = ContextVar('regen_progress_sink', default=None)
 _STDOUT_LOCK = threading.RLock()
@@ -45,43 +44,18 @@ def proof_publication(record):
             yield
 
 
-class EventSink:
-    def __init__(self, directory, *, run_id, theory=None, task_id=None, pinned=False):
-        self.directory = Path(directory)
-        self.directory.mkdir(parents=True, exist_ok=True)
-        self.lock = threading.RLock()
-        self.pinned = pinned
-        self.identity = {k:v for k,v in dict(run_id=run_id,theory=theory,task_id=task_id).items() if v is not None}
-        self.status = {**self.identity,'schema_version':2,'pid':os.getpid(),'running':True,
-                       'started_at':datetime.now(timezone.utc).isoformat(),'last_event':None,'active_event':None}
-        self.save()
+# Compatibility for existing harness callers; there is one implementation.
+EventSink = GenerationMonitor
 
-    def save(self):
-        durable(self.directory/'runner-status.json', self.status)
 
-    def emit(self, event, fields):
-        with self.lock:
-            payload = {'time':datetime.now(timezone.utc).isoformat(),'event':event,
-                       **self.identity,**{k:v for k,v in fields.items() if v is not None}}
-            with (self.directory/'runner-events.ndjson').open('a',encoding='utf-8') as stream:
-                stream.write(json.dumps(payload,ensure_ascii=False,default=str)+'\n')
-                stream.flush()
-            self.status.update(last_event=payload, active_event=payload,
-                               last_event_at=payload['time'], last_transition_at=payload['time'])
-            self.save()
-        return payload
-
-    def close(self, reason):
-        with self.lock:
-            if self.status['running']:
-                self.emit('runner_monitor_stopped', {'reason':reason})
-                self.status.update(running=False,stop_reason=reason,stopped_at=datetime.now(timezone.utc).isoformat())
-                self.save()
+def current_event_monitor():
+    return _SINK.get()
 
 
 @contextmanager
-def event_scope(directory, *, run_id, theory=None, task_id=None):
-    sink = EventSink(directory,run_id=run_id,theory=theory,task_id=task_id,pinned=True)
+def event_scope(directory, *, run_id, theory=None, task_id=None, phase='proof'):
+    sink = GenerationMonitor(directory,run_id=run_id,theory=theory,task_id=task_id,
+                             phase=phase,pinned=True)
     marker = _SINK.set(sink)
     reason = 'completed'
     try:
@@ -94,14 +68,15 @@ def event_scope(directory, *, run_id, theory=None, task_id=None):
         _SINK.reset(marker)
 
 
-def configure_event_monitor(run_dir, *, run_id, theory=None, heartbeat_seconds=0.0):
+def configure_event_monitor(run_dir, *, run_id, theory=None, heartbeat_seconds=0.0, phase='proof'):
     sink = _SINK.get()
     if sink is not None and sink.pinned:
         return
-    if sink is not None and sink.directory == Path(run_dir) and sink.status['running']:
+    if (sink is not None and sink.directory == Path(run_dir) and sink.status['running']
+            and sink.identity['generation_phase'] == phase):
         return
     close_event_monitor('reconfigured')
-    _SINK.set(EventSink(run_dir,run_id=run_id,theory=theory))
+    _SINK.set(GenerationMonitor(run_dir,run_id=run_id,theory=theory,phase=phase))
 
 
 def close_event_monitor(reason='completed'):

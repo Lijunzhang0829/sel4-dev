@@ -19,7 +19,7 @@ class ProviderWaitTests(unittest.TestCase):
         temp=tempfile.TemporaryDirectory();self.addCleanup(temp.cleanup)
         self.root=Path(temp.name)
         self.run={'run_id':'fixture'}
-        self.packages={name:{'theory':name,'plan_id':'p',
+        self.packages={name:{'theory':name,'file_slot':name+'.thy','plan_id':'p',
             'contracts':[{'contract_id':name.lower(),'name':name.lower()}],
             'repository_projection':{'required_imports':[]}}
             for name in ('A','B','C')}
@@ -29,7 +29,7 @@ class ProviderWaitTests(unittest.TestCase):
 
     def controller(self,theory):
         return SimpleNamespace(root=self.root,run=self.run,theory=theory,
-            shared=SimpleNamespace(entries={name:{} for name in self.packages}),
+            shared=SimpleNamespace(entries={name:{'file_slot':name+'.thy'} for name in self.packages}),
             _state=lambda name:(self.packages[name],self.states[name]),
             _effective_providers=lambda package,state:package['repository_projection']['required_imports'])
 
@@ -141,10 +141,50 @@ class ProviderWaitTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'accepted provider imports'):
             self.decision('import',providers=['B'])
         self.packages['A']['repository_projection']['required_imports']=['B']
+        with self.assertRaisesRegex(ValueError,'accepted provider imports'):
+            self.decision('import',providers=['B'])
+        from regen.execution.proof_commits import durable
+        durable(self.root/'theories/A/imports.json',['Regen_B'])
         with self.assertRaisesRegex(ValueError,'certified provider exports'):
             self.decision('import',providers=['B'])
         self.seal('B')
         self.decision('import',providers=['B'])
+
+    def test_import_review_becomes_pending_again_after_provider_import_is_removed(self):
+        from regen.execution.proof_commits import durable
+        self.install();self.seal('B')
+        path=self.root/'theories/A/imports.json'
+        durable(path,['Regen_B']);self.decision('import',providers=['B'])
+        require_review_decisions(self.c)
+        durable(path,[])
+        issue=review_context(self.c)['obligations'][0]
+        self.assertTrue(issue['requires_generation_decision'])
+        self.assertEqual(issue['decision_invalid_reason'],'selected_provider_no_longer_imported')
+        with self.assertRaisesRegex(ValueError,'record_review_decision'):
+            require_review_decisions(self.c)
+        self.decision('local');require_review_decisions(self.c)
+
+    def test_transitive_import_review_is_rechecked_when_provider_closure_changes(self):
+        from regen.execution.proof_commits import durable
+        self.install();self.seal('B');self.seal('C')
+        durable(self.root/'theories/A/imports.json',['Regen_B'])
+        path=self.root/'theories/B/imports.json'
+        durable(path,['Regen_C']);self.decision('import',providers=['C'])
+        require_review_decisions(self.c)
+        durable(path,[])
+        with self.assertRaisesRegex(ValueError,'record_review_decision'):
+            require_review_decisions(self.c)
+
+    def test_disposed_contract_cannot_create_a_provider_wait(self):
+        from regen.planning.theory_outcomes import CONTRACT_POLICY
+        self.run['contract_outcome_policy']=CONTRACT_POLICY
+        self.packages['A']['contracts'][0].update(exact_statement='lemma a: "False"',
+                                                contract_owned_context=[])
+        record_unresolved(self.c,reason='Synthetic local search exhausted',origin='model',entry_ids=['a'])
+        with self.assertRaisesRegex(ValueError,'terminal dispositions cannot wait'):
+            self.wait()
+        self.assertIsNone(current_wait(self.c))
+        self.assertFalse(hasattr(self.c,'provider_wait'))
 
     def test_wait_disposition_resumes_as_explicit_pending_choice(self):
         self.install()

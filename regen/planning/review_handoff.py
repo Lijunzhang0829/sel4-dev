@@ -92,10 +92,22 @@ def review_context(controller,theory=None):
         # A planning local/retain decision still carries a task, not GREEN.
         decision=issue['generation_decision']
         waiting_again=False
+        invalid_reason=None
         if decision and decision['decision']=='wait':
             from regen.planning.provider_waits import current_wait
             waiting_again=current_wait(controller,theory) is None
-        issue['requires_generation_decision']=bool(ids) and (decision is None or waiting_again)
+        if decision and not set(issue['pending_contract_ids'])<=set(decision['entry_ids']):
+            invalid_reason='decision_does_not_cover_current_pending_contracts'
+        if decision and decision['decision']=='import':
+            try:
+                visible=_certified_import_closure(controller,package,state)
+                if not decision['providers'] or not set(decision['providers'])<=visible:
+                    invalid_reason='selected_provider_no_longer_imported'
+            except ValueError:
+                invalid_reason='selected_provider_no_longer_exported'
+        if invalid_reason:
+            issue['decision_invalid_reason']=invalid_reason
+        issue['requires_generation_decision']=bool(ids) and (decision is None or waiting_again or bool(invalid_reason))
     return handoff
 
 
@@ -104,6 +116,33 @@ def require_review_decisions(controller):
              if i['requires_generation_decision'] and i['pending_contract_ids']]
     if missing:
         raise ValueError('record_review_decision required for pending review obligations: '+', '.join(missing))
+
+
+def accepted_provider_names(controller, package, state):
+    """Use the actual checker context, excluding future planning dependencies."""
+    from regen.execution.import_revisions import effective_imports
+    from regen.execution.repository_execution import read
+    from regen.execution.proof_session_runner import generated_checkpoint_theory
+    path = Path(controller.root)/'theories'/Path(package['file_slot']).stem/'imports.json'
+    if not path.exists():
+        return []
+    names = {generated_checkpoint_theory(entry['file_slot']): theory
+             for theory,entry in controller.shared.entries.items()}
+    return [names[name] for name in effective_imports(state,read(path))]
+
+
+def _certified_import_closure(controller,package,state):
+    from regen.execution.checker_policy import exports_available
+    visible=set();todo=accepted_provider_names(controller,package,state)
+    while todo:
+        provider=todo.pop()
+        if provider in visible:
+            continue
+        p,s=controller._state(provider)
+        if not exports_available(s['status']):
+            raise ValueError('import decision requires certified provider exports')
+        visible.add(provider);todo.extend(accepted_provider_names(controller,p,s))
+    return visible
 
 
 def record_review_decision(controller,proposal,metadata):
@@ -134,16 +173,7 @@ def record_review_decision(controller,proposal,metadata):
             or any(p==controller.theory or p not in controller.shared.entries for p in providers)):
         raise ValueError('invalid review provider selection')
     if choice=='import':
-        from regen.execution.checker_policy import exports_available
-        visible=set();todo=list(controller._effective_providers(package,state))
-        while todo:
-            provider=todo.pop()
-            if provider in visible:
-                continue
-            p,s=controller._state(provider)
-            if not exports_available(s['status']):
-                raise ValueError('import decision requires certified provider exports')
-            visible.add(provider);todo.extend(controller._effective_providers(p,s))
+        visible=_certified_import_closure(controller,package,state)
         if not providers or not set(providers)<=visible:
             raise ValueError('import decision requires already accepted provider imports')
     if choice=='wait':

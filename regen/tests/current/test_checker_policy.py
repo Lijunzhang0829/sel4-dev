@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from regen.execution.checker_policy import (
     ISOLATED_CONTEXT, ARCH_REUSE_CONTEXT, policy_binding, resolve_complete_context_policy,
+    DEFAULT_OUTCOME_POLICY,
 )
 from regen.execution.isabelle_node_checker import IsabelleChecker
 from regen.execution.repository_integration import expected_sealed_source
@@ -79,17 +80,19 @@ class CheckerPolicyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'complete context policy'):
             validate_continuation({}, {'complete_context_policy':ARCH_REUSE_CONTEXT}, {}, {'run':{}})
 
-    def test_init_routes_policy_without_changing_legacy_call(self):
+    def test_init_routes_render_policy_and_explicit_outcome_choice(self):
         from regen.execution.proof_session_runner import _init_run_unlocked
         for policy in (ISOLATED_CONTEXT, ARCH_REUSE_CONTEXT):
-            with patch('regen.execution.proof_session_runner.read_json',
-                       return_value={'artifact_type':'repository-file-generation-list'}), \
-                 patch('regen.execution.repository_execution.init_run', return_value={}) as init:
-                _init_run_unlocked(Path('/unused'),Path('/input'),run_id='test',
-                    schedule_path=Path('/schedule'),complete_context_policy=policy)
-                init.assert_called_once_with(Path('/unused'),Path('/input'),'test',Path('/schedule'),
-                    contract_outcome_policy=None,
-                    **policy_binding({'complete_context_policy':policy}))
+            for outcome in (None, DEFAULT_OUTCOME_POLICY):
+                with patch('regen.execution.proof_session_runner.read_json',
+                           return_value={'artifact_type':'repository-file-generation-list'}), \
+                     patch('regen.execution.repository_execution.init_run', return_value={}) as init:
+                    _init_run_unlocked(Path('/unused'),Path('/input'),run_id='test',
+                        schedule_path=Path('/schedule'),complete_context_policy=policy,
+                        contract_outcome_policy=outcome)
+                    init.assert_called_once_with(Path('/unused'),Path('/input'),'test',Path('/schedule'),
+                        contract_outcome_policy=outcome, unresolved_evidence_policy=DEFAULT_OUTCOME_POLICY,
+                        **policy_binding({'complete_context_policy':policy}))
 
     def test_unsupported_legacy_init_fails_without_loading_environment(self):
         from regen.execution.proof_session_runner import _init_run_unlocked

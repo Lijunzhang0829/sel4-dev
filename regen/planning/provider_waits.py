@@ -62,7 +62,7 @@ def _acyclic(controller, theory, providers):
 
 
 def record_wait(controller, proposal, metadata):
-    from regen.planning.theory_outcomes import _snapshot, _entry_ids, current_outcome
+    from regen.planning.theory_outcomes import _snapshot, _entry_ids, current_outcome, pending_contract_ids
     if set(proposal)-{'action','providers','entry_ids','reason','review_issue_ids'}:
         raise ValueError('unknown wait_for_providers fields')
     providers, reason = proposal.get('providers'), proposal.get('reason')
@@ -79,6 +79,8 @@ def record_wait(controller, proposal, metadata):
         ids = _entry_ids(package,state,proposal.get('entry_ids'))
         if not ids:
             raise ValueError('provider wait requires pending fixed contracts')
+        if not set(ids)<=set(pending_contract_ids(controller)):
+            raise ValueError('provider wait requires pending fixed contracts; terminal dispositions cannot wait')
         for name in providers:
             outcome = current_outcome(controller,name)
             if outcome and outcome['status']=='refuted':

@@ -7,6 +7,8 @@ from regen.planning.import_contract import required_imports
 from regen.execution.checker_policy import (
     ISOLATED_CONTEXT, validate_complete_context_policy, resolve_complete_context_policy, policy_binding,
     contract_policy_binding, exports_available, theory_finished,
+    CONTRACT_OUTCOME_POLICY, DEFAULT_OUTCOME_POLICY, new_outcome_policy_binding,
+    continuation_outcome_arguments,
 )
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -84,9 +86,18 @@ def projection_package(projection, plan, *, review_handoff=None):
 
 
 def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=ISOLATED_CONTEXT,
-             log_storage='inline-v1', execution_models=None, contract_outcome_policy=None):
+             log_storage='inline-v1', execution_models=None,
+             contract_outcome_policy=CONTRACT_OUTCOME_POLICY,
+             unresolved_evidence_policy=DEFAULT_OUTCOME_POLICY,
+             outcome_policy_upgrade=None):
     validate_complete_context_policy(complete_context_policy)
-    outcome_policy = contract_policy_binding({'contract_outcome_policy':contract_outcome_policy})
+    outcome_policy = new_outcome_policy_binding(contract_outcome_policy, unresolved_evidence_policy)
+    if outcome_policy_upgrade is not None:
+        if (not isinstance(outcome_policy_upgrade, dict)
+                or set(outcome_policy_upgrade) != {'authorization','source_run','source_run_sha256','source_tail_event_id'}
+                or any(not isinstance(v,str) or not v.strip() for v in outcome_policy_upgrade.values())
+                or outcome_policy != new_outcome_policy_binding()):
+            raise ValueError('invalid explicit outcome policy upgrade binding')
     from regen.infrastructure.incremental_log import enable, policy_arguments
     logging = policy_arguments({'log_storage':log_storage})
     from regen.planning.repository_planner import load_file_projection
@@ -201,6 +212,8 @@ def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=I
             })}}
     run.update(policy_binding({'complete_context_policy':complete_context_policy}))
     run.update(outcome_policy)
+    if outcome_policy_upgrade is not None:
+        run['outcome_policy_upgrade'] = deepcopy(outcome_policy_upgrade)
     run.update(logging)
     if logging:
         enable(run_dir)
@@ -630,7 +643,9 @@ class ProviderPreparationError(NativePreparationError):
 
 def setup(run_dir, theory, timeout, *, context_imports=None):
     from regen.execution.proof_session_runner import generated_checkpoint_theory
+    from regen.execution.checker_policy import validate_outcome_upgrade_readiness
     run=read(run_dir/'run.json'); data=read(run_dir/'execution-input.json')
+    validate_outcome_upgrade_readiness(run, run_dir)
     # Execution implementation is frozen separately from preparation, which is already sealed.
     repo=Path(__file__).resolve().parents[2]
     import hashlib
@@ -1067,6 +1082,8 @@ def _check_disposition_fork_support(source_dir, source):
     Same-run restart replays these receipts normally. Cross-run transfer needs
     a versioned re-export protocol; the existing full-seal fork is not one.
     """
+    from regen.execution.checker_policy import validate_outcome_upgrade_readiness
+    validate_outcome_upgrade_readiness(source, source_dir)
     if contract_policy_binding(source) and any((Path(source_dir)/'contract-dispositions').glob('*/events/*.json')):
         raise ValueError('cross-run continuation with contract dispositions is not supported; '
                          'resume the unchanged run or prepare a fresh run explicitly')
@@ -1074,6 +1091,11 @@ def _check_disposition_fork_support(source_dir, source):
 
 def continuation_state(package, origin, *, sealed_reuse=False):
     """Verify every source commit before carrying proof state and charged costs."""
+    if 'replanned_from_package' in origin:
+        from regen.execution.replan_continuation import validate_package_transition
+        previous_package = origin['replanned_from_package']
+        validate_package_transition(previous_package, package, sealed=sealed_reuse)
+        package = previous_package
     source_run=origin['run']; records=origin['commits']
     if not records: raise ValueError('continuation has no source commits')
     expected={**source_run['session_schedule'], **policy_binding(source_run), **contract_policy_binding(source_run),
@@ -1110,7 +1132,14 @@ def validate_continuation(package, runtime, state, origin, *, sealed_reuse=False
     if resolve_complete_context_policy(runtime) != resolve_complete_context_policy(origin['run']):
         raise ValueError('continuation changed complete context policy')
     if contract_policy_binding(runtime) != contract_policy_binding(origin['run']):
-        raise ValueError('continuation changed contract outcome policy')
+        upgrade = runtime.get('outcome_policy_upgrade')
+        if (not isinstance(upgrade,dict) or not upgrade.get('authorization')
+                or upgrade.get('source_run_sha256') != digest(origin['run'])
+                or contract_policy_binding(runtime) != new_outcome_policy_binding()
+                or origin['run'].get('unresolved_evidence_policy') is not None
+                or any(r['state'].get('contract_dispositions')
+                       or r['state'].get('status') == 'exported_partial' for r in origin['commits'])):
+            raise ValueError('continuation changed contract outcome policy without a supported explicit upgrade')
     if state!=continuation_state(package,origin,sealed_reuse=sealed_reuse):
         raise ValueError('continuation changed proofs, graph, or cumulative costs')
 
@@ -1197,7 +1226,7 @@ def fork_continuation(source_dir, destination, theory):
     input_root=Path(source.get('checker_context_root') or source['environment_run'])
     run=init_run(destination,input_root,destination.name,
                  Path(source['session_schedule']['source']), **policy_binding(source),
-                 **contract_policy_binding(source),
+                 **continuation_outcome_arguments(source),
                  **({'execution_models':source['execution_models']} if 'execution_models' in source else {}),
                  **log_policy_arguments(source))
     if any(run.get(k)!=source.get(k) for k in CONTINUATION_ENV_FIELDS):
@@ -1445,6 +1474,12 @@ def _carry_theory_outcomes(source_dir, source, destination, run, prepared):
 
 
 def fork_workspace_continuation(source_dir, destination, *, checkpoint=None, run_id=None):
+    """Continue frozen policy unchanged; use the explicit upgrade API to change it."""
+    return _fork_workspace_continuation(source_dir, destination, checkpoint=checkpoint, run_id=run_id)
+
+
+def _fork_workspace_continuation(source_dir, destination, *, checkpoint=None, run_id=None,
+                                 outcome_policy_upgrade=None):
     """Fork verified states, retaining at most one decoded theory origin at a time."""
     source_dir, destination = Path(source_dir).resolve(), Path(destination).resolve()
     if destination.exists():
@@ -1455,7 +1490,8 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None, run
             or selected_run_id == source['run_id']):
         raise ValueError('continuation run_id must be nonempty and differ from source')
     _check_disposition_fork_support(source_dir, source)
-    if checkpoint is not None and any((source_dir/folder).exists() for folder in ('provider-waits','review-handoff','review-decisions')):
+    if checkpoint is not None and any((source_dir/folder).exists() for folder in
+            ('provider-waits','review-handoff','review-decisions','replanning-continuation.json')):
         raise ValueError('checkpoint continuation with coordination receipts is unsupported')
     if checkpoint is not None:
         if checkpoint.get('source_run') != str(source_dir):
@@ -1484,6 +1520,9 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None, run
         raise ValueError('checkpoint continuation with theory outcomes is unsupported')
     outcomes = [outcome for entry in outcome_entries
                 if (outcome := _continuation_outcome(source_dir, source, entry)) is not None]
+    if outcome_policy_upgrade is not None:
+        if checkpoint is not None or any(item['outcome']['status'] != 'unknown' for item in outcomes):
+            raise ValueError('outcome policy upgrade cannot migrate checkpoint rollback or refuted stops')
     sealed = []
     continuing = []
     for entry in read(source_dir/'execution-input.json')['files']:
@@ -1493,6 +1532,8 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None, run
         descriptor = _preflight_workspace_continuation(source_dir, source, entry, selection)
         if descriptor is None:
             continue
+        if outcome_policy_upgrade is not None and descriptor['status'] == 'exported_partial':
+            raise ValueError('outcome policy upgrade cannot migrate partial exports')
         (sealed if descriptor['status'] == 'sealed' else continuing).append(descriptor)
     if not sealed and not continuing and not outcomes:
         raise ValueError('source contains no verified theory state or current outcome')
@@ -1505,9 +1546,11 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None, run
         for descriptor in continuing:
             if not set(descriptor['effective_imports']) <= available:
                 raise ValueError('checkpoint excludes a frozen dependency')
+    outcome_arguments = (continuation_outcome_arguments(source) if outcome_policy_upgrade is None else
+                         {**new_outcome_policy_binding(), 'outcome_policy_upgrade':outcome_policy_upgrade})
     run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
                    selected_run_id, Path(source['session_schedule']['source']), **policy_binding(source),
-                   **contract_policy_binding(source),
+                   **outcome_arguments,
                    **({'execution_models':source['execution_models']} if 'execution_models' in source else {}),
                    **log_policy_arguments(source))
     if any(run.get(k) != source.get(k) for k in CONTINUATION_ENV_FIELDS):
@@ -1522,21 +1565,111 @@ def fork_workspace_continuation(source_dir, destination, *, checkpoint=None, run
             'policy':'verify embedded source chains and seals; preserve accepted proofs and cumulative costs'}, immutable=True)
     # Publish stops before the continuation-completed receipt used by budget
     # transfer. An interrupted transfer cannot masquerade as a complete fork.
-    _carry_theory_outcomes(source_dir, source, destination, run, outcomes)
+    if outcome_policy_upgrade is None:
+        _carry_theory_outcomes(source_dir, source, destination, run, outcomes)
+    else:
+        # A legacy theory stop is not evidence that every remaining contract
+        # was attempted. Preserve it as history and explicitly reopen work.
+        durable(destination/'legacy-outcomes-policy-upgrade.json', {
+            'source_run':str(source_dir),'source_run_sha256':digest(source),
+            'authorization':outcome_policy_upgrade['authorization'],
+            'outcomes':[{'theory':item['entry']['theory'], 'outcome':item['outcome']}
+                        for item in outcomes],
+            'dispositions_created':0,'positive_proofs_added':0,
+            'policy':'retain legacy UNKNOWN evidence; reopen only unproved contracts'}, immutable=True)
     if any((source_dir/folder).exists() for folder in ('provider-waits','review-handoff','review-decisions')):
         if checkpoint is not None:
             raise ValueError('checkpoint continuation with coordination receipts is unsupported')
         from regen.planning.provider_waits import carry_coordination
         carry_coordination(source_dir,destination)
+    from regen.execution.replan_continuation import carry_pending_replanning
+    replanning_receipt = carry_pending_replanning(source_dir,destination,run)
     durable(destination/'workspace-continuation.json', {
         'source_run':str(source_dir), 'theories':carried,
         'sealed_theories':[d['entry']['theory'] for d in sealed],
         'reason':'explicitly authorised repository continuation after harness repair',
-        'policy':'replay embedded source chains; preserve drafts, proofs, costs and seals'}, immutable=True)
+        'policy':'replay embedded source chains; preserve drafts, proofs, costs and seals',
+        **({'replanning_receipt_sha256':replanning_receipt} if replanning_receipt else {})}, immutable=True)
     if checkpoint is not None:
         durable(destination/'checkpoint.json', checkpoint, immutable=True)
-    progress(destination)
+    if outcome_policy_upgrade is None:
+        progress(destination)
     return run
+
+
+def fork_unresolved_policy_upgrade(source_dir, destination, *, authorization, run_id=None):
+    """Prepare a stopped full-workspace policy upgrade, preserving all charged work.
+
+    No service is started. Legacy UNKNOWN receipts remain historical evidence;
+    new unresolved reports need native attempts under the new policy. Existing
+    contract dispositions, partial exports, refuted stops and finished clocks
+    require a separate migration protocol and are rejected before publication.
+    """
+    from regen.execution.proof_session_runner import acquire_run_mutation_lock, release_run_mutation_lock
+    from regen.execution.check_tasks import TERMINAL
+    from regen.execution.checker_policy import validate_outcome_upgrade_readiness
+    from regen.infrastructure.parallel_generation_budget import carry_parallel_budget, review_parallel_budget_clock
+    from regen.infrastructure.effective_time_budget import CHECKPOINT_KIND
+    from regen.infrastructure.experiment_ledger import Ledger
+    from regen.planning.parallel_file_planner import generation_strategy
+    from regen.tools import parallel_workspace_service as service
+    source_dir, destination = Path(source_dir).resolve(), Path(destination).resolve()
+    if not isinstance(authorization,str) or not authorization.strip():
+        raise ValueError('explicit outcome policy upgrade authorization required')
+    if destination.exists() or destination == source_dir or destination.is_relative_to(source_dir):
+        raise ValueError('outcome policy upgrade requires a fresh separate directory')
+    observed = service.status(source_dir)
+    if observed['running'] or (not observed['identity_verified']
+                              and observed['status'] not in {'previous_boot','not_loaded'}):
+        raise ValueError('source service must have verifiably exited before policy upgrade')
+    lock = acquire_run_mutation_lock(source_dir, operation='outcome-policy-upgrade')
+    try:
+        source = read(source_dir/'run.json')
+        _check_disposition_fork_support(source_dir, source)
+        if source.get('unresolved_evidence_policy') is not None:
+            raise ValueError('source already has an evidence policy; use unchanged continuation')
+        policy = read(source_dir/'parallel-workspace-policy.json')
+        if policy.get('file_planner_interface') != 'document' or policy.get('execution_policy',{}).get('retry_unresolved'):
+            raise ValueError('outcome policy upgrade requires document mode with retry_unresolved disabled')
+        for path in (source_dir/'check-tasks').glob('*/task.json'):
+            task = read(path)
+            if task.get('status') not in TERMINAL:
+                raise ValueError('source native task is unsettled: '+str(path))
+            # Ordinary continuation may reconcile an old completed negative
+            # check into its source journal. This upgrade promises read-only
+            # source evidence and cannot carry refutations, so reject before
+            # current_outcome can publish that missing historical receipt.
+            if (task.get('kind') == 'refutation' and task.get('status') == 'completed'
+                    and read(path.parent/'result.json').get('status') == 'refuted'):
+                raise ValueError('outcome policy upgrade cannot migrate a completed refutation; '
+                                 'review its source outcome separately before any continuation')
+        rows = Ledger(source_dir/'effective-generation-budget', source['run_id']).rows
+        checkpoints = [r for r in rows if r['kind'] == CHECKPOINT_KIND]
+        state = checkpoints[-1]['data']['state'] if checkpoints else {}
+        if (not state.get('paused') or state.get('gate_open') or state.get('finished')
+                or state.get('unclean_recoveries')
+                or any(r['kind'] == 'time_budget_finished' for r in rows)):
+            raise ValueError('policy upgrade requires a clean paused unfinished budget; no reset is permitted')
+        reviewed = review_parallel_budget_clock(source_dir)
+        upgrade = {'authorization':authorization,'source_run':str(source_dir),
+                   'source_run_sha256':digest(source),'source_tail_event_id':rows[-1]['event_id']}
+        run = _fork_workspace_continuation(source_dir,destination,run_id=run_id,
+                                          outcome_policy_upgrade=upgrade)
+        strategy = generation_strategy(policy['generation_strategy']['name'])
+        budget = carry_parallel_budget(source_dir,destination,authorization=authorization,
+            clock_review=reviewed['clock_review'],
+            target_strategy=strategy if strategy != policy['generation_strategy'] else None)
+        completed = Ledger(destination/'effective-generation-budget',run['run_id']).rows[-1]
+        durable(destination/'outcome-policy-upgrade.json', {
+            'state':'prepared','run_sha256':digest(run),'upgrade':upgrade,
+            'budget':budget,'budget_completed_event_id':completed['event_id'],
+            'historical_costs_reset':False,'service_started':False,
+            'source_service':observed}, immutable=True)
+        validate_outcome_upgrade_readiness(run,destination)
+        progress(destination)
+        return run
+    finally:
+        release_run_mutation_lock(lock)
 
 
 def _checkpoint_artifacts(directory, selection, state):
@@ -1619,7 +1752,7 @@ def fork_with_sealed_theories(source_dir, destination):
         raise ValueError('source contains no verified sealed theories')
     run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
                    destination.name, Path(source['session_schedule']['source']), **policy_binding(source),
-                   **contract_policy_binding(source),
+                   **continuation_outcome_arguments(source),
                    **({'execution_models':source['execution_models']} if 'execution_models' in source else {}),
                    **log_policy_arguments(source))
     if any(run.get(k) != source.get(k) for k in CONTINUATION_ENV_FIELDS):

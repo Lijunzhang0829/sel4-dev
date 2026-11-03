@@ -345,6 +345,9 @@ def run_agent(payload, planning_input_path, policy, output):
         harness.revision_review = context['review']
         harness.revision_initial_plan = context['initial_plan']
         harness.revision_strict = context.get('review_policy') == 'review-obligations-v1'
+        harness.recovery_baseline_plan = context.get('recovery_baseline_plan')
+        harness.revision_constraints = context.get('revision_constraints')
+        harness.view.assert_no_owner_disclosure(json.dumps(context,ensure_ascii=False))
         save(public/'revision.json', context)
         save(workspace/'plan.json', context['initial_plan'])
         revision_text = ('\nRevise the existing plan using /input/revision.json. This is a pre-freeze review, not a new architecture search. '
@@ -354,7 +357,19 @@ def run_agent(payload, planning_input_path, policy, output):
             'decision (revise, local, or retain), reason, tradeoff, and remaining_risk, all nonempty strings. '
             'The validate/preflight/submit tools automatically read revision-decisions.json; '
             'repair any decision errors before submitting. Explain actual final changes. '
-            'Do not claim a helper is proved. Do not use historical experiments.\n')
+            'Do not claim a helper is proved.\n')
+        if context.get('recovery_mode') == 'incremental-recovery-v1':
+            revision_text += (
+                'This is an explicitly authorized recovery revision. Only the supplied recovery_evidence '
+                'summaries describe earlier generated attempts; you may use those observations to reassess '
+                'routes, providers and readiness. Do not access removed human proofs or other historical '
+                'experiments. A failed attempt does not establish unprovability or a necessary dependency. '
+                'The recovery_baseline_plan and revision_constraints define hard preservation bounds: '
+                'immutable_theories must retain their entire entries; preserve_theory_contract_sets must '
+                'retain their exact contract order and membership; fixed_contract_owners cannot move. '
+                'Unsealed theory imports may change when justified. Validation rejects constraint violations.\n')
+        else:
+            revision_text += 'Do not use historical experiments.\n'
         if harness.revision_strict:
             revision_text += (
                 'Each decision also requires obligations: a nonempty array of objects with exactly theory, '

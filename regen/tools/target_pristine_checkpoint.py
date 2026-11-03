@@ -23,6 +23,7 @@ from uuid import uuid4
 
 from regen.execution.proof_commits import digest, durable, freeze_evidence
 from regen.execution.proof_session_runner import generated_checkpoint_theory
+from regen.execution.checker_policy import continuation_outcome_arguments
 from regen.execution.repository_execution import (
     CONTINUATION_ENV_FIELDS,
     _reuse_sealed_theories,
@@ -408,6 +409,7 @@ def prepare(source_dir, destination, *, theory, target_contract_id,
             destination, input_root, destination.name,
             Path(source['session_schedule']['source']),
             **policy_binding(source), **log_policy_arguments(source),
+            **continuation_outcome_arguments(source),
             execution_models=overrides,
         )
         if any(run.get(key) != source.get(key)

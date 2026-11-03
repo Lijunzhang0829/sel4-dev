@@ -202,6 +202,12 @@ class ParallelBudgetBindingTests(unittest.TestCase):
         self.assertEqual(binding['kind'], 'parallel_budget_binding')
         self.assertEqual(set(binding['data']), {'policy', 'run_sha256', 'contracts_sha256', 'configuration_sha256'})
 
+    def test_unprepared_policy_upgrade_cannot_create_a_fresh_budget(self):
+        self.overview.run['outcome_policy_upgrade'] = {'schema_version': 1}
+        with self.assertRaisesRegex(ValueError, 'finish preparation'):
+            initialize_parallel_budget(self.root, self.overview, {})
+        self.assertFalse((self.root/'effective-generation-budget').exists())
+
     def test_legacy_session_requires_audited_migration_before_zero_clock(self):
         path = self.root/'parallel-sessions'/'old'/'A'/'session-transcript.jsonl'
         path.parent.mkdir(parents=True)

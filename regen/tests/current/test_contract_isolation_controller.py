@@ -100,9 +100,11 @@ class ContractToolGuardsTests(unittest.TestCase):
 
 class ContractSessionTests(unittest.TestCase):
     def scenario(self, *, finish_after_first=False, retry_unresolved=False, pre_disposed=False,
-                 document_mode=True):
+                 document_mode=True, strict_evidence=False, on_turn=None):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         root=Path(self.temp.name);package,state,run=fixture(root); test=self
+        if strict_evidence:
+            run['unresolved_evidence_policy']='native-attempts-v1'
         class Controller:
             options={'model':'test','call_timeout':10,'check_timeout':10,'candidate_timeout':10}
             model='test';task_ids=set()
@@ -123,6 +125,8 @@ class ContractSessionTests(unittest.TestCase):
             def run(self,prompt,handler,**kwargs):
                 self.turns+=1;self.prompts.append(prompt)
                 test.assertLessEqual(self.turns,4,'contract-local idle handling failed to converge')
+                if on_turn:
+                    on_turn(self.turns, handler.__self__)
                 if finish_after_first and (self.turns==2 or pre_disposed):
                     test.assertEqual(set(current_dispositions(handler.__self__)),{'b'})
                     handler.__self__.state['proofs']['c']='synthetic accepted proof'
@@ -153,6 +157,33 @@ class ContractSessionTests(unittest.TestCase):
         self.assertEqual(self.session.turns,3)
         self.assertEqual(self.controller.state['proofs'],{'a':'by simp'})
         self.assertTrue(result['all_contracts_disposed_or_proved'])
+
+    def test_strict_idle_visits_other_targets_without_inventing_unknown(self):
+        result=self.scenario(strict_evidence=True)
+        self.assertEqual(result['status'],'unpublished')
+        self.assertEqual(result['session_stop_reason'],'planner_idle_without_outcome_evidence')
+        self.assertEqual(result['contract_dispositions'],{})
+        self.assertEqual(result['pending_contract_ids'],['b','c'])
+        self.assertFalse(result['all_contracts_disposed_or_proved'])
+        self.assertEqual(self.session.turns,3)
+        self.assertIn('Try this still-pending contract next: b.',self.session.prompts[1])
+        self.assertIn('Try this still-pending contract next: c.',self.session.prompts[2])
+        self.assertEqual(self.controller.state['proofs'],{'a':'by simp'})
+        self.assertFalse((self.controller.root/'contract-dispositions').exists())
+
+    def test_strict_idle_preserves_unattempted_target_when_another_target_progresses(self):
+        def independent_progress(turn,controller):
+            if turn==2:
+                controller.state['proofs']['c']='synthetic accepted independent proof'
+                controller.state['accepted_order'].append('c')
+                controller._proof_work_version+=1
+        result=self.scenario(strict_evidence=True,on_turn=independent_progress)
+        self.assertEqual(result['session_stop_reason'],'planner_idle_without_outcome_evidence')
+        self.assertEqual(result['contract_dispositions'],{})
+        self.assertEqual(result['pending_contract_ids'],['b'])
+        self.assertEqual(set(self.controller.state['proofs']),{'a','c'})
+        self.assertEqual(self.session.turns,4)
+        self.assertEqual(self.controller.state['rounds'],{'b':2})
 
     def test_recovered_disposition_does_not_short_circuit_remaining_contract(self):
         result=self.scenario(finish_after_first=True,pre_disposed=True)

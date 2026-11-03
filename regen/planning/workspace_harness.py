@@ -70,6 +70,8 @@ class WorkspaceHarness:
         self.revision_review=None
         self.revision_initial_plan=None
         self.revision_strict=False
+        self.recovery_baseline_plan=None
+        self.revision_constraints=None
         self.state_path=self.output/'control/state.json'
         self.state=json.loads(self.state_path.read_text()) if self.state_path.exists() else {'inspected_contracts':{},'inspected_premises':{},'sequence':0}
         from regen.infrastructure.incremental_log import find_root, read_artifact
@@ -107,6 +109,12 @@ class WorkspaceHarness:
     def validate(self, proposal):
         errors=diagnostics(self.view.payload,proposal,self.evidence())
         if errors: return {'valid':False,'errors':errors}
+        if self.revision_constraints is not None:
+            from regen.planning.recovery_revision import validate_revision_constraints
+            try:
+                validate_revision_constraints(self.recovery_baseline_plan,proposal,self.revision_constraints)
+            except ValueError as error:
+                return {'valid':False,'errors':[{'path':'recovery_constraints','message':str(error)}]}
         result,_=validate_draft(self.view.payload,proposal,self.evidence())
         if result['valid']:
             result['notice']='Structure checked, not architectural quality or proof validity. Only required imports determine later availability. Collaboration and reuse suggestions grant no premise visibility or readiness dependencies; array order prioritizes ready theories.'

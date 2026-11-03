@@ -83,6 +83,56 @@ class BatchControllerTest(unittest.TestCase):
         self.assertEqual(feedback['check']['diagnostic'],'native missing dependency detail')
         checker.build_generated_session.assert_not_called()
 
+    def _seal_failure(self, stage, native):
+        from copy import deepcopy
+        from regen.execution.proof_batches import prepare_batch
+        package, initial = fixture()
+        state = prepare_batch(package, initial, {'proofs':{'helper':'by simp','contract':'by simp'}})
+        checker = Mock()
+        checker.imports.return_value = ['Semantic_Base.Semantic_Root']
+        checker.check_complete.return_value = native if stage == 'complete' else check()
+        checker.last_complete_audit = check()
+        checker.complete_source.return_value = 'theory Generated_Demo begin end\n'
+        checker.build_sealed_session.return_value = native
+        original = deepcopy(native)
+        with tempfile.TemporaryDirectory() as tmp, \
+             patch('regen.analysis.retained_semantic_impact.load_audit_context'), \
+             patch('regen.analysis.retained_semantic_impact.audit_theory', return_value={'verdict':'pass'}):
+            root = Path(tmp); checker.generated_dir = root
+            new, feedback = seal_theory(root, {'premise_snapshot':str(root/'snapshot.json')},
+                package, root, checker, [], state)
+        self.assertIsNone(new)
+        self.assertEqual(native, original)
+        return feedback
+
+    def test_seal_complete_and_build_preserve_infrastructure_failure_scope(self):
+        for stage in ('complete', 'build'):
+            for native in (
+                    {**check(), 'verdict':'infrastructure_error', 'failure_scope':'native_preparation',
+                     'diagnostic':'native preparation unavailable'},
+                    {**check(), 'verdict':'red', 'failure_scope':'trusted_audit_target',
+                     'framework_blocked':True, 'diagnostic':'native audit unavailable'},
+                    {**check(), 'verdict':'red', 'diagnostic':
+                     'RED\nexception Io {cause = SysErr ("No space left on device", NONE)} raised'}):
+                with self.subTest(stage=stage, diagnostic=native['diagnostic']):
+                    feedback = self._seal_failure(stage, native)
+                    self.assertEqual(feedback['status'], 'infrastructure_error')
+                    self.assertTrue(feedback['framework_blocked'])
+                    self.assertEqual(feedback['failure_scope'], native.get('failure_scope','native_preparation'))
+                    saved = feedback['check'] if stage == 'complete' else feedback['evidence']['build']
+                    self.assertEqual(saved['diagnostic'], native['diagnostic'])
+
+    def test_seal_regular_red_and_candidate_timeout_are_not_framework_blocked(self):
+        for stage in ('complete', 'build'):
+            for native in (
+                    {**check(), 'verdict':'red', 'diagnostic':'Failed to finish proof'},
+                    {**check(), 'verdict':'red', 'diagnostic':'TIMEOUT\nCandidate execution deadline',
+                     'timeout_scope':'candidate-execute-and-audit', 'timed_out':True}):
+                with self.subTest(stage=stage, diagnostic=native['diagnostic']):
+                    feedback = self._seal_failure(stage, native)
+                    self.assertFalse(feedback.get('framework_blocked', False))
+                    self.assertNotEqual(feedback.get('status'), 'infrastructure_error')
+
     def test_published_batch_and_continuation_proof_sources(self):
         from regen.execution.proof_session_runner import publish_generated_records
         package,state=fixture()
