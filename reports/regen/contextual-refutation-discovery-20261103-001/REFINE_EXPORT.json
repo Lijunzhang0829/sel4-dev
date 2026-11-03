@@ -1,0 +1,35 @@
+{
+  "contracts": 287,
+  "exported_targets": 287,
+  "benchmark_contracts_proved": 0,
+  "model_calls": 0,
+  "support_sha256": "f385d60e782439f6d115e17b980835c3d6ddf82eabde4ba9a47e38d4a60f8dd3",
+  "source_sha256": "15f29bfd7a18e262d34e3030862678e2823659a128d035d03b7ee02ce2bb4cb7",
+  "log_sha256": "a764f15a90e54c6ab0665e202a15968b23a0f44deb019fcad0b567abbe97bce7",
+  "synthetic_arch_probes": [
+    {
+      "context": [],
+      "passed": true,
+      "status": "refuted",
+      "synthetic_proposition": "False"
+    },
+    {
+      "context": [
+        "context begin interpretation Arch ."
+      ],
+      "passed": true,
+      "status": "refuted",
+      "synthetic_proposition": "False"
+    },
+    {
+      "context": [
+        "context begin interpretation Arch .",
+        "context begin interpretation Arch ."
+      ],
+      "passed": true,
+      "status": "refuted",
+      "synthetic_proposition": "False"
+    }
+  ],
+  "full_report_sha256": "213c582dfc14da7a5356f2944aa8dad57f68f66246c90262f61be920ae0ee8c3"
+}

@@ -154,6 +154,23 @@ class BatchControllerTest(unittest.TestCase):
             self.assertEqual(by_name['target']['proof_sha256'],digest('by simp'))
             self.assertIn('context',by_name['target'])
 
+    def test_document_replacements_and_revalidation_update_example_provenance(self):
+        from regen.execution.proof_session_runner import publish_generated_records
+        package,state=fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);directory=root/'theories/Generated_Demo/acceptance/commits'
+            directory.mkdir(parents=True)
+            commits=[{'event':'document','state':{'proofs':{'helper':'by simp'}}},
+                     {'event':'document','state':{'proofs':{'helper':'by blast'}}},
+                     {'event':'imports','state':{'proofs':{},'context_revision':1}},
+                     {'event':'document','state':{'proofs':{'helper':'by blast'},'context_revision':1}}]
+            for number,commit in enumerate(commits,1):
+                (directory/f'{number:06d}.json').write_text(json.dumps(commit))
+            records=publish_generated_records(root,state['graph'],'seal:test',package,records_only=True)
+            helper=next(r for r in records if r['canonical_name'].endswith('.helper'))
+            self.assertEqual(helper['proof_body'],'by blast')
+            self.assertEqual(helper['proof_commit_id'],'000004')
+
     def test_query_uses_frozen_sealed_catalog_and_exact_node_context(self):
         package,state=fixture();state['graph']['nodes'][0]['context']=['context X']
         with tempfile.TemporaryDirectory() as tmp:

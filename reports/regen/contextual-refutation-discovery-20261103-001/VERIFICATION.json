@@ -1,0 +1,42 @@
+{
+  "schema": "contextual-refutation-discovery-verification-v1",
+  "date": "2026-11-03",
+  "full_regression": {
+    "run": 2847,
+    "skipped": 19,
+    "failures": 0,
+    "errors": 0,
+    "seconds": 180.526,
+    "log_sha256": "c236d8199a68bef799b0be9cd2af258d14d2d16a411648ecae24ac2264ffbd60"
+  },
+  "native_refutation": {
+    "run": 17,
+    "failures": 0,
+    "errors": 0,
+    "seconds": 119.388,
+    "log": "native-refutation-tests.log"
+  },
+  "refine_export": {
+    "contracts": 287,
+    "exported_targets": 287,
+    "previously_contextual_targets": 278,
+    "synthetic_arch_probes_passed": 3,
+    "details": "REFINE_EXPORT.json"
+  },
+  "retrieval_regressions": [
+    "unimported sealed discovery and provider version metadata",
+    "native matching only after accepted import; removal restores import requirement",
+    "unsealed and forged candidates rejected",
+    "new seal changes query identity and preserves old snapshot",
+    "proof-example body and document/imports provenance",
+    "bounded generated scoring for default queries",
+    "saved-query refresh after new seal"
+  ],
+  "git_diff_check": "passed",
+  "model_calls": 0,
+  "benchmark_contracts_proved": 0,
+  "remaining_limitations": [
+    "includes and obtains remain conservatively unsupported"
+  ],
+  "long_experiment_started": false
+}

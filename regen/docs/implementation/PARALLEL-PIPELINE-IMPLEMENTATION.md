@@ -21,6 +21,72 @@
 6. 共享 batch controller 验证声明索引、上下文、精确源码版本、完整 batch 和提交身份；文档模式不调用局部 DAG 构建/拓扑规划。任务执行器仍持久化请求和结果，但后台线程不再让同一 File Planner 重叠开展其他操作。观察收据在读取时投影为工作记忆，下次证明动作合入非证明 journal 反馈；不伪造证明计数或 GREEN。观察记忆实现命名为 observation_memory；旧 async_observations/async_* 保留作恢复兼容。
 7. 原完整检查、语义/依赖审计和 session build 构成 seal；仅 seal 才解锁硬依赖。最后独立 integration gate 验证全集 exact-once 覆盖、精确渲染源码、实际 imports、seal 证据，并在隔离输出中统一 build。进度中的 `repository_verified` 必须匹配当前 manifest，不能只看局部终态。
 
+## 2026-11-03：逐目标退出与原生尝试证据
+
+### 上下文证伪与全仓库已封存事实发现
+
+`contract-refutation-v2` 在冻结 imports 和 owned context 中读取原始声明，用
+Isabelle 的 assumption／variable export 补全前提、展开局部定义并闭合参数。
+退出所有 owned contexts 后，才构造并证明完整命题的否定；目标本身不被证明或注册
+为事实。内核审计另外绑定导出的目标项，仍要求无 skip proof、oracle、遗留 hypotheses
+或新增 axioms。旧 v1 证书通过冻结的 `contract_refutation_v1.ML` 与原渲染方式重放。
+`read_entry.refutation_capability` 允许尝试上下文导出；原生解析仍可对不支持的语法
+返回 unsupported，例如当前的 obtains／includes。unsupported 不产生终结处置。
+
+纯导出覆盖检查不调用模型、不证明 benchmark 目标：
+
+```bash
+python3 -m regen.tools.refutation_export_scan \
+  --dataset /path/to/dataset --output /path/to/fresh/check \
+  --check-arch-probes
+```
+
+可选 probes 是在空／Arch 上下文中人为构造的 False 小例子，不属于 benchmark contracts。
+
+`goal_query`／绑定残余目标查询从本轮全部认证封存结果中发现候选，包括未导入的
+provider；上游仍使用原冻结数据库。每次查询绑定不可变的发现目录快照，先索引再
+计算相似度，并核对候选声明、证明与当前 provider journal／seal。返回
+`provider_theory`、`provider_commit_id`、`provider_seal_id`、`import_name`、
+`requires_import` 和 `can_use_as_current_premise`；这些字段不证明数学适用性。
+未导入候选保留词法排名并标记 requires_import，仅当前可见事实进入原生结构匹配。
+File Planner 选择新增 import 后仍走已有语义复验和证明重验事务。
+新 seal 改变目录快照和 query identity，旧检索记忆不能阻止发现新结果。
+document／imports 接受事件也记录证明范例来源；证明改写、撤销和环境重验更新版本。
+
+新建 repository run 默认绑定 `contract_outcome_policy=contract-dispositions-v1`
+和 `unresolved_evidence_policy=native-attempts-v1`。历史 run 缺少这些字段仍按原策略
+重放；普通 continuation 显式继承旧值，不能因默认值变化而静默升级或改写原 run。
+
+严格策略下，`report_unresolved` 每次只处理一个未证明的固定 contract。harness
+从已绑定的检查记录验证该目标确实失败，并验证修改候选后再次检查的证据。仅有模型
+理由、helper 失败、条件性 sketch、未执行到的批次目标、重复缓存、过期上下文或
+基础设施故障，都不足以终结目标。`read_entry` 的 `unresolved_eligibility` 返回
+可用证据与缺口，便于 File Planner 修订局部路线或转向其他 pending 目标。
+UNKNOWN 是当前搜索的处置，不是不可证结论；目标声明、已有 GREEN 和累计费用保持。
+
+`no_progress_turn_limit` 只限制没有新原生工作的空转 final turns，不是证明失败次数。
+严格策略达到该阈值后，控制器提示其他 pending 目标；一轮提示仍无工作则以
+`planner_idle_without_outcome_evidence` 停止 worker，保留所有未处置目标。它不会
+替模型为未尝试目标写 UNKNOWN。独立且 ready 的其他 theories 仍可运行。
+基础设施故障单独记录，不可用 `proof_search_exhausted` 代替。
+
+逐目标 UNKNOWN 后，其他目标继续；正向部分导出仍须通过完整源码检查和发布审计。
+`exported_partial` 只使已检查的正向事实可用，不代表 theory 或仓库全部完成。
+
+旧实验需要显式升级时，使用独立目录准备 continuation：
+
+```bash
+python3 -m regen.tools.outcome_policy_continuation \
+  --source-run /path/to/stopped/proof \
+  --run-dir /path/to/new/proof \
+  --authorization "升级逐目标退出策略，保留历史证明和预算"
+```
+
+该命令只准备，不启动实验。源实验必须已停止、使用 document 接口且预算干净暂停；
+已存在 contract dispositions、部分导出或反证结果的迁移不在此入口支持范围内。
+旧 theory UNKNOWN 归档为历史，未证目标重新开放；已有 GREEN、seal 与累计预算
+均保留。只有预算迁移完成后才发布准备回执，未完成的目录不能开始原生检查或新建预算。
+
 ## 代码对应
 
 | 模块 | 实现入口 | 核心变化 |

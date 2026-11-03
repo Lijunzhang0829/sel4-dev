@@ -12,7 +12,8 @@ from regen.planning.premise_retrieval import _is_public_record
 
 
 def recall_for_node(database, node, request, *, generated_records, audit_path, observation=None,
-                    candidate_reranker=None, generated_index=None, lexical_index=None):
+                    candidate_reranker=None, generated_index=None, lexical_index=None,
+                    candidate_resolver=None):
     allowed = {'goal_query', 'context_node_id', 'purpose', 'scope', 'use_vectors', 'proof_hint',
                'retrieval_policy', 'candidate_budget'}
     if set(request) - allowed or request.get('goal_query') is not True:
@@ -55,7 +56,8 @@ def recall_for_node(database, node, request, *, generated_records, audit_path, o
     q = vector(target + '\n' + hint, 65536)
     sealed = []
     if scope in {'all', 'sealed'} and Path(generated_records).is_file():
-        if policy == POLICY:
+        bounded_generated = policy == POLICY or candidate_resolver is not None
+        if bounded_generated:
             index_path = generated_index or generated_index_for(
                 generated_records, Path(audit_path).parent / 'generated-candidate-indexes')
             page = generated_candidates(generated_records, index_path, target + '\n' + hint,
@@ -64,7 +66,7 @@ def recall_for_node(database, node, request, *, generated_records, audit_path, o
             pipeline['generated'] = {key: value for key, value in page.items() if key != 'records'}
         else:
             generated_pool = json.loads(Path(generated_records).read_text()).get('records', [])
-        scored = 0
+        scored = rejected = 0
         for item in generated_pool:
             if (item.get('source_class') != 'generated_theorem' or not item.get('theory_seal_id')
                     or item.get('status') != 'sealed' or not _is_public_record(item)):
@@ -77,6 +79,11 @@ def recall_for_node(database, node, request, *, generated_records, audit_path, o
                 continue
             if not certified_example:
                 item.pop('proof_body', None)
+            if candidate_resolver is not None:
+                item = candidate_resolver(item)
+                if item is None:
+                    rejected += 1
+                    continue
             text = '\n'.join([item['canonical_name'], item['exact_statement'], *item.get('context', [])])
             if purpose == 'proof_example':
                 text += '\n' + body
@@ -85,9 +92,10 @@ def recall_for_node(database, node, request, *, generated_records, audit_path, o
             score = sum(value*v.get(key, 0) for key, value in q.items())
             if score > 0:
                 sealed.append({**item, 'score':score, 'match_kind':purpose,
-                    'availability':'frozen_import_candidate_requires_current_context_check'})
-        if policy == POLICY:
+                    'availability':item.get('availability','frozen_import_candidate_requires_current_context_check')})
+        if bounded_generated:
             pipeline['generated']['vector_candidates_scored'] = scored
+            pipeline['generated']['unverified_candidates_rejected'] = rejected
     sealed.sort(key=lambda item:(-item['score'], item['record_id']))
     # Interleave source ranks. Scores from FTS and lexical cosine are not comparable.
     records = []
@@ -102,6 +110,10 @@ def recall_for_node(database, node, request, *, generated_records, audit_path, o
              'retrieval_policy': policy, 'candidate_budget': budget})
         pipeline['combined_candidates'] = len(records)
         pipeline['structural_rerank'] = rerank
+        if candidate_resolver is not None and rerank is not None:
+            rerank['eligible_for_native_matching'] = sum(
+                'visibility' not in row or row.get('can_use_as_current_premise', False) for row in records)
+            rerank['deferred_requires_import'] = sum(bool(row.get('requires_import')) for row in records)
         records = records[:5]
     summary = {'mode':'intermediate_goal' if observation else 'node_goal', 'purpose':purpose, 'scope':scope,
         'context_node_id':node['id'], 'target_sha256':digest(target),
@@ -112,12 +124,17 @@ def recall_for_node(database, node, request, *, generated_records, audit_path, o
         'queries':[summary], 'ranking':'upstream-fts-rrf; sealed-lexical-cosine; source-rank-interleave',
         'notice':('Target is an exact bound native diagnostic residual. ' if observation else
                   'Target is the graph entry goal, not a live intermediate proof state. ')+
-                 'Proof examples come only from imported sealed generated proofs; upstream proof bodies are not stored. '
+                 'Generated candidates and proof examples require certified provider exports. '
+                 'Inspect visibility/requires_import; discovery alone does not expose a theorem. '
+                 'Upstream proof bodies are not stored. '
                  'Lexical similarity is not a certificate of equivalent proof strategy or applicability.'}
     if policy == POLICY:
         result['candidate_pipeline'] = pipeline
         result['ranking'] = ('bounded-upstream-fts-rrf; generated-normalized-fts-then-cosine; '
                              'source-rank-interleave' + ('; bounded-candidate-reranker' if candidate_reranker else ''))
         summary.update(retrieval_policy=policy, candidate_budget=budget)
+    elif candidate_resolver is not None:
+        result['candidate_pipeline'] = pipeline
+        result['ranking'] = 'upstream-legacy; repository-sealed-bounded-index-then-cosine; source-rank-interleave'
     durable(Path(audit_path), {'request':request, 'target':target, **result}, immutable=True)
     return result

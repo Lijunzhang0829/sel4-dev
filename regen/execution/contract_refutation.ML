@@ -3,6 +3,7 @@
    No benchmark proof or generated result is imported. *)
 local
 val baseline_axioms = sort_strings (map #1 (Thm.all_axioms_of \<^theory>));
+val captured_target = Unsynchronized.ref (NONE: (string * term) option);
 
 fun hol_prop (Const ("Pure.imp", _) $ a $ b) = HOLogic.mk_imp (hol_prop a, hol_prop b)
   | hol_prop (Const ("Pure.all", _) $ Abs (x, T, b)) =
@@ -22,7 +23,7 @@ fun term_xml term = String.translate hex_char
   (YXML.string_of_body (Term_XML.Encode.term_raw term));
 fun field name value = XML.Elem ((name, []), [XML.Text value]);
 
-fun audit id expected results lthy =
+fun audit id closed expected results lthy =
   let
     val thms = flat results;
     val thm = (case thms of [thm] => thm | _ => error "Refutation audit: expected one theorem");
@@ -37,8 +38,9 @@ fun audit id expected results lthy =
       then () else error "Refutation audit: theorem does not match closed negation";
     val _ = Thm.consolidate thms;
     val deps = Thm_Deps.thm_deps thy thms;
-    val evidence = XML.Elem (("contract_refutation", [("version", "1"), ("contract_id", id)]),
+    val evidence = XML.Elem (("contract_refutation", [("version", "2"), ("contract_id", id)]),
       [field "expected_term" (term_xml expected), field "proved_term" (term_xml actual),
+       field "closed_target_term" (term_xml closed), field "context_exported" "true",
        field "skip_proof" "false", field "oracles" "0", field "hypotheses" "0",
        field "changed_axioms" "false", field "exact_closed_negation" "true",
        XML.Elem (("dependencies", []), map (fn (_, (name, index)) =>
@@ -55,26 +57,48 @@ val short_statement = Parse_Spec.statement -- Parse_Spec.if_statement -- Parse.f
   >> (fn ((shows, assumes), fixes) =>
     (Binding.empty_atts, [], [Element.Fixes fixes, Element.Assumes assumes], Element.Shows shows));
 
-fun negative id (binding, includes, elems, concl) int lthy =
+fun capture id (_, includes, elems, concl) lthy =
   let
     val _ = if null includes then () else error "REGEN_REFUTATION_UNSUPPORTED: includes";
     val _ = (case concl of Element.Shows _ => ()
       | _ => error "REGEN_REFUTATION_UNSUPPORTED: obtains");
     val (statements, ctxt) = Expression.read_statement elems concl lthy;
     val goals = maps (map fst o snd) statements;
-    val premises = map Thm.term_of (Assumption.local_assms_of ctxt lthy);
+    val outer = Proof_Context.init_global (Proof_Context.theory_of ctxt);
+    (* Ordinary assumption term exports are identity functions: add every owned
+       assumption explicitly, then apply native exports (including local defs).
+       No target theorem is proved, assumed, or installed in the fact namespace. *)
+    val premises = map Thm.term_of (Assumption.local_assms_of ctxt outer);
     val proposition = Logic.list_implies (premises, Logic.mk_conjunction_list goals);
-    val frees = Term.add_frees proposition []
-      |> filter_out (fn (name, _) => Variable.is_fixed lthy name);
-    val closed = fold_rev (fn v => fn t => Logic.all (Free v) t) frees proposition;
+    val exported = proposition |> Assumption.export_term ctxt outer
+      |> singleton (Variable.export_terms ctxt outer);
+    val ([imported], global_ctxt) = Variable.import_terms true [exported] outer;
+    val frees = Term.add_frees imported [];
+    val closed = fold_rev (fn v => fn t => Logic.all (Free v) t) frees imported;
+    val _ = if null (Term.add_frees closed []) andalso null (Term.add_vars closed [])
+      then () else error "REGEN_REFUTATION_UNSUPPORTED: unclosed contextual target";
+    val _ = Thm.cterm_of global_ctxt closed;
+    val _ = Thm.cterm_of global_ctxt (HOLogic.mk_Trueprop (HOLogic.mk_not (hol_prop closed)));
+    val _ = captured_target := SOME (id, closed);
+    val _ = writeln ("REGEN_REFUTATION_TARGET " ^ String.translate hex_char id ^ " " ^
+      SHA1.rep (SHA1.digest (term_xml closed)));
+  in lthy end;
+
+fun negative id name int lthy =
+  let
+    val closed = (case ! captured_target of SOME (saved_id, term) =>
+        if saved_id = id then term else error "Refutation target identity mismatch"
+      | NONE => error "Refutation target was not exported");
+    val _ = if null (Assumption.all_assms_of lthy) then ()
+      else error "Refutation proof must run outside the owned assumptions";
     val negation = HOLogic.mk_Trueprop (HOLogic.mk_not (hol_prop closed));
-    val name = if Binding.is_empty (#1 binding)
-      then (case statements of (b, _) :: _ => #1 b | _ => Binding.empty)
-      else #1 binding;
-  in Specification.theorem false Thm.theoremK NONE (audit id negation)
+  in Specification.theorem false Thm.theoremK NONE (audit id closed negation)
        (name, []) [] [] (Element.Shows [(Binding.empty_atts, [(negation, [])])]) int lthy end;
 
-val _ = Outer_Syntax.local_theory_to_proof' \<^command_keyword>\<open>regen_refute\<close>
-  "prove the negation of a frozen universally closed contract"
-  (Parse.name -- (long_statement || short_statement) >> (fn (id, spec) => negative id spec));
+val _ = Outer_Syntax.local_theory \<^command_keyword>\<open>regen_refute_capture\<close>
+  "export the complete contextual fixed target without proving it"
+  (Parse.name -- (long_statement || short_statement) >> (fn (id, spec) => capture id spec));
+val _ = Outer_Syntax.local_theory_to_proof' \<^command_keyword>\<open>regen_refute_exported\<close>
+  "prove the negation of an exported, universally closed fixed target"
+  (Parse.name -- Parse.binding >> (fn (id, name) => negative id name));
 in end

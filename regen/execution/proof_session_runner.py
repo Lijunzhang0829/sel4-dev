@@ -36,6 +36,7 @@ from regen.planning.proof_graph import (
     verify_graph_payload_sha256, write_immutable_graph,
 )
 from regen.analysis.retained_semantic_impact import audit_theory
+from regen.execution.checker_policy import DEFAULT_OUTCOME_POLICY
 
 
 _MUTATION_LOCK_STATE = threading.local()
@@ -813,7 +814,8 @@ def _init_run_unlocked(
     schedule_path: Path | None = None,
     complete_context_policy: str = 'isolated-v1',
     log_storage: str = 'inline-v1',
-    contract_outcome_policy: str | None = None,
+    contract_outcome_policy=DEFAULT_OUTCOME_POLICY,
+    unresolved_evidence_policy=DEFAULT_OUTCOME_POLICY,
 ) -> dict[str, Any]:
     from regen.execution.checker_policy import validate_complete_context_policy, policy_binding
     validate_complete_context_policy(complete_context_policy)
@@ -823,9 +825,12 @@ def _init_run_unlocked(
         from regen.execution.repository_execution import init_run as init_repository
         return init_repository(run_dir, input_root, run_id, schedule_path,
             **policy_binding({'complete_context_policy':complete_context_policy}), **logging,
-            contract_outcome_policy=contract_outcome_policy)
+            contract_outcome_policy=contract_outcome_policy,
+            unresolved_evidence_policy=unresolved_evidence_policy)
     # Everything below is the compatibility path for pre-schema-5 runs.
-    if complete_context_policy != 'isolated-v1' or logging or contract_outcome_policy is not None:
+    if (complete_context_policy != 'isolated-v1' or logging
+            or contract_outcome_policy not in (None, DEFAULT_OUTCOME_POLICY)
+            or unresolved_evidence_policy not in (None, DEFAULT_OUTCOME_POLICY)):
         raise ValueError('Arch reuse requires a new refine-dataset repository run')
     environment_run = input_root.resolve()
     context = environment_context(environment_run)
@@ -889,7 +894,8 @@ def init_run(
     schedule_path: Path | None = None,
     complete_context_policy: str = 'isolated-v1',
     log_storage: str = 'inline-v1',
-    contract_outcome_policy: str | None = None,
+    contract_outcome_policy=DEFAULT_OUTCOME_POLICY,
+    unresolved_evidence_policy=DEFAULT_OUTCOME_POLICY,
 ) -> dict[str, Any]:
     lock = acquire_run_mutation_lock(run_dir, operation="init")
     try:
@@ -899,6 +905,7 @@ def init_run(
             complete_context_policy=complete_context_policy,
             log_storage=log_storage,
             contract_outcome_policy=contract_outcome_policy,
+            unresolved_evidence_policy=unresolved_evidence_policy,
         )
     finally:
         release_run_mutation_lock(lock)
@@ -1002,6 +1009,7 @@ def publish_generated_records(
     run_dir: Path, graph: dict[str, Any], theory_seal_id: str,
     package: dict[str, Any], *, records_only=False,
 ):
+    from regen.execution.proof_commits import digest
     path = run_dir / "generated-premises.json"
     value = read_json(path) if path.exists() and not records_only else {"records": []}
     records = {item["record_id"]: item for item in value["records"]}
@@ -1011,6 +1019,7 @@ def publish_generated_records(
     }
     commit_ids: dict[str, str] = {}
     accepted_proofs: dict[str, str] = {}
+    proof_versions = {}
     commit_dir = (
         run_dir / "theories" / Path(graph["file_slot"]).stem
         / "acceptance" / "commits"
@@ -1018,15 +1027,21 @@ def publish_generated_records(
     if commit_dir.is_dir():
         for commit_path in sorted(commit_dir.glob("*.json")):
             commit = read_json(commit_path)
-            accepted_proofs.update(commit.get("state", {}).get("proofs", {}))
-            if commit.get("event") == "green":
-                node_id = commit.get("evidence", {}).get("node_id")
-                if node_id:
-                    commit_ids[node_id] = commit_path.stem
-            elif commit.get('event') == 'batch' or (commit.get('event') == 'initial'
-                    and any(k in commit.get('evidence', {}) for k in ('continuation', 'sealed_reuse'))):
-                for node_id in commit.get('state', {}).get('proofs', {}):
-                    commit_ids.setdefault(node_id, commit_path.stem)
+            state = commit.get('state', {})
+            accepted_proofs = dict(state.get('proofs', {}))
+            entries = {n['id']:n for n in state.get('graph', {}).get('nodes', [])}
+            versions = {key:digest({'proof':body, 'entry':entries.get(key),
+                'context_revision':state.get('context_revision',0),
+                'context_imports':state.get('context_imports')}) for key,body in accepted_proofs.items()}
+            accepted_event = commit.get('event') in {'green','batch','document','imports'} or (
+                commit.get('event') == 'initial' and any(k in commit.get('evidence', {})
+                                                       for k in ('continuation','sealed_reuse')))
+            commit_ids = {key:value for key,value in commit_ids.items() if key in versions}
+            if accepted_event:
+                for key,version in versions.items():
+                    if proof_versions.get(key) != version:
+                        commit_ids[key] = commit.get('commit_id', commit_path.stem)
+            proof_versions = versions
     isabelle_theory = generated_checkpoint_theory(graph["file_slot"])
     for node in graph["nodes"]:
         record_id = f"generated:{graph['theory']}:{node['name']}"
@@ -1035,7 +1050,6 @@ def publish_generated_records(
             if node["role"] == "contract"
             else list(node.get("attributes", []))
         )
-        from regen.execution.proof_commits import digest
         body = accepted_proofs.get(node["id"])
         example = ({"proof_body":body, "proof_sha256":digest(body)}
                    if body and commit_ids.get(node["id"]) else {})
@@ -2230,8 +2244,13 @@ def main() -> int:
     from regen.infrastructure.incremental_log import FORMAT
     init.add_argument('--log-storage', choices=['inline-v1', FORMAT], default='inline-v1',
                       help='Incremental immutable log objects for a new run')
-    init.add_argument('--contract-outcome-policy', choices=['contract-dispositions-v1'],
-                      help='Isolate terminal contract outcomes and publish checked partial exports; new repository runs only')
+    init.add_argument('--contract-outcome-policy',
+                      choices=['contract-dispositions-v1','legacy-theory-v1'],
+                      default=DEFAULT_OUTCOME_POLICY,
+                      help='New repository default: contract-dispositions-v1; legacy-theory-v1 explicitly preserves whole-theory stops')
+    init.add_argument('--unresolved-evidence-policy', choices=['native-attempts-v1','legacy'],
+                      default=DEFAULT_OUTCOME_POLICY,
+                      help='New contract-run default: native-attempts-v1; legacy explicitly permits historical unresolved-report semantics')
 
     plan = sub.add_parser("plan-file")
     plan.add_argument("--run-dir", type=Path, required=True)
@@ -2357,7 +2376,10 @@ def main() -> int:
                 schedule_path=args.schedule,
                 complete_context_policy=args.complete_context_policy,
                 log_storage=args.log_storage,
-                contract_outcome_policy=args.contract_outcome_policy,
+                contract_outcome_policy=(None if args.contract_outcome_policy == 'legacy-theory-v1'
+                                         else args.contract_outcome_policy),
+                unresolved_evidence_policy=(None if args.unresolved_evidence_policy == 'legacy'
+                                            else args.unresolved_evidence_policy),
             )
         elif args.command == "parallel-workspace":
             from regen.planning.parallel_file_planner import run_parallel_workspace

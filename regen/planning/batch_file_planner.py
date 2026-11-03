@@ -110,7 +110,11 @@ intermediate goal, replace goal_query with
 "proof_state_query":{"request_number":94,"goal_index":1,"origin":"diagnostic|before_command"}.
 context_node_id must be the submitted node; multi-node attribution must be unambiguous.
 No model-supplied proof-state text. helper ranks external facts; proof_example returns
-imported sealed generated proofs with contexts. Optional "proof_hint" specifies a
+certified sealed generated proofs across this run, including not-yet-imported
+providers. Results expose provider/import/version/visibility; requires_import is
+discovery only. Add the import through edit_theory and native revalidation before
+referencing the fact. Unproved contracts are never returned as facts.
+Optional "proof_hint" specifies a
 proof-example approach; "use_vectors":true uses the existing helper vector index.
 Retrieval similarity and symbol availability do not establish applicability: check
 full statements, types and locale assumptions. Upstream proof bodies are not stored.
@@ -814,7 +818,7 @@ def read_diagnostic(directory, state, proposal):
         'next_offset':end if end < len(value) else None}}
 
 
-def query_binding(run, state, directory, request):
+def query_binding(run, state, directory, request, *, generated_discovery=None):
     """Exact legacy identity payload, exposed separately for verifiable memory."""
     def file_identity(path):
         path = Path(path)
@@ -848,6 +852,10 @@ def query_binding(run, state, directory, request):
     if request.get('retrieval_policy') == 'indexed-v1':
         from regen.planning.retrieval_usage import indexed_implementation_binding
         binding['retrieval_implementation'] = indexed_implementation_binding(request)
+    from regen.execution.generated_discovery import discovery_binding
+    discovery = generated_discovery if generated_discovery is not None else discovery_binding(run, request)
+    if discovery is not None:
+        binding['generated_discovery'] = discovery
     return binding
 
 
@@ -888,7 +896,10 @@ def execute_query(run, package, state, checker, directory, request, item_index=N
         raise ValueError('query request must be an object')
     audit_path = (audit_directory or directory)/('fact-selection.json' if item_index is None
                             else f'fact-selection-{item_index:02d}.json')
-    binding = query_binding(run, state, directory, request)
+    from regen.execution.generated_discovery import prepare_discovery
+    discovery = prepare_discovery(run, package, directory, request)
+    binding = query_binding(run, state, directory, request,
+                            generated_discovery=discovery.binding if discovery else None)
     identity = digest(binding)
     page, reused_request = cached_query_feedback(state, directory, identity)
     reused_task = None
@@ -896,7 +907,8 @@ def execute_query(run, package, state, checker, directory, request, item_index=N
         from regen.planning.observation_memory import cached_query
         page,reused_task = cached_query(state,identity)
     if page is None:
-        page = batch_query(run, package, state, checker, directory, request, audit_path=audit_path)
+        page = batch_query(run, package, state, checker, directory, request, audit_path=audit_path,
+                           **({'_discovery':discovery} if discovery else {}))
     else:
         durable(audit_path, {'request':request, 'reused_request':reused_request,
             'reused_task_id':reused_task, 'source_feedback_sha256':digest(page), 'result':page}, immutable=True)
@@ -911,7 +923,7 @@ def execute_query(run, package, state, checker, directory, request, item_index=N
             'new_record_ids':[f['record_id'] for f in page.get('records', []) if f['record_id'] not in known]}}
 
 
-def batch_query(run, package, state, checker, directory, request, *, audit_path=None):
+def batch_query(run, package, state, checker, directory, request, *, audit_path=None, _discovery=None):
     from regen.execution.round_recall import select_round_facts, is_fact_request
     audit_path = audit_path if audit_path is not None else directory/'fact-selection.json'
     if not isinstance(request, dict):
@@ -924,9 +936,27 @@ def batch_query(run, package, state, checker, directory, request, *, audit_path=
         raise ValueError('structural_rerank requires an indexed-v1 target query')
     clean_request = {k: v for k, v in request.items() if k != 'structural_rerank'}
     rerank_arguments = {}
+    from regen.execution.generated_discovery import prepare_discovery
+    discovery = _discovery or prepare_discovery(run, package, directory, request)
+    generated = discovery.catalog if discovery else directory.parent.parent/'sealed-premises.json'
+    if discovery:
+        rerank_arguments['candidate_resolver'] = discovery.resolve
     if structural:
         from regen.execution.premise_structure import rerank
-        rerank_arguments['candidate_reranker'] = lambda context, records: rerank(checker, context, records)
+        def visible_rerank(context, records):
+            eligible = [r for r in records if 'visibility' not in r or r['can_use_as_current_premise']]
+            matched = (rerank(checker, context, eligible) if eligible else
+                       {'ordered_record_ids':[], 'evidence':{}})
+            native_order = iter(matched['ordered_record_ids'])
+            eligible_ids = {r['record_id'] for r in eligible}
+            ordered = [next(native_order) if r['record_id'] in eligible_ids else r['record_id']
+                       for r in records]
+            evidence = {**matched['evidence'], **{r['record_id']:{
+                'status':'requires_import' if r.get('requires_import') else 'provider_not_currently_visible',
+                'native_match_attempted':False, 'is_proof_authority':False,
+                'import_name':r.get('import_name')} for r in records if r['record_id'] not in eligible_ids}}
+            return {'ordered_record_ids':ordered, 'evidence':evidence}
+        rerank_arguments['candidate_reranker'] = visible_rerank
     nodes = {n['id']: n for n in state['graph']['nodes']}
     if 'proof_state_query' in request:
         from regen.planning.planner_workspace import intermediate_target
@@ -935,7 +965,7 @@ def batch_query(run, package, state, checker, directory, request, *, audit_path=
         clean = {k:v for k,v in clean_request.items() if k != 'proof_state_query'}
         clean['goal_query'] = True
         return recall_for_node(run['premise_database'], node, clean,
-            generated_records=directory.parent.parent/'sealed-premises.json',
+            generated_records=generated,
             audit_path=audit_path, observation=observation, **rerank_arguments)
     context_id = request.get('context_node_id')
     if context_id is not None and (not isinstance(context_id, str) or context_id not in nodes):
@@ -945,7 +975,7 @@ def batch_query(run, package, state, checker, directory, request, *, audit_path=
             raise ValueError('goal_query requires an actual context_node_id')
         from regen.execution.file_planner_recall import recall_for_node
         return recall_for_node(run['premise_database'], nodes[context_id], clean_request,
-            generated_records=directory.parent.parent/'sealed-premises.json',
+            generated_records=generated,
             audit_path=audit_path, **rerank_arguments)
     if not is_fact_request(request) or 'proof_state_query' in request:
         raise ValueError('use explicit premise_queries or goal_query with context_node_id')
@@ -962,6 +992,18 @@ def batch_query(run, package, state, checker, directory, request, *, audit_path=
 def seal_theory(run_dir, run, package, directory, checker, ancestors, state, *, dispositions=None):
     from regen.analysis.retained_semantic_impact import audit_theory, load_audit_context
     from regen.execution.proof_session_runner import generated_checkpoint_theory
+    from regen.execution.proof_batches import classify_native_failure
+
+    def infrastructure_feedback(*checks):
+        for check in checks:
+            if (check.get('framework_blocked') or check.get('verdict') == 'infrastructure_error'
+                    or check.get('failure_scope') in {'native_preparation', 'trusted_audit_target'}):
+                return {'status':'infrastructure_error', 'framework_blocked':True,
+                        'failure_scope':check.get('failure_scope') or 'native_preparation',
+                        **({'native_failure_stage':check['native_failure_stage']}
+                           if check.get('native_failure_stage') else {})}
+        return {}
+
     graph, proofs = state['graph'], state['proofs']
     export_scope = None
     if set(proofs) != {n['id'] for n in graph['nodes']}:

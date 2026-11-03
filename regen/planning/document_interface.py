@@ -109,6 +109,12 @@ Historical printed residuals retain lexical results and report that native
 structural matching is unavailable; they are never reparsed as a live context.
 Generated discovery is reference-only. Inspect visibility and provider versions
 from list_generated/read_generated before choosing imports or copying a proof.
+goal_query also discovers certified exports outside the current imports. Its
+results include provider_theory, import_name, provider_commit_id/provider_seal_id,
+requires_import and can_use_as_current_premise. Only imported candidates undergo
+native structural matching; requires_import results retain lexical ranking until
+the selected import has been accepted and the query is repeated. New provider
+seals change the bound discovery snapshot, so an old query cannot hide new facts.
 read_entry retrieval memory distinguishes returned candidates, explicit reads,
 proof-text mentions in attempts and accepted proof-text mentions. Textual mentions
 are not native dependency certificates. Old target/environment bindings remain
@@ -159,13 +165,13 @@ def tool_contracts():
                 'entry_ids':ids,'obligations':ids,'providers':{'type':'array','items':sha,'uniqueItems':True}},
             'required':['action','issue_id','decision','reason','entry_ids','obligations'],'additionalProperties':False},
         'report_unresolved':{'type':'object',
-            'description':'Stop this theory with an unknown outcome, preserve accepted work and release its worker. Classifications are unverified reports, never proof that the spec is false.',
+            'description':'Report unresolved fixed contracts under the frozen outcome policy while preserving accepted proofs. New runs require one explicit entry_id in entry_ids and target-bound native failure evidence including a revised candidate; inspect read_entry.unresolved_eligibility. Other targets continue. Legacy runs may stop the whole theory. Classifications never prove that a specification is false or unprovable.',
             'properties':{'action':{'const':'report_unresolved'},'reason':sha,'entry_ids':ids,
                 'classification':{'enum':['proof_search_exhausted','suspected_counterexample',
                     'missing_assumptions','unsupported_specification','no_progress']}},
             'required':['action','reason'],'additionalProperties':False},
         'check_refutation':{'type':'object',
-            'description':'Independently check a proof of the negation of the frozen fixed contract, including its quantifiers and assumptions. A verified refutation stops the theory but never proves the positive goal or seals its provider. The checker supplies the negative statement; do not submit a replacement spec. Only frozen parent and sealed imports are available, not the local positive prefix.',
+            'description':'Independently check a proof of the negation of the frozen fixed contract, including its quantifiers and assumptions. Inspect read_entry.refutation_capability first. The harness exports owned context/locale assumptions and parameters, exits that context, then constructs the closed negative goal. Unsupported native forms return unsupported. Under contract-dispositions-v1 only this contract stops; legacy runs stop the theory. A refutation never proves the positive goal or seals its provider. The checker supplies the negative statement; do not submit a replacement spec. Only frozen parent and sealed imports are available, not the local positive prefix.',
             'properties':{'action':{'const':'check_refutation'},'entry_id':sha,'proof_body':sha},
             'required':['action','entry_id','proof_body'],'additionalProperties':False},
         'read_entry':{'type':'object',
@@ -225,7 +231,9 @@ def tool_contracts():
             'required':['action','source_sha256'],'additionalProperties':False},
         'read_evidence':evidence_schema(),
     }
-    examples=[{'action':'report_unresolved','reason':'The fixed goal remains unresolved after the recorded checks','classification':'proof_search_exhausted'},
+    examples=[{'action':'report_unresolved','entry_ids':['fixed contract ID'],
+               'reason':'The fixed goal remains unresolved after the recorded checks and a revised candidate',
+               'classification':'proof_search_exhausted'},
         {'action':'check_refutation','entry_id':'fixed entry ID','proof_body':'complete proof of the checker-generated negative goal'},
         {'action':'read_entry','entry_id':'fixed entry ID'},
         {'action':'edit_proof','entry_id':'fixed entry ID','expected_hash':'expected_hash returned by read_entry',
@@ -265,7 +273,7 @@ def tool_contracts():
             'check':'native declaration/proof checking; draft_checked is diagnostic only. Publication requires GREEN and preservation of every accepted entry; only committed evidence establishes accepted GREEN',
             'incremental':'entry_ids selects several draft proofs; every accepted proof is retained, the longest identical prefix is reused, and the affected suffix is checked',
             'finish':'requires the current complete draft hash; pending imports and unaccepted proof text are checked before independent complete-theory audit/build and seal. Under contract-dispositions-v1, every fixed contract must be proved or explicitly disposed; finish may publish an audited positive subset as exported_partial without claiming all contracts proved.',
-            'outcomes':'unknown is a scheduling disposition, never unprovability; refuted requires an independently checked negation. Under contract-dispositions-v1, report_unresolved requires explicit entry_ids, only those contracts stop, and other targets continue. Disposed goals export no positive theorem; their slots stay oops. Hard consumers require a checked published export; exported_partial is not complete proof success. Legacy runs retain whole-theory stopping. Positive proofs and costs are preserved in either policy.',
+            'outcomes':'unknown is a scheduling disposition, never unprovability; refuted requires an independently checked negation. Under contract-dispositions-v1, report_unresolved requires explicit entry_ids, only those contracts stop, and other targets continue. With unresolved_evidence_policy=native-attempts-v1, report exactly one fixed contract after native failure and a checked, different revised candidate; read_entry exposes unresolved_eligibility. Unexecuted goals, helper failures, cached repeats and infrastructure failures do not justify abandoning a target. Revise the proof or continue another pending contract when evidence is insufficient. Disposed goals export no positive theorem; their slots stay oops. Hard consumers require a checked published export; exported_partial is not complete proof success. Legacy runs retain their frozen semantics. Positive proofs and costs are preserved in every policy.',
             'read_theory':'Default returns exact full source. Optional if_source_sha256 suppresses source '
                           'only on an exact hash match and marks source_unchanged; feedback remains current. '
                           'Cumulative fact/query indexes are paginated with explicit totals and next_action.',

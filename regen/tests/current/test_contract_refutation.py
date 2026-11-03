@@ -10,6 +10,8 @@ import unittest
 from regen.execution.contract_refutation import (
     _audit, check_refutation, contract_binding, render_refutation,
     validate_refutation_certificate, UnsupportedRefutation,
+    refutation_capability,
+    check_export_scan, LEGACY_SCHEMA, LEGACY_SUPPORT,
 )
 
 
@@ -19,21 +21,33 @@ def contract(statement='lemma fixed: "False"', context=None):
 
 
 class RefutationTests(unittest.TestCase):
+    def test_refutation_capability_exposes_scope_without_claiming_a_verdict(self):
+        self.assertTrue(refutation_capability(contract())['can_attempt'])
+        scoped=contract(context=['context begin interpretation Arch .'])
+        result=refutation_capability(scoped)
+        self.assertTrue(result['can_attempt'])
+        self.assertTrue(result['context_export_required'])
+        self.assertEqual(result['reason'],'contextual_target_export')
+        self.assertFalse(refutation_capability(contract('text "not a theorem"'))['can_attempt'])
+        rendered=render_refutation(scoped,'by simp',['Main'],theory_name='Refutation_'+'a'*32,
+                                   audit_path='/audit-output/refutation.xml')
+        self.assertIn('end\n\nregen_refute_exported "fixed" refuted_contract\nby simp',rendered)
+
     def test_native_goal_uses_exact_tail_not_string_negation(self):
         c=contract('lemma q: fixes n :: nat assumes a: "n > 0" shows "n > 1"')
         text=render_refutation(c,'by auto',['Main'],theory_name='Refutation_'+'a'*32,audit_path='/audit-output/refutation.xml')
-        self.assertIn('regen_refute "fixed" refuted_contract: fixes n :: nat assumes a: "n > 0" shows "n > 1"',text)
+        self.assertIn('regen_refute_capture "fixed" refuted_contract: fixes n :: nat assumes a: "n > 0" shows "n > 1"',text)
         self.assertIn('Expression.read_statement elems concl lthy',text)
         self.assertIn('Logic.list_implies (premises, Logic.mk_conjunction_list goals)',text)
         self.assertIn('HOLogic.mk_not (hol_prop closed)',text)
         self.assertNotIn('sorry',text)
 
-    def test_external_context_fails_closed_before_native_work(self):
+    def test_unsupported_declaration_fails_closed_before_native_work(self):
         class Never:
             def imports(self):return ['Main']
             def _check(self,*args,**kw):raise AssertionError('native check must not run')
         with tempfile.TemporaryDirectory() as d:
-            result=check_refutation(Never(),contract(context=['context assumes false: "False" begin']),
+            result=check_refutation(Never(),contract('text "not a theorem"'),
                                     'by simp',Path(d)/'case')
         self.assertEqual(result['status'],'unsupported')
         self.assertIsNone(result['certificate'])
@@ -41,6 +55,7 @@ class RefutationTests(unittest.TestCase):
     def test_untrusted_body_commands_rejected(self):
         for proof in ('sorry','by (tactic \\<open>all_tac\\<close>)',
                       'by simp\nregen_refute "bad" other: "False" by simp',
+                      'by simp\nregen_refute_capture "bad" other: "False"',
                       'by simp\naxiomatization bad :: bool'):
             with self.subTest(proof=proof),self.assertRaises(ValueError):
                 render_refutation(contract(),proof,['Main'],theory_name='Refutation_'+'a'*32,audit_path='/audit-output/refutation.xml')
@@ -56,6 +71,27 @@ class RefutationTests(unittest.TestCase):
             checker=Missing();checker.root=Path(d)
             with self.assertRaisesRegex(ValueError,'lacks refutation audit'):
                 check_refutation(checker,contract(),'by simp',Path(d)/'case')
+
+    def test_native_io_and_response_watchdog_are_infrastructure_not_negative_proof_red(self):
+        class Failed:
+            def imports(self):return ['Main']
+            def _check(self,text,label,**kw):
+                p=self.root/(label+'.thy');p.write_text(text)
+                log=p.with_suffix('.log');log.write_text(self.feedback['diagnostic'])
+                self.original={'source':str(p),'log':str(log),**self.feedback}
+                return self.original
+        cases=[({'verdict':'red','returncode':1,'diagnostic':'exception Io {cause=SysErr("disk full",NONE)}'},'infrastructure_error'),
+               ({'verdict':'red','returncode':124,'timeout_scope':'candidate-watchdog','diagnostic':'No response'},'infrastructure_error'),
+               ({'verdict':'red','returncode':1,'diagnostic':'Failed to apply proof method'},'not_refuted'),
+               ({'verdict':'red','returncode':124,'timeout_scope':'candidate-execution','diagnostic':'Candidate execution timeout'},'not_refuted')]
+        for feedback,status in cases:
+            with self.subTest(feedback=feedback),tempfile.TemporaryDirectory() as d:
+                checker=Failed();checker.root=Path(d);checker.feedback=feedback
+                result=check_refutation(checker,contract(),'by fail',Path(d)/'negative')
+                self.assertEqual(result['status'],status)
+                self.assertIsNone(result['certificate'])
+                self.assertEqual(checker.original['verdict'],'red')
+                self.assertEqual(bool(result.get('framework_blocked')),status=='infrastructure_error')
 
     def test_unsafe_or_wrong_native_audit_rejected(self):
         raw='<contract_refutation version="1" contract_id="fixed"><expected_term>x</expected_term><proved_term>x</proved_term><skip_proof>false</skip_proof><oracles>0</oracles><hypotheses>0</hypotheses><changed_axioms>false</changed_axioms><exact_closed_negation>true</exact_closed_negation><dependencies/></contract_refutation>'
@@ -92,6 +128,77 @@ class NativeRefutationTests(unittest.TestCase):
         if result['status']=='refuted':
             self.assertTrue(validate_refutation_certificate(result['certificate'],contract(statement),self.checker))
         return result
+    def contextual(self,name,statement,context,proof):
+        target=contract(statement,context)
+        result=check_refutation(self.checker,target,proof,self.root/name)
+        if result['status']=='refuted':
+            self.assertTrue(validate_refutation_certificate(result['certificate'],target,self.checker))
+            self.assertEqual(result['certificate']['audit']['context_exported'],'true')
+        elif result['status']=='not_refuted':
+            self.assertIn('REGEN_REFUTATION_TARGET ',Path(result['native_check']['log']).read_text())
+        return result
+
+    def test_outer_assumptions_are_preserved_and_not_available_to_negative_proof(self):
+        cases=[('true', 'lemma fixed: "x = 0"', ['context fixes x :: nat assumes h: "x = 0" begin'], 'not_refuted'),
+               ('false', 'lemma fixed: "False"', ['context fixes x :: nat assumes h: "x = 0" begin'], 'refuted'),
+               ('inconsistent', 'lemma fixed: "False"', ['context assumes impossible: "False" begin'], 'not_refuted'),
+               ('nested', 'lemma fixed: "False"', ['context fixes x :: nat assumes h: "x = 0" begin',
+                                                   'context fixes y :: nat assumes h2: "y = x" begin'], 'refuted')]
+        for name,statement,context,status in cases:
+            with self.subTest(name=name):
+                result=self.contextual(name,statement,context,'by auto')
+                self.assertEqual(result['status'],status,result['diagnostic'])
+
+    def test_locale_assumptions_and_local_definitions_are_exported(self):
+        (self.root/'Toy_Context.thy').write_text('theory Toy_Context imports Main begin\n'
+            'locale tiny = fixes n :: nat assumes zero: "n = 0"\nend\n')
+        self.checker.imports=lambda:['Toy_Context']
+        for name,statement,status in [('locale_true','lemma fixed: "n = 0"','not_refuted'),
+                                      ('locale_false','lemma fixed: "False"','refuted')]:
+            result=self.contextual(name,statement,['context tiny begin'],'by (auto simp: tiny_def)')
+            self.assertEqual(result['status'],status,result['diagnostic'])
+        result=self.contextual('local_definition','lemma fixed: "n = 0"',
+            ['context fixes n :: nat defines n_def: "n \\<equiv> 0" begin'],'by auto')
+        self.assertEqual(result['status'],'not_refuted',result['diagnostic'])
+
+    def test_sorted_context_parameters_keep_their_types(self):
+        result=self.contextual('sorted','lemma fixed: "x \\<noteq> x"',
+            ['context fixes x :: "\'a::order" begin'],'by simp')
+        self.assertEqual(result['status'],'refuted',result['diagnostic'])
+        self.assertIn('Orderings.order',bytes.fromhex(result['certificate']['audit']['closed_target_term']).decode())
+
+    def test_export_scan_covers_false_targets_without_publishing_a_proof(self):
+        targets=[{**contract('lemma fixed: "False"'),'contract_id':'a'},
+                 {**contract('lemma fixed: "False"',
+                             ['context fixes n :: nat assumes h: "n = 0" begin']), 'contract_id':'b'}]
+        result=check_export_scan(self.checker,targets,self.root/'scan')
+        self.assertTrue(result['passed'],result['native_check'].get('diagnostic'))
+        self.assertEqual(set(result['records']),{'a','b'})
+        self.assertEqual(result['benchmark_contracts_proved'],0)
+        self.assertNotEqual(result['records']['a'],result['records']['b'])
+
+    def test_legacy_context_free_certificate_remains_replayable(self):
+        import hashlib
+        from regen.execution.proof_commits import digest
+        from regen.execution.native_check_receipt import checker_binding
+        target=contract();body='by simp';label='Refutation_'+'e'*32
+        audit_path=str(self.root/'legacy.xml')
+        source=render_refutation(target,body,['Main'],theory_name=label,audit_path=audit_path,
+                                 _schema=LEGACY_SCHEMA)
+        native=self.checker._check(source,label)
+        self.assertEqual(native['returncode'],0,native['diagnostic'])
+        xml=Path(audit_path).read_text();log=Path(native['log']).read_text()
+        sha=lambda value:hashlib.sha256(value.encode() if isinstance(value,str) else value).hexdigest()
+        certificate={'schema':LEGACY_SCHEMA,'status':'refuted','contract':contract_binding(target),
+            'contract_sha256':digest(contract_binding(target)),'theory_name':label,'audit_path':audit_path,
+            'imports':['Main'],'checker_binding_sha256':checker_binding(self.checker),
+            'support_sha256':sha(LEGACY_SUPPORT.read_bytes()),'proof_body':body,'source':source,
+            'log':log,'audit_xml':xml,'returncode':0,'native_verdict':'green',
+            'audit':_audit(xml,'fixed',LEGACY_SCHEMA)}
+        for field in ('source','proof_body','log','audit_xml'):
+            certificate[field+'_sha256']=sha(certificate[field])
+        certificate['certificate_id']='refutation:'+digest(certificate)
+        self.assertTrue(validate_refutation_certificate(certificate,target,self.checker))
     def test_false_contract_refutes_and_binds_every_input(self):
         r=self.check('false','lemma fixed: "False"','by simp');self.assertEqual(r['status'],'refuted',r['diagnostic'])
         c=r['certificate']

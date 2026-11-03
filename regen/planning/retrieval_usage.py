@@ -73,6 +73,8 @@ def public_query_binding(binding, state):
         'database_sha256': binding.get('database', {}).get('content_sha256'),
         'database_wal_sha256': binding.get('database_wal', {}).get('content_sha256'),
         'sealed_records_sha256': binding.get('sealed'),
+        **({'generated_discovery':deepcopy(binding['generated_discovery'])}
+           if 'generated_discovery' in binding else {}),
         **({'retrieval_implementation': deepcopy(binding['retrieval_implementation'])}
            if 'retrieval_implementation' in binding else {}),
         'is_proof_authority': False,

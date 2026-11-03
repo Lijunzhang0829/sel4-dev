@@ -33,8 +33,12 @@ class SyntheticNativeChecker:
         path.write_text(source)
         log = path.with_suffix('.log')
         log.write_text('synthetic native transport fixture')
-        xml = ('<contract_refutation version="1" contract_id="'+self.contract_id+'">'
+        version='2' if 'regen_refute_capture' in source else '1'
+        exported=('<closed_target_term>False</closed_target_term><context_exported>true</context_exported>'
+                  if version=='2' else '')
+        xml = ('<contract_refutation version="'+version+'" contract_id="'+self.contract_id+'">'
             '<expected_term>not False</expected_term><proved_term>not False</proved_term>'
+            +exported+
             '<skip_proof>false</skip_proof><oracles>0</oracles><hypotheses>0</hypotheses>'
             '<changed_axioms>false</changed_axioms><exact_closed_negation>true</exact_closed_negation>'
             '<dependencies/></contract_refutation>')
@@ -86,7 +90,7 @@ class TheoryOutcomeContinuationTests(unittest.TestCase):
         return SimpleNamespace(root=root, run=run, theory=theory,
             _state=lambda _: (deepcopy(package), deepcopy(state)))
 
-    def initialize(self, destination, *_args):
+    def initialize(self, destination, *_args, **_kwargs):
         destination.mkdir()
         shutil.copytree(self.source/'packages', destination/'packages')
         shutil.copy2(self.source/'execution-input.json', destination/'execution-input.json')
@@ -173,7 +177,7 @@ class TheoryOutcomeContinuationTests(unittest.TestCase):
 
     def test_source_changed_between_preflight_and_transfer_rejected(self):
         self.unknown('Committed')
-        def initialize(*args):
+        def initialize(*args, **kwargs):
             run = self.initialize(*args)
             self.unknown('Committed')
             return run
