@@ -2336,7 +2336,8 @@ def main() -> int:
                               help="Parallel theory agents with serial per-theory tools and bounded checks")
     parallel.add_argument("--file-planner-interface", choices=["document","graph"], default="document",
                           help="Persistent theory source (default), or legacy explicit proof graph")
-    parallel.add_argument("--max-parallel-theories", type=int, default=2)
+    parallel.add_argument("--max-parallel-theories", type=int, default=1,
+                          help="Active theory agents (default 1 for single-worker comparisons)")
     parallel.add_argument("--native-slots", type=int, default=1)
     parallel.add_argument("--native-cpus", type=float, default=4)
     parallel.add_argument("--native-memory-mb", type=int, default=16384)
@@ -2346,7 +2347,8 @@ def main() -> int:
                           help="Cold provider session build budget; independent of candidate and seal timeouts")
     parallel.add_argument("--build-ml-heap-mb", type=int, default=None,
                           help="Build Poly/ML maximum heap MiB; default 75%% of container RAM, reserving native overhead")
-    parallel.add_argument("--resident-limit", type=int, default=2)
+    parallel.add_argument("--resident-limit", type=int, default=1,
+                          help="Resident native workers (default 1)")
     parallel.add_argument("--execution-policy", type=Path,
                           help="JSON with ordered theory stages and bounded SessionStalled retries")
     parallel.add_argument("--generation-strategy", choices=['baseline','helper-closure-v1','bounded-audited-prefix-v1','sketch-groups-v1','sketch-local-demands-v1','sketch-reviewed-v1','sketch-guided-v1','sketch-phased-v1'], default='sketch-reviewed-v1',

@@ -21,6 +21,31 @@
 6. 共享 batch controller 验证声明索引、上下文、精确源码版本、完整 batch 和提交身份；文档模式不调用局部 DAG 构建/拓扑规划。任务执行器仍持久化请求和结果，但后台线程不再让同一 File Planner 重叠开展其他操作。观察收据在读取时投影为工作记忆，下次证明动作合入非证明 journal 反馈；不伪造证明计数或 GREEN。观察记忆实现命名为 observation_memory；旧 async_observations/async_* 保留作恢复兼容。
 7. 原完整检查、语义/依赖审计和 session build 构成 seal；仅 seal 才解锁硬依赖。最后独立 integration gate 验证全集 exact-once 覆盖、精确渲染源码、实际 imports、seal 证据，并在隔离输出中统一 build。进度中的 `repository_verified` 必须匹配当前 manifest，不能只看局部终态。
 
+## 2026-11-04：正向证明／证伪策略
+
+新建 repository run 默认冻结
+`contract_outcome_policy=contract-dispositions-v1` 和
+`unresolved_evidence_policy=proof-or-refutation-v1`。固定 contract 只有完整正向证明
+或完整负向证书可以终结：普通 RED、单次候选超时、sketch／helper 失败、模型叙述和
+空转都不能产生 UNKNOWN。File Planner 继续使用原生反馈修复；全局预算耗尽时暂停，
+所有未证目标保持 pending。首版不增加逐 contract 计时、超时处置或独立修复 agent。
+
+正向 GREEN 仍须通过绑定声明／上下文／实际 imports 的完整原生检查和审计后提交；
+完整 theory 的 seal 与仓库 integration 独立验证。负向 REFUTED 使用 v2 导出整个
+固定目标后证明其否定，只有原生证书校验成功才能写入当前 contract 的处置记录。
+负向检查失败、超时或 unsupported 后继续 pending。一个 contract 被证伪不能停止
+其他 pending contract，也不产生可用正向事实。部分封存仅允许每个未证 contract
+均有合法负向证书，不能用 UNKNOWN 或遗漏 pending 目标代替；零正向导出仍不代表
+仓库验证成功。
+
+工具提示及帮助按冻结策略提供；新策略不提供 report_unresolved 出口，直接调用也被
+可信发布入口拒绝。该限制同时检查历史记录读取和部分封存证据回放，不能通过低层
+写入或伪造处置绕过。空转 worker 可以暂停并记录尚未解决的目标，但不写 UNKNOWN。
+
+历史缺省策略、`native-attempts-v1` 及已发布的显式 outcome-policy-upgrade 入口
+继续按原规则重放。旧升级入口仍固定升级到 native-attempts-v1；普通 continuation
+继承原策略，不因本次默认值变化静默更换语义。
+
 ## 2026-11-03：逐目标退出与原生尝试证据
 
 ### 上下文证伪与全仓库已封存事实发现
@@ -53,8 +78,9 @@ File Planner 选择新增 import 后仍走已有语义复验和证明重验事�
 新 seal 改变目录快照和 query identity，旧检索记忆不能阻止发现新结果。
 document／imports 接受事件也记录证明范例来源；证明改写、撤销和环境重验更新版本。
 
-新建 repository run 默认绑定 `contract_outcome_policy=contract-dispositions-v1`
-和 `unresolved_evidence_policy=native-attempts-v1`。历史 run 缺少这些字段仍按原策略
+此前新建 repository run 默认绑定 `contract_outcome_policy=contract-dispositions-v1`
+和 `unresolved_evidence_policy=native-attempts-v1`；该默认已被上方 2026-11-04 策略替代。
+历史 run 缺少这些字段仍按原策略
 重放；普通 continuation 显式继承旧值，不能因默认值变化而静默升级或改写原 run。
 
 严格策略下，`report_unresolved` 每次只处理一个未证明的固定 contract。harness
@@ -121,10 +147,12 @@ python3 -m regen.execution.proof_session_runner init \
 
 python3 -m regen.execution.proof_session_runner parallel-workspace \
   --run-dir /path/to/new-run \
-  --max-parallel-theories 2 --native-slots 1 \
-  --native-threads 4 --resident-limit 2 \
+  --max-parallel-theories 1 --native-slots 1 \
+  --native-threads 4 --resident-limit 1 \
   --allow-external-call
 ```
+
+Ours 新运行默认使用一个 File Planner worker、一个 native slot 和一个驻留 checker，以单 worker 进行比较。显式设置 `--max-parallel-theories 2 --resident-limit 2` 仍可开展并发实验；已有冻结运行保留原配置。
 
 模型必须匹配冻结配置，当前配置为 `gpt-6-astra / medium`。`--theory NAME` 可重复指定小范围；只完成子集不会成为全仓验收通过。全部固定目标 seal 后自动运行 integration，也可显式调用 `integrate --run-dir ...` 复验；该入口同样经过任务执行器。
 
@@ -187,3 +215,25 @@ python3 -m regen.execution.proof_session_runner parallel-workspace \
 （11.642s，proved_contracts=0）。证据位于
 `reports/analysis/document-interface-native-20260925/`：python-tests.log、result.json、
 evidence.json、validation-summary.json。没有启动新模型生成实验或迁移旧历史记录。
+
+## Native watchdog 与模型消息收尾恢复（2026-11-04）
+
+工具结果在 `CodexWorkspaceSession` 中分别记录 persisted、sent、server_confirmed。
+确认绑定 thread/turn/callId 及原始响应内容，允许提前、乱序和跨 turn 迟到；缺确认
+仅作协议诊断，不能重复执行工具，也不能据此宣称模型已理解结果。未闭合 commentary
+单独记录，不按消息年龄或无 GREEN 时长判断证明停滞，不补造 `item/completed`。
+
+candidate-response-watchdog 仍是基础设施错误。仅在故障 worker 已关闭、未接受的
+pending 已清除并已移出 checker 后，返回明确的 retryable 反馈；不产生数学 RED、
+GREEN 或 UNKNOWN。下一次显式检查重建已提交 GREEN prefix，草稿和失败历史保留。
+前缀启动、真实 I/O、证据绑定或清理失败仍按基础设施故障处理。致命 native 异常
+通过 `turn/interrupt` 和真实 interrupted 终态完成有界收尾，失败保留原异常和证据。
+
+旧运行恢复使用 `parallel_repair_continuation --native-watchdog-repair`，要求精确的
+watchdog/工具/会话证据及替换实现审查。恢复最新有效提交和原草稿，全部历史费用
+原值继承，不重做规划、不退还或重置预算、不修改旧的时钟不确定性记录。
+
+`regen.tools.native_watchdog_repair_smoke` 用合成 HOL 目标及真实 Isabelle 验证
+已验收前缀 → 注入响应 watchdog → 反馈返回且无新 GREEN → 新 worker 重检 → seal。
+注入仅改变一次测试 worker 的延迟及宿主等待期限；没有模型调用、没有 benchmark
+目标或人工目标证明输入。完整输出保存在本轮恢复实验的 validation 目录。

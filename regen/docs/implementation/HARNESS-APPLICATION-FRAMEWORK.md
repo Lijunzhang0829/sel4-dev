@@ -257,7 +257,8 @@ contract 间隔的建议口径（尚未替换现有墙钟 watchdog）：
 
 ### 调度和资源
 
-`max_parallel_theories=2` 表示最多两个活跃 theory agent，不是每次必须凑齐两个。
+Ours 新运行默认 `max_parallel_theories=1`、`native_slots=1`、`resident_limit=1`，用于单 worker 比较。
+显式设置 `max_parallel_theories=2`、`resident_limit=2` 时，最多两个活跃 theory agent，不要求每次凑齐两个。
 A 结束而 B 尚在运行时，只要 C 的硬依赖已 seal 且当前阶段允许，就立即用空槽启动 C。
 `FIRST_COMPLETED` 驱动补位；用户显式指定的阶段政策可以要求等待一组完成，这与 worker
 数量无关。仅有一个就绪 theory、资源排队或阶段限制时，并行度不足不自动代表 bug。

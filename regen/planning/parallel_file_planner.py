@@ -1738,8 +1738,8 @@ def _attach_budget_pause(error, budget, active=()):
         'repository_verified':False, 'resume_requires_authorization':True}
 
 
-def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=2, native_slots=1,
-                           native_threads=4, resident_limit=2, model=None, call_timeout=600,
+def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=1, native_slots=1,
+                           native_threads=4, resident_limit=1, model=None, call_timeout=600,
                            check_timeout=900, candidate_timeout=300, allow_external_call=False,
                            codex_home=None, integrate=True, file_planner_interface='document',
                            execution_policy=None, native_cpus=4, native_memory_mb=16384,
