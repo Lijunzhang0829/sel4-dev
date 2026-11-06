@@ -23,6 +23,7 @@ from regen.execution.check_tasks import TERMINAL, CheckCancelled, check_cancelle
 from regen.execution.proof_commits import digest, durable
 from regen.execution.checker_policy import exports_available, theory_finished, proof_or_refutation_enabled
 from regen.infrastructure.codex_runtime import CodexRuntimeError, runtime_verified_settings
+from regen.infrastructure.private_auth_home import clean_codex_home
 from regen.infrastructure.progress_events import event_scope, emit_event, generation_exclusion, observe_events
 from regen.infrastructure.generation_monitor import GenerationMonitor
 from regen.planning.proof_workspace_agent import WorkspaceController, workspace_tools, _tool
@@ -1353,11 +1354,9 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
             resumed_wait = claim_ready_wait(controller,theory) if waiting else None
             # Do not install a retained UNKNOWN into the fresh controller on an
             # authorized retry: doing so would latch its mathematical tool gate.
-            with tempfile.TemporaryDirectory(prefix='regen-theory-auth-') as temp:
-                home = Path(temp)
-                auth = Path(codex_home or os.environ.get('CODEX_HOME',Path.home()/'.codex'))/'auth.json'
-                if auth.is_file():
-                    shutil.copyfile(auth,home/'auth.json'); (home/'auth.json').chmod(0o600)
+            with clean_codex_home(codex_home, prefix='regen-theory-auth-',
+                                 forbidden_roots=(root, directory)) as auth_home:
+                home = auth_home.home
                 formats = FORMATS.replace('Return one JSON action per call. No shell, arbitrary files or external tools.',
                     'Use the action formats below inside the approved tools; no shell or external tools.')
                 formats = formats.split('{"action":"pause"',1)[0]
@@ -1408,6 +1407,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                                http_retry_mode=http_retry_mode,
                                                feedback_retry_mode=feedback_retry_mode,
                                                retry_failed_request_id=retry_failed_request_id) as session:
+                        auth_home.require_stopped(lambda: session._closed is True)
                         next_prompt = prompt
                         no_progress_turns = 0
                         idle_targets = set()

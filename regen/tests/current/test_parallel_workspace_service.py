@@ -117,7 +117,9 @@ class ParallelWorkspaceServiceTests(unittest.TestCase):
                            '--property=KillSignal=SIGTERM', '--property=SendSIGKILL=yes',
                            '--property=TimeoutStopSec=7', '--property=StandardInput=null',
                            '--property=UMask=0077', '--setenv=REGEN_CODEX_BIN=/test/codex',
-                           '--setenv=REGEN_MODEL_CONFIG=/test/models.json'):
+                           '--setenv=REGEN_MODEL_CONFIG=/test/models.json',
+                           '--setenv=REGEN_PERSIST_PRIVATE_AUTH=1',
+                           '--setenv=TMPDIR=/test/private-tmp'):
                 self.assertIn(option, command)
             self.assertIn('--property=StandardOutput=append:'+str(self.root/'service-runner.log'), command)
             self.assertIn('--property=StandardError=append:'+str(self.root/'service-runner.log'), command)
@@ -130,6 +132,8 @@ class ParallelWorkspaceServiceTests(unittest.TestCase):
              patch.object(service.subprocess, 'run', side_effect=launched) as launch, \
              patch.dict(service.os.environ, {'REGEN_CODEX_BIN':'/test/codex',
                                             'REGEN_MODEL_CONFIG':'/test/models.json',
+                                            'REGEN_PERSIST_PRIVATE_AUTH':'1',
+                                            'TMPDIR':'/test/private-tmp',
                                             'REGEN_TEST_SECRET':'test-secret-sentinel'}, clear=True):
             result = service.start(self.root, stop_timeout=7)
         launch.assert_called_once()

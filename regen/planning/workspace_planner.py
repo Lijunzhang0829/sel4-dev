@@ -21,6 +21,7 @@ from regen.planning.import_contract import prompt_v5, prompt_v6
 from regen.planning.planning_freeze import code_files
 from regen.infrastructure.audited_llm import model_settings
 from regen.infrastructure.model_isolation import ModelIsolation
+from regen.infrastructure.private_auth_home import clean_codex_home
 from regen.preparation.refine_campaign import write_immutable_json
 
 
@@ -139,22 +140,23 @@ def call_worker(settings, policy, output, public, workspace, api, text, number):
     if artifact('.meta.json').exists(): raise ValueError('Never overwrite a model call.')
     artifact('.prompt.txt').write_text(text)
     (workspace/'final.txt').unlink(missing_ok=True)
-    auth=Path(os.environ.get('CODEX_HOME',str(Path.home()/'.codex')))/'auth.json'
-    if not auth.is_file(): raise ValueError('Codex authentication unavailable.')
     started=datetime.now(timezone.utc).isoformat(); t0=time.monotonic()
     meta={'state':'running','provider':'codex-workspace-audited','scope':'repository-planning-only',
           'model':policy['model']['model'],'reasoning_effort':policy['model'].get('reasoning_effort','medium'),
           'started_at':started,'prompt_sha256':hashlib.sha256(text.encode()).hexdigest(),
           'external_isolation':'model-os-isolation-v1','timed_out':False}
     save(artifact('.meta.json'),meta)
-    with tempfile.TemporaryDirectory(prefix='regen-planner-private-') as private:
-        home=Path(private)/'home';home.mkdir(mode=0o700)
-        shutil.copyfile(auth,home/'auth.json'); (home/'auth.json').chmod(0o600)
+    with clean_codex_home(prefix='regen-planner-private-', require_auth=True,
+                          forbidden_roots=(output, public, workspace, api)) as auth_home:
+        private=str(auth_home.base);home=auth_home.home
         config=settings['model_isolation']
         isolation=ModelIsolation(base=private,client=settings['codex_bin'],cwd=workspace,
             home=home,image=policy.get('worker_image',config['image']),proxy=config.get('transport_proxy'))
         process=None
         guard=None
+        isolation_closed=False
+        auth_home.require_stopped(lambda: isolation_closed
+            and (process is None or process.poll() is not None))
         try:
             from regen.planning.planner_owner_guard import owner_identity
             with artifact('.owner.log').open('w') as guard_log:
@@ -180,7 +182,9 @@ def call_worker(settings, policy, output, public, workspace, api, text, number):
                 except subprocess.TimeoutExpired:
                     process.kill(); process.wait(); code=124; meta['timed_out']=True
         finally:
-            try:isolation.close()
+            try:
+                isolation.close()
+                isolation_closed=True
             finally:
                 try:
                     if process is not None and process.poll() is None:
