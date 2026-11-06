@@ -146,6 +146,13 @@ def _attempt(controller, package, state, directory, imports, nodes, proofs, targ
 
 
 def eligibility_view(controller, entry_id=None):
+    from regen.execution.checker_policy import proof_or_refutation_enabled, PROOF_OR_REFUTATION_POLICY
+    if proof_or_refutation_enabled(controller.run):
+        return {'policy':PROOF_OR_REFUTATION_POLICY, 'entry_id':entry_id,
+                'eligible':False, 'reason':'unknown_disabled',
+                'notice':'Only complete positive or negative proofs terminate fixed contracts. '
+                         'Continue repair using native feedback; a check timeout keeps the '
+                         'target pending. Global budget exhaustion pauses the experiment.'}
     enabled = strict_policy_enabled(controller.run)
     package, state = controller._state(controller.theory)
     fixed = {c['contract_id'] for c in package['contracts']}

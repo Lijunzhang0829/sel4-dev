@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from regen.execution import repository_execution as execution
 from regen.execution.checker_policy import (
-    CONTRACT_OUTCOME_POLICY, NATIVE_ATTEMPTS_POLICY, contract_policy_binding,
+    CONTRACT_OUTCOME_POLICY, NATIVE_ATTEMPTS_POLICY, PROOF_OR_REFUTATION_POLICY, contract_policy_binding,
     continuation_outcome_arguments, new_outcome_policy_binding,
     validate_outcome_upgrade_readiness,
 )
@@ -32,7 +32,7 @@ class OutcomePolicyInitializationTest(unittest.TestCase):
     def test_fresh_repository_defaults_are_frozen_in_run_and_commit_binding(self):
         run = self.initialize()
         self.assertEqual(run['contract_outcome_policy'],CONTRACT_OUTCOME_POLICY)
-        self.assertEqual(run['unresolved_evidence_policy'],NATIVE_ATTEMPTS_POLICY)
+        self.assertEqual(run['unresolved_evidence_policy'],PROOF_OR_REFUTATION_POLICY)
         self.assertEqual(contract_policy_binding(run),new_outcome_policy_binding())
         self.assertIn('regen/planning/unresolved_evidence.py',run['implementation'])
 
@@ -46,6 +46,16 @@ class OutcomePolicyInitializationTest(unittest.TestCase):
         old = {'contract_outcome_policy':CONTRACT_OUTCOME_POLICY}
         self.assertEqual(new_outcome_policy_binding(**continuation_outcome_arguments(old)),old)
         self.assertEqual(new_outcome_policy_binding(**continuation_outcome_arguments({})),{})
+
+    def test_existing_native_attempts_policy_and_new_policy_remain_explicit_on_continuation(self):
+        for policy in (NATIVE_ATTEMPTS_POLICY, PROOF_OR_REFUTATION_POLICY):
+            frozen = {'contract_outcome_policy':CONTRACT_OUTCOME_POLICY,
+                      'unresolved_evidence_policy':policy}
+            self.assertEqual(new_outcome_policy_binding(**continuation_outcome_arguments(frozen)),frozen)
+
+    def test_new_policy_cannot_be_enabled_without_contract_isolation(self):
+        with self.assertRaisesRegex(ValueError, 'requires contract-dispositions'):
+            new_outcome_policy_binding(None, PROOF_OR_REFUTATION_POLICY)
 
     def test_strict_evidence_cannot_be_enabled_for_legacy_theory_policy(self):
         with self.assertRaisesRegex(ValueError,'requires contract-dispositions'):

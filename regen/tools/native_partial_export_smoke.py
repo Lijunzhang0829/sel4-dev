@@ -18,6 +18,7 @@ from types import SimpleNamespace
 
 from regen.execution.check_executor import CheckExecutor, CURRENT_RESOURCES, NativeResources
 from regen.execution.contract_refutation import check_refutation
+from regen.execution.checker_policy import PROOF_OR_REFUTATION_POLICY
 from regen.execution.isabelle_node_checker import IsabelleChecker
 from regen.execution.proof_commits import digest
 from regen.execution.proof_session_runner import generated_checkpoint_theory
@@ -25,7 +26,7 @@ from regen.execution.seal_evidence import validate_seal
 from regen.infrastructure.resource_budget import clone_heaps
 from regen.planning.batch_file_planner import seal_theory
 from regen.planning.proof_graph import build_graph
-from regen.planning.theory_outcomes import _publish, current_dispositions
+from regen.planning.theory_outcomes import _publish, current_dispositions, record_unresolved
 from regen.preparation.checker_context import load_context
 
 
@@ -65,6 +66,7 @@ def run(dataset, output):
               "cases": []}
     checkers = []
     runtime = {"run_id": output.name + "-synthetic", "contract_outcome_policy": "contract-dispositions-v1",
+               "unresolved_evidence_policy": PROOF_OR_REFUTATION_POLICY,
                "premise_snapshot": str(ctx["premise_audit_context_path"]),
                "base_session": ctx["base_session"], "base_import": ctx["base_import"]}
     save(output / "runtime.json", runtime)
@@ -172,7 +174,27 @@ def run(dataset, output):
             contract("smoke_b", "(0::nat) = 1"), contract("smoke_c", "(2::nat) = 2")])
         state = fixture_state(pkg, {"smoke_a": "by simp", "smoke_c": "by simp"}, runtime["run_id"])
         c = checker("provider")
+        controller = SimpleNamespace(root=output, run=runtime, theory=pkg['theory'],
+            _state=lambda _: (pkg, state))
+        try:
+            record_unresolved(controller, reason='Synthetic ordinary failure', origin='model',
+                              entry_ids=['smoke_b'])
+        except ValueError as error:
+            record('ordinary_failure_cannot_publish_unknown', 'disables report_unresolved' in str(error))
+        else:
+            record('ordinary_failure_cannot_publish_unknown', False)
         outcomes = refute_and_dispose("provider", c, pkg, state, "smoke_b")
+        from regen.execution.partial_theory_export import build_export_scope
+        pending = deepcopy(state)
+        pending['proofs'].pop('smoke_c')
+        pending['accepted_order'].remove('smoke_c')
+        try:
+            build_export_scope(pkg, pending, outcomes, runtime=runtime)
+        except ValueError as error:
+            record('refuted_sibling_cannot_omit_pending_contract',
+                   'every unproved fixed contract' in str(error))
+        else:
+            record('refuted_sibling_cannot_omit_pending_contract', False)
         sealed, evidence = seal("provider", c, pkg, state, outcomes)
         source = evidence["source_text"]
         record("positive_source_excludes_refuted_fact", "lemma smoke_b" not in source and

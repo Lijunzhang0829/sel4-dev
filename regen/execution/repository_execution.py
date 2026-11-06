@@ -8,7 +8,7 @@ from regen.execution.checker_policy import (
     ISOLATED_CONTEXT, validate_complete_context_policy, resolve_complete_context_policy, policy_binding,
     contract_policy_binding, exports_available, theory_finished,
     CONTRACT_OUTCOME_POLICY, DEFAULT_OUTCOME_POLICY, new_outcome_policy_binding,
-    continuation_outcome_arguments,
+    continuation_outcome_arguments, outcome_upgrade_policy_binding,
 )
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -96,7 +96,7 @@ def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=I
         if (not isinstance(outcome_policy_upgrade, dict)
                 or set(outcome_policy_upgrade) != {'authorization','source_run','source_run_sha256','source_tail_event_id'}
                 or any(not isinstance(v,str) or not v.strip() for v in outcome_policy_upgrade.values())
-                or outcome_policy != new_outcome_policy_binding()):
+                or outcome_policy != outcome_upgrade_policy_binding()):
             raise ValueError('invalid explicit outcome policy upgrade binding')
     from regen.infrastructure.incremental_log import enable, policy_arguments
     logging = policy_arguments({'log_storage':log_storage})
@@ -1137,7 +1137,7 @@ def validate_continuation(package, runtime, state, origin, *, sealed_reuse=False
         upgrade = runtime.get('outcome_policy_upgrade')
         if (not isinstance(upgrade,dict) or not upgrade.get('authorization')
                 or upgrade.get('source_run_sha256') != digest(origin['run'])
-                or contract_policy_binding(runtime) != new_outcome_policy_binding()
+                or contract_policy_binding(runtime) != outcome_upgrade_policy_binding()
                 or origin['run'].get('unresolved_evidence_policy') is not None
                 or any(r['state'].get('contract_dispositions')
                        or r['state'].get('status') == 'exported_partial' for r in origin['commits'])):
@@ -1549,7 +1549,7 @@ def _fork_workspace_continuation(source_dir, destination, *, checkpoint=None, ru
             if not set(descriptor['effective_imports']) <= available:
                 raise ValueError('checkpoint excludes a frozen dependency')
     outcome_arguments = (continuation_outcome_arguments(source) if outcome_policy_upgrade is None else
-                         {**new_outcome_policy_binding(), 'outcome_policy_upgrade':outcome_policy_upgrade})
+                         {**outcome_upgrade_policy_binding(), 'outcome_policy_upgrade':outcome_policy_upgrade})
     run = init_run(destination, Path(source.get('checker_context_root') or source['environment_run']),
                    selected_run_id, Path(source['session_schedule']['source']), **policy_binding(source),
                    **outcome_arguments,

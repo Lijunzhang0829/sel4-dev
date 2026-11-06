@@ -40,7 +40,7 @@ def _disposition_receipt(row, directory):
 
 
 def validate_dispositions(package, state, dispositions, *, expected_imports=None,
-                          expected_binding=None):
+                          expected_binding=None, runtime=None):
     """Validate trusted-produced, self-contained per-contract receipts.
 
     Receipt hashes bind bytes; they do not authenticate model-authored JSON.
@@ -48,6 +48,8 @@ def validate_dispositions(package, state, dispositions, *, expected_imports=None
     Neither unknown nor a checked negation is an available positive premise.
     """
     from regen.execution.contract_refutation import contract_binding, validate_refutation_certificate
+    from regen.execution.checker_policy import proof_or_refutation_enabled
+    proof_only = proof_or_refutation_enabled(runtime or {})
     if not isinstance(dispositions, dict):
         raise ValueError('contract dispositions must be a mapping')
     contracts = {c['contract_id']:c for c in package['contracts']}
@@ -59,6 +61,9 @@ def validate_dispositions(package, state, dispositions, *, expected_imports=None
     for key, outcome in dispositions.items():
         if not isinstance(outcome, dict):
             raise ValueError('invalid contract disposition')
+        if proof_only and outcome.get('status') == 'unknown':
+            raise ValueError('proof-or-refutation-v1 forbids UNKNOWN dispositions; '
+                             'unproved contracts must remain pending')
         if (outcome.get('schema') != DISPOSITION_SCHEMA or outcome.get('policy') != CONTRACT_POLICY
                 or outcome.get('scope') != 'contract' or outcome.get('status') not in {'unknown', 'refuted'}
                 or outcome.get('positive_proofs_added') != 0 or outcome.get('theory_sealed') is not False
@@ -142,7 +147,7 @@ def _saved_dispositions(controller, theory, *, historical_context=False):
                 del outcomes[key]
     # This reader is also used against historical states during journal replay.
     # A later negative receipt must not rewrite those earlier context bindings.
-    validate_dispositions(package, state, outcomes, expected_binding=binding)
+    validate_dispositions(package, state, outcomes, expected_binding=binding, runtime=controller.run)
     return outcomes
 
 
@@ -156,7 +161,8 @@ def current_dispositions(controller, theory=None):
     if 'context_revision' in state:
         from regen.execution.import_revisions import native_imports
         validate_dispositions(package, state, saved,
-                              expected_imports=native_imports(controller.run, state['context_imports']))
+                              expected_imports=native_imports(controller.run, state['context_imports']),
+                              runtime=controller.run)
     if state.get('status') not in {'sealed', 'retired', 'exported_partial'}:
         while _recover_completed_refutation(controller, theory) is not None:
             saved = _saved_dispositions(controller, theory)
@@ -174,6 +180,10 @@ def pending_contract_ids(controller, theory=None):
 def _publish_disposition(controller, *, status, reason, origin, details, entry_ids,
                          classification=None, metadata=None, theory=None):
     from regen.execution.contract_refutation import contract_binding
+    from regen.execution.checker_policy import proof_or_refutation_enabled
+    if status == 'unknown' and proof_or_refutation_enabled(controller.run):
+        raise ValueError('proof-or-refutation-v1 forbids UNKNOWN dispositions; '
+                         'unproved contracts must remain pending')
     theory = theory or controller.theory
     package, state, binding = _snapshot(controller, theory)
     if state.get('status') in {'sealed', 'retired', 'exported_partial'}:
@@ -204,7 +214,8 @@ def _publish_disposition(controller, *, status, reason, origin, details, entry_i
              'time_unix':0, 'kind':'contract_disposition', 'data':outcome}
     probe['event_id'] = digest(probe)
     probed = {**outcome, 'receipt':_disposition_receipt(probe, directory)}
-    validate_dispositions(package, state, {key:probed for key in ids}, expected_binding=binding)
+    validate_dispositions(package, state, {key:probed for key in ids}, expected_binding=binding,
+                          runtime=controller.run)
     from regen.execution.check_tasks import CURRENT_TASK
     token = CURRENT_TASK.get() if status == 'refuted' else None
     sequence = len(ledger.rows)+1
@@ -305,6 +316,12 @@ def _ledger_path(controller, theory):
 
 def record_unresolved(controller, *, reason, origin, details=None, entry_ids=None,
                       classification='proof_search_exhausted', metadata=None):
+    from regen.execution.checker_policy import proof_or_refutation_enabled
+    if proof_or_refutation_enabled(controller.run):
+        raise ValueError('proof-or-refutation-v1 disables report_unresolved and UNKNOWN: '
+                         'continue repairing the fixed contract using native feedback, '
+                         'or work on another pending contract. Budget exhaustion pauses '
+                         'the experiment and preserves pending goals. No disposition was recorded.')
     if not isinstance(reason, str) or not reason.strip():
         raise ValueError('an unresolved report requires a nonempty reason')
     if origin not in {'model', 'controller'} or classification not in CLASSIFICATIONS:
@@ -516,7 +533,7 @@ def _check_refutation(controller, proposal, metadata):
                           audit_path='/audit-output/refutation.xml')
     except UnsupportedRefutation as error:
         return {'status':'unsupported', 'diagnostic':str(error), 'certificate':None,
-                'theory_stop':False, 'notice':'Report unresolved if this scope cannot be checked.'}
+                'theory_stop':False, 'notice':_failed_refutation_notice(controller.run)}
     identity = {key: metadata.get(key) for key in ('thread_id', 'turn_id', 'call_id')}
     if not all(isinstance(v, str) and v for v in identity.values()):
         raise ValueError('refutation requires an audited tool call identity')
@@ -580,7 +597,7 @@ def _check_refutation(controller, proposal, metadata):
         if _snapshot(controller)[2] != result.get('checked_binding', binding):
             raise ValueError('refutation context changed during native check')
         return {**result, 'task_id': task_id, 'theory_stop': False,
-                'notice': 'No refutation accepted. Revise the negative proof or report_unresolved; positive goals are unchanged.'}
+                'notice':_failed_refutation_notice(controller.run)}
     outcome = (current_dispositions(controller).get(ids[0]) if contract_mode
                else current_outcome(controller))
     if outcome is None or outcome['status'] != 'refuted':
@@ -589,6 +606,16 @@ def _check_refutation(controller, proposal, metadata):
         return {**_disposition_feedback(controller, outcome), 'task_id':task_id}
     return {'status': 'refuted', 'theory_outcome': outcome, 'theory_stop': True,
             'task_id': task_id, 'notice': 'Refutation is separate from positive proofs; this theory remains unsealed.'}
+
+
+def _failed_refutation_notice(run):
+    from regen.execution.checker_policy import proof_or_refutation_enabled
+    if proof_or_refutation_enabled(run):
+        return ('No refutation accepted. The fixed contract remains pending. '
+                'Repair the negative proof or continue positive proof generation '
+                'using native feedback; a failed or unsupported check cannot stop the target.')
+    return ('No refutation accepted. Revise the negative proof or report_unresolved; '
+            'positive goals are unchanged.')
 
 
 def _disposition_feedback(controller, outcome, *, retained=False):

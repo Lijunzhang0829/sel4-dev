@@ -8,6 +8,7 @@ ARCH_REUSE_CONTEXT = 'arch-reuse-v1'
 COMPLETE_CONTEXT_POLICIES = (ISOLATED_CONTEXT, ARCH_REUSE_CONTEXT)
 CONTRACT_OUTCOME_POLICY = 'contract-dispositions-v1'
 NATIVE_ATTEMPTS_POLICY = 'native-attempts-v1'
+PROOF_OR_REFUTATION_POLICY = 'proof-or-refutation-v1'
 # An omitted option may follow a new-run default; explicit None always means
 # the legacy policy. Never use this sentinel when replaying a frozen run.
 DEFAULT_OUTCOME_POLICY = object()
@@ -42,11 +43,16 @@ def contract_policy_binding(run):
 def validate_unresolved_evidence_policy(run):
     """Missing evidence policy retains legacy reports, including old contract runs."""
     value = run.get('unresolved_evidence_policy')
-    if value not in (None, NATIVE_ATTEMPTS_POLICY):
+    if value not in (None, NATIVE_ATTEMPTS_POLICY, PROOF_OR_REFUTATION_POLICY):
         raise ValueError('unsupported unresolved evidence policy: '+repr(value))
     if value is not None and run.get('contract_outcome_policy') != CONTRACT_OUTCOME_POLICY:
-        raise ValueError('native-attempts-v1 requires contract-dispositions-v1')
+        raise ValueError(str(value)+' requires contract-dispositions-v1')
     return value
+
+
+def proof_or_refutation_enabled(run):
+    """Only complete positive/negative proofs terminate goals in this policy."""
+    return validate_unresolved_evidence_policy(run) == PROOF_OR_REFUTATION_POLICY
 
 
 def new_outcome_policy_binding(contract_outcome_policy=CONTRACT_OUTCOME_POLICY,
@@ -55,10 +61,18 @@ def new_outcome_policy_binding(contract_outcome_policy=CONTRACT_OUTCOME_POLICY,
     if contract_outcome_policy is DEFAULT_OUTCOME_POLICY:
         contract_outcome_policy = CONTRACT_OUTCOME_POLICY
     if unresolved_evidence_policy is DEFAULT_OUTCOME_POLICY:
-        unresolved_evidence_policy = (NATIVE_ATTEMPTS_POLICY
+        unresolved_evidence_policy = (PROOF_OR_REFUTATION_POLICY
                                      if contract_outcome_policy == CONTRACT_OUTCOME_POLICY else None)
     return contract_policy_binding({'contract_outcome_policy':contract_outcome_policy,
                                     'unresolved_evidence_policy':unresolved_evidence_policy})
+
+
+def outcome_upgrade_policy_binding():
+    """Pin the already released explicit migration to its original target.
+
+    Fresh-run defaults may evolve without changing old upgrade receipts.
+    """
+    return new_outcome_policy_binding(CONTRACT_OUTCOME_POLICY, NATIVE_ATTEMPTS_POLICY)
 
 
 def continuation_outcome_arguments(source):

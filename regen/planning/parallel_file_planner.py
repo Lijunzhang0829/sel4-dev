@@ -21,7 +21,7 @@ from uuid import uuid4
 from regen.execution.check_executor import CheckExecutor, NativeResources, CURRENT_RESOURCES
 from regen.execution.check_tasks import TERMINAL, CheckCancelled, check_cancelled
 from regen.execution.proof_commits import digest, durable
-from regen.execution.checker_policy import exports_available, theory_finished
+from regen.execution.checker_policy import exports_available, theory_finished, proof_or_refutation_enabled
 from regen.infrastructure.codex_runtime import CodexRuntimeError, runtime_verified_settings
 from regen.infrastructure.progress_events import event_scope, emit_event, generation_exclusion, observe_events
 from regen.infrastructure.generation_monitor import GenerationMonitor
@@ -368,6 +368,17 @@ def _progress_marker(controller, state):
 
 def _continuation_prompt(theory, state, *, contract_view=None):
     if contract_view is not None:
+        if proof_or_refutation_enabled(contract_view):
+            return (f'Continue the assigned theory {theory} in the same workspace. '
+                    'Ordinary proof failures and candidate timeouts leave targets pending. '
+                    'Read the latest native failure, repair the proof, retrieve legal facts '
+                    'or revise a helper route; you may also attempt another pending contract. '
+                    'Only complete checked positive or negative proofs establish outcomes. '
+                    'If no pending contracts remain, finish to publish checked positive facts. '
+                    'Preserve refuted declarations as oops; they provide no positive premise. '
+                    'A final message is not completion. Existing budgets, drafts, proofs and '
+                    'failure history are unchanged. Current target view:\n'
+                    +json.dumps(contract_view, ensure_ascii=False))
         return (f'Continue the assigned theory {theory}. Contract dispositions stop only their '
                 'own goals and supply no positive facts. Leave these goals as oops, preserve '
                 'their fixed declarations, and attempt another pending contract. If no pending '
@@ -627,6 +638,12 @@ class TheoryController(WorkspaceController):
         with self._tool_lock:
             self._check_session_active()
             if mathematical:
+                if (proof_or_refutation_enabled(self.run)
+                        and arguments.get('proposal', {}).get('action') == 'report_unresolved'):
+                    raise ValueError('proof-or-refutation-v1 disables report_unresolved: '
+                        'ordinary proof failures and candidate timeouts leave the contract pending; '
+                        'repair from feedback or continue another target. Budget exhaustion pauses '
+                        'the experiment without recording UNKNOWN.')
                 self._guard_disposed_write(arguments.get('proposal'))
                 if arguments.get('proposal',{}).get('action') in {'finish','report_unresolved'}:
                     from regen.planning.review_handoff import require_review_decisions
@@ -760,7 +777,7 @@ class TheoryController(WorkspaceController):
             return handle_outcome(self, arguments['proposal'], metadata)
         if self.document_mode and name=='proof_tool_help':
             from regen.planning.document_interface import tool_contracts
-            return tool_contracts(**arguments)
+            return tool_contracts(run=getattr(self, 'run', None), **arguments)
         if self.document_mode and name=='read_theory' and arguments.get('theory')==self.theory:
             store,state = self._document()
             from regen.planning.batch_file_planner import planner_input
@@ -827,7 +844,7 @@ class TheoryController(WorkspaceController):
                 if advice:
                     result['planning_advice'] = advice
                 from regen.planning.unresolved_evidence import strict_policy_enabled, eligibility_view
-                if strict_policy_enabled(self.run):
+                if strict_policy_enabled(self.run) or proof_or_refutation_enabled(self.run):
                     result['unresolved_eligibility'] = eligibility_view(self, proposal['entry_id'])
                 if contract_dispositions_enabled(self.run):
                     result['contract_disposition'] = _contract_view(self)['contract_dispositions'].get(proposal['entry_id'])
@@ -1280,6 +1297,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
         contract_mode = contract_dispositions_enabled(controller.run)
         from regen.planning.unresolved_evidence import strict_policy_enabled, INSTRUCTIONS as EVIDENCE_INSTRUCTIONS
         evidence_mode = strict_policy_enabled(controller.run)
+        proof_only_mode = proof_or_refutation_enabled(controller.run)
+        from regen.planning.document_interface import PROOF_OR_REFUTATION_INSTRUCTIONS
         if contract_mode and not document_mode:
             raise ValueError('contract-dispositions-v1 requires the document File Planner interface')
         if contract_mode and retry_unresolved:
@@ -1344,10 +1363,24 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                 formats = formats.split('{"action":"pause"',1)[0]
                 if document_mode:
                     from regen.planning.document_interface import observation_instructions
-                    formats = observation_instructions()
+                    formats = observation_instructions(run=controller.run)
                 workspace_view = controller.handle('list_workspace',{'assigned_only':True} if document_mode else {}, {})
-                prompt = (DOCUMENT_INSTRUCTIONS if document_mode else INSTRUCTIONS)+strategy['instructions']+'\n'+formats+'\nASSIGNED THEORY: '+theory+'\n'+json.dumps(workspace_view,ensure_ascii=False)
-                if contract_mode:
+                instructions = DOCUMENT_INSTRUCTIONS if document_mode else INSTRUCTIONS
+                if proof_only_mode:
+                    instructions = instructions.replace(
+                        'or unresolved under the current search. Use report_unresolved for a precise unresolved\n'
+                        'issue, or check_refutation for an independently checked negative result. Neither seals\n'
+                        'the theory or makes its unfinished contracts available as premises.',
+                        'or remain unresolved under the current search. Keep unresolved targets pending and\n'
+                        'continue repairing from feedback. Use check_refutation only for an independently\n'
+                        'checked negation of the fixed goal; it supplies no positive premise.').replace(
+                        'Before finish or report_unresolved,', 'Before finish,').replace(
+                        'Do not report_unresolved\nmerely to wait for an unsealed provider.',
+                        'Keep the contract pending\nwhile waiting for an unsealed provider.')
+                prompt = instructions+strategy['instructions']+'\n'+formats+'\nASSIGNED THEORY: '+theory+'\n'+json.dumps(workspace_view,ensure_ascii=False)
+                if proof_only_mode:
+                    prompt += '\n'+PROOF_OR_REFUTATION_INSTRUCTIONS+'\n'
+                elif contract_mode:
                     prompt += ('\nCONTRACT DISPOSITION POLICY: contract-dispositions-v1. '
                         'report_unresolved requires explicit entry_ids and stops only those fixed contracts. '
                         'check_refutation stops only its checked entry_id. Continue other pending goals; '
@@ -1437,10 +1470,11 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                         emit_event('contract_exports_unpublished', theory=theory,
                                                    reason='no_progress_with_no_pending_contracts')
                                         break
-                                    if evidence_mode:
+                                    if evidence_mode or proof_only_mode:
                                         other = next((key for key in pending if key not in idle_targets), None)
                                         if other is None:
-                                            session_stop_reason = 'planner_idle_without_outcome_evidence'
+                                            session_stop_reason = ('planner_idle_with_pending_contracts'
+                                                if proof_only_mode else 'planner_idle_without_outcome_evidence')
                                             emit_event('planner_idle', theory=theory,
                                                 reason=session_stop_reason, pending_contract_ids=pending,
                                                 completed_turns=no_progress_turns,
@@ -1454,7 +1488,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                             'Try this still-pending contract next: '+other+'. '
                                             'Read its entry and latest failure evidence, revise a candidate '
                                             'or perform a native check. Idle replies do not justify UNKNOWN. '
-                                            +EVIDENCE_INSTRUCTIONS)
+                                            +(PROOF_OR_REFUTATION_INSTRUCTIONS if proof_only_mode
+                                              else EVIDENCE_INSTRUCTIONS))
                                         emit_event('planner_idle_target_selected', theory=theory,
                                             entry_id=other, pending_contract_ids=pending)
                                         continue

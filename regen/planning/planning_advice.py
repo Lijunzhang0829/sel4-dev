@@ -94,7 +94,8 @@ def _dispositions(controller, package, state):
             from regen.execution.import_revisions import native_imports
             from regen.planning.theory_outcomes import validate_dispositions
             validate_dispositions(package, state, saved,
-                expected_imports=native_imports(controller.run, state['context_imports']))
+                expected_imports=native_imports(controller.run, state['context_imports']),
+                runtime=controller.run)
         return saved
     outcome = _saved_outcome(reader, package['theory'])
     return {key: outcome for key in outcome['entry_ids']} if outcome else {}

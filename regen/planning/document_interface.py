@@ -22,6 +22,22 @@ PUBLIC_NAMES = {
 INTERNAL_NAMES = {public:old for old,public in PUBLIC_NAMES.items() if old!='failed_declaration_id'}
 ID_MAPS = {'proofs', 'proof_dependencies', 'entry_status', 'node_status', 'batch_examples'}
 
+PROOF_OR_REFUTATION_INSTRUCTIONS = '''PROOF OUTCOME POLICY: proof-or-refutation-v1.
+Only a complete, native-checked positive proof may establish GREEN, and only the
+independently checked negation of the complete fixed contract may establish
+REFUTED. A failed proof, an unavailable fact, a residual goal, a candidate timeout
+or a suspected counterexample leaves the contract pending. Use the failure
+feedback to repair the proof, retrieve legal facts, or revise non-contract helpers;
+you may continue another pending contract without abandoning the first one.
+report_unresolved is disabled under this policy. There is no failed-candidate
+count or per-contract timeout that authorizes UNKNOWN. When the experiment budget
+or an external pause stops work, retain pending contracts, accepted proofs,
+drafts and charged costs for recovery. A helper refutation only rejects that helper
+route; it does not refute its fixed parent. Finish only when every fixed contract
+is proved or has an independently checked refutation; refuted slots supply no
+positive theorem and stay oops. Partial export never certifies repository success.
+'''
+
 
 def public_view(value):
     if isinstance(value,list):
@@ -71,7 +87,7 @@ def internal_request(value):
     return result
 
 
-def observation_instructions():
+def observation_instructions(*, run=None):
     # Share observation semantics while removing legacy planner action schemas.
     from regen.planning.batch_file_planner import INSTRUCTIONS
     from regen.planning.evidence_reads import EVIDENCE_INSTRUCTIONS
@@ -122,7 +138,7 @@ historical evidence, not current applicability judgments or permanent exclusions
 '''
 
 
-def tool_contracts():
+def tool_contracts(*, run=None):
     """Read-only contract for the shared A/B document tools; no runtime is opened."""
     import json
     import re
@@ -252,13 +268,18 @@ def tool_contracts():
         {'action':'finish','source_sha256':'current complete draft hash'},
         {'action':'read_evidence','refs':[{'kind':'fact','id':'record ID returned by query'}]},
         {'action':'read_evidence','index':'facts','offset':0,'limit':32}]
-    instructions=observation_instructions()
+    from regen.execution.checker_policy import proof_or_refutation_enabled
+    proof_only = proof_or_refutation_enabled(run or {})
+    if proof_only:
+        source_actions.pop('report_unresolved')
+        examples = [value for value in examples if value['action'] != 'report_unresolved']
+    instructions=observation_instructions(run=run)
     decoder=json.JSONDecoder()
     for match in re.finditer(r'\{"action":',instructions):
         try:value,_=decoder.raw_decode(instructions[match.start():])
         except ValueError:continue
         if value not in examples:examples.append(value)
-    return {'version':1,'interface':'shared-document-harness',
+    result = {'version':1,'interface':'shared-document-harness',
         'tools':tools(document_mode=True),'source_action_schemas':source_actions,
         'proof_action_examples':[{'theory':'theory from accepted plan','proposal':v} for v in examples],
         'observation_contract':instructions,
@@ -292,3 +313,13 @@ def tool_contracts():
         'helper_format':{'description':'Use the same shared document markers as fixed entries; only helpers may introduce new statements.',
             'example':'(* REGEN-BEGIN {"id":"h1","role":"helper","context":[]} *)\nlemma helper_name: "proposition"\n(* REGEN-PROOF *)\noops\n(* REGEN-END *)'},
         'examples_are_syntax_only':True}
+    if proof_only:
+        result['outcome_policy'] = 'proof-or-refutation-v1'
+        result['semantics']['outcomes'] = PROOF_OR_REFUTATION_INSTRUCTIONS
+        result['semantics']['finish'] = (
+            'Requires the current complete draft hash. Every fixed contract must be '
+            'proved or independently refuted; pending targets prevent sealing. '
+            'Final imports, positive source, semantic audit and build are checked '
+            'before publication. Refutations supply no positive fact; a partial '
+            'export never claims all fixed contracts proved.')
+    return result

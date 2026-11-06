@@ -2248,9 +2248,11 @@ def main() -> int:
                       choices=['contract-dispositions-v1','legacy-theory-v1'],
                       default=DEFAULT_OUTCOME_POLICY,
                       help='New repository default: contract-dispositions-v1; legacy-theory-v1 explicitly preserves whole-theory stops')
-    init.add_argument('--unresolved-evidence-policy', choices=['native-attempts-v1','legacy'],
+    init.add_argument('--unresolved-evidence-policy',
+                      choices=['proof-or-refutation-v1','native-attempts-v1','legacy'],
                       default=DEFAULT_OUTCOME_POLICY,
-                      help='New contract-run default: native-attempts-v1; legacy explicitly permits historical unresolved-report semantics')
+                      help='New contract-run default: proof-or-refutation-v1 (no UNKNOWN); '
+                           'native-attempts-v1 and legacy explicitly select historical stopping semantics')
 
     plan = sub.add_parser("plan-file")
     plan.add_argument("--run-dir", type=Path, required=True)

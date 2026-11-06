@@ -80,7 +80,8 @@ def build_export_scope(package, state, dispositions, *, runtime=None, expected_i
                             'theory': package['theory'], 'package_sha256': digest(package)}
     from regen.planning.theory_outcomes import validate_dispositions
     validate_dispositions(package, state, dispositions,
-                          expected_imports=expected_imports, expected_binding=expected_binding)
+                          expected_imports=expected_imports, expected_binding=expected_binding,
+                          runtime=runtime)
     projected = export_graph(state)
     return {'policy': POLICY, 'package': deepcopy(package),
             'dispositions': deepcopy(dispositions),
