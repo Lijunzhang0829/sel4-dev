@@ -88,7 +88,7 @@ class DocumentConcurrencyTests(unittest.TestCase):
                 'edits':[{'old':'oops','new':'sorry'}]}}, {})
         self.assertFalse(getattr(controller, 'framework_blocked', False))
 
-    def test_legacy_cached_response_timeout_is_infrastructure_not_proof_red(self):
+    def test_legacy_cached_response_timeout_is_not_reused_as_a_proof_verdict(self):
         from regen.execution.check_tasks import NativePreparationError
         controller = self.controllers['Target']
         draft = controller.handle('read_theory', {'theory':'Target'}, {})['document']
@@ -99,11 +99,15 @@ class DocumentConcurrencyTests(unittest.TestCase):
             'edits':[{'old':'oops','new':'by simp'}]}}, metadata)
         cached = {'reused_request':1, 'check':{'verdict':'red',
             'timeout_scope':'candidate-watchdog', 'diagnostic':'missing native response'}}
-        with patch('regen.planning.planner_efficiency.reused_failure', return_value=cached):
-            with self.assertRaisesRegex(NativePreparationError, 'missing native response'):
+        with patch('regen.planning.planner_efficiency.reused_failure', return_value=cached), \
+             patch('regen.planning.theory_document.check_document', return_value={
+                 'check':{'verdict':'infrastructure_error','failure_scope':'native_preparation',
+                          'diagnostic':'fresh prefix preparation failure'}}) as fresh_check:
+            with self.assertRaisesRegex(NativePreparationError, 'fresh prefix preparation failure'):
                 controller.handle('proof_action', {'theory':'Target','proposal':{
                     'action':'check_theory','source_sha256':saved['source_sha256']}},
                     {**metadata,'call_id':'check-cached'})
+        fresh_check.assert_called_once()
         self.assertEqual(cached['check']['verdict'], 'red')
         self.assertEqual(controller._state('Target')[1]['proofs'], {})
 

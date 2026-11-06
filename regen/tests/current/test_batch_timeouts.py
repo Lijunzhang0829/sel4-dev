@@ -37,7 +37,7 @@ class BatchTimeoutTest(unittest.TestCase):
         self.assertEqual(check['verdict'], 'infrastructure_error' if infrastructure else 'red')
         if infrastructure:
             self.assertEqual(check['failure_scope'], 'native_preparation')
-            self.assertTrue(check['framework_blocked'])
+            self.assertEqual(check['framework_blocked'], scope != 'candidate-watchdog')
         else:
             self.assertFalse(check.get('framework_blocked', False))
         self.assertEqual(check['returncode'], 124)
@@ -70,14 +70,22 @@ class BatchTimeoutTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); old, new, checker = self.setup_case(root)
             error = TimeoutError('response deadline'); error.worker_log = 'partial native log'
-            with patch('regen.execution.batch_checker.BatchWorker', self.worker_factory(root, Mock(side_effect=error))):
+            created = []
+            original_factory = self.worker_factory(root, Mock(side_effect=error))
+            def factory(*args):
+                created.append(original_factory(*args))
+                return created[-1]
+            with patch('regen.execution.batch_checker.BatchWorker', factory):
                 evidence = check_batch(checker, old, new)
             self.assert_timeout_evidence(old, new, evidence, 'candidate-watchdog')
             self.assertIn('partial native log', evidence['check']['log_content'])
             self.assertEqual(checker.calls, 0)
-            self.assertIsNone(checker._batch_worker.pending)
-            self.assertTrue(checker._batch_worker.closed)
-            checker._batch_worker.close.assert_called_once()
+            self.assertIsNone(checker._batch_worker)
+            self.assertIsNone(created[0].pending)
+            self.assertTrue(created[0].closed)
+            created[0].close.assert_called_once()
+            self.assertTrue(evidence['check']['retryable'])
+            self.assertTrue(evidence['check']['worker_discarded'])
             self.assertEqual(evidence['check']['watchdog_grace_seconds'], 10)
             self.assertEqual(evidence['check']['native_failure_stage'], 'candidate-response-watchdog')
             self.assertEqual(evidence['check']['native_receipt']['verdict'], 'infrastructure_error')

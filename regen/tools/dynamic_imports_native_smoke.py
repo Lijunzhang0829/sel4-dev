@@ -259,6 +259,41 @@ def run(dataset, output, *, timeout=180, candidate_timeout=60):
             require(consumer._runtime()[4].imports() == base_imports,
                     'removing unused provider did not restore base environment')
             case('native_remove_unused_import_rechecks_repaired_draft')
+
+            def recalled_provider(expected_import):
+                result = action(consumer, {'action': 'query', 'request': {
+                    'goal_query': True, 'context_entry_id': 'consumer_truth',
+                    'scope': 'sealed', 'retrieval_policy': 'indexed-v1',
+                    'candidate_budget': 20, 'structural_rerank': True}})
+                def rows(value):
+                    if isinstance(value, dict):
+                        if value.get('canonical_name') == fact:
+                            yield value
+                        for child in value.values():
+                            yield from rows(child)
+                    elif isinstance(value, list):
+                        for child in value:
+                            yield from rows(child)
+                records = list(rows(result))
+                require(records, 'goal_query did not discover the certified provider')
+                record = records[0]
+                require(record['requires_import'] is expected_import,
+                        'goal_query returned stale import visibility')
+                require(record['provider_seal_id'] == state(PROVIDER)['seal_id'],
+                        'goal_query lost certified provider identity')
+                if expected_import:
+                    require(not record['can_use_as_current_premise'] and
+                            record['rerank_evidence']['native_match_attempted'] is False,
+                            'unimported discovery claimed native matching or visibility')
+                else:
+                    require(record['can_use_as_current_premise'],
+                            'accepted import did not expose the discovered provider')
+                return record
+
+            discovered = recalled_provider(True)
+            case('native_goal_query_discovers_unimported_sealed_provider',
+                 import_name=discovered['import_name'],
+                 provider_seal_id=discovered['provider_seal_id'])
             old_state = deepcopy(state(CONSUMER))
             saved = edit(consumer, imports=imported,
                 replace=('\noops\n', '\nusing ' + fact + ' by simp\n'))
@@ -275,6 +310,8 @@ def run(dataset, output, *, timeout=180, candidate_timeout=60):
                     'changed imports reused old accepted prefix')
             case('native_add_import_rechecks_old_proof_and_uses_provider',
                  check_mode=latest_document['evidence']['document_check_mode'])
+            recalled_provider(False)
+            case('native_goal_query_matches_after_accepted_import')
 
             saved = edit(consumer, imports=base_imports)
             result = action(consumer, {'action': 'check_theory', 'source_sha256': saved['source_sha256']})
@@ -284,6 +321,8 @@ def run(dataset, output, *, timeout=180, candidate_timeout=60):
             require('Undefined fact' in json.dumps(result), 'negative check lacked missing-fact evidence')
             require(fact in read(consumer)['source'], 'failed check erased proof draft')
             case('native_remove_import_fails_without_reusing_green', feedback=result.get('feedback'))
+            recalled_provider(True)
+            case('native_goal_query_removal_restores_import_requirement')
 
             saved = edit(consumer, replace=('using ' + fact + ' by simp', 'by simp'))
             result = action(consumer, {'action': 'finish', 'source_sha256': saved['source_sha256']})

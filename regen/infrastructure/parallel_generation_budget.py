@@ -332,6 +332,9 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
     """Bind the clock before launch; never give a legacy continuation zero cost."""
     from regen.infrastructure.effective_time_budget import EffectiveTimeBudget, POLICY, CHECKPOINT_KIND
     root = Path(root)
+    if any((root/name).exists() for name in ('native-watchdog-budget-transfer.json',
+            'resource-reduction-budget-transfer.json', 'provider-feedback-transfer.json')):
+        raise ValueError('source budget already claimed by a continuation; do not resume the old source')
     from regen.execution.checker_policy import validate_outcome_upgrade_readiness
     validate_outcome_upgrade_readiness(overview.run, root)
     ledger = Ledger(root/'effective-generation-budget', overview.run['run_id'])
@@ -416,6 +419,151 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
     return stage, ParallelGenerationBudgetBridge(stage)
 
 
+def review_native_watchdog_interruption(source_dir, event):
+    """Authenticate a local watchdog abort; retain historical clock uncertainty.
+
+    A missing native response is not a mathematical verdict. This review only
+    permits a stopped latest-workspace continuation to carry its existing costs.
+    It does not complete the open model items, refund work or certify a deadline.
+    """
+    import json
+    import re
+    from regen.infrastructure.incremental_log import read_artifact
+
+    root = Path(source_dir).resolve()
+    evidence = event['data'].get('evidence', {})
+    theory = event['data'].get('theory')
+    owner = evidence.get('thread_id'), evidence.get('turn_id')
+    item_ids = evidence.get('item_ids')
+    if (evidence.get('reason') != 'session_stopped_with_open_model_item'
+            or not isinstance(theory, str) or Path(theory).name != theory
+            or not all(isinstance(v, str) and v for v in (*owner, evidence.get('generation_id')))
+            or not isinstance(item_ids, list) or not item_ids
+            or any(not isinstance(v, str) or not v for v in item_ids)
+            or len(set(item_ids)) != len(item_ids)):
+        raise ValueError('native watchdog review lacks exact clock/session identity')
+
+    def local(path):
+        path = Path(path)
+        if not path.is_absolute():
+            path = root/path
+        if not path.resolve().is_relative_to(root) or path.is_symlink() or not path.is_file():
+            raise ValueError('native watchdog evidence escapes source or is missing')
+        return path
+
+    stop_path = local(Path('theories')/theory/'execution-stop.json')
+    stop = read_artifact(stop_path)
+    diagnostic = stop.get('reason', '')
+    response = re.fullmatch(r'TIMEOUT\nincremental batch worker timeout waiting for ([1-9][0-9]*)\.response', diagnostic)
+    count = stop.get('request_number')
+    if (stop.get('status') != 'infrastructure_error'
+            or stop.get('exception_type') != 'NativePreparationError'
+            or stop.get('theory') != theory or type(count) is not int or count <= 0
+            or response is None):
+        raise ValueError('clock fault is not a native candidate response watchdog abort')
+    check_path = local(Path('theories')/theory/'batch-requests'/f'{count:06d}'/'check.json')
+    saved = read_artifact(check_path)
+    check = saved.get('check', {})
+    if (check.get('verdict') != 'infrastructure_error'
+            or check.get('failure_scope') != 'native_preparation'
+            or check.get('native_failure_stage') != 'candidate-response-watchdog'
+            or check.get('timeout_scope') != 'candidate-watchdog'
+            or check.get('timed_out') is not True or check.get('framework_blocked') is not True
+            or check.get('diagnostic') != diagnostic
+            or (check_path.parent/'feedback.json').exists()):
+        raise ValueError('native watchdog check receipt is not the unreturned infrastructure failure')
+    log_path = local(check['log'])
+    stem = response.group(1)
+    request_path = local(log_path.parent/(stem+'.request'))
+    if (log_path.name != stem+'.log'
+            or log_path.parent.name != check.get('worker')
+            or (log_path.parent/(stem+'.response')).exists()
+            or hashlib.sha256(request_path.read_bytes()).hexdigest() != check.get('delta_sha256')):
+        raise ValueError('native watchdog request/response identity changed')
+
+    matches = []
+    for task_path in sorted((root/'check-tasks').glob('*/task.json')):
+        task = read_artifact(task_path)
+        meta = task.get('request', {}).get('metadata', {})
+        if (task.get('theory') == theory
+                and (meta.get('thread_id'), meta.get('turn_id')) == owner
+                and task.get('error_type') == 'NativePreparationError'
+                and task.get('diagnostic') == diagnostic):
+            matches.append((local(task_path), task))
+    if len(matches) != 1:
+        raise ValueError('native watchdog requires exactly one bound failed check task')
+    task_path, task = matches[0]
+    meta = task['request']['metadata']
+    raw_request = meta.get('raw_request', {})
+    arguments = raw_request.get('params', {}).get('arguments', {})
+    run = read_artifact(root/'run.json')
+    if (task.get('status') != 'error' or task.get('kind') != 'proof_batch'
+            or task.get('owner') != theory or task.get('binding', {}).get('run_id') != run['run_id']
+            or raw_request.get('method') != 'item/tool/call'
+            or raw_request.get('params', {}).get('tool') != 'proof_action'
+            or arguments.get('theory') != theory
+            or arguments.get('proposal') != task['request'].get('proposal')
+            or arguments.get('proposal', {}).get('action') != 'check_theory'
+            or read_artifact(check_path.parent/'model-proposal.json') != arguments.get('proposal')
+            or not isinstance(saved.get('document_source'), str)
+            or hashlib.sha256(saved['document_source'].encode()).hexdigest() != saved.get('document_source_sha256')
+            or read_artifact(check_path.parent/'document-source.json').get('source') != saved['document_source']
+            or not 0 <= event['time_unix']-task.get('finished_at', float('inf')) <= 10):
+        raise ValueError('native watchdog task does not bind the saved document check')
+    transcript = local(meta['transcript_path'])
+    if transcript.parent.name != theory or transcript.name != 'session-transcript.jsonl':
+        raise ValueError('native watchdog transcript owner differs')
+    raw = transcript.read_bytes()
+    opened, request_seen, response_seen, failed = set(), None, False, None
+    for number, line in enumerate(raw.splitlines(), 1):
+        row = json.loads(line)
+        message = row['message']
+        if 'parsed' in message:
+            if json.loads(message['raw_json']) != message['parsed']:
+                raise ValueError('native watchdog raw transcript differs from parsed message')
+            message = message['parsed']
+        params = message.get('params', {})
+        if row['direction'] == 'in' and (params.get('threadId'), params.get('turnId')) == owner:
+            method, item = message.get('method'), params.get('item', {})
+            if method in ('item/started', 'item/completed') and item.get('type') in {'reasoning', 'agentMessage'}:
+                if method == 'item/started': opened.add(item.get('id'))
+                else: opened.discard(item.get('id'))
+            elif method in ('item/agentMessage/delta', 'item/reasoning/textDelta', 'item/reasoning/summaryTextDelta'):
+                opened.add(params.get('itemId'))
+            if message == raw_request:
+                if request_seen is not None:
+                    raise ValueError('native watchdog tool request repeated')
+                request_seen = number
+        if (row['direction'] == 'in' and message.get('method') == 'turn/completed'
+                and (params.get('threadId'), params.get('turn', {}).get('id')) == owner):
+            raise ValueError('native watchdog session already has a terminal turn')
+        if (row['direction'] == 'out' and message.get('id') == raw_request.get('id')
+                and ('result' in message or 'error' in message)):
+            response_seen = True
+        if row['direction'] == 'local' and message.get('event') == 'session_failed':
+            if (failed is not None or request_seen is None or response_seen
+                    or message.get('exception_type') != 'NativePreparationError'
+                    or message.get('message') != diagnostic or message.get('nonsealable') is not True
+                    or opened != set(item_ids)
+                    or not 0 <= row['time_unix']-event['time_unix'] <= 5):
+                raise ValueError('native watchdog session abort does not match the clock fault')
+            failed = number
+    if failed is None or response_seen:
+        raise ValueError('native watchdog lacks an unreturned tool and trusted session abort')
+    return dict(policy='verified-native-watchdog-interruption-no-refund-v1',
+        source_run=str(root), source_run_sha256=digest(run), event_id=event['event_id'],
+        theory=theory, thread_id=owner[0], turn_id=owner[1], item_ids=sorted(item_ids),
+        check_receipt=str(check_path.relative_to(root)), check_receipt_sha256=digest(saved),
+        task=str(task_path.relative_to(root)), task_sha256=digest(task),
+        execution_stop_sha256=digest(stop), transcript=str(transcript.relative_to(root)),
+        transcript_sha256=hashlib.sha256(raw).hexdigest(), tool_request_line=request_seen,
+        session_failed_line=failed, native_request=str(request_path.relative_to(root)),
+        native_request_sha256=hashlib.sha256(request_path.read_bytes()).hexdigest(),
+        native_log_sha256=hashlib.sha256(log_path.read_bytes()).hexdigest(),
+        historical_uncertainty_retained=True, mathematical_verdict_created=False,
+        refund_seconds=0)
+
+
 def _review_parallel_budget_clock(source_dir, ledger, ancestors=()):
     """Verify inherited shutdown evidence without importing or refunding it again."""
     from regen.infrastructure.incremental_log import read_artifact
@@ -437,10 +585,16 @@ def _review_parallel_budget_clock(source_dir, ledger, ancestors=()):
     if not starts and all(row['data'].get('evidence', {}).get('reason') ==
                           'session_stopped_with_open_model_item' for row in unsupported):
         from regen.infrastructure.handler_stop_review import review_handler_stop
-        try:
-            witnesses = [review_handler_stop(source_dir, row) for row in unsupported]
-        except ValueError as error:
-            raise ValueError('unsupported uncertainty: '+str(error)) from error
+        witnesses = []
+        for row in unsupported:
+            try:
+                witness = review_handler_stop(source_dir, row)
+            except ValueError:
+                try:
+                    witness = review_native_watchdog_interruption(source_dir, row)
+                except (ValueError, KeyError, OSError) as error:
+                    raise ValueError('unsupported uncertainty: '+str(error)) from error
+            witnesses.append(witness)
         return dict(clock_review=review, inherited_reviews=witnesses)
     completions = [row for row in ledger.rows if row['kind'] == 'parallel_budget_continuation_completed']
     if len(starts) != 1 or len(completions) != 1 or starts[0]['sequence'] >= completions[0]['sequence']:
@@ -475,7 +629,8 @@ def _review_parallel_budget_clock(source_dir, ledger, ancestors=()):
     copied = region[-len(original):] if original else []
     metadata = region[:-len(original)] if original else region
     allowed_metadata = {'parallel_budget_strategy_update', 'parallel_budget_feedback_retry_policy_update',
-                        'parallel_budget_candidate_timeout_update', 'parallel_budget_clock_review_inherited'}
+                        'parallel_budget_candidate_timeout_update', 'parallel_budget_clock_review_inherited',
+                        'parallel_budget_resource_reduction_update'}
     logical = lambda row: {key:row[key] for key in ('kind', 'time_unix', 'data')}
     if (len(copied) != len(original) or any(row['kind'] not in allowed_metadata for row in metadata)
             or any(logical(a) != logical(b) for a, b in zip(copied, original))):
@@ -483,6 +638,35 @@ def _review_parallel_budget_clock(source_dir, ledger, ancestors=()):
     mapping = {new['event_id']:old for new, old in zip(copied, original)}
     if any(row['event_id'] not in mapping for row in unsupported):
         raise ValueError('new unsupported uncertainty requires separate accounting review')
+    resource_updates = [row for row in metadata if row['kind'] == 'parallel_budget_resource_reduction_update']
+    if resource_updates:
+        old_policy = read_artifact(previous_dir/'parallel-workspace-policy.json')
+        change = resource_updates[0]['data']
+        reduced_policy, old_resources = _resource_reduction_policy(old_policy, change.get('target_resources'))
+        old_state = next(row['data']['state'] for row in reversed(previous.rows) if row['kind'] == CHECKPOINT_KIND)
+        expected_change = dict(policy='authorized-resource-reduction-v1',
+            source_run=str(previous_dir), source_tail_event_id=previous.rows[-1]['event_id'],
+            authorization=complete['data']['authorization'], previous_resources=old_resources,
+            target_resources=change['target_resources'],
+            previous_configuration_sha256=digest(old_policy),
+            target_configuration_sha256=digest(reduced_policy),
+            effective_seconds_unchanged=old_state['effective_seconds'],
+            worker_seconds_unchanged=old_state['worker_seconds'],
+            planning_seconds_unchanged=old_state.get('planning_seconds', 0.),
+            seconds_unchanged=old_state['seconds'], refund_seconds=0)
+        bindings = [row for row in ledger.rows if row['kind'] == 'parallel_budget_binding']
+        if (len(resource_updates) != 1 or change != expected_change
+                or len(bindings) != 1
+                or bindings[0]['data']['configuration_sha256'] != digest(reduced_policy)
+                or complete['data'].get('resource_reduction_update') != change):
+            raise ValueError('inherited resource reduction policy or accounting witness changed')
+        claim = read_artifact(previous_dir/'resource-reduction-budget-transfer.json')
+        if (claim != complete['data'].get('resource_reduction_transfer')
+                or claim.get('target_run') != str(source_dir)
+                or claim.get('target_run_id') != ledger.run_id
+                or claim.get('target_configuration_sha256') != digest(reduced_policy)
+                or claim.get('refund_seconds') != 0):
+            raise ValueError('inherited resource reduction transfer claim changed')
     feedback_updates = [row for row in metadata if row['kind'] == 'parallel_budget_feedback_retry_policy_update']
     inherited = []
     legacy_review_id = None
@@ -534,10 +718,27 @@ def review_parallel_budget_clock(source_dir):
     return _review_parallel_budget_clock(source_dir, ledger)
 
 
+def _resource_reduction_policy(source_policy, target_resources):
+    """A typed resource-only migration cannot increase capacity or change policy."""
+    fields = {'max_parallel_theories', 'resident_limit', 'native_slots'}
+    if not isinstance(target_resources, dict) or set(target_resources) != fields:
+        raise ValueError('resource reduction requires exactly worker, resident and native limits')
+    previous = {name:source_policy.get(name) for name in fields}
+    if any(type(previous[name]) is not int or type(target_resources[name]) is not int
+           or not 0 < target_resources[name] <= previous[name] for name in fields):
+        raise ValueError('resource reduction requires positive integer nonincreasing limits')
+    if target_resources == previous:
+        raise ValueError('resource reduction requires at least one lower limit')
+    if target_resources['native_slots'] > min(target_resources['max_parallel_theories'],
+                                              target_resources['resident_limit']):
+        raise ValueError('resource reduction native slots must fit worker and resident limits')
+    return {**source_policy, **target_resources}, previous
+
+
 def carry_parallel_budget(source_dir, destination, *, authorization, clock_review,
                           target_strategy=None, provider_feedback_review=None,
                           target_execution_policy=None, target_candidate_timeout=None,
-                          target_native_slots=None):
+                          target_native_slots=None, target_resources=None):
     """Carry a stopped full-workspace continuation's ledger, never reset costs.
 
     Caller owns the source mutation lock and must establish stopped liveness.
@@ -572,6 +773,10 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
     if digest(source_policy) != bindings[0]['data']['configuration_sha256']:
         raise ValueError('source execution policy hash mismatch')
     target_policy = dict(source_policy)
+    if target_resources is not None and any(value is not None for value in (
+            target_strategy, provider_feedback_review, target_execution_policy,
+            target_candidate_timeout, target_native_slots)):
+        raise ValueError('resource-only reduction cannot combine other policy migrations')
     if provider_feedback_review is not None:
         from regen.infrastructure.provider_feedback_continuation import plan_legacy_feedback_import
         if provider_feedback_review != plan_legacy_feedback_import(source_dir):
@@ -589,6 +794,24 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
                 or target_strategy != generation_strategy(target_strategy['name'])):
             raise ValueError('strategy update must match the new frozen implementation of the same strategy')
         target_policy['generation_strategy'] = target_strategy
+    resource_reduction_change = None
+    if target_resources is not None:
+        if any(value is not None for value in (target_strategy, provider_feedback_review,
+                target_execution_policy, target_candidate_timeout, target_native_slots)):
+            raise ValueError('resource-only reduction cannot combine other policy migrations')
+        if state['effective_seconds'] >= state['seconds']:
+            raise ValueError('resource reduction cannot extend an exhausted experiment budget')
+        target_policy, previous_resources = _resource_reduction_policy(source_policy, target_resources)
+        resource_reduction_change = dict(policy='authorized-resource-reduction-v1',
+            source_run=str(source_dir), source_tail_event_id=ledger.rows[-1]['event_id'],
+            authorization=authorization, previous_resources=previous_resources,
+            target_resources=dict(target_resources),
+            previous_configuration_sha256=digest(source_policy),
+            target_configuration_sha256=digest(target_policy),
+            effective_seconds_unchanged=state['effective_seconds'],
+            worker_seconds_unchanged=state['worker_seconds'],
+            planning_seconds_unchanged=state.get('planning_seconds', 0.),
+            seconds_unchanged=state['seconds'], refund_seconds=0)
     native_slots_change = None
     if target_native_slots is not None:
         previous = source_policy.get('native_slots')
@@ -646,6 +869,47 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
     target = Ledger(destination/'effective-generation-budget', target_run['run_id'])
     if target.rows:
         raise ValueError('target budget already exists; never overwrite or replay import')
+    # A prior claim is authoritative even when a later caller asks for a plain
+    # continuation rather than repeating the resource/watchdog migration mode.
+    if any((source_dir/name).exists() for name in (
+            'native-watchdog-budget-transfer.json', 'resource-reduction-budget-transfer.json',
+            'provider-feedback-transfer.json')):
+        raise ValueError('source budget already claimed by a continuation')
+    resource_reduction_transfer = None
+    if resource_reduction_change is not None:
+        import fcntl
+        from regen.execution.proof_commits import durable
+        with (source_dir/'resource-reduction-budget-transfer.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            claim = source_dir/'resource-reduction-budget-transfer.json'
+            if claim.exists():
+                raise ValueError('resource reduction budget already claimed by a continuation')
+            resource_reduction_transfer = dict(source_run=str(source_dir),
+                source_tail_event_id=ledger.rows[-1]['event_id'],
+                clock_review_sha256=digest(clock_review),
+                reviewed_witnesses_sha256=digest(inherited_clock_reviews),
+                target_run=str(destination), target_run_id=target_run['run_id'],
+                target_configuration_sha256=digest(target_policy),
+                authorization=authorization, refund_seconds=0)
+            durable(claim, resource_reduction_transfer, immutable=True)
+    native_watchdog_transfer = None
+    if resource_reduction_change is None and any(row.get('policy') == 'verified-native-watchdog-interruption-no-refund-v1'
+           for row in inherited_clock_reviews):
+        # One stopped allowance must not fund two descendants. A partial failed
+        # import remains claimed and inspectable; retry never grants fresh time.
+        import fcntl
+        from regen.execution.proof_commits import durable
+        with (source_dir/'native-watchdog-budget-transfer.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            claim = source_dir/'native-watchdog-budget-transfer.json'
+            if claim.exists():
+                raise ValueError('native watchdog budget already claimed by a continuation')
+            native_watchdog_transfer = dict(source_run=str(source_dir),
+                source_tail_event_id=ledger.rows[-1]['event_id'],
+                reviewed_witnesses_sha256=digest(inherited_clock_reviews),
+                target_run=str(destination), target_run_id=target_run['run_id'],
+                authorization=authorization, refund_seconds=0)
+            durable(claim, native_watchdog_transfer, immutable=True)
     if provider_feedback_review is not None:
         # Claim once before copying. A failed partial import remains inspectable
         # and cannot create multiple descendants spending the same pending tail.
@@ -680,6 +944,8 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
             previous_configuration_sha256=digest(source_policy),
             target_configuration_sha256=digest(target_policy),
             effective_seconds_unchanged=state['effective_seconds'], seconds_unchanged=state['seconds'])
+    if resource_reduction_change is not None:
+        target.append('parallel_budget_resource_reduction_update', **resource_reduction_change)
     if native_slots_change is not None:
         native_slots_change.update(previous_configuration_sha256=digest(source_policy),
                                    target_configuration_sha256=digest(target_policy))
@@ -706,6 +972,11 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
         carried_effective_seconds=state['effective_seconds'],
         carried_worker_seconds=state['worker_seconds'], total_limit_seconds=state['seconds'],
         historical_uncertainty_retained=True, refund_seconds=0)
+    if resource_reduction_change is not None:
+        receipt['resource_reduction_update'] = resource_reduction_change
+        receipt['resource_reduction_transfer'] = resource_reduction_transfer
+    if native_watchdog_transfer is not None:
+        receipt['native_watchdog_transfer'] = native_watchdog_transfer
     if native_slots_change is not None:
         receipt['native_slots_update'] = native_slots_change
     if candidate_timeout_change is not None:

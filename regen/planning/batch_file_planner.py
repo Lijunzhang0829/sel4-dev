@@ -1455,6 +1455,11 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         from regen.planning.planner_efficiency import failure_identity, reused_failure
                         identity = failure_identity(run, checker, state, candidate)
                         cached = reused_failure(directory, state, identity, retry_reason=proposal.get('retry_check'))
+                        # A response watchdog never established a native RED.
+                        # Legacy memory may contain such a misclassified entry;
+                        # retry it explicitly against a fresh owned worker.
+                        if cached and cached.get('check', {}).get('timeout_scope') == 'candidate-watchdog':
+                            cached = None
                         from regen.planning.theory_document import check_document
                         evidence = ({'check':cached['check'], 'node_results':cached.get('node_results',[]),
                                      'cached_failure':True, 'failure_identity':identity,
@@ -1463,8 +1468,9 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                                      else check_batch(checker, state, candidate)))
                         # A recovered legacy response-watchdog/IO receipt must
                         # not reappear as a mathematical RED through the cache.
-                        from regen.execution.proof_batches import classify_native_failure
+                        from regen.execution.proof_batches import classify_native_failure, recoverable_native_watchdog
                         evidence['check'] = classify_native_failure(deepcopy(evidence['check']))
+                        native_retry = not cached and recoverable_native_watchdog(evidence['check'])
                         evidence.update(sealable_generation=bool(meta.get('sealable_generation')),
                                         transcript_prefix=str(prefix), reason=proposal.get('reason',''))
                         if document_source is not None:
@@ -1476,7 +1482,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         if 'workspace_reuse_origin' in proposal:
                             evidence['workspace_reuse_origin'] = deepcopy(proposal['workspace_reuse_origin'])
                         durable(request_dir/'check.json', evidence, immutable=True)
-                        if evidence['check'].get('failure_scope') == 'native_preparation':
+                        if evidence['check'].get('failure_scope') == 'native_preparation' and not native_retry:
                             raise NativePreparationError(evidence['check'].get('diagnostic','native prefix preparation failed'))
                         if document_check_requested and store.require_review and not cached:
                             from regen.planning.sketch_workflow import record_formal_result
@@ -1528,6 +1534,18 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         feedback = {'status':'rejected_batch', 'check':evidence['check'],
                             'node_results':evidence.get('node_results',[]), 'failure_identity':identity,
                             **scope}
+                        if native_retry:
+                            feedback.update(status='infrastructure_error', framework_blocked=False,
+                                failure_scope='native_preparation', retryable=True,
+                                worker_discarded=True, attempt_preserved=True, new_green=[],
+                                native_failure_stage=evidence['check']['native_failure_stage'],
+                                diagnostic=evidence['check'].get('diagnostic', ''),
+                                native_recovery=deepcopy(evidence['check']['native_recovery']),
+                                notice='No native response or proof verdict was obtained. The draft and '
+                                       'attempt are retained; accepted GREEN proofs are unchanged. '
+                                       'The failed worker and unaccepted suffix were discarded. '
+                                       'Use the diagnostic to choose an edit or an explicit new check; '
+                                       'the next check rebuilds the committed GREEN prefix.')
                         if document_check_requested and store.require_review:
                             from regen.planning.sketch_workflow import workflow_view
                             failed_ids = {r['node_id'] for r in evidence.get('node_results', [])

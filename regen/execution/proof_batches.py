@@ -20,6 +20,28 @@ class NativeEvidenceError(ValueError):
     framework_blocked = True
 
 
+def recoverable_native_watchdog(check):
+    """A fresh response watchdog may be retried after its owned worker is gone.
+
+    This is transport recovery metadata, never a native proof verdict. Legacy
+    timeouts without a verified discard remain blocked at the caller boundary.
+    """
+    recovery = check.get('native_recovery', {})
+    return (check.get('verdict') == 'infrastructure_error'
+            and check.get('timeout_scope') == 'candidate-watchdog'
+            and check.get('native_failure_stage') == 'candidate-response-watchdog'
+            and check.get('returncode') == 124 and check.get('timed_out') is True
+            and isinstance(recovery, dict)
+            and recovery.get('policy') == 'discard-worker-rebuild-committed-prefix-v1'
+            and recovery.get('retryable') is True
+            and recovery.get('worker_discarded') is True
+            and recovery.get('pending_discarded') is True
+            and recovery.get('native_response_received') is False
+            and isinstance(check.get('prefix_sha256'), str)
+            and re.fullmatch(r'[0-9a-f]{64}', check['prefix_sha256']) is not None
+            and recovery.get('prefix_sha256') == check['prefix_sha256'])
+
+
 def classify_native_failure(result):
     """Separate a missing native response / native I/O failure from proof RED.
 
@@ -46,6 +68,8 @@ def classify_native_failure(result):
             result['native_failure_stage'] = stage
         if isinstance(result.get('native_receipt'), dict):
             result['native_receipt']['verdict'] = 'infrastructure_error'
+        if recoverable_native_watchdog(result):
+            result.update(framework_blocked=False, retryable=True, worker_discarded=True)
     return result
 
 
@@ -249,6 +273,7 @@ def check_batch(checker, old, candidate):
                     _safe_text(candidate['proofs'][node['id']])
             prefix_source = _render(old['graph'], old['proofs'], evidence['imports'], evidence['label'])
             failure_stage = 'prefix-startup-or-alignment'
+            candidate_worker = None
             try:
                 worker = getattr(checker, '_batch_worker', None)
                 if (worker is None or worker.closed or worker.process.poll() is not None
@@ -266,6 +291,7 @@ def check_batch(checker, old, candidate):
                 names = {n['id']:n['name'] for n in candidate['graph']['nodes']}
                 failure_stage = 'candidate-execution-or-audit-transport'
                 candidate_started = time.monotonic()
+                candidate_worker = worker
                 result = worker.check_batch(source,
                     [names[k] for k in candidate['accepted_order'] if k in additions])
                 result['candidate_execution_ms'] = round((time.monotonic()-candidate_started)*1000)
@@ -355,6 +381,39 @@ def check_batch(checker, old, candidate):
                     failure = NativePreparationError(str(error) + '; worker cleanup failed: ' + str(cleanup_error))
                     failure.add_note('incremental failure evidence: ' + str(directory/'failure.json'))
                     raise failure from cleanup_error
+            if (result.get('timeout_scope') == 'candidate-watchdog'
+                    and candidate_worker is not None):
+                # No Isabelle response means no mathematical verdict. Discard
+                # this worker and all speculative state, then let the agent
+                # decide whether/how to retry from the committed prefix. Never
+                # replay the candidate automatically or fall back to a cold
+                # check under a different deadline.
+                from regen.execution.check_tasks import NativePreparationError
+                prefix_hash = hashlib.sha256(body(prefix_source).encode()).hexdigest()
+                if result.get('prefix_sha256') != prefix_hash:
+                    raise NativeEvidenceError('watchdog recovery committed prefix mismatch')
+                candidate_worker.pending = None
+                try:
+                    if not candidate_worker.closed:
+                        candidate_worker.close()
+                    if candidate_worker.closed is not True:
+                        raise RuntimeError('worker close did not confirm disposal')
+                except Exception as cleanup_error:
+                    raise NativePreparationError(
+                        result.get('diagnostic', 'native response watchdog')
+                        + '; worker cleanup failed: ' + str(cleanup_error)) from cleanup_error
+                checker._batch_worker = None
+                result['native_recovery'] = {
+                    'policy': 'discard-worker-rebuild-committed-prefix-v1',
+                    'retryable': True, 'worker_discarded': True,
+                    'pending_discarded': True, 'native_response_received': False,
+                    'prefix_sha256': prefix_hash,
+                    'worker': getattr(candidate_worker, 'name', None),
+                    'error_type': 'TimeoutError',
+                    'notice': 'No native verdict was received. The attempt and draft are retained; '
+                              'the failed worker and its unaccepted suffix were discarded. '
+                              'Review the diagnostic and choose a new check explicitly; '
+                              'the next check rebuilds only the committed GREEN prefix.'}
         if result is None:
             result = checker._check(source, evidence['label'], timeout=candidate_timeout)
             result['timed_out'] = result.get('returncode') == 124

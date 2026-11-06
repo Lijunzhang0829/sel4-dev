@@ -14,7 +14,7 @@ from jsonschema import Draft202012Validator, ValidationError
 
 from regen.execution.proof_commits import durable
 from regen.infrastructure.audited_llm import model_settings
-from regen.infrastructure.codex_workspace_session import validate_sleep_event
+from regen.infrastructure.codex_workspace_session import validate_sleep_event, tool_result_confirmed
 from regen.infrastructure.incremental_log import read_artifact
 
 PROVIDER = 'codex-workspace-audited'
@@ -257,6 +257,12 @@ def _audit(raw, *, require_terminal, require_real):
     argument_policy = launch.get('tool_argument_policy_version', 1)
     if type(argument_policy) is not int or argument_policy not in {1, 2}:
         raise ValueError('unknown tool argument policy version')
+    confirmation_policy = launch.get('tool_result_confirmation_policy_version', 0)
+    interrupt_policy = launch.get('trusted_failure_interrupt_policy_version', 0)
+    if type(confirmation_policy) is not int or confirmation_policy not in {0, 1}:
+        raise ValueError('unknown tool result confirmation policy version')
+    if type(interrupt_policy) is not int or interrupt_policy not in {0, 1}:
+        raise ValueError('unknown trusted failure interrupt policy version')
     real = launch.get('provider') == 'codex-app-server' and launch.get('synthetic') is False
     if require_real and not real:
         raise ValueError('synthetic or unmarked workspace launch cannot seal')
@@ -282,6 +288,16 @@ def _audit(raw, *, require_terminal, require_real):
     rejected_tool_calls = 0
     sleep_state = {}
     finished_turns = set()
+    pending_tool_requests, result_receipts, result_completions = {}, {}, {}
+    interrupt_requests, interrupted_turns = {}, set()
+
+    def confirm_result(key):
+        result, completion = result_receipts.get(key), result_completions.get(key)
+        if result is not None and completion is not None:
+            confirmed = tool_result_confirmed(completion, result['response'],
+                owner=key, tool=result['tool'])
+            result['confirmed'] = result['confirmed'] or confirmed
+
     for event in events:
         direction, message = event.get('direction'), event.get('message')
         if direction == 'local':
@@ -319,12 +335,25 @@ def _audit(raw, *, require_terminal, require_real):
                         or feedback != invalid['error']):
                     raise ValueError('invalid tool arguments lack matching rejection feedback')
                 del invalid_tools[message['id']]
+            request = pending_tool_requests.pop(message['id'])
+            if confirmation_policy:
+                key = (request['threadId'], request['turnId'], request['callId'])
+                result_receipts[key] = {'response': message['result'],
+                                       'tool': request['tool'], 'confirmed': False}
+                confirm_result(key)
             pending_tools.pop(message['id'])
             continue
         if direction == 'out' and method:
             if method == 'turn/start' and pending_tools and terminal_policy == 2:
                 raise ValueError('new turn started before pending tool results')
-            if method not in {'initialize','initialized','thread/start','turn/start'}:
+            if method == 'turn/interrupt':
+                key = (params.get('threadId'), params.get('turnId'))
+                if (interrupt_policy != 1 or set(params) != {'threadId', 'turnId'}
+                        or key not in turns or key in finished_turns
+                        or key in interrupt_requests or 'id' not in message):
+                    raise ValueError('unbound or unapproved turn interruption')
+                interrupt_requests[key] = {'rpc_id': message['id'], 'acknowledged': False}
+            elif method not in {'initialize','initialized','thread/start','turn/start'}:
                 raise ValueError('unapproved client method: '+method)
             if 'id' in message:
                 if message['id'] in requests:
@@ -353,6 +382,9 @@ def _audit(raw, *, require_terminal, require_real):
                     raise ValueError('turn has unknown thread')
                 turns[(thread_id,message['result']['turn']['id'])] = request['params']
                 terminal = False
+            if request['method'] == 'turn/interrupt':
+                key = (request['params']['threadId'], request['params']['turnId'])
+                interrupt_requests[key]['acknowledged'] = True
             continue
         if direction == 'in' and 'id' in message and method:
             if method != 'item/tool/call':
@@ -399,6 +431,7 @@ def _audit(raw, *, require_terminal, require_real):
             if message['id'] in pending_tools:
                 raise ValueError('duplicate pending server request ID')
             pending_tools[message['id']] = key
+            pending_tool_requests[message['id']] = params
             if invalid is None:
                 tool_requests.append(message)
             else:
@@ -439,29 +472,44 @@ def _audit(raw, *, require_terminal, require_real):
                 registered = {t['name'] for t in threads.get(params.get('threadId'), {}).get('dynamicTools', [])}
                 if item.get('tool') not in registered or item.get('namespace') is not None:
                     raise ValueError('workspace session observed an unknown dynamic tool')
+                if confirmation_policy and method == 'item/completed' and isinstance(item.get('id'), str):
+                    key = (params.get('threadId'), params.get('turnId'), item['id'])
+                    result_completions[key] = params
+                    confirm_result(key)
         if direction == 'in' and method == 'error':
             key = (params.get('threadId'),params.get('turnId'))
             if params.get('willRetry') is not True or key not in turns:
                 raise ValueError('workspace session reported terminal or unbound error')
         if direction == 'in' and method == 'turn/completed':
             key = (params.get('threadId'),params['turn']['id'])
-            if key not in turns or params['turn'].get('status') != 'completed':
+            interrupted = (params['turn'].get('status') == 'interrupted'
+                           and interrupt_policy == 1 and key in interrupt_requests)
+            if key not in turns or (params['turn'].get('status') != 'completed' and not interrupted):
                 raise ValueError('workspace turn failed or has unknown identity')
             if key in finished_turns:
                 raise ValueError('duplicate workspace terminal')
             if key in pending_tools.values() and terminal_policy == 1:
                 raise ValueError('workspace turn completed before pending tool results')
-            if any(owner[:2] == key for owner in sleep_state.get('pending', {})):
+            if not interrupted and any(owner[:2] == key for owner in sleep_state.get('pending', {})):
                 raise ValueError('workspace turn completed with unfinished sleep item')
-            terminal = True
+            terminal = not interrupted
+            if interrupted:
+                interrupted_turns.add(key)
             finished_turns.add(key)
     if not threads or not turns:
         raise ValueError('workspace provenance lacks started thread/turn')
     if require_terminal and (not terminal or pending_tools):
         raise ValueError('workspace session has no completed terminal turn')
+    if any(not interrupt_requests[key]['acknowledged'] for key in interrupted_turns):
+        raise ValueError('workspace interruption lacks its RPC acknowledgement')
     return {'real':real, 'launch':launch, 'threads':threads, 'turns':turns,
             'tool_requests':tool_requests, 'rejected_tool_calls':rejected_tool_calls,
-            'terminal':terminal and not pending_tools, 'events':events}
+            'terminal':terminal and not pending_tools, 'events':events,
+            'tool_result_confirmation': {'policy_version': confirmation_policy,
+                'sent': len(result_receipts),
+                'server_confirmed': sum(r['confirmed'] for r in result_receipts.values()),
+                'unconfirmed_call_ids': [key[2] for key, r in result_receipts.items() if not r['confirmed']]},
+            'interrupted_turns': sorted(interrupted_turns)}
 
 
 def audit_workspace_session(path, *, require_terminal=True, require_real=True, offset=None):
@@ -474,7 +522,8 @@ def audit_workspace_session(path, *, require_terminal=True, require_real=True, o
             'thread_ids':list(report['threads']),
             'tool_calls':len(report['tool_requests']) + report['rejected_tool_calls'],
             'rejected_tool_calls':report['rejected_tool_calls'],
-            'terminal':report['terminal'], 'sealable_generation':report['real']}
+            'terminal':report['terminal'], 'sealable_generation':report['real'],
+            'tool_result_confirmation': report['tool_result_confirmation']}
 
 
 def _binding(raw, proposal, metadata, theory, model, *, require_real):

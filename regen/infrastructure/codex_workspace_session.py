@@ -69,6 +69,28 @@ class ProviderHTTPError(SessionProtocolError):
 
 SLEEP_POLICY_VERSION = 2
 MAX_DEFERRED_TOOL_CALLS = 64
+TRUSTED_FAILURE_INTERRUPT_SECONDS = 2.0
+
+
+def tool_result_confirmed(params, response, *, owner, tool):
+    """A server display receipt confirms delivery, never a proof or model reading.
+
+    Notifications may precede the RPC or arrive while another callback runs.
+    An incomplete display item is not an acknowledgement. Do not infer one
+    from subsequent model output, a terminal turn, or an elapsed deadline.
+    """
+    item = params.get('item', {})
+    if ((params.get('threadId'), params.get('turnId'), item.get('id')) != owner
+            or item.get('tool') != tool or item.get('namespace') is not None):
+        raise ValueError('dynamic tool result confirmation identity mismatch')
+    if (item.get('status') not in {'completed', 'failed'}
+            or type(item.get('success')) is not bool
+            or not isinstance(item.get('contentItems'), list)):
+        return False
+    if (item['success'] != response['success']
+            or item['contentItems'] != response['contentItems']):
+        raise ValueError('dynamic tool result confirmation differs from sent result')
+    return True
 
 
 def validate_sleep_event(params, method, known_turns, state, *, policy_version=1):
@@ -184,6 +206,10 @@ class CodexWorkspaceSession:
         self._serial = 0
         self._buffer = b''
         self._calls = {}
+        self._tool_results = {}
+        self._tool_completions = {}
+        self._model_item_activity = {}
+        self._model_item_diagnostics = set()
         self._broken = False
         self._closed = False
         self._lock = threading.Lock()
@@ -404,7 +430,52 @@ class CodexWorkspaceSession:
             self._untrusted_model_clock('late_model_activity_after_completion', (key,))
             return
         self._model_work_items.add(key)
+        now = time.time()
+        activity = self._model_item_activity.setdefault(key, {'started_at_unix': now})
+        activity['last_activity_at_unix'] = now
         self._observe_model_work()
+
+    def _diagnose_open_messages(self, boundary, *, except_key=None):
+        # A missing completion can be legitimate during an asynchronous tool.
+        # Diagnose it early, without changing clocks, interrupting, or claiming
+        # that the message completed. In particular, no age/proof-progress cap.
+        for key in sorted(self._model_work_items, key=lambda value: tuple(map(str, value))):
+            if key[2] != 'agentMessage' or key == except_key:
+                continue
+            identity = (key, boundary)
+            if identity in self._model_item_diagnostics:
+                continue
+            self._model_item_diagnostics.add(identity)
+            self._event('local', {'event': 'model_message_completion_pending',
+                'thread_id': key[0], 'turn_id': key[1], 'item_id': key[3],
+                'boundary': boundary, 'diagnostic_only': True, 'clock_effect': 'none',
+                **self._model_item_activity.get(key, {})})
+
+    def _confirm_tool_result(self, key):
+        result, completion = self._tool_results.get(key), self._tool_completions.get(key)
+        if result is None or result['state'] not in {'sent', 'server_confirmed'} or completion is None:
+            return
+        try:
+            confirmed = tool_result_confirmed(completion, result['response'],
+                                              owner=key, tool=result['tool'])
+        except ValueError as error:
+            raise SessionProtocolError(str(error)) from error
+        if confirmed and result['state'] != 'server_confirmed':
+            result['state'] = 'server_confirmed'
+            self._event('local', {'event': 'tool_result_server_confirmed',
+                'thread_id': key[0], 'turn_id': key[1], 'call_id': key[2],
+                'rpc_id': result['rpc_id'], 'response_sha256': result['response_sha256'],
+                'authority': 'server_result_receipt_only'})
+
+    def _result_confirmation_summary(self):
+        return {'policy_version': 1,
+            'sent': sum(value['state'] in {'sent', 'server_confirmed'}
+                        for value in self._tool_results.values()),
+            'server_confirmed': sum(value['state'] == 'server_confirmed'
+                                    for value in self._tool_results.values()),
+            'unconfirmed_call_ids': [key[2] for key, value in self._tool_results.items()
+                                     if value['state'] != 'server_confirmed'],
+            'notice': 'Delivery receipts do not establish that the model understood a result.'}
 
     def _model_work_notification(self, method, params):
         """Bound preparation overrides to observed model-item lifecycles.
@@ -432,6 +503,8 @@ class CodexWorkspaceSession:
             key = (self.thread_id, self.turn_id, item['type'], item.get('id'))
             if method == 'item/started':
                 self._start_model_item(key)
+                if item['type'] == 'agentMessage':
+                    self._diagnose_open_messages('later_agent_message_started', except_key=key)
             else:
                 self._finish_stream_retry()
                 self._model_work_closed_items.add(key)
@@ -442,6 +515,10 @@ class CodexWorkspaceSession:
             self._start_model_item((self.thread_id, self.turn_id, deltas[method], params.get('itemId')))
         elif method in ('item/started', 'item/completed') and item.get('type') == 'dynamicToolCall':
             self._finish_stream_retry()
+            if method == 'item/completed' and isinstance(item.get('id'), str):
+                key = (self.thread_id, self.turn_id, item['id'])
+                self._tool_completions[key] = deepcopy(params)
+                self._confirm_tool_result(key)
 
     def __enter__(self):
         return self
@@ -527,25 +604,26 @@ class CodexWorkspaceSession:
         deadline = time.monotonic() + self._timeout
         return self._read_message(deadline=deadline)
 
-    def _read_message(self, *, deadline=None, callback_stop=None, available_only=False):
+    def _read_message(self, *, deadline=None, callback_stop=None, available_only=False,
+                      shutdown=False):
         """Exactly one reader owns stdout/buffer at a time, including callbacks."""
         while True:
             if callback_stop is not None and callback_stop.is_set():
                 return None
-            if self._cancel_event is not None and self._cancel_event.is_set():
+            if not shutdown and self._cancel_event is not None and self._cancel_event.is_set():
                 raise SessionCancelled('workspace coordinator cancelled')
-            if (callback_stop is None and self._feedback_retry_mode
+            if (not shutdown and callback_stop is None and self._feedback_retry_mode
                     and self._provider_feedback_at is not None
                     and time.monotonic() - self._provider_feedback_at >= self._timeout):
                 self._raise_feedback_failure({'kind':'no_complete_response', 'http_status':None},
                     source='provider_feedback_deadline')
-            if self._stream_retry_since is not None and (self._http_retry_mode or self._feedback_retry_mode):
+            if not shutdown and self._stream_retry_since is not None and (self._http_retry_mode or self._feedback_retry_mode):
                 # Bound a stuck reconnect even if it keeps sending heartbeats.
                 # Native callbacks retain their own deadline and are not aborted
                 # merely because the provider is reconnecting in parallel.
                 if callback_stop is None and time.monotonic() - self._stream_retry_since >= self._timeout:
                     self._raise_http_failure(self._stream_retry_error, source='reconnect_deadline')
-            if callback_stop is None and self._progress is not None and self._stream_retry_since is None:
+            if not shutdown and callback_stop is None and self._progress is not None and self._stream_retry_since is None:
                 try:
                     self._progress.check()
                 except SessionProgressDeadline as error:
@@ -558,7 +636,9 @@ class CodexWorkspaceSession:
             if b'\n' in self._buffer:
                 break
             remaining = deadline-time.monotonic() if deadline is not None else .05
-            if self._expired.is_set() or remaining <= 0:
+            if (not shutdown and self._expired.is_set()) or remaining <= 0:
+                if shutdown:
+                    raise TimeoutError('trusted failure interrupt acknowledgement deadline expired')
                 if self._stream_retry_since is not None:
                     self._raise_http_failure(self._stream_retry_error, source='reconnect_timeout')
                 if self._feedback_retry_mode:
@@ -571,6 +651,8 @@ class CodexWorkspaceSession:
                 continue
             chunk = os.read(self.process.stdout.fileno(), 65536)
             if not chunk:
+                if shutdown:
+                    raise SessionProtocolError('app-server closed before interrupted turn was confirmed')
                 if self._stream_retry_since is not None:
                     self._raise_http_failure(self._stream_retry_error, source='reconnect_eof')
                 if self._feedback_retry_mode:
@@ -713,6 +795,53 @@ class CodexWorkspaceSession:
         if self._cancel_event is not None and self._cancel_event.is_set():
             raise SessionCancelled('workspace coordinator cancelled')
 
+    def _interrupt_native_failure(self, error):
+        """Bound a trusted local stop to a real provider interruption terminal.
+
+        The callback reader is already joined. This owner is the only reader;
+        it drains notifications but never executes/replays queued callbacks.
+        Keep the original exception and all charged time if acknowledgement
+        fails. An RPC response alone does not establish a stopped turn.
+        """
+        if (self.process is None or self.process.poll() is not None
+                or not self.thread_id or not self.turn_id or not self._generation_active):
+            return False
+        if self._callback_reader is not None:
+            raise SessionProtocolError('cannot interrupt with an active callback reader')
+        owner = self.thread_id, self.turn_id
+        request_id = self._request('turn/interrupt',
+            {'threadId': owner[0], 'turnId': owner[1]})
+        self._event('local', {'event': 'trusted_failure_interrupt_requested',
+            'thread_id': owner[0], 'turn_id': owner[1], 'rpc_id': request_id,
+            'exception_type': type(error).__name__, 'refund_seconds': 0})
+        deadline = time.monotonic() + TRUSTED_FAILURE_INTERRUPT_SECONDS
+        acknowledged = interrupted = False
+        while not (acknowledged and interrupted):
+            message = self._read_message(deadline=deadline, shutdown=True)
+            method, params = message.get('method'), message.get('params', {})
+            if method is None:
+                if message.get('id') != request_id or 'error' in message or 'result' not in message:
+                    raise SessionProtocolError('invalid trusted failure interrupt response')
+                acknowledged = True
+            elif method == 'turn/completed':
+                turn = params.get('turn', {})
+                if ((params.get('threadId'), turn.get('id')) != owner
+                        or turn.get('status') != 'interrupted' or interrupted):
+                    raise SessionProtocolError('trusted failure lacks matching interrupted terminal')
+                interrupted = True
+            elif method == 'item/tool/call':
+                # A request can have been queued while the failed tool ran.
+                # The interrupt cancels it; receiving it is not execution.
+                self._queue_callback_tool(message)
+            elif method == 'turn/started':
+                raise SessionProtocolError('turn changed during trusted failure interrupt')
+            else:
+                self._notification(message)
+        self._event('local', {'event': 'trusted_failure_interrupt_confirmed',
+            'thread_id': owner[0], 'turn_id': owner[1], 'rpc_id': request_id,
+            'refund_seconds': 0, 'queued_tools_not_executed': len(self._deferred)})
+        return True
+
     def _await(self, request_id, deadline):
         while True:
             message = self._receive(deadline)
@@ -735,6 +864,19 @@ class CodexWorkspaceSession:
 
     def _notification(self, message):
         params = message.get('params', {})
+        item = params.get('item', {})
+        key = (params.get('threadId'), params.get('turnId'), item.get('id'))
+        if (message.get('method') == 'item/completed' and item.get('type') == 'dynamicToolCall'
+                and key in self._tool_results and key[:2] != (self.thread_id, self.turn_id)):
+            # A display receipt for an already executed call may be delivered
+            # after the next turn starts. It cannot execute a callback or close
+            # any model item in the current turn.
+            self.last_notification_receipt = self._notification_receipts.pop(id(message), None)
+            self._tool_completions[key] = deepcopy(params)
+            self._confirm_tool_result(key)
+            if self._on_notification is not None:
+                self._on_notification(message['method'], deepcopy(params))
+            return
         if (self._awaiting_turn_response
                 and 'id' not in message
                 and message.get('method') in ('item/started', 'item/completed')
@@ -902,6 +1044,9 @@ class CodexWorkspaceSession:
                               'pending_terminal_policy_version':2,
                               'progress_watch_timeout':self._progress_timeout,
                               'tool_argument_policy_version':2,
+                              'tool_result_confirmation_policy_version':1,
+                              'trusted_failure_interrupt_policy_version':1,
+                              'model_item_diagnostics_policy_version':1,
                               'assurance':'os-isolated-tool-allowlist' if isolation else 'audited-tool-allowlist',
                               'exclusive_os_isolation':bool(isolation), 'isolation':isolation})
         self.process = subprocess.Popen(transport_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -987,7 +1132,20 @@ class CodexWorkspaceSession:
         self._check_callback_abort()
         self._calls[key] = 'finished'
         self._event('local', {'event':'tool_finished', 'call_id':call_id, 'response':response})
+        response_hash = hashlib.sha256(json.dumps(response, sort_keys=True,
+            ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()
+        self._tool_results[key] = {'state': 'persisted', 'response': deepcopy(response),
+            'response_sha256': response_hash, 'rpc_id': message['id'], 'tool': name}
+        self._event('local', {'event': 'tool_result_persisted', 'thread_id': key[0],
+            'turn_id': key[1], 'call_id': key[2], 'rpc_id': message['id'],
+            'response_sha256': response_hash})
         self._send({'id':message['id'], 'result':response})
+        self._tool_results[key]['state'] = 'sent'
+        self._event('local', {'event': 'tool_result_sent', 'thread_id': key[0],
+            'turn_id': key[1], 'call_id': key[2], 'rpc_id': message['id'],
+            'response_sha256': response_hash})
+        self._confirm_tool_result(key)
+        self._diagnose_open_messages('tool_result_sent')
         if self._deferred_terminal is None:
             self._provider_request_begin('tool_result_sent')
         if self._http_retry_mode and not self._transport_progress_reported:
@@ -1078,6 +1236,7 @@ class CodexWorkspaceSession:
                                 if self._isolation else
                                 'audited-tool-allowlist'),
                             'exclusive_os_isolation': bool(self._isolation),
+                            'tool_result_confirmation': self._result_confirmation_summary(),
                         }
                         if self._progress is not None:
                             result['progress_made'] = (
@@ -1104,14 +1263,26 @@ class CodexWorkspaceSession:
                               'status':params['turn']['status'], 'usage':deepcopy(self._usage),
                               'assurance':'os-isolated-tool-allowlist' if self._isolation else 'audited-tool-allowlist',
                               'exclusive_os_isolation':bool(self._isolation)}
+                    result['tool_result_confirmation'] = self._result_confirmation_summary()
                     if self._progress is not None:
                         result['progress_made'] = self._progress.generation != progress_before
                     self._event('local', {'event':'turn_completed', **result})
                     return result
         except BaseException as error:
             self._runtime_failed(error)
+            interrupted = False
+            from regen.execution.check_tasks import NativePreparationError
+            if isinstance(error, NativePreparationError):
+                try:
+                    interrupted = self._interrupt_native_failure(error)
+                except BaseException as interrupt_error:
+                    error.add_note('trusted failure interruption was not confirmed: ' + str(interrupt_error))
+                    self._event('local', {'event': 'trusted_failure_interrupt_unconfirmed',
+                        'exception_type': type(interrupt_error).__name__,
+                        'thread_id': self.thread_id, 'turn_id': self.turn_id,
+                        'message': str(interrupt_error), 'refund_seconds': 0})
             try:
-                self._generation_stop(type(error).__name__)
+                self._generation_stop(type(error).__name__, handler_stop=interrupted)
             except BaseException as timing_error:
                 error.add_note('generation timing close failed: '+str(timing_error))
             self._broken = True
