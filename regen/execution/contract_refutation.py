@@ -64,7 +64,7 @@ def refutation_capability(contract):
             'notice':'The native parser must export all owned assumptions and parameters, then the kernel checks the closed negation outside that context.'}
 
 
-def render_refutation(contract, proof_body, imports, *, theory_name, audit_path, _schema=SCHEMA):
+def render_refutation(contract, proof_body, imports, *, theory_name, audit_path, _schema=SCHEMA, _modern=False):
     capability = refutation_capability(contract)
     if not capability['can_attempt']:
         raise UnsupportedRefutation(capability['diagnostic'])
@@ -92,6 +92,12 @@ def render_refutation(contract, proof_body, imports, *, theory_name, audit_path,
                    ' refuted_contract' + statement[match.end():])
     support_path = LEGACY_SUPPORT if _schema == LEGACY_SCHEMA else SUPPORT
     support = support_path.read_text().replace('REGEN_AUDIT_PATH', json.dumps(audit_path))
+    if _modern:
+        support = support.replace('fun negative id name int lthy =', 'fun negative id name lthy =')
+        support = support.replace('Specification.theorem false Thm.theoremK NONE',
+            'Specification.theorem {verbose = false, long = false, kind = Thm.theoremK} NONE')
+        support = support.replace(']) int lthy end;', ']) lthy end;')
+        support = support.replace("Outer_Syntax.local_theory_to_proof'", 'Outer_Syntax.local_theory_to_proof')
     keywords = ('keywords "regen_refute" :: thy_goal' if _schema == LEGACY_SCHEMA else
                 'keywords "regen_refute_capture" :: thy_decl\n  and "regen_refute_exported" :: thy_goal')
     if _schema == SCHEMA:
@@ -102,6 +108,8 @@ def render_refutation(contract, proof_body, imports, *, theory_name, audit_path,
         'local_setup \\<open>fn lthy =>\n'
         '  (case try (Bundle.check lthy) ("l4v_word_context", Position.none) of\n'
         '    SOME name => Bundle.unbundle [name] lthy | NONE => lthy)\\<close>\n\n')
+    if _modern:
+        notation = notation.replace('Bundle.unbundle [name]', 'Bundle.unbundle [(true, name)]')
     return ('theory ' + theory_name + '\nimports ' + ' '.join(json.dumps(x) for x in imports)
             + '\n' + keywords + '\nbegin\n\n' + notation + 'ML \\<open>\n'
             + support + '\n\\<close>\n\n' + declaration + '\n' + proof_body.strip()
@@ -141,8 +149,9 @@ def check_export_scan(checker, contracts, output_dir):
     # The canonical v2 preamble is identical to the proof checker. Capture
     # commands install no facts, so equal owned contexts can safely be shared.
     context_free={**first,'context':[]}
+    from regen.execution.native_runtime import is_calg
     template=render_refutation(context_free,'by fail',list(checker.imports()),
-        theory_name=label,audit_path=str(output_dir/'unused-audit.xml'))
+        theory_name=label,audit_path=str(output_dir/'unused-audit.xml'), _modern=is_calg(checker))
     marker='\n\nregen_refute_capture '+json.dumps(first['contract_id'])+' '
     preamble=template.split(marker,1)[0]
     groups=defaultdict(list)
@@ -190,13 +199,19 @@ def validate_refutation_certificate(certificate, contract, checker=None, *, expe
     if c.get('support_sha256') != _sha(support_path.read_bytes()):
         raise ValueError('refutation verifier implementation mismatch')
     if checker is not None:
+        from regen.execution.native_runtime import is_calg
+        if bool(c.get('native_profile')) != is_calg(checker):
+            raise ValueError('refutation native profile differs from checker')
         if c.get('checker_binding_sha256') != checker_binding(checker):
             raise ValueError('refutation checker binding mismatch')
         expected_imports = list(checker.imports())
     if expected_imports is not None and c.get('imports') != list(expected_imports):
         raise ValueError('refutation import binding mismatch')
+    if c.get('native_profile') not in (None, 'isabelle2026-v1'):
+        raise ValueError('unsupported refutation native profile')
     source = render_refutation(contract, c['proof_body'], c['imports'],
-                               theory_name=c['theory_name'], audit_path=c['audit_path'], _schema=c['schema'])
+                               theory_name=c['theory_name'], audit_path=c['audit_path'], _schema=c['schema'],
+                               _modern=c.get('native_profile') == 'isabelle2026-v1')
     for name, value in [('source',source), ('proof_body',c['proof_body']),
                         ('log',c['log']), ('audit_xml',c['audit_xml'])]:
         if c.get(name) != value or c.get(name+'_sha256') != _sha(value):
@@ -221,9 +236,10 @@ def check_refutation(checker, contract, proof_body, output_dir):
     # Local test transports can use a direct path; production uses the native
     # container's writable output mount. This changes I/O only, not the goal.
     audit_path = str(output_dir/'refutation.xml') if getattr(checker, 'refutation_local_io', False) else '/audit-output/refutation.xml'
+    from regen.execution.native_runtime import is_calg
     try:
         source = render_refutation(contract, proof_body, imports,
-                                   theory_name=label, audit_path=audit_path)
+                                   theory_name=label, audit_path=audit_path, _modern=is_calg(checker))
     except UnsupportedRefutation as error:
         result = {'status':'unsupported', 'diagnostic':str(error), 'certificate':None}
         durable(output_dir/'result.json', result, immutable=True)
@@ -267,6 +283,7 @@ def check_refutation(checker, contract, proof_body, output_dir):
         'source':source,'log':log,'audit_xml':xml,
         'returncode':native['returncode'],'native_verdict':native['verdict'],
         'audit':_audit(xml,binding['contract_id'],SCHEMA), 'native_receipt':native.get('native_receipt')}
+    if is_calg(checker): certificate['native_profile'] = 'isabelle2026-v1'
     for name in ('source','proof_body','log','audit_xml'):
         certificate[name+'_sha256'] = _sha(certificate[name])
     certificate['certificate_id'] = 'refutation:'+digest(certificate)

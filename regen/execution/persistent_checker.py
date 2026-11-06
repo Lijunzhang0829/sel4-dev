@@ -36,7 +36,8 @@ class PrefixWorker:
         self.identity = hashlib.sha256((prefix + json.dumps(checker.imports()) + label).encode()).hexdigest()
         for name, value in [('command_timeout',str(getattr(checker, 'persistent_command_timeout', 60))),('prefix',prefix),('imports','\n'.join(checker.imports())),('theory_name',label),('fact_name',fact_name),('line_number',str(source[:source.index(marker)].count('\n')+2))]:
             (self.root/name).write_text(value)
-        (self.root/'server.ML').write_bytes(Path(__file__).with_suffix('.ML').read_bytes())
+        from regen.execution.native_runtime import worker_source
+        (self.root/'server.ML').write_text(worker_source(checker, Path(__file__).with_suffix('.ML').read_text()))
         command = checker._command(checker.work_dir/(label+'.thy'), session='Generated_Refine' if checker.previous_theories else checker.base_session,
                                    writable_mounts=[(self.root,'/worker')])
         command[2:2] = ['--name',self.name]

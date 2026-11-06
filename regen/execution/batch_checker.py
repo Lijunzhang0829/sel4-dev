@@ -50,7 +50,8 @@ class BatchWorker(PrefixWorker):
         self.checkpoints[hashlib.sha256(self.base.encode()).hexdigest()] = self.base
         (self.root/'prefix_key').write_text(hashlib.sha256(self.base.encode()).hexdigest())
         (self.root/'initial_line').write_text(str(source.partition('\nbegin\n')[0].count('\n') + 2))
-        (self.root/'server.ML').write_bytes(Path(__file__).with_suffix('.ML').read_bytes())
+        from regen.execution.native_runtime import worker_source
+        (self.root/'server.ML').write_text(worker_source(checker, Path(__file__).with_suffix('.ML').read_text()))
         command = checker._command(checker.work_dir/(self.label+'.thy'),
             session='Generated_Refine' if checker.previous_theories else checker.base_session,
             writable_mounts=[(self.root,'/worker')])

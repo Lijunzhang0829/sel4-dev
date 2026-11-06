@@ -118,8 +118,8 @@ def load_context(dataset_root: Path) -> dict[str, Any]:
     dataset_root = dataset_root.resolve()
     context = _read(dataset_root / "checker-context.json")
     if (
-        context.get("artifact_type") not in ("refine-checker-context", "crefine-checker-context", "intervaltree-checker-context")
-        or context.get("target_session") not in ("Refine", "CRefine", "Intervaltree")
+        context.get("artifact_type") not in ("refine-checker-context", "crefine-checker-context", "intervaltree-checker-context", "calg-checker-context")
+        or context.get("target_session") not in ("Refine", "CRefine", "Intervaltree", "Calg")
         or context.get("artifact_type") != context.get("target_session", "").lower() + "-checker-context"
         or "environment_gate_id" in context
         or "environment_run" in context

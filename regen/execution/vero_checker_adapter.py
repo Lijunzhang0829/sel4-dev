@@ -713,7 +713,8 @@ class VeroCheckerAdapter:
                 for name,data in snapshot.items():
                     (check_dir/name).write_bytes(data)
             c=self.context
-            checker=IsabelleChecker(self.root,check_dir,image=c['image'],generated_dir=request,
+            checker=IsabelleChecker(self.root,check_dir,image=c['image'],
+                architecture=c.get('architecture','ARM'),generated_dir=request,
                 heaps_dir=self.root/'heaps',l4v_dir=c['l4v'],
                 semantic_workspace=c['semantic_workspace'],isabelle_dir=c['isabelle'],
                 base_session=c['base_session'],base_import=c['base_import'],

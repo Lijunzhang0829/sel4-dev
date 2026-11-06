@@ -22,6 +22,7 @@ from regen.execution.checker_policy import (
 )
 from regen.execution.assembly_stabilizer import extract_last_node_marker
 from regen.execution.native_fact_audit import FACT_SNAPSHOT_ML, target_resolution_ml
+from regen.execution.native_runtime import is_calg, uses_sel4, process_tool, theory_argument
 
 FORBIDDEN_PROOF = re.compile(r"\b(?:sorry|oops|axiomatization|admit)\b")
 DIAGNOSTIC_LINE = re.compile(r'\(line\s+(\d+)\s+of\s+"[^"]+"\)')
@@ -31,6 +32,7 @@ AUDIT_FIELDS = {
     "SIMP_CONG": ("weak", "congruence_name", "owner_theory", "name_hint", "derivation_name", "statement"),
     "SIMP_WEAK_CONG": ("weak", "congruence_name"),
     "SIMP_PROC_LHS": ("simproc_name", "pattern_index", "pattern"),
+    "SIMP_CONG_PROC_LHS": ("simproc_name", "pattern_index", "pattern"),
     "SIMP_LOOPER": ("name",),
     "SIMP_SAFE_SOLVER": ("name",),
     "SIMP_UNSAFE_SOLVER": ("name",),
@@ -112,7 +114,7 @@ def automation_audit_ml(
             + '\n' + automation_context_audit_ml())
 
 
-def automation_context_audit_ml(*, include_wp: bool = True) -> str:
+def automation_context_audit_ml(*, include_wp: bool = True, modern: bool = False) -> str:
     """Snapshot the final global automation context independently of local targets."""
     source = rf'''ML \<open>
 local
@@ -185,6 +187,16 @@ end
         source = '\n'.join(line for line in source.split('\n') if not any(
             token in line for token in ('val wp =', 'val wp_rules =',
                 'val wp_trips =', 'val wp_pre =', '"WP_')))
+    if modern:
+        source = source.replace('Thm.raw_derivation_name thm', '(Thm_Name.print (fst (Thm.raw_derivation_name thm)))')
+        source = source.replace('Thm.get_name_hint thm', '(Thm_Name.print (Thm.get_name_hint thm))')
+        source = source.replace('simps, procs, congs, weak_congs', 'simps, simprocs = procs, congprocs, congs, weak_congs')
+        source = source.replace('"SIMP_RULE" [name]', '"SIMP_RULE" [Thm_Name.print name]')
+        source = source.replace('  val _ = TextIO.closeOut context_stream;', '''  val _ = List.app
+    (fn (name, {lhss, ...}) => app_index (fn (index, pattern) =>
+      row context_stream "SIMP_CONG_PROC_LHS" [name, string_of_int index,
+        Print_Mode.setmp [] (Syntax.string_of_term plain_ctxt) pattern]) lhss) congprocs;
+  val _ = TextIO.closeOut context_stream;''')
     return source
 
 
@@ -328,6 +340,8 @@ class IsabelleChecker:
         self.heaps_dir = heaps_dir.resolve()
         self.l4v_dir = l4v_dir.resolve()
         self.semantic_workspace = semantic_workspace.resolve()
+        from regen.execution.native_runtime import validate
+        validate(self)
         self.work_dir.mkdir(parents=True, exist_ok=True)
         self.generated_dir.mkdir(parents=True, exist_ok=True)
 
@@ -478,7 +492,7 @@ class IsabelleChecker:
             "--mount", f"type=bind,src={self.work_dir},dst=/candidate,readonly",
             "--mount", f"type=bind,src={self.generated_dir},dst=/generated,readonly",
             "-e", f"L4V_ARCH={self.architecture}", self.image,
-            "/workspace/verification/isabelle/bin/isabelle", "process",
+            "/workspace/verification/isabelle/bin/isabelle", process_tool(self),
             "-l", session,
         ]
         if writable_mounts:
@@ -489,14 +503,16 @@ class IsabelleChecker:
                     "--mount", f"type=bind,src={host.resolve()},dst={container}",
                 ])
             command[insertion:insertion] = mount_args
-        for item in SESSION_CATALOGS:
-            command.extend(["-d", f"/sel4-project/verification/l4v/{item}"])
+        from regen.execution.native_runtime import catalogs, configure_command
+        configure_command(self, command)
+        for catalog in catalogs(self):
+            command.extend(["-d", catalog])
         command.extend(["-d", self.base_catalog])
         if (self.generated_dir / "ROOT").is_file():
             command.extend(["-d", "/generated"])
         resources = CURRENT_RESOURCES.get()
         if resources is not None:
-            at = command.index("process") + 1
+            at = command.index(process_tool(self)) + 1
             command[at:at] = ["-o", "threads=" + str(resources.policy["threads"])]
             # Hot workers and cold process checks need the same ML headroom as
             # builds. A Docker limit alone does not constrain Poly/ML's chosen
@@ -510,7 +526,7 @@ class IsabelleChecker:
             command[at:at] = ['env', f'ML_OPTIONS={ml_options}', executable]
         from regen.execution.native_container import docker_limits
         command[2:2] = docker_limits()
-        command.extend(["-T", f"/candidate/{source.stem}"])
+        command.extend(theory_argument(self, f"/candidate/{source.stem}"))
         return command
 
     @native_operation
@@ -771,7 +787,7 @@ class IsabelleChecker:
                 declaration_audits={node_id: proof_dependency_audit_ml(
                     by_id[node_id]['name'], dependency_filename='proof-dependencies.tsv')})
             source = append_before_theory_end(source, automation_context_audit_ml(
-                include_wp=getattr(self, 'base_session', 'Semantic_Base') != 'Intervaltree_Project_Base'))
+                include_wp=uses_sel4(self), modern=is_calg(self)))
             writable_mounts = [(audit_dir, "/audit-output")]
 
         # One-shot reuse for the Runner's immediate acceptance recheck.  It is
@@ -899,7 +915,7 @@ class IsabelleChecker:
         source = self._source(graph, proofs, theory_name=label,
             reuse_arch_context=policy == ARCH_REUSE_CONTEXT, declaration_audits=audits)
         return append_before_theory_end(source, automation_context_audit_ml(
-            include_wp=getattr(self, 'base_session', 'Semantic_Base') != 'Intervaltree_Project_Base'))
+            include_wp=uses_sel4(self), modern=is_calg(self)))
 
     def audit_complete_theory(
         self, graph: dict[str, Any], proofs: dict[str, str], *,
@@ -1032,9 +1048,10 @@ class IsabelleChecker:
         session = "Sealed_Refine" if seal else "Generated_Refine"
         root = self.generated_dir / "ROOT"
         providers = theories[:-1] if seal else theories
+        from regen.execution.native_runtime import catalogs, configure_command, uses_sel4
         definitions = [
             f"session Generated_Refine = {self.base_session} +",
-            *([] if self.base_session == 'Intervaltree_Project_Base' else
+            *([] if not uses_sel4(self) else
               ["  sessions", "    Lib", "    CorresK", "    AInvs"]),
             "  theories",
             *(f"    {name}" for name in providers),
@@ -1048,7 +1065,7 @@ class IsabelleChecker:
                 (self.generated_dir / (theories[-1] + '.thy')).read_bytes())
             definitions += [
                 f'session {session} in "sealed-session" = {"Generated_Refine" if providers else self.base_session} +',
-                *([] if self.base_session == 'Intervaltree_Project_Base' else
+                *([] if not uses_sel4(self) else
                   ["  sessions Lib CorresK AInvs"]), "  theories", f"    {theories[-1]}", "",
             ]
         root.write_text("\n".join(definitions), encoding="utf-8")
@@ -1077,8 +1094,9 @@ class IsabelleChecker:
             "-e", f"L4V_ARCH={self.architecture}", self.image,
             "/workspace/verification/isabelle/bin/isabelle", "build", "-b",
         ]
-        for item in SESSION_CATALOGS:
-            command.extend(["-d", f"/sel4-project/verification/l4v/{item}"])
+        configure_command(self, command)
+        for catalog in catalogs(self):
+            command.extend(["-d", catalog])
         command.extend([
             "-d", self.base_catalog, "-d", "/generated", session,
         ])

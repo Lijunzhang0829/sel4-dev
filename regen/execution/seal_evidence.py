@@ -117,12 +117,12 @@ def validate_seal(state, evidence, *, expected_imports=None, base_session=None, 
     if providers and imports != expected_import_names:
         raise ValueError('build providers differ from checked imports')
     definitions = ['session Generated_Refine = '+evidence['base_session']+' +',
-        *([] if evidence['base_session'] == 'Intervaltree_Project_Base' else
+        *([] if evidence['base_session'] in {'Intervaltree_Project_Base', 'Calg_Project_Base'} else
           ['  sessions','    Lib','    CorresK','    AInvs']), '  theories',
         *('    '+n for n in providers),''] if providers else []
     definitions += ['session Sealed_Refine in "sealed-session" = ' +
         ('Generated_Refine' if providers else evidence['base_session']) + ' +',
-        *([] if evidence['base_session'] == 'Intervaltree_Project_Base' else
+        *([] if evidence['base_session'] in {'Intervaltree_Project_Base', 'Calg_Project_Base'} else
           ['  sessions Lib CorresK AInvs']), '  theories','    '+names[-1],'']
     expected_root = '\n'.join(definitions)
     if _bytes(build,'root') != expected_root:

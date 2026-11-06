@@ -29,7 +29,20 @@ def tree_stamp(root):
         dirs.sort(); files.sort()
         for name in ['.', *dirs, *files]:
             path = Path(directory)/name
-            info = path.stat()
+            if path.is_symlink():
+                link = path.lstat()
+                records.append((str(path.relative_to(root)), 'symlink', os.readlink(path),
+                                link.st_dev, link.st_ino, link.st_size,
+                                link.st_mtime_ns, link.st_ctime_ns))
+            try:
+                info = path.stat()
+            except FileNotFoundError:
+                # Installed distributions may contain unbuilt source-header
+                # links. Bind the link itself; later target creation changes
+                # this stamp and cannot reuse the earlier certificate.
+                if path.is_symlink():
+                    continue
+                raise
             # Directory mtimes detect additions/removals, symlink target metadata
             # detects replacement; include link text as well as resolved target.
             records.append((str(path.relative_to(root)), str(path.resolve()),

@@ -195,6 +195,7 @@ def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=I
         'semantic_workspace':str(context['semantic_workspace']), 'l4v':str(context['l4v']),
         'base_session':runtime['base_session'], 'base_import':runtime['base_import'],
         'base_catalog':runtime['base_catalog'],
+        'architecture':checker_context['architecture'] if direct else 'ARM',
         'isabelle_dir':str(isabelle_dir), 'image':image,
         'isabelle_sha256':isabelle_sha256, 'budgets':budgets,
         'implementation':implementation,
@@ -579,7 +580,8 @@ def checker_for(run_dir, run, directory, timeout, ancestors, *, heaps_dir=None):
         previous_theories=ancestors,generated_dir=generated,heaps_dir=heaps,
         l4v_dir=Path(run['l4v']),semantic_workspace=Path(run['semantic_workspace']),
         base_session=run['base_session'],base_import=run['base_import'],base_catalog=run['base_catalog'],
-        image=run['image'],isabelle_dir=Path(run['isabelle_dir']),import_all_previous=True,
+        image=run['image'],architecture=run.get('architecture','ARM'),
+        isabelle_dir=Path(run['isabelle_dir']),import_all_previous=True,
         complete_context_policy=resolve_complete_context_policy(run))
     checker.declaration_environment = digest(run)
     checker.checker_context_id = run.get('checker_context_id')

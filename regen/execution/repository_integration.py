@@ -145,7 +145,8 @@ def _integrate_repository(run_dir, *, timeout=900):
         for name,source in sources.items():
             (generated/(name+'.thy')).write_text(source)
         checker = IsabelleChecker(root,output/'isabelle',timeout=timeout,
-            image=run['image'],isabelle_dir=Path(run['isabelle_dir']),
+            image=run['image'],architecture=run.get('architecture','ARM'),
+            isabelle_dir=Path(run['isabelle_dir']),
             heaps_dir=heaps,generated_dir=generated,l4v_dir=Path(run['l4v']),
             semantic_workspace=Path(run['semantic_workspace']),base_session=run['base_session'],
             base_import=run['base_import'],base_catalog=run['base_catalog'])

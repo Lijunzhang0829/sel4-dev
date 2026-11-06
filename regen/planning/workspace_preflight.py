@@ -59,7 +59,8 @@ def native_checker(dataset, timeout=900, *, threads=4):
         original=checker._command
         def readonly_command(*args,**kwargs):
             command=original(*args,**kwargs)
-            at=command.index("process")+1
+            from regen.execution.native_runtime import process_tool
+            at=command.index(process_tool(checker))+1
             from regen.execution.check_executor import CURRENT_RESOURCES
             if CURRENT_RESOURCES.get() is None:
                 command[at:at]=["-o","threads="+str(threads)]

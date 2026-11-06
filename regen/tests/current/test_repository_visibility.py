@@ -134,7 +134,8 @@ class NewSchemaExecutionTest(unittest.TestCase):
             context = {'premise_database_path': 'database', 'premise_audit_context_path': 'audit',
                 'semantic_workspace': 'semantic', 'heaps': heaps, 'l4v': 'l4v',
                 'isabelle': 'isabelle', 'image': 'test', 'isabelle_sha256': 'hash', 'budgets': {},
-                'checker_context_id': 'context', 'base_session': 'Base', 'base_import': 'Base.Root',
+                'checker_context_id': 'context', 'architecture': 'ARM',
+                'base_session': 'Base', 'base_import': 'Base.Root',
                 'base_catalog': 'catalog'}
             with patch('regen.preparation.checker_context.load_context', return_value=context):
                 run = execution.init_run(root/'run', root, 'new-run', output/'file-generation-list.json')
