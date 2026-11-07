@@ -342,7 +342,9 @@ class CodexWorkspaceSession:
             callback_executing=self._callback_executing)
         from regen.infrastructure.progress_events import emit_event
         emit_event('generation_provider_request_failed', request_id=request_id,
-            generation_id=self._generation_id, failure=deepcopy(failure))
+            generation_id=self._generation_id, thread_id=self.thread_id, turn_id=self.turn_id,
+            failure=deepcopy(failure), callback_executing=self._callback_executing,
+            active_request_id=self._active_request_id, protocol_source=source)
         raise ProviderFeedbackError(failure, request_id)
 
     def _finish_stream_retry(self):
@@ -367,7 +369,8 @@ class CodexWorkspaceSession:
             self._stream_retry_phase = uuid4().hex
             self._stream_retry_phase_since = time.monotonic()
             emit_event('generation_exclusion_started', phase_id=self._stream_retry_phase,
-                       category='provider_stream_retry')
+                       category='provider_stream_retry',confirmed_interruption=True,
+                       evidence_id='trusted-stream-retry:'+self._stream_retry_phase)
 
     def _observe_model_work(self):
         self._finish_stream_retry()

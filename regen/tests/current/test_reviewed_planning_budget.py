@@ -328,7 +328,7 @@ while not Path({str(pidfile)!r}).exists():
             return EffectiveTimeBudget(ledger, monotonic=lambda:now[0], **kwargs)
         argv = ['reviewed_planning', '--input',str(self.input_path), '--output',str(output),
             '--policy',str(policy), '--model','gpt-5.6-sol', '--reasoning-effort','xhigh',
-            '--include-planning-time', '--effective-seconds','100', '--allow-external-call']
+            '--budget-mode','effective-time', '--include-planning-time', '--effective-seconds','100', '--allow-external-call']
         with patch('sys.argv', argv), patch.object(module, 'EffectiveTimeBudget', side_effect=create), \
                 patch.object(reviewed_planning, 'run_command', side_effect=run_command):
             reviewed_planning.main()

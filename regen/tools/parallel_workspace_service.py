@@ -84,7 +84,7 @@ def _manifest(root):
               '--native-cpus', '--native-memory-mb', '--native-pids-limit',
               '--provider-build-timeout', '--build-ml-heap-mb', '--generation-strategy',
               '--focus-contract-id', '--effective-seconds', '--resume-authorization',
-              '--extend-effective-seconds', '--planning-budget', '--wall-seconds'}
+              '--extend-effective-seconds', '--planning-budget', '--wall-seconds','--budget-mode','--budget-seconds'}
     switches = {'--allow-external-call'}
     arguments = command[5:] if command[1] == '-u' else command[4:]
     options = {}
@@ -159,10 +159,14 @@ def _effective_budget_status(root, invocation_id):
             or checkpoint['sequence'] <= invocation['sequence']):
         return None
     state = checkpoint['data']['state']
-    if (state.get('policy') == POLICY and state.get('paused')
+    from regen.infrastructure.normal_runtime_budget import POLICY as NORMAL_POLICY
+    if (state.get('policy') in (POLICY,NORMAL_POLICY) and state.get('paused')
             and not state.get('finished')):
         return {'reason':state.get('reason') or 'runner_paused', 'checkpoint_event_id':checkpoint['event_id'],
                 'effective_seconds':state['effective_seconds'], 'seconds':state['seconds'],
+                'clock_policy':state['policy'],
+                'effective_experiment_seconds':state['effective_seconds'] if not state.get('unclean_recoveries') else None,
+                'accounting_complete':not bool(state.get('unclean_recoveries')),
                 'resume_requires_authorization':True}
     return None
 

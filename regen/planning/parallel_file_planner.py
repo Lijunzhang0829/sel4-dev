@@ -8,6 +8,7 @@ from copy import deepcopy
 from contextvars import copy_context
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -1287,7 +1288,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                        stop_at_focus_contract=False, and_or_control=None, retry_context=None,
                        http_retry_mode=False, effective_budget=False,
                        feedback_retry_mode=True, retry_failed_request_id=None,
-                       no_progress_turn_limit=3, retry_unresolved=False):
+                       no_progress_turn_limit=3, retry_unresolved=False, normal_runtime_seconds=None):
     from regen.infrastructure.codex_workspace_session import CodexWorkspaceSession
     from regen.infrastructure.workspace_transcript import audit_workspace_session
     from regen.planning.batch_file_planner import INSTRUCTIONS as FORMATS
@@ -1400,6 +1401,9 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                         'Before finish or report_unresolved,', 'Before finish,').replace(
                         'Do not report_unresolved\nmerely to wait for an unsealed provider.',
                         'Keep the contract pending\nwhile waiting for an unsealed provider.')
+                if normal_runtime_seconds is not None:
+                    from regen.infrastructure.normal_runtime_budget import budget_instructions
+                    instructions += '\n'+budget_instructions(normal_runtime_seconds)+'\n'
                 prompt = instructions+strategy['instructions']+'\n'+formats+'\nASSIGNED THEORY: '+theory+'\n'+json.dumps(workspace_view,ensure_ascii=False)
                 if proof_only_mode:
                     prompt += '\n'+PROOF_OR_REFUTATION_INSTRUCTIONS+'\n'
@@ -1739,6 +1743,8 @@ def _feedback_recovery_state(rows, theory):
 
 def _run_budgeted_theory_session(bridge, *args, **kwargs):
     with bridge.worker(args[1]):
+        if getattr(bridge.stage,'normal_runtime',False) is True:
+            kwargs['normal_runtime_seconds'] = bridge.stage.seconds
         return run_theory_session(*args, effective_budget=True, **kwargs)
 
 
@@ -1770,7 +1776,14 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=1, n
                            native_pids_limit=1024, provider_build_timeout=1800,
                            build_ml_heap_mb=None, generation_strategy_name='sketch-reviewed-v1', focus_contract_id=None,
                            effective_seconds=172800, resume_authorization=None,
-                           extend_effective_seconds=None, planning_budget=None, wall_seconds=None):
+                           extend_effective_seconds=None, planning_budget=None, wall_seconds=None, budget_mode="effective-time", budget_seconds=None):
+    if budget_mode == 'normal-runtime':
+        if type(budget_seconds) not in (int,float) or not math.isfinite(budget_seconds) or budget_seconds<=0:
+            raise ValueError('normal-runtime requires explicit positive --budget-seconds')
+        if wall_seconds is not None or extend_effective_seconds is not None:
+            raise ValueError('normal-runtime cannot use a fixed wall cutoff or legacy budget extension')
+        effective_seconds=budget_seconds
+    elif budget_mode != 'effective-time':raise ValueError('unsupported parallel budget mode')
     from regen.execution.proof_session_runner import acquire_run_mutation_lock, release_run_mutation_lock
     from regen.infrastructure.audited_llm import model_settings
     if not allow_external_call:
@@ -1833,6 +1846,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=1, n
             'theory_tool_execution':'serial','file_planner_interface':file_planner_interface,
             **resources.policy,**overview.options,'integration_required':integrate,
             'execution_policy':policy}
+        if budget_mode=='normal-runtime':workspace_policy.update(budget_mode=budget_mode,budget_seconds=budget_seconds)
         if wall_seconds is not None:
             workspace_policy['generation_wall_seconds'] = wall_seconds
         from regen.infrastructure.parallel_generation_budget import initialize_parallel_budget
@@ -1841,7 +1855,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=1, n
         budget, bridge = initialize_parallel_budget(root, overview, workspace_policy,
             seconds=effective_seconds, resume_authorization=resume_authorization,
             extension_seconds=extend_effective_seconds, rows=rows,
-            planning_budget=planning_budget, wall_seconds=wall_seconds)
+            planning_budget=planning_budget, wall_seconds=wall_seconds,clock_mode=budget_mode)
         budget.ledger.append('parallel_budget_invocation',
             service_invocation_id=os.environ.get('INVOCATION_ID'), pid=os.getpid())
         durable(root/'parallel-workspace-policy.json', workspace_policy, immutable=True)

@@ -235,7 +235,7 @@ def continuation_ownership(source):
         if len(lineage)>=128:raise ValueError('continuation lineage exceeds safe lock depth')
         seen.add(current);lineage.append(current)
         launch=read_artifact(current/'launch.json')
-        if launch['config'].get('budget_mode') not in ('effective-time','active-wall'):
+        if launch['config'].get('budget_mode') not in ('normal-runtime','effective-time','active-wall'):
             raise ValueError('legacy inactivity history cannot be migrated to a time budget')
         origin_path=current/'continuation-origin.json'
         if not origin_path.exists():break
@@ -254,12 +254,12 @@ def prepare(root, source, dataset, config, inactivity_seconds, *, restore_before
             effective_seconds=None, wall_seconds=None, resume_authorization=None, _source_locked=False,
             resource_pool_migration=False, source_application_root=None, workspace_recovery_repair=False,
             native_audit_repair=False):
-    effective=config.get('budget_mode') in ('effective-time','active-wall')
+    effective=config.get('budget_mode') in ('normal-runtime','effective-time','active-wall')
     if effective and (not isinstance(resume_authorization,str) or not resume_authorization.strip()):
         raise ValueError('effective-time continuation requires explicit resume authorization')
     launch=read_artifact(Path(source)/'launch.json')
     if effective and launch['config'].get('budget_mode')!=config.get('budget_mode'):
-        if launch['config'].get('budget_mode') not in ('effective-time','active-wall'):
+        if launch['config'].get('budget_mode') not in ('normal-runtime','effective-time','active-wall'):
             raise ValueError('legacy inactivity history cannot be migrated to a time budget')
         raise ValueError('continuation time-budget mode differs')
     with continuation_ownership(source) if effective and not _source_locked else nullcontext():
@@ -282,9 +282,9 @@ def _prepare(root, source, dataset, config, inactivity_seconds, *, restore_befor
     if Path(launch['dataset']).resolve()!=dataset:raise ValueError('continuation dataset differs')
     for key in ('model','effort','threads','transport_idle_timeout','preflight_seconds','check_timeout','candidate_timeout'):
         if config[key]!=old_config[key]:raise ValueError('continuation config differs: '+key)
-    effective=config.get('budget_mode') in ('effective-time','active-wall')
+    effective=config.get('budget_mode') in ('normal-runtime','effective-time','active-wall')
     if effective:
-        budget_key='wall_seconds' if config['budget_mode']=='active-wall' else 'effective_seconds'
+        budget_key='wall_seconds' if config['budget_mode'] in ('active-wall','normal-runtime') else 'effective_seconds'
         requested_seconds=wall_seconds if budget_key=='wall_seconds' else effective_seconds
         if launch.get(budget_key)!=requested_seconds:
             raise ValueError('continuation base effective budget differs; use an explicit extension')

@@ -62,10 +62,21 @@ def provider_recovery_window(args):
 
 
 def budget_options(args):
-    # Old programmatic clients stay legacy unless they explicitly select the new
-    # protocol. The public CLI below defaults to the new 48-hour budget.
+    # Preserve old programmatic clients and the CLI's effective-time default.
+    # Normal runtime is selected explicitly with its own allowance.
     mode=getattr(args,'budget_mode','theory-inactivity')
-    if mode not in ('effective-time','active-wall','theory-inactivity'):raise ValueError('unknown budget mode')
+    if mode not in ('normal-runtime','effective-time','active-wall','theory-inactivity'):raise ValueError('unknown budget mode')
+    if mode=='normal-runtime':
+        import math
+        seconds=getattr(args,'budget_seconds',None)
+        if type(seconds) not in (int,float) or not math.isfinite(seconds) or seconds<=0:
+            raise ValueError('normal-runtime requires explicit positive --budget-seconds')
+        if any(getattr(args,k,None) is not None for k in ('extend_wall_seconds','extend_effective_seconds')):
+            raise ValueError('normal-runtime cannot use legacy budget extensions')
+        authorization=getattr(args,'resume_authorization',None)
+        if getattr(args,'continue_from',None) and (not isinstance(authorization,str) or not authorization.strip()):
+            raise ValueError('continuation requires explicit resume authorization')
+        return mode,seconds,authorization,None
     seconds=(getattr(args,'wall_seconds',172800) if mode=='active-wall'
              else getattr(args,'effective_seconds',172800))
     authorization=getattr(args,'resume_authorization',None)
@@ -283,7 +294,7 @@ def run(args):
 def _run(args,ownership):
     budget_mode,budget_seconds,resume_authorization,extension_seconds=budget_options(args)
     recovery_window_seconds=provider_recovery_window(args)
-    budgeted=budget_mode in ('effective-time','active-wall')
+    budgeted=budget_mode in ('normal-runtime','effective-time','active-wall')
     root=Path(args.output).resolve();root.mkdir(parents=True,exist_ok=False)
     planning_input=Path(args.dataset).resolve()/'repository-planning-input.json'
     expected_contracts=getattr(args,'expected_contracts',None)
@@ -325,12 +336,14 @@ def _run(args,ownership):
             getattr(args,'shared_host_slots',1),
             getattr(args,'shared_host_cleanup_timeout',30)))
         if budgeted:
-            if budget_mode=='active-wall':
+            if budget_mode=='normal-runtime':
+                from regen.infrastructure.normal_runtime_budget import NormalRuntimeBudget as TimeBudget, POLICY as TIME_POLICY
+            elif budget_mode=='active-wall':
                 from regen.infrastructure.active_wall_budget import ActiveWallBudget as TimeBudget, POLICY as TIME_POLICY
             else:
                 from regen.infrastructure.effective_time_budget import EffectiveTimeBudget as TimeBudget, POLICY as TIME_POLICY
             config.update(budget_mode=budget_mode,time_budget_policy=TIME_POLICY,
-                include_planning_time=bool(getattr(args,'include_planning_time',False)),
+                include_planning_time=True if budget_mode=='normal-runtime' else bool(getattr(args,'include_planning_time',False)),
                 workspace_progress_policy='disabled-global-time-budget-v1',
                 application_sha256=application_signature(),planning_input_sha256=planning_input_sha256,
                 model_config_sha256=hashlib.sha256(Path(args.model_config).read_bytes()).hexdigest())
@@ -348,14 +361,14 @@ def _run(args,ownership):
             ledger,continuation=prepare(root,args.continue_from,args.dataset,config,args.inactivity_seconds,
                 restore_before_revision=getattr(args,'restore_before_revision',None),
                 effective_seconds=budget_seconds if budget_mode=='effective-time' else None,
-                wall_seconds=budget_seconds if budget_mode=='active-wall' else None,
+                wall_seconds=budget_seconds if budget_mode in ('active-wall','normal-runtime') else None,
                 resume_authorization=resume_authorization,_source_locked=source_ownership is not None,
                 resource_pool_migration=getattr(args,'resource_pool_migration',False),
                 workspace_recovery_repair=getattr(args,'workspace_recovery_repair',False),
                 native_audit_repair=getattr(args,'native_audit_repair',False),
                 source_application_root=getattr(args,'source_application_root',None))
         from regen.infrastructure.generic_continuation import prompt as continuation_prompt
-        prompt_options=({'wall_seconds':budget_seconds} if budget_mode=='active-wall' else
+        prompt_options=({'wall_seconds':budget_seconds} if budget_mode in ('active-wall','normal-runtime') else
                         {'effective_seconds':budget_seconds} if budgeted else {})
         stage=(TimeBudget(ledger,budget_seconds,resume_authorization=resume_authorization,
             extension_seconds=extension_seconds,
@@ -364,10 +377,13 @@ def _run(args,ownership):
             TheoryActivityStop(ledger,args.inactivity_seconds))
         if budgeted:
             # Extensions alter the authorized cap, not the frozen base binding.
-            prompt_options['wall_seconds' if budget_mode=='active-wall' else 'effective_seconds']=stage.snapshot()['seconds']
+            prompt_options['wall_seconds' if budget_mode in ('active-wall','normal-runtime') else 'effective_seconds']=stage.snapshot()['seconds']
         initial_prompt=instructions(args.inactivity_seconds,
             include_planning=bool(getattr(args,'include_planning_time',False)),
             **prompt_options)+(continuation_prompt(continuation) if continuation else '')
+        if budget_mode=='normal-runtime':
+            from regen.infrastructure.normal_runtime_budget import budget_instructions
+            initial_prompt+='\n'+budget_instructions(stage.seconds)
         report['preparation_elapsed_seconds']=time.monotonic()-started
         report['continuation']=continuation
         started=time.monotonic()
@@ -378,7 +394,7 @@ def _run(args,ownership):
             'planning_input_sha256':planning_input_sha256,
             'model_config':str(Path(args.model_config).resolve()),'inactivity_seconds':args.inactivity_seconds,'fresh_only':not bool(continuation),'continuation':continuation,'log_storage':FORMAT,
             'budget_mode':budget_mode,'effective_seconds':budget_seconds if budget_mode=='effective-time' else None,
-            'wall_seconds':budget_seconds if budget_mode=='active-wall' else None,
+            'wall_seconds':budget_seconds if budget_mode in ('active-wall','normal-runtime') else None,
             'resume_authorization':resume_authorization,'extension_seconds':extension_seconds,
             'prompt_sha256':digest(initial_prompt),'registry_sha256':digest(registry()),
             'model_config_sha256':hashlib.sha256(Path(args.model_config).read_bytes()).hexdigest()})
@@ -599,7 +615,8 @@ def main():
     parser.add_argument('--reasoning',required=True)
     parser.add_argument('--expected-contracts',type=int,required=True)
     parser.add_argument('--inactivity-seconds',type=int,default=3600)
-    parser.add_argument('--budget-mode',choices=('effective-time','active-wall','theory-inactivity'),default='effective-time',help='Select cumulative effective generation or active wall time; inactivity mode is legacy')
+    parser.add_argument('--budget-mode',choices=('normal-runtime','effective-time','active-wall','theory-inactivity'),default='effective-time',help='Preserve effective-time for existing commands; normal-runtime is opt-in')
+    parser.add_argument('--budget-seconds',type=float,help='Required normal-runtime seconds; no default')
     parser.add_argument('--effective-seconds',type=float,default=172800,help='Frozen base effective-generation allowance; default 48 hours, no token cap')
     parser.add_argument('--include-planning-time',action='store_true',
         help='charge repository planning to the cumulative effective-time budget')

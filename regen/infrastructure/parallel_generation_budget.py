@@ -39,9 +39,11 @@ def _verify_planning_models(receipt, run, binding):
         raise ValueError('planning budget model or reasoning effort differs from proof generation')
 
 
-def _planning_budget_source(directory, overview, theories, binding, seconds):
+def _planning_budget_source(directory, overview, theories, binding, seconds, *, clock_mode="effective-time"):
     """Verify a closed planning clock against the exact downstream experiment."""
     from regen.infrastructure.effective_time_budget import CHECKPOINT_KIND, POLICY
+    if clock_mode == "normal-runtime":
+        from regen.infrastructure.normal_runtime_budget import POLICY
     from regen.infrastructure.incremental_log import read_artifact
     directory = Path(directory).resolve()
     receipt_path = directory/'budget-receipt.json'
@@ -241,7 +243,8 @@ class ParallelGenerationBudgetBridge:
             theory = fields.get('theory')
             global_native = (fields.get('_budget_global_integration') is True
                 and theory is None and event in {
-                    'generation_exclusion_started', 'generation_exclusion_finished'})
+                    'generation_exclusion_started', 'generation_exclusion_finished',
+                    'native_request_started', 'native_request_finished'})
             if theory not in self.stage.theories and not global_native:
                 self.stage.cancel('effective_clock_missing_theory')
                 raise ValueError('parallel generation clock requires a registered theory lane')
@@ -255,9 +258,16 @@ class ParallelGenerationBudgetBridge:
                 self.stage.finish_provider_request(theory, fields['request_id'],
                     outcome=fields['outcome'], failure=fields.get('failure'))
             elif event == 'generation_provider_request_failed':
-                self.stage.deactivate(theory)
-                self.stage.ledger.append(event, theory=theory, evidence=dict(fields),
+                normal_runtime = getattr(self.stage,'normal_runtime',False) is True
+                # Missing callback state is not evidence that native work has
+                # stopped. Keep charging that lane until its owner closes.
+                callback_pending = fields.get('callback_executing') is not False
+                if not normal_runtime or not callback_pending:
+                    self.stage.deactivate(theory)
+                receipt=self.stage.ledger.append(event, theory=theory, evidence=dict(fields),
                     disposition='one_resend_then_credit_only_after_complete_response')
+                if normal_runtime:
+                    self.stage.confirm_provider_failure(theory,receipt['event_id'],blocked=not callback_pending)
             elif event == 'provider_feedback_retry_succeeded':
                 self.stage.credit_provider_request(fields['failed_request_id'],
                     fields['successful_request_id'])
@@ -280,9 +290,14 @@ class ParallelGenerationBudgetBridge:
             elif event == 'generation_provider_http_failure':
                 # This lane cannot generate after a confirmed provider failure.
                 # Do not refund earlier reasoning or hide a healthy peer's work.
-                self.stage.deactivate(theory)
-                self.stage.ledger.append(event, theory=theory, evidence=dict(fields),
+                normal_runtime = getattr(self.stage,'normal_runtime',False) is True
+                callback_pending = fields.get('callback_executing') is not False
+                if not normal_runtime or not callback_pending:
+                    self.stage.deactivate(theory)
+                receipt=self.stage.ledger.append(event, theory=theory, evidence=dict(fields),
                     disposition='close_owner_then_coordinator_retry_decision', refund_seconds=0)
+                if normal_runtime:
+                    self.stage.confirm_provider_failure(theory,receipt['event_id'],blocked=not callback_pending)
             elif event == 'generation_network_pause_requested':
                 self.stage.ledger.append(event, theory=theory, evidence=dict(fields),
                     disposition='pause_resume_latest_accepted_with_separate_draft',
@@ -304,7 +319,9 @@ class ParallelGenerationBudgetBridge:
                     self.stage.cancel('effective_clock_phase_error')
                     raise ValueError('invalid or duplicate effective clock phase')
                 self.phases[identity] = (theory,
-                    self.stage.begin_exclusion(reason, worker_id=theory))
+                    self.stage.begin_exclusion(reason, worker_id=theory,**(
+                        {'confirmed':bool(fields.get('confirmed_interruption')),'evidence_id':fields.get('evidence_id')}
+                        if getattr(self.stage,'normal_runtime',False) else {})))
             elif event == 'generation_exclusion_finished':
                 identity = fields['phase_id']
                 if identity not in self.phases or self.phases[identity][0] != theory:
@@ -313,8 +330,10 @@ class ParallelGenerationBudgetBridge:
                 _, handle = self.phases.pop(identity)
                 self.stage.end_exclusion(handle)
             elif event == 'theory_generation_started':
+                if getattr(self.stage,'normal_runtime',False):self.stage.provider_recovered(theory)
                 self.stage.select(theory, worker_id=theory)
             elif event == 'theory_generation_stopped':
+                if getattr(self.stage,'normal_runtime',False):self.stage.provider_stopped(theory)
                 self.stage.deactivate(theory)
             else:
                 self.stage.set_model_overlap(event == 'model_work_observed', worker_id=theory)
@@ -332,9 +351,13 @@ class ParallelGenerationBudgetBridge:
 
 def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
                                resume_authorization=None, extension_seconds=None, rows=None,
-                               planning_budget=None, wall_seconds=None):
+                               planning_budget=None, wall_seconds=None, clock_mode="effective-time"):
     """Bind the clock before launch; never give a legacy continuation zero cost."""
     from regen.infrastructure.effective_time_budget import EffectiveTimeBudget, POLICY, CHECKPOINT_KIND
+    if clock_mode == 'normal-runtime':
+        from regen.infrastructure.normal_runtime_budget import NormalRuntimeBudget as Budget, POLICY
+    elif clock_mode == 'effective-time':Budget=EffectiveTimeBudget
+    else:raise ValueError('unsupported parallel clock mode')
     root = Path(root)
     if any((root/name).exists() for name in ('native-watchdog-budget-transfer.json',
             'resource-reduction-budget-transfer.json', 'provider-feedback-transfer.json')):
@@ -374,10 +397,12 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
     if has_history and not prior_clock:
         raise ValueError('legacy experiment has generated work without the effective budget clock; '
                          'an audited accounting migration is required, never resume from zero')
+    if clock_mode=='normal-runtime' and not prior_clock and planning_budget is None:
+        raise ValueError('normal-runtime requires a matching reviewed planning budget receipt; planning may not be free')
     source = source_identity = None
     if planning_budget is not None:
         source, source_identity = _planning_budget_source(
-            planning_budget, overview, theories, binding, seconds)
+            planning_budget, overview, theories, binding, seconds, clock_mode=clock_mode)
         if planning_completed:
             prior_import = planning_completed[0]['data']
             if any(prior_import.get(key) != value for key, value in source_identity.items()):
@@ -399,7 +424,8 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
         raise ValueError('parallel effective budget ledger is missing its source binding')
     else:
         ledger.append('parallel_budget_binding', **identity)
-    if source is not None and not planning_completed:
+    continuous_planning_handoff = source is not None and not planning_completed
+    if continuous_planning_handoff:
         _import_planning_budget(ledger, source, source_identity, root, overview.run)
         # This is a continuous, already-authorized experiment transition, not an
         # operator resume after an interruption. Later resumes still need their
@@ -411,9 +437,9 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
             if row.get('green_count', 0):
                 _, state = overview._state(row['theory'])
                 baseline.update(set(theories[row['theory']]) & set(state['proofs']))
-    stage = EffectiveTimeBudget(ledger, seconds=seconds,
+    stage = Budget(ledger, seconds=seconds,
         resume_authorization=resume_authorization, extension_seconds=extension_seconds,
-        include_planning=include_planning)
+        include_planning=include_planning,**({'handoff':continuous_planning_handoff} if clock_mode=='normal-runtime' else {}))
     stage.bind_wall_limit(wall_seconds)
     try:
         stage.register(theories, baseline_green=baseline)
@@ -763,6 +789,9 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
         raise ValueError('continuation requires a new execution identity')
     ledger = Ledger(source_dir/'effective-generation-budget', source_run['run_id'])
     bindings = [r for r in ledger.rows if r['kind'] == 'parallel_budget_binding']
+    from regen.infrastructure.normal_runtime_budget import POLICY as NORMAL_POLICY
+    if len(bindings)==1 and bindings[0]['data'].get('policy')==NORMAL_POLICY:
+        POLICY=NORMAL_POLICY
     if (len(bindings) != 1 or bindings[0]['data']['run_sha256'] != digest(source_run)
             or bindings[0]['data']['policy'] != POLICY):
         raise ValueError('invalid source budget binding')

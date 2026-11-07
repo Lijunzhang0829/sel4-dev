@@ -2355,6 +2355,10 @@ def main() -> int:
                           help="Explicitly bound diagnostic workflow variant; baseline preserves the original prompt")
     parallel.add_argument("--focus-contract-id", default=None,
                           help="Prioritize one unproved fixed contract ID without adding mathematical guidance")
+    parallel.add_argument("--budget-mode",choices=['normal-runtime','effective-time'],default='effective-time',
+                          help="Preserve effective-time for existing commands; normal-runtime is opt-in")
+    parallel.add_argument("--budget-seconds",type=float,
+                          help="Required positive normal-runtime allowance; no default")
     parallel.add_argument("--effective-seconds", type=float, default=172800,
                           help="Global effective generation allowance (default 48h); union of parallel worker activity")
     parallel.add_argument("--planning-budget", type=Path, default=None,
@@ -2398,6 +2402,7 @@ def main() -> int:
                 generation_strategy_name=args.generation_strategy,
                 focus_contract_id=args.focus_contract_id,
                 effective_seconds=args.effective_seconds,
+                budget_mode=args.budget_mode,budget_seconds=args.budget_seconds,
                 wall_seconds=args.wall_seconds,
                 planning_budget=args.planning_budget,
                 resume_authorization=args.resume_authorization,

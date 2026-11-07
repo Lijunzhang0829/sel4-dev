@@ -27,15 +27,20 @@ def file_hash(path):
 
 
 class ReviewedPlanningBudget:
-    def __init__(self, root, *, seconds, binding):
+    def __init__(self, root, *, seconds, binding, budget_mode="effective-time"):
+        if budget_mode == 'normal-runtime':
+            from regen.infrastructure.normal_runtime_budget import NormalRuntimeBudget as Budget, POLICY as policy
+        elif budget_mode == 'effective-time':
+            Budget,policy=EffectiveTimeBudget,POLICY
+        else:raise ValueError('unsupported reviewed planning clock')
         self.root = Path(root)
         self.binding = dict(binding)
         self.ledger = Ledger(self.root/'budget', self.root.name)
         if self.ledger.rows:
             raise ValueError('reviewed planning requires a fresh budget; never reset charged work')
         self.ledger.append('reviewed_planning_budget_binding', **self.binding,
-                           seconds=seconds, include_planning=True, policy=POLICY)
-        self.stage = EffectiveTimeBudget(self.ledger, seconds=seconds, include_planning=True)
+                           seconds=seconds, include_planning=True, policy=policy)
+        self.stage = Budget(self.ledger, seconds=seconds, include_planning=True)
         self.process = None
         self.process_lock = threading.RLock()
         self.requests = {}
@@ -76,7 +81,7 @@ class ReviewedPlanningBudget:
                         or new['retry_of'] != failed or old.get('credited_to')):
                     raise ValueError('invalid planning retry credit')
                 self.stage.check()  # A prospective credit never bypasses cutoff.
-                seconds = old['charged_seconds']
+                seconds = 0. if getattr(self.stage,'normal_runtime',False) else old['charged_seconds']
                 self.stage.effective_seconds -= seconds
                 self.stage.planning_seconds -= seconds
                 self.stage.provider_requests.other_excluded_effective_seconds += seconds
@@ -86,7 +91,8 @@ class ReviewedPlanningBudget:
                 self.stage._write_state('planning_request_retry_credit', correction={
                     'failed_request_id':failed, 'successful_request_id':success,
                     'effective_seconds':seconds, 'planning_seconds':seconds,
-                    'policy':'successful-planning-retry-exclusion-v1',
+                    'policy':('normal-runtime-no-refund-v1' if getattr(self.stage,'normal_runtime',False)
+                              else 'successful-planning-retry-exclusion-v1'),
                     'original_consumption_preserved':True})
             else:
                 raise ValueError('unknown planning request event')
@@ -226,7 +232,7 @@ class ReviewedPlanningBudget:
         frozen_path = self.root/'frozen-plan.json'
         durable(frozen_path, frozen, immutable=True)
         receipt = {
-            'schema_version': 1, 'state': 'complete', 'policy': POLICY,
+            'schema_version': 1, 'state': 'complete', 'policy': self.stage.policy,
             'include_planning': True, 'seconds': self.stage.seconds,
             **{k: self.binding[k] for k in ('input_sha256', 'model', 'reasoning_effort')},
             'frozen_plan_sha256': file_hash(frozen_path),

@@ -116,6 +116,8 @@ def main():
     p.add_argument('--reasoning-effort',default='medium')
     p.add_argument('--include-planning-time',action='store_true',
                    help='Charge draft, review repairs and revision to the shared effective budget')
+    p.add_argument('--budget-mode',choices=['normal-runtime','effective-time'],default='effective-time')
+    p.add_argument('--budget-seconds',type=float,help='Required normal-runtime seconds; no default')
     p.add_argument('--effective-seconds',type=float,default=172800,
                    help='Total planning plus proof allowance; handed off without resetting costs')
     p.add_argument('--max-revision-rounds',type=int,default=3,
@@ -130,6 +132,12 @@ def main():
                    help='Hard preservation bounds for sealed theories and accepted graph membership')
     p.add_argument('--allow-external-call',action='store_true')
     a=p.parse_args()
+    if a.budget_mode=='normal-runtime':
+        import math
+        if type(a.budget_seconds) not in (int,float) or not math.isfinite(a.budget_seconds) or a.budget_seconds<=0:
+            p.error('normal-runtime requires explicit positive --budget-seconds')
+        a.effective_seconds=a.budget_seconds
+        a.include_planning_time=True
     if not a.allow_external_call: p.error('Explicit external-call authorization required')
     if a.max_revision_rounds < 1: p.error('At least one actual revision round is required')
     if bool(a.revision_seed) != bool(a.initial_review):
@@ -198,7 +206,7 @@ def _run(a, root):
     budget=None
     if a.include_planning_time:
         from regen.infrastructure.reviewed_planning_budget import ReviewedPlanningBudget
-        budget=ReviewedPlanningBudget(root,seconds=a.effective_seconds,
+        budget=ReviewedPlanningBudget(root,seconds=a.effective_seconds,budget_mode=a.budget_mode,
             binding={key:binding[key] for key in ('input_sha256','model','reasoning_effort','policy_sha256',
                 'recovery_source_run','recovery_source_tail_event_id') if key in binding})
     def planner(stage, config):

@@ -204,11 +204,33 @@ class GenericTimeBudgetTests(unittest.TestCase):
         with patch('sys.argv',argv),patch('regen.tools.generic_serial_application.run',
                 return_value={'passed':True,'elapsed_seconds':0}) as invoke,redirect_stdout(io.StringIO()):
             with self.assertRaises(SystemExit) as stopped:main()
-        self.assertEqual(stopped.exception.code,False)
+        self.assertFalse(stopped.exception.code)
         args=invoke.call_args.args[0]
         self.assertEqual(args.budget_mode,'effective-time')
         self.assertEqual(args.effective_seconds,172800)
         self.assertFalse(hasattr(args,'token_budget'))
+
+    def test_cli_requires_explicit_normal_runtime_duration(self):
+        from regen.tools.generic_serial_application import main
+        argv=['generic','--dataset','dataset','--output','output','--model-config','cfg',
+            '--auth','auth','--model','gpt-6-astra','--reasoning','medium','--expected-contracts','287',
+            '--budget-mode','normal-runtime']
+        with patch('sys.argv',argv),patch('regen.tools.generic_serial_application.run',
+                return_value={'passed':True,'elapsed_seconds':0}) as invoke,redirect_stdout(io.StringIO()):
+            with self.assertRaises(SystemExit) as stopped:main()
+        self.assertEqual(stopped.exception.code,2)
+        invoke.assert_not_called()
+
+    def test_cli_normal_runtime_is_explicit_and_keeps_requested_allowance(self):
+        from regen.tools.generic_serial_application import main
+        argv=['generic','--dataset','dataset','--output','output','--model-config','cfg',
+            '--auth','auth','--model','gpt-6-astra','--reasoning','medium','--expected-contracts','287',
+            '--budget-mode','normal-runtime','--budget-seconds','7200']
+        with patch('sys.argv',argv),patch('regen.tools.generic_serial_application.run',
+                return_value={'passed':True,'elapsed_seconds':0}) as invoke,redirect_stdout(io.StringIO()):
+            with self.assertRaises(SystemExit) as stopped:main()
+        self.assertFalse(stopped.exception.code)
+        self.assertEqual(budget_options(invoke.call_args.args[0]),('normal-runtime',7200,None,None))
 
     def test_effective_prompt_can_charge_repository_planning(self):
         value=instructions(3600,effective_seconds=172800,include_planning=True)

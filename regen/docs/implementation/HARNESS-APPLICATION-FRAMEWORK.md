@@ -516,6 +516,23 @@ worker 秒数、每 theory 秒数、预算与暂停原因。固定 contract 分�
 - 达到预算后继续：恢复时显式增加 `--extend-effective-seconds 86400`，即追加 24 小时，
   保留原 48 小时基线和 cutoff，最终比较把扩展段单列。不能改原始预算或清零累计值。
 
+显式 normal-runtime 模式（2026-11-07）：
+
+- 现有入口默认仍为 `effective-time`，旧参数名称、默认额度和冻结命令保持兼容。
+  Ours 的 `parallel-workspace`、`reviewed_planning` 和通用串行入口可以显式选择
+  `--budget-mode normal-runtime --budget-seconds N`，其中 N 必须为正的有限秒数。
+- 新模式使用版本 `normal-wall-minus-confirmed-interruptions-v1`。规划、推理、
+  检索、工具等待、前缀恢复、普通 native 超时、build、seal 和 integration 均计入。
+  重试成功不追溯退款；只排除有受信任证据的中断、显式暂停和离线恢复区间。
+  多 worker 有任一仍可工作时，全局时钟继续按墙钟并集计费。
+- 模型 EOF 不代表 native callback 已停止。失败事件保留 callback、请求及会话身份；
+  callback 未结束或状态未知时仍计费，确认 owner 停止后才关闭该 lane 的计费窗口。
+  其他健康 lane 的时间不受影响。
+- normal-runtime 的规划强制计时；生成通过匹配的 `--planning-budget PATH`
+  一次性继承成本，并计入规划到生成的正常交接时间。旧账本不能隐式改为新政策，
+  同模式暂停恢复保留已消耗额度；崩溃未知尾段必须先审计对账。
+- 该模式不自动修改现有 VERO 入口，也不迁移或恢复已暂停的正式实验。
+
 切换到新实验前仍须核对旧 `proof_idle_watch` 等外部服务的 run 绑定；代码更新不会自动
 停止历史 watchdog。协议无响应、重复工具空转等故障保护保留，但不等同于旧的无 GREEN 额度。
 

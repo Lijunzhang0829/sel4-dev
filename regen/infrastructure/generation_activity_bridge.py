@@ -10,6 +10,7 @@ class GenerationActivityBridge:
         self.lock = threading.RLock()
         self.phases = {}
         self.recovery = None
+        self.failure_evidence = None
 
     @contextmanager
     def acceptance(self, record):
@@ -36,9 +37,12 @@ class GenerationActivityBridge:
             if state['status']=='sealed':
                 self.stage.mark_sealed(theory)
 
-    def recovering(self):
+    def recovering(self, evidence_id=None):
         with self.lock:
-            if self.recovery is None:
+            if getattr(self.stage,'normal_runtime',False):
+                if evidence_id and self.recovery is None:
+                    self.recovery=self.stage.begin_exclusion('provider_recovery',confirmed=True,evidence_id=evidence_id)
+            elif self.recovery is None:
                 self.recovery = self.stage.begin_exclusion('provider_recovery')
 
     def handle(self, event, fields):
@@ -52,13 +56,16 @@ class GenerationActivityBridge:
                         'item_ids', 'model_lifecycle_policy', 'theory') if key in fields},
                     disposition='pause_measurement_invalid', evidence_trusted=False)
                 self.stage.cancel('effective_clock_evidence_error')
-            elif event == 'generation_provider_http_failure':
-                self.stage.ledger.append(event,
+            elif event in ('generation_provider_http_failure','generation_provider_request_failed'):
+                receipt=self.stage.ledger.append(event,
                     evidence={key: fields[key] for key in (
                         'generation_id', 'thread_id', 'turn_id', 'failure',
                         'active_request_id', 'callback_executing', 'protocol_source',
-                        'provider_request_id', 'retry_policy', 'theory') if key in fields},
+                        'provider_request_id', 'request_id', 'retry_policy', 'theory') if key in fields},
                     disposition='bounded_new_thread_retry', refund_seconds=0)
+                if getattr(self.stage,'normal_runtime',False):
+                    self.failure_evidence=receipt['event_id']
+                    if fields.get('callback_executing') is False:self.recovering(self.failure_evidence)
             elif event == 'generation_items_interrupted':
                 self.stage.ledger.append(event,
                     evidence={key: fields[key] for key in (
@@ -71,7 +78,9 @@ class GenerationActivityBridge:
                     raise ValueError('unrecognized effective clock exclusion: '+reason)
                 if identity in self.phases:
                     raise ValueError('duplicate effective clock phase start')
-                self.phases[identity] = self.stage.begin_exclusion(reason)
+                self.phases[identity] = self.stage.begin_exclusion(reason,**(
+                    {'confirmed':bool(fields.get('confirmed_interruption')),'evidence_id':fields.get('evidence_id')}
+                    if getattr(self.stage,'normal_runtime',False) else {}))
             elif event == 'generation_exclusion_finished':
                 self.stage.end_exclusion(self.phases.pop(fields['phase_id']))
             elif event == 'theory_generation_started':
@@ -80,13 +89,14 @@ class GenerationActivityBridge:
                 if self.recovery is not None:
                     handle, self.recovery = self.recovery, None
                     self.stage.end_exclusion(handle)
+                self.failure_evidence=None
             elif event == 'theory_generation_stopped':
                 if hasattr(self.stage, 'note_provider_failure'):
                     self.stage.note_provider_failure()
                 # Starts at confirmed failure/close, never retroactively at the
                 # last token: unexplained silent waiting remains charged.
                 if not self.stage.event.is_set():
-                    self.recovering()
+                    self.recovering(self.failure_evidence)
             elif event in ('model_work_observed', 'model_work_observation_finished'):
                 if hasattr(self.stage, 'set_model_overlap'):
                     self.stage.set_model_overlap(event == 'model_work_observed')
