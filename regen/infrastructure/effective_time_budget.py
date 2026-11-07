@@ -116,6 +116,8 @@ class EffectiveTimeBudget:
         self.workers = {}
         self.exclusions = {}
         self._overlap = set()
+        from regen.infrastructure.native_wait_accounting import NativeWaitAccounting
+        self.native_requests = NativeWaitAccounting()
         self._next_exclusion = 0
         self._theory_seconds = {}
         self._last_tick = self.monotonic()
@@ -232,6 +234,12 @@ class EffectiveTimeBudget:
         self._provider_request_ids = set(self.provider_requests.requests)
         self._provider_request_ids.update(row['data']['request_id'] for row in history
             if row['kind'] == CHECKPOINT_KIND and row['data'].get('boundary') == 'provider_request_started')
+        from regen.infrastructure.native_wait_accounting import NativeWaitAccounting
+        self.native_requests = NativeWaitAccounting.restore(
+            checkpoints[-1]['data']['state'].get('native_request_accounting') if checkpoints else None)
+        native_credited = sum(r['effective_seconds'] for r in self.native_requests.credits.values())
+        if native_credited > self.provider_requests.other_excluded_effective_seconds + 1e-7:
+            raise ValueError('native timeout credits exceed infrastructure accounting')
         self.stage_id = self._append('time_budget_started', policy=self.policy,
             base_seconds=self.base_seconds, seconds=self.seconds,
             resumed_from=prior['event_id'] if prior else None,
@@ -270,7 +278,8 @@ class EffectiveTimeBudget:
                 continue
             reasons = {p['reason'] for p in self.exclusions.values()
                        if p['worker_id'] in (None, worker)}
-            if not reasons or (worker in self._overlap and reasons <= MODEL_OVERLAP_EXCLUSIONS):
+            if not reasons or (worker in self._overlap and 'prefix_preparation' not in reasons
+                               and reasons <= MODEL_OVERLAP_EXCLUSIONS):
                 result.append(worker)
         return result
 
@@ -292,6 +301,8 @@ class EffectiveTimeBudget:
         planning = self._planning_open()
         elapsed = now-self._last_tick
         self.provider_requests.record(elapsed, {w:self.workers[w] for w in workers}, planning)
+        self.native_requests.record(elapsed, {w:self.workers[w] for w in workers}, planning,
+                                    self._overlap | set(self.provider_requests.active))
         if workers or planning:
             self.effective_seconds += elapsed
             if planning:
@@ -310,12 +321,48 @@ class EffectiveTimeBudget:
             finish_reason=self.finish_reason, gate_open=self._gate_open(),
             include_planning=self.include_planning, planning_active=self.planning_active,
             checkpoint_seconds=self.checkpoint_seconds, unclean_recoveries=self.unclean_recoveries)
+        value['native_timing_policy'] = 'native-stages-and-timeout-exclusion-v1'
+        if self.native_requests.active or self.native_requests.credits:
+            value['native_request_accounting'] = self.native_requests.state()
         # Legacy/non-provider runs need no duplicated counters or empty request
         # metadata in thousands of checkpoints. Their raw cost equals net cost.
-        if self.provider_requests.requests or self.provider_requests.other_excluded_effective_seconds:
+        if (self.provider_requests.requests or self.provider_requests.other_excluded_effective_seconds
+                or self.native_requests.credits):
             value.update(provider_request_accounting=self.provider_requests.state(),
                          **self.provider_requests.summary())
         return value
+
+    def begin_native_request(self, worker_id, request_id, binding):
+        with self.lock:
+            self._settle(); self._check_locked()
+            if worker_id not in self.workers:
+                raise ValueError('native request requires an active worker lane')
+            self.native_requests.begin(worker_id, self.workers[worker_id], request_id, binding)
+            self._write_state('native_request_started', worker_id=worker_id,
+                              request_id=request_id, binding=binding)
+
+    def finish_native_request(self, worker_id, request_id, outcome):
+        if outcome not in {'completed', 'timeout', 'watchdog', 'interrupted'}:
+            raise ValueError('unknown native response outcome')
+        with self.lock:
+            self._settle()
+            previous = self.native_requests.credits.get(request_id)
+            receipt = self.native_requests.finish(worker_id, request_id,
+                                                 timed_out=outcome in {'timeout', 'watchdog'})
+            if outcome in {'timeout', 'watchdog'} and previous is None:
+                accounting = self.provider_requests
+                accounting.other_excluded_effective_seconds += receipt['effective_seconds']
+                accounting.other_excluded_worker_seconds += receipt['worker_seconds']
+                self.effective_seconds = max(0., self.effective_seconds-receipt['effective_seconds'])
+                self.worker_seconds = max(0., self.worker_seconds-receipt['worker_seconds'])
+                for theory, seconds in receipt['theory_seconds'].items():
+                    accounting.other_excluded_theory_seconds[theory] = (
+                        accounting.other_excluded_theory_seconds.get(theory, 0.) + seconds)
+                    self._theory_seconds[theory] = max(0., self._theory_seconds[theory]-seconds)
+                accounting.validate(self.effective_seconds, self.worker_seconds, self._theory_seconds)
+            self._write_state('native_request_finished', worker_id=worker_id,
+                request_id=request_id, outcome=outcome, correction=receipt)
+            return receipt
 
     def begin_provider_request(self, worker_id, request_id):
         """Trusted harness boundary: a response is now awaited in this lane."""

@@ -63,12 +63,35 @@ preserves the accepted prefix and releases this worker for other dependency-read
 '''
 
 
+def validate_native_selection(proposal):
+    """Reject malformed selections before runtime/import preparation starts."""
+    if proposal.get('action') not in {'check_theory','check_sketch','probe_helpers','assess_sketch'}:
+        return
+    for key in ('entry_ids', 'target_entry_ids'):
+        if key in proposal:
+            ids = proposal[key]
+            if (not isinstance(ids, list) or not ids
+                    or any(not isinstance(x, str) or not x.strip() for x in ids)
+                    or len(set(ids)) != len(ids)):
+                raise ValueError(key + ' must be a nonempty unique list of proof IDs')
+
+
 DOCUMENT_INSTRUCTIONS = '''You are the continuing File Planner for ONE Isabelle theory, using a persistent source workspace.
 Read the assigned theory with read_theory. Its document.source is the editable .thy draft.
 Implement the fixed goals by editing this file: batch several proofs, add/remove/reorder
 helper declarations, check the current version, then revise using Isabelle feedback.
 Use explicit sketches groups, without legacy proof-DAG, route or scheduling JSON. File order determines
 which earlier proven declarations are available; oops slots export no theorem.
+
+The harness owns pending native progress. Do not emit periodic "still waiting"
+messages or request another check while one is running. Report a new diagnostic
+or a concrete next action instead. Native progress stages and last-command
+locations are diagnostic only, never accepted proof or reusable premises.
+After a missing native response, one fresh-worker retry may distinguish worker
+failure from a candidate stall. If it again returns no localized verdict, use
+a short helper probe or a shortened diagnostic proof prefix before another full
+candidate. Change the earliest unconfirmed step, not an unexecuted downstream
+tactic. Keep the full candidate saved; diagnostic fragments never establish GREEN.
 
 Use proof_action(theory, proposal):
 {"action":"read_entry","entry_id":"stable entry ID"}
@@ -1071,6 +1094,7 @@ class TheoryController(WorkspaceController):
         if arguments['theory'] != self.theory:
             raise ValueError('only the assigned theory may be checked or modified')
         kind, proposal = arguments['kind'], deepcopy(arguments['proposal'])
+        validate_native_selection(proposal)
         helper_attempt = deepcopy(getattr(self, '_helper_attempt', None))
         expected = {'proof_batch':'submit_batch','seal':'finish','statement':'submit_batch','sketch':'check_sketch',
                     'symbol':'resolve_symbols','observe':'observe'}

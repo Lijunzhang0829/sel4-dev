@@ -415,7 +415,21 @@ def check_batch(checker, old, candidate):
                               'Review the diagnostic and choose a new check explicitly; '
                               'the next check rebuilds only the committed GREEN prefix.'}
         if result is None:
-            result = checker._check(source, evidence['label'], timeout=candidate_timeout)
+            from regen.infrastructure.progress_events import emit_event
+            from regen.execution.batch_checker import body
+            from uuid import uuid4
+            timing_prefix = _render(old['graph'], old['proofs'], evidence['imports'], evidence['label'])
+            uid = 'cold-candidate:' + uuid4().hex
+            emit_event('native_request_started', request_id=uid, binding={
+                'prefix_sha256':hashlib.sha256(body(timing_prefix).encode()).hexdigest(),
+                'request_sha256':hashlib.sha256(source.encode()).hexdigest(),
+                'action':'cold-candidate'})
+            outcome = 'interrupted'
+            try:
+                result = checker._check(source, evidence['label'], timeout=candidate_timeout)
+                outcome = 'timeout' if result.get('returncode') == 124 else 'completed'
+            finally:
+                emit_event('native_request_finished', request_id=uid, outcome=outcome)
             result['timed_out'] = result.get('returncode') == 124
             result['timeout_scope'] = 'cold-candidate-including-prefix' if result['timed_out'] else None
             result['timeout_seconds'] = candidate_timeout

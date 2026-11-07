@@ -104,7 +104,7 @@ class ParallelEffectiveBudgetTests(unittest.TestCase):
         self.event('generation_exclusion_finished', 'B', phase_id='q')
         self.assertEqual(self.elapsed(), 30)
 
-    def test_observed_model_work_overrides_only_own_native_exclusion(self):
+    def test_prefix_preparation_remains_excluded_during_model_messages(self):
         self.event('theory_generation_started', 'A')
         self.event('generation_exclusion_started', 'A', phase_id='p', category='prefix_preparation')
         self.now[0] = 10
@@ -113,7 +113,7 @@ class ParallelEffectiveBudgetTests(unittest.TestCase):
         self.event('model_work_observation_finished', 'A')
         self.now[0] = 40
         self.event('generation_exclusion_finished', 'A', phase_id='p')
-        self.assertEqual(self.elapsed(), 15)
+        self.assertEqual(self.elapsed(), 0)
 
     def test_worker_scope_supplies_theory_to_raw_native_and_transport_events(self):
         with redirect_stdout(io.StringIO()), self.bridge.worker('A'):

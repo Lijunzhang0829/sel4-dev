@@ -15,8 +15,30 @@ local
   val parents = map Thy_Info.get_theory imports;
   val thy = Theory.begin_theory (theory_name, Position.none) parents;
   val baseline = map #1 (Thm.all_axioms_of thy);
-  val active = Unsynchronized.ref (NONE : string option);
+  val active = Unsynchronized.ref (SOME "startup" : string option);
   val completed = Unsynchronized.ref ([] : (string * string) list);
+  val stage = Unsynchronized.ref "prefix_execute";
+  val stage_since = Unsynchronized.ref (Time.now ());
+  val phase_times = Unsynchronized.ref ([] : (string * real) list);
+  val current_command = Unsynchronized.ref ("", "");
+  fun progress () = (case !active of NONE => () | SOME stem =>
+    let val elapsed = Time.toReal (Time.- (Time.now (), !stage_since));
+        val times = AList.map_default (op =) (!stage, 0.0) (fn x => x + elapsed) (!phase_times);
+        val (command, line) = !current_command;
+        val (last, last_line) = (case !completed of x :: _ => x | [] => ("", ""));
+        val timing = map (fn (name, seconds) => XML.Elem (("phase",
+          [("name", name), ("seconds", Real.toString seconds)]), [])) times;
+    in publish (stem ^ ".progress.xml") (XML.string_of (XML.Elem (("native_progress",
+         [("worker", worker_id), ("request", stem),
+          ("token", read (stem ^ ".progress_token")), ("stage", !stage),
+          ("command", command), ("line", line),
+          ("last_completed_command", last), ("last_completed_line", last_line)]),
+          [XML.Elem (("timings", []), timing)]))) end);
+  fun set_stage name =
+    let val now = Time.now ();
+        val elapsed = Time.toReal (Time.- (now, !stage_since));
+    in phase_times := AList.map_default (op =) (!stage, 0.0) (fn x => x + elapsed) (!phase_times);
+       stage := name; stage_since := now; progress () end;
   val requested_checkpoints = Unsynchronized.ref ([] : (int * string * string) list);
   val captured_checkpoints = Unsynchronized.ref ([] : (string * Toplevel.state * string) list);
   fun load_checkpoints stem =
@@ -45,6 +67,7 @@ local
         val transitions = Outer_Syntax.parse_text theory (fn () => theory) position text;
         fun step tr st =
           let val started = Time.now ();
+              val _ = (current_command := (Toplevel.name_of tr, command_position tr); progress ());
               val command = Toplevel.command_exception true tr;
               val out = Exn.capture
                 (if !preparing_prefix then command else Timeout.apply
@@ -58,7 +81,7 @@ local
                    then captured_checkpoints := (key, next, text) :: !captured_checkpoints else ())
                    (!requested_checkpoints))
               | Exn.Exn _ => ignore (Exn.capture (fn () => save_state tr st) ()));
-             Exn.release out end;
+             progress (); Exn.release out end;
     in fold step transitions state end;
   fun audit names st =
     let val _ = if Toplevel.is_theory st then () else error "Unclosed proof/context";
@@ -92,6 +115,7 @@ local
   val _ = load_checkpoints "initial";
   val initial = execute (Position.line_file (the (Int.fromString (read "initial_line")))
     ("/candidate/" ^ theory_name ^ ".thy")) initial_text (Toplevel.make_state (SOME thy));
+  val _ = set_stage "prefix_audit";
   val _ = audit (split_lines (read "prefix_facts")) initial;
   val _ = preparing_prefix := false;
   val base = Unsynchronized.ref initial;
@@ -105,6 +129,7 @@ local
       [element "prefix" (!base_text), element "delta" delta,
        XML.Elem (("imports",[]), map (element "import") imports),
        XML.Elem (("facts",[]), map (element "fact") names)])));
+  val _ = set_stage "ready";
   val _ = write "ready" "ready";
   fun loop n =
     if File.exists (path "stop") then ()
@@ -112,7 +137,13 @@ local
     then (OS.Process.sleep (Time.fromMilliseconds 20); loop n)
     else let
       val stem = Int.toString n;
-      val _ = (active := SOME stem; completed := []);
+      val _ = (active := SOME stem; completed := []; current_command := ("", "");
+               stage := "request_received"; stage_since := Time.now (); phase_times := [];
+               progress ());
+      val _ = set_stage (case read (stem ^ ".action") of
+          "check" => "candidate_execute" | "observe" => "observation"
+        | "sketch" => "sketch" | "restore" => "restore" | "commit" => "commit"
+        | _ => "invalid_request");
       val result = Exn.capture (fn () =>
         if read (stem ^ ".action") = "commit" then
           (case !pending of NONE => error "No pending audited batch"
@@ -173,11 +204,13 @@ local
             (Time.fromReal (the (Real.fromString (read "candidate_timeout"))))
             (fn () =>
               let val next = execute position delta (!base);
+                  val _ = set_stage "candidate_audit";
                   val _ = audit names next;
+                  val _ = set_stage "audit_publication";
+                  val _ = publish_audit stem delta names;
               in next end) ();
           (* Native evidence is complete before the response becomes visible.
              stdout remains diagnostic and may be delivered asynchronously. *)
-          val _ = publish_audit stem delta names;
           val _ = checkpoints := !captured_checkpoints @ !checkpoints;
           val _ = pending := SOME (st, !base_text ^ delta);
         in "GREEN" end) ();
@@ -186,6 +219,8 @@ local
             if read (stem ^ ".action") = "observe" then "TIMEOUT\nObservation exceeded the time budget"
             else "TIMEOUT\nCandidate execution and audit exceeded the time budget"
         | Exn.Exn exn => "RED\n" ^ Runtime.exn_message exn);
+      val _ = set_stage "response_publication";
       val _ = publish (stem ^ ".response") answer;
+      val _ = set_stage "response_ready";
     in loop (n+1) end;
 in val _ = loop 1 end;

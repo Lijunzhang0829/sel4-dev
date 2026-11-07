@@ -185,6 +185,7 @@ class BatchTimeoutTest(unittest.TestCase):
             root = Path(tmp)
             worker = object.__new__(BatchWorker)
             worker.root = root; worker.index = 0
+            worker.name = 'test-transaction-worker'; worker.base = ''
             worker.checker = Mock(timeout=1800, batch_candidate_timeout=120)
             (root/'worker.log').write_text('')
             observed = []

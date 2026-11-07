@@ -33,6 +33,7 @@ def run(dataset, output):
         'substitutions': ['synthetic HOL contracts', 'synthetic model-origin eligibility',
                           'temporary delay before native candidate execution'], 'cases': []}
     resources = executor = controller = None
+    stage = None
 
     def passed(name, **values):
         report['cases'].append({'name': name, 'pass': True, **values})
@@ -47,6 +48,14 @@ def run(dataset, output):
         executor = CheckExecutor(root/'check-tasks', workers=1)
         provenance = ScriptedProvenance(root)
         with ExitStack() as stack:
+            from regen.infrastructure.effective_time_budget import EffectiveTimeBudget
+            from regen.infrastructure.experiment_ledger import Ledger
+            from regen.infrastructure.parallel_generation_budget import ParallelGenerationBudgetBridge
+            stage = EffectiveTimeBudget(Ledger(root/'synthetic-budget', 'native-runtime-smoke'), 600)
+            stage.register({CONSUMER:['stable_truth','consumer_truth']})
+            stage.select(CONSUMER, worker_id=CONSUMER)
+            bridge = ParallelGenerationBudgetBridge(stage)
+            stack.enter_context(bridge.worker(CONSUMER))
             stack.enter_context(patch('regen.infrastructure.workspace_transcript.record_workspace_action',
                                       side_effect=provenance.record))
             stack.enter_context(patch('regen.planning.batch_file_planner.validate_call_artifact',
@@ -91,6 +100,48 @@ def run(dataset, output):
             prove('consumer_truth')
             draft = read()
             checker = controller._runtime()[4]
+            # A real in-ML timeout must leave the audited base reusable. The
+            # synthetic flag delays only the trusted worker, never a target proof.
+            from regen.execution.native_runtime import worker_source
+            original_source = worker_source
+            original_worker = checker._batch_worker
+            from regen.execution.proof_batches import _render
+            prefix_source = _render(before['graph'], before['proofs'],
+                checker.imports(), original_worker.label)
+            original_worker.close();checker._batch_worker = None
+
+            def normal_timeout_source(checker, source):
+                text=original_source(checker,source)
+                anchor='let val next = execute position delta (!base);'
+                require(text.count(anchor)==1,'normal timeout injection anchor changed')
+                return text.replace(anchor,'let val _ = if File.exists (path "synthetic_timeout") '+
+                    'then OS.Process.sleep (Time.fromSeconds 2) else (); '+
+                    'val next = execute position delta (!base);',1)
+
+            cold_started=time.monotonic()
+            with patch('regen.execution.native_runtime.worker_source',side_effect=normal_timeout_source):
+                warm=BatchWorker(checker,prefix_source,['stable_truth'],checker.imports())
+            cold_seconds=time.monotonic()-cold_started
+            checker._batch_worker=warm
+            (warm.root/'candidate_timeout').write_text('0.1')
+            (warm.root/'synthetic_timeout').write_text('delay')
+            timed=action({'action':'check_theory','source_sha256':draft['source_sha256']})
+            native=timed['feedback']['check']
+            require(native['timeout_scope']=='candidate-execute-and-audit','normal native timeout not received')
+            require(checker._batch_worker is warm and not warm.closed,'normal timeout destroyed a healthy worker')
+            require(state()['proofs']==before['proofs'],'normal timeout changed accepted state')
+            require(native['native_progress']['diagnostic_only'],'missing bound native stage receipt')
+            require(native['native_progress']['last_completed_command'] is not None,'missing last-command diagnostic')
+            (warm.root/'synthetic_timeout').unlink();(warm.root/'candidate_timeout').write_text('60')
+            reuse_started=time.monotonic()
+            observed=warm.observe_source('theory Timeout_Reuse imports '+
+                ' '.join('"'+x+'"' for x in checker.imports())+
+                '\nbegin\nlemma diagnostic: "True" by simp\nend\n','Timeout_Reuse',timeout=10)
+            require(observed['verdict']=='green' and not warm.closed,'worker unusable after normal timeout')
+            require(stage.snapshot()['excluded_infrastructure_seconds']>0,'native timeout cost was not excluded')
+            passed('normal_native_timeout_keeps_worker_and_excludes_wait',
+                native_progress=native['native_progress'], cold_prefix_seconds=cold_seconds,
+                warm_observation_seconds=time.monotonic()-reuse_started)
             old_worker = getattr(checker, '_batch_worker', None)
             if old_worker is not None:
                 old_worker.close()
@@ -123,6 +174,8 @@ def run(dataset, output):
             require(state()['proofs'] == before['proofs'], 'watchdog changed accepted prefix')
             require(read()['source_sha256'] == draft['source_sha256'], 'watchdog lost saved draft')
             require(checker._batch_worker is None, 'failed worker retained for reuse')
+            require(check['native_progress']['stage'] in {'candidate_execute','candidate_audit','audit_publication'},
+                    'watchdog has no last native stage')
             require(len(observed_workers) == 1 and observed_workers[0].closed,
                     'owned native worker was not discarded')
             require(observed_workers[0].process.poll() is not None, 'native worker still running')
@@ -140,6 +193,7 @@ def run(dataset, output):
             require(state()['status'] == 'sealed', 'recovered synthetic theory did not seal')
             passed('recovered_synthetic_theory_seals')
             report['pass'] = True
+            report['timing_policy_snapshot']=stage.snapshot()
     finally:
         if controller is not None:
             controller.close()
@@ -147,6 +201,8 @@ def run(dataset, output):
             executor.close()
         if resources is not None:
             resources.close()
+        if stage is not None:
+            stage.close()
         report['wall_seconds'] = time.monotonic()-started
         durable(root/'report.json', report)
     return report

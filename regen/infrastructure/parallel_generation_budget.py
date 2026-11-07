@@ -227,7 +227,7 @@ class ParallelGenerationBudgetBridge:
             self.stage.end_exclusion(handle)
 
     def handle(self, event, fields):
-        relevant = {'provider_transport_progress', 'generation_network_pause_requested', 'generation_provider_http_failure', 'generation_items_interrupted',
+        relevant = {'native_request_started', 'native_request_finished', 'provider_transport_progress', 'generation_network_pause_requested', 'generation_provider_http_failure', 'generation_items_interrupted',
                     'generation_provider_request_started', 'generation_provider_request_finished',
                     'generation_provider_request_failed', 'provider_feedback_retry_succeeded',
                     'generation_runtime_integrity_failure',
@@ -245,7 +245,11 @@ class ParallelGenerationBudgetBridge:
             if theory not in self.stage.theories and not global_native:
                 self.stage.cancel('effective_clock_missing_theory')
                 raise ValueError('parallel generation clock requires a registered theory lane')
-            if event == 'generation_provider_request_started':
+            if event == 'native_request_started':
+                self.stage.begin_native_request(theory, fields['request_id'], fields['binding'])
+            elif event == 'native_request_finished':
+                self.stage.finish_native_request(theory, fields['request_id'], fields['outcome'])
+            elif event == 'generation_provider_request_started':
                 self.stage.begin_provider_request(theory, fields['request_id'])
             elif event == 'generation_provider_request_finished':
                 self.stage.finish_provider_request(theory, fields['request_id'],
@@ -738,7 +742,8 @@ def _resource_reduction_policy(source_policy, target_resources):
 def carry_parallel_budget(source_dir, destination, *, authorization, clock_review,
                           target_strategy=None, provider_feedback_review=None,
                           target_execution_policy=None, target_candidate_timeout=None,
-                          target_native_slots=None, target_resources=None):
+                          target_native_slots=None, target_resources=None,
+                          native_runtime_review=None):
     """Carry a stopped full-workspace continuation's ledger, never reset costs.
 
     Caller owns the source mutation lock and must establish stopped liveness.
@@ -893,8 +898,17 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
                 authorization=authorization, refund_seconds=0)
             durable(claim, resource_reduction_transfer, immutable=True)
     native_watchdog_transfer = None
-    if resource_reduction_change is None and any(row.get('policy') == 'verified-native-watchdog-interruption-no-refund-v1'
-           for row in inherited_clock_reviews):
+    if native_runtime_review is not None:
+        if (native_runtime_review.get('policy') != 'native-stage-runtime-repair-v1'
+                or native_runtime_review.get('authorization') != authorization
+                or native_runtime_review.get('source_run_sha256') != digest(source_run)
+                or native_runtime_review.get('target_implementation_sha256') != digest(target_run['implementation'])
+                or any(v is not None for v in (target_strategy, provider_feedback_review,
+                    target_execution_policy, target_candidate_timeout, target_native_slots, target_resources))):
+            raise ValueError('native runtime review does not bind unchanged limits and exact implementations')
+    if resource_reduction_change is None and (native_runtime_review is not None or any(
+           row.get('policy') == 'verified-native-watchdog-interruption-no-refund-v1'
+           for row in inherited_clock_reviews)):
         # One stopped allowance must not fund two descendants. A partial failed
         # import remains claimed and inspectable; retry never grants fresh time.
         import fcntl
@@ -952,6 +966,12 @@ def carry_parallel_budget(source_dir, destination, *, authorization, clock_revie
         target.append('parallel_budget_native_slots_update', **native_slots_change)
     if candidate_timeout_change is not None:
         target.append('parallel_budget_candidate_timeout_update', **candidate_timeout_change)
+    if native_runtime_review is not None:
+        target.append('parallel_budget_native_runtime_update',
+            review_sha256=digest(native_runtime_review), authorization=authorization,
+            native_timing_policy='native-stages-and-timeout-exclusion-v1',
+            historical_costs_unchanged=True, refund_seconds=0,
+            effective_seconds_unchanged=state['effective_seconds'], seconds_unchanged=state['seconds'])
     if inherited_clock_reviews:
         target.append('parallel_budget_clock_review_inherited', authorization=authorization,
             clock_review=clock_review, reviews=inherited_clock_reviews, refund_seconds=0)

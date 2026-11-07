@@ -31,6 +31,8 @@ class BatchWorker(PrefixWorker):
         self.name = 'regen-batch-' + uuid.uuid4().hex[:16]
         self.root = checker.work_dir/self.name
         self.root.mkdir()
+        self._progress_tokens = {'startup': uuid.uuid4().hex}
+        (self.root/'startup.progress_token').write_text(self._progress_tokens['startup'])
         self.base = body(source)
         self.pending = None
         self.imports = list(imports)
@@ -73,7 +75,17 @@ class BatchWorker(PrefixWorker):
                  if path.name == 'ready' and timeout is None
                  else self.checker.timeout if timeout is None else timeout)
         emit_event('isabelle_batch_wait_started', worker=self.name, waiting_for=path.name, timeout_seconds=limit)
+        last_progress = None
         while not path.exists():
+            from regen.execution.native_progress import read_progress
+            stem = 'startup' if path.name == 'ready' else path.stem
+            token = getattr(self, '_progress_tokens', {}).get(stem)
+            progress = read_progress(self.root, stem, self.name, token) if token else None
+            signature = tuple(progress.get(k) for k in ('stage','command','line')) if progress else None
+            if signature != last_progress:
+                last_progress = signature
+                emit_event('native_stage_observed', worker=self.name,
+                    request=stem, progress=progress)
             try:
                 check_cancelled()
             except CheckCancelled:
@@ -88,6 +100,7 @@ class BatchWorker(PrefixWorker):
                 error.timeout_seconds = limit
                 error.timeout_scope = 'prefix-startup' if path.name == 'ready' else 'candidate-watchdog'
                 error.worker_log = (self.root/'worker.log').read_text()
+                error.native_progress = progress
                 raise error
             time.sleep(.05)
         emit_event('isabelle_batch_wait_finished', worker=self.name, waiting_for=path.name, elapsed_seconds=round(time.monotonic()-start, 3))
@@ -96,6 +109,10 @@ class BatchWorker(PrefixWorker):
         check_cancelled()
         self.index += 1
         stem = str(self.index)
+        if not hasattr(self, '_progress_tokens'):
+            self._progress_tokens = {}
+        token = self._progress_tokens[stem] = uuid.uuid4().hex
+        (self.root/(stem+'.progress_token')).write_text(token)
         offset = (self.root/'worker.log').stat().st_size
         for suffix, value in [('action',action), ('facts','\n'.join(names)), ('line',str(line))]:
             (self.root/(stem+'.'+suffix)).write_text(value)
@@ -104,8 +121,22 @@ class BatchWorker(PrefixWorker):
         temp = self.root/(stem+'.tmp'); temp.write_text(text)
         temp.rename(self.root/(stem+'.request'))
         limit = timeout if timeout is not None else (getattr(self.checker, 'batch_candidate_timeout', 300) + 10 if action == 'check' else self.checker.timeout)
-        self.wait(self.root/(stem+'.response'), timeout=limit)
-        answer = (self.root/(stem+'.response')).read_text()
+        from regen.infrastructure.progress_events import emit_event
+        request_id = self.name + ':' + stem + ':' + token
+        binding = dict(prefix_sha256=hashlib.sha256(self.base.encode()).hexdigest(),
+                       request_sha256=hashlib.sha256(text.encode()).hexdigest(),
+                       worker=self.name, request=stem, action=action)
+        emit_event('native_request_started', request_id=request_id, binding=binding)
+        outcome = 'interrupted'
+        try:
+            self.wait(self.root/(stem+'.response'), timeout=limit)
+            answer = (self.root/(stem+'.response')).read_text()
+            outcome = 'timeout' if answer.startswith('TIMEOUT\n') else 'completed'
+        except TimeoutError:
+            outcome = 'watchdog'
+            raise
+        finally:
+            emit_event('native_request_finished', request_id=request_id, outcome=outcome)
         with open(self.root/'worker.log', 'rb') as stream:
             stream.seek(offset); log = stream.read().decode(errors='replace')
         return answer, log
@@ -269,6 +300,10 @@ class BatchWorker(PrefixWorker):
             'prefix_sha256':hashlib.sha256(self.base.encode()).hexdigest(),
             'delta_sha256':hashlib.sha256(suffix.encode()).hexdigest(),
             'audited_facts':list(names), 'worker':self.name}
+        from regen.execution.native_progress import read_progress
+        result['native_progress'] = read_progress(self.root, stem, self.name,
+            getattr(self, '_progress_tokens', {}).get(stem))
+        result['worker_preserved'] = not self.closed
         from regen.execution.proof_batches import classify_native_failure
         classify_native_failure(result)
         from regen.execution.native_check_receipt import native_check_receipt
