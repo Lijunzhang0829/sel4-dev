@@ -12,6 +12,7 @@ import tempfile
 import time
 from pathlib import Path
 from official_codex_observer import TimingObserver
+from official_runtime_clock import apply_trusted_corrections
 
 from vero.isabelle.benchmark import read, save, extract, prepare, render
 from vero.isabelle.active_clock import ActiveClock, initial_state, atomic_state
@@ -138,7 +139,7 @@ def preflight(cfg, results=Path('/results')):
         account = pwd.getpwnam('checker')
         os.chown(root, 0, account.pw_gid); os.chmod(root, 0o750)
         benchmark = root/'benchmark'
-        bench = prepare(source, benchmark, base_import=cfg.get('base_import','Main'), isabelle_api='2026')
+        bench = prepare(source, benchmark, base_import=cfg.get('base_import','Main'), isabelle_api=cfg.get('isabelle_api','2026'))
         for item in [benchmark, *benchmark.rglob('*')]:
             os.chown(item, 0, account.pw_gid)
             os.chmod(item, 0o750 if item.is_dir() else 0o640)
@@ -147,14 +148,15 @@ def preflight(cfg, results=Path('/results')):
         artifact = handoff_artifact(work, extract(bench, rendered))
         report = work/'report.json'
         proc = subprocess.run(evaluation_command(cfg, benchmark/'benchmark.json', artifact,
-            work/'evaluation', report), capture_output=True, text=True, timeout=360)
+            work/'evaluation', report), capture_output=True, text=True, timeout=cfg.get('checker',{}).get('total_timeout_seconds',300)+60)
         if proc.returncode or not report.exists():
             raise RuntimeError('checker preflight failed: '+proc.stderr[-2000:])
         value = read(report)
         if (value.get('proved_specs') != 1 or value.get('context_disproved_specs') != 1
                 or value.get('strict_global_disproved_specs') != 0
                 or (value.get('integration') or {}).get('status') != 'ok'):
-            raise RuntimeError('native independent evaluator did not accept synthetic proof')
+            save(results/'preflight-failure.json',value)
+            raise RuntimeError('native independent evaluator did not accept synthetic proof: '+json.dumps(value)[-6000:])
         declarations=None
         if cfg.get('input_binding'):
             # Check the real frozen render, with every positive/negative slot
@@ -169,11 +171,12 @@ def preflight(cfg, results=Path('/results')):
                 f'render(b,{str(declaration_source)!r}); '
                 f'r=Checker({checker!r}).check({str(declaration_source)!r},"Vero_All"); '
                 f'save({str(declaration_report)!r},r)')
-            checked=subprocess.run(prefix+['python3','-c',code],capture_output=True,text=True,timeout=360)
+            checked=subprocess.run(prefix+['python3','-c',code],capture_output=True,text=True,timeout=cfg.get('checker',{}).get('total_timeout_seconds',300)+60)
             if checked.returncode or not declaration_report.exists():
                 raise RuntimeError('current declaration preflight failed: '+checked.stderr[-2000:])
             declared=read(declaration_report)
             if declared['status']!='ok':
+                save(results/'preflight-declarations-failure.json',declared)
                 raise RuntimeError('current declaration preflight rejected: '+declared['log'][-2000:])
             declarations={'status':'pass','targets':len(read('/benchmark/benchmark.json')['contracts']),
                 'dataset_binding':cfg['input_binding']['dataset_binding'],
@@ -205,6 +208,20 @@ def method_identity(cfg):
     return method
 
 
+def cleanup_abandoned_agent_processes(results):
+    """After agent termination, reap its remaining native descendants, not root/checker."""
+    import signal
+    uid=pwd.getpwnam('agent').pw_uid
+    killed=[]
+    for proc in Path('/proc').glob('[0-9]*'):
+        try:
+            if proc.stat().st_uid!=uid:continue
+            pid=int(proc.name)
+            os.kill(pid,signal.SIGKILL);killed.append(pid)
+        except (FileNotFoundError,ProcessLookupError):pass
+    save(Path(results)/'agent-descendant-cleanup.json',{'at_unix':time.time(),'pids':killed})
+
+
 def main(cfg, results=Path('/results')):
     if cfg.get('validation_only'):
         raise ValueError('validation-only deployment cannot run generation')
@@ -231,6 +248,10 @@ def main(cfg, results=Path('/results')):
         'model': cfg['model'], 'reasoning_effort': cfg['reasoning_effort']}},
         read('/benchmark/benchmark.json'), method, 'frozen-deployment')
     session = UsageSession(log, cfg, '/home/agent/.codex', results/'agent-events.jsonl')
+    reserve=cfg.get('final_evaluation_reserve_seconds',0)
+    if type(reserve) not in (int,float) or not 0<=reserve<cfg['budget_seconds']:
+        raise ValueError('final evaluation reserve must fit total experiment budget')
+    reserved_cutoff=False
     proc = evaluator = None
     observer = None
     try:
@@ -245,14 +266,17 @@ def main(cfg, results=Path('/results')):
                  'observation_profile': cfg['observation_profile'], 'agent_invocations': 1})
             while proc.poll() is None:
                 usage = session.poll()  # Accounting corruption is an explicit blocker.
+                apply_trusted_corrections(clock,results)
                 state = clock.snapshot()
                 save(results/'health.json', {'status': 'running', 'at_unix': time.time(),
                     'clock': state, 'pid': proc.pid, 'usage': usage,
                     'operation_observation': observer.snapshot()})
-                if state['remaining_seconds'] <= 0:
+                if state['remaining_seconds'] <= reserve:
+                    reserved_cutoff=reserve>0
                     kill_tree(proc.pid); break
                 time.sleep(2)
             code = proc.wait()
+        cleanup_abandoned_agent_processes(results)
         usage = session.finish('completed' if code == 0 else 'interrupted', returncode=code)
         save(results/'usage.json', {'usage': usage})
         save(results/'agent-finished.json', {'at_unix': time.time(), 'returncode': code,
@@ -269,6 +293,7 @@ def main(cfg, results=Path('/results')):
                     handoff, independent/'final-eval', report_path), stdout=stderr, stderr=stderr,
                     start_new_session=True)
                 while evaluator.poll() is None:
+                    apply_trusted_corrections(clock,results)
                     state = clock.snapshot()
                     save(results/'health.json', {'status': 'independent_final_evaluation',
                                                 'at_unix': time.time(), 'clock': state})
@@ -280,19 +305,22 @@ def main(cfg, results=Path('/results')):
         if report is not None:save(results/'final-report.json', report)
         observer.close()
         reason = ('budget_exhausted' if clock.snapshot()['remaining_seconds'] <= 0 else
+                  'generation_allowance_exhausted' if reserved_cutoff else
                   'agent_error' if code else 'final_evaluation_error' if evaluation_status != 'completed'
                   else 'official_agent_returned')
         clock.finish(reason)
         summary = {'status': 'finished', 'method': method, 'reason': reason, 'agent_returncode': code,
-                   'evaluation_status': evaluation_status, 'clock': clock.snapshot(),
+                   'evaluation_status': evaluation_status, 'generation_stopped_for_final_evaluation':reserved_cutoff,
+                   'final_evaluation_reserve_seconds':reserve, 'clock': clock.snapshot(),
                    'report': report, 'operation_observation': {**observer.snapshot(),
                        'export_tail_may_be_missing': code != 0}, 'agent_invocations': 1, 'automatic_restart': False}
         save(results/'final-summary.json', summary)
         save(results/'health.json', {**summary, 'at_unix': time.time()})
-        return 0 if code == 0 and evaluation_status == 'completed' else 1
+        return 0 if (code == 0 or reserved_cutoff) and evaluation_status == 'completed' else 1
     except BaseException as exc:
         for child in (proc, evaluator):
             if child is not None and child.poll() is None:kill_tree(child.pid); child.wait()
+        cleanup_abandoned_agent_processes(results)
         if not session.ended:
             log.emit('invocation_finished', event_id='end:'+session.identity,
                      invocation_id=session.identity, status='interrupted',

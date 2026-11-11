@@ -10,7 +10,6 @@ METHOD="official-codex"
 INPUT=None
 BASE=None
 VALIDATION_ONLY=False
-TOOLS=PROJECT/'c-algorithms/toolchains/autocorres2-isabelle2026'
 AFP='/screen/afp-2026/mirror-afp-2026-fca9585c6341cbf0f91816850b375c02e2c17ba6/thys'
 def call(*args,**kw):return subprocess.run(list(map(str,args)),check=True,**kw)
 def save(p,x):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(x,indent=2,ensure_ascii=False)+'\n')
@@ -102,14 +101,15 @@ def prepare():
     save(ROOT/'control/config.json',cfg)
     shutil.copyfile(PROJECT/'c-algorithms/binomial/tools/official_codex_runtime.py',ROOT/'control/run.py')
     shutil.copyfile(PROJECT/'c-algorithms/binomial/tools/official_codex_observer.py',ROOT/'control/official_codex_observer.py')
-    image=json.loads((INPUT/'environment.json').read_text())['container_image_id']
+    shutil.copyfile(PROJECT/'c-algorithms/binomial/tools/official_runtime_clock.py',ROOT/'control/official_runtime_clock.py')
+    image=context['image']
     cmd=['docker','run','--init','-d','--name',NAME,'--network','none' if VALIDATION_ONLY else 'host','--cpus','4','--memory','16g','--memory-swap','16g','--pids-limit','1024','--security-opt','no-new-privileges','--cap-drop','ALL']
     for cap in ['SETUID','SETGID','CHOWN','FOWNER','DAC_OVERRIDE','KILL']:cmd+=['--cap-add',cap]
     for tmp in ['/tmp:exec,size=2g','/workspace:exec','/sel4-project:exec']:cmd+=['--tmpfs',tmp]
     for env in ['PYTHONPATH=/vero-src','PYTHONDONTWRITEBYTECODE=1','PATH=/runtime:/runtime/official:/runtime/official/codex-path:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin']:cmd+=['-e',env]
     for key in ['http_proxy','https_proxy','HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','no_proxy','NO_PROXY']:
         if os.environ.get(key):cmd+=['-e',key]
-    mounts=[(TOOLS/'Isabelle2026','/workspace/verification/isabelle',True),(TOOLS/'afp-2026/mirror-afp-2026-fca9585c6341cbf0f91816850b375c02e2c17ba6/thys',AFP,True),(BASE/'checker-assets/semantic-base','/semantic-base',True),(BASE/'checker-assets/heaps','/parent-heaps',True),(INPUT,'/input',True),(ROOT/'backend','/vero-src',True)]
+    mounts=[(context['isabelle'],'/workspace/verification/isabelle',True),(context['l4v']/'afp',AFP,True),(BASE/'checker-assets/semantic-base','/semantic-base',True),(BASE/'checker-assets/heaps','/parent-heaps',True),(INPUT,'/input',True),(ROOT/'backend','/vero-src',True)]
     mounts += [(ROOT/d,'/'+d,True) for d in ['runtime','control','benchmark','public']]
     mounts += [(ROOT/d,'/'+d,False) for d in ['sandbox','results']]+[(ROOT/'agent-home','/home/agent',False)]
     for host,dest,ro in mounts:
