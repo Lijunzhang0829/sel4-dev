@@ -178,7 +178,7 @@ def _guard_refuted_context(root, run, package, state):
                            _state=lambda _: (package, state))
     dispositions = current_dispositions(view)
     outcome = current_outcome(view)
-    if (any(row['status'] == 'refuted' for row in dispositions.values())
+    if (any(row['status'] in {'refuted', 'context_refuted'} for row in dispositions.values())
             or outcome is not None and outcome['status'] == 'refuted'):
         raise ValueError('imports cannot change after an accepted native refutation; '
                          'retain its certified environment (refutation recertification is not supported)')

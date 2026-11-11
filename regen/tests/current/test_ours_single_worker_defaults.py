@@ -64,7 +64,7 @@ class OursSingleWorkerDefaultsTests(unittest.TestCase):
                  patch('regen.infrastructure.audited_llm.model_settings',return_value=settings), \
                  patch('regen.preparation.checker_context.load_context',return_value={'checker_context_id':'fixture'}), \
                  redirect_stdout(io.StringIO()):
-                result = planner.run_parallel_workspace(root,allow_external_call=True,integrate=False)
+                result = planner.run_parallel_workspace(root, budget_mode="effective-time",allow_external_call=True,integrate=False)
             self.assertEqual(result['status'],'selected_theories_sealed')
             self.assertEqual(result['workspace']['worker_count'],1)
             self.assertEqual(peak[0],1)

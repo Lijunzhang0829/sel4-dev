@@ -302,15 +302,28 @@ def validate_document_commit(package, old, new, evidence):
 
 
 class DocumentStore:
-    def __init__(self, directory, package, state, imports, *, require_sketch=False, require_use_sites=False, require_review=False, require_assessment=False, require_phases=False, allow_import_edits=False):
-        self.root=Path(directory);self.package=package;self.checked_imports=list(imports)
+    def __init__(self, directory, package, state, imports, *, generation_strategy=None,
+                 allow_import_edits=False, **legacy_options):
+        # Runtime callers supply one frozen strategy. Named bits remain only for
+        # old adapters/tests, and cannot override a selected version.
+        flags = dict.fromkeys(('require_sketch', 'require_use_sites', 'require_review',
+            'require_assessment', 'require_phases', 'require_semantic_review', 'allow_formal_leaf',
+            'allow_ordinary_helpers'), False)
+        if set(legacy_options) - flags.keys():
+            raise TypeError('unknown document workflow options: '+', '.join(sorted(set(legacy_options)-flags.keys())))
+        if generation_strategy is not None:
+            if legacy_options:
+                raise ValueError('select one generation strategy; independent workflow overrides are unsupported')
+            from regen.planning.generation_policy import policy_for
+            flags.update(policy_for(generation_strategy).store_options())
+        else:
+            flags.update(legacy_options)
+        from regen.planning.async_document import document_root
+        self.root=document_root(directory);self.package=package;self.checked_imports=list(imports)
         self.allow_import_edits=allow_import_edits
         self.state=state
-        self.require_sketch=require_sketch
-        self.require_use_sites=require_use_sites
-        self.require_phases=require_phases
-        self.require_review=require_review
-        self.require_assessment=require_assessment
+        for name, enabled in flags.items():
+            setattr(self, name, enabled)
         self.root.mkdir(parents=True,exist_ok=True)
         self.path=self.root/'draft.thy'
         if not self.path.exists():
@@ -394,7 +407,7 @@ class DocumentStore:
             raise ValueError('helper purpose snapshot binding differs')
         return snapshot['records']
 
-    def _write(self, source, origin, purposes=None, sketches=None):
+    def _write(self, source, origin, purposes=None, sketches=None, withdrawals=None):
         sha=source_hash(source)
         durable(self.root/'versions'/sha/'source.json',{'source':source},immutable=True)
         snapshot={'source_sha256':sha,'records':purposes or {}}
@@ -403,9 +416,12 @@ class DocumentStore:
         sketch_snapshot={'source_sha256':sha,'groups':sketches or []}
         sketch_key=digest(sketch_snapshot)
         durable(self.root/'sketch-plans'/f'{sketch_key}.json',sketch_snapshot,immutable=True)
+        from regen.planning.sketch_workflow import withdrawal_snapshot
+        withdrawn = withdrawal_snapshot(self, sha, sketch_key, withdrawals or {})
         # One owner serializes writes. Content-addressed versions preserve failed drafts.
         durable(self.root/'last-edit.json',{'source_sha256':sha,**origin,
-            'helper_purpose_snapshot':key,'sketch_plan_snapshot':sketch_key})
+            'helper_purpose_snapshot':key,'sketch_plan_snapshot':sketch_key,
+            **({'sketch_withdrawal_snapshot':withdrawn} if withdrawn else {})})
         temp=self.path.with_suffix('.tmp');temp.write_text(source);temp.replace(self.path)
 
     def edit(self, proposal, origin):
@@ -501,19 +517,22 @@ class DocumentStore:
         entries,proofs=parse(source,self.package,imports)
         if self.require_sketch:
             accepted = {n['id']:n for n in self.state['graph']['nodes'] if n['id'] in self.state['proofs']}
+            if set(accepted)-{node['id'] for node in entries}:
+                raise ValueError('sketch mode cannot remove accepted declarations')
             for node in entries:
                 if node['id'] in accepted and any(node[k] != accepted[node['id']][k]
                         for k in ('name','role','statement','context')):
                     raise ValueError('sketch mode preserves accepted declarations; add a new grouped helper instead')
         from regen.planning.sketch_check import merge_groups
         sketches=merge_groups(self, entries, proofs, proposal.get('sketches', []))
+        withdrawals = {}
         if self.require_review:
             from regen.planning.sketch_workflow import guard_revision
-            guard_revision(self, entries, proofs, sketches)
+            withdrawals = guard_revision(self, entries, proofs, sketches)
         from regen.planning.helper_purposes import merge, view
         purposes=merge(self._purposes(current['source_sha256']),proposal.get('helper_purposes',{}),
                        entries,proofs,source_hash(source))
-        self._write(source,origin,purposes,sketches)
+        self._write(source,origin,purposes,sketches,withdrawals)
         return {'status':'draft_saved','source_sha256':source_hash(source),'checked':False,
                 'draft_imports':imports,'checked_imports':list(self.checked_imports),
                 'imports_pending':imports != self.checked_imports,

@@ -692,11 +692,16 @@ class IsabelleChecker:
                 worker.close()
                 self._batch_worker = None
                 raise
-        label = prefix_source.splitlines()[0].split()[1]
-        result = self._check(source, label, timeout=timeout if timeout is not None else getattr(self, 'batch_candidate_timeout', 300))
-        result.update(check_scope='isolated-conditional-sketch', publishable=False,
-                      incremental=False)
-        return result
+        # The cold path uses the same scoped admission implementation as the
+        # persistent path. Do not enable quick_and_dirty for a whole process.
+        transient = BatchWorker(self, prefix_source,
+            getattr(self, '_sketch_prefix_names', []), self.imports())
+        try:
+            result = transient.check_sketch(source, admitted_names, timeout=timeout)
+            result.update(publishable=False, incremental=False, worker_preserved=False)
+            return result
+        finally:
+            transient.close()
 
     def close_prefix(self):
         errors = []

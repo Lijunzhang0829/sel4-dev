@@ -213,6 +213,14 @@ def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=I
             })}}
     run.update(policy_binding({'complete_context_policy':complete_context_policy}))
     run.update(outcome_policy)
+    if direct:
+        from regen.execution.result_scope import dataset_result_binding
+        run.update(dataset_result_binding(input_root,
+            [c for p in packages for c in p['contracts']], checker_context['checker_context_id']))
+        if 'comparison_groups_sha256' in checker_context:
+            run['comparison_groups']=read(Path(input_root)/'comparison-groups.json')
+        # The dataset selects a frozen interpretation, never a live model knob.
+        contract_policy_binding(run)
     if outcome_policy_upgrade is not None:
         run['outcome_policy_upgrade'] = deepcopy(outcome_policy_upgrade)
     run.update(logging)
@@ -488,6 +496,8 @@ def _progress_unlocked(run_dir):
                  dispositions[c['contract_id']]['status'] if c['contract_id'] in dispositions else 'pending')
                 for c in p['contracts']}
             entry['refuted_contracts'] = sum(v == 'refuted' for v in entry['contract_statuses'].values())
+            if run.get('result_scope'):
+                entry['context_refuted_contracts'] = sum(v == 'context_refuted' for v in entry['contract_statuses'].values())
             entry['unknown_contracts'] = sum(v == 'unknown' for v in entry['contract_statuses'].values())
             entry['exports_available'] = exports_available(entry['status'])
     catalog = {'records': sorted(catalog_records,key=lambda row:row['record_id'])}
@@ -509,6 +519,12 @@ def _progress_unlocked(run_dir):
             exported_contracts=sum(f.get('checked_contracts',0) for f in files if exports_available(f['status'])),
             all_theories_finished=all(theory_finished(f['status']) for f in files),
             all_contracts_proved=complete)
+        if run.get('result_scope'):
+            value.update(result_scope=run['result_scope'],
+                context_refuted_contracts=sum(f.get('context_refuted_contracts', 0) for f in files),
+                environment_evidence_sha256=run['environment_evidence']['bundle_sha256'],
+                all_contracts_resolved=all(v != 'pending' for f in files
+                                          for v in f['contract_statuses'].values()))
     durable(Path(run['session_progress_ledger']),value)
     if len(_PROGRESS_SNAPSHOTS) >= 32:
         _PROGRESS_SNAPSHOTS.clear()
@@ -1075,7 +1091,7 @@ def run_session(run_dir,*,retry_failed=False,max_parallel_theories=1,**options):
 CONTINUATION_ENV_FIELDS = ('execution_input_kind','environment_run',
     'checker_context_root','checker_context_id','premise_database','premise_snapshot',
     'semantic_workspace','l4v','base_session','base_import','base_catalog',
-    'isabelle_dir','image','isabelle_sha256')
+    'isabelle_dir','image','isabelle_sha256','result_scope','environment_evidence')
 
 
 def _check_disposition_fork_support(source_dir, source):

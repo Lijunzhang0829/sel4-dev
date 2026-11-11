@@ -160,10 +160,31 @@ def _pre_retrieval_registry(registry):
     return previous
 
 
+def _pre_semantic_review_registry(registry):
+    """Replay the exact review schema before optional semantic route fields.
+
+    Apply this only to the trusted current registry when enumerating historical
+    shapes. The transcript itself is always compared unchanged in full.
+    """
+    previous = deepcopy(registry)
+    for tool in previous:
+        if tool['name'] != 'proof_action':
+            continue
+        proposal = tool['inputSchema']['properties'].get('proposal', {})
+        for action in proposal.get('oneOf', []):
+            if action.get('properties', {}).get('action', {}).get('const') != 'review_sketch':
+                continue
+            properties = action['properties']['reviews']['items']['properties']
+            for field in ('helper_role', 'proof_mode', 'proof_plan', 'coverage'):
+                properties.pop(field, None)
+    return previous
+
+
 def _approved_generic_registry(tools, current):
-    """Compare complete registries, including the exact pre-retrieval variants."""
+    """Compare complete trusted registries and their exact historical shapes."""
     return any(_approved_generic_registry_shapes(tools, candidate)
-               for candidate in (current, _pre_retrieval_registry(current)))
+               for semantic in (current, _pre_semantic_review_registry(current))
+               for candidate in (semantic, _pre_retrieval_registry(semantic)))
 
 
 def _approved_generic_registry_shapes(tools, current):

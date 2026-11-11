@@ -308,12 +308,22 @@ class CodexWorkspaceSession:
         fields = dict(request_id=self._provider_request_id, source=source,
             generation_id=self._generation_id, thread_id=self.thread_id, turn_id=self.turn_id)
         self._event('local', {'event':'provider_request_started', **fields})
-        emit_event('generation_provider_request_started', **fields)
+        try:
+            emit_event('generation_provider_request_started', **fields)
+        except BaseException:
+            # Budget admission may reject the request before it is registered.
+            # Cleanup must preserve that cutoff, not finish an unadmitted UID.
+            self._provider_request_id = None
+            self._provider_request_since = None
+            self._provider_feedback_at = None
+            raise
 
     def _provider_request_finish(self, outcome, **evidence):
         if self._provider_request_id is None:
             return None
         from regen.infrastructure.progress_events import emit_event
+        if outcome=='failed' and self._provider_feedback_at is not None:
+            evidence['waiting_seconds']=max(0.,time.monotonic()-self._provider_feedback_at)
         request_id, self._provider_request_id = self._provider_request_id, None
         self._provider_request_since = None
         self._provider_feedback_at = None
@@ -368,6 +378,14 @@ class CodexWorkspaceSession:
             from regen.infrastructure.progress_events import emit_event
             self._stream_retry_phase = uuid4().hex
             self._stream_retry_phase_since = time.monotonic()
+            if self._provider_request_id is not None and self._provider_feedback_at is not None:
+                from regen.infrastructure.provider_http_failure import classify_provider_http_failure
+                failure=classify_provider_http_failure(error)
+                if failure is not None:
+                    emit_event('generation_provider_wait_interruption',
+                        request_id=self._provider_request_id,failure=failure,
+                        waiting_seconds=max(0.,time.monotonic()-self._provider_feedback_at),
+                        evidence_id='stream-wait:'+self._stream_retry_phase)
             emit_event('generation_exclusion_started', phase_id=self._stream_retry_phase,
                        category='provider_stream_retry',confirmed_interruption=True,
                        evidence_id='trusted-stream-retry:'+self._stream_retry_phase)

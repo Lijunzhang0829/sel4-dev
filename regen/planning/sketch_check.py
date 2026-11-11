@@ -6,23 +6,18 @@ There is no route search or model-supplied cost/dependency graph here.
 """
 from copy import deepcopy
 import json
+import re
 from uuid import uuid4
 
 from regen.execution.proof_commits import digest, durable, freeze_evidence
 
 STRATEGY = 'sketch-groups-v1'
-AUDIT_POLICY = 'declaration-export-audit-v1'
+AUDIT_POLICY = 'scoped-helper-admission-v2'
 
 
 def strategy_options(name):
-    if name == 'sketch-phased-v1':
-        return {**strategy_options('sketch-guided-v1'), 'require_phases': True}
-    result = dict(require_sketch=name in {STRATEGY, 'sketch-local-demands-v1', 'sketch-reviewed-v1', 'sketch-guided-v1'},
-                  require_use_sites=name in {'sketch-local-demands-v1', 'sketch-reviewed-v1', 'sketch-guided-v1'},
-                  require_review=name in {'sketch-reviewed-v1', 'sketch-guided-v1'})
-    if name == 'sketch-guided-v1':
-        result['require_assessment'] = True
-    return result
+    from regen.planning.generation_policy import policy_for
+    return policy_for(name).store_options()
 
 
 def load_groups(store):
@@ -59,12 +54,17 @@ def merge_groups(store, entries, proofs, updates):
         if not isinstance(target, str) or target not in nodes or target in seen:
             raise ValueError('sketch targets must be known and unique')
         seen.add(target)
-        if (not isinstance(helpers, list) or not helpers
+        if target in store.state['proofs']:
+            raise ValueError('a new sketch must serve an unaccepted parent')
+        if helpers == []:
+            if group.get('use_sites'):
+                raise ValueError('a withdrawn sketch cannot retain helper use sites')
+            groups.pop(target, None)
+            continue  # Orphan and source checks below still apply to the whole edit.
+        if (not isinstance(helpers, list)
                 or any(not isinstance(k, str) or k not in nodes for k in helpers)
                 or len(set(helpers)) != len(helpers)):
             raise ValueError('helper_ids must be a nonempty unique list of known IDs')
-        if target in store.state['proofs']:
-            raise ValueError('a new sketch must serve an unaccepted parent')
         if any(nodes[k]['role'] == 'contract' or positions[k] >= positions[target]
                for k in helpers):
             raise ValueError('sketch helpers must be auxiliaries before their parent')
@@ -95,7 +95,7 @@ def merge_groups(store, entries, proofs, updates):
             reachable = expanded
         orphans = {n['id'] for n in entries if n['role'] != 'contract'
                    and n['id'] not in store.state['proofs']} - reachable
-        if orphans:
+        if orphans and not getattr(store, 'allow_ordinary_helpers', False):
             raise ValueError('new helpers require a parent sketch group: ' + ', '.join(sorted(orphans)))
         for group in groups.values():
             if (group['target_entry_id'] not in store.state['proofs']
@@ -219,6 +219,9 @@ def authorize(store, source, entry_ids=None):
     from regen.planning.sketch_phases import guard_attempt
     guard_attempt(store,nodes,proofs,selected - set(store.state['proofs']))
     needed = {k for k in selected if k not in store.state['proofs'] and nodes[k]['role'] != 'contract'}
+    if getattr(store, 'allow_ordinary_helpers', False):
+        grouped = {k for g in load_groups(store) for k in g['helper_ids']}
+        needed &= grouped
     authorized, receipts = set(), []
     for group in load_groups(store):
         if (group['target_entry_id'] not in nodes
@@ -249,13 +252,19 @@ def render_check(state, nodes, proofs, group, imports, signature):
         raise ValueError('a sketch cannot assume its own parent')
     delta = []
     admitted = []
+    def phase(kind, entry_id):
+        marker = 'REGEN_SKETCH_PHASE ' + json.dumps(
+            {'signature': signature, 'phase': kind, 'entry_id': entry_id},
+            sort_keys=True, separators=(',', ':'))
+        return 'ML \\<open>writeln ' + json.dumps(marker) + '\\<close>\n'
     for key in group['helper_ids']:
         if key in state['proofs']:
             continue
         node = nodes[key]
         _safe_text(node['statement'], statement=True)
         # This sole admission is harness-authored and never written to draft.thy.
-        delta.append(wrap_context(node['context'], node['statement'] + '\nsorry'))
+        delta.append(phase('helper_declaration', key)
+                     + wrap_context(node['context'], node['statement'] + '\nsorry'))
         admitted.append(node['name'])
     node = nodes[target]
     _safe_text(node['statement'], statement=True)
@@ -270,10 +279,59 @@ def render_check(state, nodes, proofs, group, imports, signature):
           (Thm_Deps.all_oracles regen_sketch_thms) then () else error "Unexpected sketch oracle";
     in writeln %s end
     \\<close>''' % (target_resolution_ml(node['name']), json.dumps('REGEN_SKETCH_CLOSED ' + signature))
-    delta.append(wrap_context(node['context'], FACT_SNAPSHOT_ML + '\n'
+    delta.append(phase('consumer_proof', target) + wrap_context(node['context'], FACT_SNAPSHOT_ML + '\n'
         + node['statement'] + '\n' + instrument(proofs[target], group, signature) + '\n' + audit))
     source = prefix_source[:-len('end\n')] + '\n'.join(delta) + '\nend\n'
     return source, prefix_source, admitted
+
+
+def classify_conditional_failure(check, group, signature):
+    """Attribute a rejected conditional check to the command actually reached.
+
+    These fields guide repairs; they never change a native verdict or authorize
+    helpers. A failed helper declaration must not demand edits to its consumer.
+    """
+    if check.get('verdict') == 'green':
+        return check
+    phase = None
+    for line in check.get('log_content', '').splitlines():
+        if not line.startswith('REGEN_SKETCH_PHASE '):
+            continue
+        try:
+            row = json.loads(line[len('REGEN_SKETCH_PHASE '):])
+        except ValueError:
+            continue
+        if row.get('signature') == signature:
+            phase = row
+    diagnostic = re.sub('\x05[^\x05]*\x05', '', check.get('diagnostic', ''))
+    state = check.get('native_proof_state_full') or {}
+    command = state.get('command')
+    if not command:
+        match = re.search(r'At command "([^"]+)"', diagnostic)
+        command = match.group(1) if match else None
+    backend = ('Cheating requires' in diagnostic or
+               'trusted sketch helper admission' in diagnostic or
+               'Unexpected proof admission' in diagnostic)
+    instrumentation = command in {'ML', 'ML_val'} and 'ML error' in diagnostic
+    if instrumentation:
+        stage, kind, owner, action = ('consumer_instrumentation', 'sketch_backend_error',
+                                      'harness', 'retry_after_backend_repair')
+    elif backend:
+        stage, kind, owner, action = ('helper_admission', 'sketch_backend_error',
+                                      'harness', 'retry_after_backend_repair')
+    elif phase and phase['phase'] == 'helper_declaration':
+        stage, kind, owner, action = ('helper_declaration', 'invalid_helper_statement',
+                                      'helper', 'edit_helper_statement')
+    else:
+        stage, kind, owner, action = ('consumer_proof', 'consumer_proof_failed',
+                                      'consumer', 'edit_consumer_proof')
+    if check.get('returncode') == 124:
+        kind = 'conditional_check_timeout'
+    check.update(failure_stage=stage, failure_kind=kind, failure_owner=owner,
+                 failed_entry_id=(phase['entry_id'] if phase else group['target_entry_id']),
+                 failed_command=command, next_action=action,
+                 consumer_check_started=bool(phase and phase['phase'] == 'consumer_proof'))
+    return check
 
 
 def check_groups(checker, store, source_sha256, target_entry_ids=None):
@@ -322,7 +380,9 @@ def check_groups(checker, store, source_sha256, target_entry_ids=None):
         accepted={n['id']:n['name'] for n in base['graph']['nodes']}
         checker._sketch_prefix_names=[accepted[k] for k in base['accepted_order']]
         generated, prefix, admitted = render_check(base, nodes, proofs, group, store.imports, signature)
-        check = freeze_evidence(checker.check_sketch_source(generated, prefix, admitted))
+        check = classify_conditional_failure(
+            freeze_evidence(checker.check_sketch_source(generated, prefix, admitted)),
+            group, signature)
         closed = (check.get('verdict') == 'green' and check.get('returncode') == 0
                   and 'REGEN_SKETCH_CLOSED ' + signature in check['log_content'].splitlines())
         from regen.planning.helper_use_sites import observations, coverage
@@ -357,7 +417,8 @@ def check_groups(checker, store, source_sha256, target_entry_ids=None):
 
 def brief_check(check):
     fields=('verdict','returncode','diagnostic','wall_ms','check_scope','incremental',
-            'native_proof_state_full')
+            'native_proof_state_full','failure_stage','failure_kind','failure_owner',
+            'failed_entry_id','failed_command','next_action','consumer_check_started')
     return {key:check[key] for key in fields if key in check}
 
 
@@ -378,3 +439,72 @@ def read_receipt(store, receipt_id, view='summary'):
     return {key:record[key] for key in ('receipt_id','status','publishable','group','source_sha256','sketch_sha256')} | {
         'check':brief_check(record['check']), 'full_available':True,
         'helper_use_coverage': coverage(record['group'], record.get('helper_uses', []))}
+
+
+def certificate_status(store, nodes, proofs, group):
+    """Explain certificate reuse without granting authority or changing validity.
+
+    Existing certificate() remains the sole conditional authorization check.
+    Historical receipts only explain what changed; they never authorize work.
+    Corrupt evidence for the selected target is an integrity error, not a gate.
+    """
+    cert = certificate(store, nodes, proofs, group)
+    signature = digest(interface(nodes, proofs, group))
+    prefix = prefix_binding(available_prefix(store.state, list(nodes.values()), group['target_entry_id']))
+    if cert is not None:
+        return {'status':'valid', 'sketch_sha256':signature, 'receipt_id':cert['receipt_id'],
+                'reasons':[], 'reuse':('compatible_prefix_extension'
+                    if len(prefix)>len(cert['prefix']) else 'exact_interface'),
+                'helper_proof_changes_require_recheck':False}
+    current = interface(nodes, proofs, group)
+    candidates = []
+    paths = set((store.root/'sketch-certificates').glob('*.json'))
+    paths.update((store.root/'sketch-checks').glob('*/receipt.json'))
+    for path in paths:
+        record = json.loads(path.read_text())
+        if record.get('interface', {}).get('target', {}).get('id') != group['target_entry_id']:
+            continue
+        checksum = record.pop('receipt_sha256', None)
+        if digest(record) != checksum:
+            raise ValueError('sketch certificate integrity mismatch')
+        candidates.append((path.stat().st_mtime_ns, str(path), record))
+    reasons = []
+    def reason(code, **details):
+        if not any(r['code']==code and r.get('entry_id')==details.get('entry_id') for r in reasons):
+            reasons.append({'code':code, **details})
+    if getattr(store, 'require_use_sites', False) and 'use_sites' not in group:
+        reason('use_sites_missing')
+    if not candidates:
+        reason('conditional_check_missing')
+    else:
+        old = max(candidates, key=lambda item:(item[0],item[1]))[2]
+        previous = old['interface']
+        if previous['target'] != current['target']:
+            reason('parent_declaration_changed')
+        if previous.get('consumer_proof') != current.get('consumer_proof'):
+            reason('consumer_proof_changed')
+        old_helpers = {n['id']:n for n in previous['helpers']}
+        new_helpers = {n['id']:n for n in current['helpers']}
+        if set(old_helpers) != set(new_helpers):
+            reason('helper_set_changed')
+        elif list(old_helpers) != list(new_helpers):
+            reason('helper_order_changed')
+        for key in old_helpers.keys() & new_helpers.keys():
+            if old_helpers[key] != new_helpers[key]:
+                reason('helper_interface_changed', entry_id=key)
+        if previous.get('use_sites') != current.get('use_sites'):
+            reason('use_sites_changed')
+        if old.get('imports') != store.imports:
+            reason('imports_changed')
+        if old.get('run_id') != store.state['graph']['run_id']:
+            reason('run_changed')
+        if prefix[:len(old.get('prefix', []))] != old.get('prefix', []):
+            reason('green_prefix_incompatible')
+        if old.get('audit_policy') != AUDIT_POLICY:
+            reason('audit_policy_changed')
+        if old.get('status') != 'conditional_closed':
+            reason('conditional_check_failed')
+        if not reasons:
+            reason('conditional_certificate_missing')
+    return {'status':'needs_sketch_check', 'sketch_sha256':signature, 'receipt_id':None,
+            'reasons':reasons, 'helper_proof_changes_require_recheck':False}

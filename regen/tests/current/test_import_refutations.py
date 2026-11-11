@@ -36,7 +36,7 @@ class ImportRefutationTests(unittest.TestCase):
         def native(checker, contract, proof, directory):
             self.assertIs(checker, new_checker)
             self.assertEqual(case.state['context_revision'], 1)
-            return {'status': 'refuted', 'certificate': {'explicit_synthetic_fixture': True}}
+            return {'status': 'refuted', 'certificate': {'explicit_synthetic_fixture': True, 'status': 'refuted'}}
         with patch('regen.execution.contract_refutation.check_refutation', side_effect=native), patch(
                 'regen.execution.contract_refutation.validate_refutation_certificate', return_value=True) as validate:
             result = handle_outcome(case.c, {'action': 'check_refutation', 'entry_id': 'b',
@@ -68,7 +68,7 @@ class ImportRefutationTests(unittest.TestCase):
         case.c._apply_pending_imports = lambda runtime, state, directory: (runtime, state, None)
         def native(*args):
             case.state.update(context_revision=2, context_imports=[])
-            return {'status': 'refuted', 'certificate': {'explicit_synthetic_fixture': True}}
+            return {'status': 'refuted', 'certificate': {'explicit_synthetic_fixture': True, 'status': 'refuted'}}
         with patch('regen.execution.contract_refutation.check_refutation', side_effect=native), patch(
                 'regen.execution.contract_refutation.validate_refutation_certificate', return_value=True):
             with self.assertRaisesRegex(NativePreparationError, 'context changed during native check'):
@@ -82,7 +82,7 @@ class ImportRefutationTests(unittest.TestCase):
         task_id = digest({'kind': 'refutation', 'binding': submitted, 'call': metadata})
         def execute(directory):
             case.state.update(context_revision=1, context_imports=['Regen_Provider'])
-            return {'status': 'refuted', 'certificate': {'explicit_synthetic_fixture': True},
+            return {'status': 'refuted', 'certificate': {'explicit_synthetic_fixture': True, 'status': 'refuted'},
                     'checked_binding': _snapshot(case.c)[2]}
         row = case.c.executor.submit(kind='refutation', theory='T', binding=submitted,
             request={'proposal': {'action': 'check_refutation', 'entry_id': 'b', 'proof_body': 'by simp'},

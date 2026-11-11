@@ -234,6 +234,11 @@ class ParallelBudgetBindingTests(unittest.TestCase):
         for extra, expected in (([], (172800, None, None)),
                 (['--effective-seconds', '3600', '--resume-authorization', 'approved',
                   '--extend-effective-seconds', '120'], (3600, 'approved', 120))):
+            if extra:
+                from regen.planning.generation_policy import generation_strategy
+                (self.root/'parallel-workspace-policy.json').write_text(json.dumps({
+                    'generation_strategy':generation_strategy('baseline'),
+                    'file_planner_interface':'document','budget_mode':'effective-time'}))
             with patch('sys.argv', ['runner', 'parallel-workspace', '--run-dir', str(self.root),
                     '--allow-external-call', *extra]), redirect_stdout(io.StringIO()), \
                     patch('regen.planning.parallel_file_planner.run_parallel_workspace',
@@ -242,6 +247,7 @@ class ParallelBudgetBindingTests(unittest.TestCase):
             kwargs = run.call_args.kwargs
             self.assertEqual((kwargs['effective_seconds'], kwargs['resume_authorization'],
                               kwargs['extend_effective_seconds']), expected)
+            self.assertEqual(kwargs['budget_mode'],'effective-time' if extra else 'experiment-runtime')
 
     def test_cli_budget_pause_is_not_reported_as_runner_failure(self):
         from regen.execution.proof_session_runner import main
@@ -312,7 +318,7 @@ class ParallelBudgetRunnerTests(unittest.TestCase):
                         patch('regen.preparation.checker_context.load_context', return_value={'checker_context_id':'fixture'}), \
                         patch('regen.execution.repository_integration.integrate_repository',
                               return_value={'repository_verified':verified}), redirect_stdout(io.StringIO()):
-                    result = planner.run_parallel_workspace(root, allow_external_call=True, integrate=integrate)
+                    result = planner.run_parallel_workspace(root, allow_external_call=True, budget_mode="effective-time", integrate=integrate)
                 self.assertEqual(result['status'], expected)
                 self.assertEqual(result['disposition'], 'complete' if verified else 'pause')
                 self.assertEqual(result['generation_budget']['finished'], bool(verified))
@@ -349,7 +355,7 @@ class ParallelBudgetRunnerTests(unittest.TestCase):
                     patch('regen.preparation.checker_context.load_context', return_value={'checker_context_id':'fixture'}), \
                     redirect_stdout(io.StringIO()):
                 with self.assertRaisesRegex(RuntimeError, 'setup failed') as caught:
-                    planner.run_parallel_workspace(root, allow_external_call=True)
+                    planner.run_parallel_workspace(root, allow_external_call=True, budget_mode="effective-time")
             self.assertEqual(caught.exception.regen_pause_result['reason'], 'infrastructure_error')
             saved = budget_journal_summary(Ledger(root/'effective-generation-budget', 'test'))
             self.assertTrue(saved['paused'])
@@ -396,7 +402,7 @@ class ParallelBudgetRunnerTests(unittest.TestCase):
                     patch('regen.preparation.checker_context.load_context', return_value={'checker_context_id':'fixture'}), \
                     redirect_stdout(io.StringIO()):
                 with self.assertRaises(CheckCancelled) as caught:
-                    planner.run_parallel_workspace(root, allow_external_call=True,
+                    planner.run_parallel_workspace(root, allow_external_call=True, budget_mode="effective-time",
                         integrate=False, effective_seconds=100)
             self.assertTrue(exited.is_set())
             self.assertEqual(caught.exception.regen_pause_result['status'], 'paused')

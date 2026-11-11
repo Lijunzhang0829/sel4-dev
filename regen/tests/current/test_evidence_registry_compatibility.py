@@ -2,12 +2,13 @@
 from copy import deepcopy
 import hashlib
 import json
+from pathlib import Path
 import unittest
 
 from regen.infrastructure.workspace_transcript import (
     _approved_generic_registry, _pre_delta_registry, _pre_history_registry,
     _pre_proof_edit_registry, _pre_retrieval_registry, _pre_sketch_registry,
-    approved_registry,
+    _pre_semantic_review_registry, approved_registry,
 )
 from regen.planning.evidence_reads import evidence_schema
 from regen.planning.generic_codex_agent import registry
@@ -44,14 +45,38 @@ def old_variants(original):
 class EvidenceRegistryCompatibilityTest(unittest.TestCase):
     def setUp(self):
         self.current = [{'type': 'function', **tool} for tool in registry()]
-        self.previous = _pre_retrieval_registry(self.current)
+        self.before_semantic = _pre_semantic_review_registry(self.current)
+        self.previous = json.loads((Path(__file__).parent/'fixtures'/
+            'generic-registry-pre-retrieval.json').read_text())
 
     def test_exact_pre_retrieval_golden_registry_is_recovered(self):
         self.assertEqual(canonical_digest(self.previous), PRE_RETRIEVAL_SHA256)
+        self.assertEqual(_pre_retrieval_registry(self.before_semantic), self.previous)
         self.assertIn(evidence_schema(), alternatives(self.current))
         self.assertNotIn(evidence_schema(), alternatives(self.previous))
         self.assertTrue(approved_registry(self.current))
         self.assertTrue(approved_registry(self.previous))
+
+    def test_exact_pre_semantic_registry_is_replayed_without_loosening_schemas(self):
+        self.assertTrue(approved_registry(self.before_semantic))
+        self.assertTrue(_approved_generic_registry(self.before_semantic, self.current))
+        self.assertEqual(canonical_digest(self.before_semantic),
+                         'd760a26ec6bb3e6e290fce041d004ed7500a4419cba3d623ffd1298d5c6b8698')
+        review = lambda tools: next(action for action in alternatives(tools)
+            if action.get('properties', {}).get('action', {}).get('const') == 'review_sketch')
+        for mutation in ('partial_semantic', 'unknown_field', 'loose_legacy'):
+            with self.subTest(mutation=mutation):
+                changed = deepcopy(self.before_semantic)
+                items = review(changed)['properties']['reviews']['items']
+                if mutation == 'partial_semantic':
+                    items['properties']['helper_role'] = deepcopy(
+                        review(self.current)['properties']['reviews']['items']['properties']['helper_role'])
+                elif mutation == 'unknown_field':
+                    items['properties']['unknown_route'] = {'type':'string'}
+                else:
+                    items['additionalProperties'] = True
+                self.assertFalse(approved_registry(changed))
+                self.assertFalse(_approved_generic_registry(changed, self.current))
 
     def test_every_preexisting_historical_variant_remains_approved(self):
         variants = list(old_variants(self.previous))

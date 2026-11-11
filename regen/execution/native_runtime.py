@@ -40,8 +40,15 @@ def theory_argument(checker, theory):
 
 
 def worker_source(checker, text):
+    if 'Regen_Reuse_Diagnostics.snapshot' in text:
+        text = Path(__file__).with_name('native_reuse_diagnostics.ML').read_text() + '\n' + text
     if not is_calg(checker):
         return text
+    # The removed boolean argument used to control interactive proof commands.
+    # Preserve that meaning for the trusted, disposable helper admission only;
+    # ordinary commands and the sketch consumer keep strict noninteractive mode.
+    text = text.replace('Toplevel.command_exception allow_admission tr st',
+                        'Interactive.setmp allow_admission (Toplevel.command_exception tr) st')
     text = text.replace('Toplevel.command_exception true', 'Toplevel.command_exception')
     text = text.replace('OS.Process.sleep', 'Time.sleep')
     text = text.replace('YXML.content_of', '(XML.content_of o YXML.parse_body)')

@@ -38,6 +38,28 @@ is proved or has an independently checked refutation; refuted slots supply no
 positive theorem and stay oops. Partial export never certifies repository success.
 '''
 
+OWNED_SCOPE_INSTRUCTIONS = '''RESULT SCOPE: owned-context-outcomes-v1.
+Read read_entry.result_environment for the native environment E and obligations.
+Positive: E implies (ALL x. A x implies Q x).
+Negative: E implies NOT (ALL x. A x implies Q x).
+Lemma-local assumptions A stay inside the negation; the owned environment E is
+the same condition on both outcomes. A checked negative yields context_refuted,
+counted separately from legacy strict-global refuted, and provides no positive
+premise. It does not establish E for the original fixed constants. A checked
+parameter instance is separate evidence and must not be treated as a theorem of
+those constants. The native checker constructs the goal; never replace the spec.
+'''
+
+
+def proof_outcome_instructions(run=None):
+    from regen.execution.result_scope import resolve_result_scope
+    if not resolve_result_scope(run or {}):
+        return PROOF_OR_REFUTATION_INSTRUCTIONS
+    return PROOF_OR_REFUTATION_INSTRUCTIONS.replace(
+        'negation of the complete fixed contract',
+        'environment-relative negation of the complete fixed contract').replace(
+        'REFUTED.', 'CONTEXT_REFUTED under the same owned environment.') + OWNED_SCOPE_INSTRUCTIONS
+
 
 def public_view(value):
     if isinstance(value,list):
@@ -135,6 +157,26 @@ read_entry retrieval memory distinguishes returned candidates, explicit reads,
 proof-text mentions in attempts and accepted proof-text mentions. Textual mentions
 are not native dependency certificates. Old target/environment bindings remain
 historical evidence, not current applicability judgments or permanent exclusions.
+
+SKETCH ROUTE CHOICE (current semantic review)
+Conditional closure checks composition under assumed helpers; it does not establish
+helper truth or lower proof cost. In review_sketch.reduction explain the removed
+obligations AND the remaining recursive, invariant, or representation mechanism.
+If only postconditions have been separated and the hard mechanism is retained,
+burden="unchanged" with proof_mode="formal" and a concrete proof_plan is an honest
+review. Explain why you choose to keep that route; do not relabel it to imply ease.
+You may instead revise the sketch or return to an independent proof of the fixed
+parent. Use the existing edit_theory with sketches=[{"target_entry_id":"parent ID",
+"helper_ids":[]}] and, in the same edit, replace the consumer with an independent
+proof or oops and remove helpers that no remaining group uses. Retain accepted
+declarations/proofs and all fixed contracts. Diagnose any pending failure first;
+withdrawing the entire optional route does not require solving its failed helper.
+Saving edits grants no GREEN and does not renew the experiment budget.
+Default failure views contain readable native text and evidence references.
+Use read_sketch view="full" for complete structured use observations; use
+read_sketch/read_failure view="raw" only when the original bound record is needed.
+Explicit rule failure observations compare the cited fact with the local goal;
+they do not forbid other uses of that fact or prove its applicability after edits.
 '''
 
 
@@ -152,30 +194,49 @@ def tool_contracts(*, run=None):
     use_site={'type':'object','properties':{'helper_id':sha,
         'consumer_line':{'type':'integer','minimum':1},'fact':text},
         'required':['helper_id','consumer_line','fact'],'additionalProperties':False}
-    group={'type':'object','properties':{'target_entry_id':sha,'helper_ids':ids,
+    group={'type':'object','properties':{'target_entry_id':sha,
+        'helper_ids':{'type':'array','items':sha,'uniqueItems':True,
+                     'description':'Empty withdraws this target group; remove unused unproved helpers in the same edit. Accepted proofs and fixed targets are preserved.'},
         'use_sites':{'type':'array','items':use_site,'minItems':1}},
            'required':['target_entry_id','helper_ids'],'additionalProperties':False}
     review={'type':'object','properties':{'helper_id':sha,
         'use_indices':{'type':'array','items':{'type':'integer','minimum':0},'minItems':1,'uniqueItems':True},
         **{k:{'enum':['local','generalized']} for k in ('domain_scope','premises','conclusion')},
         'generalization':{'enum':['none','induction','reuse']},
-        'burden':{'enum':['isolated','delegated','proved','unchanged']},'reduction':text,
+        'burden':{'enum':['isolated','delegated','proved','unchanged'],
+                  'description':'In semantic review, unchanged honestly records retained difficulty and requires an explicit formal proof plan; it is not a complexity-reduction claim.'},'reduction':text,
         'generalization_evidence':{'oneOf':[
             {'type':'object','properties':{k:text for k in ('variable','invariant','base_case','step_case')},
              'required':['variable','invariant','base_case','step_case'],'additionalProperties':False},
             {'type':'object','properties':{k:text for k in ('consumers','shared_pattern')},
              'required':['consumers','shared_pattern'],'additionalProperties':False}]},
-        'probe_id':sha,'child_review_id':sha},
+        'probe_id':sha,'child_review_id':sha,
+        'helper_role':{'enum':['classification','bridge','local']},
+        'proof_mode':{'enum':['diagnostic','formal']},'proof_plan':text,
+        'coverage':{'type':'object','properties':{
+            'definition_refs':{'type':'array','items':sha,'minItems':1},
+            'premise_sources':{'type':'array','items':sha},
+            'unknowns':{'type':'array','items':sha},
+            'branches':{'type':'array','minItems':1,'items':{'type':'object','properties':{
+                'case':sha,'status':{'enum':['handled','excluded','unknown']},'evidence':sha},
+                'required':['case','status','evidence'],'additionalProperties':False}}},
+            'required':['definition_refs','branches','premise_sources','unknowns'],'additionalProperties':False}},
         'required':['helper_id','use_indices','domain_scope','premises','conclusion','generalization','burden','reduction'],
         'additionalProperties':False}
     source_actions={
+        'switch_target':{'type':'object',
+            'description':'Select another pending contract, or yield this worker to another ready theory. Preserve all drafts, accepted proofs, evidence and costs. Never records UNKNOWN. A theory yield releases native residency; resumption may rebuild the certified prefix.',
+            'properties':{'action':{'const':'switch_target'},'entry_id':sha,'theory':sha,'reason':sha,'notes':text},
+            'required':['action','reason'],'additionalProperties':False,
+            'oneOf':[{'required':['entry_id'],'not':{'required':['theory']}},
+                     {'required':['theory'],'not':{'required':['entry_id']}}]},
         'wait_for_providers':{'type':'object',
-            'description':'Release this worker while named generated providers lack certified exports. Preserve all work; the coordinator resumes after publication. This neither imports facts nor declares an unresolved outcome.',
+            'description':'Wait only the named pending fixed contracts for generated provider publication. Other runnable contracts in this theory continue; release this worker only when all pending contracts are waiting. If a provider terminates without positive exports, the wait becomes invalid and these entries need another route and a new review decision. Optional waits never relax actual theory imports. Preserve all work; publication grants no premise/import authority or unresolved outcome.',
             'properties':{'action':{'const':'wait_for_providers'},'providers':ids,'entry_ids':ids,
                 'reason':sha,'review_issue_ids':{'type':'array','items':sha,'uniqueItems':True}},
             'required':['action','providers','entry_ids','reason'],'additionalProperties':False},
         'record_review_decision':{'type':'object',
-            'description':'Record how an assigned planning-review obligation will be handled. This is a proof-work allocation, never a proof. Import requires accepted imports; wait requires a registered wait.',
+            'description':'Record how an assigned planning-review obligation will be handled for its pending_contract_ids only. Use the exact issue_id from review_context and the obligations field. Completed GREEN or disposed contracts need no new decision. This is a proof-work allocation, never a proof. Import requires accepted imports; wait requires a registered wait covering these entries and providers.',
             'properties':{'action':{'const':'record_review_decision'},'issue_id':sha,
                 'decision':{'enum':['import','local','retain','wait']},'reason':sha,
                 'entry_ids':ids,'obligations':ids,'providers':{'type':'array','items':sha,'uniqueItems':True}},
@@ -222,7 +283,7 @@ def tool_contracts(*, run=None):
             'source_sha256':sha,'target_entry_ids':ids},
             'required':['action','source_sha256'],'additionalProperties':False},
         'read_sketch':{'type':'object','properties':{'action':{'const':'read_sketch'},
-            'receipt_id':sha,'view':{'enum':['summary','full']}},
+            'receipt_id':sha,'view':{'enum':['summary','full','raw']}},
             'required':['action','receipt_id'],'additionalProperties':False},
         'transition_proof':{'type':'object','properties':{'action':{'const':'transition_proof'},
             'source_sha256':sha,'failure_id':sha,'decision':{'enum':['formal_leaf','revise_consumer','revise_interface','decompose_helper']},'plan':text},
@@ -232,7 +293,8 @@ def tool_contracts(*, run=None):
         'assess_sketch':{'type':'object','properties':{'action':{'const':'assess_sketch'},
             'source_sha256':sha,'target_entry_ids':ids},
             'required':['action','source_sha256'],'additionalProperties':False},
-        'read_failure':{'type':'object','properties':{'action':{'const':'read_failure'},'failure_id':sha},
+        'read_failure':{'type':'object','properties':{'action':{'const':'read_failure'},'failure_id':sha,
+            'view':{'enum':['summary','raw']}},
             'required':['action','failure_id'],'additionalProperties':False},
         'review_sketch':{'type':'object','properties':{'action':{'const':'review_sketch'},
             'source_sha256':sha,'target_entry_id':sha,'receipt_id':sha,
@@ -283,11 +345,13 @@ def tool_contracts(*, run=None):
         'tools':tools(document_mode=True),'source_action_schemas':source_actions,
         'proof_action_examples':[{'theory':'theory from accepted plan','proposal':v} for v in examples],
         'observation_contract':instructions,
-        'semantics':{'edit':'saves an unproved draft; prefer read_entry/edit_proof for proof-only changes. edit_theory remains available for helper structure or sequential exact edits. Sketch strategies require explicit parent groups for every new auxiliary; sketch-local-demands-v1 also requires use_sites covering every group helper',
+        'semantics':{'edit':'saves an unproved draft; prefer read_entry/edit_proof for proof-only changes. edit_theory remains available for helper structure or sequential exact edits. Historical sketch strategies require parent groups for every new auxiliary; sketch-reviewed-v3 allows ordinary ungrouped helpers to be proved directly; sketch-local-demands-v1 also requires use_sites covering every group helper',
             'imports':'draft_imports can differ from checked_imports. A native action validates and applies the final list; imports_rejected preserves the previous context. New context acceptance retires old GREEN and query projections but preserves scripts and history. Certified providers must belong to this run. Published theories and environments pinned by native refutations cannot change.',
             'proof_edit':'expected_hash binds the entire current source; a change anywhere requires a fresh hash. Only the selected proof span is replaced, with the same hygiene, sketch/review and atomic draft-save checks as edit_theory. Proof edits never alter fixed statements/contexts or directly publish GREEN.',
             'edit_errors':'Rejected edits leave the draft unchanged. Structured details identify stale current_sha256 or exact edit_index (zero-based), match_count and matching entry/line locations. Sequential-edit positions refer to the unsaved candidate after preceding edits.',
             'sketch':'temporarily admits precisely the selected group in a discarded native transaction; conditional_closed is never GREEN or publishable',
+            'sketch_route':'File Planner can continue helper proofs, revise a sketch, or withdraw it with helper_ids=[] and an atomic source edit. Diagnose prior failures first. Unused pending helpers must be removed; shared helpers need another group. Accepted proofs, fixed targets and costs are preserved. Semantic review permits burden=unchanged with an explicit formal proof_plan and an honest reduction explanation; no complexity benefit is certified.',
+            'check_feedback':'Default views render native markup as readable text and reference raw evidence. read_sketch/full includes complete structured observations with readable checks; view=raw on read_sketch/read_failure explicitly returns the original bound record. read_diagnostic retains raw pagination offsets and hashes.',
             'helper_uses':'consumer_line selects a 1-based line of the parent proof body, not the theory file; fact is its exact helper reference. The full sketch receipt records native facts after attributes, assumptions, chained facts and pending goals. Remaining schematic variables are unresolved; these observations do not certify dependency, necessity or difficulty',
             'workflow':'sketch-reviewed-v1 requires native leaf probes and bottom-up reviews before formal helper attempts. Review judgments remain model assessments. Related decomposition revisions are gated on native failure diagnosis; script/known_fact failures require a changed-proof retry first. Probes never accept proofs or replenish budget',
             'guided_workflow':'sketch-guided-v1 requires assess_sketch and bottom-up reviews. Native structure heuristics flag repeated/multi-operation/iteration/unknown leaves: use a successful probe or reviewed child. Other leaves need no mandatory probe. Generalization needs a concrete mechanism. read_failure returns exact saved proof/diagnostic/state. Scores and explanations never certify difficulty, truth, minimality or reuse',
@@ -315,11 +379,22 @@ def tool_contracts(*, run=None):
         'examples_are_syntax_only':True}
     if proof_only:
         result['outcome_policy'] = 'proof-or-refutation-v1'
-        result['semantics']['outcomes'] = PROOF_OR_REFUTATION_INSTRUCTIONS
+        result['semantics']['outcomes'] = proof_outcome_instructions(run)
         result['semantics']['finish'] = (
             'Requires the current complete draft hash. Every fixed contract must be '
             'proved or independently refuted; pending targets prevent sealing. '
             'Final imports, positive source, semantic audit and build are checked '
             'before publication. Refutations supply no positive fact; a partial '
             'export never claims all fixed contracts proved.')
+    from regen.execution.result_scope import resolve_result_scope
+    if resolve_result_scope(run or {}):
+        result['result_scope']='owned-context-outcomes-v1'
+        source_actions['check_refutation']['description'] = (
+            OWNED_SCOPE_INSTRUCTIONS + ' Only frozen parent and sealed imports are available; '
+            'local unsealed positive prefixes are unavailable. Only this fixed contract '
+            'is disposed; continue other pending targets and keep its declaration as oops.')
+        source_actions['read_entry']['description'] += (
+            ' Also returns exact native positive/negative obligations and separately bound environment evidence.')
+        if not proof_only:
+            result['semantics']['outcomes'] += '\n'+OWNED_SCOPE_INSTRUCTIONS
     return result

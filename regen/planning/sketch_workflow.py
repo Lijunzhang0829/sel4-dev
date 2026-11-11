@@ -64,6 +64,41 @@ def _compatible(store, nodes, key, record):
             and prefix[:len(record['prefix'])] == record['prefix'])
 
 
+def leaf_review_issue(store, nodes, row):
+    """The shared leaf gate for review submission, replay and navigation.
+
+    Expected workflow issues are data; corrupt/foreign receipts still raise.
+    A supplied probe must validate even if a formal plan makes it optional.
+    """
+    from regen.planning.sketch_semantics import formal_leaf_mode
+    retained = (getattr(store, 'require_semantic_review', False)
+                and row['burden'] == 'unchanged' and formal_leaf_mode(store, row))
+    if row['burden'] != 'isolated' and not retained:
+        return {'code':'leaf_review_required',
+                'diagnostic':'leaf review requires isolated burden'}
+    if not row.get('probe_id'):
+        if getattr(store, 'require_assessment', False) or formal_leaf_mode(store, row):
+            return None
+        return {'code':'probe_missing',
+                'diagnostic':'leaf review requires isolated burden and a native probe or explicit formal plan'}
+    probe = _read(store, 'probes', row['probe_id'])
+    if probe.get('audit_policy') != PROBE_AUDIT_POLICY:
+        return {'code':'probe_audit_policy_changed',
+                'diagnostic':'leaf probe uses an old audit policy; probe it again'}
+    if not _compatible(store, nodes, row['helper_id'], probe):
+        return {'code':'probe_context_changed',
+                'diagnostic':'leaf probe does not match this interface/context'}
+    return None
+
+
+def validate_leaf_review(store, nodes, row):
+    issue = leaf_review_issue(store, nodes, row)
+    if issue:
+        from regen.planning.sketch_semantics import WorkflowBlocked
+        raise WorkflowBlocked(issue['code'], issue['diagnostic'],
+                              details={'entry_id':row['helper_id']})
+
+
 def probe_helpers(checker, store, sha, entry_ids=None):
     entries, nodes, proofs = _draft(store, sha)
     groups = load_groups(store)
@@ -142,6 +177,8 @@ def _review(store, nodes, proofs, target, visiting=None):
         validate_review(store, nodes, proofs, target, record['reviews'])
     children = {g['target_entry_id'] for g in load_groups(store)}
     for row in record['reviews']:
+        from regen.planning.sketch_semantics import validate_coverage
+        validate_coverage(store,row)
         key = row['helper_id']
         if key in store.state['proofs']:
             continue
@@ -152,13 +189,7 @@ def _review(store, nodes, proofs, target, visiting=None):
             if row.get('child_review_id') != child:
                 raise ValueError('child decomposition review changed')
         else:
-            if row['burden'] != 'isolated' or ('probe_id' not in row and not getattr(store, 'require_assessment', False)):
-                raise ValueError('helper is now a leaf; review it with a native probe')
-            probe = _read(store, 'probes', row['probe_id']) if row.get('probe_id') else None
-            if probe and probe.get('audit_policy') != PROBE_AUDIT_POLICY:
-                raise ValueError('leaf probe uses an old audit policy; probe it again')
-            if probe and not _compatible(store, nodes, key, probe):
-                raise ValueError('leaf probe is stale')
+            validate_leaf_review(store, nodes, row)
     return identity
 
 
@@ -174,8 +205,10 @@ def review_sketch(store, sha, target, receipt_id, reviews):
     children = {g['target_entry_id'] for g in load_groups(store)}
     for row in reviews:
         allowed = {'helper_id','use_indices','domain_scope','premises','conclusion','generalization',
-                   'burden','reduction','probe_id','child_review_id','generalization_evidence'}
-        required = allowed - {'probe_id','child_review_id','generalization_evidence'}
+                   'burden','reduction','probe_id','child_review_id','generalization_evidence',
+                   'helper_role','coverage','proof_mode','proof_plan'}
+        required = allowed - {'probe_id','child_review_id','generalization_evidence',
+                              'helper_role','coverage','proof_mode','proof_plan'}
         if set(row) - allowed:
             raise ValueError('unknown decomposition review fields: ' + ', '.join(sorted(set(row) - allowed)))
         if not required <= set(row):
@@ -186,6 +219,8 @@ def review_sketch(store, sha, target, receipt_id, reviews):
                     {'variable','invariant','base_case','step_case'}, {'consumers','shared_pattern'})
                     or not all(isinstance(value, str) for value in evidence.values())):
                 raise ValueError('invalid generalization_evidence structure')
+        from regen.planning.sketch_semantics import validate_coverage
+        validate_coverage(store,row)
         key = row['helper_id']
         uses = {u['index'] for u in cert.get('helper_uses', []) if u['helper_id'] == key}
         if (not uses or not isinstance(row['use_indices'], list)
@@ -201,7 +236,7 @@ def review_sketch(store, sha, target, receipt_id, reviews):
             raise ValueError('generalization requires induction or reuse justification')
         if not isinstance(row['reduction'], str) or not row['reduction'].strip():
             raise ValueError('explain which proof burden was reduced')
-        if row['burden'] == 'unchanged':
+        if row['burden'] == 'unchanged' and not getattr(store, 'require_semantic_review', False):
             raise ValueError('unchanged proof burden requires a revised decomposition')
         if key in store.state['proofs']:
             if row['burden'] != 'proved':
@@ -210,21 +245,29 @@ def review_sketch(store, sha, target, receipt_id, reviews):
             if row['burden'] != 'delegated' or row.get('child_review_id') != _review(store, nodes, proofs, key):
                 raise ValueError('delegated burden requires a current reviewed child sketch')
         else:
-            if row['burden'] != 'isolated' or ('probe_id' not in row and not getattr(store, 'require_assessment', False)):
-                raise ValueError('leaf review requires isolated burden and a native probe')
-            probe = _read(store, 'probes', row['probe_id']) if row.get('probe_id') else None
-            if probe and (probe.get('audit_policy') != PROBE_AUDIT_POLICY
-                          or not _compatible(store, nodes, key, probe)):
-                raise ValueError('leaf probe does not match this interface/context')
+            validate_leaf_review(store, nodes, row)
     if getattr(store, 'require_assessment', False):
         from regen.planning.sketch_assessment import validate_review
         validate_review(store, nodes, proofs, target, reviews)
     record = {'run_id':store.state['graph']['run_id'], 'source_sha256':sha,
               'sketch_sha256':cert['sketch_sha256'], 'receipt_id':receipt_id, 'reviews':reviews,
               'difficulty_certified':False,'judgment_source':'generating-agent', 'publishable':False}
+    if getattr(store,'require_semantic_review',False):
+        from regen.planning.sketch_semantics import feasibility
+        record['semantic_policy']='critical-helper-first-v1'
+        record['semantic_claims_verified']=False
+        record['helper_feasibility']={row['helper_id']:feasibility(store,row) for row in reviews}
+        record['retained_burden_helper_ids']=[row['helper_id'] for row in reviews
+                                             if row['burden']=='unchanged']
     identity = _save(store, 'reviews', record)
     durable(store.root/'workflow'/'review-index'/(cert['sketch_sha256']+'.json'), {'review_id':identity})
-    return {'status':'decomposition_reviewed','review_id':identity,'difficulty_certified':False}
+    result={'status':'decomposition_reviewed','review_id':identity,'difficulty_certified':False}
+    if 'helper_feasibility' in record:
+        result.update(helper_feasibility=record['helper_feasibility'],semantic_claims_verified=False)
+        from regen.planning.sketch_readiness import route_options
+        result.update(retained_burden_helper_ids=record['retained_burden_helper_ids'],
+                      route_options=route_options(store, target, sha))
+    return result
 
 
 def authorize_reviews(store, nodes, proofs, needed):
@@ -232,7 +275,9 @@ def authorize_reviews(store, nodes, proofs, needed):
     for group in load_groups(store):
         if not set(group['helper_ids']) & needed:
             continue
-        _review(store, nodes, proofs, group['target_entry_id'])
+        review_id=_review(store, nodes, proofs, group['target_entry_id'])
+        from regen.planning.sketch_semantics import require_critical_predecessors
+        require_critical_predecessors(store,nodes,proofs,group,_read(store,'reviews',review_id),needed)
         authorized.update(group['helper_ids'])
     if needed - authorized:
         raise ValueError('helpers need a current decomposition review')
@@ -246,11 +291,48 @@ def _pending_path(store):
     return store.root/'workflow'/'pending-failures-by-imports'/(digest(store.imports)+'.json')
 
 
-def _pending(store):
+def _withdrawn_failures(store):
+    pointer = store.root/'last-edit.json'
+    if not pointer.exists():
+        return {}
+    edit = json.loads(pointer.read_text())
+    identity = edit.get('sketch_withdrawal_snapshot')
+    if identity is None:
+        return {}
+    record = _read(store, 'withdrawals', identity)
+    if record['source_sha256'] != edit['source_sha256']:
+        raise ValueError('sketch withdrawal snapshot binding differs')
+    return record['failures']
+
+
+def withdrawal_snapshot(store, source_sha256, sketch_plan_snapshot, withdrawals):
+    records = dict(_withdrawn_failures(store))
+    for key,row in withdrawals.items():
+        retired = set(records.get(key, {}).get('withdrawn_contract_ids', []))
+        records[key] = {**row, 'withdrawn_source_sha256':source_sha256,
+            'sketch_plan_snapshot':sketch_plan_snapshot,
+            'withdrawn_contract_ids':sorted(retired | set(row['withdrawn_contract_ids']))}
+    if not records:
+        return None
+    return _save(store, 'withdrawals', {'run_id':store.state['graph']['run_id'],
+        'source_sha256':source_sha256, 'failures':records})
+
+
+def _pending(store, *, include_withdrawn=False):
     path = _pending_path(store)
     if not path.exists():
         path = store.root/'workflow'/'pending-failures.json'
     pending = json.loads(path.read_text()) if path.exists() else {}
+    withdrawn = _withdrawn_failures(store)
+    if include_withdrawn:
+        pending = {**{row['entry_id']:key for key,row in withdrawn.items()}, **pending}
+    else:
+        fixed = {row['contract_id'] for row in store.package['contracts']}
+        def active(identity):
+            roots = set(_read(store,'failures',identity)['roots']) & fixed
+            retired = set(withdrawn.get(identity, {}).get('withdrawn_contract_ids', []))
+            return not roots or not roots <= retired
+        pending = {key:identity for key,identity in pending.items() if active(identity)}
     # A changed import can repair an unchanged script. Keep historical receipts
     # and per-environment pointers, including when an old environment returns.
     return {key:identity for key,identity in pending.items()
@@ -319,16 +401,25 @@ def record_formal_result(store, source, evidence):
 
 def record_conditional_result(store, nodes, proofs, target, check, receipt_id, closed):
     """A repaired consumer clears only its earlier conditional-script failure."""
-    if check.get('failure_scope') == 'native_preparation':
+    if (check.get('failure_scope') == 'native_preparation'
+            or check.get('failure_owner') == 'harness'):
         return
     if check['verdict'] == 'red':
-        _failure(store,nodes,target,proofs[target],check,'sketch:'+receipt_id,proofs)
+        failed = check.get('failed_entry_id', target)
+        if failed not in nodes:
+            failed = target
+        _failure(store,nodes,failed,proofs.get(failed, ''),check,'sketch:'+receipt_id,proofs)
     elif closed:
         pending = _pending(store)
-        identity = pending.get(target)
-        if identity and _read(store,'failures',identity)['evidence_id'].startswith('sketch:'):
-            pending.pop(target)
-            durable(_pending_path(store),pending)
+        checked = {target}
+        for group in load_groups(store):
+            if group['target_entry_id'] == target:
+                checked.update(group['helper_ids'])
+        for key in checked:
+            identity = pending.get(key)
+            if identity and _read(store,'failures',identity)['evidence_id'].startswith('sketch:'):
+                pending.pop(key)
+        durable(_pending_path(store),pending)
 
 
 def _diagnosis(store, failure_id):
@@ -374,29 +465,71 @@ def guard_revision(store, entries, proofs, groups):
     changed.update(k for k,n in previous.items() if n['role'] != 'contract'
                    and k not in {e['id'] for e in entries})
     affected = set().union(*(_roots([*old_groups,*groups],k) for k in changed)) if changed else set()
+    # A diagnosed optional route may be abandoned without first solving its
+    # helpers. Fixed goals, accepted proofs and failure history remain intact.
+    current = {n['id']: n for n in entries}
+    withdrawn = {key for key in old_members.keys()-new_members.keys()
+                 if key in current and previous[key]['role']=='contract'
+                 and _node(current[key]) == _node(previous[key])}
+    retired_routes = _withdrawn_failures(store)
+    withdrawals = {}
     for key, failure_id in _pending(store).items():
         failure = _read(store,'failures',failure_id)
-        if not affected & set(failure['roots']):
+        failure_roots = set(failure['roots']) - set(retired_routes.get(
+            failure_id, {}).get('withdrawn_contract_ids', []))
+        if not affected & failure_roots:
             continue
         decision = _diagnosis(store,failure_id)
         if not decision:
             raise ValueError('diagnose failure before revising its decomposition: ' + failure_id)
+        affected_contracts = {root for root in affected & failure_roots
+                              if previous.get(root, {}).get('role')=='contract'}
+        if affected_contracts and affected_contracts <= withdrawn:
+            from regen.planning.theory_document import source_hash
+            withdrawals[failure_id] = {'entry_id':key,
+                'source_before_sha256':source_hash(store.path.read_text()),
+                'diagnosis_id':digest(decision),
+                'withdrawn_contract_ids':sorted(affected_contracts)}
+            continue
         if decision['classification'] in {'script','known_fact'} and not (getattr(store,'require_phases',False) and failure.get('phase_failures',1)>=2):
             raise ValueError('attempt the local proof repair before revising this decomposition: ' + key)
+    return withdrawals
 
 
 def workflow_view(store):
-    return {'phased_workflow':getattr(store,'require_phases',False),
+    from regen.planning.theory_document import parse
+    entries, _ = parse(store.path.read_text(), store.package, store.imports)
+    active = {entry['id'] for entry in entries}
+    withdrawn = _withdrawn_failures(store)
+    fixed = {row['contract_id'] for row in store.package['contracts']}
+    def fully_withdrawn(identity):
+        roots = set(_read(store,'failures',identity)['roots']) & fixed
+        retired = set(withdrawn.get(identity, {}).get('withdrawn_contract_ids', []))
+        return bool(roots) and roots <= retired
+    result = {'phased_workflow':getattr(store,'require_phases',False),
             'short_probe_limit':2 if getattr(store,'require_phases',False) else None,
             'escalation_action':'transition_proof' if getattr(store,'require_phases',False) else None,
             'probe_candidate_seconds':PROBE_SECONDS,
             'pending_failures':[{'entry_id':key,'failure_id':identity,
+                'active_in_draft':key in active,
+                'route_withdrawn':fully_withdrawn(identity),
+                'withdrawn_contract_ids':withdrawn.get(identity, {}).get('withdrawn_contract_ids', []),
                 'diagnosis':_diagnosis(store,identity),
                 'obstacle_summary':obstacle_summary(store,identity)}
-                for key,identity in _pending(store).items()],
+                for key,identity in _pending(store, include_withdrawn=True).items()],
             'structural_assessment_required':getattr(store, 'require_assessment', False),
+            'withdrawn_failures':[{'entry_id':row['entry_id'],'failure_id':identity,
+                'withdrawn_contract_ids':row['withdrawn_contract_ids'],
+                'route_withdrawn':fully_withdrawn(identity),
+                'withdrawn_source_sha256':row['withdrawn_source_sha256'],
+                'diagnosis_id':row['diagnosis_id']} for identity,row in withdrawn.items()],
             'failure_details_action':'read_failure',
-            'difficulty_certified':False}
+            'difficulty_certified':False,
+            'semantic_review_required':getattr(store,'require_semantic_review',False),
+            'formal_leaf_without_probe':getattr(store,'allow_formal_leaf',False)}
+    from regen.planning.sketch_readiness import readiness_view
+    result['readiness']=readiness_view(store)
+    return result
 
 
 def obstacle_summary(store, failure_id):

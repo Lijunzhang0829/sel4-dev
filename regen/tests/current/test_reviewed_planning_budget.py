@@ -324,12 +324,13 @@ while not Path({str(pidfile)!r}).exists():
             else:
                 self.fail('unexpected stage '+name)
             now[0] += {'draft':10, 'review':20, 'revision':30, 'final-review':5}[name]
+        from regen.infrastructure.experiment_runtime_budget import ExperimentRuntimeBudget
         def create(ledger, **kwargs):
-            return EffectiveTimeBudget(ledger, monotonic=lambda:now[0], **kwargs)
+            return ExperimentRuntimeBudget(ledger, monotonic=lambda:now[0], **kwargs)
         argv = ['reviewed_planning', '--input',str(self.input_path), '--output',str(output),
             '--policy',str(policy), '--model','gpt-5.6-sol', '--reasoning-effort','xhigh',
-            '--budget-mode','effective-time', '--include-planning-time', '--effective-seconds','100', '--allow-external-call']
-        with patch('sys.argv', argv), patch.object(module, 'EffectiveTimeBudget', side_effect=create), \
+            '--budget-seconds','100', '--allow-external-call']
+        with patch('sys.argv', argv), patch('regen.infrastructure.experiment_runtime_budget.ExperimentRuntimeBudget', side_effect=create), \
                 patch.object(reviewed_planning, 'run_command', side_effect=run_command):
             reviewed_planning.main()
         self.assertEqual(calls, ['draft','review','revision','final-review'])

@@ -745,3 +745,59 @@ action provenance. The file is a recoverable search hint, not proof authority;
 declaration edits invalidate advice, while proof-only edits trigger fresh
 certification checks. The default baseline and dedicated strict A/B supervisor
 remain separate and unchanged. Historical benchmark runs are not upgraded in place.
+
+### Normal-runtime v2: evidenced native outages
+
+New normal-runtime runs use `normal-wall-minus-confirmed-interruptions-v2`.
+This is a versioned accounting change; a v1 ledger cannot silently resume with
+v2 semantics. Existing released experiments and historical charges are unchanged.
+
+A native `TIMEOUT` response is proof-search feedback and remains charged. A host
+watchdog is excluded only after trusted native events bind the exact request,
+worker, prefix and imports to confirmed worker cleanup and absence of a response.
+Only previously charged non-model contributor intervals are credited; overlapping
+exclusions are not counted twice and a healthy parallel worker retains the global
+union cost. A partial native trace, cancellation, or crash without that receipt
+cannot authorize a credit. Wall time and exclusion evidence remain in the ledger.
+The correction is idempotent and survives clean pause/resume.
+
+A subsequent forced prefix rebuild can be excluded once when its body and imports
+hashes match that confirmed interruption. Unrelated imports changes, normal
+startup, theory switches, ordinary candidate-timeout recovery and operator resume
+remain normal charged work. Exclusions end at recovery completion; models doing
+actual concurrent work remain charged. A hard budget cutoff does not become an
+automatic extension on the expectation of a future unconfirmed refund.
+
+The native waiter also checks for a TIMEOUT response published during graceful
+cleanup. Such a late received TIMEOUT is charged as an ordinary native timeout.
+A late GREEN is not accepted from an already discarded worker and cannot be
+used as evidence that no response existed. These changes improve classification
+and billing, not a claim that all native non-interruptibility is eliminated.
+
+
+### Current Ours clock: one policy (2026-11-08)
+
+This supersedes the selectable effective-time/normal-runtime modes for new Ours
+experiments described above. Reviewed planning and parallel-workspace generation
+now use `experiment-runtime-minus-evidenced-interruptions-v1` automatically.
+`--budget-seconds X` is the sole duration input, default 48 hours. Existing frozen
+experiments retain their old accounting and allowance.
+
+Count normal elapsed work from planning through integration, including retrieval,
+model reasoning, native prefix preparation, failed proofs and native TIMEOUT.
+Exclude recorded experiment pauses/offline gaps and evidenced worker/network
+interruptions, including the causally required exact-prefix recovery once.
+Late evidence can refund charged intervals without requiring a successful retry.
+The union of invalid intervals is excluded once; healthy overlapping work stays
+charged. Trusted native/provider events authorize corrections, never model prose
+or absence of a message-completion event.
+
+The ledger stores request identities and attributed intervals separately from
+small counter checkpoints. Each correction publishes evidence and new counters
+atomically. Duplicate evidence is a no-op; conflicting evidence is rejected.
+Budget exhaustion pauses; an audit can restore remaining allowance but does not
+auto-resume. Tokens, proofs and historical charges are retained. Missing crash
+tails are reported for reconciliation, never assumed to be fully invalid.
+
+See [the current pipeline clock](PARALLEL-PIPELINE-IMPLEMENTATION.md#unified-experiment-clock-2026-11-08)
+and [validation evidence](../../../reports/regen/unified-experiment-runtime-20261108-001/REPORT.md).

@@ -160,7 +160,8 @@ def _effective_budget_status(root, invocation_id):
         return None
     state = checkpoint['data']['state']
     from regen.infrastructure.normal_runtime_budget import POLICY as NORMAL_POLICY
-    if (state.get('policy') in (POLICY,NORMAL_POLICY) and state.get('paused')
+    from regen.infrastructure.experiment_runtime_budget import POLICY as EXPERIMENT_POLICY
+    if (state.get('policy') in (POLICY,NORMAL_POLICY,EXPERIMENT_POLICY) and state.get('paused')
             and not state.get('finished')):
         return {'reason':state.get('reason') or 'runner_paused', 'checkpoint_event_id':checkpoint['event_id'],
                 'effective_seconds':state['effective_seconds'], 'seconds':state['seconds'],

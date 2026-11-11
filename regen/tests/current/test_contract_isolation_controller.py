@@ -254,12 +254,12 @@ class ContractStageTests(unittest.TestCase):
                     'regen.preparation.checker_context.load_context',return_value={'checker_context_id':'fixture'}),patch(
                     'regen.planning.theory_outcomes.current_outcome',return_value=None),patch(
                     'regen.execution.repository_integration.integrate_repository') as integrate:
-                result=run_parallel_workspace(root,allow_external_call=True,integrate=True,max_parallel_theories=1,
+                result=run_parallel_workspace(root, budget_mode="effective-time",allow_external_call=True,integrate=True,max_parallel_theories=1,
                     file_planner_interface=interface,
                     execution_policy={'stages':[['A'],list(states)[1:]]})
                 if resume:
                     first = result
-                    result=run_parallel_workspace(root,allow_external_call=True,integrate=True,max_parallel_theories=1,
+                    result=run_parallel_workspace(root, budget_mode="effective-time",allow_external_call=True,integrate=True,max_parallel_theories=1,
                         file_planner_interface=interface,
                         execution_policy={'stages':[['A'],list(states)[1:]]},
                         resume_authorization='Explicit synthetic test resume of unchanged run')

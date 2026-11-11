@@ -105,7 +105,7 @@ class ProviderCooldownTests(unittest.TestCase):
                 policy['provider_http_retries'] = http_retries
             if feedback_retries is not None:
                 policy['provider_feedback_retries'] = feedback_retries
-            return planner.run_parallel_workspace(root, allow_external_call=True, integrate=False,
+            return planner.run_parallel_workspace(root, allow_external_call=True, budget_mode="effective-time", integrate=False,
                 max_parallel_theories=workers,
                 execution_policy=policy, resume_authorization=resume_authorization)
 

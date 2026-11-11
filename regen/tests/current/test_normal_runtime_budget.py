@@ -20,7 +20,8 @@ class NormalRuntimeTests(unittest.TestCase):
     def test_normal_phases_and_failed_requests_count(self):
         for phase in ('prefix_preparation','seal','provider_recovery'):
             with self.budget.excluded(phase):self.now+=10
-        self.budget.begin_native_request('A','n',{})
+        self.budget.register({'A':['a']});self.budget.select('A',worker_id='A')
+        self.budget.begin_native_request('A','n',{'prefix_sha256':'a'*64,'request_sha256':'b'*64})
         self.now+=10
         self.budget.finish_native_request('A','n','timeout')
         self.budget.begin_provider_request('A','p')

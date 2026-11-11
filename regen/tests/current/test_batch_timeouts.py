@@ -91,19 +91,37 @@ class BatchTimeoutTest(unittest.TestCase):
             self.assertEqual(evidence['check']['native_receipt']['verdict'], 'infrastructure_error')
             self.assertTrue(all(row['status'] == 'not_checked' for row in evidence['node_results']))
 
-    def test_prefix_startup_timeout_has_distinct_scope_without_cold_repeat(self):
+    def test_prefix_startup_timeout_without_owned_worker_cannot_authorize_requeue(self):
+        from regen.execution.check_tasks import NativeCleanupError
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); old, new, checker = self.setup_case(root)
             error = TimeoutError('prefix deadline'); error.timeout_scope = 'prefix-startup'
             error.timeout_seconds = 1800; error.worker_log = 'prefix reconstruction'
             with patch('regen.execution.batch_checker.BatchWorker', side_effect=error):
-                evidence = check_batch(checker, old, new)
-            self.assert_timeout_evidence(old, new, evidence, 'prefix-startup')
-            self.assertEqual(evidence['check']['timeout_seconds'], 1800)
+                with self.assertRaisesRegex(NativeCleanupError, 'confirmed worker disposal'):
+                    check_batch(checker, old, new)
             self.assertEqual(checker.calls, 0)
             self.assertIsNone(checker._batch_worker)
-            self.assertEqual(evidence['check']['failure_scope'], 'native_preparation')
-            self.assertTrue(all(n['status']=='not_checked' for n in evidence['node_results']))
+            self.assertFalse(next(root.glob('incremental-failure-*')).joinpath('native-recovery.json').exists())
+
+    def test_prefix_startup_timeout_has_cleanup_bound_receipt_without_cold_repeat(self):
+        from types import SimpleNamespace
+        from regen.execution.check_tasks import RecoverableNativePreparationError
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); old, new, checker = self.setup_case(root)
+            worker = SimpleNamespace(root=root, name='closed-startup-owner', closed=True,
+                close=Mock(), pending=None)
+            error = TimeoutError('prefix deadline'); error.timeout_scope = 'prefix-startup'
+            error.timeout_seconds = 1800; error.worker_log = 'prefix reconstruction'
+            error.native_worker = worker
+            with patch('regen.execution.batch_checker.BatchWorker', side_effect=error):
+                with self.assertRaises(RecoverableNativePreparationError) as caught:
+                    check_batch(checker, old, new)
+            receipt = caught.exception.read_receipt(root)
+            self.assertEqual(receipt['kind'], 'prefix_timeout')
+            self.assertEqual(checker.calls, 0)
+            self.assertIsNone(checker._batch_worker)
+            self.assertEqual(old['proofs'], {})
 
     def test_prefix_has_no_deadline_but_candidate_limits_remain(self):
         for seconds, facts in [(900, 0), (900, 78), (4000, 1000)]:

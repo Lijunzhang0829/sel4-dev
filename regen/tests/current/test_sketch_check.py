@@ -270,14 +270,30 @@ class SketchControllerTests(unittest.TestCase):
             self.base.call({'action':'edit_theory','base_sha256':draft['source_sha256'],'source':source})
         saved=self.base.call({'action':'edit_theory','base_sha256':draft['source_sha256'],'source':source,
             'sketches':[{'target_entry_id':'target_contract','helper_ids':['h1','h2']}]})
-        rejected=self.base.call({'action':'check_theory','source_sha256':saved['source_sha256'],
-                                 'entry_ids':['h1','h2']})
-        self.assertEqual(rejected['feedback']['status'],'rejected_request')
+        checks_before = checker.calls
+        blocked=self.base.call({'action':'check_theory','source_sha256':saved['source_sha256'],
+                                'entry_ids':['h1','h2']})
+        self.assertEqual(blocked['feedback']['status'],'checked_entries',blocked)
+        self.assertEqual(blocked['feedback']['new_green'],[])
+        rows=blocked['feedback']['entry_results']
+        self.assertEqual([row['entry_id'] for row in rows],['h1','h2'])
+        for row in rows:
+            self.assertEqual(row['status'],'blocked_workflow')
+            self.assertEqual(row['verdict'],'not_checked')
+            self.assertFalse(row['native_check_executed'])
+            self.assertTrue(row['missing_prerequisites'])
+            self.assertTrue(row['next_actions'])
+        self.assertEqual(checker.calls,checks_before)
+        self.assertEqual(self.base.controller._state('Target')[1]['accepted_order'],[])
+        self.assertEqual(self.base.read()['document']['source'],source)
         checked=self.base.call({'action':'check_sketch','source_sha256':saved['source_sha256']})
         self.assertEqual(checked['status'],'conditional_closed',checked)
         accepted=self.base.call({'action':'check_theory','source_sha256':saved['source_sha256'],
                                  'entry_ids':['h1','h2']})
         self.assertEqual(accepted['feedback']['status'],'accepted',accepted)
+        self.assertEqual(accepted['feedback']['new_green'],['h1','h2'])
+        self.assertEqual([(row['entry_id'],row['status']) for row in accepted['feedback']['entry_results']],
+                         [('h1','audited_green'),('h2','audited_green')])
         self.assertEqual(self.base.controller._state('Target')[1]['accepted_order'],['h1','h2'])
         self.assertEqual(self.base.read()['document']['source'],source)
         parent=self.base.call({'action':'check_theory','source_sha256':saved['source_sha256'],

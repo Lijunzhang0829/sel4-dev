@@ -54,8 +54,17 @@ class GenerationActivityBridge:
                     evidence={key: fields[key] for key in (
                         'reason', 'generation_id', 'thread_id', 'turn_id',
                         'item_ids', 'model_lifecycle_policy', 'theory') if key in fields},
-                    disposition='pause_measurement_invalid', evidence_trusted=False)
-                self.stage.cancel('effective_clock_evidence_error')
+                    disposition=('wall_clock_retained_protocol_diagnostic'
+                        if getattr(self.stage,'experiment_runtime',False) else 'pause_measurement_invalid'),
+                    evidence_trusted=False)
+                if not getattr(self.stage,'experiment_runtime',False):
+                    self.stage.cancel('effective_clock_evidence_error')
+            elif event in {'native_request_started','native_request_finished'} and getattr(self.stage,'experiment_runtime',False):
+                if event=='native_request_started':
+                    self.stage.begin_native_request(None,fields['request_id'],fields['binding'])
+                else:
+                    self.stage.finish_native_request(None,fields['request_id'],fields['outcome'],
+                        interruption_evidence=fields.get('interruption_evidence'))
             elif event in ('generation_provider_http_failure','generation_provider_request_failed'):
                 receipt=self.stage.ledger.append(event,
                     evidence={key: fields[key] for key in (

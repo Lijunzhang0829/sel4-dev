@@ -413,7 +413,9 @@ class CheckExecutor:
         finally:
             self.condition.notify_all()
 
-    def submit(self, *, kind, theory, binding, request, execute, owner=None, task_id=None):
+    def submit(self, *, kind, theory, binding, request, execute, owner=None, task_id=None, inline=False):
+        if inline and (kind != 'action' or owner is not None):
+            raise ValueError('inline tasks must be owner-free read actions')
         if kind not in {'proof_batch','statement','symbol','seal','action','preflight','integration','sketch','refutation'}:
             raise ValueError('unknown check task kind')
         task_id = task_id or uuid4().hex
@@ -439,7 +441,8 @@ class CheckExecutor:
             try:
                 self._save(record)
                 context = copy_context()
-                self.futures[task_id] = self.pool.submit(context.run, self._run, task_id, execute)
+                if not inline:
+                    self.futures[task_id] = self.pool.submit(context.run, self._run, task_id, execute)
             except BaseException as error:
                 # A failed write or dispatch must not strand the theory owner.
                 # Retain the terminal identity so retrying this ID cannot run it.
@@ -451,7 +454,9 @@ class CheckExecutor:
                 except BaseException as save_error:
                     error.add_note(f'Could not persist submission failure: {save_error}')
                 raise
-            return self.get(task_id)
+        if inline:
+            self._run(task_id, execute)
+        return self.get(task_id)
 
     def _run(self, task_id, execute):
         token = self.tokens[task_id]
@@ -479,6 +484,9 @@ class CheckExecutor:
             with self.lock:
                 self.records[task_id].update(status='error', finished_at=time.time(),
                     error_type=type(error).__name__, diagnostic=str(error))
+                from regen.execution.check_tasks import RecoverableNativePreparationError
+                if isinstance(error, RecoverableNativePreparationError):
+                    self.records[task_id]['native_recovery'] = error.record()
                 self._save(self.records[task_id])
         finally:
             CURRENT_TASK.reset(marker)

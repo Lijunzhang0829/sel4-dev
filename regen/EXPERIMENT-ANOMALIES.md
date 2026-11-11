@@ -167,6 +167,14 @@ run/machine/application/environment：
 关联旧事件/替代记录：
 ```
 
-## 本轮清理范围
+## 2026-11-06 增补：上下文反证验收与会话歧义
+
+- **上下文反证错误验收**：旧 VERO 在外层 `False` 假设内接受了对 `True` 的否定，未验证完整契约 `False ⟹ True` 的否定。独立 HOL 原生复现确认；修复为导出 owned assumptions、定义和参数，退出原 context 后证明闭合否定，并检查精确命题、空残留假设与内核依赖。当前 slot-based Codex 共用此验证器；历史非零证伪需重验，不能直接认定全部错误。
+- **反证状态与集成口径遗漏**：逐 contract 重试和增量 seal 原先仅支持 proved；指标可能把反证计为正向 GREEN。现分别记录 proved/disproved/resolved，并验证反证在崩溃恢复、重复回复和集成后的保留。
+- **最近会话歧义**：checkpoint 的 `resume --last` 可能选错会话。改为本次运行的明确 thread ID；丢失绑定时保留工作区并新建会话，不从全局最近会话猜测。
+
+本次新增原生与故障回归的独立结果见 [验收报告](../reports/regen/baseline-refutation-readiness-20261106-001/REPORT.md)。这些是新增机制和测试，不计入上文旧的 17 案例/19 回放清单，不代表已经完成 48 小时稳定性验收。
+
+## 历史清理范围
 
 已按用户要求删除reports下5—7月旧主题和运行内容；与本台账相关的9—10月异常证据保留。本文件不是删除其他历史日志、重启实验或重新计费的授权。删除记录见 [may-july-deletion-20261027.json](../reports/regen/report-conclusion-review-20261027-001/may-july-deletion-20261027.json)。

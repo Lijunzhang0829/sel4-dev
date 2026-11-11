@@ -13,6 +13,8 @@ from pathlib import Path
 
 from regen.execution.proof_commits import digest
 from regen.infrastructure.experiment_ledger import Ledger
+from regen.execution.result_scope import (NEGATIVE_STATUSES, resolve_result_scope,
+    expected_negative_status, validate_negative_scope, contract_environment_view)
 
 CLASSIFICATIONS = frozenset({'proof_search_exhausted', 'suspected_counterexample',
     'missing_assumptions', 'unsupported_specification', 'no_progress'})
@@ -65,7 +67,7 @@ def validate_dispositions(package, state, dispositions, *, expected_imports=None
             raise ValueError('proof-or-refutation-v1 forbids UNKNOWN dispositions; '
                              'unproved contracts must remain pending')
         if (outcome.get('schema') != DISPOSITION_SCHEMA or outcome.get('policy') != CONTRACT_POLICY
-                or outcome.get('scope') != 'contract' or outcome.get('status') not in {'unknown', 'refuted'}
+                or outcome.get('scope') != 'contract' or outcome.get('status') not in {'unknown', *NEGATIVE_STATUSES}
                 or outcome.get('positive_proofs_added') != 0 or outcome.get('theory_sealed') is not False
                 or not isinstance(outcome.get('reason'), str) or not outcome['reason'].strip()):
             raise ValueError('invalid contract disposition semantics')
@@ -100,12 +102,25 @@ def validate_dispositions(package, state, dispositions, *, expected_imports=None
         if covered & set(ids):
             raise ValueError('multiple terminal dispositions for one contract')
         covered.update(ids); checked[event_id] = outcome
-        if outcome['status'] == 'refuted':
+        if outcome['status'] in NEGATIVE_STATUSES:
             if (len(ids) != 1 or outcome.get('origin') != 'native_checker'
-                    or outcome.get('truth_status') != 'refuted' or outcome.get('classification') is not None):
+                    or outcome.get('truth_status') != outcome['status'] or outcome.get('classification') is not None):
                 raise ValueError('invalid native refutation disposition')
+            certificate = outcome.get('details', {}).get('certificate')
+            validate_negative_scope(runtime or {}, certificate, contracts[ids[0]])
+            if outcome['status'] != expected_negative_status(runtime or {}):
+                raise ValueError('contract disposition differs from frozen result scope')
+            if resolve_result_scope(runtime or {}):
+                if outcome.get('result_scope') != resolve_result_scope(runtime):
+                    raise ValueError('contract disposition result scope changed')
+                view = contract_environment_view(runtime, contracts[ids[0]])
+                if outcome.get('environment_id') != view['environment_id']:
+                    raise ValueError('contract disposition environment changed')
+                if outcome.get('fixed_environment_status') != view['fixed_environment_status']:
+                    raise ValueError('contract disposition environment evidence status changed')
             validate_refutation_certificate(outcome.get('details', {}).get('certificate'),
-                contracts[ids[0]], expected_imports=expected_imports)
+                contracts[ids[0]], expected_imports=expected_imports,
+                **({'expected_result_scope':resolve_result_scope(runtime)} if resolve_result_scope(runtime or {}) else {}))
         elif (outcome.get('origin') not in {'model', 'controller'}
                 or outcome.get('truth_status') != 'undetermined'
                 or outcome.get('classification') not in CLASSIFICATIONS):
@@ -202,8 +217,13 @@ def _publish_disposition(controller, *, status, reason, origin, details, entry_i
         'status':status, 'reason':reason, 'origin':origin, 'entry_ids':ids, 'binding':binding,
         'contract_bindings':{key:contract_binding(contracts[key]) for key in ids},
         'details':deepcopy(details), 'positive_proofs_added':0, 'theory_sealed':False,
-        'truth_status':'refuted' if status == 'refuted' else 'undetermined',
+        'truth_status':status if status in NEGATIVE_STATUSES else 'undetermined',
         'classification':classification, 'metadata':deepcopy(metadata or {})}
+    if resolve_result_scope(controller.run):
+        view = contract_environment_view(controller.run, contracts[ids[0]])
+        outcome.update(result_scope=resolve_result_scope(controller.run),
+                       environment_id=view['environment_id'],
+                       fixed_environment_status=view['fixed_environment_status'])
     directory = _disposition_ledger_path(controller, theory)
     ledger = Ledger(directory, controller.run['run_id'])
     # Validate semantics before publication. The event envelope is selected here
@@ -217,7 +237,7 @@ def _publish_disposition(controller, *, status, reason, origin, details, entry_i
     validate_dispositions(package, state, {key:probed for key in ids}, expected_binding=binding,
                           runtime=controller.run)
     from regen.execution.check_tasks import CURRENT_TASK
-    token = CURRENT_TASK.get() if status == 'refuted' else None
+    token = CURRENT_TASK.get() if status in NEGATIVE_STATUSES else None
     sequence = len(ledger.rows)+1
     try:
         row = ledger.append('contract_disposition', **outcome)
@@ -435,7 +455,7 @@ def _recover_completed_refutation(controller, theory):
                 or completion.get('result_sha256') != digest(result)
                 or row.get('result_sha256') != digest(result)):
             raise ValueError('completed refutation result binding mismatch')
-        if result.get('status') != 'refuted':
+        if result.get('status') not in NEGATIVE_STATUSES:
             continue
         checked_binding = result.get('checked_binding', row['binding'])
         if (not isinstance(checked_binding, dict)
@@ -451,15 +471,17 @@ def _recover_completed_refutation(controller, theory):
         if 'context_revision' in checked_binding:
             from regen.execution.import_revisions import native_imports
             expected_imports = native_imports(controller.run, checked_binding['context_imports'])
+        validate_negative_scope(controller.run, result['certificate'], contract)
         validate_refutation_certificate(result['certificate'], contract,
-                                        expected_imports=expected_imports)
+            expected_imports=expected_imports,
+            **({'expected_result_scope':resolve_result_scope(controller.run)} if resolve_result_scope(controller.run) else {}))
         if ids[0] in disposed:
             previous = disposed[ids[0]]
-            if (previous['status'] != 'refuted'
+            if (previous['status'] != result['status']
                     or previous['details']['certificate'] != result['certificate']):
                 raise ValueError('completed refutation conflicts with a contract disposition')
             continue
-        return _publish(controller, status='refuted',
+        return _publish(controller, status=result['status'],
             reason='Native-checked negation of the frozen contract', origin='native_checker',
             details={'task_id':row['task_id'], 'certificate':result['certificate'],
                      'recovered_from_completed_task':True}, entry_ids=ids,
@@ -554,10 +576,13 @@ def _check_refutation(controller, proposal, metadata):
                     if rejected is not None:
                         return {**rejected, 'checked_binding': _snapshot(controller)[2]}
                 checked_binding = _snapshot(controller)[2]
-                result = check_refutation(runtime[4], contract, proof, directory/'negative-check')
+                result = check_refutation(runtime[4], contract, proof, directory/'negative-check',
+                    **({'result_scope':resolve_result_scope(controller.run)} if resolve_result_scope(controller.run) else {}))
                 result = {**result, 'checked_binding': checked_binding}
-                if result.get('status') == 'refuted':
-                    validate_refutation_certificate(result['certificate'], contract, runtime[4])
+                if result.get('status') in NEGATIVE_STATUSES:
+                    validate_negative_scope(controller.run, result['certificate'], contract)
+                    validate_refutation_certificate(result['certificate'], contract, runtime[4],
+                        **({'expected_result_scope':resolve_result_scope(controller.run)} if resolve_result_scope(controller.run) else {}))
                     # Publish under the same transaction/cancellation authority
                     # as positive checks. The task's submitted binding remains
                     # intact; checked_binding records any accepted import event.
@@ -565,7 +590,7 @@ def _check_refutation(controller, proposal, metadata):
                         controller._check_session_active()
                         if _snapshot(controller)[2] != checked_binding:
                             raise ValueError('refutation context changed during native check')
-                        _publish(controller, status='refuted',
+                        _publish(controller, status=result['status'],
                             reason='Native-checked negation of the frozen contract', origin='native_checker',
                             details={'task_id':task_id, 'certificate':result['certificate']},
                             entry_ids=ids, metadata=metadata)
@@ -592,20 +617,32 @@ def _check_refutation(controller, proposal, metadata):
     result = row['result']
     if result.get('framework_blocked') or result.get('status') == 'infrastructure_error':
         raise NativePreparationError(result.get('diagnostic', 'native refutation infrastructure failed'))
-    if result.get('status') != 'refuted':
+    if result.get('status') not in NEGATIVE_STATUSES:
         controller._check_session_active()
         if _snapshot(controller)[2] != result.get('checked_binding', binding):
             raise ValueError('refutation context changed during native check')
-        return {**result, 'task_id': task_id, 'theory_stop': False,
+        return {**_failed_refutation_feedback(result), 'task_id': task_id, 'theory_stop': False,
                 'notice':_failed_refutation_notice(controller.run)}
     outcome = (current_dispositions(controller).get(ids[0]) if contract_mode
                else current_outcome(controller))
-    if outcome is None or outcome['status'] != 'refuted':
+    if outcome is None or outcome['status'] != result['status']:
         raise NativePreparationError('completed refutation has no accepted outcome')
     if contract_mode:
         return {**_disposition_feedback(controller, outcome), 'task_id':task_id}
     return {'status': 'refuted', 'theory_outcome': outcome, 'theory_stop': True,
             'task_id': task_id, 'notice': 'Refutation is separate from positive proofs; this theory remains unsealed.'}
+
+
+def _failed_refutation_feedback(result):
+    """Keep the complete native result in the task, not twice in model context."""
+    feedback = {key:deepcopy(value) for key,value in result.items() if key != 'native_check'}
+    if isinstance(result.get('native_check'), dict):
+        fields = ('verdict', 'returncode', 'wall_ms', 'check_scope', 'timeout_scope',
+                  'failure_scope', 'native_failure_stage', 'framework_blocked',
+                  'source', 'log', 'source_sha256', 'log_sha256')
+        feedback['native_check'] = {key:deepcopy(result['native_check'][key])
+                                    for key in fields if key in result['native_check']}
+    return feedback
 
 
 def _failed_refutation_notice(run):
@@ -620,7 +657,17 @@ def _failed_refutation_notice(run):
 
 def _disposition_feedback(controller, outcome, *, retained=False):
     remaining = pending_contract_ids(controller)
-    return {'status':outcome['status'], 'contract_disposition':outcome,
+    visible=outcome
+    if outcome['status']=='context_refuted':
+        # The full source/XML/Term_XML certificate remains in the durable task
+        # and disposition ledgers. Do not send it repeatedly into model context.
+        certificate=outcome['details']['certificate']
+        visible={k:deepcopy(outcome[k]) for k in ('status','reason','origin','entry_ids',
+            'truth_status','result_scope','environment_id','fixed_environment_status',
+            'positive_proofs_added','theory_sealed')}
+        visible.update(view='summary', disposition_event_id=outcome['receipt']['event_id'],
+            certificate_id=certificate['certificate_id'],certificate_schema=certificate['schema'])
+    return {'status':outcome['status'], 'contract_disposition':visible,
             'contract_stop':True, 'theory_stop':False,
             'remaining_contract_ids':remaining, 'all_contracts_disposed_or_proved':not remaining,
             'retained_from_prior_invocation':retained,

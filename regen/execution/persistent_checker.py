@@ -74,8 +74,15 @@ class PrefixWorker:
         atexit.register(self.close)
         try:
             self.wait(self.root/'ready')
-        except Exception:
-            self.close()
+        except Exception as error:
+            try:
+                self.close()
+            except Exception as cleanup_error:
+                from regen.execution.check_tasks import NativeCleanupError
+                failure = NativeCleanupError('native startup cleanup failed: ' + str(cleanup_error))
+                failure.native_worker = self
+                failure.add_note('startup failure: ' + type(error).__name__ + ': ' + str(error))
+                raise failure from cleanup_error
             raise
 
     def wait(self, path):

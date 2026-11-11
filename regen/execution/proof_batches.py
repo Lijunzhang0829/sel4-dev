@@ -73,6 +73,43 @@ def classify_native_failure(result):
     return result
 
 
+def _raise_clean_native_recovery(error, worker, prefix_source, directory, result):
+    """Requeue only typed process loss or a trusted prefix startup timeout.
+
+    Candidate watchdogs already return model-visible recovery feedback below.
+    Native ERROR/TIMEOUT responses, generic I/O and malformed audit evidence do
+    not enter this path. The committed prefix is evidence, never a candidate.
+    """
+    from uuid import uuid4
+    from regen.execution.check_tasks import (NativeCleanupError,
+        NativeWorkerUnavailable, RecoverableNativePreparationError)
+    process_loss = isinstance(error, NativeWorkerUnavailable)
+    prefix_timeout = (isinstance(error, TimeoutError)
+                      and getattr(error, 'timeout_scope', None) == 'prefix-startup')
+    if not (process_loss or prefix_timeout):
+        return
+    if worker is None or getattr(worker, 'closed', False) is not True:
+        raise NativeCleanupError('native recovery requires confirmed worker disposal') from error
+    waiting = getattr(error, 'waiting_for', 'ready')
+    if (worker.root / waiting).exists():
+        # A response published during cleanup is not missing-response evidence.
+        return
+    directory.mkdir(parents=True, exist_ok=True)
+    prefix = directory/'committed-prefix.thy'
+    prefix.write_text(prefix_source)
+    recovery = {'policy':RecoverableNativePreparationError.policy,
+        'incident_id':uuid4().hex, 'kind':'worker_exit' if process_loss else 'prefix_timeout',
+        'stage':result.get('native_failure_stage', 'prefix-startup-or-alignment'),
+        'worker':worker.name, 'waiting_for':waiting, 'worker_discarded':True,
+        'pending_discarded':True, 'native_response_received':False,
+        'prefix_sha256':result['prefix_sha256'], 'prefix_source_path':str(prefix.resolve()),
+        'prefix_source_sha256':hashlib.sha256(prefix.read_bytes()).hexdigest()}
+    receipt = directory/'native-recovery.json'
+    durable(receipt, recovery, immutable=True)
+    raise RecoverableNativePreparationError(str(error), receipt_path=receipt,
+        receipt_sha256=hashlib.sha256(receipt.read_bytes()).hexdigest()) from error
+
+
 def _safe_text(text, *, statement=False):
     # Ignore quoted terms: command words inside propositions are harmless. Raw
     # ML/tactic methods remain forbidden, including cartouche payloads.
@@ -303,9 +340,13 @@ def check_batch(checker, old, candidate):
                     receipt['candidate_execution_ms'] = result['candidate_execution_ms']
                     receipt['wall_ms'] = result['execution_wall_ms']
             except TimeoutError as error:
-                worker = getattr(checker, '_batch_worker', None)
+                worker = getattr(checker, '_batch_worker', None) or getattr(error, 'native_worker', None)
                 if worker is not None:
-                    worker.close()
+                    try:
+                        worker.close()
+                    except Exception as cleanup_error:
+                        from regen.execution.check_tasks import NativeCleanupError
+                        raise NativeCleanupError('native timeout worker cleanup failed: ' + str(cleanup_error)) from cleanup_error
                 checker._batch_worker = None
                 path = checker.work_dir / (evidence['label'] + '_startup_timeout.thy')
                 path.write_text(source)
@@ -323,6 +364,12 @@ def check_batch(checker, old, candidate):
                     'check_scope':'committed-prefix-and-incremental-batch',
                     'prefix_sha256':hashlib.sha256(body(prefix_source).encode()).hexdigest(),
                     'delta_sha256':hashlib.sha256(body(source)[len(body(prefix_source)):].encode()).hexdigest()}
+                if scope == 'prefix-startup':
+                    from uuid import uuid4
+                    directory = checker.work_dir/('incremental-failure-' + uuid4().hex)
+                    directory.mkdir()
+                    durable(directory/'failure.json', freeze_evidence(result), immutable=True)
+                    _raise_clean_native_recovery(error, worker, prefix_source, directory, result)
             except (RuntimeError, OSError, ValueError) as error:
                 # A failed incremental transport is not a mathematical RED.
                 # Running the full prefix cold under the delta's candidate
@@ -330,8 +377,14 @@ def check_batch(checker, old, candidate):
                 # proof timeout. Preserve evidence and let the existing
                 # NativePreparationError boundary pause for infrastructure.
                 from uuid import uuid4
-                from regen.execution.check_tasks import NativePreparationError
-                worker = getattr(checker, '_batch_worker', None)
+                from regen.execution.check_tasks import NativePreparationError, NativeCleanupError
+                worker = getattr(checker, '_batch_worker', None) or getattr(error, 'native_worker', None)
+                if isinstance(error, NativeCleanupError):
+                    # Construction may fail before assigning _batch_worker.
+                    # Preserve the owner for final cleanup and pause; never
+                    # demote uncertain disposal to ordinary proof feedback.
+                    checker._batch_worker = worker
+                    raise
                 native_log = getattr(error, 'worker_log', '')
                 worker_root = getattr(worker, 'root', None)
                 log_error = None
@@ -373,14 +426,18 @@ def check_batch(checker, old, candidate):
                         durable(directory/'cleanup-failure.json', {
                             'error_type':type(cleanup_error).__name__, 'message':str(cleanup_error)}, immutable=True)
                 except OSError as receipt_error:
-                    failure = NativePreparationError(str(error) + '; cannot save infrastructure evidence: ' + str(receipt_error))
+                    from regen.execution.check_tasks import NativeCleanupError
+                    kind = NativeCleanupError if cleanup_error is not None else NativePreparationError
+                    failure = kind(str(error) + '; cannot save infrastructure evidence: ' + str(receipt_error))
                     if cleanup_error is not None:
                         failure.add_note('worker cleanup failed: ' + str(cleanup_error))
                     raise failure from receipt_error
                 if cleanup_error is not None:
-                    failure = NativePreparationError(str(error) + '; worker cleanup failed: ' + str(cleanup_error))
+                    from regen.execution.check_tasks import NativeCleanupError
+                    failure = NativeCleanupError(str(error) + '; worker cleanup failed: ' + str(cleanup_error))
                     failure.add_note('incremental failure evidence: ' + str(directory/'failure.json'))
                     raise failure from cleanup_error
+                _raise_clean_native_recovery(error, worker, prefix_source, directory, result)
             if (result.get('timeout_scope') == 'candidate-watchdog'
                     and candidate_worker is not None):
                 # No Isabelle response means no mathematical verdict. Discard
@@ -399,7 +456,8 @@ def check_batch(checker, old, candidate):
                     if candidate_worker.closed is not True:
                         raise RuntimeError('worker close did not confirm disposal')
                 except Exception as cleanup_error:
-                    raise NativePreparationError(
+                    from regen.execution.check_tasks import NativeCleanupError
+                    raise NativeCleanupError(
                         result.get('diagnostic', 'native response watchdog')
                         + '; worker cleanup failed: ' + str(cleanup_error)) from cleanup_error
                 checker._batch_worker = None

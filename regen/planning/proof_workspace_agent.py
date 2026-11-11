@@ -157,7 +157,9 @@ class WorkspaceController:
             wait = current_wait(self,row['theory'])
             if wait:
                 row['provider_wait'] = wait
-                row['ready_for_proof_action'] = row['ready_for_proof_action'] and wait['ready']
+                row['waiting_contract_ids'] = wait['blocked_entry_ids']
+                row['runnable_contract_ids'] = wait['runnable_entry_ids']
+                row['ready_for_proof_action'] = row['ready_for_proof_action'] and not wait['theory_wait']
         return {'run_id':self.run['run_id'], 'worker_count':1, 'theories':rows,
                 'all_selected_sealed':all(states[t] in {'sealed','retired'} for t in self.selected),
                 'all_selected_exported':all(theory_finished(states[t]) for t in self.selected)}
@@ -179,8 +181,13 @@ class WorkspaceController:
         providers = self._effective_providers(package,state)
         unsealed = [provider for provider in providers
                     if provider not in self.shared.entries or not exports_available(self._state(provider)[1]['status'])]
+        from regen.planning.provider_waits import current_wait
+        wait = current_wait(self,theory)
         return {'theory':theory, 'status':state['status'], 'unsealed_providers':unsealed,
-                'ready_for_proof_action':not unsealed and not theory_finished(state['status'])}
+                **({'waiting_contract_ids':wait['blocked_entry_ids'],
+                    'runnable_contract_ids':wait['runnable_entry_ids']} if wait else {}),
+                'ready_for_proof_action':not unsealed and not theory_finished(state['status'])
+                    and not (wait and wait['theory_wait'])}
 
     def _effective_providers(self, package, state):
         from regen.planning.import_contract import required_imports

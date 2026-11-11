@@ -114,12 +114,10 @@ def main():
     p.add_argument('--policy',type=Path,default=Path('regen/config/repository-planning-policy.json'))
     p.add_argument('--model',default='gpt-6-astra')
     p.add_argument('--reasoning-effort',default='medium')
-    p.add_argument('--include-planning-time',action='store_true',
-                   help='Charge draft, review repairs and revision to the shared effective budget')
-    p.add_argument('--budget-mode',choices=['normal-runtime','effective-time'],default='effective-time')
-    p.add_argument('--budget-seconds',type=float,help='Required normal-runtime seconds; no default')
-    p.add_argument('--effective-seconds',type=float,default=172800,
-                   help='Total planning plus proof allowance; handed off without resetting costs')
+    p.add_argument('--include-planning-time',action='store_true',default=True,help=argparse.SUPPRESS)
+    p.add_argument('--budget-seconds',type=float,
+                   help='Total effective experiment allowance, including planning; default 172800 seconds')
+    p.add_argument('--effective-seconds',type=float,help=argparse.SUPPRESS)
     p.add_argument('--max-revision-rounds',type=int,default=3,
                    help='Bound actual plan revisions; unresolved final review prevents freezing')
     p.add_argument('--revision-seed',type=Path,
@@ -132,12 +130,15 @@ def main():
                    help='Hard preservation bounds for sealed theories and accepted graph membership')
     p.add_argument('--allow-external-call',action='store_true')
     a=p.parse_args()
-    if a.budget_mode=='normal-runtime':
-        import math
-        if type(a.budget_seconds) not in (int,float) or not math.isfinite(a.budget_seconds) or a.budget_seconds<=0:
-            p.error('normal-runtime requires explicit positive --budget-seconds')
-        a.effective_seconds=a.budget_seconds
-        a.include_planning_time=True
+    import math
+    from regen.infrastructure.experiment_runtime_budget import MODE, DEFAULT_SECONDS
+    a._budget_explicit=a.budget_seconds is not None or a.effective_seconds is not None
+    if a.budget_seconds is not None and a.effective_seconds is not None and a.budget_seconds!=a.effective_seconds:
+        p.error('conflicting budget allowances')
+    a.effective_seconds=(a.budget_seconds if a.budget_seconds is not None else
+        a.effective_seconds if a.effective_seconds is not None else DEFAULT_SECONDS)
+    if not math.isfinite(a.effective_seconds) or a.effective_seconds<=0:p.error('positive --budget-seconds required')
+    a.budget_mode=MODE
     if not a.allow_external_call: p.error('Explicit external-call authorization required')
     if a.max_revision_rounds < 1: p.error('At least one actual revision round is required')
     if bool(a.revision_seed) != bool(a.initial_review):
@@ -197,6 +198,12 @@ def _run(a, root):
                 ('recovery_source_run','recovery_source_tail_event_id')})
             old_clock=validate_recovery_source(raw_evidence['recovery_source_run'],
                                               raw_evidence['recovery_source_tail_event_id'])
+            if not getattr(a,'_budget_explicit',True):
+                a.effective_seconds=old_clock['seconds']-old_clock['effective_seconds']
+            # A historical revision inherits its frozen predecessor clock;
+            # this is replay compatibility, never a new selectable strategy.
+            from regen.infrastructure.effective_time_budget import POLICY as legacy_policy
+            if old_clock['policy']==legacy_policy:a.budget_mode='effective-time'
             if (a.include_planning_time
                     and abs(a.effective_seconds-(old_clock['seconds']-old_clock['effective_seconds'])) > 1e-6):
                 raise ValueError('Recovery planning allowance must equal the paused source remainder')

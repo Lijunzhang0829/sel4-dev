@@ -2332,43 +2332,10 @@ def main() -> int:
     workspace.add_argument("--candidate-timeout", type=int, default=300)
     workspace.add_argument("--allow-external-call", action="store_true", help="Enable the audited dynamic-tool provider session")
     workspace.add_argument("--codex-home", type=Path, help="Authentication source; only auth.json is copied")
-    parallel = sub.add_parser("parallel-workspace", parents=[workspace], add_help=False,
-                              help="Parallel theory agents with serial per-theory tools and bounded checks")
-    parallel.add_argument("--file-planner-interface", choices=["document","graph"], default="document",
-                          help="Persistent theory source (default), or legacy explicit proof graph")
-    parallel.add_argument("--max-parallel-theories", type=int, default=1,
-                          help="Active theory agents (default 1 for single-worker comparisons)")
-    parallel.add_argument("--native-slots", type=int, default=1)
-    parallel.add_argument("--native-cpus", type=float, default=4)
-    parallel.add_argument("--native-memory-mb", type=int, default=16384)
-    parallel.add_argument("--native-pids-limit", type=int, default=1024)
-    parallel.add_argument("--native-threads", type=int, default=4)
-    parallel.add_argument("--provider-build-timeout", type=int, default=1800,
-                          help="Cold provider session build budget; independent of candidate and seal timeouts")
-    parallel.add_argument("--build-ml-heap-mb", type=int, default=None,
-                          help="Build Poly/ML maximum heap MiB; default 75%% of container RAM, reserving native overhead")
-    parallel.add_argument("--resident-limit", type=int, default=1,
-                          help="Resident native workers (default 1)")
-    parallel.add_argument("--execution-policy", type=Path,
-                          help="JSON with ordered theory stages and bounded SessionStalled retries")
-    parallel.add_argument("--generation-strategy", choices=['baseline','helper-closure-v1','bounded-audited-prefix-v1','sketch-groups-v1','sketch-local-demands-v1','sketch-reviewed-v1','sketch-guided-v1','sketch-phased-v1'], default='sketch-reviewed-v1',
-                          help="Explicitly bound diagnostic workflow variant; baseline preserves the original prompt")
-    parallel.add_argument("--focus-contract-id", default=None,
-                          help="Prioritize one unproved fixed contract ID without adding mathematical guidance")
-    parallel.add_argument("--budget-mode",choices=['normal-runtime','effective-time'],default='effective-time',
-                          help="Preserve effective-time for existing commands; normal-runtime is opt-in")
-    parallel.add_argument("--budget-seconds",type=float,
-                          help="Required positive normal-runtime allowance; no default")
-    parallel.add_argument("--effective-seconds", type=float, default=172800,
-                          help="Global effective generation allowance (default 48h); union of parallel worker activity")
-    parallel.add_argument("--planning-budget", type=Path, default=None,
-                          help="Completed reviewed-planning directory whose charged time belongs to this same allowance")
-    parallel.add_argument("--wall-seconds", type=float, default=None,
-                          help="Elapsed generation cutoff, including all waits; separate from effective accounting")
-    parallel.add_argument("--resume-authorization", default=None,
-                          help="Explicit authorization reference to resume a persisted effective-time budget")
-    parallel.add_argument("--extend-effective-seconds", type=float, default=None,
-                          help="Explicit additional effective seconds; preserves already consumed time and requires resume authorization")
+    parallel = sub.add_parser("parallel-workspace",
+                              help="Run Ours with Document File Planners and bounded native checks")
+    from regen.execution.parallel_cli import add_arguments as add_parallel_arguments
+    add_parallel_arguments(parallel)
     integration = sub.add_parser("integrate", help="Verify exact sealed repository coverage and build")
     integration.add_argument("--run-dir", type=Path, required=True)
     integration.add_argument("--check-timeout", type=int, default=900)
@@ -2391,26 +2358,8 @@ def main() -> int:
             )
         elif args.command == "parallel-workspace":
             from regen.planning.parallel_file_planner import run_parallel_workspace
-            result = run_parallel_workspace(args.run_dir, theories=args.theories, model=args.planner_model,
-                max_parallel_theories=args.max_parallel_theories, native_slots=args.native_slots,
-                file_planner_interface=args.file_planner_interface,
-                native_threads=args.native_threads, resident_limit=args.resident_limit,
-                native_cpus=args.native_cpus,native_memory_mb=args.native_memory_mb,
-                native_pids_limit=args.native_pids_limit,
-                provider_build_timeout=args.provider_build_timeout,
-                build_ml_heap_mb=args.build_ml_heap_mb,
-                generation_strategy_name=args.generation_strategy,
-                focus_contract_id=args.focus_contract_id,
-                effective_seconds=args.effective_seconds,
-                budget_mode=args.budget_mode,budget_seconds=args.budget_seconds,
-                wall_seconds=args.wall_seconds,
-                planning_budget=args.planning_budget,
-                resume_authorization=args.resume_authorization,
-                extend_effective_seconds=args.extend_effective_seconds,
-                execution_policy=json.loads(args.execution_policy.read_text()) if args.execution_policy else None,
-                call_timeout=args.call_timeout, check_timeout=args.check_timeout,
-                candidate_timeout=args.candidate_timeout, allow_external_call=args.allow_external_call,
-                codex_home=args.codex_home)
+            from regen.execution.parallel_cli import launch_options
+            result = run_parallel_workspace(args.run_dir, **launch_options(args))
         elif args.command == "integrate":
             from regen.execution.repository_integration import integrate_repository
             token = acquire_run_mutation_lock(args.run_dir, operation='integrate')

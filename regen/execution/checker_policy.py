@@ -37,6 +37,8 @@ def contract_policy_binding(run):
     evidence = validate_unresolved_evidence_policy(run)
     if evidence is not None:
         binding['unresolved_evidence_policy'] = evidence
+    from regen.execution.result_scope import result_scope_binding
+    binding.update(result_scope_binding(run))
     return binding
 
 

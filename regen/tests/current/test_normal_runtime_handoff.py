@@ -14,6 +14,11 @@ from regen.infrastructure.parallel_generation_budget import initialize_parallel_
 
 
 class NormalRuntimeHandoffTests(unittest.TestCase):
+    budget_class=NormalRuntimeBudget
+    clock_policy=POLICY
+    clock_mode='normal-runtime'
+    budget_target='regen.infrastructure.normal_runtime_budget.NormalRuntimeBudget'
+
     def test_planning_handoff_counts_transition_and_resume_preserves_spent(self):
         with tempfile.TemporaryDirectory() as tmp:
             base=Path(tmp);planning=base/'planning';root=base/'proof';dataset=base/'dataset'
@@ -37,9 +42,9 @@ class NormalRuntimeHandoffTests(unittest.TestCase):
             write(frozen,{'state':'frozen','plan':str(plan_path),'file_generation_list':str(list_path),
                           'plan_sha256':sha(plan_path)})
             source=Ledger(planning/'budget',planning.name,clock=lambda:now[0])
-            stage=NormalRuntimeBudget(source,100,monotonic=lambda:now[0])
+            stage=self.budget_class(source,100,monotonic=lambda:now[0])
             stage.begin_planning();now[0]=20;stage.end_planning();stage.close()
-            write(planning/'budget-receipt.json',{'schema_version':1,'state':'complete','policy':POLICY,
+            write(planning/'budget-receipt.json',{'schema_version':1,'state':'complete','policy':self.clock_policy,
                 'include_planning':True,'seconds':100,'input_sha256':sha(inputs),
                 'frozen_plan_sha256':sha(frozen),'repository_plan_sha256':sha(plan_path),
                 'file_generation_list_sha256':sha(list_path),'ledger_run_id':planning.name,
@@ -54,14 +59,14 @@ class NormalRuntimeHandoffTests(unittest.TestCase):
                 {'theory':'A','contracts':[{'id':'a'}],'green_count':0}]})
 
             def ledger_factory(*args,**kwargs):return Ledger(*args,clock=lambda:now[0],**kwargs)
-            def budget_factory(*args,**kwargs):return NormalRuntimeBudget(*args,monotonic=lambda:now[0],**kwargs)
+            def budget_factory(*args,**kwargs):return self.budget_class(*args,monotonic=lambda:now[0],**kwargs)
 
             with patch('regen.infrastructure.parallel_generation_budget.Ledger',side_effect=ledger_factory), \
-                    patch('regen.infrastructure.normal_runtime_budget.NormalRuntimeBudget',side_effect=budget_factory), \
+                    patch(self.budget_target,side_effect=budget_factory), \
                     patch('regen.infrastructure.audited_llm.model_settings',return_value=settings):
                 now[0]=30
                 generation,bridge=initialize_parallel_budget(root,overview,{'model':'test-model'},
-                    seconds=100,planning_budget=planning,clock_mode='normal-runtime')
+                    seconds=100,planning_budget=planning,clock_mode=self.clock_mode)
                 self.addCleanup(generation.close)
                 self.addCleanup(bridge.close)
                 self.assertEqual(generation.snapshot()['effective_seconds'],30)
@@ -75,7 +80,7 @@ class NormalRuntimeHandoffTests(unittest.TestCase):
                 now[0]=45;generation.cancel('operator_pause');generation.close()
                 now[0]=100
                 resumed,second_bridge=initialize_parallel_budget(root,overview,{'model':'test-model'},
-                    seconds=100,clock_mode='normal-runtime',resume_authorization='resume approved')
+                    seconds=100,clock_mode=self.clock_mode,resume_authorization='resume approved')
                 self.addCleanup(resumed.close)
                 self.addCleanup(second_bridge.close)
                 self.assertEqual(resumed.snapshot()['effective_seconds'],45)

@@ -28,7 +28,9 @@ def file_hash(path):
 
 class ReviewedPlanningBudget:
     def __init__(self, root, *, seconds, binding, budget_mode="effective-time"):
-        if budget_mode == 'normal-runtime':
+        if budget_mode == 'experiment-runtime':
+            from regen.infrastructure.experiment_runtime_budget import ExperimentRuntimeBudget as Budget, POLICY as policy
+        elif budget_mode == 'normal-runtime':
             from regen.infrastructure.normal_runtime_budget import NormalRuntimeBudget as Budget, POLICY as policy
         elif budget_mode == 'effective-time':
             Budget,policy=EffectiveTimeBudget,POLICY
@@ -64,6 +66,8 @@ class ReviewedPlanningBudget:
                 self.requests[request] = {'start':self.stage.planning_seconds, 'outcome':'pending',
                                           'retry_of':fields.get('retry_of')}
                 self.active_request = request
+                if getattr(self.stage,'experiment_runtime',False):
+                    self.stage.begin_provider_request(None,request)
             elif event == 'planning_request_finished':
                 request = fields['request_id']
                 if request != self.active_request or fields['outcome'] not in {'success','timeout','failed'}:
@@ -72,6 +76,10 @@ class ReviewedPlanningBudget:
                 row.update(outcome=fields['outcome'],
                            charged_seconds=self.stage.planning_seconds-row['start'])
                 self.active_request = None
+                if getattr(self.stage,'experiment_runtime',False):
+                    self.stage.finish_provider_request(None,request,
+                        outcome='success' if fields['outcome']=='success' else 'failed',
+                        failure=fields.get('failure'),waiting_seconds=fields.get('waiting_seconds'))
             elif event == 'planning_request_retry_succeeded':
                 failed, success = fields['failed_request_id'], fields['successful_request_id']
                 old, new = self.requests[failed], self.requests[success]
@@ -91,7 +99,8 @@ class ReviewedPlanningBudget:
                 self.stage._write_state('planning_request_retry_credit', correction={
                     'failed_request_id':failed, 'successful_request_id':success,
                     'effective_seconds':seconds, 'planning_seconds':seconds,
-                    'policy':('normal-runtime-no-refund-v1' if getattr(self.stage,'normal_runtime',False)
+                    'policy':('evidenced-interruptions-only' if getattr(self.stage,'experiment_runtime',False)
+                              else 'normal-runtime-no-refund-v1' if getattr(self.stage,'normal_runtime',False)
                               else 'successful-planning-retry-exclusion-v1'),
                     'original_consumption_preserved':True})
             else:

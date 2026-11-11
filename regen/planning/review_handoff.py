@@ -75,9 +75,11 @@ def _ledger(controller,theory):
 
 
 def review_context(controller,theory=None):
+    from regen.planning.theory_outcomes import pending_contract_ids
     theory=theory or controller.theory
     handoff=_handoff(controller,theory)
     package,state=controller._state(theory)
+    pending=set(pending_contract_ids(controller,theory))
     latest={}
     for row in _ledger(controller,theory).rows:
         if row['kind']!='review_decision':
@@ -88,14 +90,29 @@ def review_context(controller,theory=None):
     for issue in handoff['obligations']:
         issue['generation_decision']=latest.get(issue['issue_id'])
         ids=set(issue['issue'].get('contract_ids',[])) & {c['contract_id'] for c in package['contracts']}
-        issue['pending_contract_ids']=sorted(ids-set(state.get('proofs',{})))
+        issue['pending_contract_ids']=sorted(ids & pending)
+        issue['completed_contract_ids']=sorted(ids & set(state.get('proofs',{})))
+        issue['disposed_contract_ids']=sorted(ids-pending-set(state.get('proofs',{})))
+        if not issue['pending_contract_ids']:
+            issue['requires_generation_decision']=False
+            issue['generation_status']=('completed_or_disposed' if issue['disposed_contract_ids']
+                else 'completed' if ids else 'not_assigned')
+            continue
+        issue['generation_status']='pending'
         # A planning local/retain decision still carries a task, not GREEN.
         decision=issue['generation_decision']
         waiting_again=False
         invalid_reason=None
         if decision and decision['decision']=='wait':
             from regen.planning.provider_waits import current_wait
-            waiting_again=current_wait(controller,theory) is None
+            wait = current_wait(controller,theory)
+            waiting_again=not _wait_covers(wait,
+                issue['pending_contract_ids'],decision['providers'])
+            if waiting_again:
+                invalid_reason = ('selected_provider_no_longer_available'
+                    if wait and any(item.get('invalidated') and
+                        set(item['entry_ids']) & set(issue['pending_contract_ids'])
+                        for item in wait.get('waits', [wait])) else 'provider_wait_no_longer_current')
         if decision and not set(issue['pending_contract_ids'])<=set(decision['entry_ids']):
             invalid_reason='decision_does_not_cover_current_pending_contracts'
         if decision and decision['decision']=='import':
@@ -107,7 +124,7 @@ def review_context(controller,theory=None):
                 invalid_reason='selected_provider_no_longer_exported'
         if invalid_reason:
             issue['decision_invalid_reason']=invalid_reason
-        issue['requires_generation_decision']=bool(ids) and (decision is None or waiting_again or bool(invalid_reason))
+        issue['requires_generation_decision']=decision is None or waiting_again or bool(invalid_reason)
     return handoff
 
 
@@ -153,6 +170,11 @@ def record_review_decision(controller,proposal,metadata):
     issue=next((i for i in context['obligations'] if i['issue_id']==proposal.get('issue_id')),None)
     if issue is None:
         raise ValueError('unknown assigned review issue')
+    if not issue['pending_contract_ids']:
+        return {'status':'not_required','issue_id':issue['issue_id'],
+                'pending_contract_ids':[], 'completed_contract_ids':issue['completed_contract_ids'],
+                'disposed_contract_ids':issue['disposed_contract_ids'],
+                'notice':'No pending contract remains for this review issue. Do not record another decision; continue other pending contracts.'}
     choice=proposal.get('decision')
     if choice not in {'import','local','retain','wait'}:
         raise ValueError('review decision must be import/local/retain/wait')
@@ -164,7 +186,7 @@ def record_review_decision(controller,proposal,metadata):
     package,state,binding=_snapshot(controller)
     ids=_entry_ids(package,state,proposal.get('entry_ids'))
     relevant=set(issue['issue'].get('contract_ids',[])) & {c['contract_id'] for c in package['contracts']}
-    pending=relevant-set(state.get('proofs',{}))
+    pending=set(issue['pending_contract_ids'])
     if not ids or set(ids)!=pending:
         raise ValueError('review decision must cover all of its own pending fixed contracts')
     providers=proposal.get('providers',[])
@@ -179,7 +201,7 @@ def record_review_decision(controller,proposal,metadata):
     if choice=='wait':
         from regen.planning.provider_waits import current_wait
         wait=current_wait(controller)
-        if not wait or not providers or not set(providers)<={p['theory'] for p in wait['providers']}:
+        if not _wait_covers(wait,ids,providers):
             raise ValueError('wait decision requires a registered provider wait')
     with _LOCK:
         row=_ledger(controller,controller.theory).append('review_decision',
@@ -188,6 +210,15 @@ def record_review_decision(controller,proposal,metadata):
             providers=providers,binding=binding,metadata=deepcopy(metadata),positive_proofs_added=0)
     return {'status':'recorded','decision':row['data'],'receipt_id':row['event_id'],
             'notice':'This allocates proof work; it does not prove the obligations or import facts.'}
+
+
+def _wait_covers(wait, entry_ids, providers):
+    if not wait or not providers:
+        return False
+    covered={key for item in wait.get('waits',[wait])
+             if not item.get('invalidated') and set(providers)<={p['theory'] for p in item['providers']}
+             for key in item['entry_ids']}
+    return set(entry_ids)<=covered
 
 
 def validate_wait_issues(controller,issues,providers,entry_ids):

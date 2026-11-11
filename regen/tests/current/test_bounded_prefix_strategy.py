@@ -187,7 +187,10 @@ class BoundedPrefixStrategyTests(unittest.TestCase):
                 else:
                     self.assertEqual(state['accepted_order'],['fresh','target_contract','later'])
                     self.assertFalse((request/'bounded-prefix').exists())
-                    self.assertEqual(checkers['Target'].calls,1)
+                    self.assertEqual(checkers['Target'].calls,3)  # Independent checks of all three new bodies.
+                    from regen.planning.batch_file_planner import committed_batch_results
+                    recovered=committed_batch_results(fixture_owner.root/'theories/Target')
+                    self.assertEqual(recovered[1]['new_green'], ['fresh','target_contract','later'])
                 fixture_owner.llm.assert_not_called()
 
     def test_online_partial_green_survives_runtime_native_and_controller_cancel(self):

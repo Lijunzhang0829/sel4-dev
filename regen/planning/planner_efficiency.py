@@ -87,8 +87,13 @@ def feedback_semantics(feedback):
     verdict = feedback.get('check', {}).get('verdict')
     if status in {'accepted', 'draft_checked'}:
         verdict = 'green'
+    if status == 'checked_entries':
+        verdicts = {r.get('verdict') for r in feedback.get('node_results', [])}
+        verdict = 'mixed' if len(verdicts) > 1 else verdict
     publication = {'accepted': 'accepted', 'draft_checked': 'diagnostic_only',
                    'sealed': 'sealed'}.get(status, 'not_published')
+    if status == 'checked_entries' and feedback.get('new_green'):
+        publication = 'partially_accepted'
     return {'result_schema_version': 2,
             'tool_status': 'rejected' if status == 'rejected_request' else
                            'failed' if status == 'tool_failed' else 'completed',

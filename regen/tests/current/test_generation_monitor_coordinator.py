@@ -113,7 +113,7 @@ class GenerationMonitorCoordinatorTests(unittest.TestCase):
                 with patch.object(planner, 'run_theory_session', side_effect=session), \
                         patch('regen.execution.repository_integration.integrate_repository',
                               side_effect=integrate) as integration:
-                    result = planner.run_parallel_workspace(root, allow_external_call=True,
+                    result = planner.run_parallel_workspace(root, budget_mode="effective-time", allow_external_call=True,
                                                             max_parallel_theories=2)
                 integration.assert_called_once()
                 self.assertLess(order.index(('sealed', 'B')), order.index(('started', 'C')))
@@ -142,7 +142,7 @@ class GenerationMonitorCoordinatorTests(unittest.TestCase):
             with patch('regen.execution.repository_integration.integrate_repository',
                        side_effect=RuntimeError('integration fixture failed')):
                 with self.assertRaisesRegex(RuntimeError, 'integration fixture failed'):
-                    planner.run_parallel_workspace(root, allow_external_call=True)
+                    planner.run_parallel_workspace(root, budget_mode="effective-time", allow_external_call=True)
             status, events = self.records(root)
             self.assertFalse(status['running'])
             self.assertEqual(status['workflow_stage'], 'integration')
@@ -152,7 +152,7 @@ class GenerationMonitorCoordinatorTests(unittest.TestCase):
     def test_final_workspace_read_exception_does_not_leave_workflow_running(self):
         with self.fixture(names=('A',), initial='sealed', fail_final_read=True) as (root, _, _):
             with self.assertRaisesRegex(RuntimeError, 'final workspace read failed'):
-                planner.run_parallel_workspace(root, allow_external_call=True)
+                planner.run_parallel_workspace(root, budget_mode="effective-time", allow_external_call=True)
             status, events = self.records(root)
             self.assertFalse(status['running'])
             self.assertEqual(status['workflow_state'], 'failed')

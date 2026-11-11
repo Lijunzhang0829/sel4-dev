@@ -123,7 +123,7 @@ class ParallelCleanupFailuresTests(unittest.TestCase):
                                      return_value={'test_token': True}))
             release = stack.enter_context(patch('regen.execution.proof_session_runner.release_run_mutation_lock'))
             with self.assertRaises(KeyboardInterrupt) as caught:
-                planner.run_parallel_workspace(root, allow_external_call=True, integrate=False)
+                planner.run_parallel_workspace(root, budget_mode="effective-time", allow_external_call=True, integrate=False)
             self.assertTrue(worker_exited.is_set())
             self.assertTrue(executor.closed)
             self.assertLess(order.index('cancel:two'), order.index('diagnostic.event'))
@@ -155,7 +155,7 @@ class ParallelCleanupFailuresTests(unittest.TestCase):
                 patch('regen.execution.proof_session_runner.acquire_run_mutation_lock', return_value='lock'), \
                 patch('regen.execution.proof_session_runner.release_run_mutation_lock') as release:
             with self.assertRaisesRegex(OSError, 'clock event disk full'):
-                planner.run_parallel_workspace(Path(tmp), allow_external_call=True)
+                planner.run_parallel_workspace(Path(tmp), budget_mode="effective-time", allow_external_call=True)
             controller.assert_not_called()
             resources.close.assert_called_once_with()
             release.assert_called_once_with('lock')

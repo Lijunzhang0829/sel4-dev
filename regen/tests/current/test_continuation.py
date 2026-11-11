@@ -7,7 +7,8 @@ from regen.execution.repository_execution import continuation_state, validate_co
 class ContinuationTest(unittest.TestCase):
     def origin(self):
         p,s=fixture();p['package_payload_sha256']='package'
-        run={**{k:k for k in CONTINUATION_ENV_FIELDS},'session_schedule':{},'run_id':'old','implementation':{}}
+        run={**{k:k for k in CONTINUATION_ENV_FIELDS if k not in ('result_scope','environment_evidence')},
+             'session_schedule':{},'run_id':'old','implementation':{}}
         binding={'run_id':'old','implementation':digest({}),'package_sha256':'package','imports':[]}
         body={'sequence':1,'parent':None,'binding':binding,'event':'initial','state':s,'evidence':{'check':check()}}
         first={**body,'commit_id':digest(body)}

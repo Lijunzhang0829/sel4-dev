@@ -148,6 +148,16 @@ def load_context(dataset_root: Path) -> dict[str, Any]:
         raise NativePreparationError("checker premise audit context binding mismatch")
     if verify_database(database) == 2 and context.get("premise_database_sha256") != digest(database):
         raise ValueError("checker premise database binding mismatch")
+    semantic_seal=context.get("semantic_files_sha256")
+    if semantic_seal is not None:
+        root=resolved["semantic_workspace"]
+        actual={str(p.relative_to(root)):digest(p) for p in root.rglob('*') if p.is_file()}
+        if actual != semantic_seal:
+            raise ValueError("checker semantic source binding mismatch")
+    if "comparison_groups_sha256" in context:
+        groups=dataset_root/'comparison-groups.json'
+        if not groups.is_file() or digest(groups)!=context['comparison_groups_sha256']:
+            raise ValueError("checker comparison groups binding mismatch")
     return {
         **context,
         **resolved,

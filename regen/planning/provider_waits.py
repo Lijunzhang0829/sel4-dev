@@ -16,26 +16,100 @@ def _ledger(controller, theory):
 
 def _provider(controller, theory):
     package, state = controller._state(theory)
+    available = exports_available(state['status'])
+    terminal_reason = None
+    if not available:
+        if theory_finished(state['status']):
+            terminal_reason = 'completed_without_positive_exports'
+        else:
+            from regen.planning.theory_outcomes import current_outcome
+            outcome = current_outcome(controller, theory)
+            # Legacy UNKNOWN can be explicitly reopened; retain that wait.
+            # A refutation or final retirement cannot publish this interface.
+            if outcome and outcome['status'] == 'refuted':
+                terminal_reason = 'refuted_provider'
     return {'theory':theory, 'package_sha256':digest(package), 'status':state['status'],
-            'seal_id':state.get('seal_id'), 'exports_available':exports_available(state['status'])}
+            'seal_id':state.get('seal_id'), 'exports_available':available,
+            'terminal_unavailable':terminal_reason is not None, 'terminal_reason':terminal_reason}
+
+
+def _entry_binding(controller, theory):
+    """Sibling proofs do not change a fixed entry's optional dependency wait."""
+    from regen.planning.theory_outcomes import _snapshot
+    _, _, binding = _snapshot(controller, theory)
+    return {key:value for key,value in binding.items() if key != 'accepted_state_sha256'}
+
+
+def _active_waits(controller, theory):
+    from regen.planning.theory_outcomes import _snapshot, pending_contract_ids
+    active = {}
+    for row in _ledger(controller, theory).rows:
+        if row['kind'] == 'provider_wait_started':
+            active[row['event_id']] = row
+        elif row['kind'] in {'provider_wait_resumed', 'provider_wait_invalidated'}:
+            active.pop(row['data']['wait_receipt_id'], None)
+        else:
+            raise ValueError('invalid provider wait ledger')
+    if not active:
+        return []
+    pending = set(pending_contract_ids(controller, theory))
+    result = []
+    for row in active.values():
+        wait = deepcopy(row['data'])
+        expected = (_entry_binding(controller, theory) if wait.get('schema') == 'provider-wait-v2'
+                    else _snapshot(controller, theory)[2])
+        if wait['binding'] != expected:
+            continue  # Preserve historical evidence, but do not reuse another context.
+        ids = sorted(set(wait['entry_ids']) & pending)
+        if not ids:
+            continue
+        providers = [_provider(controller, item['theory']) for item in wait['providers']]
+        if any(a['package_sha256'] != b['package_sha256'] for a,b in zip(wait['providers'],providers)):
+            raise ValueError('waiting provider package changed')
+        failed = [p for p in providers if p['terminal_unavailable']]
+        result.append({**wait, 'entry_ids':ids, 'receipt_id':row['event_id'],
+            'providers_current':providers, 'ready':all(p['exports_available'] for p in providers),
+            'invalidated':bool(failed), 'failed_providers':failed,
+            'requires_route_reselection':bool(failed),
+            'unavailable_providers':[p['theory'] for p in providers if not p['exports_available']]})
+    return result
 
 
 def current_wait(controller, theory=None):
-    from regen.planning.theory_outcomes import _snapshot
+    """Project optional entry waits without treating them as theory imports."""
+    from regen.planning.theory_outcomes import pending_contract_ids
     theory = theory or controller.theory
-    rows = _ledger(controller, theory).rows
-    if not rows or rows[-1]['kind'] != 'provider_wait_started':
+    waits = _active_waits(controller, theory)
+    if not waits:
         return None
-    row = rows[-1]
-    wait = deepcopy(row['data'])
-    if wait['binding'] != _snapshot(controller, theory)[2]:
-        return None  # An accepted local/environment change makes this old wait stale.
-    providers = [_provider(controller, item['theory']) for item in wait['providers']]
-    if any(a['package_sha256'] != b['package_sha256'] for a,b in zip(wait['providers'],providers)):
-        raise ValueError('waiting provider package changed')
-    return {**wait, 'receipt_id':row['event_id'], 'providers_current':providers,
-            'ready':all(p['exports_available'] for p in providers),
-            'unavailable_providers':[p['theory'] for p in providers if not p['exports_available']]}
+    blocked = sorted({key for wait in waits if not wait['ready'] and not wait['invalidated']
+                      for key in wait['entry_ids']})
+    runnable = sorted(set(pending_contract_ids(controller, theory)) - set(blocked))
+    summary = deepcopy(waits[0])
+    if len(waits) > 1:
+        summary.update(receipt_id='provider-waits:'+digest([w['receipt_id'] for w in waits]),
+            entry_ids=sorted({key for w in waits for key in w['entry_ids']}),
+            providers=list({p['theory']:p for w in waits for p in w['providers']}.values()),
+            providers_current=list({p['theory']:p for w in waits for p in w['providers_current']}.values()),
+            unavailable_providers=sorted({p for w in waits for p in w['unavailable_providers']}))
+    failed = list({p['theory']:p for w in waits for p in w['failed_providers']}.values())
+    return {**summary, 'waits':waits, 'ready':all(w['ready'] for w in waits),
+            'invalidated':any(w['invalidated'] for w in waits), 'failed_providers':failed,
+            'requires_route_reselection':bool(failed),
+            'blocked_entry_ids':blocked, 'runnable_entry_ids':runnable,
+            'theory_wait':bool(blocked) and not runnable}
+
+
+def blocked_wait_contract_ids(controller, theory=None):
+    wait = current_wait(controller, theory)
+    return wait['blocked_entry_ids'] if wait else []
+
+
+def runnable_contract_ids(controller, theory=None):
+    from regen.planning.theory_outcomes import pending_contract_ids
+    theory = theory or controller.theory
+    return sorted(set(pending_contract_ids(controller, theory)) -
+                  set(blocked_wait_contract_ids(controller, theory)))
 
 
 def _acyclic(controller, theory, providers):
@@ -45,7 +119,8 @@ def _acyclic(controller, theory, providers):
         edges[name] = set(controller._effective_providers(package, state))
         wait = current_wait(controller, name)
         if wait:
-            edges[name].update(p['theory'] for p in wait['providers'])
+            edges[name].update(p['theory'] for item in wait['waits'] if not item['invalidated']
+                               for p in item['providers'])
     edges[theory].update(providers)
     visiting, visited = set(), set()
     def visit(name):
@@ -86,37 +161,61 @@ def record_wait(controller, proposal, metadata):
             if outcome and outcome['status']=='refuted':
                 raise ValueError('refuted provider cannot supply a future positive export')
         current = [_provider(controller,p) for p in providers]
+        if any(p['terminal_unavailable'] for p in current):
+            raise ValueError('provider completed without positive exports; select another route')
         if all(p['exports_available'] for p in current):
             raise ValueError('providers already exported; inspect their imports instead of waiting')
         _acyclic(controller,controller.theory,providers)
         previous = current_wait(controller)
-        if previous:
-            raise ValueError('theory already has an active provider wait')
+        live_ids = {key for item in previous['waits'] if not item['invalidated']
+                    for key in item['entry_ids']} if previous else set()
+        if set(ids) & live_ids:
+            raise ValueError('contract already has an active provider wait')
         from regen.planning.review_handoff import validate_wait_issues, record_wait_decisions
         issues = validate_wait_issues(controller,proposal.get('review_issue_ids',[]),providers,ids)
         row = _ledger(controller,controller.theory).append('provider_wait_started',
-            schema='provider-wait-v1',binding=binding,providers=current,entry_ids=ids,
+            schema='provider-wait-v2',binding=_entry_binding(controller,controller.theory),providers=current,entry_ids=ids,
             reason=reason,review_issue_ids=issues,metadata=deepcopy(metadata),
             positive_proofs_added=0,imports_added=0)
         wait = current_wait(controller)
-        controller.provider_wait = wait
-        record_wait_decisions(controller,wait)
-        return {'status':'waiting_for_provider','theory_wait':True,'provider_wait':wait,
-                'notice':'Accepted proofs and costs are retained. The worker is released; resume only after all named providers publish certified exports. Imports still require native validation.'}
+        controller.provider_wait = wait if wait['theory_wait'] else None
+        recorded = next(w for w in wait['waits'] if w['receipt_id'] == row['event_id'])
+        record_wait_decisions(controller,recorded)
+        return {'status':'waiting_for_provider' if wait['theory_wait'] else 'entries_waiting_for_provider',
+                'theory_wait':wait['theory_wait'],'provider_wait':wait,
+                'runnable_entry_ids':wait['runnable_entry_ids'],
+                'notice':'Only the named pending contracts wait. Continue runnable siblings; release the worker only when none remain. Accepted proofs and costs are retained. Provider publication creates no import; imports still require native validation.'}
 
 
 def claim_ready_wait(controller, theory=None):
+    """Consume published or terminally invalid waits; neither adds an import."""
     theory = theory or controller.theory
     with _LOCK:
         wait = current_wait(controller,theory)
         if wait is None:
             return None
-        if not wait['ready']:
+        ready = [w for w in wait['waits'] if w['ready']]
+        invalid = [w for w in wait['waits'] if w['invalidated']]
+        if not ready and not invalid:
             raise ValueError('provider wait is not ready')
-        row = _ledger(controller,theory).append('provider_wait_resumed',
-            wait_receipt_id=wait['receipt_id'],providers=wait['providers_current'],
-            accepted_state_preserved=True,imports_added=0)
-        return {**wait,'resume_receipt_id':row['event_id']}
+        resumed = []
+        for item in ready:
+            row = _ledger(controller,theory).append('provider_wait_resumed',
+                wait_receipt_id=item['receipt_id'],providers=item['providers_current'],
+                accepted_state_preserved=True,imports_added=0)
+            resumed.append({**item,'resume_receipt_id':row['event_id']})
+        invalidated = []
+        for item in invalid:
+            row = _ledger(controller,theory).append('provider_wait_invalidated',
+                wait_receipt_id=item['receipt_id'], providers=item['providers_current'],
+                failed_providers=item['failed_providers'], entry_ids=item['entry_ids'],
+                reason='provider_terminal_without_positive_exports',
+                accepted_state_preserved=True, imports_added=0, positive_proofs_added=0)
+            invalidated.append({**item,'invalidation_receipt_id':row['event_id']})
+        return {**(resumed or invalidated)[0], 'resumed_waits':resumed,
+                'invalidated_waits':invalidated,
+                'requires_route_reselection':bool(invalidated),
+                'notice':'Only published exports are ready. Invalidated waits restore the named pending entries for another proof route; they supply no facts or imports. Reassess affected review decisions.'}
 
 
 def carry_coordination(source_dir, destination):
@@ -149,14 +248,18 @@ def carry_coordination(source_dir, destination):
     for theory in old.shared.entries:
         wait=current_wait(old,theory)
         if wait:
-            data={key:deepcopy(value) for key,value in wait.items() if key not in
-                  {'receipt_id','providers_current','ready','unavailable_providers'}}
-            data.update(binding=_snapshot(new,theory)[2],
-                providers=[_provider(new,p['theory']) for p in wait['providers']],
-                continuation_source={'run_id':old.run['run_id'],'events':_ledger(old,theory).rows})
-            row=_ledger(new,theory).append('provider_wait_started',**data)
-            carried.append({'theory':theory,'kind':'provider_wait','source_receipt':wait['receipt_id'],
-                            'receipt':row['event_id']})
+            for item in wait['waits']:
+                data={key:deepcopy(value) for key,value in item.items() if key not in
+                      {'receipt_id','providers_current','ready','unavailable_providers',
+                       'invalidated','failed_providers','requires_route_reselection'}}
+                binding=(_entry_binding(new,theory) if data.get('schema')=='provider-wait-v2'
+                         else _snapshot(new,theory)[2])
+                data.update(binding=binding,
+                    providers=[_provider(new,p['theory']) for p in item['providers']],
+                    continuation_source={'run_id':old.run['run_id'],'events':_ledger(old,theory).rows})
+                row=_ledger(new,theory).append('provider_wait_started',**data)
+                carried.append({'theory':theory,'kind':'provider_wait','source_receipt':item['receipt_id'],
+                                'receipt':row['event_id']})
         decisions=decision_ledger(old,theory).rows
         if decisions:
             if _handoff(old,theory)!=_handoff(new,theory):

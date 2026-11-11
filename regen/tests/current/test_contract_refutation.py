@@ -21,6 +21,56 @@ def contract(statement='lemma fixed: "False"', context=None):
 
 
 class RefutationTests(unittest.TestCase):
+    def test_large_scope_record_does_not_hide_real_failure_or_change_raw_evidence(self):
+        import hashlib
+        from regen.execution.contract_refutation import OWNED_CONTEXT_POLICY
+        raw = ('Running Draft ...\nREGEN_REFUTATION_SCOPE 6669786564 ' + 'ab' * 300000 +
+               '\n*** Failed to finish proof (line 193):\n*** goal (1 subgoal):\n'
+               '***  1. external_storage s slot\n*** At command "by"\n')
+        class Red:
+            def imports(self): return ['Main']
+            def _check(self, text, label, **kw):
+                source = self.root / (label + '.thy'); source.write_text(text)
+                log = source.with_suffix('.log'); log.write_text(raw)
+                return {'returncode':1, 'verdict':'red', 'source':str(source),
+                        'log':str(log), 'diagnostic':raw[-12000:]}
+        with tempfile.TemporaryDirectory() as directory:
+            checker = Red(); checker.root = Path(directory)
+            result = check_refutation(checker, contract(), 'by fail', checker.root/'negative',
+                                      result_scope=OWNED_CONTEXT_POLICY)
+            self.assertEqual(result['status'], 'not_refuted')
+            self.assertIsNone(result['certificate'])
+            self.assertTrue(result['diagnostic'].startswith('*** Failed to finish proof'))
+            self.assertIn('external_storage s slot', result['diagnostic'])
+            self.assertLess(len(result['diagnostic']), 300)
+            self.assertEqual(result['scope_records_omitted'], 1)
+            self.assertFalse(result['diagnostic_truncated'])
+            self.assertEqual(result['native_check']['diagnostic'], raw[-12000:])
+            self.assertEqual(Path(result['native_check']['log']).read_text(), raw)
+            self.assertEqual(result['log_sha256'], hashlib.sha256(raw.encode()).hexdigest())
+            self.assertEqual(json.loads((checker.root/'negative/result.json').read_text()), result)
+
+    def test_refutation_error_rendering_preserves_errors_fallback_and_truncation(self):
+        from regen.execution.contract_refutation import _failure_diagnostic
+        text = ('REGEN_REFUTATION_SCOPE 01 abcd\n'
+                '*** REGEN_REFUTATION_UNSUPPORTED: unsupported statement\n'
+                '*** ordinary diagnostic quoting REGEN_REFUTATION_SCOPE is retained\n'
+                'REGEN_REFUTATION_SCOPE 01 ef01')
+        result = _failure_diagnostic({}, text)
+        self.assertEqual(result['scope_records_omitted'], 2)
+        self.assertIn('REGEN_REFUTATION_UNSUPPORTED', result['diagnostic'])
+        self.assertIn('ordinary diagnostic quoting REGEN_REFUTATION_SCOPE', result['diagnostic'])
+        text = '*** Failed to apply method (line 10)\n' + 'x\n' * 10000 + '*** remaining goal: Q'
+        result = _failure_diagnostic({}, text)
+        self.assertTrue(result['diagnostic_truncated'])
+        self.assertEqual(len(result['diagnostic']), 12000)
+        self.assertTrue(result['diagnostic'].startswith('*** Failed to apply method (line 10)'))
+        self.assertTrue(result['diagnostic'].endswith('remaining goal: Q'))
+        self.assertEqual(_failure_diagnostic({}, 'process timeout')['diagnostic'], 'process timeout')
+        self.assertEqual(_failure_diagnostic({'diagnostic':'startup failed'}, '')['diagnostic'].strip(), 'startup failed')
+        self.assertIn('process timeout', _failure_diagnostic(
+            {'diagnostic':'process timeout'}, 'Running Draft ...')['diagnostic'])
+
     def test_refutation_capability_exposes_scope_without_claiming_a_verdict(self):
         self.assertTrue(refutation_capability(contract())['can_attempt'])
         scoped=contract(context=['context begin interpretation Arch .'])

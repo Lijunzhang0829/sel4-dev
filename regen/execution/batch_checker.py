@@ -64,7 +64,10 @@ class BatchWorker(PrefixWorker):
     def wait(self, path, *, timeout=None):
         from contextlib import nullcontext
         from regen.infrastructure.progress_events import generation_exclusion
-        scope = generation_exclusion('prefix_preparation') if path.name == 'ready' else nullcontext()
+        scope = generation_exclusion('prefix_preparation',
+            prefix_sha256=(hashlib.sha256(self.base.encode()).hexdigest()
+                           if isinstance(getattr(self,'base',None),str) else None),
+            imports_sha256=hashlib.sha256('\n'.join(getattr(self,'imports',[])).encode()).hexdigest()) if path.name == 'ready' else nullcontext()
         with scope:
             return self._wait(path, timeout=timeout)
 
@@ -92,11 +95,24 @@ class BatchWorker(PrefixWorker):
                 self.close()
                 raise
             if self.process.poll() is not None:
-                raise RuntimeError((self.root/'worker.log').read_text()[-6000:])
+                if path.exists():
+                    break  # Process exit raced a complete native response.
+                from regen.execution.check_tasks import NativeWorkerUnavailable
+                raise NativeWorkerUnavailable((self.root/'worker.log').read_text()[-6000:],
+                    worker=self, waiting_for=path.name)
             now = time.monotonic()
             if limit is not None and now-start > limit:
+                if path.exists():break  # Response publication raced the deadline check.
                 self.close()
+                # A native TIMEOUT may be published during graceful cleanup. It
+                # is a received proof timeout, not evidence of a missing response.
+                if path.name != 'ready' and path.is_file() and path.read_text().startswith('TIMEOUT\n'):
+                    emit_event('native_response_during_cleanup',worker=self.name,request=path.stem,
+                               response_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+                               disposition='native_timeout_received_worker_closed')
+                    break
                 error = TimeoutError('incremental batch worker timeout waiting for ' + path.name)
+                error.native_worker = self
                 error.timeout_seconds = limit
                 error.timeout_scope = 'prefix-startup' if path.name == 'ready' else 'candidate-watchdog'
                 error.worker_log = (self.root/'worker.log').read_text()
@@ -125,7 +141,8 @@ class BatchWorker(PrefixWorker):
         request_id = self.name + ':' + stem + ':' + token
         binding = dict(prefix_sha256=hashlib.sha256(self.base.encode()).hexdigest(),
                        request_sha256=hashlib.sha256(text.encode()).hexdigest(),
-                       worker=self.name, request=stem, action=action)
+                       worker=self.name, request=stem, action=action,
+                       imports_sha256=hashlib.sha256('\n'.join(getattr(self,'imports',[])).encode()).hexdigest())
         emit_event('native_request_started', request_id=request_id, binding=binding)
         outcome = 'interrupted'
         try:
@@ -136,7 +153,15 @@ class BatchWorker(PrefixWorker):
             outcome = 'watchdog'
             raise
         finally:
-            emit_event('native_request_finished', request_id=request_id, outcome=outcome)
+            response=self.root/(stem+'.response')
+            evidence=({'policy':'native-no-response-after-cleanup-v1','request_id':request_id,
+                'worker':self.name,'prefix_sha256':binding['prefix_sha256'],
+                'request_sha256':binding['request_sha256'],'imports_sha256':binding['imports_sha256'],
+                'response_missing':not response.exists(),'native_response_received':response.exists(),
+                'worker_discarded':getattr(self,'closed',False) is True}
+                if outcome=='watchdog' else None)
+            emit_event('native_request_finished', request_id=request_id, outcome=outcome,
+                       interruption_evidence=evidence)
         with open(self.root/'worker.log', 'rb') as stream:
             stream.seek(offset); log = stream.read().decode(errors='replace')
         return answer, log
@@ -284,6 +309,8 @@ class BatchWorker(PrefixWorker):
                     'executed_commands':[dict(x.attrib) for x in tree.findall('./executed_commands/command')]}
             except (ET.ParseError, OSError) as error:
                 snapshot = {'origin':'unavailable', 'error':str(error)}
+        from regen.execution.native_reuse_diagnostics import attach_observation
+        snapshot = attach_observation(snapshot, self.root/(stem+'.reuse-diagnostics.xml'))
         result = {**audit, 'native_proof_state_full':snapshot,
             'native_proof_state':({'origin':snapshot.get('origin'), 'command':snapshot.get('command'),
                 'line':snapshot.get('line'), 'goal_count':len(snapshot.get('goals',[])),
@@ -340,6 +367,8 @@ class BatchWorker(PrefixWorker):
             state={'origin':tree.get('origin'),'command':tree.get('command'),'line':tree.get('line'),
                    'goals':[x.text or '' for x in tree.findall('./goals/goal')],
                    'local_assumptions':[x.text or '' for x in tree.findall('./assumptions/assumption')]}
+        from regen.execution.native_reuse_diagnostics import attach_observation
+        state = attach_observation(state, self.root/(stem+'.reuse-diagnostics.xml'))
         result = {'verdict': 'green' if answer == 'CONDITIONAL' else 'red',
                 'returncode': 0 if answer == 'CONDITIONAL' else 124 if answer.startswith('TIMEOUT\n') else 1,
                 'diagnostic': answer, 'source': str(path), 'log': str(log_path),

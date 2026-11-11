@@ -84,7 +84,7 @@ class RecoveryTests(unittest.TestCase):
                     'regen.planning.parallel_file_planner.run_theory_session',side_effect=session), patch(
                     'regen.infrastructure.audited_llm.model_settings',return_value=settings), patch(
                     'regen.preparation.checker_context.load_context',return_value={'checker_context_id':'fixture'}):
-                result = run_parallel_workspace(root,allow_external_call=True,integrate=False,
+                result = run_parallel_workspace(root, budget_mode="effective-time",allow_external_call=True,integrate=False,
                     execution_policy={'stages':[['A','B'],['C','D']], 'session_stall_retries':1})
             self.assertEqual(attempts['A'],2)
             self.assertNotEqual(paths[0],paths[1])

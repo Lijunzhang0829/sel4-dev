@@ -182,13 +182,14 @@ def compact_feedback(value):
         result = {k:compact_feedback(v) for k,v in value.items()
                   if k not in {'source_content','log_content','audit_content','native_proof_state_full'}
                   and not (k == 'command' and not isinstance(v, str))}
-        diagnostic = value.get('diagnostic')
-        if isinstance(diagnostic, str) and len(diagnostic) > DIAGNOSTIC_CHARS:
-            result['diagnostic'] = diagnostic[:DIAGNOSTIC_CHARS]
-            result['diagnostic_excerpt'] = {
-                'incomplete': True, 'offset': 0, 'total_chars': len(diagnostic),
-                'sha256': digest(diagnostic),
-                'notice': 'Excerpt only; read_diagnostic retrieves exact pages from the original request evidence.'}
+        # Render before bounding the model view: a short native goal can contain
+        # tens of thousands of YXML markup characters. The complete original
+        # feedback remains in its immutable request artifact.
+        from regen.planning.check_feedback import diagnostic_fields
+        result.update(diagnostic_fields(value))
+        native = value.get('native_proof_state_full')
+        if isinstance(native, dict) and isinstance(native.get('reuse_diagnostics'), dict):
+            result['reuse_diagnostics'] = deepcopy(native['reuse_diagnostics'])
         source = value.get('source_content')
         diagnostic = value.get('diagnostic', '')
         if isinstance(source, str) and isinstance(diagnostic, str):
@@ -483,7 +484,13 @@ def committed_batch_results(directory):
             state = record['state']
             number = state.get('batch_requests')
             if isinstance(number, int):
-                results[number] = deepcopy(state.get('batch_feedback', {'status':'accepted'}))
+                feedback = deepcopy(state.get('batch_feedback', {'status':'accepted'}))
+                if record.get('evidence', {}).get('independent_entries'):
+                    previous = results.get(number, {})
+                    feedback['new_green'] = list(dict.fromkeys(
+                        previous.get('new_green', []) + feedback.get('new_green', [])))
+                    feedback['node_results'] = previous.get('node_results', []) + feedback.get('node_results', [])
+                results[number] = feedback
     acceptance = directory/'acceptance'
     # Match replay's journal -> cold-memory lock order. Recovery traverses the
     # same potentially giant embedded origins and must share its memory gate.
@@ -547,6 +554,8 @@ def restore_batch_memory(directory, state, *, accepted_results=None):
                         'check':compact_feedback(check)}
             if accepted:
                 feedback = deepcopy(accepted_results[number])
+        elif number in accepted_results:
+            feedback = deepcopy(accepted_results[number])
         elif number in committed:
             continue  # inherited committed observation has no local artifact
         else:
@@ -1204,6 +1213,11 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 if runtime_cache is not None:
                     runtime_cache[cache_key] = cached
             run, package, directory, journal, checker, ancestors = cached
+            from regen.planning.generation_policy import policy_for
+            # Only the document path owns these gates. Legacy graph checkers
+            # need no document strategy metadata at all.
+            workflow_policy = policy_for(getattr(checker, 'generation_strategy_name', 'baseline')
+                if getattr(checker, 'document_mode', False) is True else 'baseline')
             from regen.infrastructure.progress_events import configure_event_monitor, emit_event
             configure_event_monitor(Path(run_dir), run_id=run['run_id'], theory=theory)
             monitor_started = True
@@ -1218,7 +1232,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
             policy = {'mode':'file-planner-workspace-v1' if decision_source else 'file-planner-batch-v1', 'provider':provider, 'model':model,
                       'call_timeout':call_timeout, 'check_timeout':check_timeout,
                       'candidate_timeout':candidate_timeout, 'workers':1}
-            if getattr(checker, 'generation_strategy_name', 'baseline') == 'bounded-audited-prefix-v1':
+            if workflow_policy.bounded_prefix:
                 policy['generation_strategy'] = 'bounded-audited-prefix-v1'
             durable(directory/'batch-policy.json', policy, immutable=True)
             state = initialize_batch_state(cached)
@@ -1315,6 +1329,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                 bounded_start_order = None
                 try:
                     document_check_requested = False
+                    independent_start_order = None
                     finish_after_check = False
                     proposal = parse_json_response(response)
                     if not isinstance(proposal, dict):
@@ -1335,16 +1350,23 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         if set(proposal)-{'action','source_sha256','reason','notes','retry_check','entry_ids'}:
                             raise ValueError('check_theory accepts source_sha256, entry_ids, reason, notes and optional retry_check')
                         durable(request_dir/'model-proposal.json',proposal,immutable=True)
-                        from regen.planning.sketch_check import strategy_options
                         store=DocumentStore(directory/'document',package,state,checker.imports(),
                             allow_import_edits=True,
-                            **strategy_options(getattr(checker,'generation_strategy_name','baseline')))
+                            generation_strategy=workflow_policy.name)
                         requested_source=store.checked_source(proposal.get('source_sha256'))
                         source, selected_ids = disposition_check_source(package, state, requested_source,
                             checker.imports(), proposal.get('entry_ids'), dispositions)
                         from regen.planning.sketch_check import authorize
-                        document_sketch_authorizations=authorize(store,requested_source,selected_ids)
                         projected=document_candidate(package,state,source,checker.imports())
+                        from regen.planning.independent_document_checks import selected_new_entries
+                        independent_check_requested = (not finish_after_check and decision_source is not None
+                            and not workflow_policy.bounded_prefix
+                            and len(selected_new_entries(state,projected)) >= 2)
+                        # Global source/fixed declarations/imports were validated above.
+                        # Per-helper workflow gates are isolated only for new independent
+                        # entries; rewrites and seal retain whole-context authorization.
+                        document_sketch_authorizations=([] if independent_check_requested else
+                            authorize(store,requested_source,selected_ids))
                         proposal={**{k:v for k,v in proposal.items() if k in {'reason','notes','retry_check'}},
                             'action':'submit_batch','document_source':source,
                             'proofs':projected['proofs'],
@@ -1372,7 +1394,7 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     bounded_feedback = None
                     bounded_fallback = None
                     if (document_check_requested and not finish_after_check and decision_source is not None
-                            and getattr(checker, 'generation_strategy_name', 'baseline') == 'bounded-audited-prefix-v1'):
+                            and workflow_policy.bounded_prefix):
                         from regen.planning.bounded_prefix import run_prefix, STRATEGY
                         durable(request_dir/'document-source.json', {'source':proposal['document_source']}, immutable=True)
                         durable(request_dir/'candidate.json', projected, immutable=True)
@@ -1397,6 +1419,33 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         if bounded_feedback is None:
                             bounded_fallback = {'strategy':STRATEGY, 'status':'whole_check_fallback',
                                 'policy_path':str(request_dir/'bounded-prefix/policy.json')}
+                    if (document_check_requested and independent_check_requested
+                            and not finish_after_check and decision_source is not None
+                            and not workflow_policy.bounded_prefix):
+                        from regen.planning.independent_document_checks import run_checks
+                        def commit_entry(new, evidence):
+                            nonlocal state
+                            new = apply_feedback(new, proposal, new['batch_feedback'], count,
+                                                 observation_order=observation_order)
+                            state = journal.append('document', new, evidence)
+                            return state
+                        def record_entry(source, evidence):
+                            if store.require_review:
+                                from regen.planning.sketch_workflow import record_formal_result
+                                record_formal_result(store, source, evidence)
+                        def authorize_entry(current, key):
+                            from copy import copy
+                            from regen.planning.sketch_readiness import entry_authorization
+                            scoped_store=copy(store)
+                            scoped_store.state=current
+                            return entry_authorization(scoped_store,requested_source,key)
+                        independent_start_order=list(state['accepted_order'])
+                        bounded_feedback = run_checks(package, state, proposal['document_source'], checker,
+                            request_dir/'independent-entries', commit=commit_entry, record_result=record_entry,
+                            authorize_entry=authorize_entry if independent_check_requested else None,
+                            evidence_origin={'sealable_generation':bool(meta.get('sealable_generation')),
+                                'transcript_prefix':str(prefix), 'reason':proposal.get('reason',''),
+                                'sketch_authorizations':document_sketch_authorizations})
                     if bounded_feedback is not None:
                         feedback = bounded_feedback
                     elif action == 'observe':
@@ -1599,6 +1648,15 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     feedback = {'status':'tool_failed', 'failure_scope':'tool',
                                 'diagnostic':str(error),
                                 'notice':'Inspect the tool failure; only durable checker-validated commits remain accepted.'}
+                if independent_start_order is not None and 'independent_entries' not in feedback:
+                    # A global authority error can follow a separately published
+                    # success. Preserve and report that durable acceptance.
+                    accepted=[key for key in state['accepted_order'] if key not in independent_start_order]
+                    if accepted:
+                        feedback.update(new_green=accepted,
+                            independent_entries={'policy':'independent-document-entries-v1',
+                                'accepted_ids':accepted,'draft_preserved':True,
+                                'stop_reason':'global_check_error'})
                 if bounded_start_order is not None and 'bounded_prefix' not in feedback:
                     accepted = [key for key in state['accepted_order'] if key not in bounded_start_order]
                     feedback.update(new_green=accepted, bounded_prefix={

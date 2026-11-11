@@ -68,7 +68,8 @@ def instrument(proof, group, signature):
             SOME refs => refs | NONE => error "Invalid helper use fact expression");
           val facts = Attrib.eval_thms ctxt refs;
           val {goal, facts = chained_facts, ...} = @{Isar.goal};
-          fun term t = YXML.content_of (Syntax.string_of_term (Config.put show_types true ctxt) t);
+          fun term t = XML.content_of (YXML.parse_body
+            (Syntax.string_of_term (Config.put show_types true ctxt) t));
           fun element name text = XML.Elem ((name, []), [XML.Text text]);
           fun fact thm = XML.Elem (("fact", []),
             [element "proposition" (term (Thm.prop_of thm)),

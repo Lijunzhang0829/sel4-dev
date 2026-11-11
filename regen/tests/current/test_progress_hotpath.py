@@ -59,6 +59,10 @@ class ProgressHotpathTests(unittest.TestCase):
 
     def controller(self, *, selected=None, providers=()):
         controller = WorkspaceController.__new__(WorkspaceController)
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        controller.root = Path(temporary.name)
+        controller.run = {'run_id':'hotpath-fixture'}
         controller.selected = ['Target'] if selected is None else selected
         controller.shared = SimpleNamespace(entries=dict.fromkeys(['Target','Provider','Unrelated']))
         package = {'repository_projection':{'schema_version':6,
@@ -134,7 +138,7 @@ class ProgressHotpathTests(unittest.TestCase):
                     'regen.planning.parallel_file_planner.wait', side_effect=poll), patch(
                     'regen.infrastructure.audited_llm.model_settings', return_value=settings), patch(
                     'regen.preparation.checker_context.load_context', return_value={'checker_context_id':'fixture'}):
-                result = run_parallel_workspace(root, allow_external_call=True, integrate=False,
+                result = run_parallel_workspace(root, budget_mode="effective-time", allow_external_call=True, integrate=False,
                                                 max_parallel_theories=2, resident_limit=2)
             self.assertEqual(result['status'], 'selected_theories_sealed')
             self.assertFalse(result['failures'])
@@ -179,7 +183,7 @@ class ProgressHotpathTests(unittest.TestCase):
                     'regen.planning.parallel_file_planner.wait', side_effect=poll), patch(
                     'regen.infrastructure.audited_llm.model_settings', return_value=settings), patch(
                     'regen.preparation.checker_context.load_context', return_value={'checker_context_id':'fixture'}):
-                result = run_parallel_workspace(root, allow_external_call=True, integrate=False,
+                result = run_parallel_workspace(root, budget_mode="effective-time", allow_external_call=True, integrate=False,
                                                 max_parallel_theories=2, resident_limit=2)
             self.assertEqual(result['status'], 'selected_theories_sealed')
             self.assertFalse(result['failures'])

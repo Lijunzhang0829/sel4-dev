@@ -43,12 +43,23 @@ def retry_planning_request(call, *, retry_gap=10):
                 time.sleep(retry_gap)
         request = uuid4().hex
         emit_event('planning_request_started', request_id=request, retry_of=failed)
+        started=time.monotonic()
         try:
             result = call(attempt)
         except BaseException as error:
             timeout = isinstance(error, PlanningFeedbackTimeout)
+            from regen.infrastructure.provider_http_failure import classify_provider_http_failure
+            from regen.infrastructure.provider_recovery import ProviderUnavailable
+            from regen.infrastructure.codex_workspace_session import ProviderHTTPError, ProviderFeedbackError
+            failure=None
+            if isinstance(error,(ProviderHTTPError,ProviderFeedbackError)):
+                failure=error.failure
+            elif isinstance(error,ProviderUnavailable):
+                failure=classify_provider_http_failure(str(error))
             emit_event('planning_request_finished', request_id=request,
-                       outcome='timeout' if timeout else 'failed')
+                       outcome='timeout' if timeout else 'failed',**(
+                           {'failure':failure,'waiting_seconds':max(0.,time.monotonic()-started)}
+                           if failure is not None else {}))
             if not timeout:
                 raise
             if attempt:

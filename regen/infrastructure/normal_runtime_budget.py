@@ -1,7 +1,8 @@
 """Normal experiment runtime, minus evidenced all-worker interruption intervals.
 
 A versioned new policy; legacy clocks and historical ledger identities stay intact.
-Proof failures, native timeouts and successful retries never grant time credits.
+Proof failures and native-reported timeouts count. Evidence-bound missing-response
+watchdogs can exclude only their charged non-model contributor intervals.
 """
 from copy import deepcopy
 import math
@@ -10,7 +11,7 @@ from regen.infrastructure.active_wall_budget import ActiveWallBudget
 from regen.infrastructure.effective_time_budget import CHECKPOINT_KIND
 from regen.infrastructure.theory_activity import EXCLUDED_PHASES
 
-POLICY='normal-wall-minus-confirmed-interruptions-v1'
+POLICY='normal-wall-minus-confirmed-interruptions-v2'
 LIMIT_REASON='normal_runtime_budget_reached'
 INTERRUPTIONS=frozenset({'provider_recovery','provider_stream_retry','stream_retry',
     'experiment_pause','native_unresponsive','provider_interruption','offline'})
@@ -28,8 +29,12 @@ class NormalRuntimeBudget(ActiveWallBudget):
         self.normal_wall_seconds=old.get('normal_wall_seconds',old.get('effective_seconds',0.))
         self.normal_excluded_seconds=old.get('normal_excluded_seconds',0.)
         self._provider_handles={};self._provider_pending={};self._normal_credits={}
+        from regen.infrastructure.native_wait_accounting import NativeWaitAccounting
+        self.normal_native_requests=NativeWaitAccounting.restore(old.get('normal_native_accounting'))
+        self._native_recovery_causes=deepcopy(old.get('normal_native_recovery_causes',{}))
+        self._native_recovery_handles={}
         kwargs['include_planning']=True
-        if prior and old.get('policy')==POLICY and not old.get('gate_open') and not old.get('finished'):
+        if prior and old.get('policy')==self.policy and not old.get('gate_open') and not old.get('finished'):
             gap=ledger.clock()-prior['time_unix']
             if not math.isfinite(gap) or gap<0:raise ValueError('invalid recovery wall interval')
             if not handoff:
@@ -50,7 +55,8 @@ class NormalRuntimeBudget(ActiveWallBudget):
         blocked=[p for p in self.exclusions.values() if p.get('confirmed')]
         if any(p['worker_id'] is None for p in blocked):return []
         lanes=set(self.workers)|{p['worker_id'] for p in blocked}
-        unavailable={p['worker_id'] for p in blocked}
+        unavailable={p['worker_id'] for p in blocked
+            if not (p['reason']=='native_unresponsive' and p['worker_id'] in self._overlap)}
         if lanes and lanes<=unavailable:return []
         return ['wall']
 
@@ -72,8 +78,11 @@ class NormalRuntimeBudget(ActiveWallBudget):
             else:
                 if self._open_workers():
                     self.effective_seconds+=delta
-                    blocked={p['worker_id'] for p in self.exclusions.values() if p.get('confirmed')}
+                    blocked={p['worker_id'] for p in self.exclusions.values() if p.get('confirmed')
+                        and not (p['reason']=='native_unresponsive' and p['worker_id'] in self._overlap)}
                     healthy={w:t for w,t in self.workers.items() if w not in blocked}
+                    self.normal_native_requests.record(delta,healthy,self.planning_active,
+                        self._overlap | set(self.provider_requests.active))
                     self.worker_seconds+=delta*len(healthy)
                     if self.planning_active or not self._registered:self.planning_seconds+=delta
                     for theory in set(healthy.values()):self._theory_seconds[theory]=self._theory_seconds.get(theory,0.)+delta
@@ -81,7 +90,16 @@ class NormalRuntimeBudget(ActiveWallBudget):
         self._last_tick=now
         self._sync_accounting()
 
-    def begin_exclusion(self,reason,*,worker_id=None,confirmed=False,evidence_id=None):
+    def begin_exclusion(self,reason,*,worker_id=None,confirmed=False,evidence_id=None,prefix_sha256=None,imports_sha256=None):
+        recovery=None
+        if reason=='prefix_preparation' and worker_id in self._native_recovery_causes:
+            cause=self._native_recovery_causes[worker_id]
+            if (cause['prefix_sha256']==prefix_sha256 and cause.get('imports_sha256')==imports_sha256
+                    and isinstance(imports_sha256,str)):
+                recovery=cause;reason='native_unresponsive';confirmed=True
+                evidence_id='native-watchdog:'+cause['request_id']
+            elif prefix_sha256 is not None:
+                self._native_recovery_causes.pop(worker_id,None)
         if reason not in EXCLUDED_PHASES|INTERRUPTIONS:raise ValueError('unknown harness phase')
         if confirmed and (reason not in INTERRUPTIONS or not isinstance(evidence_id,str) or not evidence_id):
             raise ValueError('confirmed interruption requires trusted evidence')
@@ -90,8 +108,15 @@ class NormalRuntimeBudget(ActiveWallBudget):
             handle=str(self._next_exclusion)
             self.exclusions[handle]=dict(reason=reason,worker_id=worker_id,
                 confirmed=bool(confirmed),evidence_id=evidence_id)
+            if recovery is not None:self._native_recovery_handles[handle]=worker_id
             self._write_state('exclusion_started',handle=handle,**self.exclusions[handle])
             return handle
+
+    def end_exclusion(self,handle):
+        with self.lock:
+            worker=self._native_recovery_handles.pop(handle,None)
+            if worker is not None:self._native_recovery_causes.pop(worker,None)
+            return super().end_exclusion(handle)
 
     def confirm_provider_failure(self,worker_id,evidence_id,*,blocked=True):
         with self.lock:
@@ -112,10 +137,52 @@ class NormalRuntimeBudget(ActiveWallBudget):
             if handle is not None:self.end_exclusion(handle)
 
     def begin_native_request(self,worker_id,request_id,binding):
-        return self._request('native',worker_id,request_id,binding=binding)
+        with self.lock:
+            self._settle();self._check_locked()
+            if worker_id in self.workers:
+                self.normal_native_requests.begin(worker_id,self.workers[worker_id],request_id,binding)
+            self._write_state('normal_native_request_started',worker_id=worker_id,
+                              request_id=request_id,binding=binding)
 
-    def finish_native_request(self,worker_id,request_id,outcome):
-        return self._request('native',worker_id,request_id,outcome=outcome)
+    def finish_native_request(self,worker_id,request_id,outcome,*,interruption_evidence=None):
+        if outcome not in {'completed','timeout','watchdog','interrupted'}:
+            raise ValueError('unknown native response outcome')
+        with self.lock:
+            self._settle()
+            tracker=self.normal_native_requests
+            previous=tracker.credits.get(request_id)
+            request=previous or tracker.requests.get(request_id)
+            receipt=None
+            evidence=interruption_evidence or {}
+            binding=request.get('binding',{}) if request else {}
+            verified=(outcome=='watchdog' and request is not None
+                and evidence.get('policy')=='native-no-response-after-cleanup-v1'
+                and evidence.get('request_id')==request_id
+                and evidence.get('worker')==binding.get('worker')
+                and isinstance(binding.get('worker'),str)
+                and evidence.get('prefix_sha256')==binding.get('prefix_sha256')
+                and evidence.get('request_sha256')==binding.get('request_sha256')
+                and isinstance(binding.get('imports_sha256'),str)
+                and evidence.get('imports_sha256')==binding['imports_sha256']
+                and evidence.get('response_missing') is True
+                and evidence.get('worker_discarded') is True
+                and evidence.get('native_response_received') is False)
+            if request is not None:
+                receipt=tracker.finish(worker_id,request_id,timed_out=verified)
+                if verified and previous is None:
+                    self.effective_seconds=max(0.,self.effective_seconds-receipt['effective_seconds'])
+                    self.normal_excluded_seconds+=receipt['effective_seconds']
+                    self.worker_seconds=max(0.,self.worker_seconds-receipt['worker_seconds'])
+                    for theory,seconds in receipt['theory_seconds'].items():
+                        self._theory_seconds[theory]=max(0.,self._theory_seconds.get(theory,0.)-seconds)
+                    self._native_recovery_causes[worker_id]={
+                        'request_id':request_id,'prefix_sha256':binding['prefix_sha256'],
+                        'imports_sha256':binding['imports_sha256']}
+            self._sync_accounting()
+            self._write_state('normal_native_request_finished',worker_id=worker_id,
+                request_id=request_id,outcome=outcome,verified_interruption=verified,
+                interruption_evidence=deepcopy(evidence),correction=receipt)
+            return receipt
 
     def begin_provider_request(self,worker_id,request_id):
         return self._request('provider',worker_id,request_id)
@@ -149,8 +216,9 @@ class NormalRuntimeBudget(ActiveWallBudget):
         value=super()._compact()
         value.update(clock_basis='normal_runtime',normal_wall_seconds=self.normal_wall_seconds,
             normal_excluded_seconds=self.normal_excluded_seconds,
-            native_timing_policy='ordinary-native-timeouts-count; no automatic refunds',
-            include_planning=True)
+            native_timing_policy='native-timeouts-count; evidenced-watchdog-and-bound-recovery-excluded-v2',
+            include_planning=True,normal_native_accounting=self.normal_native_requests.state(),
+            normal_native_recovery_causes=deepcopy(self._native_recovery_causes))
         return value
 
     def snapshot(self):
@@ -162,7 +230,7 @@ class NormalRuntimeBudget(ActiveWallBudget):
             experiment_wall_seconds=self.normal_wall_seconds if known else None,
             excluded_experiment_seconds=self.normal_excluded_seconds if known else None,
             remaining_seconds=value['remaining_seconds'] if known else None,
-            native_timing_policy='ordinary-native-timeouts-count; no automatic refunds')
+            native_timing_policy='native-timeouts-count; evidenced-watchdog-and-bound-recovery-excluded-v2')
         return value
 
     def reconcile_unknown_tail(self,*,active_seconds,wall_seconds,evidence_id):
@@ -186,7 +254,9 @@ def budget_instructions(seconds):
         'builds, seals and integration all count. Only trusted evidence of a recorded '
         'pause, confirmed infrastructure interruption with every worker blocked, or '
         'offline recovery can exclude time; overlapping exclusions count once. '
-        'Proof failure, no new GREEN result and successful retries do not refund time. '
+        'Native-reported proof timeouts still count. Evidence-bound missing-response watchdog waits '
+        'and the matching forced prefix recovery exclude only otherwise charged non-model intervals; '
+        'healthy parallel lanes remain charged. Proof failure, no new GREEN result and successful retries do not refund time. '
         'Read experiment_status.generation_clock for remaining effective time; no fixed '
         'calendar deadline applies. An unknown crash tail blocks continuation until '
         'evidence-backed reconciliation. Do not change the clock or reset the allowance. '

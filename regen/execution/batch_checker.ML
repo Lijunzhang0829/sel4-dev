@@ -1,4 +1,5 @@
-(* Transactional batches over a real, audited Isabelle prefix. No admissions. *)
+(* Transactional batches over an audited prefix. Only discarded sketch trials
+   may execute the exact number of harness-authored helper admissions. *)
 local
   val root = Path.explode "/worker";
   fun path s = Path.append root (Path.basic s);
@@ -21,6 +22,27 @@ local
   val stage_since = Unsynchronized.ref (Time.now ());
   val phase_times = Unsynchronized.ref ([] : (string * real) list);
   val current_command = Unsynchronized.ref ("", "");
+  val reuse_observation = Unsynchronized.ref (NONE : (unit -> XML.tree option) option);
+  val reuse_deadline = Unsynchronized.ref (NONE : Time.time option);
+  fun publish_reuse_observation () =
+    (case (!active, !reuse_observation, !reuse_deadline) of
+      (SOME stem, SOME observe, SOME deadline) =>
+        let
+          val remaining = Time.toReal (Time.- (deadline, Time.now ()));
+          val observed = if remaining <= 0.0 then
+              SOME (Regen_Reuse_Diagnostics.skipped "budget_exhausted"
+                "Candidate budget was exhausted before optional reuse observation")
+            else (case Exn.capture
+              (Timeout.apply (Time.fromReal (Real.min (0.5, remaining))) observe) () of
+                Exn.Res value => value
+              | Exn.Exn (Timeout.TIMEOUT _) =>
+                  SOME (Regen_Reuse_Diagnostics.skipped "budget_exhausted"
+                    "Optional reuse observation reached its bounded local deadline")
+              | Exn.Exn exn =>
+                  SOME (Regen_Reuse_Diagnostics.skipped "unavailable" (Runtime.exn_message exn)));
+        in case observed of NONE => () | SOME value =>
+          write (stem ^ ".reuse-diagnostics.xml") (XML.string_of value) end
+    | _ => ());
   fun progress () = (case !active of NONE => () | SOME stem =>
     let val elapsed = Time.toReal (Time.- (Time.now (), !stage_since));
         val times = AList.map_default (op =) (!stage, 0.0) (fn x => x + elapsed) (!phase_times);
@@ -62,27 +84,44 @@ local
         [XML.Elem (("goals",[]),goals), XML.Elem (("assumptions",[]),assumptions),
          XML.Elem (("executed_commands",[]),commands)]))) end);
   val preparing_prefix = Unsynchronized.ref true;
-  fun execute position text state =
+  fun run_command allow_admission tr st =
+    Toplevel.command_exception allow_admission tr st;
+  fun execute_with_admissions admission_count position text state =
     let val theory = Toplevel.theory_of state;
+        val admissions_left = Unsynchronized.ref admission_count;
         val transitions = Outer_Syntax.parse_text theory (fn () => theory) position text;
         fun step tr st =
           let val started = Time.now ();
               val _ = (current_command := (Toplevel.name_of tr, command_position tr); progress ());
-              val command = Toplevel.command_exception true tr;
+              val admission = Toplevel.name_of tr = "sorry";
+              val _ = if admission andalso !admissions_left <= 0
+                then error "Unexpected proof admission outside a trusted sketch helper" else ();
+              val command = run_command admission tr;
               val out = Exn.capture
                 (if !preparing_prefix then command else Timeout.apply
                   (Time.fromReal (the (Real.fromString (read "command_timeout")))) command) st;
           in writeln ("REGEN_COMMAND " ^ Toplevel.name_of tr ^ " " ^
                LargeInt.toString (Time.toMilliseconds (Time.- (Time.now (), started))));
              (case out of Exn.Res next =>
-                (completed := (Toplevel.name_of tr, command_position tr) :: !completed;
+                (if admission then admissions_left := !admissions_left - 1 else ();
+                 completed := (Toplevel.name_of tr, command_position tr) :: !completed;
                  List.app (fn (line, key, text) =>
                    if command_position tr = Int.toString line andalso Toplevel.is_theory next
                    then captured_checkpoints := (key, next, text) :: !captured_checkpoints else ())
                    (!requested_checkpoints))
-              | Exn.Exn _ => ignore (Exn.capture (fn () => save_state tr st) ()));
+              | Exn.Exn _ =>
+                  (ignore (Exn.capture (fn () => save_state tr st) ());
+                   if is_some (!reuse_deadline) andalso Toplevel.is_proof st andalso
+                       member (op =) ["proof", "apply", "by"] (Toplevel.name_of tr)
+                   then reuse_observation := SOME (fn () =>
+                     Regen_Reuse_Diagnostics.snapshot position text tr st)
+                   else ()));
              progress (); Exn.release out end;
-    in fold step transitions state end;
+        val result = fold step transitions state;
+        val _ = if !admissions_left = 0 then ()
+          else error "Missing trusted sketch helper admission";
+    in result end;
+  val execute = execute_with_admissions 0;
   fun audit names st =
     let val _ = if Toplevel.is_theory st then () else error "Unclosed proof/context";
         val finished = execute Position.none "end" st;
@@ -138,8 +177,16 @@ local
     else let
       val stem = Int.toString n;
       val _ = (active := SOME stem; completed := []; current_command := ("", "");
+               reuse_observation := NONE; reuse_deadline := NONE;
                stage := "request_received"; stage_since := Time.now (); phase_times := [];
                progress ());
+      val _ = if member (op =) ["check", "sketch"] (read (stem ^ ".action")) then
+        let val seconds = if read (stem ^ ".action") = "sketch" andalso
+              File.exists (path (stem ^ ".candidate_timeout"))
+            then read (stem ^ ".candidate_timeout") else read "candidate_timeout"
+        in reuse_deadline := SOME (Time.+ (Time.now (),
+          Time.fromReal (the (Real.fromString seconds)))) end
+        else ();
       val _ = set_stage (case read (stem ^ ".action") of
           "check" => "candidate_execute" | "observe" => "observation"
         | "sketch" => "sketch" | "restore" => "restore" | "commit" => "commit"
@@ -183,7 +230,11 @@ local
             val _ = Timeout.apply
               (Time.fromReal (the (Real.fromString trial_timeout)))
               (fn () =>
-                let val trial = execute position (read (stem ^ ".request")) (!base);
+                let val admitted = split_lines (read (stem ^ ".facts"));
+                    val _ = if distinct (op =) admitted = admitted then ()
+                      else error "Duplicate trusted sketch helper admission";
+                    val trial = execute_with_admissions (length admitted)
+                      position (read (stem ^ ".request")) (!base);
                     val _ = if Toplevel.is_theory trial then () else error "Unclosed sketch";
                     val finished = execute Position.none "end" trial;
                     val theory = Toplevel.end_theory Position.none finished;
@@ -214,6 +265,11 @@ local
           val _ = checkpoints := !captured_checkpoints @ !checkpoints;
           val _ = pending := SOME (st, !base_text ^ delta);
         in "GREEN" end) ();
+      (* The authoritative result is already captured. Optional diagnostics
+         cannot turn a proof rejection into timeout, success, or infrastructure
+         failure, and run only within the remaining candidate time allowance. *)
+      val _ = (case result of Exn.Res _ => () | Exn.Exn _ =>
+        ignore (Exn.capture publish_reuse_observation ()));
       val answer = (case result of Exn.Res text => text
         | Exn.Exn (Timeout.TIMEOUT _) =>
             if read (stem ^ ".action") = "observe" then "TIMEOUT\nObservation exceeded the time budget"

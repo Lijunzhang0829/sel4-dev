@@ -1,0 +1,79 @@
+{
+  "baseline": {
+    "instructions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "capabilities": {
+      "require_sketch": false,
+      "require_use_sites": false,
+      "require_review": false
+    }
+  },
+  "sketch-groups-v1": {
+    "instructions_sha256": "7a611c0f060f42b94d2a39a3f871d3cda9e680025d2056eda897ba2b2a1350d3",
+    "capabilities": {
+      "require_sketch": true,
+      "require_use_sites": false,
+      "require_review": false
+    }
+  },
+  "bounded-audited-prefix-v1": {
+    "instructions_sha256": "3669cc8bad2cc79e4cecd220c21a7504213de1e64dcff398378f8b602e6a34ab",
+    "capabilities": {
+      "require_sketch": false,
+      "require_use_sites": false,
+      "require_review": false
+    }
+  },
+  "helper-closure-v1": {
+    "instructions_sha256": "43b8c91f1e586d045a4a7cfbe70760e88c4aeb9a5e90240d59d24ba4af9ee786",
+    "capabilities": {
+      "require_sketch": false,
+      "require_use_sites": false,
+      "require_review": false
+    }
+  },
+  "sketch-local-demands-v1": {
+    "instructions_sha256": "683d172773ae2d75bec4ab7fb380711bc9d1a2696ecae789c1d5a08c8db9fb28",
+    "capabilities": {
+      "require_sketch": true,
+      "require_use_sites": true,
+      "require_review": false
+    }
+  },
+  "sketch-reviewed-v1": {
+    "instructions_sha256": "bc24d38b3305accb3d822ad613f3fa590d5e910bf7b0d9c34ba8cdb754386c34",
+    "capabilities": {
+      "require_sketch": true,
+      "require_use_sites": true,
+      "require_review": true
+    }
+  },
+  "sketch-reviewed-v2": {
+    "instructions_sha256": "07ce35368eaecf67910049dd9b45fcc29ce41adfb39a979a592741e484fdb094",
+    "capabilities": {
+      "require_sketch": true,
+      "require_use_sites": true,
+      "require_review": true,
+      "require_semantic_review": true,
+      "allow_formal_leaf": true
+    }
+  },
+  "sketch-guided-v1": {
+    "instructions_sha256": "58a8e3e68007d5867d6ab651243f1f38c411829da02cc127198163ca8cfd47b8",
+    "capabilities": {
+      "require_sketch": true,
+      "require_use_sites": true,
+      "require_review": true,
+      "require_assessment": true
+    }
+  },
+  "sketch-phased-v1": {
+    "instructions_sha256": "26e6cd96d2768494364e9ad3466a16b7f35ff4087c2de9782ae8926fecb39368",
+    "capabilities": {
+      "require_sketch": true,
+      "require_use_sites": true,
+      "require_review": true,
+      "require_assessment": true,
+      "require_phases": true
+    }
+  }
+}

@@ -237,3 +237,173 @@ watchdog/工具/会话证据及替换实现审查。恢复最新有效提交和�
 已验收前缀 → 注入响应 watchdog → 反馈返回且无新 GREEN → 新 worker 重检 → seal。
 注入仅改变一次测试 worker 的延迟及宿主等待期限；没有模型调用、没有 benchmark
 目标或人工目标证明输入。完整输出保存在本轮恢复实验的 validation 目录。
+
+### Independent checks and explicit work switching
+
+Document `check_theory` checks multiple new proof bodies separately under
+`independent-document-entries-v1`. The selected source is frozen once, entries
+are visited in source order, and each candidate contains the certified GREEN
+prefix plus exactly one new proof. Other pending fixed statements retain `oops`
+carriers; their statements are not available facts. No `sorry` is inserted.
+An ordinary RED or native candidate timeout does not suppress subsequent checks.
+A successful predecessor is audited and journal-committed before a later entry
+may use it. `feedback.entry_results` gives each verdict, diagnostic, elapsed
+check time and evidence address; `new_green` lists independently published
+successes. Mixed results have publication `partially_accepted`. The saved full
+draft remains unchanged. Infrastructure failure/cancellation can leave explicit
+not-checked entries; it does not establish a negative mathematical result.
+
+Single-body checks retain their existing path. Edits to already accepted proof
+bytes or declarations require whole-context revalidation, rather than silently
+substituting old accepted bytes. `finish` still validates the complete theory,
+imports and semantic audit before seal. The explicitly selected historical
+`bounded-audited-prefix-v1` strategy retains its original stopping policy.
+
+`switch_target(entry_id, reason, notes?)` selects another pending fixed contract
+inside the assigned theory. It returns the exact target body and persists the
+choice without editing proofs, resetting budgets or disposing any contract.
+The live controller/native cache is reused. `switch_target(theory, reason,
+notes?)` instead yields the current worker to a different theory in the current
+scheduler scope whose providers are certified. The coordinator prioritizes that
+theory and moves the yielding theory behind other ready work. It later resumes
+from its journals, draft and saved switch notes; immutable switch receipts also
+restore ordering after coordinator restart. Neither operation records UNKNOWN.
+Native actions remain serial and `worker=1` remains one active File Planner.
+
+Durable logical state and a live Isabelle process are distinct. A local contract
+switch retains the process and prefix. A theory yield releases native residency,
+so a later resume may replay the certified prefix. Retaining every theory's live
+Isabelle process is not promised by `resident_limit=1`. Process loss or a native
+watchdog also requires reconstruction; persisted journals alone cannot recreate
+the process's in-memory heap without loading/replay.
+
+### Reviewed sketches v2: semantic route review and entry-local gates
+
+New `parallel-workspace` runs default to `sketch-reviewed-v2`; `baseline` is the
+current ablation. Omit the strategy on resume to use the exact frozen version.
+Historical strategy names remain accepted by the current CLI only for exact frozen replay,
+and their prompt hashes and review requirements are preserved. The shared entry-local authorization and
+readiness feedback also apply to existing document strategies.
+
+After `check_sketch`, each helper review records its role (`classification`,
+`bridge`, `local`), definition references, representation/case branches, premise
+sources and unresolved cases. These are agent-authored semantic claims, explicitly
+marked `semantic_claims_verified=false`. The harness validates their presence
+and receipt bindings; it does not prove that a list of cases is exhaustive.
+Conditional closure still proves only that the consumer closes assuming its
+helpers, and publishes no GREEN.
+
+Classification/bridge helpers must pass ordinary native checking before sibling
+helper work is authorized. Helpers in a child sketch serving such a critical
+helper remain available. A newly accepted critical helper unlocks later entries
+in the same frozen multi-entry request, using the evolving committed state.
+A false helper disproves that candidate route only: it does not refute the fixed
+contract. Unrelated fixed contracts remain available and can be selected with
+`switch_target`.
+
+For new proof bodies in one `check_theory`, a missing/stale conditional receipt,
+review or diagnosis returns `blocked_workflow` for that entry, with
+`native_check_executed=false`. Other independently eligible entries continue.
+Malformed source, changed fixed statements, corrupt receipts and infrastructure
+errors still stop the operation. Native successes before a later global error
+remain separately journal-committed and are reported. Accepted-body rewrites
+and final seal retain whole-context revalidation.
+
+`read_theory.workflow.readiness` and `read_entry.workflow_readiness` report
+specific invalidity causes and source-bound `next_actions`. An action is complete
+only when `requires_agent_fields` is empty; the harness never invents a review,
+diagnosis or proof plan. Compatible helper-proof-only edits and extensions of
+the certified GREEN prefix reuse their conditional certificates. Changes to
+helper statements, consumers, use sites or incompatible imports/prefixes require
+the corresponding checks again.
+
+A v2 leaf can choose diagnostic mode with a compatible probe receipt, or formal
+mode with a nonempty `proof_plan` and no short probe. A supplied probe must still
+match its context. A timeout leaves feasibility `unestablished`; it cannot prove
+hardness or make a helper GREEN. No new probe-success threshold, repair-round
+limit or elapsed-time decomposition rule is introduced. The ordinary proof
+audit, fixed parent check and complete theory seal remain mandatory.
+
+### One versioned policy definition
+
+`generation_policy.py` owns strategy names, instructions, capabilities and the
+new-run default. Runtime `DocumentStore` callers pass one `generation_strategy`;
+seven old boolean attributes are derived compatibility views, not independently
+configured parameters. Explicit legacy constructor arguments remain available to
+old adapters, but cannot override a named strategy. Document-mode requirements
+and the historical bounded-prefix check path derive from the same definition.
+
+`leaf_review_issue` is shared by review submission, stored-review authorization
+and readiness feedback. Invalid or foreign receipts still raise integrity errors;
+only actual workflow prerequisites become local blockers. This consolidates
+repeated decisions without dropping native evidence or changing fixed contracts.
+Default v2 does not enable the historical guided scores or phased retry-count
+gates. These remain available only through their explicit historical workflows.
+
+The parameter inventory and validation evidence are recorded in
+`reports/regen/generation-policy-consolidation-20261108-001/REPORT.md`.
+
+### Current launch interface
+
+`regen.execution.parallel_cli` defines 19 public options for `parallel-workspace`.
+Executing this generation command enables its audited model session; it needs no
+separate `--allow-external-call` switch. Authentication is resolved through the
+existing `CODEX_HOME`/default clean-home mechanism. Explicit `codex-home` and
+`focus-contract-id` remain advanced diagnostic inputs outside normal help.
+
+New experiments use Document and accept only `baseline` or `sketch-reviewed-v2`.
+The graph selector and custom `execution-policy` file are retired from the new
+launch surface. Older frozen interfaces/policies can be decoded unchanged, and
+cannot be selected as new experiment configurations through compatibility flags.
+The generic legacy `workspace` command keeps its old interface independently.
+
+The public budget inputs are `--budget-seconds` (new default 48 hours),
+`--planning-budget` (first handoff only), and `--resume-authorization` (resume
+audit reference). New clocks use the single `experiment-runtime` policy; there
+is no clock selector. Resumes inherit their exact frozen policy and allowance,
+including historical clocks. The allowance includes imported planning costs.
+Resume rejects a changed allowance; consumed work never resets. Old extension/wall options remain
+only in the frozen effective-time compatibility decoder, outside current help.
+
+Native resource semantics are unchanged: one run's native_slots limits active
+requests in that run's pool; native_threads controls internal Isabelle
+parallelism. Two independent pools do not mutually exclude each other. Host-wide
+file-lock admission is an opt-in lower-level capability and is not automatically
+enabled by native_slots=1.
+
+
+### Unified experiment clock (2026-11-08)
+
+Current Ours planning and generation use
+`experiment-runtime-minus-evidenced-interruptions-v1`. The only public duration
+is `--budget-seconds X`, default 172800 seconds (48 hours). `planning-budget`
+identifies the initial paid planning receipt; `resume-authorization` is an audit
+reference, neither is a clock strategy or second allowance.
+
+Effective experiment time is elapsed experiment time minus the union of recorded
+pauses/offline gaps and trusted worker/network interruption intervals. Normal
+planning, model reasoning/waiting, retrieval, prefix preparation, failed proof
+attempts, native-reported TIMEOUT, seal and integration count. The initial
+planning-to-generation handoff counts once. Explicit stopped/resumed gaps do not.
+Ordinary in-run reconstruction counts; a forced exact-prefix/import rebuild
+caused by a confirmed discarded unresponsive worker can be excluded once.
+
+The harness binds native outage evidence to the request, worker, prefix and imports,
+missing response and completed worker cleanup. Provider evidence must be a trusted
+transport/service failure; only the measured wait since the last real model
+feedback is refundable. Silence, a hard lemma or missing commentary completion
+alone is insufficient. The model cannot issue refunds. Native and provider
+intervals share one durable correction ledger: overlaps are credited once,
+healthy work in another worker or overlapping model/native work stays charged.
+
+A late diagnosis may correct already charged time, including after a clean
+pause or provisional budget cutoff, without changing proofs, token usage or the
+original allowance. Corrections are immutable, request-bound and idempotent.
+They do not automatically resume work. Use the normal explicit continuation
+path after a correction. A stopped audit uses
+`correct_stopped_experiment` under the run mutation lock; unobserved crash tails
+require reconciliation rather than guessed exclusion. Historical clocks remain
+replayable with their frozen policies and are not silently recalculated.
+
+Validation and runnable fault-injection evidence:
+[unified clock report](../../../reports/regen/unified-experiment-runtime-20261108-001/REPORT.md).

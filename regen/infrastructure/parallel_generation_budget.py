@@ -42,7 +42,9 @@ def _verify_planning_models(receipt, run, binding):
 def _planning_budget_source(directory, overview, theories, binding, seconds, *, clock_mode="effective-time"):
     """Verify a closed planning clock against the exact downstream experiment."""
     from regen.infrastructure.effective_time_budget import CHECKPOINT_KIND, POLICY
-    if clock_mode == "normal-runtime":
+    if clock_mode == 'experiment-runtime':
+        from regen.infrastructure.experiment_runtime_budget import POLICY
+    elif clock_mode == "normal-runtime":
         from regen.infrastructure.normal_runtime_budget import POLICY
     from regen.infrastructure.incremental_log import read_artifact
     directory = Path(directory).resolve()
@@ -231,7 +233,7 @@ class ParallelGenerationBudgetBridge:
     def handle(self, event, fields):
         relevant = {'native_request_started', 'native_request_finished', 'provider_transport_progress', 'generation_network_pause_requested', 'generation_provider_http_failure', 'generation_items_interrupted',
                     'generation_provider_request_started', 'generation_provider_request_finished',
-                    'generation_provider_request_failed', 'provider_feedback_retry_succeeded',
+                    'generation_provider_request_failed', 'generation_provider_wait_interruption', 'provider_feedback_retry_succeeded',
                     'generation_runtime_integrity_failure',
                     'generation_clock_untrusted', 'generation_exclusion_started',
                     'generation_exclusion_finished', 'theory_generation_started',
@@ -251,12 +253,21 @@ class ParallelGenerationBudgetBridge:
             if event == 'native_request_started':
                 self.stage.begin_native_request(theory, fields['request_id'], fields['binding'])
             elif event == 'native_request_finished':
-                self.stage.finish_native_request(theory, fields['request_id'], fields['outcome'])
+                self.stage.finish_native_request(theory, fields['request_id'], fields['outcome'], **(
+                    {'interruption_evidence':fields.get('interruption_evidence')}
+                    if getattr(self.stage,'normal_runtime',False) else {}))
             elif event == 'generation_provider_request_started':
                 self.stage.begin_provider_request(theory, fields['request_id'])
             elif event == 'generation_provider_request_finished':
                 self.stage.finish_provider_request(theory, fields['request_id'],
-                    outcome=fields['outcome'], failure=fields.get('failure'))
+                    outcome=fields['outcome'], failure=fields.get('failure'),**(
+                        {'waiting_seconds':fields.get('waiting_seconds')}
+                        if getattr(self.stage,'experiment_runtime',False) else {}))
+            elif event == 'generation_provider_wait_interruption':
+                if getattr(self.stage,'experiment_runtime',False):
+                    self.stage.confirm_interruption('provider',fields['request_id'],
+                        {'failure':fields['failure'],'waiting_seconds':fields['waiting_seconds']},
+                        evidence_id=fields['evidence_id'])
             elif event == 'generation_provider_request_failed':
                 normal_runtime = getattr(self.stage,'normal_runtime',False) is True
                 # Missing callback state is not evidence that native work has
@@ -311,8 +322,11 @@ class ParallelGenerationBudgetBridge:
                     evidence={key: fields[key] for key in (
                         'reason', 'generation_id', 'thread_id', 'turn_id',
                         'item_ids', 'model_lifecycle_policy') if key in fields},
-                    disposition='pause_measurement_invalid', evidence_trusted=False)
-                self.stage.cancel('effective_clock_evidence_error')
+                    disposition=('wall_clock_retained_protocol_diagnostic'
+                        if getattr(self.stage,'experiment_runtime',False) else 'pause_measurement_invalid'),
+                    evidence_trusted=False)
+                if not getattr(self.stage,'experiment_runtime',False):
+                    self.stage.cancel('effective_clock_evidence_error')
             elif event == 'generation_exclusion_started':
                 reason, identity = fields['category'], fields['phase_id']
                 if reason not in EXCLUDED_PHASES or identity in self.phases:
@@ -320,7 +334,7 @@ class ParallelGenerationBudgetBridge:
                     raise ValueError('invalid or duplicate effective clock phase')
                 self.phases[identity] = (theory,
                     self.stage.begin_exclusion(reason, worker_id=theory,**(
-                        {'confirmed':bool(fields.get('confirmed_interruption')),'evidence_id':fields.get('evidence_id')}
+                        {'confirmed':bool(fields.get('confirmed_interruption')),'evidence_id':fields.get('evidence_id'),'prefix_sha256':fields.get('prefix_sha256'),'imports_sha256':fields.get('imports_sha256')}
                         if getattr(self.stage,'normal_runtime',False) else {})))
             elif event == 'generation_exclusion_finished':
                 identity = fields['phase_id']
@@ -354,7 +368,9 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
                                planning_budget=None, wall_seconds=None, clock_mode="effective-time"):
     """Bind the clock before launch; never give a legacy continuation zero cost."""
     from regen.infrastructure.effective_time_budget import EffectiveTimeBudget, POLICY, CHECKPOINT_KIND
-    if clock_mode == 'normal-runtime':
+    if clock_mode == 'experiment-runtime':
+        from regen.infrastructure.experiment_runtime_budget import ExperimentRuntimeBudget as Budget, POLICY
+    elif clock_mode == 'normal-runtime':
         from regen.infrastructure.normal_runtime_budget import NormalRuntimeBudget as Budget, POLICY
     elif clock_mode == 'effective-time':Budget=EffectiveTimeBudget
     else:raise ValueError('unsupported parallel clock mode')
@@ -397,7 +413,7 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
     if has_history and not prior_clock:
         raise ValueError('legacy experiment has generated work without the effective budget clock; '
                          'an audited accounting migration is required, never resume from zero')
-    if clock_mode=='normal-runtime' and not prior_clock and planning_budget is None:
+    if clock_mode in {'normal-runtime','experiment-runtime'} and not prior_clock and planning_budget is None:
         raise ValueError('normal-runtime requires a matching reviewed planning budget receipt; planning may not be free')
     source = source_identity = None
     if planning_budget is not None:
@@ -439,7 +455,8 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
                 baseline.update(set(theories[row['theory']]) & set(state['proofs']))
     stage = Budget(ledger, seconds=seconds,
         resume_authorization=resume_authorization, extension_seconds=extension_seconds,
-        include_planning=include_planning,**({'handoff':continuous_planning_handoff} if clock_mode=='normal-runtime' else {}))
+        include_planning=include_planning,**({'handoff':continuous_planning_handoff}
+            if clock_mode in {'normal-runtime','experiment-runtime'} else {}))
     stage.bind_wall_limit(wall_seconds)
     try:
         stage.register(theories, baseline_green=baseline)

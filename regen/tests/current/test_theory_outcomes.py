@@ -86,7 +86,7 @@ class TheoryOutcomesTests(unittest.TestCase):
     def test_refutation_has_separate_receipt_and_no_positive_acceptance(self):
         metadata=self._native_controller();before=deepcopy(self.state)
         with patch('regen.execution.contract_refutation.check_refutation',
-                   return_value={'status':'refuted','certificate':{'native_fixture':'separate'}}), patch(
+                   return_value={'status':'refuted','certificate':{'native_fixture':'separate','status':'refuted'}}), patch(
                    'regen.execution.contract_refutation.validate_refutation_certificate',return_value=True) as validate:
             result=handle_outcome(self.c,{'action':'check_refutation','entry_id':'b','proof_body':'by simp'},metadata)
             self.assertEqual(result['status'],'refuted')
@@ -144,7 +144,7 @@ class TheoryOutcomesTests(unittest.TestCase):
         row = self.c.executor.submit(kind='refutation', theory='T', binding=binding,
             request={'proposal':{'action':'check_refutation', 'entry_id':'b', 'proof_body':'by simp'},
                      'metadata':metadata}, owner='T', task_id=task_id,
-            execute=lambda directory:{'status':'refuted','certificate':{'native_fixture':'separate'}})
+            execute=lambda directory:{'status':'refuted','certificate':{'native_fixture':'separate','status':'refuted'}})
         while row['status'] not in {'completed', 'cancelled', 'error'}:
             row = self.c.executor.wait([task_id], timeout=2)[0]
         self.assertEqual(row['status'], 'completed')
@@ -222,7 +222,7 @@ class TheoryOutcomesTests(unittest.TestCase):
             except BaseException as error:
                 escaped.append(error)
         with patch('regen.execution.contract_refutation.check_refutation',
-                   return_value={'status':'refuted','certificate':{'native_fixture':'separate'}}), patch(
+                   return_value={'status':'refuted','certificate':{'native_fixture':'separate','status':'refuted'}}), patch(
                    'regen.execution.contract_refutation.validate_refutation_certificate', side_effect=validate):
             thread = threading.Thread(target=call); thread.start()
             try:
@@ -255,7 +255,7 @@ class TheoryOutcomesTests(unittest.TestCase):
             except BaseException as error:
                 escaped.append(error)
         with patch('regen.execution.contract_refutation.check_refutation',
-                   return_value={'status':'refuted','certificate':{'native_fixture':'separate'}}), patch(
+                   return_value={'status':'refuted','certificate':{'native_fixture':'separate','status':'refuted'}}), patch(
                    'regen.execution.contract_refutation.validate_refutation_certificate', return_value=True), patch(
                    'regen.planning.theory_outcomes._publish', side_effect=publish):
             thread = threading.Thread(target=call); thread.start()
@@ -285,7 +285,7 @@ class TheoryOutcomesTests(unittest.TestCase):
                 raise OSError('injected crash before executor result')
             return durable(path, *args, **kwargs)
         with patch('regen.execution.contract_refutation.check_refutation',
-                   return_value={'status':'refuted','certificate':{'native_fixture':'separate'}}), patch(
+                   return_value={'status':'refuted','certificate':{'native_fixture':'separate','status':'refuted'}}), patch(
                    'regen.execution.contract_refutation.validate_refutation_certificate', return_value=True), patch(
                    'regen.execution.check_executor.durable', side_effect=fail_result):
             with self.assertRaisesRegex(NativePreparationError, 'injected crash'):
@@ -306,7 +306,7 @@ class TheoryOutcomesTests(unittest.TestCase):
                 raise OSError('injected error after immutable publication')
             return result
         with patch('regen.execution.contract_refutation.check_refutation',
-                   return_value={'status':'refuted','certificate':{'native_fixture':'separate'}}), patch(
+                   return_value={'status':'refuted','certificate':{'native_fixture':'separate','status':'refuted'}}), patch(
                    'regen.execution.contract_refutation.validate_refutation_certificate', return_value=True), patch.object(
                    Ledger, 'append', append_then_fail):
             with self.assertRaisesRegex(NativePreparationError, 'immutable publication'):
@@ -338,6 +338,31 @@ class TheoryOutcomesTests(unittest.TestCase):
         self.assertEqual(before,self.state)
         self.assertIsNone(current_outcome(self.c))
         self.assertFalse(hasattr(self.c,'theory_outcome'))
+
+    def test_failed_refutation_returns_one_diagnostic_and_preserves_full_task_result(self):
+        metadata = self._native_controller()
+        native = {'verdict':'red', 'returncode':1, 'wall_ms':42,
+                  'diagnostic':'ab' * 6000, 'source':'candidate.thy', 'log':'full.log',
+                  'check_scope':'negative', 'failure_scope':'candidate',
+                  'timeout_scope':'candidate', 'native_failure_stage':'candidate_check',
+                  'framework_blocked':False, 'native_receipt':{'full':'durable'}}
+        full = {'status':'not_refuted', 'certificate':None,
+                'diagnostic':'*** Failed to finish proof: Q', 'native_check':native,
+                'source_sha256':'source-hash', 'log_sha256':'log-hash'}
+        with patch('regen.execution.contract_refutation.check_refutation', return_value=deepcopy(full)):
+            result = handle_outcome(self.c,
+                {'action':'check_refutation', 'entry_id':'b', 'proof_body':'by simp'}, metadata)
+        self.assertEqual(result['status'], 'not_refuted')
+        self.assertFalse(result['theory_stop'])
+        self.assertIsNone(current_outcome(self.c))
+        self.assertEqual(result['diagnostic'], full['diagnostic'])
+        self.assertEqual(result['log_sha256'], 'log-hash')
+        for key in native.keys() - {'diagnostic', 'native_receipt'}:
+            self.assertEqual(result['native_check'][key], native[key])
+        self.assertNotIn('diagnostic', result['native_check'])
+        self.assertNotIn('native_receipt', result['native_check'])
+        task = self.c.executor.get(result['task_id'])
+        self.assertEqual(task['result']['native_check'], native)
 
     def test_outcome_schemas_exclude_model_supplied_truth_or_target(self):
         from regen.planning.document_interface import tool_contracts
