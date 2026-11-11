@@ -270,7 +270,8 @@ class BatchWorker(PrefixWorker):
         timed_out = False
         timeout_scope = None
         try:
-            answer, log = self.transaction('check', suffix, names, before.count('\n')+1)
+            answer, log = self.transaction('check', suffix, names, before.count('\n')+1,
+                fields={'candidate_timeout':getattr(self.checker, 'batch_candidate_timeout', 300)})
             timed_out = answer.startswith('TIMEOUT\n')
             timeout_scope = 'candidate-execute-and-audit' if timed_out else None
         except TimeoutError as error:

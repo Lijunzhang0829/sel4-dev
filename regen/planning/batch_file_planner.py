@@ -1335,7 +1335,18 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                     if not isinstance(proposal, dict):
                         proposal = None
                         raise ValueError('expected one JSON action object')
+                    accepted_publication = None
+                    if proposal.get('action') == 'finish' and getattr(checker, 'document_mode', False):
+                        from regen.planning.theory_document import DocumentStore
+                        from regen.planning.publication_admission import accepted_document_binding
+                        publication_store = DocumentStore(directory/'document', package, state, checker.imports(),
+                            allow_import_edits=True, generation_strategy=workflow_policy.name)
+                        publication_source = publication_store.checked_source(proposal.get('source_sha256'))
+                        accepted_publication = accepted_document_binding(package, state, publication_source, checker.imports())
+                        if accepted_publication is not None:
+                            durable(request_dir/'publication-admission.json', accepted_publication, immutable=True)
                     if (proposal.get('action') == 'finish' and getattr(checker,'document_mode',False)
+                            and accepted_publication is None
                             and proposal.get('source_sha256') != state.get('document_source_sha256')):
                         # The audited agent request remains finish. Checking its
                         # exact draft is a trusted implementation step, never a
@@ -1507,13 +1518,15 @@ def _run_batch_file(run_dir, theory, *, provider='codex', model=None,
                         # A response watchdog never established a native RED.
                         # Legacy memory may contain such a misclassified entry;
                         # retry it explicitly against a fresh owned worker.
-                        if cached and cached.get('check', {}).get('timeout_scope') == 'candidate-watchdog':
+                        if finish_after_check or (cached and cached.get('check', {}).get('timeout_scope') == 'candidate-watchdog'):
                             cached = None
                         from regen.planning.theory_document import check_document
+                        from regen.planning.publication_admission import check_complete_document
+                        document_checker = check_complete_document if finish_after_check else check_document
                         evidence = ({'check':cached['check'], 'node_results':cached.get('node_results',[]),
                                      'cached_failure':True, 'failure_identity':identity,
                                      'reused_request':cached['reused_request']} if cached else
-                                    (check_document(checker,state,candidate,document_source) if document_source is not None
+                                    (document_checker(checker,state,candidate,document_source) if document_source is not None
                                      else check_batch(checker, state, candidate)))
                         # A recovered legacy response-watchdog/IO receipt must
                         # not reappear as a mathematical RED through the cache.

@@ -407,3 +407,28 @@ replayable with their frozen policies and are not silently recalculated.
 
 Validation and runnable fault-injection evidence:
 [unified clock report](../../../reports/regen/unified-experiment-runtime-20261108-001/REPORT.md).
+
+### Publication admission and failed publication scheduling
+
+`finish` compares the saved draft against the certified entries. If declarations,
+imports and proof bodies are identical, a different draft order does not trigger
+another candidate-suffix check. `publication-admission.json` records the requested
+and certified orders; publication uses the certified order and still requires the
+complete native check, semantic audit and session build. The draft is preserved.
+Changed proofs or interfaces retain whole-document revalidation, using the existing
+`check_timeout` instead of sharing the ordinary `candidate_timeout`. The Python
+and ML workers receive the limit per request; subsequent ordinary candidates keep
+their original deadline. A smaller cached candidate timeout cannot satisfy or
+replace this publication check.
+
+When a newly submitted finish task fails after every fixed contract is accepted,
+the controller records `publication-deferred/<task>.json` and ends that File Planner
+session as `unpublished`. The coordinator excludes this theory from immediate
+resubmission and proceeds with other ready theories. Proofs and drafts remain;
+no UNKNOWN or REFUTED disposition is created. Infrastructure failures retain their
+existing classification. Reading an old failed receipt does not defer a new session.
+The theory must be repaired and explicitly resumed before publication is retried.
+
+Regression coverage is in `test_publication_admission.py`; the model-free
+`publication_budget_native_smoke.py` verifies timeout/whole-check/timeout on one
+real warm Isabelle worker without proving benchmark contracts.

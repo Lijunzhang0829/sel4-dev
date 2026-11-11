@@ -181,8 +181,7 @@ local
                stage := "request_received"; stage_since := Time.now (); phase_times := [];
                progress ());
       val _ = if member (op =) ["check", "sketch"] (read (stem ^ ".action")) then
-        let val seconds = if read (stem ^ ".action") = "sketch" andalso
-              File.exists (path (stem ^ ".candidate_timeout"))
+        let val seconds = if File.exists (path (stem ^ ".candidate_timeout"))
             then read (stem ^ ".candidate_timeout") else read "candidate_timeout"
         in reuse_deadline := SOME (Time.+ (Time.now (),
           Time.fromReal (the (Real.fromString seconds)))) end
@@ -251,8 +250,10 @@ local
             ("/candidate/" ^ read "theory_name" ^ ".thy");
           val delta = read (stem ^ ".request");
           val names = split_lines (read (stem ^ ".facts"));
+          val candidate_timeout = if File.exists (path (stem ^ ".candidate_timeout"))
+            then read (stem ^ ".candidate_timeout") else read "candidate_timeout";
           val st = Timeout.apply
-            (Time.fromReal (the (Real.fromString (read "candidate_timeout"))))
+            (Time.fromReal (the (Real.fromString candidate_timeout)))
             (fn () =>
               let val next = execute position delta (!base);
                   val _ = set_stage "candidate_audit";

@@ -218,6 +218,8 @@ Do not busy-poll. Completion validates the snapshot, not subsequent draft edits.
 Before finish or ending the session, consume all pending task results. A task ID is
 not GREEN. Native queries sharing the prover require waiting; static queries do not.
 Ordinary helpers can be proved directly; use sketch only for conditional decomposition.
+If finish reports publication_deferred, this session ends with proofs/draft preserved.
+Publication failures do not dispose contracts or justify rewriting accepted proofs.
 """
 DOCUMENT_INSTRUCTIONS += ASYNC_INSTRUCTIONS
 
@@ -344,6 +346,7 @@ class TheoryController(WorkspaceController):
             raise ValueError('stop_at_focus_contract requires focus_contract_id')
         self.async_checks = bool(async_checks and document_mode)
         self._async_snapshots = {}
+        self._publication_tasks = set()
         self.document_mode = document_mode
         self.generation_strategy = generation_strategy(generation_strategy_name)
         if policy_for(generation_strategy_name).requires_document and not document_mode:
@@ -543,6 +546,8 @@ class TheoryController(WorkspaceController):
             from regen.planning.provider_waits import current_wait
             waiting = current_wait(self)
             self.provider_wait = waiting if waiting and waiting.get('theory_wait', not waiting['ready']) else None
+        if mathematical and getattr(self, 'publication_deferred', None):
+            return {'publication_deferred':self.publication_deferred}
         if mathematical and getattr(self, 'theory_switch', None):
             return {'theory_yield':True,'switch':self.theory_switch}
         if mathematical and getattr(self, 'provider_wait', None):
@@ -1064,6 +1069,23 @@ class TheoryController(WorkspaceController):
             error.read_receipt(self.root)
             raise error
         self._record_proof_work(row, arguments)
+        if (row['status'] == 'completed' and arguments.get('kind') == 'seal'
+                and row['task_id'] in self._publication_tasks):
+            package, state = self._state(self.theory)
+            fixed = {c['contract_id'] for c in package['contracts']}
+            if (fixed <= set(state['proofs']) and not theory_finished(state['status'])
+                    and not getattr(self, 'framework_blocked', False)):
+                # Publication failure is not a new mathematical goal. End this
+                # session immediately; the scheduler can run independent theories.
+                receipt = {'theory':self.theory, 'task_id':row['task_id'],
+                    'reason':'publication_check_failed', 'accepted_ids':list(state['accepted_order']),
+                    'accepted_state_preserved':True, 'draft_preserved':True}
+                durable(self.root/'publication-deferred'/(row['task_id']+'.json'),receipt,immutable=True)
+                self.publication_deferred = receipt
+                row = deepcopy(row)
+                row['result'] = {**row.get('result',{}), 'publication_deferred':receipt,
+                    'notice':'Accepted proofs and draft are retained. Publication needs repair; '
+                             'release this worker for other ready theories.'}
         return self._public(row)
 
     def _record_proof_work(self, row, arguments):
@@ -1257,6 +1279,8 @@ class TheoryController(WorkspaceController):
             execute=execute,owner=None if inline_read else self.theory,task_id=task_id, inline=inline_read)
         with self.executor.lock:
             self.task_ids.add(result['task_id'])
+            if kind == 'seal':
+                self._publication_tasks.add(result['task_id'])
         # Cover an abort between the final pre-submit check and registration.
         # An already accepted task may decline cancellation; never roll it back.
         if self._abort_requested.is_set():
@@ -1509,6 +1533,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                                        on_abort=getattr(controller,'abort_pending',None),
                                                        stop_when=lambda value: (
                                                            'framework_blocked' if isinstance(value,dict) and value.get('framework_blocked')
+                                                           else 'publication_deferred' if isinstance(value,dict) and value.get('publication_deferred')
                                                            else 'theory_yielded' if isinstance(value,dict) and value.get('theory_yield')
                                                            else 'waiting_for_provider' if isinstance(value,dict) and value.get('theory_wait')
                                                            else 'theory_outcome' if isinstance(value,dict) and value.get('theory_stop')
@@ -1530,6 +1555,9 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                             providers.append(provider)
                             _, state = controller._state(theory)
                             target_completed = controller.target_contract_green()
+                            if getattr(controller, 'publication_deferred', None):
+                                session_stop_reason = 'publication_check_failed'
+                                break
                             if (target_completed or theory_finished(state['status'])
                                     or getattr(controller, 'theory_outcome', None)
                                     or getattr(controller, 'provider_wait', None)
@@ -1642,6 +1670,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                 result.update(_contract_view(controller))
             if session_stop_reason:
                 result['session_stop_reason'] = session_stop_reason
+            if getattr(controller, 'publication_deferred', None):
+                result['publication_deferred'] = controller.publication_deferred
             if getattr(controller, 'theory_switch', None):
                 result['switch'] = controller.theory_switch
             if waiting:
