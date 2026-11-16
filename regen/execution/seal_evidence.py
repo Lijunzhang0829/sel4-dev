@@ -80,9 +80,14 @@ def validate_seal(state, evidence, *, expected_imports=None, base_session=None, 
     if set(certificates) != set(proofs):
         raise ValueError('seal dependency certificate coverage mismatch')
     audit_policy = evidence.get('audit_policy')
-    if audit_policy == AUDIT_POLICY:
+    from regen.execution.deferred_audit import policy as resolve_audit_policy
+    requested_audit_policy = resolve_audit_policy(runtime or {})
+    if audit_policy in (AUDIT_POLICY, 'declaration-export-deferred-v2'):
+        if audit_policy != requested_audit_policy:
+            raise ValueError('seal audit policy differs from frozen run')
+        renderer.audit_policy = audit_policy
         expected_audit = renderer.complete_audit_source(graph, proofs)
-    elif version == 3 and 'audit_policy' not in evidence:
+    elif version == 3 and 'audit_policy' not in evidence and requested_audit_policy == AUDIT_POLICY:
         # Existing v3 seals predate declaration-bound audits. Accept only the
         # exact historical renderer; this branch also supports immutable seal
         # reuse in a continuation without pretending it is new certification.
@@ -136,7 +141,8 @@ def bind_seal(state, evidence, checker, *, export_scope=None):
     from pathlib import Path
     from regen.execution.proof_commits import freeze_evidence
     evidence = freeze_evidence(evidence)
-    evidence.update(seal_evidence_version=3, audit_policy=AUDIT_POLICY,
+    from regen.execution.deferred_audit import policy as resolve_audit_policy
+    evidence.update(seal_evidence_version=3, audit_policy=resolve_audit_policy(vars(checker)),
                     complete_context_policy=resolve_complete_context_policy(vars(checker)), state_binding=state_binding(state),
                     imports=checker.imports(), base_session=checker.base_session,
                     dependency_receipts={})

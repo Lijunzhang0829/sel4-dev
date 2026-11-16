@@ -432,3 +432,62 @@ The theory must be repaired and explicitly resumed before publication is retried
 Regression coverage is in `test_publication_admission.py`; the model-free
 `publication_budget_native_smoke.py` verifies timeout/whole-check/timeout on one
 real warm Isabelle worker without proving benchmark contracts.
+
+
+## 2026-11-16：发布等待与模型生成容量分离
+
+`PublicationManager` 持有发布任务的调度登记（task ID、冻结 binding）。只有通过
+`publication_ready` 的 finish 才让出模型生成容量：固定目标均有正向证明或合法处置，
+helpers 已证明，正向导出投影满足前置依赖闭包。证伪声明保留在原始 graph 和处置
+账本，仅从正向原生检查/发布投影排除。发布失败的让出判断使用同一函数。
+
+manager 可在 A 发布等待时安排独立 ready theory B。`max_parallel_theories` 在这条
+主路径限制正在生成的 File Planner 数；发布等待者另列，原生槽和 resident 上限不变。
+先关闭 A 的模型传输和私有认证 HOME，确认认证锁释放后才开放下一模型槽。
+实现保留 A 的 session future、controller、预算与取消上下文直到任务结束及 cleanup
+join，不让 checker 脱离所有权。后台工作通过既有 CheckExecutor 执行；不是额外的
+证明 agent，也没有让 A 在等待期间继续模型生成。工具结果携带 publication_handoff
+停止会话，防止发布结束后 A 又与 B 并发开启模型轮次。
+
+`active_theories` 包含所有仍持有资源的会话，监控另列 `generating_theories` 与
+`publishing_theories`。新增 publication_task_adopted / publication_owner_joined 事件。
+这些事件不代表 GREEN 或 seal。既有原生请求、等待、模型请求及有效时间事件保留；
+不新增计时器、不把重叠墙钟相加。正常暂停/异常退出仍先取消检查，再 join 所有会话，
+最后关闭 executor 和资源。恢复使用原 journal / CheckExecutor 的任务与提交证据；
+publication-tasks 下登记仅供诊断，不凭它重新执行或接受发布。
+
+未发布 A 不会解锁依赖 A 的 theory，也不更新可用 premise。A 发布失败后保持原证明
+和负向证书，当前 invocation 记录失败并继续独立任务；重试仍须经过正式恢复入口。
+若 B 的初始化或原生查询需要检查槽，它仍会排队；本修改不保证所有等待都被隐藏。
+
+历史定位：11bfeb43 保存了 Arch 复用快照；f5fce2e9 强化旧 seal 策略绑定；
+06dd1021 恢复异步 document 检查；dfcd8768 增加发布失败后让出。延后审计
+`declaration-export-deferred-v2` 仅存在于隔离候选实现，未找到已提交后回退的历史。
+本修改不静默升级冻结运行的审计策略；正式接入该候选仍需结构化审计生成和策略绑定。
+
+
+### Inherited heap integrity
+
+Heap initialization records SHA-256 hashes for session images (excluding mutable
+`log/` build databases) and verifies the source and staging copy before atomic
+publication. Before constructing a theory/context checker, repository setup
+verifies inherited images against the run's original copy manifest. A damaged
+local parent is quarantined and atomically restored only from a source matching
+that manifest; generated child heaps and proof commits are untouched. Missing
+legacy manifests permit comparison but not automatic repair. Source corruption
+or a failed repair stops as infrastructure failure. An import semantic check
+that encounters Poly/ML heap relocation failure must not report a mathematical
+import rejection to the model. This guard does not claim to identify whether
+underlying bit corruption originated in hardware, storage, or copying.
+
+### Explicit Arch and deferred audit binding
+
+For a fresh generation run, `complete_context_policy=arch-reuse-v1` and
+`audit_policy=declaration-export-deferred-v2` are separate, immutable choices.
+The first shares compatible Arch interpretation scopes during final rendering.
+The second captures each declaration's theorem identity in its original scope,
+then executes its dependency audit at the end of the theory. All dependency and
+context receipts, complete checks and session builds remain required before
+publication. The audit policy is propagated through init, checker setup, journal
+bindings and seal replay. Missing policy retains historical immediate auditing;
+manager-owned background publication does not enable either optimization.

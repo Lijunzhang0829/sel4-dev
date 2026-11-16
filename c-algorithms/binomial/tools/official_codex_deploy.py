@@ -89,7 +89,8 @@ def prepare():
     import sqlite3
     with sqlite3.connect(BASE/'parent-premises.sqlite') as db,(ROOT/'public/premises.jsonl').open('w') as f:
         for name,statement in db.execute('SELECT canonical_name,exact_statement FROM premises ORDER BY canonical_name'): f.write(json.dumps({'canonical_name':name,'exact_statement':statement})+'\n')
-    checker=dict(backend='fresh-process-v1',session=context['base_session'],session_dirs=[AFP,'/semantic-base'],isabelle='/runtime/isabelle',threads=4,timeout_seconds=300,total_timeout_seconds=300,env={'HOME':'/home/agent','USER_HOME':'/home/agent'})
+    from regen.execution.check_protocol import baseline_config
+    checker=dict(**baseline_config(),session=context['base_session'],session_dirs=[AFP,'/semantic-base'],isabelle='/runtime/isabelle',threads=4,env={'HOME':'/home/agent','USER_HOME':'/home/agent'})
     save(ROOT/'benchmark/checker.json',checker)
     cfg=dict(run_id=NAME,method=METHOD,observation_profile='official-otel-metadata-v1',budget_seconds=BUDGET,
         validation_only=VALIDATION_ONLY,base_import=context['base_import'],comparison_groups=groups,

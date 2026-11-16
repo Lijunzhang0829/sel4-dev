@@ -16,11 +16,33 @@ from regen.execution.proof_commits import durable
 
 def run(root):
     from regen.tools.application_release import verify
+    from regen.planning.generation_policy import CURRENT_STRATEGIES, DEFAULT_STRATEGY
     from regen.execution.proof_session_runner import init_run
     from regen.tools.parallel_workspace_service import start
     from regen.tools.parallel_workspace_memory_guard import monitor
     root=Path(root).resolve()
     config=json.loads((root/'experiment-config.json').read_text())
+    strategy=config.get('generation_strategy',DEFAULT_STRATEGY)
+    if strategy not in CURRENT_STRATEGIES:
+        raise ValueError('fresh experiment requires a current generation strategy')
+    check_timeout=config.get('check_timeout',900)
+    if type(check_timeout) is not int or check_timeout<=0:
+        raise ValueError('check_timeout must be a positive integer')
+    protocol=config.get('native_check_protocol')
+    if protocol is not None:
+        from regen.execution.check_protocol import descriptor, FILENAME
+        from regen.preparation.checker_context import load_context
+        from regen.planning.repository_planner import validate_policy
+        if protocol!=descriptor() or check_timeout!=300 or config.get('candidate_timeout',300)!=300:
+            raise ValueError('shared comparison requires the frozen total-300 check protocol')
+        context=load_context(root/'dataset')
+        if json.loads((context['semantic_workspace']/FILENAME).read_text())!=protocol:
+            raise ValueError('experiment protocol differs from sealed checker input')
+        policy=json.loads((root/'config/planning-policy.json').read_text())
+        validate_policy(policy)
+        payload=json.loads((root/'dataset/repository-planning-input.json').read_text())
+        if policy['stage']!=payload['benchmark']['target_session']:
+            raise ValueError('planner stage differs from fixed input')
     if (root/'phase-status.json').exists():raise ValueError('fresh launch only; inspect existing evidence before recovery')
     if json.loads((root/'dataset-acceptance.json').read_text())['status']!='pass':
         raise ValueError('dataset acceptance required')
@@ -53,8 +75,8 @@ def run(root):
             '--max-parallel-theories','1','--native-slots','1','--resident-limit','1',
             '--native-threads','4','--native-cpus','4','--native-memory-mb','16384',
             '--native-pids-limit','1024','--build-ml-heap-mb','8192',
-            '--provider-build-timeout','1800','--call-timeout','600','--check-timeout','900',
-            '--candidate-timeout','300','--generation-strategy','sketch-reviewed-v2',
+            '--provider-build-timeout','1800','--call-timeout','600','--check-timeout',str(check_timeout),
+            '--candidate-timeout','300','--generation-strategy',strategy,
             '--budget-seconds',str(config['budget_seconds']),'--planning-budget',str(planning)]
         durable(proof/'experiment.json',dict(command=command,cwd=str(root/'application'),
             resource_requirements=dict(min_free_disk_bytes=5*1024**3,min_available_memory_bytes=18*1024**3)),immutable=True)

@@ -26,7 +26,11 @@ def resolve_complete_context_policy(run):
 
 def policy_binding(run):
     policy = resolve_complete_context_policy(run)
-    return {} if policy == ISOLATED_CONTEXT else {'complete_context_policy': policy}
+    from regen.execution.deferred_audit import policy as audit_policy, LEGACY
+    binding = {} if policy == ISOLATED_CONTEXT else {'complete_context_policy': policy}
+    if audit_policy(run) != LEGACY:
+        binding['audit_policy'] = audit_policy(run)
+    return binding
 
 
 def contract_policy_binding(run):

@@ -20,6 +20,11 @@ def network_failure(failure):
 
 
 def native_failure(uid,binding,evidence):
+    # The shared total-check protocol charges a slow/unresponsive check just
+    # like a baseline process timeout. Historical bindings retain their policy.
+    from regen.execution.check_protocol import NAME
+    if binding.get('check_protocol') == NAME:
+        return False
     return (evidence.get('policy')=='native-no-response-after-cleanup-v1'
         and evidence.get('request_id')==uid
         and isinstance(binding.get('worker'),str) and evidence.get('worker')==binding['worker']

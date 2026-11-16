@@ -126,7 +126,10 @@ def _clone_heaps(source, destination, *, reserve_bytes):
                 f'reserve={reserve_bytes}, required={required}, destination={destination}')
         with tempfile.TemporaryDirectory(prefix=f'.{destination.name}-copy-', dir=destination.parent) as temporary:
             staging = Path(temporary) / 'heaps'
+            from regen.infrastructure.heap_integrity import manifest, verify_copy
+            inherited_heap_sha256 = manifest(source)
             shutil.copytree(source, staging)
+            verify_copy(source, staging, inherited_heap_sha256)
             remaining = shutil.disk_usage(destination.parent).free
             if remaining < reserve_bytes:
                 raise ResourceBudgetError(
@@ -138,6 +141,7 @@ def _clone_heaps(source, destination, *, reserve_bytes):
                 raise FileExistsError(f'heap destination appeared during copy: {destination}')
             _publish_directory(staging, destination)
         return {'status': 'copied', 'source': str(source), 'destination': str(destination),
+                'inherited_heap_sha256': inherited_heap_sha256,
                 'policy': policy, **size, 'free_before': available, 'free_after': remaining}
 
 

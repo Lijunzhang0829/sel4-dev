@@ -87,10 +87,13 @@ def projection_package(projection, plan, *, review_handoff=None):
 
 def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=ISOLATED_CONTEXT,
              log_storage='inline-v1', execution_models=None,
+             audit_policy='declaration-export-audit-v1',
              contract_outcome_policy=CONTRACT_OUTCOME_POLICY,
              unresolved_evidence_policy=DEFAULT_OUTCOME_POLICY,
              outcome_policy_upgrade=None):
     validate_complete_context_policy(complete_context_policy)
+    from regen.execution.deferred_audit import policy as resolve_audit_policy
+    resolve_audit_policy({'audit_policy': audit_policy})
     outcome_policy = new_outcome_policy_binding(contract_outcome_policy, unresolved_evidence_policy)
     if outcome_policy_upgrade is not None:
         if (not isinstance(outcome_policy_upgrade, dict)
@@ -212,6 +215,8 @@ def init_run(run_dir, input_root, run_id, schedule, *, complete_context_policy=I
                 'environment_dataflow_id':plan['environment_dataflow_id'],
             })}}
     run.update(policy_binding({'complete_context_policy':complete_context_policy}))
+    if audit_policy != 'declaration-export-audit-v1':
+        run['audit_policy'] = audit_policy
     run.update(outcome_policy)
     if direct:
         from regen.execution.result_scope import dataset_result_binding
@@ -600,6 +605,8 @@ def checker_for(run_dir, run, directory, timeout, ancestors, *, heaps_dir=None):
         isabelle_dir=Path(run['isabelle_dir']),import_all_previous=True,
         complete_context_policy=resolve_complete_context_policy(run))
     checker.declaration_environment = digest(run)
+    from regen.execution.deferred_audit import policy as resolve_audit_policy
+    checker.audit_policy = resolve_audit_policy(run)
     checker.checker_context_id = run.get('checker_context_id')
     return checker
 
@@ -727,6 +734,22 @@ def setup(run_dir, theory, timeout, *, context_imports=None):
         if not heaps.exists():
             from regen.infrastructure.resource_budget import clone_heaps
             durable(native_directory/'heap-copy-budget.json', clone_heaps(run_dir/'heaps',heaps))
+        from regen.infrastructure.heap_integrity import verify_parents, manifest
+        # New runs pin the parent images when copying the frozen environment.
+        # Legacy runs have no such repair authority: compare them, but never
+        # silently repair a mismatch against an unrecorded source hash.
+        copy_receipt = run_dir/'heap-copy-budget.json'
+        expected = read(copy_receipt).get('inherited_heap_sha256') if copy_receipt.exists() else None
+        if expected:
+            verify_parents(run_dir/'heaps', heaps, expected,
+                           receipt_dir=native_directory/'heap-integrity')
+        else:
+            parents = manifest(run_dir/'heaps')
+            local = manifest(heaps)
+            if any(local.get(name) != value for name, value in parents.items()):
+                raise ProviderPreparationError({'diagnostic':
+                    'Inherited heap integrity mismatch in legacy workspace; '
+                    'no recorded parent manifest authorizes automatic repair.'})
     checker=checker_for(run_dir,run,native_directory/'isabelle',timeout,ancestors,heaps_dir=heaps)
     if run.get('execution_input_kind')=='refine-dataset':
         # Freeze only the providers and their transitive imports. ROOT, logs and

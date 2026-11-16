@@ -73,10 +73,16 @@ class BatchWorker(PrefixWorker):
 
     def _wait(self, path, *, timeout=None):
         from regen.infrastructure.progress_events import emit_event
+        from regen.execution.check_protocol import remaining
         start = time.monotonic()
         limit = (getattr(self, 'prefix_timeout', self.checker.timeout)
                  if path.name == 'ready' and timeout is None
                  else self.checker.timeout if timeout is None else timeout)
+        try:
+            limit = remaining(limit)
+        except TimeoutError as error:
+            error.native_worker = self
+            raise
         emit_event('isabelle_batch_wait_started', worker=self.name, waiting_for=path.name, timeout_seconds=limit)
         last_progress = None
         while not path.exists():
@@ -120,9 +126,15 @@ class BatchWorker(PrefixWorker):
                 raise error
             time.sleep(.05)
         emit_event('isabelle_batch_wait_finished', worker=self.name, waiting_for=path.name, elapsed_seconds=round(time.monotonic()-start, 3))
+        try:
+            remaining()  # A response first observed after the total deadline cannot pass.
+        except TimeoutError as error:
+            error.native_worker = self
+            raise
 
     def transaction(self, action, text='', names=(), line=1, *, fields=None, timeout=None):
         check_cancelled()
+        from regen.execution.check_protocol import enabled, remaining, NAME
         self.index += 1
         stem = str(self.index)
         if not hasattr(self, '_progress_tokens'):
@@ -132,7 +144,10 @@ class BatchWorker(PrefixWorker):
         offset = (self.root/'worker.log').stat().st_size
         for suffix, value in [('action',action), ('facts','\n'.join(names)), ('line',str(line))]:
             (self.root/(stem+'.'+suffix)).write_text(value)
-        for suffix, value in (fields or {}).items():
+        fields = dict(fields or {})
+        if enabled(self.checker) and action in {'check', 'sketch'}:
+            fields['candidate_timeout'] = remaining(float(fields.get('candidate_timeout', self.checker.timeout)))
+        for suffix, value in fields.items():
             (self.root/(stem+'.'+suffix)).write_text(str(value))
         temp = self.root/(stem+'.tmp'); temp.write_text(text)
         temp.rename(self.root/(stem+'.request'))
@@ -143,6 +158,8 @@ class BatchWorker(PrefixWorker):
                        request_sha256=hashlib.sha256(text.encode()).hexdigest(),
                        worker=self.name, request=stem, action=action,
                        imports_sha256=hashlib.sha256('\n'.join(getattr(self,'imports',[])).encode()).hexdigest())
+        if enabled(self.checker):
+            binding['check_protocol'] = NAME
         emit_event('native_request_started', request_id=request_id, binding=binding)
         outcome = 'interrupted'
         try:

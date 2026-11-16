@@ -47,6 +47,8 @@ def _observe(checker, package):
     imports = list(checker.imports())
     source = observation_source(package, imports)
     check = freeze_evidence(checker._check(source, 'Import_Semantics'))
+    from regen.infrastructure.heap_integrity import require_loadable
+    require_loadable(check)
     result = {'imports': imports, 'check': check}
     if check.get('verdict') == 'green' and check.get('returncode') == 0:
         result['records'] = records_from_log(check.get('log_content', ''), package)

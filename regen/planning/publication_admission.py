@@ -49,3 +49,27 @@ def check_complete_document(checker, state, proposed, source):
     evidence['publication_check_budget'] = {'scope':'complete-document',
                                           'seconds':checker.timeout}
     return evidence
+
+
+def publication_ready(controller):
+    """All fixed outcomes and positive prerequisites must be certified.
+
+    This is scheduling admission, never a substitute for native publication.
+    Negative certificates stay in the journal and out of the positive graph.
+    """
+    package, state = controller._state(controller.theory)
+    from regen.planning.theory_outcomes import current_dispositions
+    from regen.execution.partial_theory_export import build_export_scope, export_graph
+    fixed = {c['contract_id'] for c in package['contracts']}
+    proofs = set(state['proofs'])
+    dispositions = current_dispositions(controller)
+    if fixed != ((fixed & proofs) | set(dispositions)):
+        return False
+    if dispositions:
+        build_export_scope(package, state, dispositions, runtime=controller.run)
+    else:
+        # Match ordinary finish: without a partial-export scope every node must be proved.
+        if {n['id'] for n in state['graph']['nodes']} != proofs:
+            return False
+        export_graph(state)  # Validate accepted order and prerequisite closure.
+    return True

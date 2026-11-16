@@ -62,7 +62,7 @@ class GenerationMonitor:
             return self.emit('workflow_stage_changed', {
                 **details, 'workflow_stage': stage, 'workflow_state': state})
 
-    def update_workspace(self, rows, *, active=(), failures=None, limits=None, observed_at=None):
+    def update_workspace(self, rows, *, active=(), publishing=(), failures=None, limits=None, observed_at=None):
         """Project validated workspace rows and scheduler state, only on change.
 
         In particular, checker activity is not counted as accepted proof work.
@@ -75,6 +75,8 @@ class GenerationMonitor:
             'theories': {row['theory']: {key: deepcopy(row[key]) for key in keys if key in row}
                          for row in rows},
             'active_theories': sorted(active),
+            'generating_theories': sorted(set(active)-set(publishing)),
+            'publishing_theories': sorted(publishing),
             'failures': {name: {key: value[key] for key in ('status', 'reason') if key in value}
                          for name, value in (failures or {}).items()},
             'limits': dict(limits or {}),

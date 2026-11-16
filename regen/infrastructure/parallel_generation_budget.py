@@ -363,6 +363,25 @@ class ParallelGenerationBudgetBridge:
                 self.phases.clear()
 
 
+def fixed_plan_generation_authorization(root, run, seconds):
+    """Explicit generation-only experiment; never silently discard planning cost."""
+    import hashlib
+    import json
+    path = Path(root)/'fixed-plan-generation.json'
+    if not path.exists():
+        return None
+    record = json.loads(path.read_text())
+    schedule = Path(run['session_schedule']['source'])
+    if (record.get('scope') != 'fresh-fixed-plan-generation-only-v1'
+            or record.get('run_sha256') != digest(run)
+            or record.get('schedule_sha256') != hashlib.sha256(schedule.read_bytes()).hexdigest()
+            or record.get('seconds') != seconds
+            or not isinstance(record.get('authorization'), str)
+            or not record['authorization'].strip()):
+        raise ValueError('invalid fixed-plan generation authorization')
+    return digest(record)
+
+
 def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
                                resume_authorization=None, extension_seconds=None, rows=None,
                                planning_budget=None, wall_seconds=None, clock_mode="effective-time"):
@@ -410,10 +429,14 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
         or any((root/'theories').glob('*/batch-requests/*'))
         or any((root/'theories').glob('*/document/edits/*')))
     prior_clock = any(row['kind'] == CHECKPOINT_KIND for row in ledger.rows)
+    fixed_plan = fixed_plan_generation_authorization(root, overview.run, seconds)
+    if fixed_plan and planning_budget is not None:
+        raise ValueError('fixed-plan generation cannot also transfer a planning budget')
     if has_history and not prior_clock:
         raise ValueError('legacy experiment has generated work without the effective budget clock; '
                          'an audited accounting migration is required, never resume from zero')
-    if clock_mode in {'normal-runtime','experiment-runtime'} and not prior_clock and planning_budget is None:
+    if (clock_mode in {'normal-runtime','experiment-runtime'} and not prior_clock
+            and planning_budget is None and fixed_plan is None):
         raise ValueError('normal-runtime requires a matching reviewed planning budget receipt; planning may not be free')
     source = source_identity = None
     if planning_budget is not None:
@@ -432,6 +455,8 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
     include_planning = bool(planning_completed or source_identity)
     identity = {'policy': POLICY, 'run_sha256': digest(overview.run),
                 'contracts_sha256': digest(theories), 'configuration_sha256': digest(binding)}
+    if fixed_plan:
+        identity['fixed_plan_generation_sha256'] = fixed_plan
     prior = [row for row in ledger.rows if row['kind'] == 'parallel_budget_binding']
     if prior:
         if len(prior) != 1 or prior[0]['data'] != identity:
@@ -455,7 +480,8 @@ def initialize_parallel_budget(root, overview, binding, *, seconds=172800,
                 baseline.update(set(theories[row['theory']]) & set(state['proofs']))
     stage = Budget(ledger, seconds=seconds,
         resume_authorization=resume_authorization, extension_seconds=extension_seconds,
-        include_planning=include_planning,**({'handoff':continuous_planning_handoff}
+        include_planning=include_planning,**({'handoff':continuous_planning_handoff,
+                                            'generation_only':bool(fixed_plan)}
             if clock_mode in {'normal-runtime','experiment-runtime'} else {}))
     stage.bind_wall_limit(wall_seconds)
     try:

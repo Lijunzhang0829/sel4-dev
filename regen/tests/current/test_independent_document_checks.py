@@ -12,6 +12,53 @@ from regen.execution.repository_execution import validator
 
 
 class IndependentChecksTests(unittest.TestCase):
+    def test_verified_watchdog_continues_other_entries_without_accepting_timed_out_proof(self):
+        from regen.execution.proof_batches import recoverable_native_watchdog
+        package, old = fixture(); checker = Checker()
+        source = render(package, old, checker.imports()).replace('oops', 'by simp')
+        commits, calls = [], []
+        from regen.planning.theory_document import check_document as original
+        def check(checker, current, new, isolated):
+            calls.append(isolated)
+            checker.verdict = 'red' if len(calls) == 1 else 'green'
+            evidence = original(checker, current, new, isolated)
+            if len(calls) == 1:
+                evidence['check'].update(verdict='infrastructure_error', returncode=124,
+                    timed_out=True, timeout_scope='candidate-watchdog',
+                    native_failure_stage='candidate-response-watchdog',
+                    failure_scope='native_preparation', framework_blocked=False,
+                    prefix_sha256='a'*64, diagnostic='no native response',
+                    native_recovery=dict(policy='discard-worker-rebuild-committed-prefix-v1',
+                        retryable=True, worker_discarded=True, pending_discarded=True,
+                        native_response_received=False, prefix_sha256='a'*64))
+                self.assertTrue(recoverable_native_watchdog(evidence['check']))
+            return evidence
+        def commit(new, evidence):
+            validator(package)(commits[-1] if commits else old, new, 'document', evidence)
+            commits.append(deepcopy(new));return new
+        with tempfile.TemporaryDirectory() as temp, patch(
+                'regen.planning.independent_document_checks.check_document', side_effect=check):
+            result = run_checks(package,old,source,checker,temp,commit=commit,
+                                evidence_origin={'sealable_generation':True})
+        self.assertEqual(len(calls),2)
+        self.assertEqual(result['new_green'],['contract'])
+        self.assertEqual(result['node_results'][0]['status'],'retryable_native_timeout')
+        self.assertFalse(result.get('framework_blocked',False))
+        self.assertEqual(commits[-1]['proofs'],{'contract':'by simp'})
+        self.assertEqual(old['proofs'],{})
+        self.assertIn('oops',calls[1])
+
+    def test_missing_disposal_receipt_still_stops_independent_checks(self):
+        from regen.execution.check_tasks import NativePreparationError
+        package,old=fixture();checker=Checker()
+        source=render(package,old,checker.imports()).replace('oops','by simp')
+        native=dict(verdict='infrastructure_error',returncode=124,timed_out=True,
+                    timeout_scope='candidate-watchdog',diagnostic='unconfirmed worker')
+        with tempfile.TemporaryDirectory() as temp, patch(
+                'regen.planning.independent_document_checks.check_document',return_value={'check':native}):
+            with self.assertRaisesRegex(NativePreparationError,'unconfirmed worker'):
+                run_checks(package,old,source,checker,temp,commit=lambda *_:self.fail('no GREEN'),evidence_origin={})
+
     def run_case(self, first_red=False, cancel_second=False):
         package, old = fixture()
         checker = Checker()
@@ -86,6 +133,35 @@ class SwitchTargetTests(unittest.TestCase):
         self.assertEqual(self.base.controller._state('Target')[1]['proofs'],{})
 
 class IndependentControllerTests(unittest.TestCase):
+    def test_recoverable_entry_timeout_survives_controller_feedback_and_later_green(self):
+        from regen.tests.current.test_theory_document import DocumentControllerTests
+        base=DocumentControllerTests();base.setUp();self.addCleanup(base.doCleanups)
+        draft=base.read()['document']
+        helper=dict(id='slow_helper',name='slow_helper',role='helper',
+            statement='lemma slow_helper: "True"',context=[],dependencies=[],strategy='')
+        source=draft['source'].replace('\nend\n',block(helper,'by simp')+'\nend\n').replace('oops','by simp')
+        saved=base.call(dict(action='edit_theory',base_sha256=draft['source_sha256'],source=source))
+        from regen.planning.theory_document import check_document as original
+        calls=[]
+        def checked(checker,current,new,isolated):
+            calls.append(isolated);checker.verdict='red' if len(calls)==1 else 'green'
+            evidence=original(checker,current,new,isolated)
+            if len(calls)==1:
+                evidence['check'].update(verdict='infrastructure_error',returncode=124,timed_out=True,
+                    timeout_scope='candidate-watchdog',native_failure_stage='candidate-response-watchdog',
+                    failure_scope='native_preparation',prefix_sha256='a'*64,diagnostic='no response',
+                    native_recovery=dict(policy='discard-worker-rebuild-committed-prefix-v1',retryable=True,
+                        worker_discarded=True,pending_discarded=True,native_response_received=False,
+                        prefix_sha256='a'*64))
+            return evidence
+        with patch('regen.planning.independent_document_checks.check_document',side_effect=checked):
+            result=base.call(dict(action='check_theory',source_sha256=saved['source_sha256']))
+        self.assertEqual(len(calls),2)
+        self.assertFalse(base.controller.framework_blocked)
+        self.assertFalse(result['feedback'].get('framework_blocked',False))
+        self.assertEqual(len(base.controller._state('Target')[1]['proofs']),1)
+        self.assertEqual(base.read()['document']['source'],source)
+
     def test_one_request_returns_all_results_and_replays_individual_acceptance(self):
         from regen.tests.current.test_theory_document import DocumentControllerTests
         from regen.planning.theory_document import block

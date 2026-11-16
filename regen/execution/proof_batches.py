@@ -478,10 +478,14 @@ def check_batch(checker, old, candidate):
             from uuid import uuid4
             timing_prefix = _render(old['graph'], old['proofs'], evidence['imports'], evidence['label'])
             uid = 'cold-candidate:' + uuid4().hex
-            emit_event('native_request_started', request_id=uid, binding={
+            native_binding = {
                 'prefix_sha256':hashlib.sha256(body(timing_prefix).encode()).hexdigest(),
                 'request_sha256':hashlib.sha256(source.encode()).hexdigest(),
-                'action':'cold-candidate'})
+                'action':'cold-candidate'}
+            from regen.execution.check_protocol import enabled, NAME
+            if enabled(checker):
+                native_binding['check_protocol'] = NAME
+            emit_event('native_request_started', request_id=uid, binding=native_binding)
             outcome = 'interrupted'
             try:
                 result = checker._check(source, evidence['label'], timeout=candidate_timeout)
@@ -489,7 +493,8 @@ def check_batch(checker, old, candidate):
             finally:
                 emit_event('native_request_finished', request_id=uid, outcome=outcome)
             result['timed_out'] = result.get('returncode') == 124
-            result['timeout_scope'] = 'cold-candidate-including-prefix' if result['timed_out'] else None
+            result['timeout_scope'] = ('total-check' if enabled(checker) else
+                                      'cold-candidate-including-prefix') if result['timed_out'] else None
             result['timeout_seconds'] = candidate_timeout
             result['check_scope'] = 'accepted-prefix-and-batch'
             result['incremental'] = False

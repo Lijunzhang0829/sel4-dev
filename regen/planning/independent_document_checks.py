@@ -82,17 +82,19 @@ def run_checks(package, state, source, checker, directory, *, commit,
                 evidence['sketch_authorizations'] = deepcopy(authorization['sketch_authorizations'])
             evidence['document_publication_policy'] = 'preserve-accepted-ids-v1'
             evidence['independent_entries'] = {**policy, 'entry_id': key, 'segment': number}
-            from regen.execution.proof_batches import classify_native_failure
+            from regen.execution.proof_batches import classify_native_failure, recoverable_native_watchdog
             check = classify_native_failure(deepcopy(evidence['check']))
+            native_retry = recoverable_native_watchdog(check)
             evidence['check'] = check
             durable(part/'check.json', evidence, immutable=True)
             results.append({'node_id': key, 'verdict': check['verdict'],
-                            'status': 'audited_green' if check['verdict'] == 'green' else 'failed',
+                            'status': ('audited_green' if check['verdict'] == 'green' else
+                                       'retryable_native_timeout' if native_retry else 'failed'),
                             'check': deepcopy(check),
                             'node_results': evidence.get('node_results', []),
                             'check_wall_seconds': monotonic()-start,
                             'evidence_path': str(part/'check.json')})
-            if check.get('failure_scope') == 'native_preparation':
+            if check.get('failure_scope') == 'native_preparation' and not native_retry:
                 raise NativePreparationError(check.get('diagnostic', 'native preparation failed'))
             if record_result is not None:
                 record_result(isolated, evidence)
@@ -108,7 +110,7 @@ def run_checks(package, state, source, checker, directory, *, commit,
                 current = commit(new, evidence)
                 accepted.append(key)
             # Stop unsafe runtime/evidence failures, continue ordinary RED/timeouts.
-            if (check.get('failure_scope') not in (None, '', 'candidate', 'proof-search')
+            if not native_retry and (check.get('failure_scope') not in (None, '', 'candidate', 'proof-search')
                     or check.get('verdict') == 'infrastructure_error'):
                 break
     finally:

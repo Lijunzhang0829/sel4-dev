@@ -120,6 +120,8 @@ class _SharedHostSlots:
         while True:
             if cancellable:
                 check_cancelled()
+                from regen.execution.check_protocol import remaining as check_remaining
+                check_remaining()
             if deadline is not None and time.monotonic() >= deadline:
                 raise TimeoutError('shared host native slot acquisition timed out; cleanup can be retried')
             for slot in range(self.slots):
@@ -210,6 +212,8 @@ class NativeResources:
                 self.queue.append(ticket)
                 while True:
                     check_cancelled()
+                    from regen.execution.check_protocol import remaining
+                    remaining()
                     if self.closed:
                         raise RuntimeError('native pool is closed')
                     if (self.queue[0] is ticket and len(self.active) < self.policy['native_slots']
@@ -307,12 +311,27 @@ class NativeResources:
 def native_operation(function):
     @wraps(function)
     def call(checker, *args, **kwargs):
+        from regen.execution.check_protocol import (enabled,total_call,remaining,
+            CheckDeadlineExceeded,queued_timeout,limit)
         resources = CURRENT_RESOURCES.get()
         check_cancelled()
-        if resources is None:
-            return function(checker, *args, **kwargs)
-        with resources.lease(checker):
-            return function(checker, *args, **kwargs)
+        if not enabled(checker):
+            if resources is None:
+                return function(checker, *args, **kwargs)
+            with resources.lease(checker):
+                return function(checker, *args, **kwargs)
+        seconds=limit(checker,kwargs.get('timeout'))
+        with total_call(checker,seconds):
+            entered=False
+            try:
+                if resources is None:
+                    remaining();entered=True
+                    return function(checker,*args,**kwargs)
+                with resources.lease(checker):
+                    remaining();entered=True
+                    return function(checker,*args,**kwargs)
+            except CheckDeadlineExceeded:
+                return queued_timeout(checker,args[0] if args else None,seconds,before_admission=not entered)
     return call
 
 

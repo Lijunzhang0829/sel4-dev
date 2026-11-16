@@ -352,7 +352,7 @@ class SchedulerTests(unittest.TestCase):
 
     def _empty_turn_scenario(self, temporary, *, progress_field=False,
                              focus=False, on_turn=None, cancel_event=None, effective_budget=False,
-                             no_progress_turn_limit=3, retained_outcome=None, retry_unresolved=False):
+                             no_progress_turn_limit=3, retained_outcome=None, retry_unresolved=False, publication_manager=None):
         """Synthetic provider; never claim these fixtures establish live GREEN."""
         from types import SimpleNamespace
         from regen.planning.parallel_file_planner import run_theory_session
@@ -381,7 +381,7 @@ class SchedulerTests(unittest.TestCase):
                 self.options=kwargs
                 self.turns=0;self.closed=False;self.prompts=[]
             def __enter__(self):return self
-            def __exit__(self,*args):self.closed=True
+            def __exit__(self,*args):self.closed=True;self._closed=True
             def run(self,prompt,handler,**kwargs):
                 self.turns+=1;self.prompts.append(prompt)
                 test.assertLessEqual(self.turns,7,'continuation failed to stop')
@@ -411,13 +411,14 @@ class SchedulerTests(unittest.TestCase):
                 directory=Path(temporary)/'session',cancel_event=cancel_event,
                 focus_contract_id='goal' if focus else None,stop_at_focus_contract=focus,
                 effective_budget=effective_budget,no_progress_turn_limit=no_progress_turn_limit,
-                retry_unresolved=retry_unresolved)
+                retry_unresolved=retry_unresolved,publication_manager=publication_manager)
             if result.get('retained_from_prior_invocation'):
                 audit.assert_not_called()
                 self.assertFalse(hasattr(self, 'empty_session'))
                 return result
             self.assertEqual(audit.call_args.kwargs['require_terminal'],
-                not focus and result['status'] not in {'framework_blocked','unknown','refuted'})
+                not focus and result['status'] not in {'framework_blocked','unknown','refuted'}
+                and not getattr(self.empty_controller,'managed_publication',None))
             return result
 
     def test_direct_session_respects_retained_unknown_without_starting_model(self):
@@ -632,7 +633,7 @@ class SchedulerTests(unittest.TestCase):
             token=acquire_run_mutation_lock(root,operation='after-test');release_run_mutation_lock(token)
 
 class TheoryOutcomeSchedulingTests(unittest.TestCase):
-    def _schedule(self, *, retained_status=None, retry_unresolved=False):
+    def _schedule(self, *, retained_status=None, retry_unresolved=False, background=False):
         import tempfile
         import hashlib
         from regen.planning.parallel_file_planner import run_parallel_workspace
@@ -641,6 +642,8 @@ class TheoryOutcomeSchedulingTests(unittest.TestCase):
             states={name:'pending' for name in ('A','B','C','D')}
             dependencies={'A':[], 'B':[], 'C':['B'], 'D':['A']}
             started=[]
+            import threading
+            other_started = threading.Event()
             class Overview:
                 selected=list(states)
                 run={'run_id':'test','execution_input_kind':'refine-dataset',
@@ -655,6 +658,18 @@ class TheoryOutcomeSchedulingTests(unittest.TestCase):
                         for name,state in states.items()]}
             def session(root,theory,**kwargs):
                 started.append(theory)
+                if background and theory=='A':
+                    kwargs['publication_manager'].adopt('A', {'task_id':'test-seal', 'binding':{'snapshot':'A'}})
+                    kwargs['publication_manager'].release_model('A')
+                    if not other_started.wait(5):
+                        raise AssertionError('single model slot remained occupied by publication')
+                    if background == 'failed':
+                        return {'theory':theory,'status':'unpublished','session_stop_reason':'publication_check_failed'}
+                    states[theory]='sealed'
+                    return {'theory':theory,'status':'sealed'}
+                if background and theory=='B':
+                    self.assertEqual(states['A'],'pending')
+                    other_started.set()
                 if theory=='A':
                     return {'theory':theory,'status':'unknown','theory_outcome':{
                         'status':'unknown','reason':'proof search exhausted','receipt':'synthetic'}}
@@ -671,6 +686,20 @@ class TheoryOutcomeSchedulingTests(unittest.TestCase):
                 result=run_parallel_workspace(root,allow_external_call=True,budget_mode="effective-time",integrate=False,max_parallel_theories=1,
                     execution_policy={'retry_unresolved':retry_unresolved})
             return started,states,result
+
+    def test_publication_overlaps_independent_generation_with_one_model_slot(self):
+        started,states,result=self._schedule(background=True)
+        self.assertEqual(started[:2],['A','B'])
+        self.assertEqual(set(started),{'A','B','C','D'})
+        self.assertEqual(set(states.values()),{'sealed'})
+        self.assertFalse(result['failures'])
+
+    def test_background_publication_failure_keeps_dependants_blocked(self):
+        started,states,result=self._schedule(background='failed')
+        self.assertEqual(started,['A','B','C'])
+        self.assertEqual(states['A'],'pending')
+        self.assertEqual(result['failures']['A']['reason'],'publication_check_failed')
+        self.assertEqual(result['blocked']['D']['unsealed_providers'],['A'])
 
     def test_stopped_root_releases_serial_slot_to_ready_deeper_theory(self):
         started,states,result=self._schedule()

@@ -22,7 +22,7 @@ class NormalRuntimeBudget(ActiveWallBudget):
     limit_reason=LIMIT_REASON
     normal_runtime=True
 
-    def __init__(self,ledger,*args,handoff=False,**kwargs):
+    def __init__(self,ledger,*args,handoff=False,generation_only=False,**kwargs):
         states=[r for r in ledger.rows if r['kind']==CHECKPOINT_KIND]
         prior=states[-1] if states else None
         old=prior['data']['state'] if prior else {}
@@ -33,7 +33,7 @@ class NormalRuntimeBudget(ActiveWallBudget):
         self.normal_native_requests=NativeWaitAccounting.restore(old.get('normal_native_accounting'))
         self._native_recovery_causes=deepcopy(old.get('normal_native_recovery_causes',{}))
         self._native_recovery_handles={}
-        kwargs['include_planning']=True
+        kwargs['include_planning']=not generation_only
         if prior and old.get('policy')==self.policy and not old.get('gate_open') and not old.get('finished'):
             gap=ledger.clock()-prior['time_unix']
             if not math.isfinite(gap) or gap<0:raise ValueError('invalid recovery wall interval')
@@ -217,7 +217,7 @@ class NormalRuntimeBudget(ActiveWallBudget):
         value.update(clock_basis='normal_runtime',normal_wall_seconds=self.normal_wall_seconds,
             normal_excluded_seconds=self.normal_excluded_seconds,
             native_timing_policy='native-timeouts-count; evidenced-watchdog-and-bound-recovery-excluded-v2',
-            include_planning=True,normal_native_accounting=self.normal_native_requests.state(),
+            include_planning=self.include_planning,normal_native_accounting=self.normal_native_requests.state(),
             normal_native_recovery_causes=deepcopy(self._native_recovery_causes))
         return value
 

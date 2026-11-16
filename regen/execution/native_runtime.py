@@ -24,6 +24,8 @@ def validate(checker):
             raise ValueError('unsupported Calg native runtime profile')
         if checker.architecture != 'X64' or not (checker.l4v_dir / 'afp/ROOTS').is_file():
             raise ValueError('Calg requires X64 and the frozen AFP catalog')
+    from regen.execution.check_protocol import configure
+    configure(checker)
 
 
 def uses_sel4(checker):

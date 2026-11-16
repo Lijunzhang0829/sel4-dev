@@ -1,4 +1,5 @@
 """The launch supervisor stops on failed planning and forwards one allowance."""
+import argparse
 import json
 import os
 from pathlib import Path
@@ -28,6 +29,7 @@ class DatasetExperimentLaunchTests(unittest.TestCase):
             self.assertEqual(json.loads((self.root/'phase-status.json').read_text())['status'],'stopped')
 
     def test_current_clock_handoff_and_single_worker_are_forwarded(self):
+        (self.root/'experiment-config.json').write_text(json.dumps({**self.config,'check_timeout':300}))
         planning=self.root/'planning';planning.mkdir()
         (planning/'frozen-plan.json').write_text(json.dumps(dict(state='frozen',file_generation_list=str(planning/'files.json'))))
         def init(proof,*args,**kwargs):proof.mkdir()
@@ -45,4 +47,32 @@ class DatasetExperimentLaunchTests(unittest.TestCase):
         self.assertEqual(cmd[cmd.index('--planning-budget')+1],str(planning))
         for retired in ('--wall-seconds','--effective-seconds','--budget-mode','--execution-policy'):
             self.assertNotIn(retired,cmd)
+        # Exercise the real current CLI decoder: the old hard-coded v2 strategy
+        # passed this launch fixture but was rejected by every fresh runner.
+        from regen.execution.parallel_cli import add_arguments, launch_options
+        from regen.planning.generation_policy import DEFAULT_STRATEGY
+        parser=argparse.ArgumentParser();add_arguments(parser)
+        options=launch_options(parser.parse_args(cmd[5:]))
+        self.assertEqual(options['generation_strategy_name'],DEFAULT_STRATEGY)
+        self.assertEqual(options['check_timeout'],300)
         with self.assertRaisesRegex(ValueError,'fresh launch'):run(self.root)
+
+    def test_retired_strategy_is_rejected_before_planning(self):
+        (self.root/'experiment-config.json').write_text(json.dumps({
+            **self.config,'generation_strategy':'sketch-reviewed-v2'}))
+        with patch('regen.tools.reviewed_dataset_experiment.subprocess.run') as call:
+            with self.assertRaisesRegex(ValueError,'current generation strategy'):
+                run(self.root)
+        call.assert_not_called()
+
+    def test_shared_protocol_rejects_unsealed_or_different_runtime_before_model(self):
+        from regen.execution.check_protocol import descriptor,FILENAME
+        (self.root/'experiment-config.json').write_text(json.dumps({**self.config,
+            'check_timeout':300,'native_check_protocol':descriptor()}))
+        semantic=self.root/'semantic';semantic.mkdir()
+        (semantic/FILENAME).write_text(json.dumps({**descriptor(),'proof_worker_reuse':True}))
+        with patch('regen.preparation.checker_context.load_context',return_value={'semantic_workspace':semantic}), \
+             patch('regen.tools.reviewed_dataset_experiment.subprocess.run') as call:
+            with self.assertRaisesRegex(ValueError,'differs from sealed'):
+                run(self.root)
+        call.assert_not_called()

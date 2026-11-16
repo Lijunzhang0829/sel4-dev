@@ -535,9 +535,11 @@ class IsabelleChecker:
         writable_mounts: list[tuple[Path, str]] | None = None,
         timeout: float | None = None,
     ) -> dict[str, Any]:
+        check_call_started = time.monotonic()
         if CURRENT_RESOURCES.get() is not None:
             self.close_prefix()  # A cold process replaces, never accompanies, this resident.
-        timeout = self.timeout if timeout is None else timeout
+        from regen.execution.check_protocol import limit
+        timeout = limit(self, timeout)
         source = self.work_dir / f"{label}.thy"
         source.write_text(source_text, encoding="utf-8")
         # Both mounts can affect a cold process check. In particular, a VERO
@@ -561,8 +563,16 @@ class IsabelleChecker:
             timeout_seconds=timeout, container=container_name,
         )
         try:
+            from regen.execution.check_protocol import enabled
+            native_timeout = timeout
+            if enabled(self):
+                from regen.execution.check_protocol import remaining
+                native_timeout = remaining(timeout)
+                native_timeout = min(native_timeout, timeout-(time.monotonic()-check_call_started))
+                if native_timeout <= 0:
+                    raise subprocess.TimeoutExpired(command, timeout)
             result = native_run(
-                command, text=True, capture_output=True, timeout=timeout,
+                command, text=True, capture_output=True, timeout=native_timeout,
             )
             returncode = result.returncode
             full_diagnostic = result.stdout + result.stderr
@@ -612,6 +622,10 @@ class IsabelleChecker:
             "check_scope": "cold-full-theory",
             "incremental": False,
         }
+        from regen.execution.check_protocol import enabled, descriptor
+        if enabled(self):
+            check.update(native_check_protocol=descriptor(), total_timeout_seconds=timeout,
+                         timeout_scope='total-check' if returncode == 124 else None)
         from regen.execution.native_check_receipt import native_check_receipt
         check['native_receipt'] = native_check_receipt(
             self, check, source=mounted_sources, scope='cold-full-theory',
@@ -672,6 +686,10 @@ class IsabelleChecker:
     @native_operation
     def check_sketch_source(self, source, prefix_source, admitted_names, *, timeout=None):
         """Native conditional diagnostic; never certify or commit this source."""
+        from regen.execution.check_protocol import enabled
+        if enabled(self):
+            from regen.execution.total_sketch_check import check
+            return check(self, source, prefix_source, admitted_names, timeout=timeout)
         from regen.execution.batch_checker import BatchWorker, body
         worker = getattr(self, '_batch_worker', None)
         if getattr(self, 'batch_incremental', False):
@@ -901,6 +919,8 @@ class IsabelleChecker:
         return result
 
     def complete_audit_source(self, graph, proofs, *, theory_name=None):
+        from regen.execution.deferred_audit import policy, defer_block, wrap_queue
+        deferred = policy(vars(self)) == "declaration-export-deferred-v2"
         ordered = [next(n for n in graph['nodes'] if n['id'] == key)
                    for key in graph['execution_order']]
         if not ordered and graph.get('partial_export_projection') != 'contract-dispositions-v1':
@@ -914,13 +934,16 @@ class IsabelleChecker:
             token += '-' + hashlib.sha256(node['id'].encode()).hexdigest()[:10]
             filename = 'proof-dependencies-' + token + '.tsv'
             audits[node['id']] = proof_dependency_audit_ml(node['name'], dependency_filename=filename)
+            if deferred:
+                audits[node['id']] = defer_block(audits[node['id']], node['id'])
         label = theory_name or 'Complete_Audit_' + graph['file_slot'].removesuffix('.thy')
         policy = validate_complete_context_policy(
             getattr(self, 'complete_context_policy', ISOLATED_CONTEXT))
         source = self._source(graph, proofs, theory_name=label,
             reuse_arch_context=policy == ARCH_REUSE_CONTEXT, declaration_audits=audits)
-        return append_before_theory_end(source, automation_context_audit_ml(
+        source = append_before_theory_end(source, automation_context_audit_ml(
             include_wp=uses_sel4(self), modern=is_calg(self)))
+        return wrap_queue(source) if deferred else source
 
     def audit_complete_theory(
         self, graph: dict[str, Any], proofs: dict[str, str], *,

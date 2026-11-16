@@ -1026,10 +1026,12 @@ class TheoryController(WorkspaceController):
             if row.get('error_type') == 'NativePreparationError':
                 from regen.execution.check_tasks import NativePreparationError
                 raise NativePreparationError(row.get('diagnostic','native prefix preparation failed'))
+            publication = ({'publication_handoff':row['publication_handoff']}
+                           if 'publication_handoff' in row else {})
             if row['status'] != 'completed':
                 return {'status':row['status'],'task_id':row['task_id'],
-                        'diagnostic':row.get('diagnostic','')}
-            return {**self._public(row)['result'],'task_id':row['task_id']}
+                        'diagnostic':row.get('diagnostic',''), **publication}
+            return {**self._public(row)['result'],'task_id':row['task_id'], **publication}
         return super().handle(name, arguments, metadata)
 
     def submit(self, arguments, metadata):
@@ -1040,9 +1042,24 @@ class TheoryController(WorkspaceController):
                 if row['status'] in TERMINAL:
                     return self._consume_task(row, arguments)
                 return self._public(row)
+            manager = getattr(self, 'publication_manager', None)
+            if manager is not None and arguments['kind'] == 'seal':
+                from regen.planning.publication_admission import publication_ready
+                if publication_ready(self):
+                    self.managed_publication = manager.adopt(self.theory, row)
+                    self._managed_publication_arguments = deepcopy(arguments)
+                    return {**row, 'status':'publication_pending', 'publication_handoff':self.managed_publication}
             while row['status'] not in TERMINAL:
                 row = self.executor.wait([row['task_id']], timeout=30)[0]
-            return self._consume_task(row, arguments)
+            result = self._consume_task(row, arguments)
+            return result
+
+    def complete_publication(self):
+        task_id = self.managed_publication['task_id']
+        row = self.executor.get(task_id)
+        while row['status'] not in TERMINAL:
+            row = self.executor.wait([task_id], timeout=1)[0]
+        return self._consume_task(row, self._managed_publication_arguments)
 
     def _consume_task(self, row, arguments):
         if row.get('error_type') == 'ImplementationChangedError':
@@ -1072,8 +1089,8 @@ class TheoryController(WorkspaceController):
         if (row['status'] == 'completed' and arguments.get('kind') == 'seal'
                 and row['task_id'] in self._publication_tasks):
             package, state = self._state(self.theory)
-            fixed = {c['contract_id'] for c in package['contracts']}
-            if (fixed <= set(state['proofs']) and not theory_finished(state['status'])
+            from regen.planning.publication_admission import publication_ready
+            if (publication_ready(self) and not theory_finished(state['status'])
                     and not getattr(self, 'framework_blocked', False)):
                 # Publication failure is not a new mathematical goal. End this
                 # session immediately; the scheduler can run independent theories.
@@ -1354,7 +1371,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                        stop_at_focus_contract=False, and_or_control=None, retry_context=None,
                        http_retry_mode=False, effective_budget=False,
                        feedback_retry_mode=True, retry_failed_request_id=None,
-                       switchable_theories=None, no_progress_turn_limit=3, retry_unresolved=False, normal_runtime_seconds=None):
+                       switchable_theories=None, no_progress_turn_limit=3, retry_unresolved=False, normal_runtime_seconds=None, publication_manager=None):
     from regen.infrastructure.codex_workspace_session import CodexWorkspaceSession
     from regen.infrastructure.workspace_transcript import audit_workspace_session
     from regen.planning.batch_file_planner import INSTRUCTIONS as FORMATS
@@ -1383,6 +1400,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
         stop_at_focus_contract=stop_at_focus_contract, async_checks=document_mode,
         model=model,call_timeout=call_timeout,check_timeout=check_timeout,
         candidate_timeout=candidate_timeout, **controller_options)
+    controller.publication_manager = publication_manager
     controller.switchable_theories = list(switchable_theories or [theory])
     try:
         from regen.execution.checker_policy import validate_outcome_upgrade_readiness
@@ -1533,6 +1551,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                                        on_abort=getattr(controller,'abort_pending',None),
                                                        stop_when=lambda value: (
                                                            'framework_blocked' if isinstance(value,dict) and value.get('framework_blocked')
+                                                           else 'publication_handoff' if isinstance(value,dict) and value.get('publication_handoff')
                                                            else 'publication_deferred' if isinstance(value,dict) and value.get('publication_deferred')
                                                            else 'theory_yielded' if isinstance(value,dict) and value.get('theory_yield')
                                                            else 'waiting_for_provider' if isinstance(value,dict) and value.get('theory_wait')
@@ -1557,6 +1576,8 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                             target_completed = controller.target_contract_green()
                             if getattr(controller, 'publication_deferred', None):
                                 session_stop_reason = 'publication_check_failed'
+                                break
+                            if getattr(controller, 'managed_publication', None):
                                 break
                             if (target_completed or theory_finished(state['status'])
                                     or getattr(controller, 'theory_outcome', None)
@@ -1641,6 +1662,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                                 and not getattr(controller, 'theory_outcome', None)
                                 and not getattr(controller, 'provider_wait', None)
                                 and not getattr(controller, 'theory_switch', None)
+                                and not getattr(controller, 'managed_publication', None)
                                 and not state.get('batch_feedback', {}).get('framework_blocked'),
                             require_real=True)
                     else:
@@ -1651,6 +1673,14 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
                     audit = {
                         'terminal':False,
                         'provider_not_started':'target_already_journal_green'}
+            # Only after the provider and its private authentication lease are
+            # closed may another model use this slot. Keep the native owner alive.
+            if publication_manager is not None and getattr(controller, 'managed_publication', None):
+                publication_manager.release_model(theory)
+                controller.complete_publication()
+                _, published_state = controller._state(theory)
+                if not theory_finished(published_state['status']):
+                    session_stop_reason = 'publication_check_failed'
             # A model ending a turn never upgrades pending work to success.
             _, state = controller._state(theory)
             target_completed = controller.target_contract_green()
@@ -2023,6 +2053,8 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=1, n
             service_invocation_id=os.environ.get('INVOCATION_ID'), pid=os.getpid())
         durable(root/'parallel-workspace-policy.json', workspace_policy, immutable=True)
         executor = CheckExecutor(root/'check-tasks',workers=max_parallel_theories)
+        from regen.planning.publication_manager import PublicationManager
+        publications = PublicationManager(root)
         results, active, failures = [], {}, {}
         from regen.planning.theory_outcomes import current_outcome
         for row in rows:
@@ -2049,7 +2081,8 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=1, n
         sessions = root/'parallel-sessions'/uuid4().hex
         with event_scope(sessions,run_id=overview.run['run_id'],phase='proof') as monitor, \
                 observe_events(bridge.handle, publication_guard=bridge.acceptance):
-            with ThreadPoolExecutor(max_workers=max_parallel_theories,thread_name_prefix='file-planner') as agents:
+            # Publication waiters keep their owning sessions alive without using a model slot.
+            with ThreadPoolExecutor(max_workers=max(max_parallel_theories,len(selected)),thread_name_prefix='file-planner') as agents:
                 try:
                     if monitor is not None:
                         monitor.transition('proof_construction')
@@ -2062,7 +2095,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=1, n
                         eligible = _stage_eligible(rows, policy, active.values())
                         for row in sorted(rows, key=lambda r: rotation_order.index(r['theory'])
                                           if r['theory'] in rotation_order else len(rotation_order)):
-                            if len(active)>=max_parallel_theories:
+                            if len(publications.generating(active.values()))>=max_parallel_theories:
                                 break
                             theory = row['theory']
                             if (theory not in eligible or theory in failures or theory in active.values()
@@ -2106,6 +2139,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=1, n
                                     attempt_directory=str(directory), accepted_state_preserved=True)
                             future = agents.submit(context.run,_run_budgeted_theory_session,bridge,root,theory,
                                 resources=resources,executor=executor,settings=settings,directory=directory,
+                                publication_manager=publications,
                                 generation_strategy_name=generation_strategy_name,
                                 focus_contract_id=focus_contract_id,
                                 switchable_theories=sorted(set(eligible)-set(failures)),
@@ -2119,7 +2153,7 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=1, n
                                 codex_home=codex_home,cancel_event=cancel_event,document_mode=file_planner_interface=='document',**overview.options)
                             active[future] = theory
                         if monitor is not None:
-                            monitor.update_workspace(rows,active=active.values(),failures=failures,
+                            monitor.update_workspace(rows,active=active.values(),publishing=publications.theories(),failures=failures,
                                 observed_at=rows_observed_at,
                                 limits={'max_parallel_theories':max_parallel_theories,
                                         'native_slots':native_slots})
@@ -2144,9 +2178,10 @@ def run_parallel_workspace(run_dir, *, theories=None, max_parallel_theories=1, n
                         # free slot, a still-active writer may have sealed a
                         # provider before returning from its session; continue
                         # polling then so its hard dependants can start.
-                        refresh = bool(done) or len(active) < max_parallel_theories
+                        refresh = bool(done) or len(publications.generating(active.values())) < max_parallel_theories
                         for future in done:
                             theory = active.pop(future)
+                            publications.joined(theory)
                             try:
                                 completed = future.result()
                                 # A persisted result.json alone is too early:
