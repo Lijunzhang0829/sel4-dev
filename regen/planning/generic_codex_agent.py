@@ -186,10 +186,10 @@ def registry():
         'required':['action'],'additionalProperties':True}
     proof_action['inputSchema']['properties']['proposal']={
         'description':('Read a stable entry with read_entry; change its proof with edit_proof. '
-                       'Source-changing actions use the exact edit_proof/edit_theory/check_theory/finish schemas. '
+                       'Source-changing actions use the exact edit_proof/edit_proofs/edit_theory/check_theory/finish schemas. '
                        'The enumerated observation actions remain read-only and receive their detailed '
                        'runtime contracts from proof_tool_help.'),
-        'oneOf':[deepcopy(source_actions[action]) for action in ('read_entry','read_evidence','edit_proof','edit_theory','check_theory','check_sketch','read_sketch','probe_helpers','transition_proof','assess_sketch','read_failure','review_sketch','diagnose_failure','finish')]
+        'oneOf':[deepcopy(source_actions[action]) for action in ('read_entry','read_evidence','edit_proof','edit_proofs','edit_theory','check_theory','check_sketch','read_sketch','probe_helpers','transition_proof','assess_sketch','read_failure','review_sketch','diagnose_failure','finish')]
                 +[observation]}
     return tools+[
         _tool('repository_plan','Inspect fixed contracts/parents or validate, preflight and submit one immutable initial plan. action=schema returns operation contracts and proposal format. Retrieval uses values (a list of strings). Inspect valid/errors: a returned result is not necessarily accepted.',{'request':request_schema(allow_revision=False)},('request',)),

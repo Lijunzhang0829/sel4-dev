@@ -473,6 +473,40 @@ class DocumentStore:
                 source=source.replace(edit['old'],edit['new'],1)
         return self._save_edit(source, current, proposal, origin)
 
+    def edit_proofs(self, proposal, origin):
+        """Validate every proof span against one source, then save exactly once."""
+        if (set(proposal) != {'action', 'expected_hash', 'proofs'}
+                or proposal.get('action') != 'edit_proofs'
+                or not isinstance(proposal.get('proofs'), list) or not proposal['proofs']):
+            raise DocumentEditError('edit_proofs requires expected_hash and a nonempty proofs list',
+                                    code='invalid_proof_edit', draft_unchanged=True)
+        current = self.read()
+        if proposal['expected_hash'] != current['source_sha256']:
+            raise DocumentEditError('stale document; obtain the current source hash',
+                code='stale_document', current_sha256=current['source_sha256'], draft_unchanged=True)
+        edits, seen = [], set()
+        for index, item in enumerate(proposal['proofs']):
+            if (not isinstance(item, dict) or set(item) != {'entry_id', 'proof_body'}
+                    or not isinstance(item['entry_id'], str) or item['entry_id'] in seen
+                    or not isinstance(item['proof_body'], str)
+                    or any(marker in item['proof_body'] for marker in (START, PROOF, END))):
+                raise DocumentEditError('invalid or duplicate batch proof edit', code='invalid_proof_edit',
+                                        edit_index=index, draft_unchanged=True)
+            seen.add(item['entry_id'])
+            try:
+                _, location, _ = self._entry(current['source'], item['entry_id'])
+            except ValueError as error:
+                raise DocumentEditError(str(error), code='invalid_proof_edit',
+                                        edit_index=index, draft_unchanged=True) from error
+            edits.append((location['proof_start'], location['proof_end'], item['proof_body']))
+        source = current['source']
+        for start, end, proof in sorted(edits, reverse=True):
+            source = source[:start]+proof+source[end:]
+        saved = self._save_edit(source, current, proposal, origin)
+        return {**saved, 'entry_ids': [item['entry_id'] for item in proposal['proofs']],
+                'expected_hash': saved['source_sha256'], 'hash_scope': 'document_source',
+                'atomic': True, 'acceptance': 'draft_only'}
+
     def edit_proof(self, proposal, origin):
         """Replace only one proof span; framework-owned declaration bytes stay fixed."""
         required = {'action','entry_id','proof_body','expected_hash'}

@@ -105,6 +105,10 @@ For proof-only changes prefer:
 expected_hash binds the whole current document. The harness preserves the entry's
 declaration, context and markers. Read the current entry again after a stale-hash
 rejection. Saving a proof body is not acceptance; check the returned source hash.
+For multiple proof-only changes use one atomic batch at a common document version:
+{"action":"edit_proofs","expected_hash":"current source hash","proofs":[{"entry_id":"ID","proof_body":"by simp"}]}
+All edits validate before one save; any invalid or protected entry rejects the whole batch.
+Use the returned source_sha256 and entry_ids for check_theory. Saving is not GREEN.
 For helper declarations, ordering or other structural changes use:
 {"action":"edit_theory","base_sha256":"hash from read_theory","edits":[{"old":"unique exact text","new":"replacement"}]}
 Or replace the complete file using source instead of edits. Edits are sequential. Saving
@@ -490,7 +494,7 @@ class TheoryController(WorkspaceController):
         if not contract_dispositions_enabled(self.run) or not isinstance(proposal, dict):
             return
         action = proposal.get('action')
-        if action not in {'edit_proof','edit_theory','submit_batch','check_theory',
+        if action not in {'edit_proof','edit_proofs','edit_theory','submit_batch','check_theory',
                           'check_sketch','assess_sketch','probe_helpers','review_sketch'}:
             return
         disposed = set(current_dispositions(self))
@@ -502,6 +506,9 @@ class TheoryController(WorkspaceController):
             # remain oops, but must never acquire another candidate proof.
             if str(proposal.get('proof_body', '')).strip() != 'oops':
                 selected.add(proposal.get('entry_id'))
+        if action == 'edit_proofs':
+            selected.update(item.get('entry_id') for item in proposal.get('proofs', [])
+                            if isinstance(item, dict) and str(item.get('proof_body', '')).strip() != 'oops')
         if action == 'submit_batch' and isinstance(proposal.get('proofs'), dict):
             selected.update(proposal['proofs'])
         for field in ('entry_ids', 'target_entry_ids'):
@@ -590,9 +597,11 @@ class TheoryController(WorkspaceController):
                 if pending:
                     proposal = arguments.get('proposal', {})
                     action = proposal.get('action')
-                    if action == 'edit_proof':
+                    if action in {'edit_proof', 'edit_proofs'}:
                         protected = set().union(*(self._async_snapshots.get(row['task_id'], {}).get('protected', set()) for row in pending))
-                        if proposal.get('entry_id') in protected or set(proposal) & {'sketches','helper_purposes','notes'}:
+                        selected = ({proposal.get('entry_id')} if action == 'edit_proof' else
+                                    {item.get('entry_id') for item in proposal.get('proofs', []) if isinstance(item, dict)})
+                        if selected & protected or set(proposal) & {'sketches','helper_purposes','notes'}:
                             raise ValueError('entry/context is reserved by a pending check; edit another entry or wait_checks')
                     elif action not in {'read_entry','read_evidence','read_context_index','read_facts','read_diagnostic',
                             'read_attempts','read_proofs','read_queries','query','observe','read_sketch','read_failure',
@@ -948,16 +957,16 @@ class TheoryController(WorkspaceController):
                 from regen.planning.document_recall import context_index_page
                 package,state = self._state(self.theory)
                 return context_index_page(planner_input(package,state),proposal)
-            if proposal.get('action') not in {'edit_theory','edit_proof','check_theory','check_sketch','probe_helpers','assess_sketch','finish'}:
+            if proposal.get('action') not in {'edit_theory','edit_proof','edit_proofs','check_theory','check_sketch','probe_helpers','assess_sketch','finish'}:
                 from regen.planning.document_interface import internal_request
                 proposal = internal_request(proposal)
                 arguments = {**arguments, 'proposal':proposal}
-            allowed = {'edit_theory','edit_proof','check_theory','check_sketch','probe_helpers','assess_sketch','finish','observe','query','read_facts',
+            allowed = {'edit_theory','edit_proof','edit_proofs','check_theory','check_sketch','probe_helpers','assess_sketch','finish','observe','query','read_facts',
                        'read_proofs','read_attempts','read_queries','read_diagnostic',
                        'read_proof_state','resolve_symbols'}
             if proposal.get('action') not in allowed:
                 raise ValueError('document mode requires source edits/checks, not legacy graph actions')
-            if proposal.get('action') in {'edit_theory','edit_proof'}:
+            if proposal.get('action') in {'edit_theory','edit_proof','edit_proofs'}:
                 from regen.infrastructure.workspace_transcript import record_workspace_action
                 store,state=self._document()
                 if theory_finished(state['status']):
@@ -965,7 +974,7 @@ class TheoryController(WorkspaceController):
                 prefix=store.root/'edits'/uuid4().hex/'call'
                 record_workspace_action(prefix,'Persistent theory source edit',proposal,metadata,
                                         theory=self.theory,model=self.model)
-                edit = store.edit_proof if proposal['action'] == 'edit_proof' else store.edit
+                edit = {'edit_proof':store.edit_proof, 'edit_proofs':store.edit_proofs, 'edit_theory':store.edit}[proposal['action']]
                 return edit(proposal,{'transcript_prefix':str(prefix)})
             if proposal.get('action')=='finish':
                 store,state=self._document()
