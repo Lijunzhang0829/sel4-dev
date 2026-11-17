@@ -1,0 +1,41 @@
+{
+  "status": "concrete_environment_satisfiability_passed",
+  "semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+  "target_count": 8,
+  "audit": {
+    "target_premise_instances": "8",
+    "fixed_stack_bridges": "2",
+    "preparation_facts": "28",
+    "skipped_proofs": "0",
+    "oracles": "0",
+    "hidden_hypotheses": "0",
+    "unproved_targets_exported": "0"
+  },
+  "formal_inputs_unchanged": true,
+  "scope": "One admissible stack/address interpretation; not all fixed stack interpretations.",
+  "functional_proofs": 0,
+  "formal_refutations": 0,
+  "generation_allowed": false,
+  "files": {
+    "ROOT": "42df8f2dd42b2bfe63f6f30a5dbc0aa721f2846c1f8e4c751199243eed35c10d",
+    "translation-input.json": "7a60a3c7e49482843d991c28603819fdc0ec97593a09df95e4bce3b976e9d173",
+    "environment-lock.json": "ccfeee9ca284017c3b91c47b171852617eaf774f293e1532d53d53fb83043173",
+    "theories/Binomial_Environment.thy": "ea4449bfe91a24ca94a538ff0d51c375a963de710e8d25c0daa5f8f46c12f8af",
+    "theories/Binomial_Heap_C.thy": "e8a9a68bf1011b23a93e9e75c8610f8fdba7b7b82e20d1d8f94777807cd16ada",
+    "targets-session/Binomial_Heap_Model.thy": "fb9675151af46bc93058d5aa535146c05914ad74fa0486e007c942fa2ed9d843",
+    "targets-session/Binomial_Heap_Targets.thy": "1cbdc1e9a98ee38a21e9f138b1fc13a369b8f4e1591415051013221f90daeb31",
+    "targets-session/Binomial_Preparation_Audit.thy": "c20e0e2ef12feb7e7707faa2bfe3a8f422a4eff091461e0c580fc541f6b48036",
+    "c/binomial_heap_input.c": "7aa97b7051740519dbd2e813db096cd8a3ab3e33951e7950a26d472d67070d9f",
+    "satisfiability/ROOT": "5efa111a12cbbabb0acce98616d35576c8b4566563aee0fc202972c14e91a03e",
+    "satisfiability/Binomial_Satisfiability.thy": "343c052862a96d91df621e1913b9575e36a64ff16d0bf3d6bc56cd06f52ebc04",
+    "satisfiability/Binomial_Target_Satisfiability.thy": "80d4e57dafc3b2259625841e55ec5b7315cb7eaa0bacbdc1b2cfa9a3bf410dcd",
+    "satisfiability/coverage.json": "37dbfad307d8ed5d5100ab27e86a0621b916fb79377fd18aab4f02bb6138a344",
+    "tools/satisfiability.py": "1147edcca3c806f4d17694f39937647a8495254c8b2890ab3eeccc20f4e8bf69",
+    "tools/build.py": "8e89875c09da21dd17e185ae22120cd6091dddd4ca0c51ad1ee26f857c2b5085",
+    "evidence/satisfiability-build.json": "1c096061c101f02a52b96a0f2876546c683f27e056d6055c865a67c7e6e68b98",
+    "evidence/satisfiability-build.log": "b7b4629eafcaa17a235f21bfbe9f7fde375a3014c406fb183ed9ddb2da746b11",
+    "evidence/satisfiability-audit.txt": "6ec51e564db6720effb7e7f2d6d861b49ad208dd64ed48130f0f63d7d8a6581e",
+    "evidence/satisfiability-context-bindings.tsv": "ce4948922e46a2b74388aa846d44795bea6fe25bdf0ecc5b2e84f33a939c98a5",
+    "evidence/satisfiability-context.txt": "3ae92bc39e0548c9a2f2e2d148d25646cd90b4054c59c74453805a42e4dbe2a3"
+  }
+}

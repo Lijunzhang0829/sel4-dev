@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "layout": "source-input-and-private-acceptance",
+  "dataset_binding": "8148dcb80eeeaa888e80256d45ff269410d39e98ea861ca4a668acee028eb52e",
+  "generation_input": "input",
+  "main_targets": 78,
+  "fixed_helper_targets": 13,
+  "background_declarations": 9,
+  "private_acceptance": "acceptance/checked-evidence.tar.gz",
+  "archive_sha256": "ce454a6cb82005a05976c0553793204ea3fa4911a02ec837aa11ba24cdcd02b0",
+  "old_experiments_retained": false,
+  "old_experiments_resumable": false,
+  "runtime_binaries_or_heaps_retained": false,
+  "runtime_ready": false,
+  "external_environment_requirements": "input/environment.json",
+  "verification_command": "python3 c-algorithms/binomial/tools/compact_dataset.py verify",
+  "generation_must_not_access_acceptance": true
+}

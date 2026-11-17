@@ -1,0 +1,18 @@
+{
+  "schema_version": 3,
+  "default_scope": "owned-context",
+  "outcomes": {
+    "proved_in_environment": "E implies forall x. A(x) implies Q(x)",
+    "refuted_in_environment": "E implies exists x. A(x) and not Q(x)",
+    "refuted_global": "E and exists x. A(x) and not Q(x)",
+    "unresolved": "no accepted native certificate"
+  },
+  "negative_goal_constructor": "Isabelle r2_capture/r2_refute; original declaration, not model-authored negation",
+  "global_environment_evidence_separate": true,
+  "parameter_satisfiability_evidence_separate": true,
+  "historical_results_regraded": false,
+  "strict_global_is_independent_evidence_class": true,
+  "bad_contract_not_exported_as_positive_lemma": true,
+  "unproved_target_facts_imported": 0,
+  "global_environment_assumed_by_axiom": false
+}

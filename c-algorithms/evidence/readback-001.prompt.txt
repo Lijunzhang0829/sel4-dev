@@ -1,0 +1,294 @@
+You are a stateless mathematical read-back reviewer. Use ONLY the formal input below.
+Do not call tools, inspect files, infer the author's intention, or provide proof scripts.
+For EACH of the six lemma declarations, explain in Chinese exactly what the proposition asserts:
+quantifiers, premises, normal/exceptional outcomes, nonfailure, existence of outcomes, multiset multiplicities,
+numeric bounds, and frame/ownership guarantees. Expand the supplied nonstandard definitions.
+Distinguish the explicit external-function model from any verified libc implementation.
+Identify what cannot be determined from the supplied declarations. Do not assume the goals are true.
+Return ONLY valid JSON with keys: targets (list of {id, readback, assumptions, exclusions}),
+shared_assumptions (list), unresolved_semantics (list), possible_vacuity_or_scope_issues (list).
+No intended natural-language specification has been supplied.
+FORMAL INPUT:
+theories/Heap_Environment.thy
+theory Heap_Environment
+  imports AutoCorres2.AutoCorres
+begin
+
+
+
+record calg_allocator =
+  live_blocks :: "addr \<Rightarrow> nat option"
+  reserved_bytes :: "addr set"
+
+definition block_bytes :: "addr \<Rightarrow> nat \<Rightarrow> addr set" where
+  "block_bytes p n = {a. unat p \<le> unat a \<and> unat a < unat p + n}"
+
+definition block_ok :: "addr \<Rightarrow> nat \<Rightarrow> bool" where
+  "block_ok p n \<longleftrightarrow> p \<noteq> 0 \<and> 0 < n \<and>
+    unat p + n \<le> 2 ^ 64 \<and> unat p mod 16 = 0"
+
+definition allocator_wf :: "calg_allocator \<Rightarrow> bool" where
+  "allocator_wf A \<longleftrightarrow>
+    (\<forall>p n. live_blocks A p = Some n \<longrightarrow> block_ok p n \<and>
+       block_bytes p n \<inter> reserved_bytes A = {}) \<and>
+    (\<forall>p n q m. live_blocks A p = Some n \<longrightarrow>
+       live_blocks A q = Some m \<longrightarrow> p \<noteq> q \<longrightarrow>
+       block_bytes p n \<inter> block_bytes q m = {})"
+
+definition fresh_block :: "calg_allocator \<Rightarrow> addr \<Rightarrow> nat \<Rightarrow> bool" where
+  "fresh_block A p n \<longleftrightarrow> block_ok p n \<and>
+    block_bytes p n \<inter> reserved_bytes A = {} \<and>
+    (\<forall>q m. live_blocks A q = Some m \<longrightarrow>
+      block_bytes p n \<inter> block_bytes q m = {})"
+
+definition bytes_frame :: "addr set \<Rightarrow> heap_mem \<Rightarrow> heap_mem \<Rightarrow> bool" where
+  "bytes_frame W h h' \<longleftrightarrow> (\<forall>a. a \<notin> W \<longrightarrow> h' a = h a)"
+
+definition malloc_rel ::
+  "nat \<Rightarrow> heap_mem \<Rightarrow> calg_allocator \<Rightarrow> addr \<Rightarrow>
+    heap_mem \<Rightarrow> calg_allocator \<Rightarrow> bool" where
+  "malloc_rel n h A p h' A' \<longleftrightarrow> allocator_wf A \<and> 0 < n \<and>
+    ((p = 0 \<and> h' = h \<and> A' = A) \<or>
+     (fresh_block A p n \<and> bytes_frame (block_bytes p n) h h' \<and>
+      A' = A\<lparr>live_blocks := (live_blocks A)(p := Some n)\<rparr>))"
+
+definition free_rel ::
+  "addr \<Rightarrow> heap_mem \<Rightarrow> calg_allocator \<Rightarrow>
+    heap_mem \<Rightarrow> calg_allocator \<Rightarrow> bool" where
+  "free_rel p h A h' A' \<longleftrightarrow> allocator_wf A \<and>
+    ((p = 0 \<and> h' = h \<and> A' = A) \<or>
+     (p \<noteq> 0 \<and> (\<exists>n. live_blocks A p = Some n \<and>
+       bytes_frame (block_bytes p n) h h') \<and>
+      A' = A\<lparr>live_blocks := (live_blocks A)(p := None)\<rparr>))"
+
+definition realloc_rel ::
+  "addr \<Rightarrow> nat \<Rightarrow> heap_mem \<Rightarrow> calg_allocator \<Rightarrow>
+    addr \<Rightarrow> heap_mem \<Rightarrow> calg_allocator \<Rightarrow> bool" where
+  "realloc_rel p n h A q h' A' \<longleftrightarrow> allocator_wf A \<and> 0 < n \<and>
+    (if p = 0 then malloc_rel n h A q h' A' else
+      (\<exists>m. live_blocks A p = Some m \<and>
+        ((q = 0 \<and> h' = h \<and> A' = A) \<or>
+         (fresh_block (A\<lparr>live_blocks := (live_blocks A)(p := None)\<rparr>) q n \<and>
+          (q = p \<or> block_bytes q n \<inter> block_bytes p m = {}) \<and>
+          bytes_frame (block_bytes p m \<union> block_bytes q n) h h' \<and>
+          (\<forall>i < min m n. h' (q + of_nat i) = h (p + of_nat i)) \<and>
+          A' = A\<lparr>live_blocks := ((live_blocks A)(p := None))(q := Some n)\<rparr>))))"
+
+
+
+
+theories/Binary_Heap_C.thy
+theory Binary_Heap_C
+  imports Heap_Environment
+begin
+
+declare [[cpp_path = "", allow_underscore_idents = true]]
+install_C_file "../c/binary_heap_input.c" [machinety=calg_allocator]
+
+init-autocorres [skip_heap_abs, skip_word_abs, ts_rules = nondet] "binary_heap_input.c"
+
+overloading malloc_body \<equiv> malloc_body
+begin
+definition
+  "malloc_body \<equiv> exec_spec_monad global_exn_var'_' global_exn_var'_'_update globals
+    (\<lambda>s. clookup 0 (locals s))
+    (\<lambda>(n::64 word). L2_guarded
+      (\<lambda>s. 0 < unat n \<and> allocator_wf (phantom_machine_state_' s))
+      (L2_assume (\<lambda>s. {(p::unit ptr, t).
+      \<exists>h A. malloc_rel (unat n) (hrs_mem (t_hrs_' s)) (phantom_machine_state_' s)
+           (ptr_val p) h A \<and>
+        t = phantom_machine_state_'_update (\<lambda>_. A)
+          (t_hrs_'_update (hrs_mem_update (\<lambda>_. h)) s)})))
+    (\<lambda>upd. locals_update (cupdate 1 upd))"
+end
+declare_prototype malloc_body_def done
+
+overloading realloc_body \<equiv> realloc_body
+begin
+definition
+  "realloc_body \<equiv> exec_spec_monad global_exn_var'_' global_exn_var'_'_update globals
+    (\<lambda>s. (clookup 0 (locals s), clookup 1 (locals s)))
+    (\<lambda>(p::unit ptr, n::64 word). L2_guarded
+      (\<lambda>s. 0 < unat n \<and> allocator_wf (phantom_machine_state_' s) \<and>
+        (p = NULL \<or> live_blocks (phantom_machine_state_' s) (ptr_val p) \<noteq> None))
+      (L2_assume (\<lambda>s. {(q::unit ptr, t).
+      \<exists>h A. realloc_rel (ptr_val p) (unat n) (hrs_mem (t_hrs_' s))
+          (phantom_machine_state_' s) (ptr_val q) h A \<and>
+        t = phantom_machine_state_'_update (\<lambda>_. A)
+          (t_hrs_'_update (hrs_mem_update (\<lambda>_. h)) s)})))
+    (\<lambda>upd. locals_update (cupdate 2 upd))"
+end
+declare_prototype realloc_body_def done
+
+overloading free_body \<equiv> free_body
+begin
+definition
+  "free_body \<equiv> exec_spec_monad global_exn_var'_' global_exn_var'_'_update globals
+    (\<lambda>s. clookup 0 (locals s))
+    (\<lambda>(p::unit ptr). L2_guarded
+      (\<lambda>s. allocator_wf (phantom_machine_state_' s) \<and>
+        (p = NULL \<or> live_blocks (phantom_machine_state_' s) (ptr_val p) \<noteq> None))
+      (L2_assume (\<lambda>s. {(r::unit, t).
+      \<exists>h A. free_rel (ptr_val p) (hrs_mem (t_hrs_' s)) (phantom_machine_state_' s) h A \<and>
+        t = phantom_machine_state_'_update (\<lambda>_. A)
+          (t_hrs_'_update (hrs_mem_update (\<lambda>_. h)) s)})))
+    (\<lambda>upd. (\<lambda>s. s))"
+end
+declare_prototype free_body_def done
+
+autocorres "binary_heap_input.c"
+
+thm final_defs
+ML \<open>writeln "CALG_BINARY_TRANSLATION_PASS"\<close>
+end
+
+
+targets-session/Binary_Heap_Model.thy
+theory Binary_Heap_Model
+  imports Calg_Binary_Foundation.Binary_Heap_C "HOL-Library.Multiset"
+begin
+
+
+
+definition bh_record where
+  "bh_record s h = (h_val (hrs_mem (t_hrs_' s)) h :: StrictC'_BinaryHeap_C)"
+definition bh_count where "bh_count s h = unat (num_values_C (bh_record s h))"
+definition bh_capacity where "bh_capacity s h = unat (alloced_size_C (bh_record s h))"
+definition bh_buffer where "bh_buffer s h = values_C (bh_record s h)"
+definition bh_values where
+  "bh_values s h = map (\<lambda>i. h_val (hrs_mem (t_hrs_' s))
+    (bh_buffer s h +\<^sub>p int i)) [0..<bh_count s h]"
+definition bh_contents where "bh_contents s h = mset (bh_values s h)"
+definition payload_key where
+  "payload_key s p = sint (h_val (hrs_mem (t_hrs_' s)) (ptr_coerce p :: 32 signed word ptr))"
+definition payload_valid where
+  "payload_valid s p \<longleftrightarrow> c_guard (ptr_coerce p :: 32 signed word ptr) \<and>
+     block_bytes (ptr_val p) 4 \<subseteq> reserved_bytes (phantom_machine_state_' s)"
+
+definition bh_rep where
+  "bh_rep s h M \<longleftrightarrow>
+    allocator_wf (phantom_machine_state_' s) \<and> c_guard h \<and>
+    c_guard (bh_buffer s h) \<and> ptr_val h \<noteq> ptr_val (bh_buffer s h) \<and>
+    live_blocks (phantom_machine_state_' s) (ptr_val h) = Some (size_of TYPE(StrictC'_BinaryHeap_C)) \<and>
+    live_blocks (phantom_machine_state_' s) (ptr_val (bh_buffer s h)) =
+      Some (size_of TYPE(unit ptr) * bh_capacity s h) \<and>
+    0 < bh_capacity s h \<and> bh_capacity s h < 2 ^ 31 \<and>
+    bh_count s h \<le> bh_capacity s h \<and>
+    heap_type_C (bh_record s h) = BINARY_HEAP_TYPE_MIN \<and>
+    compare_func_C (bh_record s h) = binary_heap_input.int_compare \<and>
+    (\<forall>p \<in> set (bh_values s h). payload_valid s p) \<and>
+    (\<forall>i. 0 < i \<and> i < bh_count s h \<longrightarrow>
+       payload_key s (bh_values s h ! ((i - 1) div 2)) \<le>
+       payload_key s (bh_values s h ! i)) \<and>
+    M = bh_contents s h"
+
+definition insert_admissible where
+  "insert_admissible s h \<longleftrightarrow>
+    (bh_count s h < bh_capacity s h \<or> 2 * bh_capacity s h < 2 ^ 31)"
+
+definition payload_frame where
+  "payload_frame s t \<longleftrightarrow>
+    reserved_bytes (phantom_machine_state_' t) = reserved_bytes (phantom_machine_state_' s) \<and>
+    (\<forall>a \<in> reserved_bytes (phantom_machine_state_' s).
+       hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a)"
+
+definition bh_owned where
+  "bh_owned s h = block_bytes (ptr_val h) (size_of TYPE(StrictC'_BinaryHeap_C)) \<union>
+    block_bytes (ptr_val (bh_buffer s h)) (size_of TYPE(unit ptr) * bh_capacity s h)"
+
+definition other_blocks_unchanged where
+  "other_blocks_unchanged s h t \<longleftrightarrow>
+    (\<forall>p. p \<noteq> ptr_val h \<and> p \<noteq> ptr_val (bh_buffer s h) \<longrightarrow>
+      (case live_blocks (phantom_machine_state_' s) p of None \<Rightarrow> True
+       | Some n \<Rightarrow> live_blocks (phantom_machine_state_' t) p = Some n \<and>
+         (\<forall>a \<in> block_bytes p n. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a)))"
+
+definition insert_storage where
+  "insert_storage s h t \<longleftrightarrow>
+    phantom_machine_state_' t = (phantom_machine_state_' s)\<lparr>live_blocks :=
+      ((live_blocks (phantom_machine_state_' s))(ptr_val (bh_buffer s h) := None))
+        (ptr_val (bh_buffer t h) := Some (size_of TYPE(unit ptr) * bh_capacity t h))\<rparr>"
+
+definition existing_blocks_preserved where
+  "existing_blocks_preserved s t \<longleftrightarrow>
+    (\<forall>p n. live_blocks (phantom_machine_state_' s) p = Some n \<longrightarrow>
+      live_blocks (phantom_machine_state_' t) p = Some n \<and>
+      (\<forall>a \<in> block_bytes p n. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a))"
+
+definition new_storage where
+  "new_storage s h t \<longleftrightarrow>
+    phantom_machine_state_' t = (phantom_machine_state_' s)\<lparr>live_blocks :=
+      ((live_blocks (phantom_machine_state_' s))(ptr_val h := Some (size_of TYPE(StrictC'_BinaryHeap_C))))
+        (ptr_val (bh_buffer t h) := Some (size_of TYPE(unit ptr) * 16))\<rparr>"
+
+
+definition calg_contract ::
+  "('e::default, 'a, 's) spec_monad \<Rightarrow> 's \<Rightarrow> ('a \<Rightarrow> 's \<Rightarrow> bool) \<Rightarrow> bool" where
+  "calg_contract f s Q \<longleftrightarrow>
+    runs_to f s (\<lambda>r t. \<exists>v. r = Result v \<and> Q v t) \<and>
+    (\<exists>v t. reaches f s (Result v) t)"
+
+end
+
+
+targets-session/Binary_Heap_Targets.thy
+theory Binary_Heap_Targets
+  imports Binary_Heap_Model
+begin
+
+
+
+context binary_heap_input_global_addresses
+begin
+
+lemma bh_count_exact:
+  "bh_rep s h M \<Longrightarrow> calg_contract (binary_heap_num_entries' h) s
+    (\<lambda>r t. unat r = size M \<and> t = s)"
+  oops
+
+lemma bh_insert_correct:
+  "bh_rep s h M \<Longrightarrow> payload_valid s p \<Longrightarrow> insert_admissible s h \<Longrightarrow>
+   calg_contract (binary_heap_insert' h p) s (\<lambda>r t.
+     payload_frame s t \<and> other_blocks_unchanged s h t \<and>
+     (if r = 0 then t = s else r = 1 \<and> bh_rep t h (add_mset p M) \<and> insert_storage s h t))"
+  oops
+
+lemma bh_insert_without_growth:
+  "bh_rep s h M \<Longrightarrow> payload_valid s p \<Longrightarrow> bh_count s h < bh_capacity s h \<Longrightarrow>
+   calg_contract (binary_heap_insert' h p) s (\<lambda>r t.
+     r = 1 \<and> bh_rep t h (add_mset p M) \<and>
+     phantom_machine_state_' t = phantom_machine_state_' s \<and>
+     bh_buffer t h = bh_buffer s h \<and> bh_capacity t h = bh_capacity s h \<and>
+     bytes_frame (bh_owned s h) (hrs_mem (t_hrs_' s)) (hrs_mem (t_hrs_' t)))"
+  oops
+
+lemma bh_pop_correct:
+  "bh_rep s h M \<Longrightarrow>
+   calg_contract (binary_heap_pop' h) s (\<lambda>p t.
+     phantom_machine_state_' t = phantom_machine_state_' s \<and>
+     bytes_frame (bh_owned s h) (hrs_mem (t_hrs_' s)) (hrs_mem (t_hrs_' t)) \<and>
+     bh_buffer t h = bh_buffer s h \<and> bh_capacity t h = bh_capacity s h \<and>
+     (if M = {#} then p = NULL \<and> t = s else
+       p \<in># M \<and> (\<forall>q \<in># M. payload_key s p \<le> payload_key s q) \<and>
+       bh_rep t h (M - {#p#})))"
+  oops
+
+lemma bh_free_owned_storage:
+  "bh_rep s h M \<Longrightarrow> calg_contract (binary_heap_free' h) s (\<lambda>r t.
+     r = () \<and> payload_frame s t \<and>
+     bytes_frame (bh_owned s h) (hrs_mem (t_hrs_' s)) (hrs_mem (t_hrs_' t)) \<and>
+     phantom_machine_state_' t = (phantom_machine_state_' s)\<lparr>live_blocks :=
+       ((live_blocks (phantom_machine_state_' s))(ptr_val (bh_buffer s h) := None))
+         (ptr_val h := None)\<rparr>)"
+  oops
+
+lemma bh_new_empty_or_failure:
+  "allocator_wf (phantom_machine_state_' s) \<Longrightarrow>
+   calg_contract calg_binary_new' s (\<lambda>h t.
+     payload_frame s t \<and> existing_blocks_preserved s t \<and>
+     (if h = NULL then phantom_machine_state_' t = phantom_machine_state_' s else
+       bh_rep t h {#} \<and> bh_capacity t h = 16 \<and> new_storage s h t))"
+  oops
+
+end
+end

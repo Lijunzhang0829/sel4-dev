@@ -1,0 +1,9 @@
+{
+  "command": "python3 -m unittest regen.tests.current.test_calg_adapter regen.tests.current.test_intervaltree_seal_context regen.tests.current.test_checker_policy regen.tests.current.test_persistent_checker regen.tests.current.test_seal_evidence regen.tests.current.test_native_fact_audit regen.tests.current.test_repository_planner regen.tests.current.test_contract_refutation regen.tests.current.test_proof_refutation_outcomes",
+  "tests_run": 75,
+  "passed": 65,
+  "skipped": 10,
+  "failures": 0,
+  "errors": 0,
+  "native_adapter_preflight_is_separate": true
+}

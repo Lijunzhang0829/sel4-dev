@@ -1,0 +1,106 @@
+{
+  "scope": "This work only; pre-existing proof/refutation/controller edits are not claimed as this patch.",
+  "groups": [
+    {
+      "purpose": "Freeze the approved C semantics and exact locale targets as a legal generation dataset",
+      "files": [
+        "regen/preparation/calg_dataset.py",
+        "regen/preparation/checker_context.py"
+      ],
+      "checks": [
+        "65 translation facts + 12 preparation witnesses",
+        "six exact declarations and contextual export",
+        "parent facts exported with preparation witnesses removed"
+      ]
+    },
+    {
+      "purpose": "Run Isabelle2026 via process_theories and modern ML APIs",
+      "files": [
+        "regen/execution/native_runtime.py",
+        "regen/execution/calg_process.py",
+        "regen/execution/isabelle_node_checker.py",
+        "regen/execution/batch_checker.py",
+        "regen/execution/persistent_checker.py",
+        "regen/execution/contract_refutation.py",
+        "regen/execution/seal_evidence.py"
+      ],
+      "checks": [
+        "positive and negative native controls",
+        "native negation certificate",
+        "persistent batch",
+        "generic global and locale seals; offline replay"
+      ]
+    },
+    {
+      "purpose": "Propagate frozen X64 architecture through ordinary execution and integration",
+      "files": [
+        "regen/execution/repository_execution.py",
+        "regen/execution/repository_integration.py",
+        "regen/execution/vero_checker_adapter.py"
+      ],
+      "incident": "pilot-002 used ARM default before reading proofs; zero target checks",
+      "checks": [
+        "real controller reads on all four theories",
+        "native execution declaration and proof controls",
+        "37 architecture/continuation regressions, 21 integration regressions; overlapping totals"
+      ]
+    },
+    {
+      "purpose": "Bind dangling distribution links in declaration-cache metadata without treating them as readable files",
+      "files": [
+        "regen/execution/declaration_cache.py"
+      ],
+      "incident": "pilot-004 stopped during declaration initialization on an unbuilt config.h symlink",
+      "checks": [
+        "dangling link and later target changes invalidate identity",
+        "11 adapter/declaration-cache tests"
+      ]
+    },
+    {
+      "purpose": "Accept explicit Calg dataset identity in planner/preflight",
+      "files": [
+        "regen/planning/repository_planner.py",
+        "regen/planning/workspace_preflight.py"
+      ],
+      "checks": [
+        "reviewed model planning and native statement checks"
+      ]
+    },
+    {
+      "purpose": "Record preparation, blind readback, experiment release, native controls and pilot costs separately",
+      "files": [
+        "c-algorithms/tools/catalog.py",
+        "c-algorithms/tools/readback.py",
+        "c-algorithms/tools/pilot.py",
+        "c-algorithms/tools/record_results.py"
+      ],
+      "checks": [
+        "fixed source and heap hashes",
+        "new run identities for infrastructure repairs",
+        "no supervisor target proofs/hints"
+      ]
+    },
+    {
+      "purpose": "Prepare original binomial implementation and eight separate model drafts",
+      "files": [
+        "c-algorithms/binomial/ROOT",
+        "c-algorithms/binomial/theories/Binomial_Environment.thy",
+        "c-algorithms/binomial/theories/Binomial_Heap_C.thy",
+        "c-algorithms/binomial/targets-session/Binomial_Heap_Model.thy",
+        "c-algorithms/binomial/targets-session/Binomial_Heap_Targets.thy"
+      ],
+      "checks": [
+        "95 translation facts/definitions",
+        "eight declarations export no facts",
+        "original source hash preserved",
+        "native allocation-failure and UBSan diagnostics; isolated patch contrast"
+      ]
+    }
+  ],
+  "limits": [
+    "A short pilot cannot establish long-duration stability.",
+    "Calg document/persistent paths are tested; arbitrary stepwise/checkpoint routes are not.",
+    "Native diagnostics are not formal algorithm refutations.",
+    "Binomial semantic readiness remains incomplete."
+  ]
+}

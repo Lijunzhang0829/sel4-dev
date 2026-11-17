@@ -1,0 +1,11 @@
+{
+  "choice": "original-upstream",
+  "commit": "23d453792ed89a28ed7d2c8d4311a4d9f7822edd",
+  "files": {
+    "vendor/binomial-heap.c": "b5ecb7b381ca9d97c366a579fd76921be2e30fffb2cf0964680a6ed41c2c2faf",
+    "vendor/binomial-heap.h": "9adf4f6917936efae0eedfe1f384192a6258afbc8bb235531908a2efddb49fee"
+  },
+  "authorization": "保留原实现，允许形成证伪结果（推荐）",
+  "zero_length_memcpy_patch_applied": false,
+  "applies_to": "next-stage binomial dataset only; environment semantics still require review"
+}

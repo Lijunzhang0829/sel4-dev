@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d",
+  "status": "consistent_with_approved_scope",
+  "readback_path": "evidence/readback-001.json",
+  "readback_sha256": "cb50e1d90bda0569c2acd6b6ed716832b7dd39ca535eb55a48b6ad5ec99a07d5",
+  "compared_by": "supervising agent; separate from stateless read-back call",
+  "target_count": 6,
+  "scope_observations": [
+    "Duplicates count with multiplicity; equal keys have no stability promise.",
+    "No allocation-success guarantee; failure is an ordinary return value.",
+    "Endpoint frames do not prohibit temporary writes or allocations.",
+    "External allocator is trusted specification, not verified libc."
+  ],
+  "unresolved_readback_inputs": [
+    "Library definitions, generated functions and global-address locale were omitted from read-back input; reviewer correctly declined to infer them."
+  ],
+  "cross_checks": [
+    "Preparation_Audit checks generated translation facts and absence of target facts.",
+    "Environment_Sanity supplies nonvacuous representation and allocator witnesses.",
+    "Native declaration preflight must retain binary_heap_input_global_addresses."
+  ],
+  "proves_functional_targets": false
+}

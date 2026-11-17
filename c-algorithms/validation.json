@@ -1,0 +1,40 @@
+{
+  "scope": "preparation-only; generation outcomes are reported separately",
+  "status": "preparation_and_adapter_passed",
+  "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d",
+  "native_audit": {
+    "translation_facts_checked": 65,
+    "preparation_witnesses_checked": 12,
+    "targets_not_exported_as_facts": 6
+  },
+  "native_differential": {
+    "operations": 42016,
+    "injected_allocation_failures": 4,
+    "forced_relocation_scenarios": 1,
+    "live_blocks_at_end": 0
+  },
+  "target_count": 6,
+  "functional_targets_proved_during_preparation": 0,
+  "generation_evidence": "evidence/experiment-summary.json",
+  "independent_readback_completed": true,
+  "native_generation_adapter_checked": true,
+  "libc_implementation_verified": false,
+  "binomial_heap_prepared": false,
+  "source_closure": {
+    "ROOT": "50b5b1a598abe768115aac7f619b3747153ce48c025c1004946d60242b67e3fd",
+    "source-lock.json": "a84e9dc1caf72abeb2ff99123e8a991e65b149ba76d6234e2c405b9cb84c39eb",
+    "environment-lock.json": "ccfeee9ca284017c3b91c47b171852617eaf774f293e1532d53d53fb83043173",
+    "c/binary_heap_input.c": "151dcb8b43bcfafc6693afa50e440fa66b318e26c7d12f2da6fde746516e1483",
+    "theories/Binary_Heap_C.thy": "8897cff328d17676f1b18d594176a16edeef7f8edce3dfa0db3e216b2b6116cb",
+    "theories/Heap_Environment.thy": "43820c5ae33bcd5be4646d9b7f34cace4c2905b85905152e07afdee9069bce21",
+    "targets-session/Binary_Heap_Model.thy": "95788f49425cc81f292d6ee62254ebcc3772b8ad4336b85850c3b98e41a8a57f",
+    "targets-session/Binary_Heap_Targets.thy": "7874d2489bb7df9774cd3688ce2b1243320611e8b322bbcb8afc902f01a40f13",
+    "targets-session/Environment_Sanity.thy": "cb198fd81684bf76e48cf0c1e9cb8434116dcb4fd6ecc86a420bb59eb4e0eb10",
+    "targets-session/Preparation_Audit.thy": "3809432f6cb236b85ba45b0a65751011f6e755d6e8f3bc7500c5d37cabaaac49"
+  },
+  "limitations": [
+    "Finite native tests do not establish universal correctness",
+    "Semantic review is not a proof of target validity",
+    "Preparation success does not imply generated target or repository proof success"
+  ]
+}

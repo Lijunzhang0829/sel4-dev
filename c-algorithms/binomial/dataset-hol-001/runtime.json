@@ -1,0 +1,15 @@
+{
+  "dataset_binding": "2fdc1500b5ef9bbfa806e2e0c0fd18816f1023fa4cb3c5aa6079b5daa23e8a5a",
+  "status": "prepared-and-native-preflight-passed",
+  "prepared": "/tmp/binomial-hol-export-20261111-001/hol-prepared-002",
+  "bootstrap_parent": "/tmp/binomial-hol-export-20261111-001/hol-bootstrap-parent-005",
+  "checker_context_id": "checker-context:21e41d6d892ac7964971",
+  "isabelle": "/tmp/binomial-hol-export-20261111-001/toolchain/Isabelle2026",
+  "afp": "/tmp/binomial-hol-export-20261111-001/toolchain/thys",
+  "upstream_heaps": "/tmp/binomial-hol-export-20261111-001/upstream-heaps",
+  "parent_premises": 60810,
+  "model_calls": 0,
+  "generation_run_started": false,
+  "rebuildable": true,
+  "paths_are_machine_A_runtime_artifacts": true
+}

@@ -1,0 +1,551 @@
+Running Draft ...
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_ENTRIES 91
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0001
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0001 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0002
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0002 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0004
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0004 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0007
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0007 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0008
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0008 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0009
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0009 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0010
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0010 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0011
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0011 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0012
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0012 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0013
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0013 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0014
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0014 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0015
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0015 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0016
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0016 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0017
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0017 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0018
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0018 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0020
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0020 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0021
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0021 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0022
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0022 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0023
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0023 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0024
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0024 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0025
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0025 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0026
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0026 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0027
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0027 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0029
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0029 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0030
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0030 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0031
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0031 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0032
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0032 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0033
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0033 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0035
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0035 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0036
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0036 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0037
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0037 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0038
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0038 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0039
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0039 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0040
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0040 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0041
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0041 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0042
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0042 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0044
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0044 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0045
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0045 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0046
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0046 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0047
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0047 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0048
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0048 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0049
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0049 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0050
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0050 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0051
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0051 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0052
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0052 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0053
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0053 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0055
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0055 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0056
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0056 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0057
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0057 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0058
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0058 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0060
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0060 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0061
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0061 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0062
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0062 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0063
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0063 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0064
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0064 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0065
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0065 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0066
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0066 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0067
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0067 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0068
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0068 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0069
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0069 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0070
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0070 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0071
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0071 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0072
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0072 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0073
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0073 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0074
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0074 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0075
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0075 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0076
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0076 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0077
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0077 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0078
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0078 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0080
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0080 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0081
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0081 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0082
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0082 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0083
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0083 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0084
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0084 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0085
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0085 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0086
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0086 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0087
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0087 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0088
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0088 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0089
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0089 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0090
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0090 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0091
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0091 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0092
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0092 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0093
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0093 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0094
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0094 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0095
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0095 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0096
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0096 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0097
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0097 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0098
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0098 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0099
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0099 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0100
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0100 clean
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_BINDING_BEGIN 0101
+
+Output (line 2 of "/probe/HOL_Binding_Check.thy"):
+HOL_TARGET_BINDING 0101 clean
+Finished Draft (0:00:05 elapsed time, 0:00:04 cpu time, factor 0.87)

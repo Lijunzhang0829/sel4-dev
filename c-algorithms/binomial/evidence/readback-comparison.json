@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-04T01:01:20.190894+00:00",
+  "semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+  "status": "comparison_complete_with_correction_preparation_incomplete",
+  "compared_by": "supervising agent, separate from the stateless tool-free model call",
+  "readback_path": "evidence/readback-001.json",
+  "readback_sha256": "faa11a13b5527b00ce7f452bdfe9e7edc9221f5d90f879e09ba5f43264849ec1",
+  "target_count": 8,
+  "target_coverage_exact": true,
+  "invocation": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "wall_seconds": 134.611,
+    "started_at": "2026-11-04T00:54:45.243545+00:00",
+    "finished_at": "2026-11-04T00:56:59.855402+00:00",
+    "no_tool_events": true,
+    "formal_input_exactly_matches_authorized_files": true,
+    "intended_prose_supplied": false
+  },
+  "source_closure_verified_unchanged": true,
+  "source_closure": {
+    "ROOT": "42df8f2dd42b2bfe63f6f30a5dbc0aa721f2846c1f8e4c751199243eed35c10d",
+    "source-lock.json": "e1dc6a0ad880a63e60a74a1a1e1c4b8326426246a6fb50f64263826191039985",
+    "version-decision.json": "4cfbfc5c9d4732bff80e6cee20f69397151ef1f71ee584dde929147ffe927730",
+    "environment-lock.json": "ccfeee9ca284017c3b91c47b171852617eaf774f293e1532d53d53fb83043173",
+    "translation-input.json": "7a60a3c7e49482843d991c28603819fdc0ec97593a09df95e4bce3b976e9d173",
+    "c/binomial_heap_input.c": "7aa97b7051740519dbd2e813db096cd8a3ab3e33951e7950a26d472d67070d9f",
+    "theories/Binomial_Environment.thy": "ea4449bfe91a24ca94a538ff0d51c375a963de710e8d25c0daa5f8f46c12f8af",
+    "theories/Binomial_Heap_C.thy": "e8a9a68bf1011b23a93e9e75c8610f8fdba7b7b82e20d1d8f94777807cd16ada",
+    "targets-session/Binomial_Heap_Model.thy": "fb9675151af46bc93058d5aa535146c05914ad74fa0486e007c942fa2ed9d843",
+    "targets-session/Binomial_Heap_Targets.thy": "1cbdc1e9a98ee38a21e9f138b1fc13a369b8f4e1591415051013221f90daeb31",
+    "targets-session/Binomial_Preparation_Audit.thy": "c20e0e2ef12feb7e7707faa2bfe3a8f422a4eff091461e0c580fc541f6b48036"
+  },
+  "targets": [
+    {
+      "id": "bn_count_exact",
+      "assessment": "consistent",
+      "comparison": "返回计数等于多重集总重数，整个状态不变；bn_rep 已含字段与重数相等，目标验证读取 API 的连接，不单独证明更新保持计数。"
+    },
+    {
+      "id": "bn_insert_correct",
+      "assessment": "consistent_after_stack_constant_correction",
+      "comparison": "元素以指针多重集计数；成功增加一次并约束最终所有权转换，失败保持抽象内容和活块映射，不要求形状或已拥有块字节回滚。\\<S> 是固定生成常量。"
+    },
+    {
+      "id": "bn_pop_correct",
+      "assessment": "consistent_after_stack_constant_correction",
+      "comparison": "非 NULL 返回删除一个最小键指针的一次出现；NULL 允许非空堆的分配失败；不保证成功可达。\\<S> 固定，当前共用插入的较强栈准备条件。"
+    },
+    {
+      "id": "bn_free_owned_storage",
+      "assessment": "consistent",
+      "comparison": "最终恰好移除初始拥有的结构块；保护 payload 与外部活块，未要求释放区清零，也未约束中间临时分配。"
+    },
+    {
+      "id": "bn_new_empty_or_failure",
+      "assessment": "consistent",
+      "comparison": "成功仅新增空堆结构块；NULL 正常返回保留 ghost allocator 和列明外部字节，但不承诺完整状态不变或成功分配。"
+    },
+    {
+      "id": "bn_ref_null",
+      "assessment": "consistent",
+      "comparison": "无局部前提，要求 NULL 引用操作正常且状态不变；仍在固定全局地址上下文内。"
+    },
+    {
+      "id": "bn_ref_increment",
+      "assessment": "consistent_with_explicit_scope_limit",
+      "comparison": "局部原始内存字段更新，无 live_blocks 登记、allocator_wf 或独占所有权前提。c_guard 不是生命周期有效性保证；原 C 字段为 unsigned short。"
+    },
+    {
+      "id": "bn_merge_leaves_nonfailure",
+      "assessment": "consistent_with_explicit_scope_limit",
+      "comparison": "True 后置条件只留下非失败及正常结果存在性，没有树序、元素、frame 或成功分配保证。sanitizer 线索不是正式否定证书。"
+    }
+  ],
+  "readback_corrections": [
+    {
+      "id": "fixed_stack_constant",
+      "targets": [
+        "bn_insert_correct",
+        "bn_pop_correct"
+      ],
+      "reviewer_claim": "回译将 S 列为与 s,h,P,F,M 一起普遍量化的变量。",
+      "correction": "实际目标引用 Binomial_Heap_C.\\<S>，是固定 C 环境的常量；bn_stack_ready 的定义可参数化，不代表目标中的栈区域可以任意选择。",
+      "evidence": "evidence/isabelle-audit.txt: CALG_BINOMIAL_STACK_TERM Term.Const"
+    }
+  ],
+  "confirmed_scope_limits": [
+    "完整表示与实际栈条件尚缺非空实例；声明检查和正常结果存在项不能单独排除前提空真。",
+    "计数目标是观察函数契约；内部 merge/undo 的完整功能目标尚未独立列入八条清单。",
+    "成功插入/弹出有最终存储转换约束；这些约束不证明执行途中没有临时分配或修改。",
+    "引用计数目标只在原始内存语义中陈述字段更新，不应称为完整所有权安全定理。",
+    "叶节点 merge 仅为非失败性挑战，可能被证伪；原生诊断不能替代 Isabelle 证书。",
+    "分配失败是正常业务返回；非失败不等于必定成功分配。",
+    "memcpy 环境未完整表达 C 指针来源和读写权限；libc 实现不在本项目验证范围。"
+  ],
+  "local_library_cross_checks": [
+    {
+      "path": "/tmp/autocorres2-c-screen-20261103/afp-2026/mirror-afp-2026-fca9585c6341cbf0f91816850b375c02e2c17ba6/thys/AutoCorres2/lib/Spec_Monad.thy",
+      "sha256": "658570b0094813b18572cd5c649ebd1add1e023a0662014c9899f5e255952342",
+      "finding": "holds_post_state at 277-279 and runs_to at 1394-1397: Failure is rejected; every Success outcome must satisfy the postcondition."
+    },
+    {
+      "path": "/tmp/autocorres2-c-screen-20261103/afp-2026/mirror-afp-2026-fca9585c6341cbf0f91816850b375c02e2c17ba6/thys/AutoCorres2/lib/Reaches.thy",
+      "sha256": "b747b3c40d075f0b39a1f24775d2037e6c860253a9eef37cdfa00628b836a4d0",
+      "finding": "reaches at 63-64 and runs_to_def_old at 80: membership in actual outcome set; nonfailure plus universal postcondition."
+    },
+    {
+      "path": "/tmp/autocorres2-c-screen-20261103/afp-2026/mirror-afp-2026-fca9585c6341cbf0f91816850b375c02e2c17ba6/thys/AutoCorres2/c-parser/umm_heap/CTypesDefs.thy",
+      "sha256": "9be58b6af96db14584104f601a7eea36552abb788b7def5e9ebd5d3118ac56c4",
+      "finding": "c_guard at 576-585: alignment and null-address exclusion across object span, not allocation ownership."
+    },
+    {
+      "path": "/tmp/autocorres2-c-screen-20261103/afp-2026/mirror-afp-2026-fca9585c6341cbf0f91816850b375c02e2c17ba6/thys/AutoCorres2/c-parser/CLanguage.thy",
+      "sha256": "38369ef64994ff244a175be708bafb665bd87eec9a69ff409ef9282a98cc0233",
+      "finding": "stack_allocs at 1036-1046: typed footprint candidates within the specified stack region."
+    }
+  ],
+  "unresolved_after_comparison": [
+    "Construct native checked witnesses satisfying the full bn_rep, payload separation and actual generated stack assumptions.",
+    "Assess sufficiency and conservatism of the two-stage stack condition; typing preservation warnings for insert/pop remain.",
+    "Review and approve the new eight-goal scope and explicit calloc/memcpy/stack environment.",
+    "Build and preflight the binomial generation adapter before a separately configured pilot."
+  ],
+  "readback_input_limits": [
+    "Generated function bodies, generated struct layouts, full imported library definitions and global-address context assumptions were not supplied to the external reviewer. Local definition checks do not constitute target proofs."
+  ],
+  "formal_model_or_target_changes": false,
+  "functional_targets_proved": 0,
+  "formal_refutations": 0,
+  "semantic_approval_granted": false,
+  "generation_allowed": false,
+  "raw_response_preserved": true,
+  "supersedes_only_comparison_pending_snapshot_in": "evidence/readback-001.json"
+}

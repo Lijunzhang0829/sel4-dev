@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "-m",
+    "unittest",
+    "regen.tests.current.test_calg_hol_input",
+    "regen.tests.current.test_result_scope",
+    "regen.tests.current.test_calg_current_integration"
+  ],
+  "returncode": 0,
+  "output": "..................s.\n----------------------------------------------------------------------\nRan 20 tests in 0.862s\n\nOK (skipped=1)\n",
+  "scope": "input binding, proof-free target selection, C-free input, result-scope isolation and default deployment routing; native evidence is separate"
+}

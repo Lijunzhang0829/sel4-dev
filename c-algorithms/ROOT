@@ -1,0 +1,14 @@
+session Calg_Binary_Foundation = AutoCorres2 +
+  options [document = false, timeout = 600]
+  directories "theories"
+  theories
+    Heap_Environment
+    Binary_Heap_C
+
+session Calg_Binary_Targets in "targets-session" = Calg_Binary_Foundation +
+  options [document = false, timeout = 300]
+  theories
+    Binary_Heap_Model
+    Binary_Heap_Targets
+    Environment_Sanity
+    Preparation_Audit

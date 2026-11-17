@@ -1,0 +1,356 @@
+
+Theory "Calg_Binary_Targets.Binary_Heap_Model" (in Calg_Binary_Targets):
+
+Output (line 10 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  bh_record :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> StrictC'_BinaryHeap_C"
+
+Output (line 12 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  bh_count :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> nat"
+
+Output (line 13 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  bh_capacity :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> nat"
+
+Output (line 14 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  bh_buffer :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> unit ptr ptr"
+
+Output (line 15 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  bh_values :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> unit ptr list"
+
+Output (line 18 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  bh_contents :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> unit ptr multiset"
+
+Output (line 19 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  payload_key :: "'a globals_scheme \<Rightarrow> 'b ptr \<Rightarrow> int"
+
+Output (line 21 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  payload_valid :: "'a globals_scheme \<Rightarrow> 'b ptr \<Rightarrow> bool"
+
+Output (line 25 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  bh_rep :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> unit ptr multiset \<Rightarrow> bool"
+
+Output (line 42 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  insert_admissible :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> bool"
+
+Output (line 46 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  payload_frame :: "'a globals_scheme \<Rightarrow> 'b globals_scheme \<Rightarrow> bool"
+
+Output (line 52 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  bh_owned :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> 64 word set"
+
+Output (line 56 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  other_blocks_unchanged :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> 'b globals_scheme \<Rightarrow> bool"
+
+Output (line 63 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  insert_storage :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> 'b globals_scheme \<Rightarrow> bool"
+
+Output (line 69 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  existing_blocks_preserved :: "'a globals_scheme \<Rightarrow> 'b globals_scheme \<Rightarrow> bool"
+
+Output (line 75 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  new_storage :: "'a globals_scheme \<Rightarrow> StrictC'_BinaryHeap_C ptr \<Rightarrow> 'b globals_scheme \<Rightarrow> bool"
+
+Output (line 84 of "/project/targets-session/Binary_Heap_Model.thy"):
+consts
+  calg_contract :: "('e, 'a, 's) spec_monad \<Rightarrow> 's \<Rightarrow> ('a \<Rightarrow> 's \<Rightarrow> bool) \<Rightarrow> bool"
+
+Theory "Calg_Binary_Targets.Binary_Heap_Targets" (in Calg_Binary_Targets):
+
+Output (line 8 of "/project/targets-session/Binary_Heap_Targets.thy"):
+locale binary_heap_input_global_addresses
+  assumes "binary_heap_input_global_addresses"
+
+Theory "Calg_Binary_Targets.Environment_Sanity" (in Calg_Binary_Targets):
+
+Output (line 7 of "/project/targets-session/Environment_Sanity.thy"):
+consts
+  empty_allocator :: "calg_allocator"
+
+Output (line 9 of "/project/targets-session/Environment_Sanity.thy"):
+consts
+  one_allocator :: "calg_allocator"
+
+Output (line 12 of "/project/targets-session/Environment_Sanity.thy"):
+theorem empty_allocator_wf: allocator_wf empty_allocator
+
+Output (line 15 of "/project/targets-session/Environment_Sanity.thy"):
+theorem fresh_block_witness: fresh_block empty_allocator 0x10 16
+
+Output (line 18 of "/project/targets-session/Environment_Sanity.thy"):
+theorem malloc_success_witness: malloc_rel 16 ?h empty_allocator 0x10 ?h one_allocator
+
+Output (line 23 of "/project/targets-session/Environment_Sanity.thy"):
+theorem one_allocator_wf: allocator_wf one_allocator
+
+Output (line 26 of "/project/targets-session/Environment_Sanity.thy"):
+theorem
+  realloc_in_place_witness: realloc_rel 0x10 32 ?h one_allocator 0x10 ?h (empty_allocator\<lparr>live_blocks := [0x10 \<mapsto> 32]\<rparr>)
+
+Output (line 32 of "/project/targets-session/Environment_Sanity.thy"):
+theorem
+  realloc_move_witness:
+    realloc_rel 0x10 32 (\<lambda>_. 0) one_allocator 0x40 (\<lambda>_. 0) (empty_allocator\<lparr>live_blocks := [0x40 \<mapsto> 32]\<rparr>)
+
+Output (line 38 of "/project/targets-session/Environment_Sanity.thy"):
+theorem free_success_witness: free_rel 0x10 ?h one_allocator ?h empty_allocator
+
+Output (line 43 of "/project/targets-session/Environment_Sanity.thy"):
+theorem invalid_free_rejected: \<not> free_rel 0x10 ?h empty_allocator ?h' ?A'
+
+Output (line 47 of "/project/targets-session/Environment_Sanity.thy"):
+theorem
+  malloc_failure_execution: allocator_wf (phantom_machine_state_' ?s) \<Longrightarrow> reaches (malloc' 0x10) ?s (Result NULL) ?s
+
+Output (line 53 of "/project/targets-session/Environment_Sanity.thy"):
+theorem
+  malloc_success_execution:
+    phantom_machine_state_' ?s = empty_allocator \<Longrightarrow>
+    reaches (malloc' 0x10) ?s (Result (PTR(unit) 0x10)) (?s\<lparr>phantom_machine_state_' := one_allocator\<rparr>)
+
+Output (line 60 of "/project/targets-session/Environment_Sanity.thy"):
+consts
+  witness_heap_record :: "StrictC'_BinaryHeap_C"
+
+Output (line 65 of "/project/targets-session/Environment_Sanity.thy"):
+consts
+  witness_allocator :: "calg_allocator"
+
+Output (line 69 of "/project/targets-session/Environment_Sanity.thy"):
+consts
+  witness_state :: "globals"
+
+Output (line 74 of "/project/targets-session/Environment_Sanity.thy"):
+theorem representation_witness: bh_rep witness_state (PTR(StrictC'_BinaryHeap_C) 0x10) {#}
+
+Output (line 81 of "/project/targets-session/Environment_Sanity.thy"):
+theorem
+  insertion_precondition_witness:
+    bh_rep witness_state (PTR(StrictC'_BinaryHeap_C) 0x10) {#} \<and>
+    payload_valid witness_state (PTR(unit) 0x100) \<and> insert_admissible witness_state (PTR(StrictC'_BinaryHeap_C) 0x10)
+
+Theory "Calg_Binary_Targets.Preparation_Audit" (in Calg_Binary_Targets):
+
+Output (line 5 of "/project/targets-session/Preparation_Audit.thy"):
+locale binary_heap_input_global_addresses
+  assumes "binary_heap_input_global_addresses"
+
+Output (line 7 of "/project/targets-session/Preparation_Audit.thy"):
+  L1corres True \<Gamma> l1_binary_heap_num_entries' (Call binary_heap_input.binary_heap_num_entries)
+  L2corres globals (\<lambda>s. clookup 1 (locals s)) global_exn_var'_' (\<lambda>s. clookup 0 (locals s) = ?heap)
+   (l2_binary_heap_num_entries' ?heap) l1_binary_heap_num_entries'
+  refines (l2_binary_heap_num_entries' ?heap) (binary_heap_num_entries' ?heap) ?s ?s (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_int_compare' (Call binary_heap_input.int_compare)
+  L2corres globals (\<lambda>s. clookup 2 (locals s)) global_exn_var'_'
+   ((\<lambda>s. clookup 0 (locals s) = ?vlocation1.0) and (\<lambda>s. clookup 1 (locals s) = ?vlocation2.0))
+   (l2_int_compare' ?vlocation1.0 ?vlocation2.0) l1_int_compare'
+  refines (l2_int_compare' ?vlocation1.0 ?vlocation2.0) (int_compare' ?vlocation1.0 ?vlocation2.0) ?s ?s
+   (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_binary_heap_cmp' (Call binary_heap_input.binary_heap_cmp)
+  L2corres globals (\<lambda>s. clookup 3 (locals s)) global_exn_var'_'
+   ((\<lambda>s. clookup 0 (locals s) = ?heap) and
+    ((\<lambda>s. clookup 1 (locals s) = ?data1.0) and (\<lambda>s. clookup 2 (locals s) = ?data2.0)))
+   (l2_binary_heap_cmp' ?heap ?data1.0 ?data2.0) l1_binary_heap_cmp'
+  refines (l2_binary_heap_cmp' ?heap ?data1.0 ?data2.0) (binary_heap_cmp' ?heap ?data1.0 ?data2.0) ?s ?s
+   (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_realloc' (Call binary_heap_input.realloc)
+  L2corres globals (\<lambda>s. clookup 2 (locals s)) global_exn_var'_'
+   ((\<lambda>s. clookup 0 (locals s) = ?ptr) and (\<lambda>s. clookup 1 (locals s) = ?size)) (l2_realloc' ?ptr ?size) l1_realloc'
+  refines (l2_realloc' ?ptr ?size) (realloc' ?ptr ?size) ?s ?s (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_binary_heap_insert' (Call binary_heap_input.binary_heap_insert)
+  L2corres globals (\<lambda>s. clookup 2 (locals s)) global_exn_var'_'
+   ((\<lambda>s. clookup 0 (locals s) = ?heap) and (\<lambda>s. clookup 1 (locals s) = ?value)) (l2_binary_heap_insert' ?heap ?value)
+   l1_binary_heap_insert'
+  refines (l2_binary_heap_insert' ?heap ?value) (binary_heap_insert' ?heap ?value) ?s ?s (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_free' (Call binary_heap_input.free)
+  L2corres globals (\<lambda>s. ()) global_exn_var'_' (\<lambda>s. clookup 0 (locals s) = ?ptr) (l2_free' ?ptr) l1_free'
+  refines (l2_free' ?ptr) (free' ?ptr) ?s ?s (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_binary_heap_free' (Call binary_heap_input.binary_heap_free)
+  L2corres globals (\<lambda>s. ()) global_exn_var'_' (\<lambda>s. clookup 0 (locals s) = ?heap) (l2_binary_heap_free' ?heap)
+   l1_binary_heap_free'
+  refines (l2_binary_heap_free' ?heap) (binary_heap_free' ?heap) ?s ?s (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_malloc' (Call binary_heap_input.malloc)
+  L2corres globals (\<lambda>s. clookup 1 (locals s)) global_exn_var'_' (\<lambda>s. clookup 0 (locals s) = ?size) (l2_malloc' ?size)
+   l1_malloc'
+  refines (l2_malloc' ?size) (malloc' ?size) ?s ?s (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_binary_heap_new' (Call binary_heap_input.binary_heap_new)
+  L2corres globals (\<lambda>s. clookup 2 (locals s)) global_exn_var'_'
+   ((\<lambda>s. clookup 0 (locals s) = ?heap_type) and (\<lambda>s. clookup 1 (locals s) = ?compare_func))
+   (l2_binary_heap_new' ?heap_type ?compare_func) l1_binary_heap_new'
+  refines (l2_binary_heap_new' ?heap_type ?compare_func) (binary_heap_new' ?heap_type ?compare_func) ?s ?s
+   (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_calg_binary_new' (Call binary_heap_input.calg_binary_new)
+  L2corres globals (\<lambda>s. clookup 0 (locals s)) global_exn_var'_' (\<lambda>s. True) l2_calg_binary_new' l1_calg_binary_new'
+  refines l2_calg_binary_new' calg_binary_new' ?s ?s (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_binary_heap_pop' (Call binary_heap_input.binary_heap_pop)
+  L2corres globals (\<lambda>s. clookup 1 (locals s)) global_exn_var'_' (\<lambda>s. clookup 0 (locals s) = ?heap)
+   (l2_binary_heap_pop' ?heap) l1_binary_heap_pop'
+  refines (l2_binary_heap_pop' ?heap) (binary_heap_pop' ?heap) ?s ?s (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_init'globals' (Call binary_heap_input.init'globals)
+  L2corres globals (\<lambda>s. ()) global_exn_var'_' (\<lambda>s. True) l2_init'globals' l1_init'globals'
+  refines l2_init'globals' init'globals' ?s ?s (rel_prod rel_liftE (=))
+  L1corres True \<Gamma> l1_int_equal' (Call binary_heap_input.int_equal)
+  L2corres globals (\<lambda>s. clookup 2 (locals s)) global_exn_var'_'
+   ((\<lambda>s. clookup 0 (locals s) = ?vlocation1.0) and (\<lambda>s. clookup 1 (locals s) = ?vlocation2.0))
+   (l2_int_equal' ?vlocation1.0 ?vlocation2.0) l1_int_equal'
+  refines (l2_int_equal' ?vlocation1.0 ?vlocation2.0) (int_equal' ?vlocation1.0 ?vlocation2.0) ?s ?s
+   (rel_prod rel_liftE (=))
+  ac_corres' (\<lambda>_. Exception ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma>
+   (\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_num_entries.ret') global_exn_var'_'
+   ((\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_num_entries.heap = ?heap) and (\<lambda>_. True) \<circ> globals and (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals)
+   (binary_heap_num_entries' ?heap) (Call binary_heap_input.binary_heap_num_entries)
+  ac_corres' (\<lambda>_. Exception ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma>
+   (\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_insert.ret') global_exn_var'_'
+   ((\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_insert.heap = ?heap) and (\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_insert.value = ?value) and
+    (\<lambda>_. True) \<circ> globals and
+    (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals)
+   (binary_heap_insert' ?heap ?value) (Call binary_heap_input.binary_heap_insert)
+  ac_corres' (\<lambda>_. Result ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. ()) global_exn_var'_'
+   ((\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_free.heap = ?heap) and (\<lambda>_. True) \<circ> globals and (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals)
+   (binary_heap_free' ?heap) (Call binary_heap_input.binary_heap_free)
+  ac_corres' (\<lambda>_. Exception ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. s \<cdot>\<^sub>\<L> calg_binary_new.ret')
+   global_exn_var'_' ((\<lambda>s. True) and (\<lambda>_. True) \<circ> globals and (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals) calg_binary_new'
+   (Call binary_heap_input.calg_binary_new)
+  ac_corres' (\<lambda>_. Exception ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_pop.ret')
+   global_exn_var'_'
+   ((\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_pop.heap = ?heap) and (\<lambda>_. True) \<circ> globals and (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals)
+   (binary_heap_pop' ?heap) (Call binary_heap_input.binary_heap_pop)
+  ac_corres' (\<lambda>_. Exception ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_new.ret')
+   global_exn_var'_'
+   ((\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_new.heap_type = ?heap_type) and (\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_new.compare_func = ?compare_func) and
+    (\<lambda>_. True) \<circ> globals and
+    (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals)
+   (binary_heap_new' ?heap_type ?compare_func) (Call binary_heap_input.binary_heap_new)
+  ac_corres' (\<lambda>_. Exception ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_cmp.ret')
+   global_exn_var'_'
+   ((\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_cmp.heap = ?heap) and
+    ((\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_cmp.data1 = ?data1.0) and (\<lambda>s. s \<cdot>\<^sub>\<L> binary_heap_cmp.data2 = ?data2.0)) and
+    (\<lambda>_. True) \<circ> globals and
+    (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals)
+   (binary_heap_cmp' ?heap ?data1.0 ?data2.0) (Call binary_heap_input.binary_heap_cmp)
+  ac_corres' (\<lambda>_. Result ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. ()) global_exn_var'_'
+   ((\<lambda>s. True) and (\<lambda>_. True) \<circ> globals and (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals) init'globals'
+   (Call binary_heap_input.init'globals)
+  ac_corres' (\<lambda>_. Exception ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. s \<cdot>\<^sub>\<L> int_compare.ret')
+   global_exn_var'_'
+   ((\<lambda>s. s \<cdot>\<^sub>\<L> int_compare.vlocation1 = ?vlocation1.0) and (\<lambda>s. s \<cdot>\<^sub>\<L> int_compare.vlocation2 = ?vlocation2.0) and
+    (\<lambda>_. True) \<circ> globals and
+    (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals)
+   (int_compare' ?vlocation1.0 ?vlocation2.0) (Call binary_heap_input.int_compare)
+  ac_corres' (\<lambda>_. Exception ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. s \<cdot>\<^sub>\<L> int_equal.ret')
+   global_exn_var'_'
+   ((\<lambda>s. s \<cdot>\<^sub>\<L> int_equal.vlocation1 = ?vlocation1.0) and (\<lambda>s. s \<cdot>\<^sub>\<L> int_equal.vlocation2 = ?vlocation2.0) and
+    (\<lambda>_. True) \<circ> globals and
+    (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals)
+   (int_equal' ?vlocation1.0 ?vlocation2.0) (Call binary_heap_input.int_equal)
+  ac_corres' (\<lambda>_. Exception ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. s \<cdot>\<^sub>\<L> realloc.ret')
+   global_exn_var'_'
+   ((\<lambda>s. s \<cdot>\<^sub>\<L> realloc.ptr = ?ptr) and (\<lambda>s. s \<cdot>\<^sub>\<L> realloc.size = ?size) and (\<lambda>_. True) \<circ> globals and
+    (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals)
+   (realloc' ?ptr ?size) (Call binary_heap_input.realloc)
+  ac_corres' (\<lambda>_. Exception ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. s \<cdot>\<^sub>\<L> malloc.ret')
+   global_exn_var'_' ((\<lambda>s. s \<cdot>\<^sub>\<L> malloc.size = ?size) and (\<lambda>_. True) \<circ> globals and (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals)
+   (malloc' ?size) (Call binary_heap_input.malloc)
+  ac_corres' (\<lambda>_. Result ()) ((\<lambda>s. s) \<circ> globals) True {AssumeError, StackOverflow} \<Gamma> (\<lambda>s. ()) global_exn_var'_'
+   ((\<lambda>s. s \<cdot>\<^sub>\<L> free.ptr = ?ptr) and (\<lambda>_. True) \<circ> globals and (\<lambda>_. True) \<circ> (\<lambda>s. s) \<circ> globals) (free' ?ptr)
+   (Call binary_heap_input.free)
+
+Output (line 8 of "/project/targets-session/Preparation_Audit.thy"):
+\<P> \<equiv> map_of_default \<top> [(binary_heap_input.int_compare, int_compare')]
+
+Output (line 9 of "/project/targets-session/Preparation_Audit.thy"):
+  gets_the (ogets (\<lambda>_. ?f)) = return ?f
+  gets_the (ogets ?f) = gets ?f
+  \<Gamma> binary_heap_input.free = Some free_body
+  \<Gamma> binary_heap_input.malloc = Some malloc_body
+  \<Gamma> binary_heap_input.realloc = Some realloc_body
+  \<Gamma> binary_heap_input.int_equal = Some int_equal_body
+  \<Gamma> binary_heap_input.int_compare = Some int_compare_body
+  \<Gamma> binary_heap_input.init'globals = Some init'globals_body
+  \<Gamma> binary_heap_input.binary_heap_cmp = Some binary_heap_cmp_body
+  \<Gamma> binary_heap_input.binary_heap_new = Some binary_heap_new_body
+  \<Gamma> binary_heap_input.binary_heap_pop = Some binary_heap_pop_body
+  \<Gamma> binary_heap_input.calg_binary_new = Some calg_binary_new_body
+  \<Gamma> binary_heap_input.binary_heap_free = Some binary_heap_free_body
+  \<Gamma> binary_heap_input.binary_heap_insert = Some binary_heap_insert_body
+  \<Gamma> binary_heap_input.binary_heap_num_entries = Some binary_heap_num_entries_body
+  \<P> binary_heap_input.int_compare \<equiv> int_compare'
+
+Output (line 10 of "/project/targets-session/Preparation_Audit.thy"):
+CALG_TRANSLATION_FACTS_CHECKED 65
+
+Output (line 10 of "/project/targets-session/Preparation_Audit.thy"):
+oracles:
+
+Output (line 10 of "/project/targets-session/Preparation_Audit.thy"):
+val facts =
+   ["L1corres True \<Gamma> l1_binary_heap_num_entries' (Call binary_heap_input.binary_heap_num_entries)",
+    "L2corres globals (\<lambda>s. clookup 1 (locals s)) global_exn_var'_' (\<lambda>s. clookup 0 (locals s) = ?heap)
+      (l2_binary_heap_num_entries' ?heap) l1_binary_heap_num_entries'",
+    "refines (l2_binary_heap_num_entries' ?heap) (binary_heap_num_entries' ?heap) ?s ?s (rel_prod rel_liftE (=))",
+    "L1corres True \<Gamma> l1_int_compare' (Call binary_heap_input.int_compare)",
+    "L2corres globals (\<lambda>s. clookup 2 (locals s)) global_exn_var'_'
+      ((\<lambda>s. clookup 0 (locals s) = ?vlocation1.0) and (\<lambda>s. clookup 1 (locals s) = ?vlocation2.0))
+      (l2_int_compare' ?vlocation1.0 ?vlocation2.0) l1_int_compare'",
+    "refines (l2_int_compare' ?vlocation1.0 ?vlocation2.0) (int_compare' ?vlocation1.0 ?vlocation2.0) ?s ?s
+      (rel_prod rel_liftE (=))",
+    "L1corres True \<Gamma> l1_binary_heap_cmp' (Call binary_heap_input.binary_heap_cmp)",
+    "L2corres globals (\<lambda>s. clookup 3 (locals s)) global_exn_var'_'
+      ((\<lambda>s. clookup ... (... ...) = ?heap) and ((\<lambda>s. ... ... ... ... ?data1.0) and (\<lambda>s. ... ... ... ... ?data2.0)))
+      (l2_binary_heap_cmp' ?heap ?data1.0 ?data2.0) l1_binary_heap_cmp'",
+    "refines (l2_binary_heap_cmp' ?heap ?data1.0 ?data2.0) (binary_heap_cmp' ?heap ?data1.0 ?data2.0) ?s ?s
+      (rel_prod rel_liftE (=))",
+    "L1corres True \<Gamma> l1_realloc' (Call binary_heap_input.realloc)",
+    "L2corres globals (\<lambda>s. clookup 2 (... ...)) global_exn_var'_' ((\<lambda>s. ... ... ...) and (\<lambda>s. ... ... ...))
+      (l2_realloc' ?ptr ?size) l1_realloc'",
+    "refines (l2_realloc' ?ptr ?size) (realloc' ?ptr ?size) ?s ?s (rel_prod rel_liftE ...)",
+    "L1corres True \<Gamma> l1_binary_heap_insert' (... ...)",
+    "L2corres globals (......... ...) global_exn_var'_' ...... ... ...... (... ... ...) l1_binary_heap_insert'",
+    "... ......... ......... ?s ?s .........", "... ... ... ... ...", "...", "...", "...", ..., ...]:
+   thm list
+
+Output (line 19 of "/project/targets-session/Preparation_Audit.thy"):
+CALG_PREPARATION_WITNESSES_CHECKED 12
+
+Output (line 19 of "/project/targets-session/Preparation_Audit.thy"):
+CALG_TARGETS_NOT_EXPORTED_AS_FACTS 6
+
+Output (line 19 of "/project/targets-session/Preparation_Audit.thy"):
+val witnesses =
+   ["allocator_wf empty_allocator", "fresh_block empty_allocator 0x10 16",
+    "malloc_rel 16 ?h empty_allocator 0x10 ?h one_allocator", "allocator_wf one_allocator",
+    "realloc_rel 0x10 32 ?h one_allocator 0x10 ?h (empty_allocator\<lparr>live_blocks := [0x10 \<mapsto> 32]\<rparr>)",
+    "realloc_rel 0x10 32 (\<lambda>_. 0) one_allocator 0x40 (\<lambda>_. 0) (empty_allocator\<lparr>live_blocks := [0x40 \<mapsto> 32]\<rparr>)",
+    "free_rel 0x10 ?h one_allocator ?h empty_allocator", "\<not> free_rel 0x10 ?h empty_allocator ?h' ?A'",
+    "allocator_wf (phantom_machine_state_' ?s) \<Longrightarrow> reaches (malloc' 0x10) ?s (Result NULL) ?s",
+    "phantom_machine_state_' ?s = empty_allocator \<Longrightarrow>
+     reaches (malloc' 0x10) ?s (Result (...... 0x10)) (?s\<lparr>phantom_machine_state_' := ...\<rparr>)",
+    "bh_rep witness_state (............ 0x10) {#}",
+    "bh_rep witness_state (...... 0x10) {#} \<and>
+     payload_valid witness_state (... ...) \<and> insert_admissible witness_state (... ...)"]:
+   thm list
+val targets =
+   ["bh_count_exact", "bh_insert_correct", "bh_insert_without_growth", "bh_pop_correct", "bh_free_owned_storage",
+    "bh_new_empty_or_failure"]:
+   string list
+val exported_names =
+   ["ATP.fAll_def", "ATP.fAll_law", "ATP.fAll_table", "ATP.fChoice_def", "ATP.fChoice_iff_Ex", "ATP.fComp_def",
+    "ATP.fComp_law", "ATP.fEx_def", "ATP.fEx_law", "ATP.fEx_table", "ATP.fFalse_def", "ATP.fNot_def", "ATP.fNot_law",
+    "ATP.fNot_table", "ATP.fTrue_def", "ATP.fTrue_ne_fFalse", "ATP.fconj_def", "ATP.fconj_laws", "ATP.fconj_table",
+    "ATP.fdisj_def", ...]:
+   string list
+val leaked = []: string list

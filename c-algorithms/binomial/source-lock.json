@@ -1,0 +1,10 @@
+{
+  "upstream": "fragglet/c-algorithms",
+  "commit": "23d453792ed89a28ed7d2c8d4311a4d9f7822edd",
+  "source_evidence": "reports/regen/autocorres2-c-candidate-screen-20261103-001/evidence/fragglet__c-algorithms/source-sha256.json",
+  "files": {
+    "vendor/binomial-heap.c": "b5ecb7b381ca9d97c366a579fd76921be2e30fffb2cf0964680a6ed41c2c2faf",
+    "vendor/binomial-heap.h": "9adf4f6917936efae0eedfe1f384192a6258afbc8bb235531908a2efddb49fee"
+  },
+  "status": "next-stage diagnostic only; no Isabelle model or functional proof yet"
+}

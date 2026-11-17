@@ -1,0 +1,21 @@
+\<S>	sat_stack
+\<G>	{}
+binomial_heap_input.binomial_heap_cmp	PTR(unit) 0x2000
+binomial_heap_input.binomial_heap_free	PTR(unit) 0x2010
+binomial_heap_input.binomial_heap_insert	PTR(unit) 0x2020
+binomial_heap_input.binomial_heap_merge	PTR(unit) 0x2030
+binomial_heap_input.binomial_heap_merge_undo	PTR(unit) 0x2040
+binomial_heap_input.binomial_heap_new	PTR(unit) 0x2050
+binomial_heap_input.binomial_heap_num_entries	PTR(unit) 0x2060
+binomial_heap_input.binomial_heap_pop	PTR(unit) 0x2070
+binomial_heap_input.binomial_tree_merge	PTR(unit) 0x2080
+binomial_heap_input.binomial_tree_ref	PTR(unit) 0x2090
+binomial_heap_input.binomial_tree_unref	PTR(unit) 0x20A0
+binomial_heap_input.calg_binomial_new	PTR(unit) 0x20B0
+binomial_heap_input.calloc	PTR(unit) 0x20C0
+binomial_heap_input.free	PTR(unit) 0x20D0
+binomial_heap_input.init'globals	PTR(unit) 0x20E0
+binomial_heap_input.int_compare	PTR(unit) 0x20F0
+binomial_heap_input.int_equal	PTR(unit) 0x2100
+binomial_heap_input.malloc	PTR(unit) 0x2110
+binomial_heap_input.memcpy	PTR(unit) 0x2120

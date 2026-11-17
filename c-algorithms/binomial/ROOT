@@ -1,0 +1,12 @@
+session Calg_Binomial_Foundation in "theories" = AutoCorres2 +
+  options [document = false]
+  theories
+    Binomial_Environment
+    Binomial_Heap_C
+
+session Calg_Binomial_Targets in "targets-session" = Calg_Binomial_Foundation +
+  options [document = false]
+  theories
+    Binomial_Heap_Model
+    Binomial_Heap_Targets
+    Binomial_Preparation_Audit

@@ -1,0 +1,280 @@
+Running Draft ...
+
+Output (line 2 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_binomial_heap_num_entries' ::
+    "StrictC'_BinomialHeap_C ptr \<Rightarrow> (unit, 32 word, globals) spec_monad"
+
+Output (line 11 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_binomial_tree_ref' ::
+    "StrictC'_BinomialTree_C ptr \<Rightarrow> (unit, unit, globals) spec_monad"
+
+Output (line 35 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_memcpy' ::
+    "unit ptr \<Rightarrow> unit ptr \<Rightarrow> 64 word \<Rightarrow> (unit, unit ptr, globals) spec_monad"
+
+Output (line 57 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_free' :: "unit ptr \<Rightarrow> (unit, unit, globals) spec_monad"
+
+Output (line 78 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_malloc' :: "64 word \<Rightarrow> (unit, unit ptr, globals) spec_monad"
+
+Output (line 95 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_int_compare' ::
+    "unit ptr \<Rightarrow> unit ptr \<Rightarrow> (unit, 32 signed word, globals) spec_monad"
+
+Output (line 117 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_binomial_heap_cmp' ::
+    "StrictC'_BinomialHeap_C ptr
+     \<Rightarrow> unit ptr \<Rightarrow> unit ptr \<Rightarrow> (unit, 32 signed word, globals) spec_monad"
+
+Output (line 157 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_binomial_tree_merge' ::
+    "StrictC'_BinomialHeap_C ptr
+     \<Rightarrow> StrictC'_BinomialTree_C ptr
+       \<Rightarrow> StrictC'_BinomialTree_C ptr
+         \<Rightarrow> (unit, StrictC'_BinomialTree_C ptr, globals) spec_monad"
+
+Output (line 386 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_binomial_heap_merge_undo' ::
+    "StrictC'_BinomialTree_C ptr ptr
+     \<Rightarrow> 32 word \<Rightarrow> (unit, unit, globals) spec_monad"
+
+Output (line 408 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_binomial_heap_merge' ::
+    "StrictC'_BinomialHeap_C ptr
+     \<Rightarrow> StrictC'_BinomialHeap_C ptr
+       \<Rightarrow> (unit, 32 signed word, globals) spec_monad"
+
+Output (line 729 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_binomial_heap_insert' ::
+    "StrictC'_BinomialHeap_C ptr
+     \<Rightarrow> unit ptr \<Rightarrow> (unit, 32 signed word, globals) spec_monad"
+
+Output (line 947 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_binomial_heap_pop' ::
+    "StrictC'_BinomialHeap_C ptr \<Rightarrow> (unit, unit ptr, globals) spec_monad"
+
+Output (line 1184 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_binomial_heap_free' ::
+    "StrictC'_BinomialHeap_C ptr \<Rightarrow> (unit, unit, globals) spec_monad"
+
+Output (line 1221 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_calloc' ::
+    "64 word \<Rightarrow> 64 word \<Rightarrow> (unit, unit ptr, globals) spec_monad"
+
+Output (line 1249 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_binomial_heap_new' ::
+    "32 signed word
+     \<Rightarrow> unit ptr \<Rightarrow> (unit, StrictC'_BinomialHeap_C ptr, globals) spec_monad"
+
+Output (line 1302 of "/probe/HOL_Public_Bridge.thy"):
+consts
+  public_calg_binomial_new' ::
+    "(unit, StrictC'_BinomialHeap_C ptr, globals) spec_monad"
+
+Warning (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+### Legacy feature! ML string looks like formal name: "HOL_Public_Bridge.public_"
+### better use antiquotations like \<^const_name>\<open>\<dots>\<close>, \<^type_name>\<open>\<dots>\<close>, \<^unchecked_name>\<open>\<dots>\<close>, \<^verbatim>\<open>\<dots>\<close> etc. (line 1313 of "/probe/HOL_Public_Bridge.thy")
+
+Warning (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+### Legacy feature! ML string looks like formal name: "Binomial_Heap_C.binomial_heap_cmp.heap.compare_func.\<P>_def_raw"
+### better use antiquotations like \<^const_name>\<open>\<dots>\<close>, \<^type_name>\<open>\<dots>\<close>, \<^unchecked_name>\<open>\<dots>\<close>, \<^verbatim>\<open>\<dots>\<close> etc. (line 1317 of "/probe/HOL_Public_Bridge.thy")
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE binomial_heap_num_entries' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE binomial_tree_ref' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE memcpy' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE free' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE malloc' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE int_compare' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE binomial_heap_cmp' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE binomial_tree_merge' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE binomial_heap_merge_undo' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE binomial_heap_merge' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE binomial_heap_insert' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE binomial_heap_pop' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE binomial_heap_free' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE calloc' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE binomial_heap_new' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+HOL_PUBLIC_BRIDGE calg_binomial_new' clean
+
+Output (line 1308 of "/probe/HOL_Public_Bridge.thy"):
+val thy =
+   {Pure, HOL.Try0, Tools.Code_Generator, HOL.HOL, HOL.Orderings,
+     HOL.Groups, HOL.Lattices, HOL.Boolean_Algebras, HOL.Set, HOL.Fun,
+     HOL.Complete_Lattices, HOL.Ctr_Sugar, HOL.Typedef, HOL.Inductive,
+     HOL.Rings, HOL.Nat, HOL.Product_Type, HOL.Sum_Type, HOL.Fields,
+     HOL.Relation, HOL.Finite_Set, HOL.Transitive_Closure, HOL.Wellfounded,
+     HOL.Wfrec, HOL.Order_Relation, HOL.Hilbert_Choice,
+     HOL.BNF_Wellorder_Relation, HOL.BNF_Wellorder_Embedding, HOL.Zorn,
+     HOL.BNF_Wellorder_Constructions, HOL.BNF_Cardinal_Order_Relation,
+     HOL.BNF_Cardinal_Arithmetic, HOL.Fun_Def_Base, HOL.BNF_Def,
+     HOL.BNF_Composition, HOL.Basic_BNFs, HOL.BNF_Fixpoint_Base,
+     HOL.BNF_Least_Fixpoint, HOL.Meson, HOL.ATP, HOL.Basic_BNF_LFPs,
+     HOL.Metis, HOL.Equiv_Relations, HOL.Transfer, HOL.Lifting, HOL.Num,
+     HOL.Power, HOL.Complete_Partial_Order, HOL.Option, HOL.Argo,
+     HOL.Partial_Function, HOL.SAT, HOL.Quotient, HOL.Groups_Big,
+     HOL.Fun_Def, HOL.Int, HOL.Lattices_Big, HOL.Euclidean_Rings,
+     HOL.Parity, HOL.Numeral_Simprocs, HOL.Semiring_Normalization,
+     HOL.Groebner_Basis, HOL.Set_Interval, HOL.Presburger, HOL.Try0_HOL,
+     HOL.SMT, HOL.Sledgehammer, HOL.Lifting_Set, HOL.List, HOL.Groups_List,
+     HOL.Bit_Operations, HOL.Code_Numeral, HOL.Map, HOL.Enum, HOL.String,
+     HOL.Predicate, HOL.Lazy_Sequence, HOL.Typerep, HOL.Limited_Sequence,
+     HOL.Random, HOL.Code_Evaluation, HOL.Quickcheck_Random,
+     HOL.Random_Pred, HOL.Random_Sequence, HOL.Quickcheck_Exhaustive,
+     HOL.Predicate_Compile, HOL.Record, HOL.GCD, HOL.Nitpick, HOL.Factorial,
+     HOL.Alethe_Rare_Nary_Ops, HOL.Alethe_Boolean_Rewrites_Lemmas,
+     HOL.Alethe_Arith_Rewrites_Lemmas, HOL.Alethe_Boolean_Rewrites,
+     HOL.Alethe_Builtin_Rewrites, HOL.Alethe_Arith_Rewrites,
+     HOL.Alethe_UF_Rewrites, HOL.Alethe_cvc5_Rewrites,
+     HOL.Alethe_Rare_Interface, HOL.Quickcheck_Narrowing, HOL.Mirabelle,
+     HOL.Extraction, HOL.Nunchaku, HOL.BNF_Greatest_Fixpoint, HOL.Filter,
+     HOL.Conditionally_Complete_Lattices, HOL.Binomial, HOL.SMT_CVC, Main,
+     HOL-Library.Phantom_Type, HOL-Library.Cardinality,
+     AutoCorres2.Print_Annotated, AutoCorres2.ML_Fun_Cache,
+     AutoCorres2.Named_Bindings, AutoCorres2.AutoCorres_Utils,
+     AutoCorres2.TermPatternAntiquote, HOL-Library.Numeral_Type,
+     AutoCorres2.Match_Cterm, AutoCorres2.ML_Infer_Instantiate,
+     HOL-Library.Type_Length, HOL-Library.Word, Word_Lib.Bit_Comprehension,
+     Word_Lib.More_Int, Word_Lib.More_Arithmetic, Word_Lib.More_Divides,
+     Word_Lib.More_Bit_Ring, Word_Lib.More_Word,
+     Word_Lib.Bit_Shifts_Infix_Syntax, Word_Lib.Most_significant_bit,
+     Word_Lib.Sgn_Abs, Word_Lib.Typedef_Morphisms,
+     Word_Lib.Least_significant_bit, Word_Lib.Rsplit,
+     Word_Lib.Even_More_List, HOL-Library.Sublist, Word_Lib.Aligned,
+     Word_Lib.Singleton_Bit_Shifts, Word_Lib.Legacy_Aliases,
+     Word_Lib.Reversed_Bit_Lists, Word_Lib.Bitwise, Word_Lib.Signed_Words,
+     Word_Lib.Generic_set_bit, HOL-Library.Signed_Division,
+     Word_Lib.Enumeration, HOL-Eisbach.Eisbach, HOL-Eisbach.Eisbach_Tools,
+     Word_Lib.Word_EqI, Word_Lib.Type_Syntax, Word_Lib.Signed_Division_Word,
+     Word_Lib.Enumeration_Word, Word_Lib.Boolean_Inequalities,
+     Word_Lib.Word_Lemmas, Word_Lib.More_Misc, Word_Lib.Many_More,
+     Word_Lib.Word_Syntax, Word_Lib.Word_Names,
+     Word_Lib.More_Word_Operations, Word_Lib.Bit_Comprehension_Int,
+     Word_Lib.Bitwise_Signed, Word_Lib.Hex_Words, Word_Lib.More_Sublist,
+     Word_Lib.Bin_sign, Word_Lib.Next_and_Prev, Word_Lib.Norm_Words,
+     Word_Lib.Syntax_Bundles, Word_Lib.Word_8, Word_Lib.Word_16,
+     Word_Lib.Word_32, Word_Lib.Machine_Word_32_Basics,
+     Word_Lib.Word_Lib_Sumo, Word_Lib.Machine_Word_32,
+     AutoCorres2.Word_Lemmas_Internal, Word_Lib.Word_64,
+     Word_Lib.Machine_Word_64_Basics, Word_Lib.Machine_Word_64,
+     HOL-Library.Prefix_Order, AutoCorres2.Word_Lemmas_32_Internal,
+     AutoCorres2.Word_Lemmas_64_Internal, AutoCorres2.Distinct_Prop,
+     AutoCorres2.Target_Architecture, AutoCorres2.WordSetup,
+     AutoCorres2.Addr_Type_ARM, AutoCorres2.Addr_Type_ARM64,
+     AutoCorres2.Addr_Type_ARM_HYP, AutoCorres2.Addr_Type_RISCV64,
+     AutoCorres2.Addr_Type_X64, AutoCorres2.Addr_Type,
+     AutoCorres2.CTypesBase, AutoCorres2.CTypesDefs, AutoCorres2.CTypes,
+     AutoCorres2.Vanilla32_Preliminaries, AutoCorres2.Word_Mem_Encoding_ARM,
+     AutoCorres2.Word_Mem_Encoding_ARM64,
+     AutoCorres2.Word_Mem_Encoding_ARM_HYP,
+     AutoCorres2.Word_Mem_Encoding_RISCV64,
+     AutoCorres2.Word_Mem_Encoding_X64, AutoCorres2.Word_Mem_Encoding,
+     AutoCorres2.Vanilla32, AutoCorres2.Padding, AutoCorres2.Lens,
+     AutoCorres2.Arrays, AutoCorres2.CompoundCTypes,
+     AutoCorres2.ArraysMemInstance, AutoCorres2.MapExtra,
+     AutoCorres2.ArchArraysMemInstance, AutoCorres2.HeapRawState,
+     AutoCorres2.MapExtraTrans, AutoCorres2.TypHeap, HOL-Library.Old_Recdef,
+     Simpl.Language, Simpl.Semantic, Simpl.HoarePartialDef,
+     Simpl.HoarePartialProps, Simpl.Termination, Simpl.SmallStep,
+     Simpl.HoareTotalDef, Simpl.HoareTotalProps, Simpl.HoarePartial,
+     Simpl.HoareTotal, Simpl.Hoare, HOL-Statespace.DistinctTreeProver,
+     HOL-Statespace.StateFun, Simpl.StateSpace,
+     HOL-Statespace.StateSpaceLocale, Simpl.Generalise,
+     AutoCorres2.Separation_UMM, Simpl.Vcg, AutoCorres2.SepCode,
+     AutoCorres2.SepInv, AutoCorres2.SepTactic, AutoCorres2.StructSupport,
+     AutoCorres2.SepFrame, AutoCorres2.ArrayAssertion,
+     AutoCorres2.ML_Record_Antiquotation, AutoCorres2.CProof,
+     AutoCorres2.PrettyProgs, AutoCorres2.CLanguage,
+     AutoCorres2.Introduction_AutoCorres2, AutoCorres2.More_Lib,
+     AutoCorres2.Padding_Equivalence, HOL-Library.Code_Abstract_Nat,
+     HOL-Library.Code_Target_Nat, HOL-Library.Code_Target_Int,
+     AutoCorres2.UMM, HOL-Library.Code_Target_Numeral,
+     AutoCorres2.PackedTypes, AutoCorres2.IndirectCalls,
+     AutoCorres2.ModifiesProofs, AutoCorres2.Option_Scanner,
+     AutoCorres2.Misc_Antiquotation, AutoCorres2.MkTermAntiquote,
+     AutoCorres2.CLocals, AutoCorres2.CTranslationSetup,
+     AutoCorres2.Array_Selectors, AutoCorres2.CTranslation,
+     AutoCorres2.TypHeapLib, AutoCorres2.Tuple_Tools, AutoCorres2.Subgoals,
+     AutoCorres2.Named_Rules, AutoCorres2.Tagging,
+     AutoCorres2.Basic_Runs_To_VCG, HOL-Library.Complete_Partial_Order2,
+     HOL-Library.Monad_Syntax, AutoCorres2.Spec_Monad,
+     AutoCorres2.LemmaBucket_C, AutoCorres2.Synthesize,
+     AutoCorres2.Cong_Tactic, AutoCorres2.Reaches,
+     AutoCorres2.Mutual_CCPO_Recursion, AutoCorres2.Simp_Trace,
+     AutoCorres2.AutoCorres_Base, AutoCorres2.SimplBucket,
+     AutoCorres2.CCorresE, AutoCorres2.L1Defs, AutoCorres2.L1Peephole,
+     AutoCorres2.CorresXF, AutoCorres2.L1Valid, AutoCorres2.SimplConv,
+     AutoCorres2.L2Defs, AutoCorres2.ExceptionRewrite,
+     AutoCorres2.Runs_To_VCG, AutoCorres2.L2ExceptionRewrite,
+     AutoCorres2.L2Peephole, AutoCorres2.TypHeapSimple,
+     AutoCorres2.Stack_Typing, AutoCorres2.In_Out_Parameters,
+     AutoCorres2.Split_Heap, AutoCorres2.AbstractArrays,
+     AutoCorres2.NatBitwise, AutoCorres2.WordAbstract,
+     AutoCorres2.Less_Monad_Syntax, AutoCorres2.Reader_Monad,
+     AutoCorres2.Option_MonadND, AutoCorres2.Refines_Spec,
+     AutoCorres2.HeapLift, AutoCorres2.WordPolish,
+     AutoCorres2.TypeStrengthen, AutoCorres2.LocalVarExtract,
+     AutoCorres2.AutoCorresSimpset, AutoCorres2.Polish,
+     AutoCorres2.Runs_To_VCG_StackPointer, AutoCorres2.AutoCorres,
+     Calg_Binomial_Foundation.Binomial_Environment,
+     Calg_Binomial_Foundation.Binomial_Heap_C, HOL_Public_Bridge:395}:
+   theory
+val ctxt = <context>: Proof.context
+val entries =
+   [("binomial_heap_num_entries'", 1), ("binomial_tree_ref'", 1),
+    ("memcpy'", 3), ("free'", 1), ("malloc'", 1), ("int_compare'", 2),
+    ("binomial_heap_cmp'", 3), ("binomial_tree_merge'", 3),
+    ("binomial_heap_merge_undo'", 2), ("binomial_heap_merge'", 2),
+    ("binomial_heap_insert'", 2), ("binomial_heap_pop'", 1),
+    ("binomial_heap_free'", 1), ("calloc'", 2), ("binomial_heap_new'", 2),
+    ("calg_binomial_new'", 0)]:
+   (string * int) list
+val proved = ref []: thm list ref
+val check = fn: string * int -> unit
+Finished Draft (0:00:08 elapsed time, 0:00:08 cpu time, factor 0.90)

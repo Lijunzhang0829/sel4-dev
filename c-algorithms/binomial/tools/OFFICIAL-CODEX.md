@@ -53,7 +53,7 @@ experiment was started.
 
 ## VERO-style baseline
 
-The same deployer/runtime now accepts `prepare --method vero` with an explicit duration. Use `--method vero` on preflight/start as well to check the frozen method identity. This selects the existing disclosed `intervaltree/baselines/vero/PROMPT.txt` and records method=vero in configuration/telemetry. `official-codex` remains the default for prior callers. Both methods share task rules, checker identities, native adapter, resource enforcement, clock, final evaluator and token gates; only the disclosed task prompt and method metadata differ. This is the agreed seven-service VERO-style instruction baseline, not the historical custom VERO retry/planner runner. No historical deployment is rewritten.
+The same deployer/runtime now accepts `prepare --method vero` with an explicit duration. Use `--method vero` on preflight/start as well to check the frozen method identity. This selects the existing disclosed `baselines/vero/PROMPT.txt` and records method=vero in configuration/telemetry. `official-codex` remains the default for prior callers. Both methods share task rules, checker identities, native adapter, resource enforcement, clock, final evaluator and token gates; only the disclosed task prompt and method metadata differ. This is the agreed seven-service VERO-style instruction baseline, not the historical custom VERO retry/planner runner. No historical deployment is rewritten.
 
 Both profiles currently allow generation to consume the full cumulative allowance; final evaluation runs only if time remains. A successful preflight is not a completed final evaluation of an experiment. Reserving evaluation time must be a declared common configuration change for both methods.
 

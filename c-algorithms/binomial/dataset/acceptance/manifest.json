@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "dataset_binding": "8148dcb80eeeaa888e80256d45ff269410d39e98ea861ca4a668acee028eb52e",
+  "archive": "checked-evidence.tar.gz",
+  "archive_sha256": "ce454a6cb82005a05976c0553793204ea3fa4911a02ec837aa11ba24cdcd02b0",
+  "files": 423,
+  "uncompressed_bytes": 73691069,
+  "archive_bytes": 2352578,
+  "targets": 91,
+  "positive": 83,
+  "context_refuted": 8,
+  "disabled": [
+    "0054"
+  ],
+  "result_scope": "owned-context-outcomes-v1",
+  "supplied_to_generation": false,
+  "cold_replay_source": "dataset/validation/Current_Target_Receipts-1794303933719923454/source",
+  "historical_native_validation": true,
+  "new_native_run": false
+}

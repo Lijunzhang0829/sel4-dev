@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+  "runs": [
+    {
+      "metadata": "build/20261104T013723Z.json",
+      "log": "build/20261104T013723Z.log",
+      "inputs": {
+        "ROOT": "42df8f2dd42b2bfe63f6f30a5dbc0aa721f2846c1f8e4c751199243eed35c10d",
+        "translation-input.json": "7a60a3c7e49482843d991c28603819fdc0ec97593a09df95e4bce3b976e9d173",
+        "environment-lock.json": "ccfeee9ca284017c3b91c47b171852617eaf774f293e1532d53d53fb83043173",
+        "theories/Binomial_Environment.thy": "ea4449bfe91a24ca94a538ff0d51c375a963de710e8d25c0daa5f8f46c12f8af",
+        "theories/Binomial_Heap_C.thy": "e8a9a68bf1011b23a93e9e75c8610f8fdba7b7b82e20d1d8f94777807cd16ada",
+        "targets-session/Binomial_Heap_Model.thy": "fb9675151af46bc93058d5aa535146c05914ad74fa0486e007c942fa2ed9d843",
+        "targets-session/Binomial_Heap_Targets.thy": "1cbdc1e9a98ee38a21e9f138b1fc13a369b8f4e1591415051013221f90daeb31",
+        "targets-session/Binomial_Preparation_Audit.thy": "c20e0e2ef12feb7e7707faa2bfe3a8f422a4eff091461e0c580fc541f6b48036",
+        "c/binomial_heap_input.c": "7aa97b7051740519dbd2e813db096cd8a3ab3e33951e7950a26d472d67070d9f",
+        "satisfiability/ROOT": "5efa111a12cbbabb0acce98616d35576c8b4566563aee0fc202972c14e91a03e",
+        "satisfiability/Binomial_Satisfiability.thy": "343c052862a96d91df621e1913b9575e36a64ff16d0bf3d6bc56cd06f52ebc04",
+        "satisfiability/Binomial_Target_Satisfiability.thy": "80d4e57dafc3b2259625841e55ec5b7315cb7eaa0bacbdc1b2cfa9a3bf410dcd"
+      },
+      "elapsed_seconds": 101.72113741096109,
+      "exit_code": 0,
+      "audit_sha256": "6ec51e564db6720effb7e7f2d6d861b49ad208dd64ed48130f0f63d7d8a6581e",
+      "metadata_sha256": "87ba4baa821e67fe4e214a715142e220bf12e5457b1928df7671277ae3b629d9",
+      "log_sha256": "cf282ee79f99bf4f8815479fa2f9812dabb02aea250768173dc44ceed4af8186"
+    },
+    {
+      "metadata": "build/20261104T013935Z.json",
+      "log": "build/20261104T013935Z.log",
+      "inputs": {
+        "ROOT": "42df8f2dd42b2bfe63f6f30a5dbc0aa721f2846c1f8e4c751199243eed35c10d",
+        "translation-input.json": "7a60a3c7e49482843d991c28603819fdc0ec97593a09df95e4bce3b976e9d173",
+        "environment-lock.json": "ccfeee9ca284017c3b91c47b171852617eaf774f293e1532d53d53fb83043173",
+        "theories/Binomial_Environment.thy": "ea4449bfe91a24ca94a538ff0d51c375a963de710e8d25c0daa5f8f46c12f8af",
+        "theories/Binomial_Heap_C.thy": "e8a9a68bf1011b23a93e9e75c8610f8fdba7b7b82e20d1d8f94777807cd16ada",
+        "targets-session/Binomial_Heap_Model.thy": "fb9675151af46bc93058d5aa535146c05914ad74fa0486e007c942fa2ed9d843",
+        "targets-session/Binomial_Heap_Targets.thy": "1cbdc1e9a98ee38a21e9f138b1fc13a369b8f4e1591415051013221f90daeb31",
+        "targets-session/Binomial_Preparation_Audit.thy": "c20e0e2ef12feb7e7707faa2bfe3a8f422a4eff091461e0c580fc541f6b48036",
+        "c/binomial_heap_input.c": "7aa97b7051740519dbd2e813db096cd8a3ab3e33951e7950a26d472d67070d9f",
+        "satisfiability/ROOT": "5efa111a12cbbabb0acce98616d35576c8b4566563aee0fc202972c14e91a03e",
+        "satisfiability/Binomial_Satisfiability.thy": "343c052862a96d91df621e1913b9575e36a64ff16d0bf3d6bc56cd06f52ebc04",
+        "satisfiability/Binomial_Target_Satisfiability.thy": "80d4e57dafc3b2259625841e55ec5b7315cb7eaa0bacbdc1b2cfa9a3bf410dcd"
+      },
+      "elapsed_seconds": 96.4942822929006,
+      "exit_code": 0,
+      "audit_sha256": "6ec51e564db6720effb7e7f2d6d861b49ad208dd64ed48130f0f63d7d8a6581e",
+      "metadata_sha256": "1c096061c101f02a52b96a0f2876546c683f27e056d6055c865a67c7e6e68b98",
+      "log_sha256": "b7b4629eafcaa17a235f21bfbe9f7fde375a3014c406fb183ed9ddb2da746b11"
+    }
+  ],
+  "same_inputs": true,
+  "same_native_audit": true,
+  "refreshed_child_session_cache": true,
+  "completed_utc": "2026-11-04T01:42:17.066837+00:00"
+}

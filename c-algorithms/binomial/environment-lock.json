@@ -1,0 +1,18 @@
+{
+  "isabelle": "Isabelle2026",
+  "distribution_url": "https://mirror.clarkson.edu/isabelle/dist/Isabelle2026_linux.tar.gz",
+  "expected_sha256": "858c995b32216b3876bf395c3be843147d1f1eee404bc6c958d7534ee335e48d",
+  "architecture": "X64",
+  "afp_commit": "fca9585c6341cbf0f91816850b375c02e2c17ba6",
+  "container_image_id": "sha256:8e7ee430544e004b57343636038d5ce155c128e5ee002a22821cbeaa6f66d324",
+  "gcc": "9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.2)",
+  "download_sha256_verified": true,
+  "original_screen_evidence": "reports/regen/autocorres2-c-candidate-screen-20261103-001/evidence/environment.json",
+  "autocorres_options": [
+    "skip_heap_abs",
+    "skip_word_abs",
+    "ts_rules=nondet"
+  ],
+  "libc_verified": false,
+  "status": "pinned preparation toolchain; model review pending"
+}

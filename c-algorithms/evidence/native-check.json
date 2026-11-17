@@ -1,0 +1,32 @@
+{
+  "kind": "native_differential_not_formal_proof",
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "-v",
+    "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/c-algorithms:/project:ro",
+    "sha256:8e7ee430544e004b57343636038d5ce155c128e5ee002a22821cbeaa6f66d324",
+    "bash",
+    "/project/tools/native_check.sh"
+  ],
+  "recorded_utc": "2026-11-03T15:33:54.397401+00:00",
+  "exit_code": 0,
+  "output": "{\"operations\":42016,\"injected_allocation_failures\":4,\"forced_relocation_scenarios\":1,\"live_blocks_at_end\":0}\n",
+  "files": {
+    "vendor/src/binary-heap.c": "b26f8cf95544bfd55fbfd865749ce5b1822d612ca15537fef992d15a2e5af45f",
+    "vendor/src/binary-heap.h": "7bbd48c2a810b802b4daf91395690641e72afd35918fb207889b12426080ab8d",
+    "vendor/src/compare-int.c": "e31f939aac72fe45f771a39237538d90c8c65e87c908c685791e6f3248355b46",
+    "vendor/src/compare-int.h": "f1d31375d1106557d537567cfda01e53d15502b901d8935374e9c1a804b0116d",
+    "tools/native_check.c": "e790f00937449971a7f052a47a7883002e8b66ed71cb1e800b54c4d51af25723",
+    "tools/native_check.sh": "fe7c4ebf545ae03225700caf1bf6d019522bf98f24d1eec6b576235d8c52422a"
+  },
+  "counts": {
+    "operations": 42016,
+    "injected_allocation_failures": 4,
+    "forced_relocation_scenarios": 1,
+    "live_blocks_at_end": 0
+  }
+}

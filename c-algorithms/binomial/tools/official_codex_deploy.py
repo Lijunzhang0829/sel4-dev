@@ -15,7 +15,7 @@ def call(*args,**kw):return subprocess.run(list(map(str,args)),check=True,**kw)
 def save(p,x):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(x,indent=2,ensure_ascii=False)+'\n')
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def task_text(name,budget,method):
-    text=(PROJECT/'intervaltree/baselines'/method/name).read_text()
+    text=(PROJECT/'baselines'/method/name).read_text()
     text=text.replace('{{budget_seconds}}',str(budget)).replace('{{budget_hours}}',format(budget/3600,'.12g'))
     if name=='PROMPT.txt':
         text=text.replace('positive proof or strict refutation',
@@ -75,7 +75,7 @@ def prepare():
             'input_only':True,'target_count':len(targets),'background_helpers':len(background),
             'background_facts_imported':0,'comparison_groups':groups})
     render(bench,ROOT/'sandbox');shutil.copyfile(ROOT/'benchmark/benchmark.json',ROOT/'sandbox/benchmark.json')
-    shutil.copyfile(PROJECT/'intervaltree/baselines/shared-harness/tool.py',ROOT/'control/tool.py')
+    shutil.copyfile(PROJECT/'baselines/shared-harness/tool.py',ROOT/'control/tool.py')
     for f in ['AGENTS.md','PROMPT.txt']:
         text=task_text(f,BUDGET,METHOD)
         if f=='AGENTS.md':text+=f'\nUse only /input and the legal parent facts. The {len(background)} background helper declarations are not goals and are not certified facts: do not assume them or call the model to regenerate them. No helper certificate has been imported in this fresh run. Do not access historical experiments, audit data or host paths. Native operations must use /backend/tool.py and /runtime/isabelle; do not launch a prover directly or bypass the one-slot gate.\n'

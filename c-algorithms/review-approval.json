@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "status": "approved_by_user",
+  "approved_semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d",
+  "confirmation_date": "2026-11-04",
+  "confirmation_timezone": "Asia/Shanghai",
+  "evidence": "我已确认，没有问题，可以继续完成",
+  "scope": [
+    "sequential integer min-heap with duplicate pointers and keys",
+    "explicit external allocation contracts; libc implementation excluded",
+    "capacity and expanded capacity below 2^31"
+  ],
+  "independent_readback_is_separate": true
+}

@@ -1,0 +1,15 @@
+{
+  "status": "pass",
+  "frozen_binding": "2fdc1500b5ef9bbfa806e2e0c0fd18816f1023fa4cb3c5aa6079b5daa23e8a5a",
+  "input_files": 45,
+  "input_bytes": 580939,
+  "targets": 91,
+  "background_declarations": 9,
+  "positive": 83,
+  "context_refuted": 8,
+  "statement_and_context_preservation": "byte-identical",
+  "native_target_binding": 91,
+  "parent_facts": 60810,
+  "prepared_ROOT": "exact checked definition-only extension",
+  "generation_started": false
+}

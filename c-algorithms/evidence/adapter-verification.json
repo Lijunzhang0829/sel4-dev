@@ -1,0 +1,25 @@
+{
+  "status": "pass",
+  "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d",
+  "scope": "document controller reads, declarations/cache, persistent checking, positive/negative controls, contextual export, native audit and generic seal replay",
+  "functional_targets_proved_by_controls": 0,
+  "evidence_files": {
+    "build/pilot-002/adapter-preflight.json": "0c0a6c138df3f1b32a8aa4c80efbada079e1a31f2e7d8a01e88263e702a1d6d3",
+    "build/pilot-002/frozen-input-audit.json": "74aac78261846c33a22c454e3017d4661a48fd0d5a9912b9e85028cb9133fa08",
+    "build/pilot-002/target-export-scan.json": "d5da82b89172b1ee91884f3ea827bd0ac1fae15bc415f114d74c6197fcabcbca",
+    "build/pilot-002/dataset/preparation.json": "d004110b71526ca1e2122838016aa95f0488124d56fec982508d46db9597a299",
+    "build/pilot-002/adapter-preflight-1793748575587139757/false-positive-control.json": "cd2787f296ac6f5251d84ac7c9ee33eb8676d4704412613a4bea6cf78fa7dc7d",
+    "build/pilot-002/adapter-preflight-1793748575587139757/worker-smoke.json": "45f04ca22e59812c16254029828b7d4e8966ec0ee09a1f2c0cbc6c0a64032403",
+    "build/pilot-002/adapter-preflight-1793748575587139757/refutation-smoke/certificate.json": "ea48fb8da72bad8b478aa550caa67f2e87b2e010385cdfc386364703dcdce26a",
+    "build/pilot-002/adapter-preflight-1793748575587139757/seal-evidence.json": "af13b529745791854cfd52cad4d1c0d7c86548ed962b45a23528f2f970abf79b",
+    "build/pilot-005/execution-preflight.json": "5bc30adf75309f0b1f13dd5382ba42a87195e086a06e201aabf60506169fd816",
+    "build/pilot-005/execution-preflight/native-control.json": "9d99acc73f5781e8b24c0339308f8d4f0b5dbe3cbae3df55f74d57bdf83ce9c3",
+    "build/pilot-005/execution-preflight/native-declarations.json": "78284423b574b8f0bfa589c0153f932b07fd11fed55a656eaecbf44bfacde397",
+    "build/pilot-005/release/manifest.json": "58f03fbfc90dbb9863827945b40f0a746ec54aed2e64ba1a7e616ede7ea79e46"
+  },
+  "not_certified": [
+    "arbitrary stepwise/checkpoint tooling",
+    "long-duration stability",
+    "all functional goals"
+  ]
+}

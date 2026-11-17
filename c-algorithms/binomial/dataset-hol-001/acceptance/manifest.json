@@ -1,0 +1,32 @@
+{
+  "schema": "fixed-hol-preparation-acceptance-v1",
+  "dataset_binding": "2fdc1500b5ef9bbfa806e2e0c0fd18816f1023fa4cb3c5aa6079b5daa23e8a5a",
+  "targets": 91,
+  "positive": 83,
+  "context_refuted": 8,
+  "model_calls": 0,
+  "generation_input_directory": "../input",
+  "generation_must_not_access_acceptance": true,
+  "files_sha256": {
+    "fixed-model-native-result.json": "ca6d08a46051ea57d163189d67889f2f9b2ae23cb2501a763a12f3e34ff4b405",
+    "REPORT.md": "6bf7a3cffd211e95f82381831c493988231ff2b849e71e2bbe7d787a6d40f3fa",
+    "entry-preflight.json": "ec98bf06bb0b7d79d51fa79ab7963a2625cf19b51a85b66705127daa10dc5e53",
+    "public-definition-equivalence.log": "15eb7701f6f0f329afe9c6004d7e78f2287357e5e7b89e14725e0c036b561bf2",
+    "completion-audit.json": "367bcedb18fdc621cdd656208dcedff0a94dac04aeb298ef713a598657a0acc2",
+    "preparation.json": "3d74a20454552421601a8a51c9ae41e4782d71d112964eef8c0e54a507aadd97",
+    "signature-compatibility.json": "92e67a3b984d8d7bac3de9675b8c31c3986e241a87ab1a522a80a12d53ab350c",
+    "target-binding-native.log": "f0261e3175a20bfc9569d48f0f1bd59ff70b791b07e47cf4a8407cc3bc50cc65",
+    "bootstrap.json": "ed662ae578b1629b383c77d9ca062a3bd85d713fabbca7b9b02ff51772840d87",
+    "static-tests.json": "1ecfec90a921fe43dadf6096d567af0682046a21cf3c391a1fa41a29e028becf",
+    "target-replay-summary.json": "0221df9cb86d1ca4d77184968c76b3ca882c0ad5c12e876e4eae743b8ac667ff",
+    "private-proof-api-migration.patch": "4dca7c82014604327d748cb003ad29cd0f2a49c30ee41c828bedd58d98d0d578",
+    "checked-targets.xml.gz": "56c5d2b4b4c225160c1f8aa101330e3e7685d03bf64773f86dcb33953b0f6337",
+    "private-proof-api-migration.json": "9685577a9b96af7e4a969379baca1601f5dcb3bcfa3db1e1211518ad9ba0c74c",
+    "fixed-model-audit.xml": "a90321f6cf8be9404fc9a9aedcc1869ab359e9005bb99c3a94cf38d6716b210e",
+    "primitive-definition-equivalence.log": "9aaee2d7c4ea05ef2aaf1c125dc45a18503846835c904b41705b39d319a832ed",
+    "public-definition-equivalence.json": "f02d50195603299ced767ec5effe82304a99f86b3e2c817a4796d9a91401ac00",
+    "primitive-definition-equivalence.json": "adc4e9dc813497c563d513598acbcd8b994045894d803637fea885a53ecddef6",
+    "target-binding-native-result.json": "66b03142d190e055f479e6d75c44081c55c2eb127197e1af0a84fca6a15f9cf3",
+    "final-signature-audit.json": "6a696394e737893fc28179fc66d452af946536dafedf42c9b2afc5b83cd8cea8"
+  }
+}

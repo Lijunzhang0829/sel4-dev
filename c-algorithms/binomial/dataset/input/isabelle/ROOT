@@ -1,0 +1,3 @@
+session Binomial_Current_Dataset = Calg_Project_Base +
+ options [document=false]
+ theories Contracts

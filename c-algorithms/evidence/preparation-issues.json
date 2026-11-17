@@ -1,0 +1,10 @@
+{
+  "status": "issues_found_during_preparation_not_proof_outcomes",
+  "issues": [
+    {"kind": "container_configuration", "detail": "UID 1000 is not named in the container; Isabelle default temporary directory caused I/O errors.", "resolution": "Set a project-specific ISABELLE_TMP_PREFIX in isolated user settings."},
+    {"kind": "prototype_interface", "detail": "declare_prototype generated no dependency proof obligations, so by read_write_confined failed with No subgoals.", "resolution": "Close the empty obligation with done; translation correspondence is still natively checked."},
+    {"kind": "session_layout", "detail": "Two Isabelle sessions initially shared one theory directory.", "resolution": "Separate foundation and target session directories."},
+    {"kind": "spec_elaboration", "detail": "Matching Exn accidentally specialized the contract combinator to an option exception type.", "resolution": "Use an explicit polymorphic spec_monad type and existential normal Result postcondition."},
+    {"kind": "native_sanitizer_runtime", "detail": "An instrumented rerun repeatedly emitted AddressSanitizer:DEADLYSIGNAL and did not terminate. The affected container was killed; no functional counterexample was obtained.", "resolution": "Use a non-PIE executable, disable only ASan's SIGSEGV handler, retain address/UB/leak instrumentation, and enforce a 30-second kill timeout. Revised check passed.", "root_cause": "not conclusively established; runtime/layout interaction is suspected"}
+  ]
+}

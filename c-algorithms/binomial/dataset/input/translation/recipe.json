@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--cpus",
+    "1",
+    "--memory",
+    "1g",
+    "-v",
+    "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/c-algorithms/binomial/dataset/input:/project:ro",
+    "-w",
+    "/project",
+    "sha256:8e7ee430544e004b57343636038d5ce155c128e5ee002a22821cbeaa6f66d324",
+    "gcc",
+    "-E",
+    "-P",
+    "-CC",
+    "-nostdinc",
+    "-Itranslation/include",
+    "-Ic",
+    "translation/binomial_instance.c"
+  ],
+  "annotation_pattern": "(?m)^(\\s*)(return [^\\n]*heap->compare_func\\([^\\n]*)$",
+  "annotation_replacement": "\\1__attribute__((calls(int_compare))) \\2",
+  "expected_annotations": 2,
+  "expected_preprocessed_sha256": "7aa97b7051740519dbd2e813db096cd8a3ab3e33951e7950a26d472d67070d9f"
+}

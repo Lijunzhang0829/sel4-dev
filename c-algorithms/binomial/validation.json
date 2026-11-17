@@ -1,0 +1,126 @@
+{
+  "status": "semantics_approved_and_generation_adapter_checked",
+  "semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+  "translation_facts_checked": 95,
+  "translation_skipped_proofs": 0,
+  "translation_oracles": 0,
+  "targets_not_exported": 8,
+  "functional_proofs": 0,
+  "formal_refutations": 0,
+  "generation_allowed": true,
+  "version": "original-upstream",
+  "toolchain_warnings": [
+    "AutoCorres2 did not automatically prove unchanged_typing for insert and pop; this did not invalidate checked correspondence facts."
+  ],
+  "remaining": [
+    "model repository planning and proof/refutation generation for the eight fixed targets"
+  ],
+  "sources": [
+    {
+      "title": "C11 committee draft N1570",
+      "url": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf",
+      "sections": [
+        "7.1.4",
+        "7.24.1p2"
+      ]
+    },
+    {
+      "title": "C2y proposal N3261",
+      "url": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3261.pdf"
+    }
+  ],
+  "evidence_files": {
+    "evidence/isabelle-build.json": "32bf65195299ddb5031670191f90632c975ab9e9625365ac96657eb57afd9812",
+    "evidence/isabelle-build.log": "f4b8bf647ffae768946c52d011e19fc4fa702db888ef87dcc23691675da400f7",
+    "evidence/isabelle-audit.txt": "5ab7b1626453381adb7c563646ebcf5f871f1cbe4841c85eebda86ccb7e35434",
+    "diagnostic.json": "945bbb963d901a074674aeccd9947857f8ec451c0e367da6c639487f06258629",
+    "patch-diagnostic.json": "b9dd0a1e83d89a80d5e9f2aa801095c2cbb5e0ddf32c599854e6a22c56bcad24",
+    "evidence/readback-authorization.json": "e6408cb23854da933a370d4bdd7459603b2ea9a238b9ae29a8d8ce3338c95bc2",
+    "evidence/readback-block.json": "f30aa75ce85b78e663158dd5849dd55999c2918dbb3f75d0e5eea3c8631c3073",
+    "evidence/readback-001.json": "faa11a13b5527b00ce7f452bdfe9e7edc9221f5d90f879e09ba5f43264849ec1",
+    "evidence/readback-001.audit.json": "23978a4dbf5460fea93046cf8c9b7032685f5c398eb4e67ee72fbf99a3643283",
+    "evidence/readback-001.meta.json": "2b6fb3f4cebb1b31de604ce4bc4d957e3b149fd8b87c454d3d01e033ed5dd76d",
+    "evidence/readback-001.prompt.txt": "619102d30f0c61ed722a0fa17a2edacf1f68d89c24eaf614d14b8cb47434b321",
+    "evidence/readback-001.final.txt": "9cde2466a7280b992300c0c6e3f357998298d8a9bac025bd6547882870768afd",
+    "evidence/readback-001.ndjson": "1a6c3ae86acb56fa97c74813c3b426ff7bca005ecf4551b7de7e7c3498e279c4",
+    "evidence/readback-comparison.json": "ed0eb6adb5b65457941cfcd875f7081b61344d1cb4ec70698a7200b2a5e9b0f6",
+    "evidence/satisfiability.json": "ebf1f35884a50b588f2edae14f615fa197c9abc60fe1dc25c38d612615e1ca90",
+    "evidence/satisfiability-build.json": "1c096061c101f02a52b96a0f2876546c683f27e056d6055c865a67c7e6e68b98",
+    "evidence/satisfiability-build.log": "b7b4629eafcaa17a235f21bfbe9f7fde375a3014c406fb183ed9ddb2da746b11",
+    "evidence/satisfiability-audit.txt": "6ec51e564db6720effb7e7f2d6d861b49ad208dd64ed48130f0f63d7d8a6581e",
+    "evidence/satisfiability-context.txt": "3ae92bc39e0548c9a2f2e2d148d25646cd90b4054c59c74453805a42e4dbe2a3",
+    "evidence/satisfiability-context-bindings.tsv": "ce4948922e46a2b74388aa846d44795bea6fe25bdf0ecc5b2e84f33a939c98a5",
+    "evidence/satisfiability-reproducibility.json": "3182c9c65725a3b5b02e932f892e9130ee42db20c0862ade42b4a3d6a5554863",
+    "evidence/satisfiability-integrity-controls.json": "d54ff7236aa771e9d3661ef5e433ecf2ec91747cf655add1eb331f2879032b0d",
+    "satisfiability/coverage.json": "37dbfad307d8ed5d5100ab27e86a0621b916fb79377fd18aab4f02bb6138a344",
+    "satisfiability/ROOT": "5efa111a12cbbabb0acce98616d35576c8b4566563aee0fc202972c14e91a03e",
+    "satisfiability/Binomial_Satisfiability.thy": "343c052862a96d91df621e1913b9575e36a64ff16d0bf3d6bc56cd06f52ebc04",
+    "satisfiability/Binomial_Target_Satisfiability.thy": "80d4e57dafc3b2259625841e55ec5b7315cb7eaa0bacbdc1b2cfa9a3bf410dcd",
+    "tools/build.py": "8e89875c09da21dd17e185ae22120cd6091dddd4ca0c51ad1ee26f857c2b5085",
+    "tools/satisfiability.py": "1147edcca3c806f4d17694f39937647a8495254c8b2890ab3eeccc20f4e8bf69",
+    "review-approval.json": "61306d4b0633f03173a8ad131ee4a6d09e5143db74a8d1c5cc1aeb1a51040450",
+    "evidence/review-approved.md": "a1cd71dda1348a9243076ed922b55b006dee2905540f27e2a277415e9fee19c4",
+    "evidence/adapter-verification.json": "1f38721a2a3fe9cc7b287964a6e379bc019b0fc790fb8ea3bf7e501d96218b10"
+  },
+  "readback": {
+    "status": "comparison_complete_with_correction_preparation_incomplete",
+    "targets_compared": 8,
+    "reviewer_corrections": 1,
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "wall_seconds": 134.611,
+    "comparison_path": "evidence/readback-comparison.json",
+    "human_semantic_approval": true
+  },
+  "satisfiability": {
+    "status": "concrete_environment_satisfiability_passed",
+    "targets_covered": 8,
+    "local_premises_checked": 25,
+    "targets_without_local_premises": [
+      "bn_ref_null"
+    ],
+    "preparation_facts_audited": 28,
+    "skipped_proofs": 0,
+    "oracles": 0,
+    "hidden_hypotheses": 0,
+    "unproved_targets_exported": 0,
+    "repeated_native_runs_passed": 2,
+    "integrity_controls_passed": 6,
+    "scope": "Concrete environment parameter instance; fixed-stack bridges explicitly require equality to sat_stack. No universal claim about all fixed stack interpretations.",
+    "isolated_session": "Calg_Binomial_Satisfiability",
+    "must_exclude_from_generation": true,
+    "algorithm_target_proofs": 0,
+    "algorithm_target_refutations": 0,
+    "evidence_path": "evidence/satisfiability.json",
+    "reproducibility_path": "evidence/satisfiability-reproducibility.json"
+  },
+  "native_generation_adapter_checked": true,
+  "semantic_approval": {
+    "path": "review-approval.json",
+    "semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+    "confirmation": "确认新规格并完成生成适配"
+  },
+  "generation_adapter": {
+    "target_count": 8,
+    "parent_facts": 61544,
+    "unit_tests_passed": 12,
+    "integrity_controls_passed": 4,
+    "native_controls": {
+      "fixed_declarations": 8,
+      "contextual_refutation_exports": 8,
+      "false_positive_rejected": true,
+      "generic_refutation_certificate": true,
+      "persistent_batch": true,
+      "global_and_binomial_locale_seal": true,
+      "native_audit_and_build": true,
+      "seal_certificate_replay": true,
+      "document_controller_read": true,
+      "X64_execution_checker": true,
+      "frozen_inputs_unchanged_after_controls": true
+    },
+    "model_calls": 0,
+    "status": "pass",
+    "evidence_path": "evidence/adapter-verification.json",
+    "dataset": "build/adapter-001/dataset"
+  }
+}

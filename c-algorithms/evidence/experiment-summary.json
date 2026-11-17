@@ -1,0 +1,235 @@
+{
+  "run_id": "pilot-005",
+  "run_directory": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/c-algorithms/build/pilot-005",
+  "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "status": "partial",
+  "purpose": "15-minute readiness pilot; no baseline comparison",
+  "planning": {
+    "elapsed_seconds": 0,
+    "returncode": 0,
+    "included_in_generation_budget": false,
+    "reused_from": "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/c-algorithms/build/pilot-002",
+    "original": {
+      "elapsed_seconds": 324.9657187461853,
+      "returncode": 0,
+      "included_in_generation_budget": false
+    }
+  },
+  "generation": {
+    "elapsed_seconds": 905.613921880722,
+    "returncode": 2
+  },
+  "contracts": {
+    "total": 6,
+    "proved": 1,
+    "refuted": 0,
+    "unknown": 0,
+    "pending": 5
+  },
+  "sealed_theories": 1,
+  "accepted_helpers": 0,
+  "repository_verified": false,
+  "targets": [
+    {
+      "id": "bh_count_exact",
+      "contract_id": "goal:2ed9011f4c1ed49e5d2f068e",
+      "status": "proved",
+      "theory": "Heap_Observation"
+    },
+    {
+      "id": "bh_insert_without_growth",
+      "contract_id": "goal:22924262cbdfdc49b88cfc3c",
+      "status": "pending",
+      "theory": "Heap_Insertion"
+    },
+    {
+      "id": "bh_insert_correct",
+      "contract_id": "goal:1cf888903e0c62f46fc63afb",
+      "status": "pending",
+      "theory": "Heap_Insertion"
+    },
+    {
+      "id": "bh_pop_correct",
+      "contract_id": "goal:5ebcf7985eb705807de5ccd6",
+      "status": "pending",
+      "theory": "Heap_Removal"
+    },
+    {
+      "id": "bh_new_empty_or_failure",
+      "contract_id": "goal:10afe168897ef21bd8f89a14",
+      "status": "pending",
+      "theory": "Heap_Storage"
+    },
+    {
+      "id": "bh_free_owned_storage",
+      "contract_id": "goal:b3837e8d2785080aef010674",
+      "status": "pending",
+      "theory": "Heap_Storage"
+    }
+  ],
+  "native_check_events": 8,
+  "batch_responses": 11,
+  "infrastructure_errors": [],
+  "fixed_semantic_files_and_parent_heaps_unchanged": true,
+  "supervisor_target_proofs_or_hints": 0,
+  "earlier_attempts": [
+    "pilot-002: architecture propagation failure, 315.086s",
+    "pilot-003: control heap path error; no model calls",
+    "pilot-004: dangling symlink rejected by declaration cache, 261.538s; graceful shutdown"
+  ],
+  "evidence_files": {
+    "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/c-algorithms/build/pilot-005/final-progress.json": "1fee8db9663f13dfea89daa77a0f3e35117dfe48dbbaacc25f8b4d1a9cfc4f39",
+    "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/c-algorithms/build/pilot-005/configuration.json": "333782a3db99c26d991be36536dfcc2eaa9f839c48d2743df2dc0fc1daa8790f",
+    "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/c-algorithms/build/pilot-005/release/manifest.json": "58f03fbfc90dbb9863827945b40f0a746ec54aed2e64ba1a7e616ede7ea79e46",
+    "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/c-algorithms/build/pilot-005/generation.log": "2cab396a6860d062b2fb1ef7f1363268dfada12c2812cd74c55ffd6e32a7731a",
+    "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/c-algorithms/build/pilot-005/execution-preflight.json": "5bc30adf75309f0b1f13dd5382ba42a87195e086a06e201aabf60506169fd816"
+  },
+  "limits": [
+    "Partial/unattempted goals are not refutations.",
+    "A short pilot does not establish long-run stability.",
+    "Binomial draft is a separate unapproved dataset."
+  ],
+  "stop_reason": "generation_wall_time_budget_exhausted",
+  "runner_status": "paused",
+  "generation_budget": {
+    "accounting_complete": true,
+    "active_theory": null,
+    "active_workers": {},
+    "base_seconds": 900.0,
+    "budget_overrun_seconds": 0.0,
+    "checkpoint_seconds": 30.0,
+    "closed": true,
+    "contract_owners": {
+      "goal:10afe168897ef21bd8f89a14": "Heap_Storage",
+      "goal:1cf888903e0c62f46fc63afb": "Heap_Insertion",
+      "goal:22924262cbdfdc49b88cfc3c": "Heap_Insertion",
+      "goal:2ed9011f4c1ed49e5d2f068e": "Heap_Observation",
+      "goal:5ebcf7985eb705807de5ccd6": "Heap_Removal",
+      "goal:b3837e8d2785080aef010674": "Heap_Storage"
+    },
+    "effective_seconds": 624.2083474018145,
+    "effective_seconds_limit": 900.0,
+    "excluded_failed_request_seconds": 0.0,
+    "excluded_failed_request_theory_seconds": {},
+    "excluded_failed_request_worker_seconds": 0.0,
+    "excluded_infrastructure_seconds": 0.0,
+    "excluded_infrastructure_theory_seconds": {},
+    "excluded_infrastructure_worker_seconds": 0.0,
+    "exclusions": {},
+    "finish_reason": null,
+    "finished": false,
+    "gate_open": false,
+    "gate_state": "CLOSED",
+    "green_contract_ids": [
+      "goal:2ed9011f4c1ed49e5d2f068e"
+    ],
+    "include_planning": false,
+    "next_exclusion": 7,
+    "paused": true,
+    "planning_active": false,
+    "planning_seconds": 0.0,
+    "policy": "global-effective-generation-budget-v1",
+    "provider_request_accounting": {
+      "active": {},
+      "credits": {},
+      "excluded_failed_request_seconds": 0.0,
+      "excluded_failed_request_theory_seconds": {},
+      "excluded_failed_request_worker_seconds": 0.0,
+      "excluded_infrastructure_seconds": 0.0,
+      "excluded_infrastructure_theory_seconds": {},
+      "excluded_infrastructure_worker_seconds": 0.0,
+      "policy": "successful-retry-request-exclusion-v1",
+      "raw_effective_seconds": 624.2083474018145,
+      "raw_theory_seconds": {
+        "Heap_Insertion": 357.9011698287213,
+        "Heap_Observation": 266.3071775730932
+      },
+      "raw_worker_seconds": 624.2083474018145,
+      "requests": {
+        "4204a97ff9804c5ea4abb7c82c2137ac": {
+          "finished_sequence": 30,
+          "started_sequence": 29,
+          "status": "success",
+          "theory": "Heap_Observation",
+          "worker_id": "Heap_Observation"
+        },
+        "50873c210f7e414ba19d348bc60c86ba": {
+          "finished_sequence": 166,
+          "started_sequence": 165,
+          "status": "success",
+          "theory": "Heap_Insertion",
+          "worker_id": "Heap_Insertion"
+        }
+      },
+      "segments": [],
+      "sequence": 166
+    },
+    "raw_effective_seconds": 624.2083474018145,
+    "raw_theory_seconds": {
+      "Heap_Insertion": 357.9011698287213,
+      "Heap_Observation": 266.3071775730932
+    },
+    "raw_worker_seconds": 624.2083474018145,
+    "reason": "generation_wall_time_budget_exhausted",
+    "remaining_seconds": 275.79165259818546,
+    "seconds": 900.0,
+    "terminal_reason": "generation_wall_time_budget_exhausted",
+    "theories": {
+      "Heap_Insertion": {
+        "contract_ids": [
+          "goal:1cf888903e0c62f46fc63afb",
+          "goal:22924262cbdfdc49b88cfc3c"
+        ],
+        "effective_seconds": 357.9011698287213,
+        "green_contract_ids": [],
+        "sealed": false
+      },
+      "Heap_Observation": {
+        "contract_ids": [
+          "goal:2ed9011f4c1ed49e5d2f068e"
+        ],
+        "effective_seconds": 266.3071775730932,
+        "green_contract_ids": [
+          "goal:2ed9011f4c1ed49e5d2f068e"
+        ],
+        "sealed": true
+      },
+      "Heap_Removal": {
+        "contract_ids": [
+          "goal:5ebcf7985eb705807de5ccd6"
+        ],
+        "effective_seconds": 0.0,
+        "green_contract_ids": [],
+        "sealed": false
+      },
+      "Heap_Storage": {
+        "contract_ids": [
+          "goal:10afe168897ef21bd8f89a14",
+          "goal:b3837e8d2785080aef010674"
+        ],
+        "effective_seconds": 0.0,
+        "green_contract_ids": [],
+        "sealed": false
+      }
+    },
+    "theory_seconds": {
+      "Heap_Insertion": 357.9011698287213,
+      "Heap_Observation": 266.3071775730932
+    },
+    "token_limit": null,
+    "unclean_recoveries": 0,
+    "unobserved_shutdown_tail": false,
+    "unobserved_tail_seconds": 0,
+    "wall_limit": {
+      "deadline_unix": 1793751589.6339102,
+      "includes_downtime": true,
+      "refunds": false,
+      "remaining_seconds": 0.0,
+      "seconds": 900.0,
+      "started_unix": 1793750689.6339102
+    },
+    "worker_seconds": 624.2083474018145
+  }
+}

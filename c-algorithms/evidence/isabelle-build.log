@@ -1,0 +1,41 @@
+Started at Tue Nov 3 15:38:06 GMT 2026 (polyml-5.9.2_x86_64_32-linux on cdb607e6a368)
+ISABELLE_TOOL_JAVA_OPTIONS="-Djava.awt.headless=true -Xms256m -Xmx2g -Xss16m"
+ISABELLE_BUILD_OPTIONS=""
+
+ML_PLATFORM="x86_64_32-linux"
+ML_HOME="/screen/Isabelle2026/contrib/polyml-5.9.2-6/x86_64_32-linux"
+ML_SYSTEM="polyml-5.9.2"
+ML_OPTIONS="--minheap 500 --enablegcsharing"
+
+Session Pure/Pure
+Session FOL/FOL
+Session Misc/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Cardinals (timing)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Combinatorics (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Number_Theory (main timing)
+Session HOL/HOL-Algebra (main timing)
+Session HOL/HOL-Decision_Procs (timing)
+Session HOL/HOL-ex (timing)
+Session HOL/HOL-Real_Asymp
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Statespace
+Session AFP/Simpl (AFP)
+Session AFP/Word_Lib (AFP)
+Session AFP/AutoCorres2 (AFP)
+Session Unsorted/Calg_Binary_Foundation
+Session Unsorted/Calg_Binary_Targets
+Running Calg_Binary_Targets ...
+Calg_Binary_Targets: theory Calg_Binary_Targets.Binary_Heap_Model
+Calg_Binary_Targets: theory Calg_Binary_Targets.Binary_Heap_Targets
+Calg_Binary_Targets: theory Calg_Binary_Targets.Environment_Sanity
+Calg_Binary_Targets: theory Calg_Binary_Targets.Binary_Heap_Model 100% (1.836s cumulated time)
+Calg_Binary_Targets: theory Calg_Binary_Targets.Preparation_Audit
+Timing Calg_Binary_Targets (4 threads, 7.638s elapsed time, 10.302s cpu time, 0.272s GC time, factor 1.35)
+Finished Calg_Binary_Targets (0:00:11 elapsed time, 0:00:14 cpu time, factor 1.22)
+
+Finished at Tue Nov 3 15:38:37 GMT 2026
+0:00:31 elapsed time, 0:00:14 cpu time, factor 0.47

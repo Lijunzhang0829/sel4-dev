@@ -1,0 +1,26 @@
+{
+  "schema": "official-codex-owned-context-v3",
+  "status": "pass",
+  "model_calls": 0,
+  "method": "official-codex",
+  "invocation_accounting": {
+    "responses": 1,
+    "tokens": 12,
+    "duplicate_counted_once": true,
+    "interrupted_tail_unknown": true
+  },
+  "checker_owned_render_and_native_integration": "pass",
+  "default_owned_context_positive_and_negative": "pass",
+  "current_dataset_declarations": {
+    "status": "pass",
+    "targets": 91,
+    "dataset_binding": "2fdc1500b5ef9bbfa806e2e0c0fd18816f1023fa4cb3c5aa6079b5daa23e8a5a",
+    "native_seconds": 48.02424891600094,
+    "benchmark_proofs": 0,
+    "comparison_counts": {
+      "main": 78,
+      "fixed_helper": 13
+    }
+  },
+  "official_cli_observation_config": "accepted_without_model_call"
+}

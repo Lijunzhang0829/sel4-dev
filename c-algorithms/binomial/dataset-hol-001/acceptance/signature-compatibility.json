@@ -1,0 +1,22 @@
+{
+  "program_signatures_equal": {
+    "Binomial_Heap_C.binomial_heap_num_entries'": true,
+    "Binomial_Heap_C.binomial_tree_ref'": true,
+    "Binomial_Heap_C.binomial_tree_unref'": true,
+    "Binomial_Heap_C.binomial_tree_merge'": true,
+    "Binomial_Heap_C.binomial_heap_merge_undo'": true,
+    "Binomial_Heap_C.binomial_heap_merge'": true,
+    "Binomial_Heap_C.binomial_heap_cmp'": true,
+    "Binomial_Heap_C.binomial_heap_insert'": true,
+    "Binomial_Heap_C.binomial_heap_pop'": true,
+    "Binomial_Heap_C.binomial_heap_free'": true,
+    "Binomial_Heap_C.binomial_heap_new'": true,
+    "Binomial_Heap_C.calg_binomial_new'": true,
+    "Binomial_Heap_C.malloc'": true,
+    "Binomial_Heap_C.calloc'": true,
+    "Binomial_Heap_C.free'": true,
+    "Binomial_Heap_C.memcpy'": true,
+    "Binomial_Heap_C.int_compare'": true
+  },
+  "count": 17
+}

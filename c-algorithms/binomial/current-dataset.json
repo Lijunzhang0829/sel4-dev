@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "dataset": "dataset-hol-001",
+  "input_manifest": "dataset-hol-001/input/manifest.json",
+  "dataset_binding": "2fdc1500b5ef9bbfa806e2e0c0fd18816f1023fa4cb3c5aa6079b5daa23e8a5a",
+  "active_targets": 91,
+  "disabled": [
+    "0054"
+  ],
+  "historical_snapshots": [
+    {
+      "dataset": "dataset",
+      "dataset_binding": "8148dcb80eeeaa888e80256d45ff269410d39e98ea861ca4a668acee028eb52e",
+      "purpose": "original C-bound input and historical acceptance provenance"
+    }
+  ],
+  "historical_snapshots_are_current": false,
+  "retained_acceptance_archive": "dataset/acceptance/checked-evidence.tar.gz",
+  "historical_runtime_artifacts_removed": true,
+  "model_representation": "fixed-hol-source",
+  "generation_requires_c_source": false,
+  "generation_invokes_c_translation": false,
+  "runtime_ready": true
+}

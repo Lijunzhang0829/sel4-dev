@@ -1,0 +1,178 @@
+{
+  "semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "intent_supplied": false,
+  "tool_events_allowed": false,
+  "author_comparison_pending": true,
+  "readback": {
+    "targets": [
+      {
+        "id": "bn_count_exact",
+        "readback": "对所有满足 bn_rep s h P F M 的 s、h、P、F、M，命题要求 binomial_heap_num_entries' h 从 s 执行满足 bn_contract：runs_to 所约束的结果全部是正常 Result r，且 unat r 等于多重集 M 的总重数、最终完整状态 t 等于 s；此外至少存在一个可达的正常结果及其最终状态。按 runs_to 的通常非失败语义，这也要求执行不失败。",
+        "assumptions": [
+          "bn_rep 的全部条件，具体展开见 shared_assumptions；特别是存储的 num_values 的无符号自然数值等于 size M。"
+        ],
+        "exclusions": [
+          "不只是保持堆字节，而是要求整个状态不变。",
+          "不提供函数体或证明，不能据此前提断定命题成立。"
+        ]
+      },
+      {
+        "id": "bn_insert_correct",
+        "readback": "对所有 s、h、P、F、M、v、S，若所列前提成立，则插入执行满足 bn_contract，至少有一个正常可达结果，所有被 runs_to 约束的结果均正常并满足以下条件。无论返回值如何，bn_frame s h P F t 成立。若 r = 0，则存在某个 F' 使最终堆仍表示原多重集 M，而且整个 live_blocks 映射与初态相等。若 r ≠ 0，则存在某个 F' 使最终堆表示 add_mset v M，并满足 bn_storage_transition s h F t F'；即 v 的重数增加一，其他指针的重数不变，总重数增加一。返回零是正常返回分支，并不是异常结果或单子失败。",
+        "assumptions": [
+          "bn_rep s h P F M。",
+          "bn_payload P v：把 v 强制转换成 32 位有符号字指针后满足 c_guard，且从 ptr_val v 开始的四字节地址集合包含于 P。",
+          "size M + 1 < 2^32；这是自然数严格上界，等价于 size M ≤ 2^32 - 2。",
+          "bn_stack_ready S s，具体展开见 shared_assumptions。",
+          "P 与 S 不相交。"
+        ],
+        "exclusions": [
+          "不保证存在非零返回，也不保证资源充足时一定成功。",
+          "不要求 v 原先不在 M；可以插入重复的载荷指针。",
+          "零返回时不要求 t = s、F' = F，也不要求原有已拥有块的字节保持不变。",
+          "非零返回值只要求不等于零，没有指定其具体值。",
+          "成功分支的存储转换不要求维持原有树形或原有分配地址。"
+        ]
+      },
+      {
+        "id": "bn_pop_correct",
+        "readback": "对所有满足前提的 s、h、P、F、M、S，弹出执行满足 bn_contract，至少存在一个正常可达结果，所有被约束的结果均正常且满足初始所有权对应的 bn_frame。若 r = NULL，则存在 F' 使最终堆仍表示 M，且整个 live_blocks 映射保持不变。若 r ≠ NULL，则 r 在 M 中至少出现一次，并且对 M 中每个载荷指针 q，初态中的有符号整数键 bn_key s r 不大于 bn_key s q；还存在 F' 使最终堆表示 M - {#r#} 并满足 bn_storage_transition。这里多重集减法只删除 r 的一次出现，因此总重数减少一，其他指针的重数不变。",
+        "assumptions": [
+          "bn_rep s h P F M。",
+          "bn_stack_ready S s。",
+          "P 与 S 不相交。",
+          "bn_key s x 是从 x 转换成的 32 位有符号字指针处读取字，再用 sint 解释得到的整数；比较使用初态 s。"
+        ],
+        "exclusions": [
+          "没有前提要求 M 非空。",
+          "当 M 为空时，非 NULL 分支因成员条件不可能成立；若整个契约成立，则所有正常返回均为 NULL。",
+          "当 M 非空时仍允许 NULL 返回；没有声称 NULL 当且仅当堆为空。",
+          "相同最小键对应的不同指针之间没有指定选择规则。",
+          "NULL 分支不是异常或单子失败，也不保证整个状态或原有已拥有块的字节不变。",
+          "成功时删除的是载荷指针的一次多重集出现，不是所有具有同一键值的元素；没有释放该载荷的保证。"
+        ]
+      },
+      {
+        "id": "bn_free_owned_storage",
+        "readback": "对所有满足 bn_rep s h P F M 的参数，释放执行满足 bn_contract，至少存在一个正常可达结果；所有被约束的结果均正常，最终满足 bn_frame 和 allocator_wf。最终 live_blocks 在初始 bn_owned s h F 列出的每一个起始地址处均为 None，在其他所有地址处均严格等于初始映射。因此初始拥有的堆对象、非空指针表示的根数组、全部树节点及有孩子节点的孩子数组均从分配映射中删除，且最终没有在其他地址增加分配。返回值 r 不受约束。",
+        "assumptions": [
+          "bn_rep s h P F M，包括拥有块起始地址互异、各块符合其分配尺寸约束，以及分配器良构。"
+        ],
+        "exclusions": [
+          "不要求最终还有 bn_rep；堆对象自身也被移除。",
+          "载荷位于保留集合 P 中，不属于 bn_owned 列出的动态存储；P 的字节由 frame 保持。",
+          "不要求被释放块的字节清零、保持原值或变得无法被底层 heap_mem 读取。",
+          "不约束执行过程中的临时分配，只约束最终映射。",
+          "除 frame 指定内容外，不保证最终完整状态等于初态。"
+        ]
+      },
+      {
+        "id": "bn_new_empty_or_failure",
+        "readback": "对所有 s、P，若初始分配器良构且 P 包含于初始 reserved_bytes，则 calg_binomial_new' 从 s 执行满足 bn_contract。至少存在一个正常可达返回，所有被约束的结果均正常。任一结果都保持 P 中的每个字节，以及每个初始活块的映射尺寸和全部块内字节。若返回 h = NULL，则整个 phantom_machine_state 与初态相等。若 h ≠ NULL，则最终满足 bn_rep t h P [] {#}，roots 字段为 NULL，最终分配器记录恰好是初始记录把 ptr_val h 的 live_blocks 项更新为堆结构体大小所得的记录。成功分支因此具有零长度森林、空载荷多重集及零条目数，并保留 reserved_bytes。结合初始活块保持、最终良构及表示条件，成功得到的堆块不能占用任何初始活块或保留字节。",
+        "assumptions": [
+          "allocator_wf (phantom_machine_state_' s)。",
+          "P ⊆ reserved_bytes (phantom_machine_state_' s)。",
+          "没有栈准备或 P 与某个栈集合不相交的前提。"
+        ],
+        "exclusions": [
+          "NULL 是正常的创建失败报告，不是异常或单子失败。",
+          "不保证存在非 NULL 返回。",
+          "NULL 分支只要求分配器记录完全不变及列明的字节保持，不要求完整状态或所有内存字节不变。",
+          "成功分支最终只新增堆对象这一活块，不保证执行过程中没有临时分配。",
+          "不约束其他未列明状态字段。"
+        ]
+      },
+      {
+        "id": "bn_ref_null",
+        "readback": "对所有初始状态 s，不附加任何显式前提，binomial_tree_ref' NULL 的执行都被要求满足 bn_contract：至少存在一个正常可达结果，所有被 runs_to 约束的结果均为正常 Result r，并且最终完整状态 t 等于 s。返回值 r 任意。",
+        "assumptions": [
+          "没有显式局部前提；仍处于声明所用的全局地址上下文中。"
+        ],
+        "exclusions": [
+          "没有要求分配器良构或任何指针保护条件。",
+          "不指定返回值。",
+          "不能因没有前提就认定此命题已被证明。"
+        ]
+      },
+      {
+        "id": "bn_ref_increment",
+        "readback": "对所有 s、p，若 c_guard p 且初态树结构 refcount 字段的无符号自然数值严格小于 65535，则调用满足 bn_contract，至少有一个正常可达结果。所有被约束的结果均正常，最终读出的树记录等于初始树记录仅把 refcount 更新为原字段值加一所得的记录；该加法按字段自身的形式类型运算。最终 phantom_machine_state 完全不变，并且从 ptr_val p 开始、长度为树结构体 size_of 的 block_bytes 集合之外，所有 heap_mem 字节不变。返回值 r 不受约束。",
+        "assumptions": [
+          "c_guard p；其具体定义未给出。",
+          "unat (refcount_C (bn_tree s p)) < 65535，即该自然数值至多为 65534。",
+          "bn_tree s p 是通过 h_val 从初态 heap_mem 的 p 处读取的树结构记录。"
+        ],
+        "exclusions": [
+          "没有显式要求 p 在 live_blocks 中，也没有要求 allocator_wf、bn_valid、bn_rep 或独占所有权。",
+          "不要求初始 refcount 为正。",
+          "没有给出 refcount 的字段类型定义，不能仅据这段输入认定它是 16 位字段；式中的加一不能未经类型信息替换成无界整数运算。",
+          "记录的其他字段保持相等，但结构体块内部的填充字节没有逐字节保持保证。",
+          "不保证完整状态不变，也未显式保持堆类型描述 hrs_htd。"
+        ]
+      },
+      {
+        "id": "bn_merge_leaves_nonfailure",
+        "readback": "对所有 s、h、P、p、q，若所有前提成立，则 binomial_tree_merge' h p q 从 s 执行满足后置条件恒真的 bn_contract。也就是说，runs_to 所约束的结果必须为正常 Result，且至少存在一个正常可达结果；按 runs_to 的通常语义还要求非失败。两个输入是不同的有效叶节点：各自有受保护的树指针、精确树结构体大小的活块、order 的无符号值为零、refcount 为一、满足 bn_payload 的载荷，以及 NULL 子树指针。空孩子列表使孩子秩、数组元素、递归有效性和对后代的键序条件均为空条件。",
+        "assumptions": [
+          "初始分配器良构。",
+          "h 满足 c_guard，所读堆的类型字段为 BINOMIAL_HEAP_TYPE_MIN，比较函数字段为指定的 binomial_heap_input.int_compare。",
+          "P 包含于初始 reserved_bytes。",
+          "bn_valid s P (BN p []) 和 bn_valid s P (BN q [])，且 p ≠ q。",
+          "ptr_val h 对应一个精确堆结构体大小的活块，并且不同于 ptr_val p 和 ptr_val q。"
+        ],
+        "exclusions": [
+          "后置条件 True 不保证返回非 NULL，不保证返回某个输入节点，也不保证获得有效合并树。",
+          "没有最终键序、元素多重集、引用计数、分配器良构、存储转换或 frame 保证。",
+          "没有要求完整 bn_rep；h 的根数组、长度和条目数字段没有相应表示前提。",
+          "不要求两个叶节点的载荷指针不同，也不要求它们的键不同。",
+          "没有栈准备前提，也不保证任何给定最终状态或返回值可达。"
+        ]
+      }
+    ],
+    "shared_assumptions": [
+      "所有声明中的自由变量均按其形式类型作普遍量化；每个存在量化的最终森林可以依赖具体执行结果。八个声明都以 oops 结束，输入没有建立这些命题的证明。",
+      "bn_contract f s Q 展开为 runs_to f s (λr t. ∃v. r = Result v ∧ Q v t)，并且存在 v、t 使 reaches f s (Result v) t。第一项把所约束的结果限定为满足 Q 的正常结果；第二项明确要求正常可达结果非空。runs_to 的通常非失败意义与仅仅对已有结果作全称约束不同；其底层定义在输入中未展开。",
+      "block_bytes p n 是所有满足 unat p ≤ unat a < unat p + n 的地址 a 的集合，界限用自然数计算。block_ok p n 要求 p 非零、n 正、unat p + n ≤ 2^64，且 p 的无符号值按 16 字节对齐。",
+      "allocator_wf A 要求每个 live_blocks A p = Some n 的块满足 block_ok，且其字节与 reserved_bytes 不相交；不同活块起始地址对应的字节集合两两不相交。它不要求保留集合具有特定形状，也不要求描述全部可寻址内存。",
+      "fresh_block A p n 要求 block_ok、与所有保留字节不相交、与 A 中每个活块的字节不相交。bytes_frame W h h' 仅要求 W 之外的每个字节保持不变；单凭这一条件，W 内字节任意。",
+      "bn_root (BN p cs) = p，bn_rank (BN p cs) = length cs。bn_tree 和 bn_heap 分别用 h_val 从 heap_mem 读取树结构和堆结构。bn_values 按根载荷在前、随后递归连接孩子载荷列表的方式收集载荷指针。bn_blocks 收集树节点起始地址，有孩子时还收集孩子指针数组的起始地址，再递归收集孩子的块地址。",
+      "bn_payload P p 要求 p 转换成 32 位有符号字指针后满足 c_guard，并且其四字节 block_bytes 包含于 P。bn_key 用该转换指针读取 32 位有符号字并以 sint 解释为整数。多重集 M 的元素是载荷指针，而不是这些整数键；不同指针可有相同键，同一指针也可重复出现。",
+      "bn_valid s P (BN p cs) 要求节点指针受 c_guard 保护且对应精确树结构大小的活块；order 的无符号值等于孩子数；refcount 等于一；载荷满足 bn_payload；孩子的秩列表恰好是 0 到 length cs - 1。无孩子时子树指针必须为 NULL；否则该数组指针受保护，并对应大小恰为指针大小乘孩子数的活块。每个数组元素地址均受保护，其内容等于对应孩子根指针。所有孩子递归有效，根载荷的键不大于所有后代载荷的键。",
+      "bn_owned s h F 收集堆对象地址、roots 非 NULL 时的根数组地址，以及 F 中全部非空树的 bn_blocks。它是块起始地址列表，不是字节集合，也不包含载荷地址作为载荷所有权。",
+      "bn_rep 要求分配器良构，P 包含于保留集合，堆指针受保护且拥有精确堆结构大小的活块；堆类型为最小堆，比较函数指针等于指定 int_compare。roots_length 的无符号值等于 length F，且 length F ≤ 32。roots 为 NULL 时 F 必为空；roots 非 NULL 时它受保护并对应某个活块，块大小至少容纳 length F 个树指针。每个槽地址受保护，内容等于 None 对应的 NULL 或 Some T 对应的根指针；Some T 的秩等于槽号，并满足 bn_valid。bn_owned 的起始地址全部互异。M 恰为森林载荷列表的多重集，num_values 的无符号值等于 M 的总重数。",
+      "bn_rep 不要求载荷指针互异。有效秩为 i 的树由给出的递归秩条件具有 2^i 个节点，因此森林条件在数学上给出 size M ≤ 2^32 - 1。根列表允许 None 槽和末尾 None；F = [] 也不单独强制 roots = NULL。",
+      "bn_frame s h P F t 要求最终 reserved_bytes 等于初始集合；P 中全部字节保持；每个初始活块若其起始地址不在初始 bn_owned 中，则最终仍以原尺寸存活且其全部块内字节保持。它本身不保护已拥有块，不保护 P 之外的所有保留字节，也不禁止在原先未分配地址新增块。",
+      "bn_stack_ready S s 要求 S 包含于初始 reserved_bytes；在初始 hrs_htd 上，对一个堆结构体的 stack_allocs 候选集合非空；并且对该集合中每个候选 (p,d)，在 d 上对一个树指针对象的 stack_allocs 候选集合也非空。这里对第一阶段候选是全称要求，不只是存在一条可继续的选择。",
+      "bn_storage_transition s h F t G 要求：每个不属于最终拥有集合的地址，若初始拥有则最终 live_blocks 为 None，否则最终映射等于初始映射；每个属于最终拥有集合但不属于初始拥有集合的地址，在初态必须为 None。配合最终 bn_rep，这排除最终泄漏原有拥有块及夺取初始外部活块；对前后均拥有的地址，本条件不直接要求尺寸不变。",
+      "malloc_rel 是显式关系模型：初始分配器良构且请求大小正；或者返回零并保持内存和分配器完全不变，或者返回满足 fresh_block 的地址，仅允许修改新块内字节，并只把该地址的 live_blocks 更新为请求大小。新块内容没有初始化要求，且模型总允许零返回。",
+      "free_rel 要求初始分配器良构；零指针分支保持内存与分配器不变；非零分支必须正好指向 live_blocks 中的块起始地址，允许改变该块内字节，并仅移除该映射项。没有非零无效指针的合法关系分支。",
+      "realloc_rel 要求初始分配器良构及正的新大小。原指针为零时使用 malloc_rel；否则原地址必须有活块。零返回保持内存和分配器不变；成功时，新块在先移除旧块的分配器中满足 fresh_block，且新地址必须等于旧地址或新旧块字节完全不相交。只允许修改新旧块并集内字节，复制 min 旧大小 新大小 个字节，并以新块替换旧映射。本输入没有给出 realloc_body 的外部函数绑定。",
+      "calloc_rel 要求 count、width 都正，且自然数乘积严格小于 2^64；在 malloc_rel 的基础上，非零返回时每个分配字节为零。零返回仍保持内存与分配器不变。",
+      "readable_bytes A 是 reserved_bytes 与全部活块字节的并集。memcpy_ok 要求源、目的地址非零，两段自然数端点均不超过 2^64，两段均包含于 readable_bytes，且互不相交；不要求 n 正，不要求属于同一块，也未另设目的区域可写权限。memcpy_rel 保持目的区域以外全部字节，并逐字节把初始源内容复制到最终目的区域。",
+      "malloc_body、free_body、calloc_body、memcpy_body 使用 exec_spec_monad、L2_guarded 和 L2_assume 显式引入这些关系。malloc 和 calloc 的守卫要求正尺寸及良构，calloc 另有乘积上界；free 的守卫要求良构且参数为 NULL 或已登记；memcpy 的守卫要求良构及 memcpy_ok。关系集合指定相应内存和分配器字段更新，memcpy 还要求返回目的指针并保持分配器。它们是外部函数的形式模型，不是所提供并验证的 libc 实现。"
+    ],
+    "unresolved_semantics": [
+      "未提供 binomial_heap_input.c 内容、生成的各目标函数定义或 final_defs 的实际输出，因此无法从输入确定实际控制流、分配调用、比较实现或证明这些目标。",
+      "未提供导入库中 runs_to、reaches、spec_monad、Result、异常构造、L2_guarded、L2_assume 及 exec_spec_monad 的定义。可精确读出正常结果限定和正常结果存在性，但不能仅据输入完整展开失败、空结果集、发散及异常传播的语义，也不能把契约直接等同于某种现实执行时间内终止保证。",
+      "未提供 c_guard、h_val、stack_allocs、堆类型描述及指针运算的定义；不能把 c_guard 自行解释为具有分配所有权，也不能把 stack_allocs 非空直接扩展成未列明的运行时栈容量保证。",
+      "未给出生成的 C 结构布局、各字段类型、size_of 数值、addr 的定义及全局地址上下文的全部假设。输入明确出现 64 位外部函数尺寸参数、32 位有符号载荷读取和 2^64 边界，但不足以展开全部机器表示细节。",
+      "全局地址上下文可能带有导入的固定参数和假设，其内容未展示；除显式写出的函数指针相等条件外，不能推断其他地址关系。",
+      "没有自然语言需求可供对照，也没有任何这些外部关系与真实 libc、操作系统分配器或具体 C 执行之间的验证连接。"
+    ],
+    "possible_vacuity_or_scope_issues": [
+      "八个命题均被 oops 放弃；声明表达待证明性质，不是已知事实。",
+      "带前提的命题在不存在满足前提的实例时可能因蕴含而空真；输入没有建立完整前提的可满足性。bn_ref_null 没有显式局部前提，但仍依赖其形式类型和上下文。",
+      "bn_contract 的正常可达性存在项排除了仅靠完全没有正常结果来满足整个契约；它不要求两个条件分支各自都可达，也不要求成功返回可达。",
+      "返回零或 NULL 的正常业务失败与单子失败、异常结果必须区分。插入、弹出和创建允许前者；正常结果限定不允许被约束结果为异常。",
+      "分配关系允许无条件选择正常的零返回；因此不能由该模型推出资源充足时操作成功，或由非失败推出业务成功。",
+      "bn_merge_leaves_nonfailure 的后置条件恒真，除了正常结果限定、存在性及 runs_to 所带的非失败要求外，没有任何功能正确性或所有权保持内容。",
+      "frame 仅覆盖初始外部活块和 P，并不覆盖全部保留字节；P 与栈集合不相交也不是完整状态保持条件。",
+      "bn_rep 的所有权约束针对结构存储，载荷可共享、重复或具有相同整数键；不能将其解释为载荷对象的独占所有权。",
+      "bn_ref_increment 的前提明显少于 bn_valid：即便分配器没有登记 p，其前提也未显式排除。能否支持非失败结论必须依赖未提供的底层语义与函数定义。",
+      "存储转换及最终分配器等式只描述初末状态，不能用于断言中间过程没有释放后重分配、临时分配或临时修改。"
+    ]
+  },
+  "transcript_prefix": "evidence/readback-001"
+}

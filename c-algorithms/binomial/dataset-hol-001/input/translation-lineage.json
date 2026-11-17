@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "source_dataset_binding": "8148dcb80eeeaa888e80256d45ff269410d39e98ea861ca4a668acee028eb52e",
+  "original_c_sha256": "7aa97b7051740519dbd2e813db096cd8a3ab3e33951e7950a26d472d67070d9f",
+  "source_translation_theory_sha256": "e8a9a68bf1011b23a93e9e75c8610f8fdba7b7b82e20d1d8f94777807cd16ada",
+  "program_functions": 17,
+  "primitive_definition_equivalences": 19,
+  "target_statements_modified": false,
+  "owned_context_policy_modified": false,
+  "allocator_semantics_modified": false,
+  "translation_support_proofs_are_not_benchmark_results": true,
+  "public_code_equation_equivalences": 16,
+  "program_pointer_abbreviations_expanded": true,
+  "original_sources_retained_at": "c-algorithms/binomial/dataset/input",
+  "generation_input_contains_c": false
+}

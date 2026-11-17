@@ -1,0 +1,131 @@
+{
+  "targets": [
+    {
+      "id": "bh_count_exact",
+      "readback": "对声明中任意类型正确的 s、h、M，若 bh_rep s h M 成立，则 binary_heap_num_entries' h 从 s 执行须满足 calg_contract：runs_to 所约束的每个结果均须为正常结果 Result r，其最终状态 t 满足 unat r = size M 且 t = s；此外至少存在一个可达的正常结果及其最终状态。size M 是多重集的总重数，因此重复出现的相同指针分别计数。unat r 是返回机器字的无符号自然数值。t = s 要求整个状态相等，因而包括堆字节、分配器状态以及状态中的其他部分均不变。",
+      "assumptions": [
+        "bh_rep 的全部条件适用，具体展开见 shared_assumptions；特别是 M 恰为前 bh_count 个缓冲区元素形成的多重集，且 bh_count ≤ bh_capacity < 2^31。",
+        "变量均在 binary_heap_input_global_addresses 上下文内理解；该上下文的附加假设未提供。",
+        "正常结果约束、非失败含义及正常结果存在性按 shared_assumptions 和 unresolved_semantics 中对 calg_contract 的区分理解。"
+      ],
+      "exclusions": [
+        "不计数不同指针的种类数，也不计数不同键值的种类数。",
+        "未提供函数定义，不能据此确认其实现行为、时间复杂度或该命题成立。"
+      ]
+    },
+    {
+      "id": "bh_insert_correct",
+      "readback": "对任意 s、h、M、p，若 bh_rep s h M、payload_valid s p 和 insert_admissible s h 均成立，则 binary_heap_insert' h p 从 s 执行须满足 calg_contract，且至少存在一个可达正常结果。每个受约束的正常结果 Result r、最终状态 t 都保持保留字节集合及其中的字节，并保持初态中除堆记录块与旧缓冲区块之外的所有活动块的登记大小及其字节。若 r = 0，则必须 t = s，即整个状态完全不变；否则必须 r = 1，并在同一记录指针 h 上满足 bh_rep t h (add_mset p M)。add_mset p M 仅将指针 p 的重数增加一，所有其他指针的重数不变，因此元素总数增加一。成功时 insert_storage 要求最终分配器恰为初始分配器先把旧缓冲区基址登记改为 None，再把最终缓冲区基址登记为 Some (指针大小 × 最终容量) 的结果；其余登记和 reserved_bytes 不变。若新旧缓冲区基址相同，后一次更新覆盖前一次。",
+      "assumptions": [
+        "payload_valid s p 表示将 p 转换为 32 位有符号字指针后满足 c_guard，且从 ptr_val p 起按 block_bytes 定义的四字节区域包含在初始 reserved_bytes 中。",
+        "insert_admissible s h 表示初始元素数小于容量，或者初始容量的两倍严格小于 2^31。该析取并不要求两项都成立。",
+        "bh_rep 的全部条件及 calg_contract 的共同解释适用。"
+      ],
+      "exclusions": [
+        "返回 0 是正常结果中的失败返回码，不是异常结果；该分支仍满足整个 calg_contract。",
+        "没有断言一定返回 1，也没有要求返回 0 和返回 1 两种结果都存在。",
+        "没有要求 p 原先不在 M 中；允许重复插入同一指针。",
+        "成功分支未规定最终容量必须翻倍，也未规定缓冲区必须搬迁或必须保持原址。",
+        "没有全局 bytes_frame 条件；未由其他条件覆盖的未分配、未保留字节不获保持保证。"
+      ]
+    },
+    {
+      "id": "bh_insert_without_growth",
+      "readback": "对任意 s、h、M、p，若 bh_rep s h M、payload_valid s p 且初始元素数严格小于容量，则 binary_heap_insert' h p 从 s 执行须满足 calg_contract，至少存在一个可达正常结果，并且每个受约束的正常结果都返回 r = 1。最终同一 h 表示 add_mset p M，即 p 的重数增加一、其他重数不变、总数增加一。最终分配器记录必须与初始完全相等，缓冲区指针及容量分别与初始相同。bytes_frame 要求初始 bh_owned s h 之外的每一个堆字节不变；该拥有区域是初始堆记录的整块字节与初始缓冲区按全部容量计算的整块字节的并集。由初始分配器良构性，这两块与保留字节及其他活动块不相交，所以这些区域的堆字节也保持，且其分配登记由分配器相等而保持。",
+      "assumptions": [
+        "初始容量严格大于元素数，并且由 bh_rep 得到 0 < 容量 < 2^31。",
+        "payload_valid、bh_rep 和 calg_contract 的共同展开适用。"
+      ],
+      "exclusions": [
+        "不允许正常返回 0；但是否已证明实现确实满足这一点不能从声明确认。",
+        "不要求最终整个状态等于初始状态，也不要求拥有区域内部所有字节不变。",
+        "只约束执行结果，不能由最终分配器、指针与容量不变推出执行途中没有调用分配函数或没有临时分配。",
+        "不规定相等键元素的稳定次序或最终数组排列。"
+      ]
+    },
+    {
+      "id": "bh_pop_correct",
+      "readback": "对任意 s、h、M，若 bh_rep s h M，则 binary_heap_pop' h 从 s 执行须满足 calg_contract，至少存在一个可达正常结果。每个受约束的正常结果 Result p、最终状态 t 都保持整个分配器记录、缓冲区指针和容量，并保持初始 bh_owned s h 之外的全部堆字节。若 M 是空多重集，必须返回 NULL 且 t = s。否则，返回指针 p 必须在初始 M 中有正重数，并且对初始 M 中每个指针 q，都有 payload_key s p ≤ payload_key s q；比较的是初态中读取的有符号 32 位整数键。最终同一 h 必须表示 M - {#p#}，即只删除 p 的一次出现：p 的重数减少一，其他指针重数不变，总数减少一。分配器不变且拥有区域外字节不变，结合初始良构性也保证保留字节及其他活动块的登记和内容保持。",
+      "assumptions": [
+        "bh_rep 提供最小堆的父子键不等式、所有元素的 payload_valid 条件以及精确的初始多重集。",
+        "空与非空分支都受同一 calg_contract 正常结果约束与存在性要求约束。"
+      ],
+      "exclusions": [
+        "非空时不要求唯一最小键，也不指定并列最小元素中返回哪一个。",
+        "多重集相减不会删除 p 的所有出现。",
+        "不释放记录块、缓冲区块或载荷块；最终分配器记录必须完全不变。",
+        "非空分支未单独写出 p ≠ NULL；能否从 payload_valid 中的 c_guard 推出它，取决于未提供的 c_guard 定义。",
+        "没有规定剩余元素的稳定次序或具体数组排列。"
+      ]
+    },
+    {
+      "id": "bh_free_owned_storage",
+      "readback": "对任意 s、h、M，若 bh_rep s h M，则 binary_heap_free' h 从 s 执行须满足 calg_contract，至少存在一个可达正常结果。每个受约束的正常结果返回单位值 ()。payload_frame 要求保留字节集合及初始保留集合内所有堆字节不变；bytes_frame 要求初始堆记录块和初始整容量缓冲区块的并集之外所有堆字节不变。最终分配器恰为初始分配器先删除旧缓冲区基址登记、再删除记录基址 h 的登记所得的记录，其余活动块登记与 reserved_bytes 保持。bh_rep 保证这两个基址不同且对应合法、不相交的活动块。因此该命题规定移除这两个块的分配登记，并保持其他活动块的登记和字节。",
+      "assumptions": [
+        "bh_rep 对初始记录块与缓冲区块的精确登记大小、不同基址和分配器良构性均为前提。",
+        "calg_contract 的共同解释适用；单位返回值本身不另编码成功或失败。"
+      ],
+      "exclusions": [
+        "不要求被释放区域的字节清零、保持原值或变得不可读取；其内部字节未受 bytes_frame 限制。",
+        "不删除或释放 M 中载荷指针对应的保留区域；这些保留字节被明确保持。",
+        "不要求最终仍满足 bh_rep，也不为后续继续通过 h 操作提供契约。",
+        "未约束最终其他非堆、非分配器状态字段与初始相等。"
+      ]
+    },
+    {
+      "id": "bh_new_empty_or_failure",
+      "readback": "对任意初态 s，若其分配器 allocator_wf，则 calg_binary_new' 从 s 执行须满足 calg_contract，至少存在一个可达正常结果。每个受约束的正常结果 Result h、最终状态 t 都保持 reserved_bytes 及其全部初始字节，并保持初态每一个活动块的同址、同大小登记及块内全部字节。若返回 h = NULL，只要求最终分配器记录与初始完全相等，此外仍须满足前述两个保持条件。若 h ≠ NULL，则最终 h 必须满足 bh_rep t h {#}，因此元素数为零，并且容量恰为 16；最终分配器恰为初始分配器先在 h 的基址登记一个堆记录大小的块，再在最终缓冲区基址登记一个大小为 16 × 指针大小的块。最终 bh_rep 要求这两块合法、基址不同、互不相交、与保留区域不相交；结合所有原有活动块保持，这两块还必须与原有活动块分离。",
+      "assumptions": [
+        "唯一显式执行前提是初始分配器良构；不要求初始存在某个堆表示。",
+        "existing_blocks_preserved s t 对所有 p、n 量化：只要初始 live_blocks p = Some n，最终仍须为 Some n，并保持 block_bytes p n 内每个字节。",
+        "成功分支的 bh_rep、new_storage 及共同 calg_contract 展开适用。"
+      ],
+      "exclusions": [
+        "不保证分配成功，也不要求成功与 NULL 两种正常结果都存在。",
+        "NULL 分支不要求 t = s；未分配且未保留区域的字节，以及其他未受条件约束的状态部分，可能不同。",
+        "成功分支没有覆盖整个地址空间的 bytes_frame；除保留区域及初始活动块之外的字节没有统一保持保证。",
+        "空堆不表示缓冲区的全部 16 个槽位已初始化或清零；bh_values 此时是空列表。"
+      ]
+    }
+  ],
+  "shared_assumptions": [
+    "六个命题中的自由变量按 Isabelle 声明方式作隐式全称量化，并在 binary_heap_input_global_addresses 上下文内解释。每个命题都是前提推出契约的条件命题，没有断言前提存在满足者。",
+    "六个声明均以 oops 结束，因而这里给出的是放弃证明的目标，不是已证明定理；不能假定任何一个目标为真。",
+    "calg_contract f s Q 精确展开为两个合取项：runs_to f s (λr t. ∃v. r = Result v ∧ Q v t)，以及 ∃v t. reaches f s (Result v) t。第一项的后置谓词只接受正常 Result 构造的结果，排除任何不同于 Result 的异常结果；第二项独立要求至少一个正常结果可达。所有目标中的后置条件约束均通过这个共同包装给出。runs_to 是否同时保证非失败，以及如何处理发散，须依赖其未提供的库定义，不能仅从名字确定。",
+    "calg_allocator 有 live_blocks 和 reserved_bytes 两个字段。live_blocks 将地址映射到可选自然数大小，Some n 表示登记为大小 n 的活动块，None 表示无此登记；reserved_bytes 是一组保留地址。",
+    "block_bytes p n 是所有满足 unat p ≤ unat a 且 unat a < unat p + n 的地址 a，使用自然数上的半开区间条件，并不是按字地址回绕定义的区间。block_ok p n 要求 p ≠ 0、n > 0、unat p + n ≤ 2^64，且 unat p mod 16 = 0。",
+    "allocator_wf A 要求每个登记的活动块均满足 block_ok，且与 reserved_bytes 不相交；任意不同登记基址对应的活动块字节集合互不相交。它不要求 reserved_bytes 自身构成某种块分解，也不声称未登记地址不存在内存。",
+    "fresh_block A p n 要求 block_ok p n、新块与 reserved_bytes 不相交，且与 A 中每个活动块都不相交。bytes_frame W h h' 只要求每个不在 W 中的地址 a 满足 h' a = h a；对 W 内部不施加保持条件。",
+    "bh_record s h 是从状态 s 的原始堆内存经 h_val 在 h 读取的 StrictC'_BinaryHeap_C 记录。bh_count 和 bh_capacity 分别是该记录 num_values_C、alloced_size_C 字段的无符号自然数值，bh_buffer 是 values_C 字段。",
+    "bh_values s h 按 i = 0 到 bh_count s h - 1 的顺序，读取 bh_buffer s h +ₚ int i 指向的值并构成列表。这里使用的是所给的类型化指针加法。bh_contents 是此列表的多重集，因此保留重复指针的重数但丢弃列表次序。",
+    "payload_key s p 将 p 转换为 32 位有符号字指针，以 h_val 读取并用 sint 解释为有符号整数。payload_valid s p 要求该转换后指针满足 c_guard，且 block_bytes (ptr_val p) 4 包含于 reserved_bytes。它没有要求载荷指针对应 live_blocks 中单独登记的活动块，也没有要求不同载荷指针的四字节区域互不重叠。",
+    "bh_rep s h M 要求：分配器良构；记录指针 h 和缓冲区指针分别满足 c_guard；二者原始地址不同；记录块登记大小恰为 size_of TYPE(StrictC'_BinaryHeap_C)；缓冲区块登记大小恰为 size_of TYPE(unit ptr) × 容量；0 < 容量 < 2^31；元素数 ≤ 容量；heap_type_C 等于 BINARY_HEAP_TYPE_MIN；compare_func_C 等于 binary_heap_input.int_compare；列表内每个指针均 payload_valid；对每个自然数 i，若 0 < i < 元素数，则下标 (i - 1) div 2 处的父节点键 ≤ 下标 i 处的键；最后 M 恰等于 bh_contents。它约束的是父子最小堆不等式，不要求整个数组按键排序。",
+    "payload_frame s t 要求 reserved_bytes 集合完全相同，并保持初始保留集合内的全部原始堆字节。bh_owned s h 是初始记录块的字节集合与初始整个容量缓冲区块的字节集合的并集；它是显式集合定义，并未额外引入分离逻辑权限机制。",
+    "other_blocks_unchanged s h t 对除初始记录基址与初始缓冲区基址之外的每个地址 p 量化：若初始登记为 Some n，则最终仍登记 Some n 且该块字节不变；若初始为 None，则该条件在此地址不作限制。它不等同于所有其他地址字节都不变。",
+    "malloc_rel 要求初始分配器良构且 n > 0。它允许 p = 0、堆和分配器完全不变的分配失败结果；或者允许一个 fresh_block，保持新块之外全部字节，并仅将该基址登记为 Some n。成功新块内部字节没有初始化约束。",
+    "free_rel 要求初始分配器良构。p = 0 时堆和分配器完全不变；p ≠ 0 时必须存在初始登记大小 n，保持该块之外所有字节，并仅删除 p 的登记。非零未登记指针没有该关系中的结果。",
+    "realloc_rel 要求初始分配器良构且 n > 0。p = 0 时采用 malloc_rel；否则 p 必须有初始登记大小 m。它允许 q = 0 且堆和分配器不变；成功时，新块相对于删除旧块登记后的分配器须为 fresh_block，且 q = p 或新旧块完全不相交；旧块与新块并集之外字节保持；对每个 i < min m n，最终地址 q + of_nat i 的字节等于初始地址 p + of_nat i 的字节；登记更新为先删除 p，再登记 q 为 Some n。其余新块字节、未被复制条件限制的旧块字节没有保持要求。",
+    "malloc_body、realloc_body、free_body 是通过 exec_spec_monad、L2_guarded、L2_assume 显式提供的外部函数模型。malloc 的守卫要求正大小和分配器良构；realloc 还要求输入为 NULL 或已登记；free 要求分配器良构且输入为 NULL 或已登记。关系中选出的状态通过所示更新修改原始堆字节和 phantom_machine_state；参数、返回值与异常状态的包装还依赖所调用组合子的语义。这些声明不是对某个 libc malloc、realloc、free 实现的验证，也未提供它们与真实 libc 的精化证明。"
+  ],
+  "unresolved_semantics": [
+    "没有给出 runs_to、reaches、spec_monad、Result 及异常结果类型的定义。因此可以精确陈述契约公式和其中的正常结果存在要求，但无法仅凭本文确定 runs_to 对失败标记、空结果、无限执行或发散的完整语义，也无法确认它给出何种非失败或终止保证。",
+    "没有给出 exec_spec_monad、L2_guarded 和 L2_assume 的定义；守卫为假、允许结果集合为空、异常传播以及包装层局部状态如何变化，不能完整展开。",
+    "未提供 binary_heap_input.c、生成后的函数定义或 final_defs 的内容，不能判定六个操作实际如何执行、会调用哪些外部函数、是否满足这些目标或有何复杂度。",
+    "未给出 binary_heap_input_global_addresses 上下文的声明，无法列出其附加地址约束或假设。",
+    "addr、heap_mem、c_guard、h_val、指针加法、ptr_coerce、ptr_val、NULL、结构体布局与 size_of 的具体库定义未提供。不能从文本直接确定结构体字节数、指针字节数、端序、全部对齐条件，或 c_guard 是否排除 NULL。64 位参数字和 2^64 边界显式出现，但这并不代替缺失的 addr 类型定义。",
+    "BINARY_HEAP_TYPE_MIN 的数值和 int_compare 的函数体未提供。bh_rep 只要求相关字段等于这些常量；它另外直接规定了 payload_key 的父子不等式，不能据此认定 int_compare 的实现已被验证为该比较。",
+    "没有给出完整状态类型，因此除明确的整个状态相等分支外，无法列举未受后置条件约束的其他状态字段。"
+  ],
+  "possible_vacuity_or_scope_issues": [
+    "若某个前提或上下文没有满足者，对应条件命题可能真空成立；声明没有证明存在 bh_rep 状态、有效待插入载荷或符合上下文的地址配置。",
+    "在前提成立的状态上，calg_contract 显式要求至少一个可达正常结果，因此不能仅以没有任何正常结果来满足整个契约；但该存在性本身不要求成功返回码或成功分配。",
+    "异常排除发生在 runs_to 使用的结果谓词中；要把它提升为所有实际执行无异常、无失败或必终止，仍须知道 runs_to 与 reaches 的定义及相互关系。",
+    "返回 0 或 NULL 的分配失败分支与单子层失败或异常不是同一个概念。外部分配关系即使没有可用新块，也允许保持状态的零地址结果；目标的正常结果存在性并不保证有足够内存完成插入或新建。",
+    "insert_admissible 是严格不等式：满容量时必须满足 2 × 容量 < 2^31；恰等于该界限不满足此项。未满时，即使容量翻倍越界，也可通过第一项满足。",
+    "帧条件都是初态到终态的约束，不说明执行途中是否曾修改后又恢复字节、临时分配或释放内存。",
+    "多重集记录的是指针值的重数；两个不同指针即使具有相等整数键也仍是不同元素。同一指针重复出现时，插入加一次，非空弹出减一次。",
+    "载荷有效性只通过 c_guard 和保留字节包含关系表达，不要求每个载荷拥有独立块或互不别名。reserved_bytes 是模型中的保留集合，不能自动解释为已验证的 libc 所有权或权限机制。",
+    "新建失败分支仅恢复分配器记录并保持原有活动块及保留字节，不保证整个状态回滚；一般插入失败分支则明确要求 t = s。两者的失败保证不同。",
+    "所有结论仅针对给定模型和未展开的导入语义。安装 C 文件、调用 autocorres 或打印翻译标记本身不证明这些 oops 目标，也不验证真实外部分配器实现。"
+  ]
+}

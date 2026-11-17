@@ -1,0 +1,20 @@
+{
+  "architecture_suite": {
+    "tests": 37,
+    "passed": 37,
+    "errors": 0
+  },
+  "integration_suite": {
+    "tests": 21,
+    "passed": 21,
+    "errors": 0
+  },
+  "notes": [
+    "An earlier test invocation named a nonexistent test module; the corrected command passed.",
+    "Overlapping suite totals must not be interpreted as unique tests."
+  ],
+  "logs": {
+    "evidence/architecture-regressions.log": "73775613e66ee975548d145d6bbaceb4e8841d0433d5cc347906962dc913de10",
+    "evidence/integration-regressions.log": "60647f318439be7b08976ab3cfa0c69470d38468a6dec88d560e7d738a6c9b2b"
+  }
+}

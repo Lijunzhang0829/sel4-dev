@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "status": "semantics_approved",
+  "scope": "binary heap only",
+  "generation_allowed": true,
+  "independent_readback_completed": true,
+  "native_generation_adapter_checked": true,
+  "adapter_evidence": "evidence/adapter-verification.json",
+  "target_count": 6,
+  "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d",
+  "source_closure": {
+    "ROOT": "50b5b1a598abe768115aac7f619b3747153ce48c025c1004946d60242b67e3fd",
+    "source-lock.json": "a84e9dc1caf72abeb2ff99123e8a991e65b149ba76d6234e2c405b9cb84c39eb",
+    "environment-lock.json": "ccfeee9ca284017c3b91c47b171852617eaf774f293e1532d53d53fb83043173",
+    "c/binary_heap_input.c": "151dcb8b43bcfafc6693afa50e440fa66b318e26c7d12f2da6fde746516e1483",
+    "theories/Binary_Heap_C.thy": "8897cff328d17676f1b18d594176a16edeef7f8edce3dfa0db3e216b2b6116cb",
+    "theories/Heap_Environment.thy": "43820c5ae33bcd5be4646d9b7f34cace4c2905b85905152e07afdee9069bce21",
+    "targets-session/Binary_Heap_Model.thy": "95788f49425cc81f292d6ee62254ebcc3772b8ad4336b85850c3b98e41a8a57f",
+    "targets-session/Binary_Heap_Targets.thy": "7874d2489bb7df9774cd3688ce2b1243320611e8b322bbcb8afc902f01a40f13",
+    "targets-session/Environment_Sanity.thy": "cb198fd81684bf76e48cf0c1e9cb8434116dcb4fd6ecc86a420bb59eb4e0eb10",
+    "targets-session/Preparation_Audit.thy": "3809432f6cb236b85ba45b0a65751011f6e755d6e8f3bc7500c5d37cabaaac49"
+  },
+  "targets": [
+    {
+      "id": "bh_count_exact",
+      "source_function": "binary_heap_num_entries",
+      "source_file": "vendor/src/binary-heap.c",
+      "intent": "计数等于抽象多重集大小，状态不变",
+      "proposition": "bh_rep s h M \\<Longrightarrow> calg_contract (binary_heap_num_entries' h) s\n    (\\<lambda>r t. unat r = size M \\<and> t = s)",
+      "isabelle_context": "binary_heap_input_global_addresses",
+      "theory": "Calg_Binary_Targets.Binary_Heap_Targets",
+      "status": "unproved",
+      "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d"
+    },
+    {
+      "id": "bh_insert_correct",
+      "source_function": "binary_heap_insert",
+      "source_file": "vendor/src/binary-heap.c",
+      "intent": "成功增加一次给定指针；失败保持状态；保持堆序与所有权",
+      "proposition": "bh_rep s h M \\<Longrightarrow> payload_valid s p \\<Longrightarrow> insert_admissible s h \\<Longrightarrow>\n   calg_contract (binary_heap_insert' h p) s (\\<lambda>r t.\n     payload_frame s t \\<and> other_blocks_unchanged s h t \\<and>\n     (if r = 0 then t = s else r = 1 \\<and> bh_rep t h (add_mset p M) \\<and> insert_storage s h t))",
+      "isabelle_context": "binary_heap_input_global_addresses",
+      "theory": "Calg_Binary_Targets.Binary_Heap_Targets",
+      "status": "unproved",
+      "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d"
+    },
+    {
+      "id": "bh_insert_without_growth",
+      "source_function": "binary_heap_insert",
+      "source_file": "vendor/src/binary-heap.c",
+      "intent": "有空余容量时必定成功，不改变分配状态、数组地址或容量",
+      "proposition": "bh_rep s h M \\<Longrightarrow> payload_valid s p \\<Longrightarrow> bh_count s h < bh_capacity s h \\<Longrightarrow>\n   calg_contract (binary_heap_insert' h p) s (\\<lambda>r t.\n     r = 1 \\<and> bh_rep t h (add_mset p M) \\<and>\n     phantom_machine_state_' t = phantom_machine_state_' s \\<and>\n     bh_buffer t h = bh_buffer s h \\<and> bh_capacity t h = bh_capacity s h \\<and>\n     bytes_frame (bh_owned s h) (hrs_mem (t_hrs_' s)) (hrs_mem (t_hrs_' t)))",
+      "isabelle_context": "binary_heap_input_global_addresses",
+      "theory": "Calg_Binary_Targets.Binary_Heap_Targets",
+      "status": "unproved",
+      "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d"
+    },
+    {
+      "id": "bh_pop_correct",
+      "source_function": "binary_heap_pop",
+      "source_file": "vendor/src/binary-heap.c",
+      "intent": "空堆返回空指针；非空堆移除一个最小键元素，保持堆序和分配状态",
+      "proposition": "bh_rep s h M \\<Longrightarrow>\n   calg_contract (binary_heap_pop' h) s (\\<lambda>p t.\n     phantom_machine_state_' t = phantom_machine_state_' s \\<and>\n     bytes_frame (bh_owned s h) (hrs_mem (t_hrs_' s)) (hrs_mem (t_hrs_' t)) \\<and>\n     bh_buffer t h = bh_buffer s h \\<and> bh_capacity t h = bh_capacity s h \\<and>\n     (if M = {#} then p = NULL \\<and> t = s else\n       p \\<in># M \\<and> (\\<forall>q \\<in># M. payload_key s p \\<le> payload_key s q) \\<and>\n       bh_rep t h (M - {#p#})))",
+      "isabelle_context": "binary_heap_input_global_addresses",
+      "theory": "Calg_Binary_Targets.Binary_Heap_Targets",
+      "status": "unproved",
+      "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d"
+    },
+    {
+      "id": "bh_free_owned_storage",
+      "source_function": "binary_heap_free",
+      "source_file": "vendor/src/binary-heap.c",
+      "intent": "只释放堆对象和数组，保留调用者数据",
+      "proposition": "bh_rep s h M \\<Longrightarrow> calg_contract (binary_heap_free' h) s (\\<lambda>r t.\n     r = () \\<and> payload_frame s t \\<and>\n     bytes_frame (bh_owned s h) (hrs_mem (t_hrs_' s)) (hrs_mem (t_hrs_' t)) \\<and>\n     phantom_machine_state_' t = (phantom_machine_state_' s)\\<lparr>live_blocks :=\n       ((live_blocks (phantom_machine_state_' s))(ptr_val (bh_buffer s h) := None))\n         (ptr_val h := None)\\<rparr>)",
+      "isabelle_context": "binary_heap_input_global_addresses",
+      "theory": "Calg_Binary_Targets.Binary_Heap_Targets",
+      "status": "unproved",
+      "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d"
+    },
+    {
+      "id": "bh_new_empty_or_failure",
+      "source_function": "binary_heap_new",
+      "source_file": "vendor/src/binary-heap.c",
+      "intent": "成功创建容量16的空堆；失败回收临时块；保留已有块和调用者数据",
+      "proposition": "allocator_wf (phantom_machine_state_' s) \\<Longrightarrow>\n   calg_contract calg_binary_new' s (\\<lambda>h t.\n     payload_frame s t \\<and> existing_blocks_preserved s t \\<and>\n     (if h = NULL then phantom_machine_state_' t = phantom_machine_state_' s else\n       bh_rep t h {#} \\<and> bh_capacity t h = 16 \\<and> new_storage s h t))",
+      "isabelle_context": "binary_heap_input_global_addresses",
+      "theory": "Calg_Binary_Targets.Binary_Heap_Targets",
+      "status": "unproved",
+      "semantic_binding": "9689aaba04f7a679335c75ba97bc5a269a08c15d15bb09e7892ace5fcdde682d"
+    }
+  ]
+}

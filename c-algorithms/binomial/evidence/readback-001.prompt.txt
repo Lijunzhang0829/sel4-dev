@@ -1,0 +1,355 @@
+You are a stateless mathematical read-back reviewer. Use ONLY the formal input below.
+Do not call tools, inspect files, infer the author's intention, or provide proof scripts.
+For EACH of the eight lemma declarations, explain in Chinese exactly what the proposition asserts:
+quantifiers, premises, normal/exceptional outcomes, nonfailure, existence of outcomes, multiset multiplicities,
+numeric bounds, and frame/ownership guarantees. Expand the supplied nonstandard definitions.
+Distinguish the explicit external-function model from any verified libc implementation.
+Identify what cannot be determined from the supplied declarations. Do not assume the goals are true.
+Return ONLY valid JSON with keys: targets (list of {id, readback, assumptions, exclusions}),
+shared_assumptions (list), unresolved_semantics (list), possible_vacuity_or_scope_issues (list).
+No intended natural-language specification has been supplied.
+FORMAL INPUT:
+theories/Binomial_Environment.thy
+theory Binomial_Environment
+  imports AutoCorres2.AutoCorres
+begin
+
+
+
+record calg_allocator =
+  live_blocks :: "addr \<Rightarrow> nat option"
+  reserved_bytes :: "addr set"
+
+definition block_bytes :: "addr \<Rightarrow> nat \<Rightarrow> addr set" where
+  "block_bytes p n = {a. unat p \<le> unat a \<and> unat a < unat p + n}"
+
+definition block_ok :: "addr \<Rightarrow> nat \<Rightarrow> bool" where
+  "block_ok p n \<longleftrightarrow> p \<noteq> 0 \<and> 0 < n \<and>
+    unat p + n \<le> 2 ^ 64 \<and> unat p mod 16 = 0"
+
+definition allocator_wf :: "calg_allocator \<Rightarrow> bool" where
+  "allocator_wf A \<longleftrightarrow>
+    (\<forall>p n. live_blocks A p = Some n \<longrightarrow> block_ok p n \<and>
+       block_bytes p n \<inter> reserved_bytes A = {}) \<and>
+    (\<forall>p n q m. live_blocks A p = Some n \<longrightarrow>
+       live_blocks A q = Some m \<longrightarrow> p \<noteq> q \<longrightarrow>
+       block_bytes p n \<inter> block_bytes q m = {})"
+
+definition fresh_block :: "calg_allocator \<Rightarrow> addr \<Rightarrow> nat \<Rightarrow> bool" where
+  "fresh_block A p n \<longleftrightarrow> block_ok p n \<and>
+    block_bytes p n \<inter> reserved_bytes A = {} \<and>
+    (\<forall>q m. live_blocks A q = Some m \<longrightarrow>
+      block_bytes p n \<inter> block_bytes q m = {})"
+
+definition bytes_frame :: "addr set \<Rightarrow> heap_mem \<Rightarrow> heap_mem \<Rightarrow> bool" where
+  "bytes_frame W h h' \<longleftrightarrow> (\<forall>a. a \<notin> W \<longrightarrow> h' a = h a)"
+
+definition malloc_rel ::
+  "nat \<Rightarrow> heap_mem \<Rightarrow> calg_allocator \<Rightarrow> addr \<Rightarrow>
+    heap_mem \<Rightarrow> calg_allocator \<Rightarrow> bool" where
+  "malloc_rel n h A p h' A' \<longleftrightarrow> allocator_wf A \<and> 0 < n \<and>
+    ((p = 0 \<and> h' = h \<and> A' = A) \<or>
+     (fresh_block A p n \<and> bytes_frame (block_bytes p n) h h' \<and>
+      A' = A\<lparr>live_blocks := (live_blocks A)(p := Some n)\<rparr>))"
+
+definition free_rel ::
+  "addr \<Rightarrow> heap_mem \<Rightarrow> calg_allocator \<Rightarrow>
+    heap_mem \<Rightarrow> calg_allocator \<Rightarrow> bool" where
+  "free_rel p h A h' A' \<longleftrightarrow> allocator_wf A \<and>
+    ((p = 0 \<and> h' = h \<and> A' = A) \<or>
+     (p \<noteq> 0 \<and> (\<exists>n. live_blocks A p = Some n \<and>
+       bytes_frame (block_bytes p n) h h') \<and>
+      A' = A\<lparr>live_blocks := (live_blocks A)(p := None)\<rparr>))"
+
+definition realloc_rel ::
+  "addr \<Rightarrow> nat \<Rightarrow> heap_mem \<Rightarrow> calg_allocator \<Rightarrow>
+    addr \<Rightarrow> heap_mem \<Rightarrow> calg_allocator \<Rightarrow> bool" where
+  "realloc_rel p n h A q h' A' \<longleftrightarrow> allocator_wf A \<and> 0 < n \<and>
+    (if p = 0 then malloc_rel n h A q h' A' else
+      (\<exists>m. live_blocks A p = Some m \<and>
+        ((q = 0 \<and> h' = h \<and> A' = A) \<or>
+         (fresh_block (A\<lparr>live_blocks := (live_blocks A)(p := None)\<rparr>) q n \<and>
+          (q = p \<or> block_bytes q n \<inter> block_bytes p m = {}) \<and>
+          bytes_frame (block_bytes p m \<union> block_bytes q n) h h' \<and>
+          (\<forall>i < min m n. h' (q + of_nat i) = h (p + of_nat i)) \<and>
+          A' = A\<lparr>live_blocks := ((live_blocks A)(p := None))(q := Some n)\<rparr>))))"
+
+
+
+
+definition calloc_rel where
+  "calloc_rel count width h A p h' A' \<longleftrightarrow>
+    0 < count \<and> 0 < width \<and> count * width < 2 ^ 64 \<and>
+    malloc_rel (count * width) h A p h' A' \<and>
+    (p \<noteq> 0 \<longrightarrow> (\<forall>i < count * width. h' (p + of_nat i) = 0))"
+
+definition readable_bytes where
+  "readable_bytes A = reserved_bytes A \<union>
+    (\<Union>p \<in> dom (live_blocks A). block_bytes p (the (live_blocks A p)))"
+
+definition memcpy_ok where
+  "memcpy_ok A dst src n \<longleftrightarrow> dst \<noteq> 0 \<and> src \<noteq> 0 \<and>
+    unat dst + n \<le> 2 ^ 64 \<and> unat src + n \<le> 2 ^ 64 \<and>
+    block_bytes dst n \<subseteq> readable_bytes A \<and>
+    block_bytes src n \<subseteq> readable_bytes A \<and>
+    block_bytes dst n \<inter> block_bytes src n = {}"
+
+definition memcpy_rel where
+  "memcpy_rel A dst src n h h' \<longleftrightarrow> memcpy_ok A dst src n \<and>
+    bytes_frame (block_bytes dst n) h h' \<and>
+    (\<forall>i < n. h' (dst + of_nat i) = h (src + of_nat i))"
+
+end
+
+
+theories/Binomial_Heap_C.thy
+theory Binomial_Heap_C
+  imports Binomial_Environment
+begin
+
+declare [[cpp_path = "", allow_underscore_idents = true]]
+install_C_file "../c/binomial_heap_input.c" [machinety=calg_allocator]
+
+init-autocorres [skip_heap_abs, skip_word_abs, ts_rules = nondet] "binomial_heap_input.c"
+
+overloading malloc_body \<equiv> malloc_body
+begin
+definition
+  "malloc_body \<equiv> exec_spec_monad global_exn_var'_' global_exn_var'_'_update globals
+    (\<lambda>s. clookup 0 (locals s))
+    (\<lambda>(n::64 word). L2_guarded
+      (\<lambda>s. 0 < unat n \<and> allocator_wf (phantom_machine_state_' s))
+      (L2_assume (\<lambda>s. {(p::unit ptr, t).
+      \<exists>h A. malloc_rel (unat n) (hrs_mem (t_hrs_' s)) (phantom_machine_state_' s)
+           (ptr_val p) h A \<and>
+        t = phantom_machine_state_'_update (\<lambda>_. A)
+          (t_hrs_'_update (hrs_mem_update (\<lambda>_. h)) s)})))
+    (\<lambda>upd. locals_update (cupdate 1 upd))"
+end
+declare_prototype malloc_body_def done
+
+overloading free_body \<equiv> free_body
+begin
+definition
+  "free_body \<equiv> exec_spec_monad global_exn_var'_' global_exn_var'_'_update globals
+    (\<lambda>s. clookup 0 (locals s))
+    (\<lambda>(p::unit ptr). L2_guarded
+      (\<lambda>s. allocator_wf (phantom_machine_state_' s) \<and>
+        (p = NULL \<or> live_blocks (phantom_machine_state_' s) (ptr_val p) \<noteq> None))
+      (L2_assume (\<lambda>s. {(r::unit, t).
+      \<exists>h A. free_rel (ptr_val p) (hrs_mem (t_hrs_' s)) (phantom_machine_state_' s) h A \<and>
+        t = phantom_machine_state_'_update (\<lambda>_. A)
+          (t_hrs_'_update (hrs_mem_update (\<lambda>_. h)) s)})))
+    (\<lambda>upd. (\<lambda>s. s))"
+end
+declare_prototype free_body_def done
+
+
+overloading calloc_body \<equiv> calloc_body
+begin
+definition
+  "calloc_body \<equiv> exec_spec_monad global_exn_var'_' global_exn_var'_'_update globals
+    (\<lambda>s. (clookup 0 (locals s), clookup 1 (locals s)))
+    (\<lambda>(n::64 word, w::64 word). L2_guarded
+      (\<lambda>s. 0 < unat n \<and> 0 < unat w \<and> unat n * unat w < 2 ^ 64 \<and>
+        allocator_wf (phantom_machine_state_' s))
+      (L2_assume (\<lambda>s. {(p::unit ptr, t).
+      \<exists>h A. calloc_rel (unat n) (unat w) (hrs_mem (t_hrs_' s)) (phantom_machine_state_' s)
+           (ptr_val p) h A \<and>
+        t = phantom_machine_state_'_update (\<lambda>_. A)
+          (t_hrs_'_update (hrs_mem_update (\<lambda>_. h)) s)})))
+    (\<lambda>upd. locals_update (cupdate 2 upd))"
+end
+declare_prototype calloc_body_def done
+
+overloading memcpy_body \<equiv> memcpy_body
+begin
+definition
+  "memcpy_body \<equiv> exec_spec_monad global_exn_var'_' global_exn_var'_'_update globals
+    (\<lambda>s. (clookup 0 (locals s), clookup 1 (locals s), clookup 2 (locals s)))
+    (\<lambda>(dst::unit ptr, src::unit ptr, n::64 word). L2_guarded
+      (\<lambda>s. allocator_wf (phantom_machine_state_' s) \<and>
+        memcpy_ok (phantom_machine_state_' s) (ptr_val dst) (ptr_val src) (unat n))
+      (L2_assume (\<lambda>s. {(p::unit ptr, t).
+      \<exists>h. p = dst \<and> memcpy_rel (phantom_machine_state_' s) (ptr_val dst)
+        (ptr_val src) (unat n) (hrs_mem (t_hrs_' s)) h \<and>
+        t = t_hrs_'_update (hrs_mem_update (\<lambda>_. h)) s})))
+    (\<lambda>upd. locals_update (cupdate 3 upd))"
+end
+declare_prototype memcpy_body_def done
+
+autocorres "binomial_heap_input.c"
+
+thm final_defs
+ML \<open>writeln "CALG_BINOMIAL_TRANSLATION_PASS"\<close>
+end
+
+
+targets-session/Binomial_Heap_Model.thy
+theory Binomial_Heap_Model
+  imports Calg_Binomial_Foundation.Binomial_Heap_C "HOL-Library.Multiset"
+begin
+
+
+
+datatype bn_shape = BN "StrictC'_BinomialTree_C ptr" "bn_shape list"
+fun bn_root where "bn_root (BN p cs) = p"
+fun bn_rank where "bn_rank (BN p cs) = length cs"
+definition bn_tree where "bn_tree s p = (h_val (hrs_mem (t_hrs_' s)) p :: StrictC'_BinomialTree_C)"
+definition bn_heap where "bn_heap s h = (h_val (hrs_mem (t_hrs_' s)) h :: StrictC'_BinomialHeap_C)"
+definition bn_key where "bn_key s p = sint (h_val (hrs_mem (t_hrs_' s)) (ptr_coerce p :: 32 signed word ptr))"
+definition bn_payload where
+  "bn_payload P p \<longleftrightarrow> c_guard (ptr_coerce p :: 32 signed word ptr) \<and> block_bytes (ptr_val p) 4 \<subseteq> P"
+primrec bn_values where
+  "bn_values s (BN p cs) = value_C (bn_tree s p) # concat (map (bn_values s) cs)"
+primrec bn_blocks where
+  "bn_blocks s (BN p cs) = ptr_val p #
+    (if cs = [] then [] else [ptr_val (subtrees_C (bn_tree s p))]) @ concat (map (bn_blocks s) cs)"
+primrec bn_valid where
+  "bn_valid s P (BN p cs) \<longleftrightarrow>
+    c_guard p \<and> live_blocks (phantom_machine_state_' s) (ptr_val p) = Some (size_of TYPE(StrictC'_BinomialTree_C)) \<and>
+    unat (order_C (bn_tree s p)) = length cs \<and> refcount_C (bn_tree s p) = 1 \<and>
+    bn_payload P (value_C (bn_tree s p)) \<and> map bn_rank cs = [0..<length cs] \<and>
+    (if cs = [] then subtrees_C (bn_tree s p) = NULL else
+      c_guard (subtrees_C (bn_tree s p)) \<and>
+      live_blocks (phantom_machine_state_' s) (ptr_val (subtrees_C (bn_tree s p))) =
+        Some (size_of TYPE(StrictC'_BinomialTree_C ptr) * length cs)) \<and>
+    (\<forall>i < length cs. c_guard (subtrees_C (bn_tree s p) +\<^sub>p int i) \<and>
+      h_val (hrs_mem (t_hrs_' s)) (subtrees_C (bn_tree s p) +\<^sub>p int i) = bn_root (cs ! i)) \<and>
+    list_all (bn_valid s P) cs \<and>
+    (\<forall>q \<in> set (concat (map (bn_values s) cs)). bn_key s (value_C (bn_tree s p)) \<le> bn_key s q)"
+definition bn_forest_values where
+  "bn_forest_values s F = concat (map (case_option [] (bn_values s)) F)"
+definition bn_owned where
+  "bn_owned s h F = ptr_val h #
+    (if roots_C (bn_heap s h) = NULL then [] else [ptr_val (roots_C (bn_heap s h))]) @
+    concat (map (case_option [] (bn_blocks s)) F)"
+definition bn_rep where
+  "bn_rep s h P F M \<longleftrightarrow>
+    allocator_wf (phantom_machine_state_' s) \<and> P \<subseteq> reserved_bytes (phantom_machine_state_' s) \<and>
+    c_guard h \<and> live_blocks (phantom_machine_state_' s) (ptr_val h) = Some (size_of TYPE(StrictC'_BinomialHeap_C)) \<and>
+    heap_type_C (bn_heap s h) = BINOMIAL_HEAP_TYPE_MIN \<and>
+    compare_func_C (bn_heap s h) = binomial_heap_input.int_compare \<and>
+    unat (roots_length_C (bn_heap s h)) = length F \<and> length F \<le> 32 \<and>
+    (if roots_C (bn_heap s h) = NULL then F = [] else
+      c_guard (roots_C (bn_heap s h)) \<and>
+      (\<exists>n. live_blocks (phantom_machine_state_' s) (ptr_val (roots_C (bn_heap s h))) = Some n \<and>
+        size_of TYPE(StrictC'_BinomialTree_C ptr) * length F \<le> n)) \<and>
+    (\<forall>i < length F. c_guard (roots_C (bn_heap s h) +\<^sub>p int i) \<and>
+      h_val (hrs_mem (t_hrs_' s)) (roots_C (bn_heap s h) +\<^sub>p int i) =
+        case_option NULL bn_root (F ! i) \<and>
+      (case F ! i of None \<Rightarrow> True | Some T \<Rightarrow> bn_rank T = i \<and> bn_valid s P T)) \<and>
+    distinct (bn_owned s h F) \<and> M = mset (bn_forest_values s F) \<and>
+    unat (num_values_C (bn_heap s h)) = size M"
+
+definition bn_frame where
+  "bn_frame s h P F t \<longleftrightarrow>
+    reserved_bytes (phantom_machine_state_' t) = reserved_bytes (phantom_machine_state_' s) \<and>
+    (\<forall>a \<in> P. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a) \<and>
+    (\<forall>p n. live_blocks (phantom_machine_state_' s) p = Some n \<longrightarrow> p \<notin> set (bn_owned s h F) \<longrightarrow>
+      live_blocks (phantom_machine_state_' t) p = Some n \<and>
+      (\<forall>a \<in> block_bytes p n. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a))"
+
+definition bn_stack_ready where
+  "bn_stack_ready S s \<longleftrightarrow>
+    S \<subseteq> reserved_bytes (phantom_machine_state_' s) \<and>
+    stack_allocs 1 S TYPE(StrictC'_BinomialHeap_C) (hrs_htd (t_hrs_' s)) \<noteq> {} \<and>
+    (\<forall>p d. (p,d) \<in> stack_allocs 1 S TYPE(StrictC'_BinomialHeap_C) (hrs_htd (t_hrs_' s)) \<longrightarrow>
+      stack_allocs 1 S TYPE(StrictC'_BinomialTree_C ptr) d \<noteq> {})"
+
+definition bn_storage_transition where
+  "bn_storage_transition s h F t G \<longleftrightarrow>
+    (\<forall>p. p \<notin> set (bn_owned t h G) \<longrightarrow>
+      live_blocks (phantom_machine_state_' t) p =
+        (if p \<in> set (bn_owned s h F) then None else live_blocks (phantom_machine_state_' s) p)) \<and>
+    (\<forall>p \<in> set (bn_owned t h G) - set (bn_owned s h F).
+      live_blocks (phantom_machine_state_' s) p = None)"
+
+definition bn_contract ::
+  "('e::default, 'a, 's) spec_monad \<Rightarrow> 's \<Rightarrow> ('a \<Rightarrow> 's \<Rightarrow> bool) \<Rightarrow> bool" where
+  "bn_contract f s Q \<longleftrightarrow>
+    runs_to f s (\<lambda>r t. \<exists>v. r = Result v \<and> Q v t) \<and>
+    (\<exists>v t. reaches f s (Result v) t)"
+
+end
+
+
+targets-session/Binomial_Heap_Targets.thy
+theory Binomial_Heap_Targets
+  imports Binomial_Heap_Model
+begin
+
+context binomial_heap_input_global_addresses begin
+
+lemma bn_count_exact:
+  "bn_rep s h P F M \<Longrightarrow> bn_contract (binomial_heap_num_entries' h) s
+    (\<lambda>r t. unat r = size M \<and> t = s)"
+oops
+
+lemma bn_insert_correct:
+  "bn_rep s h P F M \<Longrightarrow> bn_payload P v \<Longrightarrow>
+    size M + 1 < 2 ^ 32 \<Longrightarrow> bn_stack_ready \<S> s \<Longrightarrow> P \<inter> \<S> = {} \<Longrightarrow>
+    bn_contract (binomial_heap_insert' h v) s (\<lambda>r t.
+      bn_frame s h P F t \<and>
+      (if r = 0 then (\<exists>F'. bn_rep t h P F' M) \<and>
+        live_blocks (phantom_machine_state_' t) = live_blocks (phantom_machine_state_' s)
+       else \<exists>F'. bn_rep t h P F' (add_mset v M) \<and> bn_storage_transition s h F t F'))"
+oops
+
+lemma bn_pop_correct:
+  "bn_rep s h P F M \<Longrightarrow> bn_stack_ready \<S> s \<Longrightarrow> P \<inter> \<S> = {} \<Longrightarrow>
+    bn_contract (binomial_heap_pop' h) s (\<lambda>r t. bn_frame s h P F t \<and>
+      (if r = NULL then (\<exists>F'. bn_rep t h P F' M) \<and>
+        live_blocks (phantom_machine_state_' t) = live_blocks (phantom_machine_state_' s)
+       else r \<in># M \<and> (\<forall>q \<in># M. bn_key s r \<le> bn_key s q) \<and>
+         (\<exists>F'. bn_rep t h P F' (M - {#r#}) \<and> bn_storage_transition s h F t F')))"
+oops
+
+lemma bn_free_owned_storage:
+  "bn_rep s h P F M \<Longrightarrow> bn_contract (binomial_heap_free' h) s (\<lambda>r t.
+    bn_frame s h P F t \<and> allocator_wf (phantom_machine_state_' t) \<and>
+    live_blocks (phantom_machine_state_' t) =
+      (\<lambda>p. if p \<in> set (bn_owned s h F) then None else live_blocks (phantom_machine_state_' s) p))"
+oops
+
+lemma bn_new_empty_or_failure:
+  "allocator_wf (phantom_machine_state_' s) \<Longrightarrow>
+    P \<subseteq> reserved_bytes (phantom_machine_state_' s) \<Longrightarrow>
+    bn_contract calg_binomial_new' s (\<lambda>h t.
+      (\<forall>a \<in> P. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a) \<and>
+      (\<forall>p n. live_blocks (phantom_machine_state_' s) p = Some n \<longrightarrow>
+        live_blocks (phantom_machine_state_' t) p = Some n \<and>
+        (\<forall>a \<in> block_bytes p n. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a)) \<and>
+      (if h = NULL then phantom_machine_state_' t = phantom_machine_state_' s else
+        bn_rep t h P [] {#} \<and> roots_C (bn_heap t h) = NULL \<and>
+        phantom_machine_state_' t = (phantom_machine_state_' s)\<lparr>live_blocks :=
+          (live_blocks (phantom_machine_state_' s))(ptr_val h := Some (size_of TYPE(StrictC'_BinomialHeap_C)))\<rparr>))"
+oops
+
+lemma bn_ref_null:
+  "bn_contract (binomial_tree_ref' NULL) s (\<lambda>r t. t = s)"
+oops
+
+lemma bn_ref_increment:
+  "c_guard p \<Longrightarrow> unat (refcount_C (bn_tree s p)) < 65535 \<Longrightarrow>
+    bn_contract (binomial_tree_ref' p) s (\<lambda>r t.
+      bn_tree t p = (bn_tree s p)\<lparr>refcount_C := refcount_C (bn_tree s p) + 1\<rparr> \<and>
+      phantom_machine_state_' t = phantom_machine_state_' s \<and>
+      bytes_frame (block_bytes (ptr_val p) (size_of TYPE(StrictC'_BinomialTree_C)))
+        (hrs_mem (t_hrs_' s)) (hrs_mem (t_hrs_' t)))"
+oops
+
+
+lemma bn_merge_leaves_nonfailure:
+  "allocator_wf (phantom_machine_state_' s) \<Longrightarrow> c_guard h \<Longrightarrow>
+    heap_type_C (bn_heap s h) = BINOMIAL_HEAP_TYPE_MIN \<Longrightarrow>
+    compare_func_C (bn_heap s h) = binomial_heap_input.int_compare \<Longrightarrow>
+    P \<subseteq> reserved_bytes (phantom_machine_state_' s) \<Longrightarrow>
+    bn_valid s P (BN p []) \<Longrightarrow> bn_valid s P (BN q []) \<Longrightarrow> p \<noteq> q \<Longrightarrow>
+    live_blocks (phantom_machine_state_' s) (ptr_val h) = Some (size_of TYPE(StrictC'_BinomialHeap_C)) \<Longrightarrow>
+    ptr_val h \<noteq> ptr_val p \<Longrightarrow> ptr_val h \<noteq> ptr_val q \<Longrightarrow>
+    bn_contract (binomial_tree_merge' h p q) s (\<lambda>r t. True)"
+oops
+
+end
+end

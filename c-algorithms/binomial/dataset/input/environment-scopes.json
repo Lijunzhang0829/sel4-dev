@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "scope_policy": "owned-context-v3",
+  "environments": [
+    {
+      "id": "global",
+      "context": "global",
+      "assumptions": [],
+      "global_truth": "trivial_empty_context"
+    },
+    {
+      "id": "function-address-locale",
+      "context": "binomial_heap_input_global_addresses",
+      "exact_assumptions": "native-export-catalog",
+      "global_truth": "unbound",
+      "parameter_instance": "native_verified",
+      "parameter_instance_evidence": "validation/environment-and-c.json",
+      "instance_does_not_bind_actual_constants": true
+    },
+    {
+      "id": "reviewed-stack-locale",
+      "context": "Calg_Binomial_Reviewed_Stack",
+      "exact_assumptions": "native-export-catalog",
+      "global_truth": "unbound",
+      "stack_interval": "[4096,4160)",
+      "parameter_instance": "native_verified",
+      "instance_does_not_bind_actual_constants": true
+    }
+  ],
+  "contract_premises_are_environment_assumptions": false,
+  "new_axioms": 0
+}

@@ -1,0 +1,20 @@
+{
+  "status": "authorized_by_user",
+  "authorization": "授权独立回译（推荐）",
+  "date": "2026-11-04",
+  "timezone": "Asia/Shanghai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "purpose": "one independent semantic readback and subsequent local comparison",
+  "semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+  "authorized_files": {
+    "theories/Binomial_Environment.thy": "ea4449bfe91a24ca94a538ff0d51c375a963de710e8d25c0daa5f8f46c12f8af",
+    "theories/Binomial_Heap_C.thy": "e8a9a68bf1011b23a93e9e75c8610f8fdba7b7b82e20d1d8f94777807cd16ada",
+    "targets-session/Binomial_Heap_Model.thy": "fb9675151af46bc93058d5aa535146c05914ad74fa0486e007c942fa2ed9d843",
+    "targets-session/Binomial_Heap_Targets.thy": "1cbdc1e9a98ee38a21e9f138b1fc13a369b8f4e1591415051013221f90daeb31"
+  },
+  "tools_allowed": false,
+  "intended_prose_included": false,
+  "credentials_or_other_experiments_included": false,
+  "does_not_approve_spec_semantics_or_launch_proof_generation": true
+}

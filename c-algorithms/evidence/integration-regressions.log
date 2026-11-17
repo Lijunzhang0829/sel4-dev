@@ -1,0 +1,8 @@
+.....[regen-event] {"time": "2026-11-03T23:53:54.786896+00:00", "event": "generation_exclusion_started", "phase_id": "c7729fd85967462da56f1b539ac3b05c", "category": "provider_build"}
+[regen-event] {"time": "2026-11-03T23:53:54.787607+00:00", "event": "isabelle_build_started", "session": "Generated_Refine", "timeout_seconds": 900, "container": "regen-isabelle-build-1421294-1f22fbb8df514809bc9136c111b7dfa8", "resource_policy": null}
+[regen-event] {"time": "2026-11-03T23:53:54.788092+00:00", "event": "generation_exclusion_finished", "phase_id": "c7729fd85967462da56f1b539ac3b05c", "category": "provider_build"}
+................
+----------------------------------------------------------------------
+Ran 21 tests in 0.736s
+
+OK

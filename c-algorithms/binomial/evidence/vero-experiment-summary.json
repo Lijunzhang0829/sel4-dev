@@ -1,0 +1,101 @@
+{
+  "status": "budget_exhausted",
+  "engine": "VERO Isabelle port",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+  "benchmark_id": "a059ecc47b75274dd9b437f6a6ad6a41d924b91ce369be62e11d1cd5bf8f41dc",
+  "backend_commit": "db0d68f44cd9c11afcbe2511d66855aa549b2b7c",
+  "backend_implementation_id": "110e32f20d5a815d7122bf72d70e82013a18c30e530a25ba0ce6bbcf1245ccbe",
+  "run_directory": "experiments/vero-astra-low-20261104-002",
+  "contracts": {
+    "total": 8,
+    "proved": 3,
+    "refuted": 0,
+    "unresolved": 5
+  },
+  "targets": [
+    {
+      "vero_id": "c0001",
+      "name": "bn_count_exact",
+      "polarity": "prove",
+      "status": "proved"
+    },
+    {
+      "vero_id": "c0002",
+      "name": "bn_insert_correct",
+      "status": "unfilled"
+    },
+    {
+      "vero_id": "c0003",
+      "name": "bn_pop_correct",
+      "status": "unfilled"
+    },
+    {
+      "vero_id": "c0004",
+      "name": "bn_free_owned_storage",
+      "status": "unfilled"
+    },
+    {
+      "vero_id": "c0005",
+      "name": "bn_new_empty_or_failure",
+      "status": "unfilled"
+    },
+    {
+      "vero_id": "c0006",
+      "name": "bn_ref_null",
+      "polarity": "prove",
+      "status": "proved"
+    },
+    {
+      "vero_id": "c0007",
+      "name": "bn_ref_increment",
+      "polarity": "prove",
+      "status": "proved"
+    },
+    {
+      "vero_id": "c0008",
+      "name": "bn_merge_leaves_nonfailure",
+      "status": "unfilled"
+    }
+  ],
+  "budget": {
+    "original_seconds": 900,
+    "failed_deployment_calls_seconds_upper_bound": 196.9033224582672,
+    "transport_preflight_seconds": 33.349151372909546,
+    "proof_generation_seconds": 669.0335307121277,
+    "charged_total_seconds_upper_bound": 899.2860045433044,
+    "independent_evaluation_seconds": 93.83421172806993,
+    "budget_reset": false
+  },
+  "independent_reports_agree": true,
+  "native_module_status": "ok",
+  "context_errors": 0,
+  "auxiliary_errors": 0,
+  "repository_verified": false,
+  "integration": null,
+  "supervisor_target_proofs_or_hints": 0,
+  "runtime_events": [
+    "first deployment lacked CLI code-mode host; preserved and repaired in fresh instance",
+    "one cgroup OOM kill during proof-side checking; desired settings were written to an obsolete directory"
+  ],
+  "future_deployment_settings_fixed_and_checked": true,
+  "limitations": [
+    "five unfilled targets are unresolved, not refuted",
+    "short deployment test with infrastructure incidents; not a fair performance comparison",
+    "results verify the fixed Isabelle contracts under their specified C environment/locale, not all configurations of the upstream library"
+  ],
+  "evidence_files": {
+    "experiments/vero-astra-low-20261104-002/collected-results/trial/binding.json": "4fc2a3e607eb32d287ae3f55db8e4c90a5e37e1dc76b0b3abef3b30f0212efe2",
+    "experiments/vero-astra-low-20261104-002/collected-results/trial/iterations.json": "f1c03ebbf94d0fe5ff7b46f63bab27b4e37a56309d72ddc5f41fc3349b943e36",
+    "experiments/vero-astra-low-20261104-002/collected-results/trial/iter-000/eval/report.json": "1c3a984637550b6c76eff8df3d342b913d319ad87edf5c72d7beabf1768b7533",
+    "experiments/vero-astra-low-20261104-002/collected-results/trial/iter-001/eval/report.json": "3e4f0e112738bdb344dc4d61660e95e6f39c556ee2479be97083c85d1fe9fad4",
+    "experiments/vero-astra-low-20261104-002/backend-manifest.json": "a6a268609b75752d14311dfd19ae16bf1a7cdf03cab05122848486e75d56cc4d",
+    "experiments/vero-astra-low-20261104-002/frozen-files.json": "1cb6b3549ce4f7fadcd07358414f55b343632f8cd1eb764f91e72cfd56e16813",
+    "experiments/vero-astra-low-20261104-002/preflight.json": "856aded8b7a54b0cd3915b7c34d219100756ea858037f8cf97b026ca6b01217a",
+    "experiments/vero-astra-low-20261104-002/transport-preflight.json": "e89356a56c3d4b49be02134c67bcc6e8b3f366e2d6a158165d9a0443b4f8c745",
+    "experiments/vero-astra-low-20261104-002/resource-observation.json": "44a3bddea1a48be03c1fba7896b814c8897c385319465b8af2854cfe592134d9",
+    "experiments/vero-astra-low-20261104-002/future-deployment-settings-check.json": "72732aea3543c075e494e157496fb2f4bf27a7bade4783d6fb7b07e0c8b78868"
+  },
+  "container_stopped": true
+}

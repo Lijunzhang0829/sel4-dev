@@ -1,0 +1,21 @@
+{
+  "files": [
+    {
+      "file": "Revision_Full_Preparation_Provider.thy",
+      "original_sha256": "aca077c6773d95cd671a32575ee336db1615722b58c358c9c7f9f6bc15430856",
+      "adapted_sha256": "93175a7a7c1d523f76f04797aaa415699575959cf3defa7cba8eb81cded9d041"
+    },
+    {
+      "file": "Revision_Witness_Provider.thy",
+      "original_sha256": "7b0299cfa41e05aa47bf4c136506229f9be1ae72669542dac84389693928813d",
+      "adapted_sha256": "fab6fff6b9e741a341c330a235a3d416e57fb0dd6fbcfdacfc0d77f71355512f"
+    }
+  ],
+  "changes": [
+    "five legacy function-pointer simp references replaced by map_of_default_def",
+    "two unref proof methods use record-update and integer equivalence rules",
+    "four elementary integer normalization lemmas proved privately"
+  ],
+  "target_statements_modified": false,
+  "generation_input_contains_private_proofs": false
+}

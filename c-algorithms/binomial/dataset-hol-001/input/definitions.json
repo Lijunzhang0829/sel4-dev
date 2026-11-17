@@ -1,0 +1,736 @@
+{
+  "definitions": [
+    {
+      "name": "bn_ds_node_list",
+      "kind": "primrec",
+      "context": [],
+      "source_file": "isabelle/Binomial_Bridge_Targets.thy",
+      "line": 5,
+      "exact_command": "primrec bn_ds_node_list where\n \"bn_ds_node_list (BN p cs) = p # concat (map bn_ds_node_list cs)\""
+    },
+    {
+      "name": "bn_ds_forest_nodes",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Bridge_Targets.thy",
+      "line": 7,
+      "exact_command": "definition bn_ds_forest_nodes where\n \"bn_ds_forest_nodes F = set (concat (map (case_option [] bn_ds_node_list) F))\""
+    },
+    {
+      "name": "bn_ds_physical_edges",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Bridge_Targets.thy",
+      "line": 9,
+      "exact_command": "definition bn_ds_physical_edges where\n \"bn_ds_physical_edges s p = map (h_val (hrs_mem (t_hrs_' s)))\n    (bn_ds_slots (subtrees_C (bn_tree s p)) (unat (order_C (bn_tree s p))))\""
+    },
+    {
+      "name": "bn_ds_carry_inv",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Carry_Bridge_Targets.thy",
+      "line": 5,
+      "exact_command": "definition bn_ds_carry_inv where\n \"bn_ds_carry_inv s0 h other P F G ext held N a n state s \\<longleftrightarrow>\n  (\\<exists>bn_carry i len vals prefix C N' edges'.\n   state = (bn_carry,(i :: 32 word),(len :: 32 word),(vals :: StrictC'_BinomialTree_C ptr[3])) \\<and>\n   unat i \\<le> n \\<and> unat len \\<le> unat i \\<and> length prefix = unat i \\<and>\n   bn_review_root_array_view s a prefix \\<and>\n   (\\<forall>k \\<in> {unat len..<unat i}. prefix ! k = None) \\<and>\n   (\\<forall>k < unat i. case prefix ! k of None \\<Rightarrow> True | Some T \\<Rightarrow>\n      bn_rank T = k \\<and> bn_ds_tree_layout s P T) \\<and>\n   distinct (concat (map (case_option [] (bn_blocks s)) prefix) @ case_option [] (bn_blocks s) C) \\<and>\n   bn_carry = case_option NULL bn_root C \\<and>\n   (case C of None \\<Rightarrow> True | Some T \\<Rightarrow>\n      bn_rank T = unat i \\<and> bn_ds_tree_layout s P T) \\<and>\n   mset (bn_forest_values s0 F) + mset (bn_forest_values s0 G) =\n      mset (bn_forest_values s prefix) + mset (case_option [] (bn_values s) C) +\n      mset (bn_forest_values s0 (drop (unat i) F)) + mset (bn_forest_values s0 (drop (unat i) G)) \\<and>\n   bn_heap s h = bn_heap s0 h \\<and> bn_heap s other = bn_heap s0 other \\<and>\n   bn_review_root_array_view s (roots_C (bn_heap s0 h)) F \\<and>\n   bn_review_root_array_view s (roots_C (bn_heap s0 other)) G \\<and>\n   bn_ds_graph s P N' edges'\n     (bn_ds_slots (roots_C (bn_heap s0 h)) (length F) @ bn_ds_slots a (unat i) @ ext)\n     (held + mset (filter (\\<lambda>p. p \\<noteq> NULL) [bn_carry])) {} \\<and>\n   bn_ds_graph_storage s N'\n     (bn_ds_slots (roots_C (bn_heap s0 h)) (length F) @ bn_ds_slots a (unat i) @ ext) \\<and>\n   N \\<subseteq> N' \\<and> bn_ds_old_node_fields s0 N s N' \\<and>\n   live_blocks (phantom_machine_state_' s) (ptr_val a) = Some (8*n) \\<and>\n   bn_ds_storage_transition s0 (bn_ds_graph_blocks s0 N)\n     s (insert (ptr_val a) (bn_ds_graph_blocks s N')) \\<and>\n   hrs_htd (t_hrs_' s) = hrs_htd (t_hrs_' s0))\""
+    },
+    {
+      "name": "bn_ds_clear_root_fragment",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Detach.thy",
+      "line": 6,
+      "exact_command": "definition bn_ds_clear_root_fragment :: \"StrictC'_BinomialHeap_C ptr \\<Rightarrow> 32 word \\<Rightarrow> (unit, unit, globals) spec_monad\" where\n \"bn_ds_clear_root_fragment heap (least_index :: 32 word) =\nmodify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update\n                      (roots_C (h_val (hrs_mem a) heap) +\\<^sub>p\n                       uint least_index)\n                      NULL)\n                    a))\""
+    },
+    {
+      "name": "bn_ds_pop_detach",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Detach.thy",
+      "line": 18,
+      "exact_command": "definition bn_ds_pop_detach :: \"StrictC'_BinomialHeap_C ptr \\<Rightarrow> StrictC'_BinomialHeap_C ptr \\<Rightarrow> 32 word \\<Rightarrow> (unit, StrictC'_BinomialTree_C ptr, globals) spec_monad\" where\n \"bn_ds_pop_detach heap fake (least_index :: 32 word) = do {\nguard\n             (\\<lambda>s.\n                 c_guard\n                  (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                   uint least_index));\n            least_tree \\<leftarrow>\n              gets\n               (\\<lambda>xd.\n                   h_val (hrs_mem (t_hrs_' xd))\n                    (roots_C (h_val (hrs_mem (t_hrs_' xd)) heap) +\\<^sub>p\n                     uint least_index));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update\n                      (roots_C (h_val (hrs_mem a) heap) +\\<^sub>p\n                       uint least_index)\n                      NULL)\n                    a));\n            guard (\\<lambda>s. c_guard fake);\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake\n                      (heap_type_C_update\n                        (\\<lambda>b. heap_type_C (h_val (hrs_mem a) heap))\n                        (h_val (hrs_mem a) fake)))\n                    a));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake\n                      (compare_func_C_update\n                        (\\<lambda>b.\n                            compare_func_C (h_val (hrs_mem a) heap))\n                        (h_val (hrs_mem a) fake)))\n                    a));\n            guard (\\<lambda>s. c_guard least_tree);\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake\n                      (roots_C_update\n                        (\\<lambda>b.\n                            subtrees_C (h_val (hrs_mem a) least_tree))\n                        (h_val (hrs_mem a) fake)))\n                    a));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake\n                      (roots_length_C_update\n                        (\\<lambda>b.\n                            UCAST(16 \\<rightarrow> 32)\n                             (order_C (h_val (hrs_mem a) least_tree)))\n                        (h_val (hrs_mem a) fake)))\n                    a));\n return least_tree\n}\""
+    },
+    {
+      "name": "bn_ds_pop_with_detach",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Detach.thy",
+      "line": 85,
+      "exact_command": "definition bn_ds_pop_with_detach where\n \"bn_ds_pop_with_detach heap =\nglobals.with_fresh_stack_ptr 1 (\\<lambda>a. UNIV)\n (\\<lambda>fake.\n     do {\n       guard (\\<lambda>s. c_guard heap);\n       condition (\\<lambda>s.\n                     num_values_C (h_val (hrs_mem (t_hrs_' s)) heap) = 0)\n         (return binomial_heap_null_value)\n         (do {\n            (i, least_index) \\<leftarrow>\n              whileLoop (\\<lambda>(i, least_index) s.\n                            i < roots_length_C\n                                 (h_val (hrs_mem (t_hrs_' s)) heap))\n                (\\<lambda>(i, least_index).\n                    do {\n                      guard\n                       (\\<lambda>s.\n                           c_guard\n                            (roots_C\n                              (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                             uint i));\n                      least_index \\<leftarrow>\n                        condition (\\<lambda>s.\nh_val (hrs_mem (t_hrs_' s))\n (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p uint i) =\nNULL)\n                          (return least_index)\n                          (do {\n                             ret \\<leftarrow>\n                               condition (\\<lambda>s.\n       least_index = 0xFFFFFFFF)\n                                 (return (1 :: 32 signed word))\n                                 (do {\n                                    guard\n                                     (\\<lambda>s.\n   c_guard\n    (h_val (hrs_mem (t_hrs_' s))\n      (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p uint i)));\n                                    x \\<leftarrow>\nguard\n (\\<lambda>s.\n     c_guard\n      (h_val (hrs_mem (t_hrs_' s))\n        (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n         uint least_index)));\n                                    guard\n                                     (\\<lambda>s.\n   c_guard\n    (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n     uint least_index));\n                                    data1 \\<leftarrow>\ngets\n (\\<lambda>xe.\n     value_C\n      (h_val (hrs_mem (t_hrs_' xe))\n        (h_val (hrs_mem (t_hrs_' xe))\n          (roots_C (h_val (hrs_mem (t_hrs_' xe)) heap) +\\<^sub>p\n           uint i))));\n                                    data2 \\<leftarrow>\ngets\n (\\<lambda>xf.\n     value_C\n      (h_val (hrs_mem (t_hrs_' xf))\n        (h_val (hrs_mem (t_hrs_' xf))\n          (roots_C (h_val (hrs_mem (t_hrs_' xf)) heap) +\\<^sub>p\n           uint least_index))));\n                                    ret'int'2 \\<leftarrow>\nbinomial_heap_cmp' heap data1 data2;\n                                    return (if ret'int'2 <s 0 then (1 :: 32 signed word) else 0)\n                                  });\n                             return\n                              (if ret \\<noteq> 0 then i else least_index)\n                           });\n                      return (i + 1, least_index)\n                    })\n               (0, 0xFFFFFFFF);\n least_tree \\<leftarrow> bn_ds_pop_detach heap fake least_index;\nret'int'1 \\<leftarrow>\n              binomial_heap_merge' heap fake;\n            condition (\\<lambda>s. ret'int'1 \\<noteq> 0)\n              (do {\n                 result \\<leftarrow>\n                   gets\n                    (\\<lambda>xm.\n                        value_C (h_val (hrs_mem (t_hrs_' xm)) least_tree));\n                 ret \\<leftarrow> binomial_tree_unref' least_tree;\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update heap\n                           (num_values_C_update (\\<lambda>a. a - 1)\n                             (h_val (hrs_mem a) heap)))\n                         a));\n                 return result\n               })\n              (do {\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (roots_C\n                         (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                        uint least_index));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (roots_C (h_val (hrs_mem a) heap) +\\<^sub>p\n                            uint least_index)\n                           least_tree)\n                         a));\n                 return binomial_heap_null_value\n               })\n          })\n     })\""
+    },
+    {
+      "name": "bn_ds_pop_success",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Finishes.thy",
+      "line": 6,
+      "exact_command": "definition bn_ds_pop_success where\n \"bn_ds_pop_success heap least_tree =\ndo {\n                 result \\<leftarrow>\n                   gets\n                    (\\<lambda>xm.\n                        value_C (h_val (hrs_mem (t_hrs_' xm)) least_tree));\n                 ret \\<leftarrow> binomial_tree_unref' least_tree;\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update heap\n                           (num_values_C_update (\\<lambda>a. a - 1)\n                             (h_val (hrs_mem a) heap)))\n                         a));\n                 return result\n               }\""
+    },
+    {
+      "name": "bn_ds_pop_restore",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Finishes.thy",
+      "line": 25,
+      "exact_command": "definition bn_ds_pop_restore :: \"StrictC'_BinomialHeap_C ptr \\<Rightarrow> 32 word \\<Rightarrow> StrictC'_BinomialTree_C ptr \\<Rightarrow> (unit, unit ptr, globals) spec_monad\" where\n \"bn_ds_pop_restore heap least_index least_tree =\ndo {\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (roots_C\n                         (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                        uint least_index));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (roots_C (h_val (hrs_mem a) heap) +\\<^sub>p\n                            uint least_index)\n                           least_tree)\n                         a));\n                 return binomial_heap_null_value\n               }\""
+    },
+    {
+      "name": "bn_ds_insert_finish",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Finishes.thy",
+      "line": 46,
+      "exact_command": "definition bn_ds_insert_finish where\n \"bn_ds_insert_finish heap bn_new_treep (result :: 32 signed word) =\ndo {\nunless (result = 0)\n                  (modify\n                    (t_hrs_'_update\n                      (\\<lambda>a.\n                          hrs_mem_update\n                           (heap_update heap\n                             (num_values_C_update (\\<lambda>a. a + 1)\n                               (h_val (hrs_mem a) heap)))\n                           a)));\n                 tree \\<leftarrow>\n                   gets\n                    (\\<lambda>xu.\n                        h_val (hrs_mem (t_hrs_' xu)) bn_new_treep);\n                 ret \\<leftarrow> binomial_tree_unref' tree;\n                 return result\n}\""
+    },
+    {
+      "name": "bn_ds_pop_with_finishes",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Finishes.thy",
+      "line": 66,
+      "exact_command": "definition bn_ds_pop_with_finishes where\n \"bn_ds_pop_with_finishes heap =\nglobals.with_fresh_stack_ptr 1 (\\<lambda>a. UNIV)\n (\\<lambda>fake_heap\\<^sub>p.\n     do {\n       guard (\\<lambda>s. c_guard heap);\n       condition (\\<lambda>s.\n                     num_values_C (h_val (hrs_mem (t_hrs_' s)) heap) = 0)\n         (return binomial_heap_null_value)\n         (do {\n            (i, least_index) \\<leftarrow>\n              whileLoop (\\<lambda>(i, least_index) s.\n                            i < roots_length_C\n                                 (h_val (hrs_mem (t_hrs_' s)) heap))\n                (\\<lambda>(i, least_index).\n                    do {\n                      guard\n                       (\\<lambda>s.\n                           c_guard\n                            (roots_C\n                              (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                             uint i));\n                      least_index \\<leftarrow>\n                        condition (\\<lambda>s.\nh_val (hrs_mem (t_hrs_' s))\n (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p uint i) =\nNULL)\n                          (return least_index)\n                          (do {\n                             ret \\<leftarrow>\n                               condition (\\<lambda>s.\n       least_index = 0xFFFFFFFF)\n                                 (return (1 :: 32 signed word))\n                                 (do {\n                                    guard\n                                     (\\<lambda>s.\n   c_guard\n    (h_val (hrs_mem (t_hrs_' s))\n      (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p uint i)));\n                                    x \\<leftarrow>\nguard\n (\\<lambda>s.\n     c_guard\n      (h_val (hrs_mem (t_hrs_' s))\n        (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n         uint least_index)));\n                                    guard\n                                     (\\<lambda>s.\n   c_guard\n    (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n     uint least_index));\n                                    data1 \\<leftarrow>\ngets\n (\\<lambda>xe.\n     value_C\n      (h_val (hrs_mem (t_hrs_' xe))\n        (h_val (hrs_mem (t_hrs_' xe))\n          (roots_C (h_val (hrs_mem (t_hrs_' xe)) heap) +\\<^sub>p\n           uint i))));\n                                    data2 \\<leftarrow>\ngets\n (\\<lambda>xf.\n     value_C\n      (h_val (hrs_mem (t_hrs_' xf))\n        (h_val (hrs_mem (t_hrs_' xf))\n          (roots_C (h_val (hrs_mem (t_hrs_' xf)) heap) +\\<^sub>p\n           uint least_index))));\n                                    ret'int'2 \\<leftarrow>\nbinomial_heap_cmp' heap data1 data2;\n                                    return (if ret'int'2 <s 0 then (1 :: 32 signed word) else 0)\n                                  });\n                             return\n                              (if ret \\<noteq> 0 then i else least_index)\n                           });\n                      return (i + 1, least_index)\n                    })\n               (0, 0xFFFFFFFF);\n            guard\n             (\\<lambda>s.\n                 c_guard\n                  (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                   uint least_index));\n            least_tree \\<leftarrow>\n              gets\n               (\\<lambda>xd.\n                   h_val (hrs_mem (t_hrs_' xd))\n                    (roots_C (h_val (hrs_mem (t_hrs_' xd)) heap) +\\<^sub>p\n                     uint least_index));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update\n                      (roots_C (h_val (hrs_mem a) heap) +\\<^sub>p\n                       uint least_index)\n                      NULL)\n                    a));\n            guard (\\<lambda>s. c_guard fake_heap\\<^sub>p);\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (heap_type_C_update\n                        (\\<lambda>b. heap_type_C (h_val (hrs_mem a) heap))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (compare_func_C_update\n                        (\\<lambda>b.\n                            compare_func_C (h_val (hrs_mem a) heap))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            guard (\\<lambda>s. c_guard least_tree);\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (roots_C_update\n                        (\\<lambda>b.\n                            subtrees_C (h_val (hrs_mem a) least_tree))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (roots_length_C_update\n                        (\\<lambda>b.\n                            UCAST(16 \\<rightarrow> 32)\n                             (order_C (h_val (hrs_mem a) least_tree)))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            ret'int'1 \\<leftarrow>\n              binomial_heap_merge' heap fake_heap\\<^sub>p;\n            condition (\\<lambda>s. ret'int'1 \\<noteq> 0)\n              (bn_ds_pop_success heap least_tree)\n              (bn_ds_pop_restore heap least_index least_tree)\n          })\n     })\""
+    },
+    {
+      "name": "bn_ds_insert_with_finish",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Finishes.thy",
+      "line": 213,
+      "exact_command": "definition bn_ds_insert_with_finish where\n \"bn_ds_insert_with_finish heap value =\nglobals.with_fresh_stack_ptr 1 (\\<lambda>a. UNIV)\n (\\<lambda>fake_heap\\<^sub>p.\n     globals.with_fresh_stack_ptr 1 (\\<lambda>s. UNIV)\n      (\\<lambda>bn_new_treep.\n          do {\n            ret'ptr_to_void'1 \\<leftarrow>\n              malloc' (word_of_nat (size_of TYPE(StrictC'_BinomialTree_C)));\n            guard (\\<lambda>s. c_guard bn_new_treep);\n            modify\n             (t_hrs_'_update\n               (hrs_mem_update\n                 (heap_update bn_new_treep\n                   (PTR_COERCE(unit \\<rightarrow> StrictC'_BinomialTree_C)\n                     ret'ptr_to_void'1))));\n            condition (\\<lambda>s.\n                          h_val (hrs_mem (t_hrs_' s)) bn_new_treep =\n                          NULL)\n              (return 0)\n              (do {\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (h_val (hrs_mem (t_hrs_' s)) bn_new_treep));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (PTR(unit ptr)\n                             &(h_val (hrs_mem a)\n                                bn_new_treep\\<rightarrow>[''value_C'']))\n                           value)\n                         a));\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (h_val (hrs_mem (t_hrs_' s)) bn_new_treep));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (PTR(16 word)\n                             &(h_val (hrs_mem a)\n                                bn_new_treep\\<rightarrow>[''order_C'']))\n                           0)\n                         a));\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (h_val (hrs_mem (t_hrs_' s)) bn_new_treep));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (PTR(16 word)\n                             &(h_val (hrs_mem a)\n                                bn_new_treep\\<rightarrow>[''refcount_C'']))\n                           1)\n                         a));\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (h_val (hrs_mem (t_hrs_' s)) bn_new_treep));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (PTR(StrictC'_BinomialTree_C ptr ptr)\n                             &(h_val (hrs_mem a)\n                                bn_new_treep\\<rightarrow>[''subtrees_C'']))\n                           NULL)\n                         a));\n                 guard (\\<lambda>s. c_guard fake_heap\\<^sub>p);\n                 guard (\\<lambda>s. c_guard heap);\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update fake_heap\\<^sub>p\n                           (heap_type_C_update\n                             (\\<lambda>b.\n                                 heap_type_C (h_val (hrs_mem a) heap))\n                             (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                         a));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update fake_heap\\<^sub>p\n                           (compare_func_C_update\n                             (\\<lambda>b.\n                                 compare_func_C (h_val (hrs_mem a) heap))\n                             (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                         a));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update fake_heap\\<^sub>p\n                           (num_values_C_update (\\<lambda>a. 1)\n                             (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                         a));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update fake_heap\\<^sub>p\n                           (roots_C_update (\\<lambda>a. bn_new_treep)\n                             (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                         a));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update fake_heap\\<^sub>p\n                           (roots_length_C_update (\\<lambda>a. 1)\n                             (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                         a));\n                 result \\<leftarrow>\n                   binomial_heap_merge' heap fake_heap\\<^sub>p;\n                 bn_ds_insert_finish heap bn_new_treep result\n               })\n          }))\""
+    },
+    {
+      "name": "bn_ds_scan",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Fragments.thy",
+      "line": 6,
+      "exact_command": "definition bn_ds_scan where\n  \"bn_ds_scan heap =\nwhileLoop (\\<lambda>(i, least_index) s.\n                            i < roots_length_C\n                                 (h_val (hrs_mem (t_hrs_' s)) heap))\n                (\\<lambda>(i, least_index).\n                    do {\n                      guard\n                       (\\<lambda>s.\n                           c_guard\n                            (roots_C\n                              (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                             uint i));\n                      least_index \\<leftarrow>\n                        condition (\\<lambda>s.\nh_val (hrs_mem (t_hrs_' s))\n (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p uint i) =\nNULL)\n                          (return least_index)\n                          (do {\n                             ret \\<leftarrow>\n                               condition (\\<lambda>s.\n       least_index = 0xFFFFFFFF)\n                                 (return (1 :: 32 signed word))\n                                 (do {\n                                    guard\n                                     (\\<lambda>s.\n   c_guard\n    (h_val (hrs_mem (t_hrs_' s))\n      (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p uint i)));\n                                    x \\<leftarrow>\nguard\n (\\<lambda>s.\n     c_guard\n      (h_val (hrs_mem (t_hrs_' s))\n        (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n         uint least_index)));\n                                    guard\n                                     (\\<lambda>s.\n   c_guard\n    (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n     uint least_index));\n                                    data1 \\<leftarrow>\ngets\n (\\<lambda>xe.\n     value_C\n      (h_val (hrs_mem (t_hrs_' xe))\n        (h_val (hrs_mem (t_hrs_' xe))\n          (roots_C (h_val (hrs_mem (t_hrs_' xe)) heap) +\\<^sub>p\n           uint i))));\n                                    data2 \\<leftarrow>\ngets\n (\\<lambda>xf.\n     value_C\n      (h_val (hrs_mem (t_hrs_' xf))\n        (h_val (hrs_mem (t_hrs_' xf))\n          (roots_C (h_val (hrs_mem (t_hrs_' xf)) heap) +\\<^sub>p\n           uint least_index))));\n                                    ret'int'2 \\<leftarrow>\nbinomial_heap_cmp' heap data1 data2;\n                                    return (if ret'int'2 <s 0 then (1 :: 32 signed word) else 0)\n                                  });\n                             return\n                              (if ret \\<noteq> 0 then i else least_index)\n                           });\n                      return (i + 1, least_index)\n                    })\n               (0, 0xFFFFFFFF)\""
+    },
+    {
+      "name": "bn_ds_binomial_heap_pop_expanded",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Fragments.thy",
+      "line": 75,
+      "exact_command": "definition bn_ds_binomial_heap_pop_expanded where\n  \"bn_ds_binomial_heap_pop_expanded heap =\nglobals.with_fresh_stack_ptr 1 (\\<lambda>a. UNIV)\n (\\<lambda>fake_heap\\<^sub>p.\n     do {\n       guard (\\<lambda>s. c_guard heap);\n       condition (\\<lambda>s.\n                     num_values_C (h_val (hrs_mem (t_hrs_' s)) heap) = 0)\n         (return binomial_heap_null_value)\n         (do {\n            (i, least_index) \\<leftarrow>\n              bn_ds_scan heap;\n            guard\n             (\\<lambda>s.\n                 c_guard\n                  (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                   uint least_index));\n            least_tree \\<leftarrow>\n              gets\n               (\\<lambda>xd.\n                   h_val (hrs_mem (t_hrs_' xd))\n                    (roots_C (h_val (hrs_mem (t_hrs_' xd)) heap) +\\<^sub>p\n                     uint least_index));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update\n                      (roots_C (h_val (hrs_mem a) heap) +\\<^sub>p\n                       uint least_index)\n                      NULL)\n                    a));\n            guard (\\<lambda>s. c_guard fake_heap\\<^sub>p);\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (heap_type_C_update\n                        (\\<lambda>b. heap_type_C (h_val (hrs_mem a) heap))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (compare_func_C_update\n                        (\\<lambda>b.\n                            compare_func_C (h_val (hrs_mem a) heap))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            guard (\\<lambda>s. c_guard least_tree);\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (roots_C_update\n                        (\\<lambda>b.\n                            subtrees_C (h_val (hrs_mem a) least_tree))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (roots_length_C_update\n                        (\\<lambda>b.\n                            UCAST(16 \\<rightarrow> 32)\n                             (order_C (h_val (hrs_mem a) least_tree)))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            ret'int'1 \\<leftarrow>\n              binomial_heap_merge' heap fake_heap\\<^sub>p;\n            condition (\\<lambda>s. ret'int'1 \\<noteq> 0)\n              (do {\n                 result \\<leftarrow>\n                   gets\n                    (\\<lambda>xm.\n                        value_C (h_val (hrs_mem (t_hrs_' xm)) least_tree));\n                 ret \\<leftarrow> binomial_tree_unref' least_tree;\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update heap\n                           (num_values_C_update (\\<lambda>a. a - 1)\n                             (h_val (hrs_mem a) heap)))\n                         a));\n                 return result\n               })\n              (do {\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (roots_C\n                         (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                        uint least_index));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (roots_C (h_val (hrs_mem a) heap) +\\<^sub>p\n                            uint least_index)\n                           least_tree)\n                         a));\n                 return binomial_heap_null_value\n               })\n          })\n     })\""
+    },
+    {
+      "name": "bn_ds_carry_loop",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Fragments.thy",
+      "line": 189,
+      "exact_command": "definition bn_ds_carry_loop :: \"StrictC'_BinomialHeap_C ptr \\<Rightarrow> StrictC'_BinomialHeap_C ptr \\<Rightarrow> 32 word \\<Rightarrow> StrictC'_BinomialTree_C ptr ptr \\<Rightarrow> StrictC'_BinomialTree_C ptr[3] \\<Rightarrow> (32 signed word option, StrictC'_BinomialTree_C ptr \\<times> 32 word \\<times> 32 word \\<times> StrictC'_BinomialTree_C ptr[3], globals) spec_monad\" where\n  \"bn_ds_carry_loop heap other bn_max new_roots vals =\nwhileLoop (\\<lambda>(carry, i, new_roots_length, vals) s.\n                         i < bn_max)\n             (\\<lambda>(carry, i, new_roots_length, vals).\n                 do {\n                   ret \\<leftarrow>\n                     gets\n                      (\\<lambda>xg.\n                          i < roots_length_C\n                               (h_val (hrs_mem (t_hrs_' xg)) heap));\n                   ret \\<leftarrow>\n                     liftE\n                      (do {\n                         guard\n                          (\\<lambda>xi.\n                              ret \\<longrightarrow>\n                              c_guard\n                               (roots_C\n                                 (h_val (hrs_mem (t_hrs_' xi))\n                                   heap) +\\<^sub>p\n                                uint i));\n                         gets\n                          (\\<lambda>xi.\n                              if ret \\<and>\n                                 h_val (hrs_mem (t_hrs_' xi))\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' xi))\nheap) +\\<^sub>p\n                                   uint i) \\<noteq>\n                                 NULL\n                              then (1 :: 32 signed word) else 0)\n                       });\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. ret \\<noteq> 0)\n                         (do {\n                            guard\n                             (\\<lambda>s.\n                                 c_guard\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' s))\nheap) +\\<^sub>p\n                                   uint i));\n                            vals \\<leftarrow>\n                              gets\n                               (\\<lambda>xj.\n                                   Arrays.update vals 0\n                                    (h_val (hrs_mem (t_hrs_' xj))\n(roots_C (h_val (hrs_mem (t_hrs_' xj)) heap) +\\<^sub>p uint i)));\n                            return ((1 :: 32 signed word), vals)\n                          })\n                         (return ((0 :: 32 signed word), vals)));\n                   ret \\<leftarrow>\n                     gets\n                      (\\<lambda>xi.\n                          i < roots_length_C\n                               (h_val (hrs_mem (t_hrs_' xi)) other));\n                   ret \\<leftarrow>\n                     liftE\n                      (do {\n                         guard\n                          (\\<lambda>xk.\n                              ret \\<longrightarrow>\n                              c_guard\n                               (roots_C\n                                 (h_val (hrs_mem (t_hrs_' xk))\n                                   other) +\\<^sub>p\n                                uint i));\n                         gets\n                          (\\<lambda>xk.\n                              if ret \\<and>\n                                 h_val (hrs_mem (t_hrs_' xk))\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' xk))\nother) +\\<^sub>p\n                                   uint i) \\<noteq>\n                                 NULL\n                              then (1 :: 32 signed word) else 0)\n                       });\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. ret \\<noteq> 0)\n                         (do {\n                            guard (\\<lambda>s. num_vals <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals);\n                            guard\n                             (\\<lambda>s.\n                                 c_guard\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' s))\nother) +\\<^sub>p\n                                   uint i));\n                            guard (\\<lambda>s. sint num_vals < INT_MAX);\n                            vals \\<leftarrow>\n                              gets\n                               (\\<lambda>xl.\n                                   Arrays.update vals (unat num_vals)\n                                    (h_val (hrs_mem (t_hrs_' xl))\n(roots_C (h_val (hrs_mem (t_hrs_' xl)) other) +\\<^sub>p uint i)));\n                            return (num_vals + 1, vals)\n                          })\n                         (return (num_vals, vals)));\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. carry \\<noteq> NULL)\n                         (do {\n                            guard (\\<lambda>s. num_vals <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals);\n                            guard (\\<lambda>s. sint num_vals < INT_MAX);\n                            return\n                             (num_vals + 1,\n                              Arrays.update vals (unat num_vals) carry)\n                          })\n                         (return (num_vals, vals)));\n                   new_roots_length \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. num_vals && 1 = 1)\n                         (do {\n                            guard\n                             (\\<lambda>s.\n                                 c_guard (new_roots +\\<^sub>p uint i));\n                            guard (\\<lambda>s. num_vals - 1 <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals - 1);\n                            guard\n                             (\\<lambda>s. - INT_MAX - 1 < sint num_vals);\n                            guard\n                             (\\<lambda>_. sint num_vals \\<le> INT_MAX + 1);\n                            modify\n                             (t_hrs_'_update\n                               (hrs_mem_update\n                                 (heap_update (new_roots +\\<^sub>p uint i)\n                                   (vals.[unat (num_vals - 1)]))));\n                            tree \\<leftarrow>\n                              gets\n                               (\\<lambda>xm.\n                                   h_val (hrs_mem (t_hrs_' xm))\n                                    (new_roots +\\<^sub>p uint i));\n                            ret \\<leftarrow> binomial_tree_ref' tree;\n                            return (i + 1)\n                          })\n                         (do {\n                            guard\n                             (\\<lambda>_.\n                                 c_guard (new_roots +\\<^sub>p uint i));\n                            modify\n                             (t_hrs_'_update\n                               (hrs_mem_update\n                                 (heap_update (new_roots +\\<^sub>p uint i)\n                                   NULL)));\n                            return new_roots_length\n                          }));\n                   new_carry \\<leftarrow>\n                     condition (\\<lambda>s. num_vals && 2 \\<noteq> 0)\n                       (do {\n                          new_carry \\<leftarrow>\n                            liftE\n                             (binomial_tree_merge' heap (vals.[0])\n                               (vals.[1]));\n                          ret \\<leftarrow>\n                            when (new_carry = NULL)\n                             (do {\n                                ret \\<leftarrow>\n                                  liftE\n                                   (binomial_heap_merge_undo' new_roots i);\n                                ret \\<leftarrow>\n                                  liftE (binomial_tree_unref' carry);\n                                throw 0\n                              });\n                          return new_carry\n                        })\n                       (return NULL);\n                   liftE\n                    (do {\n                       ret \\<leftarrow> binomial_tree_unref' carry;\n                       ret \\<leftarrow> binomial_tree_ref' new_carry;\n                       return (new_carry, i + 1, new_roots_length, vals)\n                     })\n                 })\n            (NULL, 0, 0, vals)\""
+    },
+    {
+      "name": "bn_ds_binomial_heap_merge_expanded",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Fragments.thy",
+      "line": 370,
+      "exact_command": "definition bn_ds_binomial_heap_merge_expanded where\n  \"bn_ds_binomial_heap_merge_expanded heap other =\ndo {\n  vals \\<leftarrow> unknown;\n  guard (\\<lambda>s. c_guard heap);\n  guard (\\<lambda>s. c_guard other);\n  bn_max \\<leftarrow>\n    condition (\\<lambda>s.\n                  roots_length_C (h_val (hrs_mem (t_hrs_' s)) other)\n                  < roots_length_C (h_val (hrs_mem (t_hrs_' s)) heap))\n      (gets\n        (\\<lambda>xc.\n            roots_length_C (h_val (hrs_mem (t_hrs_' xc)) heap) + 1))\n      (gets\n        (\\<lambda>xc.\n            roots_length_C (h_val (hrs_mem (t_hrs_' xc)) other) + 1));\n  ret'ptr_to_void'1 \\<leftarrow>\n    malloc'\n     (word_of_nat (size_of TYPE(StrictC'_BinomialTree_C ptr)) *\n      UCAST(32 \\<rightarrow> 64) bn_max);\n  new_roots \\<leftarrow>\n    return\n     (PTR_COERCE(unit \\<rightarrow> StrictC'_BinomialTree_C ptr)\n       ret'ptr_to_void'1);\n  condition (\\<lambda>s. new_roots = NULL)\n    (return 0)\n    (finally\n      (do {\n         (carry, i, new_roots_length, vals) \\<leftarrow>\n           bn_ds_carry_loop heap other bn_max new_roots vals;\n         i \\<leftarrow>\n           liftE\n            (whileLoop (\\<lambda>i s.\n                           i < roots_length_C\n                                (h_val (hrs_mem (t_hrs_' s)) heap))\n               (\\<lambda>i.\n                   do {\n                     guard\n                      (\\<lambda>s.\n                          c_guard\n                           (roots_C\n                             (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                            uint i));\n                     ret \\<leftarrow>\n                       condition (\\<lambda>s.\n                                     h_val (hrs_mem (t_hrs_' s))\n(roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p uint i) \\<noteq>\n                                     NULL)\n                         (gets\n                           (\\<lambda>xi.\n                               h_val (hrs_mem (t_hrs_' xi))\n                                (roots_C\n                                  (h_val (hrs_mem (t_hrs_' xi))\n                                    heap) +\\<^sub>p\n                                 uint i)) >>=\n                          binomial_tree_unref')\n                         skip;\n                     return (i + 1)\n                   })\n              0);\n         ptr \\<leftarrow>\n           gets\n            (\\<lambda>xh.\n                PTR_COERCE(StrictC'_BinomialTree_C ptr \\<rightarrow> unit)\n                 (roots_C (h_val (hrs_mem (t_hrs_' xh)) heap)));\n         ret \\<leftarrow> liftE (free' ptr);\n         modify\n          (t_hrs_'_update\n            (\\<lambda>a.\n                hrs_mem_update\n                 (heap_update heap\n                   (roots_C_update (\\<lambda>a. new_roots)\n                     (h_val (hrs_mem a) heap)))\n                 a));\n         modify\n          (t_hrs_'_update\n            (\\<lambda>a.\n                hrs_mem_update\n                 (heap_update heap\n                   (roots_length_C_update (\\<lambda>a. new_roots_length)\n                     (h_val (hrs_mem a) heap)))\n                 a));\n         throw 1\n       }))\n}\""
+    },
+    {
+      "name": "bn_ds_tree_layout",
+      "kind": "primrec",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 5,
+      "exact_command": "primrec bn_ds_tree_layout where\n \"bn_ds_tree_layout s P (BN p cs) \\<longleftrightarrow>\n    c_guard p \\<and> live_blocks (phantom_machine_state_' s) (ptr_val p) = Some (size_of TYPE(StrictC'_BinomialTree_C)) \\<and>\n    unat (order_C (bn_tree s p)) = length cs \\<and>\n    bn_payload P (value_C (bn_tree s p)) \\<and> map bn_rank cs = [0..<length cs] \\<and>\n    (if cs = [] then subtrees_C (bn_tree s p) = NULL else\n      c_guard (subtrees_C (bn_tree s p)) \\<and>\n      live_blocks (phantom_machine_state_' s) (ptr_val (subtrees_C (bn_tree s p))) =\n        Some (size_of TYPE(StrictC'_BinomialTree_C ptr) * length cs)) \\<and>\n    (\\<forall>i < length cs. c_guard (subtrees_C (bn_tree s p) +\\<^sub>p int i) \\<and>\n      h_val (hrs_mem (t_hrs_' s)) (subtrees_C (bn_tree s p) +\\<^sub>p int i) = bn_root (cs ! i)) \\<and>\n    list_all (bn_ds_tree_layout s P) cs \\<and>\n    (\\<forall>q \\<in> set (concat (map (bn_values s) cs)). bn_key s (value_C (bn_tree s p)) \\<le> bn_key s q)\""
+    },
+    {
+      "name": "bn_ds_slots",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 19,
+      "exact_command": "definition bn_ds_slots where\n \"bn_ds_slots a n = map (\\<lambda>i. a +\\<^sub>p int i) [0..<n]\""
+    },
+    {
+      "name": "bn_ds_forest_view",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 22,
+      "exact_command": "definition bn_ds_forest_view where\n \"bn_ds_forest_view s h P F \\<longleftrightarrow>\n   bn_review_header_view s h F \\<and> length F \\<le> 32 \\<and>\n   block_bytes (ptr_val h) (size_of TYPE(StrictC'_BinomialHeap_C)) \\<subseteq>\n     readable_bytes (phantom_machine_state_' s) \\<and>\n   block_bytes (ptr_val (roots_C (bn_heap s h))) (8 * length F) \\<subseteq>\n     readable_bytes (phantom_machine_state_' s) \\<and>\n   (\\<forall>i < length F. case F ! i of None \\<Rightarrow> True |\n      Some T \\<Rightarrow> bn_rank T = i \\<and> bn_ds_tree_layout s P T)\""
+    },
+    {
+      "name": "bn_ds_graph_blocks",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 32,
+      "exact_command": "definition bn_ds_graph_blocks where\n \"bn_ds_graph_blocks s N = ptr_val ` N \\<union>\n   {ptr_val (subtrees_C (bn_tree s p)) | p. p \\<in> N \\<and> order_C (bn_tree s p) \\<noteq> 0}\""
+    },
+    {
+      "name": "bn_ds_graph_storage",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 36,
+      "exact_command": "definition bn_ds_graph_storage where\n \"bn_ds_graph_storage s N slots \\<longleftrightarrow>\n  (\\<forall>a \\<in> set slots. block_bytes (ptr_val a) (size_of TYPE(StrictC'_BinomialTree_C ptr)) \\<subseteq>\n     readable_bytes (phantom_machine_state_' s)) \\<and>\n  (\\<forall>p \\<in> N. order_C (bn_tree s p) \\<noteq> 0 \\<longrightarrow>\n    ptr_val (subtrees_C (bn_tree s p)) \\<notin> ptr_val ` N \\<and>\n    set slots \\<inter> set (bn_ds_slots (subtrees_C (bn_tree s p)) (unat (order_C (bn_tree s p)))) = {}) \\<and>\n  (\\<forall>p \\<in> N. \\<forall>q \\<in> N. p \\<noteq> q \\<longrightarrow>\n    order_C (bn_tree s p) \\<noteq> 0 \\<longrightarrow> order_C (bn_tree s q) \\<noteq> 0 \\<longrightarrow>\n    subtrees_C (bn_tree s p) \\<noteq> subtrees_C (bn_tree s q))\""
+    },
+    {
+      "name": "bn_ds_restore",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 47,
+      "exact_command": "definition bn_ds_restore where\n \"bn_ds_restore s t \\<longleftrightarrow>\n   phantom_machine_state_' t = phantom_machine_state_' s \\<and>\n   hrs_htd (t_hrs_' t) = hrs_htd (t_hrs_' s) \\<and>\n   (\\<forall>a \\<in> readable_bytes (phantom_machine_state_' s).\n     hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a)\""
+    },
+    {
+      "name": "bn_ds_storage_transition",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 54,
+      "exact_command": "definition bn_ds_storage_transition where\n \"bn_ds_storage_transition s B t C \\<longleftrightarrow>\n   reserved_bytes (phantom_machine_state_' t) = reserved_bytes (phantom_machine_state_' s) \\<and>\n   (\\<forall>p. p \\<notin> C \\<longrightarrow> live_blocks (phantom_machine_state_' t) p =\n     (if p \\<in> B then None else live_blocks (phantom_machine_state_' s) p)) \\<and>\n   (\\<forall>p \\<in> C - B. live_blocks (phantom_machine_state_' s) p = None) \\<and>\n   (\\<forall>p n. live_blocks (phantom_machine_state_' s) p = Some n \\<longrightarrow> p \\<notin> B \\<longrightarrow>\n     (\\<forall>a \\<in> block_bytes p n. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a))\""
+    },
+    {
+      "name": "bn_ds_old_node_fields",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 63,
+      "exact_command": "definition bn_ds_old_node_fields where\n \"bn_ds_old_node_fields s N t M \\<longleftrightarrow>\n   (\\<forall>p \\<in> N \\<inter> M. bn_tree t p =\n     (bn_tree s p)\\<lparr>refcount_C := refcount_C (bn_tree t p)\\<rparr>)\""
+    },
+    {
+      "name": "bn_ds_tree_merge_pre",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 68,
+      "exact_command": "definition bn_ds_tree_merge_pre where\n \"bn_ds_tree_merge_pre s h P T U N edges slots held \\<longleftrightarrow>\n   c_guard h \\<and> live_blocks (phantom_machine_state_' s) (ptr_val h) = Some (size_of TYPE(StrictC'_BinomialHeap_C)) \\<and>\n   ptr_val h \\<notin> bn_ds_graph_blocks s N \\<and> heap_type_C (bn_heap s h) = BINOMIAL_HEAP_TYPE_MIN \\<and>\n   compare_func_C (bn_heap s h) = binomial_heap_input.int_compare \\<and>\n   bn_ds_tree_layout s P T \\<and> bn_ds_tree_layout s P U \\<and>\n   distinct (bn_blocks s T @ bn_blocks s U) \\<and>\n   bn_rank T = bn_rank U \\<and> bn_rank T < 65535 \\<and>\n   bn_root T \\<in> N \\<and> bn_root U \\<in> N \\<and>\n   bn_ds_graph s P N edges slots held {} \\<and> bn_ds_graph_storage s N slots \\<and>\n   (\\<forall>p \\<in> N. unat (refcount_C (bn_tree s p)) < 65535)\""
+    },
+    {
+      "name": "bn_ds_merge_pre",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 80,
+      "exact_command": "definition bn_ds_merge_pre where\n \"bn_ds_merge_pre s h other P F G ext held N edges \\<longleftrightarrow>\n   bn_ds_forest_view s h P F \\<and> bn_ds_forest_view s other P G \\<and>\n   distinct (concat (map (case_option [] (bn_blocks s)) (F @ G))) \\<and>\n   live_blocks (phantom_machine_state_' s) (ptr_val h) = Some (size_of TYPE(StrictC'_BinomialHeap_C)) \\<and>\n   (roots_C (bn_heap s h) = NULL \\<or> bn_ds_owned_array s (roots_C (bn_heap s h)) (length F)) \\<and>\n   ptr_val h \\<notin> bn_ds_graph_blocks s N \\<and>\n   ptr_val (roots_C (bn_heap s h)) \\<notin> bn_ds_graph_blocks s N \\<and>\n   h \\<noteq> other \\<and>\n   bn_ds_graph s P N edges (bn_ds_slots (roots_C (bn_heap s h)) (length F) @ ext) held {} \\<and>\n   bn_ds_graph_storage s N (bn_ds_slots (roots_C (bn_heap s h)) (length F) @ ext) \\<and>\n   (\\<forall>T. Some T \\<in> set G \\<longrightarrow> bn_root T \\<in> N) \\<and>\n   length (bn_forest_values s F) + length (bn_forest_values s G) < 2^32 \\<and>\n   (\\<forall>p \\<in> N. unat (refcount_C (bn_tree s p)) < 65533)\""
+    },
+    {
+      "name": "bn_ds_merge_success",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 95,
+      "exact_command": "definition bn_ds_merge_success where\n \"bn_ds_merge_success s h P F G ext held N t \\<longleftrightarrow>\n   (\\<exists>H N' edges'. bn_ds_forest_view t h P H \\<and> distinct (bn_owned t h H) \\<and>\n     mset (bn_forest_values t H) = mset (bn_forest_values s F) + mset (bn_forest_values s G) \\<and>\n     num_values_C (bn_heap t h) = num_values_C (bn_heap s h) \\<and>\n     bn_ds_graph t P N' edges' (bn_ds_slots (roots_C (bn_heap t h)) (length H) @ ext) held {} \\<and>\n     bn_ds_graph_storage t N' (bn_ds_slots (roots_C (bn_heap t h)) (length H) @ ext) \\<and>\n     bn_ds_old_node_fields s N t N' \\<and>\n     bn_ds_storage_transition s (insert (ptr_val h) (insert (ptr_val (roots_C (bn_heap s h))) (bn_ds_graph_blocks s N)))\n       t (insert (ptr_val h) (insert (ptr_val (roots_C (bn_heap t h))) (bn_ds_graph_blocks t N')))) \\<and>\n   hrs_htd (t_hrs_' t) = hrs_htd (t_hrs_' s) \\<and>\n   (\\<forall>a \\<in> P. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a)\""
+    },
+    {
+      "name": "bn_ds_finish_base",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 108,
+      "exact_command": "definition bn_ds_finish_base where\n \"bn_ds_finish_base s h P G N edges slots held \\<longleftrightarrow>\n   bn_ds_forest_view s h P G \\<and> distinct (bn_owned s h G) \\<and>\n   live_blocks (phantom_machine_state_' s) (ptr_val h) = Some (size_of TYPE(StrictC'_BinomialHeap_C)) \\<and>\n   (roots_C (bn_heap s h) = NULL \\<or> bn_ds_owned_array s (roots_C (bn_heap s h)) (length G)) \\<and>\n   ptr_val h \\<notin> bn_ds_graph_blocks s N \\<and>\n   ptr_val (roots_C (bn_heap s h)) \\<notin> bn_ds_graph_blocks s N \\<and>\n   bn_ds_graph s P N edges (bn_ds_slots (roots_C (bn_heap s h)) (length G) @ slots) held {} \\<and>\n   bn_ds_graph_storage s N (bn_ds_slots (roots_C (bn_heap s h)) (length G) @ slots)\""
+    },
+    {
+      "name": "bn_ds_roots_allocation",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 118,
+      "exact_command": "definition bn_ds_roots_allocation where\n \"bn_ds_roots_allocation s0 s a n \\<longleftrightarrow>\n   a \\<noteq> NULL \\<and> c_guard a \\<and> 0 < n \\<and>\n   malloc_rel (size_of TYPE(StrictC'_BinomialTree_C ptr) * n)\n     (hrs_mem (t_hrs_' s0)) (phantom_machine_state_' s0) (ptr_val a)\n     (hrs_mem (t_hrs_' s)) (phantom_machine_state_' s) \\<and>\n   hrs_htd (t_hrs_' s) = hrs_htd (t_hrs_' s0)\""
+    },
+    {
+      "name": "bn_ds_carry_done",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Interfaces.thy",
+      "line": 126,
+      "exact_command": "definition bn_ds_carry_done where\n \"bn_ds_carry_done s0 h P F G ext held N a n result t \\<longleftrightarrow>\n  (\\<exists>i len vals H N' edges'. result = ((NULL :: StrictC'_BinomialTree_C ptr),(i :: 32 word),(len :: 32 word),(vals :: StrictC'_BinomialTree_C ptr[3])) \\<and> unat i = n \\<and>\n   length H = n \\<and> distinct (concat (map (case_option [] (bn_blocks t)) H)) \\<and> unat len \\<le> n \\<and>\n   (\\<forall>k \\<in> {unat len..<n}. H ! k = None) \\<and>\n   bn_review_root_array_view t a H \\<and>\n   (\\<forall>k < n. case H ! k of None \\<Rightarrow> True | Some T \\<Rightarrow>\n      bn_rank T = k \\<and> bn_ds_tree_layout t P T) \\<and>\n   mset (bn_forest_values t H) = mset (bn_forest_values s0 F) + mset (bn_forest_values s0 G) \\<and>\n   bn_heap t h = bn_heap s0 h \\<and>\n   bn_review_root_array_view t (roots_C (bn_heap s0 h)) F \\<and>\n   bn_ds_graph t P N' edges'\n     (bn_ds_slots (roots_C (bn_heap s0 h)) (length F) @ bn_ds_slots a n @ ext) held {} \\<and>\n   bn_ds_graph_storage t N'\n     (bn_ds_slots (roots_C (bn_heap s0 h)) (length F) @ bn_ds_slots a n @ ext) \\<and>\n   N \\<subseteq> N' \\<and> bn_ds_old_node_fields s0 N t N' \\<and>\n   live_blocks (phantom_machine_state_' t) (ptr_val a) = Some (8*n) \\<and>\n   bn_ds_storage_transition s0 (bn_ds_graph_blocks s0 N)\n      t (insert (ptr_val a) (bn_ds_graph_blocks t N')))\""
+    },
+    {
+      "name": "bn_ds_scan_step",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Loop_Steps.thy",
+      "line": 6,
+      "exact_command": "definition bn_ds_scan_step :: \"StrictC'_BinomialHeap_C ptr \\<Rightarrow> 32 word \\<times> 32 word \\<Rightarrow> (unit, 32 word \\<times> 32 word, globals) spec_monad\" where\n \"bn_ds_scan_step heap = (\\<lambda>(i, least_index).\n                    do {\n                      guard\n                       (\\<lambda>s.\n                           c_guard\n                            (roots_C\n                              (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n                             uint i));\n                      least_index \\<leftarrow>\n                        condition (\\<lambda>s.\nh_val (hrs_mem (t_hrs_' s))\n (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p uint i) =\nNULL)\n                          (return least_index)\n                          (do {\n                             ret \\<leftarrow>\n                               condition (\\<lambda>s.\n       least_index = 0xFFFFFFFF)\n                                 (return (1 :: 32 signed word))\n                                 (do {\n                                    guard\n                                     (\\<lambda>s.\n   c_guard\n    (h_val (hrs_mem (t_hrs_' s))\n      (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p uint i)));\n                                    x \\<leftarrow>\nguard\n (\\<lambda>s.\n     c_guard\n      (h_val (hrs_mem (t_hrs_' s))\n        (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n         uint least_index)));\n                                    guard\n                                     (\\<lambda>s.\n   c_guard\n    (roots_C (h_val (hrs_mem (t_hrs_' s)) heap) +\\<^sub>p\n     uint least_index));\n                                    data1 \\<leftarrow>\ngets\n (\\<lambda>xe.\n     value_C\n      (h_val (hrs_mem (t_hrs_' xe))\n        (h_val (hrs_mem (t_hrs_' xe))\n          (roots_C (h_val (hrs_mem (t_hrs_' xe)) heap) +\\<^sub>p\n           uint i))));\n                                    data2 \\<leftarrow>\ngets\n (\\<lambda>xf.\n     value_C\n      (h_val (hrs_mem (t_hrs_' xf))\n        (h_val (hrs_mem (t_hrs_' xf))\n          (roots_C (h_val (hrs_mem (t_hrs_' xf)) heap) +\\<^sub>p\n           uint least_index))));\n                                    ret'int'2 \\<leftarrow>\nbinomial_heap_cmp' heap data1 data2;\n                                    return (if ret'int'2 <s 0 then (1 :: 32 signed word) else 0)\n                                  });\n                             return\n                              (if ret \\<noteq> 0 then i else least_index)\n                           });\n                      return (i + 1, least_index)\n                    })\""
+    },
+    {
+      "name": "bn_ds_scan_from",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Loop_Steps.thy",
+      "line": 70,
+      "exact_command": "definition bn_ds_scan_from where\n \"bn_ds_scan_from heap state = whileLoop (\\<lambda>(i, least_index) s.\n                            i < roots_length_C\n                                 (h_val (hrs_mem (t_hrs_' s)) heap)) (bn_ds_scan_step heap) state\""
+    },
+    {
+      "name": "bn_ds_carry_loop_step",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Loop_Steps.thy",
+      "line": 75,
+      "exact_command": "definition bn_ds_carry_loop_step :: \"StrictC'_BinomialHeap_C ptr \\<Rightarrow> StrictC'_BinomialHeap_C ptr \\<Rightarrow> 32 word \\<Rightarrow> StrictC'_BinomialTree_C ptr ptr \\<Rightarrow> StrictC'_BinomialTree_C ptr \\<times> 32 word \\<times> 32 word \\<times> StrictC'_BinomialTree_C ptr[3] \\<Rightarrow> (32 signed word option, StrictC'_BinomialTree_C ptr \\<times> 32 word \\<times> 32 word \\<times> StrictC'_BinomialTree_C ptr[3], globals) spec_monad\" where\n \"bn_ds_carry_loop_step heap other bn_max new_roots = (\\<lambda>(carry, i, new_roots_length, vals).\n                 do {\n                   ret \\<leftarrow>\n                     gets\n                      (\\<lambda>xg.\n                          i < roots_length_C\n                               (h_val (hrs_mem (t_hrs_' xg)) heap));\n                   ret \\<leftarrow>\n                     liftE\n                      (do {\n                         guard\n                          (\\<lambda>xi.\n                              ret \\<longrightarrow>\n                              c_guard\n                               (roots_C\n                                 (h_val (hrs_mem (t_hrs_' xi))\n                                   heap) +\\<^sub>p\n                                uint i));\n                         gets\n                          (\\<lambda>xi.\n                              if ret \\<and>\n                                 h_val (hrs_mem (t_hrs_' xi))\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' xi))\nheap) +\\<^sub>p\n                                   uint i) \\<noteq>\n                                 NULL\n                              then (1 :: 32 signed word) else 0)\n                       });\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. ret \\<noteq> 0)\n                         (do {\n                            guard\n                             (\\<lambda>s.\n                                 c_guard\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' s))\nheap) +\\<^sub>p\n                                   uint i));\n                            vals \\<leftarrow>\n                              gets\n                               (\\<lambda>xj.\n                                   Arrays.update vals 0\n                                    (h_val (hrs_mem (t_hrs_' xj))\n(roots_C (h_val (hrs_mem (t_hrs_' xj)) heap) +\\<^sub>p uint i)));\n                            return ((1 :: 32 signed word), vals)\n                          })\n                         (return ((0 :: 32 signed word), vals)));\n                   ret \\<leftarrow>\n                     gets\n                      (\\<lambda>xi.\n                          i < roots_length_C\n                               (h_val (hrs_mem (t_hrs_' xi)) other));\n                   ret \\<leftarrow>\n                     liftE\n                      (do {\n                         guard\n                          (\\<lambda>xk.\n                              ret \\<longrightarrow>\n                              c_guard\n                               (roots_C\n                                 (h_val (hrs_mem (t_hrs_' xk))\n                                   other) +\\<^sub>p\n                                uint i));\n                         gets\n                          (\\<lambda>xk.\n                              if ret \\<and>\n                                 h_val (hrs_mem (t_hrs_' xk))\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' xk))\nother) +\\<^sub>p\n                                   uint i) \\<noteq>\n                                 NULL\n                              then (1 :: 32 signed word) else 0)\n                       });\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. ret \\<noteq> 0)\n                         (do {\n                            guard (\\<lambda>s. num_vals <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals);\n                            guard\n                             (\\<lambda>s.\n                                 c_guard\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' s))\nother) +\\<^sub>p\n                                   uint i));\n                            guard (\\<lambda>s. sint num_vals < INT_MAX);\n                            vals \\<leftarrow>\n                              gets\n                               (\\<lambda>xl.\n                                   Arrays.update vals (unat num_vals)\n                                    (h_val (hrs_mem (t_hrs_' xl))\n(roots_C (h_val (hrs_mem (t_hrs_' xl)) other) +\\<^sub>p uint i)));\n                            return (num_vals + 1, vals)\n                          })\n                         (return (num_vals, vals)));\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. carry \\<noteq> NULL)\n                         (do {\n                            guard (\\<lambda>s. num_vals <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals);\n                            guard (\\<lambda>s. sint num_vals < INT_MAX);\n                            return\n                             (num_vals + 1,\n                              Arrays.update vals (unat num_vals) carry)\n                          })\n                         (return (num_vals, vals)));\n                   new_roots_length \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. num_vals && 1 = 1)\n                         (do {\n                            guard\n                             (\\<lambda>s.\n                                 c_guard (new_roots +\\<^sub>p uint i));\n                            guard (\\<lambda>s. num_vals - 1 <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals - 1);\n                            guard\n                             (\\<lambda>s. - INT_MAX - 1 < sint num_vals);\n                            guard\n                             (\\<lambda>_. sint num_vals \\<le> INT_MAX + 1);\n                            modify\n                             (t_hrs_'_update\n                               (hrs_mem_update\n                                 (heap_update (new_roots +\\<^sub>p uint i)\n                                   (vals.[unat (num_vals - 1)]))));\n                            tree \\<leftarrow>\n                              gets\n                               (\\<lambda>xm.\n                                   h_val (hrs_mem (t_hrs_' xm))\n                                    (new_roots +\\<^sub>p uint i));\n                            ret \\<leftarrow> binomial_tree_ref' tree;\n                            return (i + 1)\n                          })\n                         (do {\n                            guard\n                             (\\<lambda>_.\n                                 c_guard (new_roots +\\<^sub>p uint i));\n                            modify\n                             (t_hrs_'_update\n                               (hrs_mem_update\n                                 (heap_update (new_roots +\\<^sub>p uint i)\n                                   NULL)));\n                            return new_roots_length\n                          }));\n                   new_carry \\<leftarrow>\n                     condition (\\<lambda>s. num_vals && 2 \\<noteq> 0)\n                       (do {\n                          new_carry \\<leftarrow>\n                            liftE\n                             (binomial_tree_merge' heap (vals.[0])\n                               (vals.[1]));\n                          ret \\<leftarrow>\n                            when (new_carry = NULL)\n                             (do {\n                                ret \\<leftarrow>\n                                  liftE\n                                   (binomial_heap_merge_undo' new_roots i);\n                                ret \\<leftarrow>\n                                  liftE (binomial_tree_unref' carry);\n                                throw 0\n                              });\n                          return new_carry\n                        })\n                       (return NULL);\n                   liftE\n                    (do {\n                       ret \\<leftarrow> binomial_tree_unref' carry;\n                       ret \\<leftarrow> binomial_tree_ref' new_carry;\n                       return (new_carry, i + 1, new_roots_length, vals)\n                     })\n                 })\""
+    },
+    {
+      "name": "bn_ds_carry_loop_from",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Binomial_Dataset_Loop_Steps.thy",
+      "line": 252,
+      "exact_command": "definition bn_ds_carry_loop_from where\n \"bn_ds_carry_loop_from heap other bn_max new_roots state = whileLoop (\\<lambda>(carry, i, new_roots_length, vals) s.\n                         i < bn_max) (bn_ds_carry_loop_step heap other bn_max new_roots) state\""
+    },
+    {
+      "name": "bn_ds_slot_handles",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Model.thy",
+      "line": 5,
+      "exact_command": "definition bn_ds_slot_handles where\n  \"bn_ds_slot_handles s slots = mset (filter (\\<lambda>p. p \\<noteq> NULL)\n    (map (h_val (hrs_mem (t_hrs_' s))) slots))\""
+    },
+    {
+      "name": "bn_ds_graph",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Model.thy",
+      "line": 9,
+      "exact_command": "definition bn_ds_graph where\n  \"bn_ds_graph s P N edges slots held pending \\<longleftrightarrow>\n    allocator_wf (phantom_machine_state_' s) \\<and>\n    P \\<subseteq> reserved_bytes (phantom_machine_state_' s) \\<and>\n    finite N \\<and> distinct slots \\<and>\n    (\\<forall>a \\<in> set slots. c_guard a) \\<and>\n    set_mset (bn_ds_slot_handles s slots + held) \\<subseteq> N \\<and>\n    pending \\<subseteq> N \\<and>\n    N = {p. \\<exists>r \\<in> set_mset (bn_ds_slot_handles s slots + held) \\<union> pending.\n      (r,p) \\<in> {(q,r). q \\<in> N \\<and> r \\<in> set (edges q)}\\<^sup>*} \\<and>\n    (\\<forall>p \\<in> N. c_guard p \\<and>\n      live_blocks (phantom_machine_state_' s) (ptr_val p) =\n        Some (size_of TYPE(StrictC'_BinomialTree_C)) \\<and>\n      bn_payload P (value_C (bn_tree s p)) \\<and>\n      unat (order_C (bn_tree s p)) = length (edges p) \\<and>\n      set (edges p) \\<subseteq> N \\<and>\n      map (\\<lambda>q. unat (order_C (bn_tree s q))) (edges p) = [0..<length (edges p)] \\<and>\n      (if edges p = [] then subtrees_C (bn_tree s p) = NULL else\n        c_guard (subtrees_C (bn_tree s p)) \\<and>\n        live_blocks (phantom_machine_state_' s) (ptr_val (subtrees_C (bn_tree s p))) =\n          Some (size_of TYPE(StrictC'_BinomialTree_C ptr) * length (edges p))) \\<and>\n      (\\<forall>i < length (edges p). c_guard (subtrees_C (bn_tree s p) +\\<^sub>p int i) \\<and>\n        h_val (hrs_mem (t_hrs_' s)) (subtrees_C (bn_tree s p) +\\<^sub>p int i) = edges p ! i) \\<and>\n      (\\<forall>q \\<in> set (edges p). bn_key s (value_C (bn_tree s p)) \\<le>\n        bn_key s (value_C (bn_tree s q))) \\<and>\n      count (bn_ds_slot_handles s slots + held) p +\n        (\\<Sum>q \\<in> N. count (mset (edges q)) p) < 2 ^ 16 \\<and>\n      unat (refcount_C (bn_tree s p)) =\n        count (bn_ds_slot_handles s slots + held) p +\n        (\\<Sum>q \\<in> N. count (mset (edges q)) p))\""
+    },
+    {
+      "name": "bn_ds_heap_frame",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Model.thy",
+      "line": 40,
+      "exact_command": "definition bn_ds_heap_frame where\n  \"bn_ds_heap_frame W s t \\<longleftrightarrow>\n    hrs_htd (t_hrs_' t) = hrs_htd (t_hrs_' s) \\<and>\n    bytes_frame W (hrs_mem (t_hrs_' s)) (hrs_mem (t_hrs_' t))\""
+    },
+    {
+      "name": "bn_ds_owned_array",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Model.thy",
+      "line": 45,
+      "exact_command": "definition bn_ds_owned_array where\n  \"bn_ds_owned_array s a n \\<longleftrightarrow>\n    c_guard a \\<and> (\\<exists>m. live_blocks (phantom_machine_state_' s) (ptr_val a) = Some m \\<and>\n      size_of TYPE(StrictC'_BinomialTree_C ptr) * n \\<le> m) \\<and>\n    (\\<forall>i < n. c_guard (a +\\<^sub>p int i))\""
+    },
+    {
+      "name": "bn_ds_borrowed_array",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Model.thy",
+      "line": 51,
+      "exact_command": "definition bn_ds_borrowed_array where\n  \"bn_ds_borrowed_array s owner a n \\<longleftrightarrow>\n    c_guard owner \\<and> a = subtrees_C (bn_tree s owner) \\<and>\n    n = unat (order_C (bn_tree s owner)) \\<and>\n    (if n = 0 then a = NULL else bn_ds_owned_array s a n)\""
+    },
+    {
+      "name": "bn_ds_detached",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Dataset_Model.thy",
+      "line": 57,
+      "exact_command": "definition bn_ds_detached where\n  \"bn_ds_detached entry s h i root \\<longleftrightarrow>\n    i < unat (roots_length_C (bn_heap entry h)) \\<and>\n    h_val (hrs_mem (t_hrs_' entry)) (roots_C (bn_heap entry h) +\\<^sub>p int i) = root \\<and>\n    root \\<noteq> NULL \\<and> s = bn_review_clear_root entry h i\""
+    },
+    {
+      "name": "bn_ds_children",
+      "kind": "fun",
+      "context": [],
+      "source_file": "isabelle/Binomial_Detach_Bridge_Targets.thy",
+      "line": 4,
+      "exact_command": "fun bn_ds_children where \"bn_ds_children (BN p cs) = cs\""
+    },
+    {
+      "name": "bn_review_stack_frame",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Intermediate_Draft.thy",
+      "line": 5,
+      "exact_command": "definition bn_review_stack_frame :: \"addr set \\<Rightarrow> globals \\<Rightarrow> globals \\<Rightarrow> bool\" where\n  \"bn_review_stack_frame S s t \\<longleftrightarrow>\n    phantom_machine_state_' t = phantom_machine_state_' s \\<and>\n    (\\<forall>a. a \\<notin> S \\<longrightarrow> hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a)\""
+    },
+    {
+      "name": "bn_review_root_array_view",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Intermediate_Draft.thy",
+      "line": 10,
+      "exact_command": "definition bn_review_root_array_view ::\n  \"globals \\<Rightarrow> StrictC'_BinomialTree_C ptr ptr \\<Rightarrow> bn_shape option list \\<Rightarrow> bool\" where\n  \"bn_review_root_array_view s a F \\<longleftrightarrow>\n    (\\<forall>i < length F. c_guard (a +\\<^sub>p int i) \\<and>\n      h_val (hrs_mem (t_hrs_' s)) (a +\\<^sub>p int i) = case_option NULL bn_root (F ! i))\""
+    },
+    {
+      "name": "bn_review_header_view",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Intermediate_Draft.thy",
+      "line": 16,
+      "exact_command": "definition bn_review_header_view ::\n  \"globals \\<Rightarrow> StrictC'_BinomialHeap_C ptr \\<Rightarrow> bn_shape option list \\<Rightarrow> bool\" where\n  \"bn_review_header_view s h F \\<longleftrightarrow>\n    c_guard h \\<and>\n    heap_type_C (bn_heap s h) = BINOMIAL_HEAP_TYPE_MIN \\<and>\n    compare_func_C (bn_heap s h) = binomial_heap_input.int_compare \\<and>\n    unat (roots_length_C (bn_heap s h)) = length F \\<and>\n    bn_review_root_array_view s (roots_C (bn_heap s h)) F\""
+    },
+    {
+      "name": "bn_review_reference_ledger",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Intermediate_Draft.thy",
+      "line": 25,
+      "exact_command": "definition bn_review_reference_ledger ::\n  \"globals \\<Rightarrow> StrictC'_BinomialTree_C ptr set \\<Rightarrow>\n    (StrictC'_BinomialTree_C ptr \\<Rightarrow> StrictC'_BinomialTree_C ptr list) \\<Rightarrow>\n    StrictC'_BinomialTree_C ptr multiset \\<Rightarrow> bool\" where\n  \"bn_review_reference_ledger s N bn_edges H \\<longleftrightarrow>\n    finite N \\<and> set_mset H \\<subseteq> N \\<and>\n    (\\<forall>p \\<in> N. c_guard p \\<and>\n      live_blocks (phantom_machine_state_' s) (ptr_val p) =\n        Some (size_of TYPE(StrictC'_BinomialTree_C)) \\<and>\n      set (bn_edges p) \\<subseteq> N \\<and>\n      count H p + (\\<Sum>q \\<in> N. count (mset (bn_edges q)) p) < 2 ^ 16 \\<and>\n      unat (refcount_C (bn_tree s p)) =\n        count H p + (\\<Sum>q \\<in> N. count (mset (bn_edges q)) p))\""
+    },
+    {
+      "name": "bn_review_scan_prefix",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Intermediate_Draft.thy",
+      "line": 39,
+      "exact_command": "definition bn_review_scan_prefix ::\n  \"globals \\<Rightarrow> bn_shape option list \\<Rightarrow> nat \\<Rightarrow> nat option \\<Rightarrow> bool\" where\n  \"bn_review_scan_prefix s F i j \\<longleftrightarrow>\n    i \\<le> length F \\<and>\n    (case j of None \\<Rightarrow> (\\<forall>k < i. F ! k = None)\n     | Some k \\<Rightarrow> k < i \\<and> (\\<exists>T. F ! k = Some T \\<and>\n         (\\<forall>l < i. \\<forall>U. F ! l = Some U \\<longrightarrow>\n           bn_key s (value_C (bn_tree s (bn_root T))) \\<le>\n           bn_key s (value_C (bn_tree s (bn_root U))))))\""
+    },
+    {
+      "name": "bn_review_clear_root",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Intermediate_Draft.thy",
+      "line": 49,
+      "exact_command": "definition bn_review_clear_root ::\n  \"globals \\<Rightarrow> StrictC'_BinomialHeap_C ptr \\<Rightarrow> nat \\<Rightarrow> globals\" where\n  \"bn_review_clear_root s h i =\n    t_hrs_'_update (hrs_mem_update\n      (heap_update (roots_C (bn_heap s h) +\\<^sub>p int i)\n        (NULL :: StrictC'_BinomialTree_C ptr))) s\""
+    },
+    {
+      "name": "bn_review_detached_view",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Intermediate_Draft.thy",
+      "line": 56,
+      "exact_command": "definition bn_review_detached_view ::\n  \"globals \\<Rightarrow> globals \\<Rightarrow> StrictC'_BinomialHeap_C ptr \\<Rightarrow> addr set \\<Rightarrow>\n    bn_shape option list \\<Rightarrow> unit ptr multiset \\<Rightarrow> nat \\<Rightarrow> bn_shape \\<Rightarrow> bool\" where\n  \"bn_review_detached_view s0 s h P F M i T \\<longleftrightarrow>\n    bn_rep s0 h P F M \\<and> i < length F \\<and> F ! i = Some T \\<and>\n    s = bn_review_clear_root s0 h i\""
+    },
+    {
+      "name": "bn_review_merge_inventory",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Binomial_Intermediate_Draft.thy",
+      "line": 63,
+      "exact_command": "definition bn_review_merge_inventory ::\n  \"globals \\<Rightarrow> bn_shape option list \\<Rightarrow> bn_shape option list \\<Rightarrow> globals \\<Rightarrow>\n    bn_shape option list \\<Rightarrow> bn_shape option \\<Rightarrow> unit ptr multiset \\<Rightarrow> bool\" where\n  \"bn_review_merge_inventory s0 F G s bn_prefix bn_carry bn_remaining \\<longleftrightarrow>\n    mset (bn_forest_values s0 F) + mset (bn_forest_values s0 G) =\n      mset (bn_forest_values s bn_prefix) +\n      mset (case_option [] (bn_values s) bn_carry) + bn_remaining\""
+    },
+    {
+      "name": "r2_address_configuration",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Environment_Parameters.thy",
+      "line": 2,
+      "exact_command": "definition r2_address_configuration ::\n  \"unit ptr list \\<Rightarrow> addr set \\<Rightarrow> addr set \\<Rightarrow> bool\" where\n  \"r2_address_configuration fs g st = (length fs = 19 \\<and> ((((c_fnptr_guard (fs ! 0) \\<and>\n   c_fnptr_guard (fs ! 1)) \\<and>\n  c_fnptr_guard (fs ! 2) \\<and>\n  c_fnptr_guard (fs ! 3) \\<and>\n  c_fnptr_guard (fs ! 4)) \\<and>\n (c_fnptr_guard (fs ! 5) \\<and>\n  c_fnptr_guard (fs ! 6)) \\<and>\n c_fnptr_guard (fs ! 7) \\<and>\n c_fnptr_guard (fs ! 8) \\<and>\n c_fnptr_guard (fs ! 9)) \\<and>\n((c_fnptr_guard (fs ! 10) \\<and>\n  c_fnptr_guard (fs ! 11)) \\<and>\n c_fnptr_guard (fs ! 12) \\<and>\n c_fnptr_guard (fs ! 13) \\<and>\n c_fnptr_guard (fs ! 14)) \\<and>\n(c_fnptr_guard (fs ! 15) \\<and>\n c_fnptr_guard (fs ! 16) \\<and>\n c_fnptr_guard (fs ! 17)) \\<and>\nc_fnptr_guard (fs ! 18) \\<and>\nall_distinct\n (Node\n   (Node\n     (Node (Node Tip (fs ! 0) False Tip)\n       (fs ! 1) False\n       (Node Tip (fs ! 2) False\n         (Node Tip (fs ! 3) False Tip)))\n     (fs ! 4) False\n     (Node (Node Tip (fs ! 5) False Tip)\n       (fs ! 6) False\n       (Node Tip (fs ! 7) False\n         (Node Tip (fs ! 8) False Tip))))\n   (fs ! 9) False\n   (Node\n     (Node (Node Tip (fs ! 10) False Tip)\n       (fs ! 11) False\n       (Node Tip (fs ! 12) False\n         (Node Tip (fs ! 13) False Tip)))\n     (fs ! 14) False\n     (Node (Node Tip (fs ! 15) False Tip)\n       (fs ! 16) False\n       (Node Tip (fs ! 17) False\n         (Node Tip (fs ! 18) False\n           Tip))))) \\<and>\ng \\<inter> st = {}))\""
+    },
+    {
+      "name": "audit_stack_addresses",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Environment_Spec_Review.thy",
+      "line": 3,
+      "exact_command": "definition audit_stack_addresses :: \"addr set\" where\n \"audit_stack_addresses = {a. 4096 \\<le> unat a \\<and> unat a < 4160}\""
+    },
+    {
+      "name": "Calg_Binomial_Reviewed_Stack",
+      "kind": "locale",
+      "context": [],
+      "source_file": "isabelle/Environment_Spec_Review.thy",
+      "line": 6,
+      "exact_command": "locale Calg_Binomial_Reviewed_Stack = binomial_heap_input_global_addresses +\n assumes audit_stack_configuration: \"Binomial_Heap_C.\\<S> = audit_stack_addresses\""
+    },
+    {
+      "name": "env_insert_leaf",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 6,
+      "exact_command": "definition env_insert_leaf where\n  \"env_insert_leaf = StrictC'_BinomialTree_C (Ptr 128) 0 1 NULL\""
+    },
+    {
+      "name": "env_insert_A",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 9,
+      "exact_command": "definition env_insert_A where\n \"env_insert_A = \\<lparr>live_blocks = (\\<lambda>_. None)(16 := Some 40, 64 := Some 24, 96 := Some 8),\n   reserved_bytes = block_bytes 128 4 \\<union> audit_stack_addresses\\<rparr>\""
+    },
+    {
+      "name": "env_insert_heap",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 13,
+      "exact_command": "definition env_insert_heap where\n \"env_insert_heap = StrictC'_BinomialHeap_C BINOMIAL_HEAP_TYPE_MIN binomial_heap_input.int_compare 1 (Ptr 96) 1\""
+    },
+    {
+      "name": "env_insert_mem",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 16,
+      "exact_command": "definition env_insert_mem where\n \"env_insert_mem = heap_update (Ptr 16) env_insert_heap\n   (heap_update (Ptr 64) env_insert_leaf\n    (heap_update (Ptr 96 :: StrictC'_BinomialTree_C ptr ptr) (Ptr 64) (\\<lambda>_. 0)))\""
+    },
+    {
+      "name": "env_insert_s",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 21,
+      "exact_command": "definition env_insert_s where\n \"env_insert_s = globals.make\n   (env_insert_mem, stack_byte_typing)\n   env_insert_A undefined\""
+    },
+    {
+      "name": "env_pop_A",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 26,
+      "exact_command": "definition env_pop_A where\n \"env_pop_A = \\<lparr>live_blocks = (\\<lambda>_. None)(16 := Some 40, 64 := Some 24,\n 96 := Some 24, 160 := Some 24, 192 := Some 16, 224 := Some 8),\n reserved_bytes = block_bytes 256 8 \\<union> audit_stack_addresses\\<rparr>\""
+    },
+    {
+      "name": "env_pop_leaf",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 31,
+      "exact_command": "definition env_pop_leaf where\n \"env_pop_leaf v = StrictC'_BinomialTree_C (Ptr v) 0 1 NULL\""
+    },
+    {
+      "name": "env_pop_parent",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 34,
+      "exact_command": "definition env_pop_parent where\n \"env_pop_parent = StrictC'_BinomialTree_C (Ptr 256) 1 1 (Ptr 224)\""
+    },
+    {
+      "name": "env_pop_heap",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 37,
+      "exact_command": "definition env_pop_heap where\n \"env_pop_heap = StrictC'_BinomialHeap_C BINOMIAL_HEAP_TYPE_MIN binomial_heap_input.int_compare 3 (Ptr 192) 2\""
+    },
+    {
+      "name": "env_pop_mem",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 40,
+      "exact_command": "definition env_pop_mem where\n \"env_pop_mem = heap_update (Ptr 16) env_pop_heap\n (heap_update (Ptr 64) (env_pop_leaf 260)\n (heap_update (Ptr 96) env_pop_parent\n (heap_update (Ptr 160) (env_pop_leaf 256)\n (heap_update (Ptr 192) (Ptr 64 :: StrictC'_BinomialTree_C ptr)\n (heap_update (Ptr 200) (Ptr 96 :: StrictC'_BinomialTree_C ptr)\n (heap_update (Ptr 224) (Ptr 160 :: StrictC'_BinomialTree_C ptr)\n (heap_update (Ptr 260) (1 :: 32 signed word)\n (heap_update (Ptr 256) (0 :: 32 signed word) (\\<lambda>_. 0)))))))))\""
+    },
+    {
+      "name": "env_pop_s",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 51,
+      "exact_command": "definition env_pop_s where\n \"env_pop_s = globals.make (env_pop_mem, stack_byte_typing) env_pop_A undefined\""
+    },
+    {
+      "name": "env_pop_F",
+      "kind": "definition",
+      "context": [
+        "context Calg_Binomial_Reviewed_Stack begin"
+      ],
+      "source_file": "isabelle/Refutation_Helper_Definitions.thy",
+      "line": 54,
+      "exact_command": "definition env_pop_F where\n \"env_pop_F = [Some (BN (Ptr 64) []), Some (BN (Ptr 96) [BN (Ptr 160) []])]\""
+    },
+    {
+      "name": "bn_r3_old_node_fields",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Repair_Field_Model.thy",
+      "line": 3,
+      "exact_command": "definition bn_r3_old_node_fields where\n \"bn_r3_old_node_fields s N t M \\<longleftrightarrow>\n  (\\<forall>p\\<in>N \\<inter> M.\n   value_C (bn_tree t p)=value_C (bn_tree s p) \\<and>\n   order_C (bn_tree t p)=order_C (bn_tree s p) \\<and>\n   subtrees_C (bn_tree t p)=subtrees_C (bn_tree s p))\""
+    },
+    {
+      "name": "bn_r3_release",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Repair_Field_Model.thy",
+      "line": 10,
+      "exact_command": "definition bn_r3_release where\n  \"bn_r3_release s D W t \\<longleftrightarrow>\n    allocator_wf (phantom_machine_state_' t) \\<and>\n    reserved_bytes (phantom_machine_state_' t) = reserved_bytes (phantom_machine_state_' s) \\<and>\n    hrs_htd (t_hrs_' t) = hrs_htd (t_hrs_' s) \\<and>\n    (\\<forall>q. live_blocks (phantom_machine_state_' t) q =\n      (if q\\<in>D then None else live_blocks (phantom_machine_state_' s) q)) \\<and>\n    (\\<forall>x\\<in>reserved_bytes (phantom_machine_state_' s). hrs_mem (t_hrs_' t) x = hrs_mem (t_hrs_' s) x) \\<and>\n    (\\<forall>q n. live_blocks (phantom_machine_state_' s) q = Some n \\<longrightarrow> q\\<notin>W \\<longrightarrow>\n      (\\<forall>x\\<in>block_bytes q n. hrs_mem (t_hrs_' t) x = hrs_mem (t_hrs_' s) x))\""
+    },
+    {
+      "name": "r2_dec",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Repair_Phase_Model.thy",
+      "line": 5,
+      "exact_command": "definition r2_dec where\n \"r2_dec s p = t_hrs_'_update (hrs_mem_update\n   (heap_update p ((bn_tree s p)\\<lparr>refcount_C:=refcount_C (bn_tree s p)-1\\<rparr>))) s\""
+    },
+    {
+      "name": "r3_count",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Repair_Phase_Model.thy",
+      "line": 13,
+      "exact_command": "definition r3_count where\n \"r3_count s h result = (if result=0 then s else\n  t_hrs_'_update (hrs_mem_update (heap_update h\n   ((bn_heap s h)\\<lparr>num_values_C:=num_values_C (bn_heap s h)+1\\<rparr>))) s)\""
+    },
+    {
+      "name": "bn_r3_rollback_entry",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Repair_Phase_Model.thy",
+      "line": 20,
+      "exact_command": "definition bn_r3_rollback_entry where\n \"bn_r3_rollback_entry s0 h other P F G ext held N0 e0 a n (i::32 word) bn_carry s N edges \\<longleftrightarrow>\n  bn_r2_merge_pre s0 h other P F G ext held N0 e0 \\<and>\n  n \\<le> 33 \\<and> unat i < n \\<and> bn_ds_owned_array s a n \\<and>\n  bn_heap s h = bn_heap s0 h \\<and>\n  bn_ds_graph s P N edges\n    (bn_ds_slots (roots_C (bn_heap s0 h)) (length F) @ bn_ds_slots a (unat i+1) @ ext)\n    (held + mset (filter (\\<lambda>p. p\\<noteq>NULL) [bn_carry])) {} \\<and>\n  bn_r2_graph_storage s N\n    (bn_ds_slots (roots_C (bn_heap s0 h)) (length F) @ bn_ds_slots a (unat i+1) @ ext) \\<and>\n  N0 \\<subseteq> N \\<and> bn_r3_old_node_fields s0 N0 s N \\<and>\n  bn_ds_storage_transition s0 (bn_ds_graph_blocks s0 N0)\n    s (insert (ptr_val a) (bn_ds_graph_blocks s N))\""
+    },
+    {
+      "name": "bn_r3_rollback_throw",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Repair_Phase_Model.thy",
+      "line": 36,
+      "exact_command": "definition bn_r3_rollback_throw where\n \"bn_r3_rollback_throw new_roots i bn_carry = do {\n    ret \\<leftarrow> liftE (binomial_heap_merge_undo' new_roots i);\n    ret \\<leftarrow> liftE (binomial_tree_unref' bn_carry);\n    throw (0::32 signed word)}\""
+    },
+    {
+      "name": "bn_r3_carry_loop_step",
+      "kind": "definition",
+      "context": [
+        "context binomial_heap_input_global_addresses begin"
+      ],
+      "source_file": "isabelle/Repair_Phase_Model.thy",
+      "line": 46,
+      "exact_command": "definition bn_r3_carry_loop_step :: \"StrictC'_BinomialHeap_C ptr \\<Rightarrow> StrictC'_BinomialHeap_C ptr \\<Rightarrow> 32 word \\<Rightarrow> StrictC'_BinomialTree_C ptr ptr \\<Rightarrow> StrictC'_BinomialTree_C ptr \\<times> 32 word \\<times> 32 word \\<times> StrictC'_BinomialTree_C ptr[3] \\<Rightarrow> (32 signed word option, StrictC'_BinomialTree_C ptr \\<times> 32 word \\<times> 32 word \\<times> StrictC'_BinomialTree_C ptr[3], globals) spec_monad\" where\n \"bn_r3_carry_loop_step heap other bn_max new_roots = (\\<lambda>(bn_carry, i, new_roots_length, vals).\n                 do {\n                   ret \\<leftarrow>\n                     gets\n                      (\\<lambda>xg.\n                          i < roots_length_C\n                               (h_val (hrs_mem (t_hrs_' xg)) heap));\n                   ret \\<leftarrow>\n                     liftE\n                      (do {\n                         guard\n                          (\\<lambda>xi.\n                              ret \\<longrightarrow>\n                              c_guard\n                               (roots_C\n                                 (h_val (hrs_mem (t_hrs_' xi))\n                                   heap) +\\<^sub>p\n                                uint i));\n                         gets\n                          (\\<lambda>xi.\n                              if ret \\<and>\n                                 h_val (hrs_mem (t_hrs_' xi))\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' xi))\nheap) +\\<^sub>p\n                                   uint i) \\<noteq>\n                                 NULL\n                              then (1 :: 32 signed word) else 0)\n                       });\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. ret \\<noteq> 0)\n                         (do {\n                            guard\n                             (\\<lambda>s.\n                                 c_guard\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' s))\nheap) +\\<^sub>p\n                                   uint i));\n                            vals \\<leftarrow>\n                              gets\n                               (\\<lambda>xj.\n                                   Arrays.update vals 0\n                                    (h_val (hrs_mem (t_hrs_' xj))\n(roots_C (h_val (hrs_mem (t_hrs_' xj)) heap) +\\<^sub>p uint i)));\n                            return ((1 :: 32 signed word), vals)\n                          })\n                         (return ((0 :: 32 signed word), vals)));\n                   ret \\<leftarrow>\n                     gets\n                      (\\<lambda>xi.\n                          i < roots_length_C\n                               (h_val (hrs_mem (t_hrs_' xi)) other));\n                   ret \\<leftarrow>\n                     liftE\n                      (do {\n                         guard\n                          (\\<lambda>xk.\n                              ret \\<longrightarrow>\n                              c_guard\n                               (roots_C\n                                 (h_val (hrs_mem (t_hrs_' xk))\n                                   other) +\\<^sub>p\n                                uint i));\n                         gets\n                          (\\<lambda>xk.\n                              if ret \\<and>\n                                 h_val (hrs_mem (t_hrs_' xk))\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' xk))\nother) +\\<^sub>p\n                                   uint i) \\<noteq>\n                                 NULL\n                              then (1 :: 32 signed word) else 0)\n                       });\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. ret \\<noteq> 0)\n                         (do {\n                            guard (\\<lambda>s. num_vals <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals);\n                            guard\n                             (\\<lambda>s.\n                                 c_guard\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' s))\nother) +\\<^sub>p\n                                   uint i));\n                            guard (\\<lambda>s. sint num_vals < INT_MAX);\n                            vals \\<leftarrow>\n                              gets\n                               (\\<lambda>xl.\n                                   Arrays.update vals (unat num_vals)\n                                    (h_val (hrs_mem (t_hrs_' xl))\n(roots_C (h_val (hrs_mem (t_hrs_' xl)) other) +\\<^sub>p uint i)));\n                            return (num_vals + 1, vals)\n                          })\n                         (return (num_vals, vals)));\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. bn_carry \\<noteq> NULL)\n                         (do {\n                            guard (\\<lambda>s. num_vals <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals);\n                            guard (\\<lambda>s. sint num_vals < INT_MAX);\n                            return\n                             (num_vals + 1,\n                              Arrays.update vals (unat num_vals) bn_carry)\n                          })\n                         (return (num_vals, vals)));\n                   new_roots_length \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. num_vals && 1 = 1)\n                         (do {\n                            guard\n                             (\\<lambda>s.\n                                 c_guard (new_roots +\\<^sub>p uint i));\n                            guard (\\<lambda>s. num_vals - 1 <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals - 1);\n                            guard\n                             (\\<lambda>s. - INT_MAX - 1 < sint num_vals);\n                            guard\n                             (\\<lambda>_. sint num_vals \\<le> INT_MAX + 1);\n                            modify\n                             (t_hrs_'_update\n                               (hrs_mem_update\n                                 (heap_update (new_roots +\\<^sub>p uint i)\n                                   (vals.[unat (num_vals - 1)]))));\n                            tree \\<leftarrow>\n                              gets\n                               (\\<lambda>xm.\n                                   h_val (hrs_mem (t_hrs_' xm))\n                                    (new_roots +\\<^sub>p uint i));\n                            ret \\<leftarrow> binomial_tree_ref' tree;\n                            return (i + 1)\n                          })\n                         (do {\n                            guard\n                             (\\<lambda>_.\n                                 c_guard (new_roots +\\<^sub>p uint i));\n                            modify\n                             (t_hrs_'_update\n                               (hrs_mem_update\n                                 (heap_update (new_roots +\\<^sub>p uint i)\n                                   NULL)));\n                            return new_roots_length\n                          }));\n                   new_carry \\<leftarrow>\n                     condition (\\<lambda>s. num_vals && 2 \\<noteq> 0)\n                       (do {\n                          new_carry \\<leftarrow>\n                            liftE\n                             (binomial_tree_merge' heap (vals.[0])\n                               (vals.[1]));\n                          ret \\<leftarrow>\n                            when (new_carry = NULL)\n                             (bn_r3_rollback_throw new_roots i bn_carry);\n                          return new_carry\n                        })\n                       (return NULL);\n                   liftE\n                    (do {\n                       ret \\<leftarrow> binomial_tree_unref' bn_carry;\n                       ret \\<leftarrow> binomial_tree_ref' new_carry;\n                       return (new_carry, i + 1, new_roots_length, vals)\n                     })\n                 })\""
+    },
+    {
+      "name": "bn_r2_allocation_bytes",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 5,
+      "exact_command": "definition bn_r2_allocation_bytes where\n \"bn_r2_allocation_bytes s b =\n   (case live_blocks (phantom_machine_state_' s) b of\n      None \\<Rightarrow> {} | Some n \\<Rightarrow> block_bytes b n)\""
+    },
+    {
+      "name": "bn_r2_released_bytes",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 10,
+      "exact_command": "definition bn_r2_released_bytes where\n \"bn_r2_released_bytes s B = (\\<Union>b\\<in>B. bn_r2_allocation_bytes s b)\""
+    },
+    {
+      "name": "bn_r2_span_supported",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 13,
+      "exact_command": "definition bn_r2_span_supported where\n \"bn_r2_span_supported s W B \\<longleftrightarrow>\n    W \\<subseteq> reserved_bytes (phantom_machine_state_' s) \\<or>\n    (\\<exists>b n. live_blocks (phantom_machine_state_' s) b = Some n \\<and>\n       b \\<notin> B \\<and> W \\<subseteq> block_bytes b n)\""
+    },
+    {
+      "name": "bn_r2_slot_supported",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 19,
+      "exact_command": "definition bn_r2_slot_supported ::\n \"globals \\<Rightarrow> StrictC'_BinomialTree_C ptr ptr \\<Rightarrow> addr set \\<Rightarrow> bool\" where\n \"bn_r2_slot_supported s q B \\<longleftrightarrow>\n    c_guard q \\<and> bn_r2_span_supported s (ptr_span q) B\""
+    },
+    {
+      "name": "bn_r2_slots_supported",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 24,
+      "exact_command": "definition bn_r2_slots_supported where\n \"bn_r2_slots_supported s qs B \\<longleftrightarrow>\n    (\\<forall>q\\<in>set qs. bn_r2_slot_supported s q B)\""
+    },
+    {
+      "name": "bn_r2_graph_storage",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 28,
+      "exact_command": "definition bn_r2_graph_storage where\n \"bn_r2_graph_storage s N slots \\<longleftrightarrow>\n    bn_ds_graph_storage s N slots \\<and>\n    bn_r2_slots_supported s slots (bn_ds_graph_blocks s N)\""
+    },
+    {
+      "name": "bn_r2_tree_merge_pre",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 33,
+      "exact_command": "definition bn_r2_tree_merge_pre where\n \"bn_r2_tree_merge_pre s h P T U N edges slots held \\<longleftrightarrow>\n   c_guard h \\<and> live_blocks (phantom_machine_state_' s) (ptr_val h) = Some (size_of TYPE(StrictC'_BinomialHeap_C)) \\<and>\n   ptr_val h \\<notin> bn_ds_graph_blocks s N \\<and> heap_type_C (bn_heap s h) = BINOMIAL_HEAP_TYPE_MIN \\<and>\n   compare_func_C (bn_heap s h) = binomial_heap_input.int_compare \\<and>\n   bn_ds_tree_layout s P T \\<and> bn_ds_tree_layout s P U \\<and>\n   distinct (bn_blocks s T @ bn_blocks s U) \\<and>\n   bn_rank T = bn_rank U \\<and> bn_rank T < 65535 \\<and>\n   bn_root T \\<in> N \\<and> bn_root U \\<in> N \\<and>\n   bn_ds_graph s P N edges slots held {} \\<and> bn_r2_graph_storage s N slots \\<and>\n   (\\<forall>p \\<in> N. unat (refcount_C (bn_tree s p)) < 65535)\""
+    },
+    {
+      "name": "bn_r2_merge_pre",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 45,
+      "exact_command": "definition bn_r2_merge_pre where\n \"bn_r2_merge_pre s h other P F G ext held N edges \\<longleftrightarrow>\n   bn_ds_forest_view s h P F \\<and> bn_ds_forest_view s other P G \\<and>\n   distinct (concat (map (case_option [] (bn_blocks s)) (F @ G))) \\<and>\n   live_blocks (phantom_machine_state_' s) (ptr_val h) = Some (size_of TYPE(StrictC'_BinomialHeap_C)) \\<and>\n   (roots_C (bn_heap s h) = NULL \\<or> bn_ds_owned_array s (roots_C (bn_heap s h)) (length F)) \\<and>\n   ptr_val h \\<notin> bn_ds_graph_blocks s N \\<and>\n   ptr_val (roots_C (bn_heap s h)) \\<notin> bn_ds_graph_blocks s N \\<and>\n   bn_r2_slots_supported s ext\n     (insert (ptr_val h) (insert (ptr_val (roots_C (bn_heap s h))) (bn_ds_graph_blocks s N))) \\<and>\n   bn_r2_span_supported s (ptr_span other)\n     (insert (ptr_val h) (insert (ptr_val (roots_C (bn_heap s h))) (bn_ds_graph_blocks s N))) \\<and>\n   (roots_C (bn_heap s h) = NULL \\<or> ptr_val (roots_C (bn_heap s h)) \\<noteq> ptr_val h) \\<and>\n   h \\<noteq> other \\<and>\n   bn_ds_graph s P N edges (bn_ds_slots (roots_C (bn_heap s h)) (length F) @ ext) held {} \\<and>\n   bn_r2_graph_storage s N (bn_ds_slots (roots_C (bn_heap s h)) (length F) @ ext) \\<and>\n   (\\<forall>T. Some T \\<in> set G \\<longrightarrow> bn_root T \\<in> N) \\<and>\n   length (bn_forest_values s F) + length (bn_forest_values s G) < 2^32 \\<and>\n   (\\<forall>p \\<in> N. unat (refcount_C (bn_tree s p)) < 65533)\""
+    },
+    {
+      "name": "bn_r2_merge_success",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 65,
+      "exact_command": "definition bn_r2_merge_success where\n \"bn_r2_merge_success s h P F G ext held N t \\<longleftrightarrow>\n   (\\<exists>H N' edges'. bn_ds_forest_view t h P H \\<and> distinct (bn_owned t h H) \\<and>\n     mset (bn_forest_values t H) = mset (bn_forest_values s F) + mset (bn_forest_values s G) \\<and>\n     num_values_C (bn_heap t h) = num_values_C (bn_heap s h) \\<and>\n     bn_ds_graph t P N' edges' (bn_ds_slots (roots_C (bn_heap t h)) (length H) @ ext) held {} \\<and>\n     bn_r2_graph_storage t N' (bn_ds_slots (roots_C (bn_heap t h)) (length H) @ ext) \\<and>\n     bn_r3_old_node_fields s N t N' \\<and>\n     bn_ds_storage_transition s (insert (ptr_val h) (insert (ptr_val (roots_C (bn_heap s h))) (bn_ds_graph_blocks s N)))\n       t (insert (ptr_val h) (insert (ptr_val (roots_C (bn_heap t h))) (bn_ds_graph_blocks t N')))) \\<and>\n   hrs_htd (t_hrs_' t) = hrs_htd (t_hrs_' s) \\<and>\n   (\\<forall>a \\<in> P. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a)\""
+    },
+    {
+      "name": "bn_r2_finish_base",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 78,
+      "exact_command": "definition bn_r2_finish_base where\n \"bn_r2_finish_base s h P G N edges slots held \\<longleftrightarrow>\n   bn_ds_forest_view s h P G \\<and> distinct (bn_owned s h G) \\<and>\n   live_blocks (phantom_machine_state_' s) (ptr_val h) = Some (size_of TYPE(StrictC'_BinomialHeap_C)) \\<and>\n   (roots_C (bn_heap s h) = NULL \\<or> bn_ds_owned_array s (roots_C (bn_heap s h)) (length G)) \\<and>\n   ptr_val h \\<notin> bn_ds_graph_blocks s N \\<and>\n   ptr_val (roots_C (bn_heap s h)) \\<notin> bn_ds_graph_blocks s N \\<and>\n   bn_ds_graph s P N edges (bn_ds_slots (roots_C (bn_heap s h)) (length G) @ slots) held {} \\<and>\n   bn_r2_graph_storage s N (bn_ds_slots (roots_C (bn_heap s h)) (length G) @ slots)\""
+    },
+    {
+      "name": "bn_r2_carry_done",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 88,
+      "exact_command": "definition bn_r2_carry_done where\n \"bn_r2_carry_done s0 h P F G ext held N a n result t \\<longleftrightarrow>\n  (\\<exists>i len vals H N' edges'. result = ((NULL :: StrictC'_BinomialTree_C ptr),(i :: 32 word),(len :: 32 word),(vals :: StrictC'_BinomialTree_C ptr[3])) \\<and> unat i = n \\<and>\n   length H = n \\<and> distinct (concat (map (case_option [] (bn_blocks t)) H)) \\<and> unat len \\<le> n \\<and>\n   (\\<forall>k \\<in> {unat len..<n}. H ! k = None) \\<and>\n   bn_review_root_array_view t a H \\<and>\n   (\\<forall>k < n. case H ! k of None \\<Rightarrow> True | Some T \\<Rightarrow>\n      bn_rank T = k \\<and> bn_ds_tree_layout t P T) \\<and>\n   mset (bn_forest_values t H) = mset (bn_forest_values s0 F) + mset (bn_forest_values s0 G) \\<and>\n   bn_heap t h = bn_heap s0 h \\<and>\n   bn_review_root_array_view t (roots_C (bn_heap s0 h)) F \\<and>\n   bn_ds_graph t P N' edges'\n     (bn_ds_slots (roots_C (bn_heap s0 h)) (length F) @ bn_ds_slots a n @ ext) held {} \\<and>\n   bn_r2_graph_storage t N'\n     (bn_ds_slots (roots_C (bn_heap s0 h)) (length F) @ bn_ds_slots a n @ ext) \\<and>\n   N \\<subseteq> N' \\<and> bn_r3_old_node_fields s0 N t N' \\<and>\n   live_blocks (phantom_machine_state_' t) (ptr_val a) = Some (8*n) \\<and>\n   bn_ds_storage_transition s0 (bn_ds_graph_blocks s0 N)\n      t (insert (ptr_val a) (bn_ds_graph_blocks t N')))\""
+    },
+    {
+      "name": "bn_r2_carry_inv",
+      "kind": "definition",
+      "context": [],
+      "source_file": "isabelle/Revised_Ownership_Model.thy",
+      "line": 108,
+      "exact_command": "definition bn_r2_carry_inv where\n \"bn_r2_carry_inv s0 h other P F G ext held N a n state s \\<longleftrightarrow>\n  (\\<exists>bn_carry i len vals prefix C N' edges'.\n   state = (bn_carry,(i :: 32 word),(len :: 32 word),(vals :: StrictC'_BinomialTree_C ptr[3])) \\<and>\n   unat i \\<le> n \\<and> unat len \\<le> unat i \\<and> length prefix = unat i \\<and>\n   bn_review_root_array_view s a prefix \\<and>\n   (\\<forall>k \\<in> {unat len..<unat i}. prefix ! k = None) \\<and>\n   (\\<forall>k < unat i. case prefix ! k of None \\<Rightarrow> True | Some T \\<Rightarrow>\n      bn_rank T = k \\<and> bn_ds_tree_layout s P T) \\<and>\n   distinct (concat (map (case_option [] (bn_blocks s)) prefix) @ case_option [] (bn_blocks s) C) \\<and>\n   bn_carry = case_option NULL bn_root C \\<and>\n   (case C of None \\<Rightarrow> True | Some T \\<Rightarrow>\n      bn_rank T = unat i \\<and> bn_ds_tree_layout s P T) \\<and>\n   mset (bn_forest_values s0 F) + mset (bn_forest_values s0 G) =\n      mset (bn_forest_values s prefix) + mset (case_option [] (bn_values s) C) +\n      mset (bn_forest_values s0 (drop (unat i) F)) + mset (bn_forest_values s0 (drop (unat i) G)) \\<and>\n   bn_heap s h = bn_heap s0 h \\<and> bn_heap s other = bn_heap s0 other \\<and>\n   bn_review_root_array_view s (roots_C (bn_heap s0 h)) F \\<and>\n   bn_review_root_array_view s (roots_C (bn_heap s0 other)) G \\<and>\n   bn_ds_graph s P N' edges'\n     (bn_ds_slots (roots_C (bn_heap s0 h)) (length F) @ bn_ds_slots a (unat i) @ ext)\n     (held + mset (filter (\\<lambda>p. p \\<noteq> NULL) [bn_carry])) {} \\<and>\n   bn_r2_graph_storage s N'\n     (bn_ds_slots (roots_C (bn_heap s0 h)) (length F) @ bn_ds_slots a (unat i) @ ext) \\<and>\n   N \\<subseteq> N' \\<and> bn_r3_old_node_fields s0 N s N' \\<and>\n   live_blocks (phantom_machine_state_' s) (ptr_val a) = Some (8*n) \\<and>\n   bn_ds_storage_transition s0 (bn_ds_graph_blocks s0 N)\n     s (insert (ptr_val a) (bn_ds_graph_blocks s N')) \\<and>\n   hrs_htd (t_hrs_' s) = hrs_htd (t_hrs_' s0))\""
+    }
+  ],
+  "generated_c_definitions": "generated-c-definitions.json",
+  "upstream_definitions": "upstream-definitions.json",
+  "full_parent_sources": "parent/",
+  "full_local_sources": "isabelle/"
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "approved_by_user",
+  "approved_semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+  "confirmation_utc": "2026-11-04T01:54:40.160399+00:00",
+  "evidence": "确认新规格并完成生成适配",
+  "scope": [
+    "original upstream binomial heap; eight exact contracts",
+    "sequential integer min-heap; explicit external allocator and stack contracts",
+    "strict C11 memcpy preconditions retained, including zero-length calls",
+    "proof, formal refutation, or unresolved outcomes; no assumed algorithm targets"
+  ],
+  "approved_evidence": {
+    "evidence/readback-comparison.json": "ed0eb6adb5b65457941cfcd875f7081b61344d1cb4ec70698a7200b2a5e9b0f6",
+    "evidence/satisfiability.json": "ebf1f35884a50b588f2edae14f615fa197c9abc60fe1dc25c38d612615e1ca90"
+  },
+  "reviewed_document_sha256": "a1cd71dda1348a9243076ed922b55b006dee2905540f27e2a277415e9fee19c4",
+  "independent_readback_is_separate": true,
+  "reviewed_document_path": "evidence/review-approved.md"
+}

@@ -1,0 +1,37 @@
+{
+  "status": "unapproved_environment_translation_probe",
+  "upstream": "23d453792ed89a28ed7d2c8d4311a4d9f7822edd",
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "-v",
+    "/home/lijun/seL4-docker-main/.worktrees/semantic-base-repository-planning/c-algorithms/binomial:/project:ro",
+    "-w",
+    "/project",
+    "sha256:8e7ee430544e004b57343636038d5ce155c128e5ee002a22821cbeaa6f66d324",
+    "gcc",
+    "-E",
+    "-P",
+    "-CC",
+    "-nostdinc",
+    "-Ic/include",
+    "-Ivendor",
+    "c/binomial_instance.c"
+  ],
+  "calls_annotations": 2,
+  "algorithm_changes": 0,
+  "files": {
+    "vendor/binomial-heap.c": "b5ecb7b381ca9d97c366a579fd76921be2e30fffb2cf0964680a6ed41c2c2faf",
+    "vendor/binomial-heap.h": "9adf4f6917936efae0eedfe1f384192a6258afbc8bb235531908a2efddb49fee",
+    "vendor/compare-int.c": "e31f939aac72fe45f771a39237538d90c8c65e87c908c685791e6f3248355b46",
+    "vendor/compare-int.h": "f1d31375d1106557d537567cfda01e53d15502b901d8935374e9c1a804b0116d",
+    "c/include/limits.h": "8eaf112fb34a4e443f8f29870a43fab4729393ec30e21443a427cdee3afd9e0e",
+    "c/include/stdlib.h": "efc23699a2a2f267cf5eb435cb6ee5ac39560dfc92d1656456dd61cdf0e3d490",
+    "c/include/string.h": "10b87b60e97cdaf482c5d3412f7a71fad424e5088173724325b6210d2e99f436",
+    "c/binomial_instance.c": "ae99587b3f4b61d0ac8a10f85bb2c5e72ba10eadb7feab8d2468e072ba2ee6c8",
+    "c/binomial_heap_input.c": "7aa97b7051740519dbd2e813db096cd8a3ab3e33951e7950a26d472d67070d9f"
+  }
+}

@@ -1,0 +1,263 @@
+{
+  "semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+  "definitions": [
+    {
+      "name": "binomial_heap_num_entries'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_heap_num_entries' ?heap \\<equiv>\ndo {\n  guard (\\<lambda>s. c_guard ?heap);\n  gets (\\<lambda>s. num_values_C (h_val (hrs_mem (t_hrs_' s)) ?heap))\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_heap_num_entries'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "c_guard",
+        "h_val"
+      ],
+      "anchor": "def-039"
+    },
+    {
+      "name": "binomial_tree_ref'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_tree_ref' ?tree \\<equiv>\nunless (?tree = NULL)\n (do {\n    guard (\\<lambda>s. c_guard ?tree);\n    guard\n     (\\<lambda>s.\n         uint (refcount_C (h_val (hrs_mem (t_hrs_' s)) ?tree)) < INT_MAX);\n    modify\n     (t_hrs_'_update\n       (\\<lambda>a.\n           hrs_mem_update\n            (heap_update ?tree\n              (refcount_C_update (\\<lambda>a. a + 1)\n                (h_val (hrs_mem a) ?tree)))\n            a))\n  })",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_tree_ref'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "c_guard",
+        "h_val"
+      ],
+      "anchor": "def-040"
+    },
+    {
+      "name": "binomial_tree_unref'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_tree_unref' ?tree \\<equiv>\nunless (?tree = NULL)\n (do {\n    guard (\\<lambda>s. c_guard ?tree);\n    guard\n     (\\<lambda>s.\n         - INT_MAX - 1\n         < uint (refcount_C (h_val (hrs_mem (t_hrs_' s)) ?tree)));\n    guard\n     (\\<lambda>s.\n         uint (refcount_C (h_val (hrs_mem (t_hrs_' s)) ?tree))\n         \\<le> INT_MAX + 1);\n    modify\n     (t_hrs_'_update\n       (\\<lambda>a.\n           hrs_mem_update\n            (heap_update ?tree\n              (refcount_C_update (\\<lambda>a. a - 1)\n                (h_val (hrs_mem a) ?tree)))\n            a));\n    condition (\\<lambda>s.\n                  UCAST(16 \\<rightarrow> 32 signed)\n                   (refcount_C (h_val (hrs_mem (t_hrs_' s)) ?tree)) =\n                  0)\n      (do {\n         i \\<leftarrow>\n           whileLoop (\\<lambda>i s.\n                         i <s UCAST(16 \\<rightarrow> 32 signed)\n                               (order_C\n                                 (h_val (hrs_mem (t_hrs_' s)) ?tree)))\n             (\\<lambda>i.\n                 do {\n                   guard\n                    (\\<lambda>s.\n                        c_guard\n                         (subtrees_C\n                           (h_val (hrs_mem (t_hrs_' s)) ?tree) +\\<^sub>p\n                          sint i));\n                   tree \\<leftarrow>\n                     gets\n                      (\\<lambda>s.\n                          h_val (hrs_mem (t_hrs_' s))\n                           (subtrees_C\n                             (h_val (hrs_mem (t_hrs_' s)) ?tree) +\\<^sub>p\n                            sint i));\n                   ret \\<leftarrow> binomial_tree_unref' tree;\n                   guard (\\<lambda>s. 0 \\<le> 2147483649 + sint i);\n                   guard (\\<lambda>s. sint i < INT_MAX);\n                   return (i + 1)\n                 })\n            0;\n         ptr \\<leftarrow>\n           gets\n            (\\<lambda>s.\n                PTR_COERCE(StrictC'_BinomialTree_C ptr \\<rightarrow> unit)\n                 (subtrees_C (h_val (hrs_mem (t_hrs_' s)) ?tree)));\n         ret \\<leftarrow> free' ptr;\n         free'\n          (PTR_COERCE(StrictC'_BinomialTree_C \\<rightarrow> unit) ?tree)\n       })\n      skip\n  })",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_tree_unref'.simps",
+      "fixed_point_alias": "binomial_tree_unref' \\<equiv> fixp_binomial_tree_unref'",
+      "fixed_point_alias_fact": "Binomial_Heap_C.binomial_tree_unref'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "c_guard",
+        "free'",
+        "h_val"
+      ],
+      "anchor": "def-041"
+    },
+    {
+      "name": "binomial_tree_merge'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_tree_merge' ?heap ?tree1.0 ?tree2.0 \\<equiv>\ndo {\n  guard (\\<lambda>s. c_guard ?tree1.0);\n  guard (\\<lambda>s. c_guard ?tree2.0);\n  data1 \\<leftarrow>\n    gets (\\<lambda>xb. value_C (h_val (hrs_mem (t_hrs_' xb)) ?tree1.0));\n  data2 \\<leftarrow>\n    gets (\\<lambda>xc. value_C (h_val (hrs_mem (t_hrs_' xc)) ?tree2.0));\n  ret'int'1 \\<leftarrow> binomial_heap_cmp' ?heap data1 data2;\n  (tree1, tree2) \\<leftarrow>\n    return\n     (if 0 <s ret'int'1 then (?tree2.0, ?tree1.0)\n      else (?tree1.0, ?tree2.0));\n  ret'ptr_to_void'1 \\<leftarrow>\n    malloc' (word_of_nat (size_of TYPE(StrictC'_BinomialTree_C)));\n  new_tree \\<leftarrow>\n    return\n     (PTR_COERCE(unit \\<rightarrow> StrictC'_BinomialTree_C)\n       ret'ptr_to_void'1);\n  condition (\\<lambda>s. new_tree = NULL)\n    (return NULL)\n    (do {\n       guard (\\<lambda>s. c_guard new_tree);\n       modify\n        (t_hrs_'_update\n          (\\<lambda>a.\n              hrs_mem_update\n               (heap_update new_tree\n                 (refcount_C_update (\\<lambda>a. 0)\n                   (h_val (hrs_mem a) new_tree)))\n               a));\n       guard\n        (\\<lambda>s.\n            uint (order_C (h_val (hrs_mem (t_hrs_' s)) tree1)) < INT_MAX);\n       guard (\\<lambda>s. c_guard tree1);\n       modify\n        (t_hrs_'_update\n          (\\<lambda>a.\n              hrs_mem_update\n               (heap_update new_tree\n                 (order_C_update\n                   (\\<lambda>b. order_C (h_val (hrs_mem a) tree1) + 1)\n                   (h_val (hrs_mem a) new_tree)))\n               a));\n       modify\n        (t_hrs_'_update\n          (\\<lambda>a.\n              hrs_mem_update\n               (heap_update new_tree\n                 (value_C_update\n                   (\\<lambda>b. value_C (h_val (hrs_mem a) tree1))\n                   (h_val (hrs_mem a) new_tree)))\n               a));\n       size \\<leftarrow>\n         gets\n          (\\<lambda>xm.\n              word_of_nat (size_of TYPE(StrictC'_BinomialTree_C ptr)) *\n              UCAST(16 \\<rightarrow> 64)\n               (order_C (h_val (hrs_mem (t_hrs_' xm)) new_tree)));\n       ret'ptr_to_void'1 \\<leftarrow> malloc' size;\n       modify\n        (t_hrs_'_update\n          (\\<lambda>a.\n              hrs_mem_update\n               (heap_update new_tree\n                 (subtrees_C_update\n                   (\\<lambda>a.\n                       PTR_COERCE\n                        (unit \\<rightarrow> StrictC'_BinomialTree_C ptr)\n                        ret'ptr_to_void'1)\n                   (h_val (hrs_mem a) new_tree)))\n               a));\n       condition (\\<lambda>s.\n                     subtrees_C (h_val (hrs_mem (t_hrs_' s)) new_tree) =\n                     NULL)\n         (do {\n            ret \\<leftarrow>\n              free'\n               (PTR_COERCE(StrictC'_BinomialTree_C \\<rightarrow> unit)\n                 new_tree);\n            return NULL\n          })\n         (do {\n            dest \\<leftarrow>\n              gets\n               (\\<lambda>xq.\n                   PTR_COERCE\n                    (StrictC'_BinomialTree_C ptr \\<rightarrow> unit)\n                    (subtrees_C (h_val (hrs_mem (t_hrs_' xq)) new_tree)));\n            src \\<leftarrow>\n              gets\n               (\\<lambda>xr.\n                   PTR_COERCE\n                    (StrictC'_BinomialTree_C ptr \\<rightarrow> unit)\n                    (subtrees_C (h_val (hrs_mem (t_hrs_' xr)) tree1)));\n            count \\<leftarrow>\n              gets\n               (\\<lambda>xs.\n                   word_of_nat (size_of TYPE(StrictC'_BinomialTree_C ptr)) *\n                   UCAST(16 \\<rightarrow> 64)\n                    (order_C (h_val (hrs_mem (t_hrs_' xs)) tree1)));\n            ret \\<leftarrow> memcpy' dest src count;\n            guard\n             (\\<lambda>s.\n                 c_guard\n                  (subtrees_C\n                    (h_val (hrs_mem (t_hrs_' s)) new_tree) +\\<^sub>p\n                   sint\n                    (UCAST(16 \\<rightarrow> 32 signed)\n                      (order_C (h_val (hrs_mem (t_hrs_' s)) new_tree)) -\n                     1)));\n            guard\n             (\\<lambda>s.\n                 - INT_MAX - 1\n                 < uint (order_C (h_val (hrs_mem (t_hrs_' s)) new_tree)));\n            guard\n             (\\<lambda>s.\n                 uint (order_C (h_val (hrs_mem (t_hrs_' s)) new_tree))\n                 \\<le> INT_MAX + 1);\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update\n                      (subtrees_C (h_val (hrs_mem a) new_tree) +\\<^sub>p\n                       sint\n                        (UCAST(16 \\<rightarrow> 32 signed)\n                          (order_C (h_val (hrs_mem a) new_tree)) -\n                         1))\n                      tree2)\n                    a));\n            i \\<leftarrow>\n              whileLoop (\\<lambda>i s.\n                            i <s UCAST(16 \\<rightarrow> 32 signed)\n                                  (order_C\n                                    (h_val (hrs_mem (t_hrs_' s)) new_tree)))\n                (\\<lambda>i.\n                    do {\n                      guard\n                       (\\<lambda>s.\n                           c_guard\n                            (subtrees_C\n                              (h_val (hrs_mem (t_hrs_' s))\n                                new_tree) +\\<^sub>p\n                             sint i));\n                      tree \\<leftarrow>\n                        gets\n                         (\\<lambda>xx.\n                             h_val (hrs_mem (t_hrs_' xx))\n                              (subtrees_C\n                                (h_val (hrs_mem (t_hrs_' xx))\n                                  new_tree) +\\<^sub>p\n                               sint i));\n                      ret \\<leftarrow> binomial_tree_ref' tree;\n                      guard (\\<lambda>s. 0 \\<le> 2147483649 + sint i);\n                      guard (\\<lambda>s. sint i < INT_MAX);\n                      return (i + 1)\n                    })\n               0;\n            return new_tree\n          })\n     })\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_tree_merge'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "binomial_heap_cmp'",
+        "binomial_tree_ref'",
+        "c_guard",
+        "free'",
+        "h_val",
+        "malloc'",
+        "memcpy'"
+      ],
+      "anchor": "def-042"
+    },
+    {
+      "name": "binomial_heap_merge_undo'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_heap_merge_undo' ?new_roots ?count \\<equiv>\ndo {\n  i \\<leftarrow>\n    whileLoop (\\<lambda>i s. i \\<le> ?count)\n      (\\<lambda>i.\n          do {\n            guard (\\<lambda>_. c_guard (?new_roots +\\<^sub>p uint i));\n            tree \\<leftarrow>\n              gets\n               (\\<lambda>s.\n                   h_val (hrs_mem (t_hrs_' s))\n                    (?new_roots +\\<^sub>p uint i));\n            ret \\<leftarrow> binomial_tree_unref' tree;\n            return (i + 1)\n          })\n     0;\n  free'\n   (PTR_COERCE(StrictC'_BinomialTree_C ptr \\<rightarrow> unit) ?new_roots)\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_heap_merge_undo'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "binomial_tree_unref'",
+        "c_guard",
+        "free'",
+        "h_val"
+      ],
+      "anchor": "def-043"
+    },
+    {
+      "name": "binomial_heap_merge'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_heap_merge' ?heap ?other \\<equiv>\ndo {\n  vals \\<leftarrow> unknown;\n  guard (\\<lambda>s. c_guard ?heap);\n  guard (\\<lambda>s. c_guard ?other);\n  max \\<leftarrow>\n    condition (\\<lambda>s.\n                  roots_length_C (h_val (hrs_mem (t_hrs_' s)) ?other)\n                  < roots_length_C (h_val (hrs_mem (t_hrs_' s)) ?heap))\n      (gets\n        (\\<lambda>xc.\n            roots_length_C (h_val (hrs_mem (t_hrs_' xc)) ?heap) + 1))\n      (gets\n        (\\<lambda>xc.\n            roots_length_C (h_val (hrs_mem (t_hrs_' xc)) ?other) + 1));\n  ret'ptr_to_void'1 \\<leftarrow>\n    malloc'\n     (word_of_nat (size_of TYPE(StrictC'_BinomialTree_C ptr)) *\n      UCAST(32 \\<rightarrow> 64) max);\n  new_roots \\<leftarrow>\n    return\n     (PTR_COERCE(unit \\<rightarrow> StrictC'_BinomialTree_C ptr)\n       ret'ptr_to_void'1);\n  condition (\\<lambda>s. new_roots = NULL)\n    (return 0)\n    (finally\n      (do {\n         (carry, i, new_roots_length, vals) \\<leftarrow>\n           whileLoop (\\<lambda>(carry, i, new_roots_length, vals) s.\n                         i < max)\n             (\\<lambda>(carry, i, new_roots_length, vals).\n                 do {\n                   ret \\<leftarrow>\n                     gets\n                      (\\<lambda>xg.\n                          i < roots_length_C\n                               (h_val (hrs_mem (t_hrs_' xg)) ?heap));\n                   ret \\<leftarrow>\n                     liftE\n                      (do {\n                         guard\n                          (\\<lambda>xi.\n                              ret \\<longrightarrow>\n                              c_guard\n                               (roots_C\n                                 (h_val (hrs_mem (t_hrs_' xi))\n                                   ?heap) +\\<^sub>p\n                                uint i));\n                         gets\n                          (\\<lambda>xi.\n                              if ret \\<and>\n                                 h_val (hrs_mem (t_hrs_' xi))\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' xi))\n?heap) +\\<^sub>p\n                                   uint i) \\<noteq>\n                                 NULL\n                              then 1 else 0)\n                       });\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. ret \\<noteq> 0)\n                         (do {\n                            guard\n                             (\\<lambda>s.\n                                 c_guard\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' s))\n?heap) +\\<^sub>p\n                                   uint i));\n                            vals \\<leftarrow>\n                              gets\n                               (\\<lambda>xj.\n                                   Arrays.update vals 0\n                                    (h_val (hrs_mem (t_hrs_' xj))\n(roots_C (h_val (hrs_mem (t_hrs_' xj)) ?heap) +\\<^sub>p uint i)));\n                            return (1, vals)\n                          })\n                         (return (0, vals)));\n                   ret \\<leftarrow>\n                     gets\n                      (\\<lambda>xi.\n                          i < roots_length_C\n                               (h_val (hrs_mem (t_hrs_' xi)) ?other));\n                   ret \\<leftarrow>\n                     liftE\n                      (do {\n                         guard\n                          (\\<lambda>xk.\n                              ret \\<longrightarrow>\n                              c_guard\n                               (roots_C\n                                 (h_val (hrs_mem (t_hrs_' xk))\n                                   ?other) +\\<^sub>p\n                                uint i));\n                         gets\n                          (\\<lambda>xk.\n                              if ret \\<and>\n                                 h_val (hrs_mem (t_hrs_' xk))\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' xk))\n?other) +\\<^sub>p\n                                   uint i) \\<noteq>\n                                 NULL\n                              then 1 else 0)\n                       });\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. ret \\<noteq> 0)\n                         (do {\n                            guard (\\<lambda>s. num_vals <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals);\n                            guard\n                             (\\<lambda>s.\n                                 c_guard\n                                  (roots_C\n                                    (h_val (hrs_mem (t_hrs_' s))\n?other) +\\<^sub>p\n                                   uint i));\n                            guard (\\<lambda>s. sint num_vals < INT_MAX);\n                            vals \\<leftarrow>\n                              gets\n                               (\\<lambda>xl.\n                                   Arrays.update vals (unat num_vals)\n                                    (h_val (hrs_mem (t_hrs_' xl))\n(roots_C (h_val (hrs_mem (t_hrs_' xl)) ?other) +\\<^sub>p uint i)));\n                            return (num_vals + 1, vals)\n                          })\n                         (return (num_vals, vals)));\n                   (num_vals, vals) \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. carry \\<noteq> NULL)\n                         (do {\n                            guard (\\<lambda>s. num_vals <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals);\n                            guard (\\<lambda>s. sint num_vals < INT_MAX);\n                            return\n                             (num_vals + 1,\n                              Arrays.update vals (unat num_vals) carry)\n                          })\n                         (return (num_vals, vals)));\n                   new_roots_length \\<leftarrow>\n                     liftE\n                      (condition (\\<lambda>s. num_vals && 1 = 1)\n                         (do {\n                            guard\n                             (\\<lambda>s.\n                                 c_guard (new_roots +\\<^sub>p uint i));\n                            guard (\\<lambda>s. num_vals - 1 <s 3);\n                            guard (\\<lambda>s. 0 \\<le>s num_vals - 1);\n                            guard\n                             (\\<lambda>s. - INT_MAX - 1 < sint num_vals);\n                            guard\n                             (\\<lambda>_. sint num_vals \\<le> INT_MAX + 1);\n                            modify\n                             (t_hrs_'_update\n                               (hrs_mem_update\n                                 (heap_update (new_roots +\\<^sub>p uint i)\n                                   (vals.[unat (num_vals - 1)]))));\n                            tree \\<leftarrow>\n                              gets\n                               (\\<lambda>xm.\n                                   h_val (hrs_mem (t_hrs_' xm))\n                                    (new_roots +\\<^sub>p uint i));\n                            ret \\<leftarrow> binomial_tree_ref' tree;\n                            return (i + 1)\n                          })\n                         (do {\n                            guard\n                             (\\<lambda>_.\n                                 c_guard (new_roots +\\<^sub>p uint i));\n                            modify\n                             (t_hrs_'_update\n                               (hrs_mem_update\n                                 (heap_update (new_roots +\\<^sub>p uint i)\n                                   NULL)));\n                            return new_roots_length\n                          }));\n                   new_carry \\<leftarrow>\n                     condition (\\<lambda>s. num_vals && 2 \\<noteq> 0)\n                       (do {\n                          new_carry \\<leftarrow>\n                            liftE\n                             (binomial_tree_merge' ?heap (vals.[0])\n                               (vals.[1]));\n                          ret \\<leftarrow>\n                            when (new_carry = NULL)\n                             (do {\n                                ret \\<leftarrow>\n                                  liftE\n                                   (binomial_heap_merge_undo' new_roots i);\n                                ret \\<leftarrow>\n                                  liftE (binomial_tree_unref' carry);\n                                throw 0\n                              });\n                          return new_carry\n                        })\n                       (return NULL);\n                   liftE\n                    (do {\n                       ret \\<leftarrow> binomial_tree_unref' carry;\n                       ret \\<leftarrow> binomial_tree_ref' new_carry;\n                       return (new_carry, i + 1, new_roots_length, vals)\n                     })\n                 })\n            (NULL, 0, 0, vals);\n         i \\<leftarrow>\n           liftE\n            (whileLoop (\\<lambda>i s.\n                           i < roots_length_C\n                                (h_val (hrs_mem (t_hrs_' s)) ?heap))\n               (\\<lambda>i.\n                   do {\n                     guard\n                      (\\<lambda>s.\n                          c_guard\n                           (roots_C\n                             (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p\n                            uint i));\n                     ret \\<leftarrow>\n                       condition (\\<lambda>s.\n                                     h_val (hrs_mem (t_hrs_' s))\n(roots_C (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p uint i) \\<noteq>\n                                     NULL)\n                         (gets\n                           (\\<lambda>xi.\n                               h_val (hrs_mem (t_hrs_' xi))\n                                (roots_C\n                                  (h_val (hrs_mem (t_hrs_' xi))\n                                    ?heap) +\\<^sub>p\n                                 uint i)) >>=\n                          binomial_tree_unref')\n                         skip;\n                     return (i + 1)\n                   })\n              0);\n         ptr \\<leftarrow>\n           gets\n            (\\<lambda>xh.\n                PTR_COERCE(StrictC'_BinomialTree_C ptr \\<rightarrow> unit)\n                 (roots_C (h_val (hrs_mem (t_hrs_' xh)) ?heap)));\n         ret \\<leftarrow> liftE (free' ptr);\n         modify\n          (t_hrs_'_update\n            (\\<lambda>a.\n                hrs_mem_update\n                 (heap_update ?heap\n                   (roots_C_update (\\<lambda>a. new_roots)\n                     (h_val (hrs_mem a) ?heap)))\n                 a));\n         modify\n          (t_hrs_'_update\n            (\\<lambda>a.\n                hrs_mem_update\n                 (heap_update ?heap\n                   (roots_length_C_update (\\<lambda>a. new_roots_length)\n                     (h_val (hrs_mem a) ?heap)))\n                 a));\n         throw 1\n       }))\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_heap_merge'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "binomial_heap_merge_undo'",
+        "binomial_tree_merge'",
+        "binomial_tree_ref'",
+        "binomial_tree_unref'",
+        "c_guard",
+        "free'",
+        "h_val",
+        "malloc'"
+      ],
+      "anchor": "def-044"
+    },
+    {
+      "name": "binomial_heap_cmp'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_heap_cmp' ?heap ?data1.0 ?data2.0 \\<equiv>\ndo {\n  guard (\\<lambda>s. c_guard ?heap);\n  condition (\\<lambda>s.\n                heap_type_C (h_val (hrs_mem (t_hrs_' s)) ?heap) =\n                BINOMIAL_HEAP_TYPE_MIN)\n    (do {\n       p \\<leftarrow>\n         gets\n          (\\<lambda>xb.\n              compare_func_C (h_val (hrs_mem (t_hrs_' xb)) ?heap));\n       \\<P> p ?data1.0 ?data2.0\n     })\n    (do {\n       p \\<leftarrow>\n         gets\n          (\\<lambda>xb.\n              compare_func_C (h_val (hrs_mem (t_hrs_' xb)) ?heap));\n       ret'int'1 \\<leftarrow> \\<P> p ?data1.0 ?data2.0;\n       x \\<leftarrow> guard (\\<lambda>_. sint ret'int'1 \\<le> INT_MAX + 1);\n       guard (\\<lambda>_. - sint ret'int'1 \\<le> INT_MAX);\n       return (- ret'int'1)\n     })\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_heap_cmp'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "c_guard",
+        "h_val"
+      ],
+      "anchor": "def-045"
+    },
+    {
+      "name": "binomial_heap_insert'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_heap_insert' ?heap ?value \\<equiv>\nglobals.with_fresh_stack_ptr 1 (\\<lambda>a. UNIV)\n (\\<lambda>fake_heap\\<^sub>p.\n     globals.with_fresh_stack_ptr 1 (\\<lambda>s. UNIV)\n      (\\<lambda>new_tree\\<^sub>p.\n          do {\n            ret'ptr_to_void'1 \\<leftarrow>\n              malloc' (word_of_nat (size_of TYPE(StrictC'_BinomialTree_C)));\n            guard (\\<lambda>s. c_guard new_tree\\<^sub>p);\n            modify\n             (t_hrs_'_update\n               (hrs_mem_update\n                 (heap_update new_tree\\<^sub>p\n                   (PTR_COERCE(unit \\<rightarrow> StrictC'_BinomialTree_C)\n                     ret'ptr_to_void'1))));\n            condition (\\<lambda>s.\n                          h_val (hrs_mem (t_hrs_' s)) new_tree\\<^sub>p =\n                          NULL)\n              (return 0)\n              (do {\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (h_val (hrs_mem (t_hrs_' s)) new_tree\\<^sub>p));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (PTR(unit ptr)\n                             &(h_val (hrs_mem a)\n                                new_tree\\<^sub>p\\<rightarrow>[''value_C'']))\n                           ?value)\n                         a));\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (h_val (hrs_mem (t_hrs_' s)) new_tree\\<^sub>p));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (PTR(16 word)\n                             &(h_val (hrs_mem a)\n                                new_tree\\<^sub>p\\<rightarrow>[''order_C'']))\n                           0)\n                         a));\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (h_val (hrs_mem (t_hrs_' s)) new_tree\\<^sub>p));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (PTR(16 word)\n                             &(h_val (hrs_mem a)\n                                new_tree\\<^sub>p\\<rightarrow>[''refcount_C'']))\n                           1)\n                         a));\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (h_val (hrs_mem (t_hrs_' s)) new_tree\\<^sub>p));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (PTR(StrictC'_BinomialTree_C ptr ptr)\n                             &(h_val (hrs_mem a)\n                                new_tree\\<^sub>p\\<rightarrow>[''subtrees_C'']))\n                           NULL)\n                         a));\n                 guard (\\<lambda>s. c_guard fake_heap\\<^sub>p);\n                 guard (\\<lambda>s. c_guard ?heap);\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update fake_heap\\<^sub>p\n                           (heap_type_C_update\n                             (\\<lambda>b.\n                                 heap_type_C (h_val (hrs_mem a) ?heap))\n                             (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                         a));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update fake_heap\\<^sub>p\n                           (compare_func_C_update\n                             (\\<lambda>b.\n                                 compare_func_C (h_val (hrs_mem a) ?heap))\n                             (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                         a));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update fake_heap\\<^sub>p\n                           (num_values_C_update (\\<lambda>a. 1)\n                             (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                         a));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update fake_heap\\<^sub>p\n                           (roots_C_update (\\<lambda>a. new_tree\\<^sub>p)\n                             (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                         a));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update fake_heap\\<^sub>p\n                           (roots_length_C_update (\\<lambda>a. 1)\n                             (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                         a));\n                 result \\<leftarrow>\n                   binomial_heap_merge' ?heap fake_heap\\<^sub>p;\n                 unless (result = 0)\n                  (modify\n                    (t_hrs_'_update\n                      (\\<lambda>a.\n                          hrs_mem_update\n                           (heap_update ?heap\n                             (num_values_C_update (\\<lambda>a. a + 1)\n                               (h_val (hrs_mem a) ?heap)))\n                           a)));\n                 tree \\<leftarrow>\n                   gets\n                    (\\<lambda>xu.\n                        h_val (hrs_mem (t_hrs_' xu)) new_tree\\<^sub>p);\n                 ret \\<leftarrow> binomial_tree_unref' tree;\n                 return result\n               })\n          }))",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_heap_insert'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "binomial_heap_merge'",
+        "binomial_tree_unref'",
+        "c_guard",
+        "h_val",
+        "malloc'"
+      ],
+      "anchor": "def-046"
+    },
+    {
+      "name": "binomial_heap_pop'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_heap_pop' ?heap \\<equiv>\nglobals.with_fresh_stack_ptr 1 (\\<lambda>a. UNIV)\n (\\<lambda>fake_heap\\<^sub>p.\n     do {\n       guard (\\<lambda>s. c_guard ?heap);\n       condition (\\<lambda>s.\n                     num_values_C (h_val (hrs_mem (t_hrs_' s)) ?heap) = 0)\n         (return binomial_heap_null_value)\n         (do {\n            (i, least_index) \\<leftarrow>\n              whileLoop (\\<lambda>(i, least_index) s.\n                            i < roots_length_C\n                                 (h_val (hrs_mem (t_hrs_' s)) ?heap))\n                (\\<lambda>(i, least_index).\n                    do {\n                      guard\n                       (\\<lambda>s.\n                           c_guard\n                            (roots_C\n                              (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p\n                             uint i));\n                      least_index \\<leftarrow>\n                        condition (\\<lambda>s.\nh_val (hrs_mem (t_hrs_' s))\n (roots_C (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p uint i) =\nNULL)\n                          (return least_index)\n                          (do {\n                             ret \\<leftarrow>\n                               condition (\\<lambda>s.\n       least_index = 0xFFFFFFFF)\n                                 (return 1)\n                                 (do {\n                                    guard\n                                     (\\<lambda>s.\n   c_guard\n    (h_val (hrs_mem (t_hrs_' s))\n      (roots_C (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p uint i)));\n                                    x \\<leftarrow>\nguard\n (\\<lambda>s.\n     c_guard\n      (h_val (hrs_mem (t_hrs_' s))\n        (roots_C (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p\n         uint least_index)));\n                                    guard\n                                     (\\<lambda>s.\n   c_guard\n    (roots_C (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p\n     uint least_index));\n                                    data1 \\<leftarrow>\ngets\n (\\<lambda>xe.\n     value_C\n      (h_val (hrs_mem (t_hrs_' xe))\n        (h_val (hrs_mem (t_hrs_' xe))\n          (roots_C (h_val (hrs_mem (t_hrs_' xe)) ?heap) +\\<^sub>p\n           uint i))));\n                                    data2 \\<leftarrow>\ngets\n (\\<lambda>xf.\n     value_C\n      (h_val (hrs_mem (t_hrs_' xf))\n        (h_val (hrs_mem (t_hrs_' xf))\n          (roots_C (h_val (hrs_mem (t_hrs_' xf)) ?heap) +\\<^sub>p\n           uint least_index))));\n                                    ret'int'2 \\<leftarrow>\nbinomial_heap_cmp' ?heap data1 data2;\n                                    return (if ret'int'2 <s 0 then 1 else 0)\n                                  });\n                             return\n                              (if ret \\<noteq> 0 then i else least_index)\n                           });\n                      return (i + 1, least_index)\n                    })\n               (0, 0xFFFFFFFF);\n            guard\n             (\\<lambda>s.\n                 c_guard\n                  (roots_C (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p\n                   uint least_index));\n            least_tree \\<leftarrow>\n              gets\n               (\\<lambda>xd.\n                   h_val (hrs_mem (t_hrs_' xd))\n                    (roots_C (h_val (hrs_mem (t_hrs_' xd)) ?heap) +\\<^sub>p\n                     uint least_index));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update\n                      (roots_C (h_val (hrs_mem a) ?heap) +\\<^sub>p\n                       uint least_index)\n                      NULL)\n                    a));\n            guard (\\<lambda>s. c_guard fake_heap\\<^sub>p);\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (heap_type_C_update\n                        (\\<lambda>b. heap_type_C (h_val (hrs_mem a) ?heap))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (compare_func_C_update\n                        (\\<lambda>b.\n                            compare_func_C (h_val (hrs_mem a) ?heap))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            guard (\\<lambda>s. c_guard least_tree);\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (roots_C_update\n                        (\\<lambda>b.\n                            subtrees_C (h_val (hrs_mem a) least_tree))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            modify\n             (t_hrs_'_update\n               (\\<lambda>a.\n                   hrs_mem_update\n                    (heap_update fake_heap\\<^sub>p\n                      (roots_length_C_update\n                        (\\<lambda>b.\n                            UCAST(16 \\<rightarrow> 32)\n                             (order_C (h_val (hrs_mem a) least_tree)))\n                        (h_val (hrs_mem a) fake_heap\\<^sub>p)))\n                    a));\n            ret'int'1 \\<leftarrow>\n              binomial_heap_merge' ?heap fake_heap\\<^sub>p;\n            condition (\\<lambda>s. ret'int'1 \\<noteq> 0)\n              (do {\n                 result \\<leftarrow>\n                   gets\n                    (\\<lambda>xm.\n                        value_C (h_val (hrs_mem (t_hrs_' xm)) least_tree));\n                 ret \\<leftarrow> binomial_tree_unref' least_tree;\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update ?heap\n                           (num_values_C_update (\\<lambda>a. a - 1)\n                             (h_val (hrs_mem a) ?heap)))\n                         a));\n                 return result\n               })\n              (do {\n                 guard\n                  (\\<lambda>s.\n                      c_guard\n                       (roots_C\n                         (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p\n                        uint least_index));\n                 modify\n                  (t_hrs_'_update\n                    (\\<lambda>a.\n                        hrs_mem_update\n                         (heap_update\n                           (roots_C (h_val (hrs_mem a) ?heap) +\\<^sub>p\n                            uint least_index)\n                           least_tree)\n                         a));\n                 return binomial_heap_null_value\n               })\n          })\n     })",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_heap_pop'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "binomial_heap_cmp'",
+        "binomial_heap_merge'",
+        "binomial_tree_unref'",
+        "c_guard",
+        "h_val"
+      ],
+      "anchor": "def-047"
+    },
+    {
+      "name": "binomial_heap_free'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_heap_free' ?heap \\<equiv>\ndo {\n  guard (\\<lambda>s. c_guard ?heap);\n  i \\<leftarrow>\n    whileLoop (\\<lambda>i s.\n                  i < roots_length_C (h_val (hrs_mem (t_hrs_' s)) ?heap))\n      (\\<lambda>i.\n          do {\n            guard\n             (\\<lambda>s.\n                 c_guard\n                  (roots_C (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p\n                   uint i));\n            tree \\<leftarrow>\n              gets\n               (\\<lambda>s.\n                   h_val (hrs_mem (t_hrs_' s))\n                    (roots_C (h_val (hrs_mem (t_hrs_' s)) ?heap) +\\<^sub>p\n                     uint i));\n            ret \\<leftarrow> binomial_tree_unref' tree;\n            return (i + 1)\n          })\n     0;\n  ptr \\<leftarrow>\n    gets\n     (\\<lambda>s.\n         PTR_COERCE(StrictC'_BinomialTree_C ptr \\<rightarrow> unit)\n          (roots_C (h_val (hrs_mem (t_hrs_' s)) ?heap)));\n  ret \\<leftarrow> free' ptr;\n  free' (PTR_COERCE(StrictC'_BinomialHeap_C \\<rightarrow> unit) ?heap)\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_heap_free'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "binomial_tree_unref'",
+        "c_guard",
+        "free'",
+        "h_val"
+      ],
+      "anchor": "def-048"
+    },
+    {
+      "name": "binomial_heap_new'",
+      "category": "autocorres_final_definition",
+      "body": "binomial_heap_new' ?heap_type ?compare_func \\<equiv>\ndo {\n  ret'ptr_to_void'1 \\<leftarrow>\n    calloc' 1 (word_of_nat (size_of TYPE(StrictC'_BinomialHeap_C)));\n  new_heap \\<leftarrow>\n    return\n     (PTR_COERCE(unit \\<rightarrow> StrictC'_BinomialHeap_C)\n       ret'ptr_to_void'1);\n  condition (\\<lambda>s. new_heap = NULL)\n    (return NULL)\n    (do {\n       guard (\\<lambda>s. c_guard new_heap);\n       modify\n        (t_hrs_'_update\n          (\\<lambda>a.\n              hrs_mem_update\n               (heap_update new_heap\n                 (heap_type_C_update (\\<lambda>a. ?heap_type)\n                   (h_val (hrs_mem a) new_heap)))\n               a));\n       modify\n        (t_hrs_'_update\n          (\\<lambda>a.\n              hrs_mem_update\n               (heap_update new_heap\n                 (compare_func_C_update (\\<lambda>a. ?compare_func)\n                   (h_val (hrs_mem a) new_heap)))\n               a));\n       return new_heap\n     })\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.binomial_heap_new'_def",
+      "definition_references": [
+        "C_heap_storage",
+        "c_guard",
+        "calloc'",
+        "h_val"
+      ],
+      "anchor": "def-049"
+    },
+    {
+      "name": "calg_binomial_new'",
+      "category": "autocorres_final_definition",
+      "body": "calg_binomial_new' \\<equiv>\nbinomial_heap_new' BINOMIAL_HEAP_TYPE_MIN binomial_heap_input.int_compare",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.calg_binomial_new'_def",
+      "definition_references": [
+        "binomial_heap_new'"
+      ],
+      "anchor": "def-050"
+    },
+    {
+      "name": "malloc'",
+      "category": "autocorres_final_definition",
+      "body": "malloc' ?size \\<equiv>\ndo {\n  guard (\\<lambda>s. binomial_heap_input.malloc.size_' < unat ?size);\n  guard (\\<lambda>s. allocator_wf (phantom_machine_state_' s));\n  assume_result_and_state\n   (\\<lambda>s.\n       {(p, t).\n        \\<exists>h A.\n           malloc_rel (unat ?size) (hrs_mem (t_hrs_' s))\n            (phantom_machine_state_' s) (ptr_val p) h A \\<and>\n           t =\n           t_hrs_'_update (hrs_mem_update (\\<lambda>_. h)) s\n           \\<lparr>phantom_machine_state_' := A\\<rparr>})\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.malloc'_def",
+      "definition_references": [
+        "allocator_wf",
+        "malloc_rel"
+      ],
+      "anchor": "def-051"
+    },
+    {
+      "name": "calloc'",
+      "category": "autocorres_final_definition",
+      "body": "calloc' ?count ?size \\<equiv>\ndo {\n  guard (\\<lambda>s. binomial_heap_input.calloc.count_' < unat ?count);\n  x \\<leftarrow>\n    guard (\\<lambda>s. binomial_heap_input.calloc.count_' < unat ?size);\n  x \\<leftarrow>\n    guard\n     (\\<lambda>s.\n         unat ?count * unat ?size < binomial_heap_input.calloc.ret'_' ^ 64);\n  guard (\\<lambda>s. allocator_wf (phantom_machine_state_' s));\n  assume_result_and_state\n   (\\<lambda>s.\n       {(p, t).\n        \\<exists>h A.\n           calloc_rel (unat ?count) (unat ?size) (hrs_mem (t_hrs_' s))\n            (phantom_machine_state_' s) (ptr_val p) h A \\<and>\n           t =\n           t_hrs_'_update (hrs_mem_update (\\<lambda>_. h)) s\n           \\<lparr>phantom_machine_state_' := A\\<rparr>})\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.calloc'_def",
+      "definition_references": [
+        "allocator_wf",
+        "calloc_rel"
+      ],
+      "anchor": "def-052"
+    },
+    {
+      "name": "free'",
+      "category": "autocorres_final_definition",
+      "body": "free' ?ptr \\<equiv>\ndo {\n  guard (\\<lambda>s. allocator_wf (phantom_machine_state_' s));\n  guard\n   (\\<lambda>s.\n       ?ptr = NULL \\<or>\n       (\\<exists>y.\n           live_blocks (phantom_machine_state_' s) (ptr_val ?ptr) =\n           Some y));\n  assume_result_and_state\n   (\\<lambda>s.\n       {(r, t).\n        \\<exists>h A.\n           free_rel (ptr_val ?ptr) (hrs_mem (t_hrs_' s))\n            (phantom_machine_state_' s) h A \\<and>\n           t =\n           t_hrs_'_update (hrs_mem_update (\\<lambda>_. h)) s\n           \\<lparr>phantom_machine_state_' := A\\<rparr>})\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.free'_def",
+      "definition_references": [
+        "allocator_wf",
+        "calg_allocator",
+        "free_rel"
+      ],
+      "anchor": "def-053"
+    },
+    {
+      "name": "memcpy'",
+      "category": "autocorres_final_definition",
+      "body": "memcpy' ?dest ?src ?count \\<equiv>\ndo {\n  guard (\\<lambda>s. allocator_wf (phantom_machine_state_' s));\n  guard\n   (\\<lambda>s.\n       memcpy_ok (phantom_machine_state_' s) (ptr_val ?dest) (ptr_val ?src)\n        (unat ?count));\n  assume_result_and_state\n   (\\<lambda>s.\n       {?dest} \\<times>\n       {t. \\<exists>h.\n              memcpy_rel (phantom_machine_state_' s) (ptr_val ?dest)\n               (ptr_val ?src) (unat ?count) (hrs_mem (t_hrs_' s)) h \\<and>\n              t = t_hrs_'_update (hrs_mem_update (\\<lambda>_. h)) s})\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.memcpy'_def",
+      "definition_references": [
+        "allocator_wf",
+        "memcpy_ok",
+        "memcpy_rel"
+      ],
+      "anchor": "def-054"
+    },
+    {
+      "name": "int_compare'",
+      "category": "autocorres_final_definition",
+      "body": "int_compare' ?vlocation1.0 ?vlocation2.0 \\<equiv>\ndo {\n  location1 \\<leftarrow>\n    return (PTR_COERCE(unit \\<rightarrow> 32 signed word) ?vlocation1.0);\n  location2 \\<leftarrow>\n    return (PTR_COERCE(unit \\<rightarrow> 32 signed word) ?vlocation2.0);\n  x \\<leftarrow> guard (\\<lambda>_. c_guard location2);\n  guard (\\<lambda>_. c_guard location1);\n  condition (\\<lambda>s.\n                h_val (hrs_mem (t_hrs_' s)) location1\n                <s h_val (hrs_mem (t_hrs_' s)) location2)\n    (return (- 1))\n    (condition (\\<lambda>s.\n                   h_val (hrs_mem (t_hrs_' s)) location2\n                   <s h_val (hrs_mem (t_hrs_' s)) location1)\n       (return 1)\n       (return 0))\n}",
+      "file": "theories/Binomial_Heap_C.thy",
+      "line": 76,
+      "canonical_fact": "Binomial_Heap_C.int_compare'_def",
+      "definition_references": [
+        "c_guard",
+        "h_val"
+      ],
+      "anchor": "def-055"
+    }
+  ]
+}

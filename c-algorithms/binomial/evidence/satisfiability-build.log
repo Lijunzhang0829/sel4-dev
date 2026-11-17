@@ -1,0 +1,63 @@
+Started at Wed Nov 4 01:39:38 GMT 2026 (polyml-5.9.2_x86_64_32-linux on 616ac3c08fc5)
+ISABELLE_TOOL_JAVA_OPTIONS="-Djava.awt.headless=true -Xms256m -Xmx2g -Xss16m"
+ISABELLE_BUILD_OPTIONS=""
+
+ML_PLATFORM="x86_64_32-linux"
+ML_HOME="/screen/Isabelle2026/contrib/polyml-5.9.2-6/x86_64_32-linux"
+ML_SYSTEM="polyml-5.9.2"
+ML_OPTIONS="--minheap 500 --enablegcsharing"
+
+Session Pure/Pure
+Session FOL/FOL
+Session Misc/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Cardinals (timing)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Combinatorics (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Number_Theory (main timing)
+Session HOL/HOL-Algebra (main timing)
+Session HOL/HOL-Decision_Procs (timing)
+Session HOL/HOL-ex (timing)
+Session HOL/HOL-Real_Asymp
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Statespace
+Session AFP/Simpl (AFP)
+Session AFP/Word_Lib (AFP)
+Session AFP/AutoCorres2 (AFP)
+Session Unsorted/Calg_Binomial_Foundation
+Session Unsorted/Calg_Binomial_Targets
+Session Unsorted/Calg_Binomial_Satisfiability
+Running Calg_Binomial_Satisfiability ...
+Calg_Binomial_Satisfiability: theory Calg_Binomial_Satisfiability.Binomial_Satisfiability
+Calg_Binomial_Satisfiability: command "local_setup" running for 21.634s (line 288 of theory "Calg_Binomial_Satisfiability.Binomial_Satisfiability")
+Calg_Binomial_Satisfiability: theory Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability
+Calg_Binomial_Satisfiability: command "ML" running for 20.125s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "by" running for 21.908s (line 214 of theory "Calg_Binomial_Satisfiability.Binomial_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 22.128s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "by" running for 23.913s (line 214 of theory "Calg_Binomial_Satisfiability.Binomial_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 24.133s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "by" running for 25.915s (line 214 of theory "Calg_Binomial_Satisfiability.Binomial_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 26.135s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "by" running for 27.917s (line 214 of theory "Calg_Binomial_Satisfiability.Binomial_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 28.137s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "by" running for 29.919s (line 214 of theory "Calg_Binomial_Satisfiability.Binomial_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 30.139s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "by" running for 31.921s (line 214 of theory "Calg_Binomial_Satisfiability.Binomial_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 32.141s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "by" running for 33.923s (line 214 of theory "Calg_Binomial_Satisfiability.Binomial_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 34.143s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "by" running for 35.924s (line 214 of theory "Calg_Binomial_Satisfiability.Binomial_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 36.144s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "by" running for 37.927s (line 214 of theory "Calg_Binomial_Satisfiability.Binomial_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 38.147s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: theory Calg_Binomial_Satisfiability.Binomial_Satisfiability 100% (112.467s cumulated time)
+Calg_Binomial_Satisfiability: command "ML" running for 40.149s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 42.150s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Calg_Binomial_Satisfiability: command "ML" running for 43.282s (line 47 of theory "Calg_Binomial_Satisfiability.Binomial_Target_Satisfiability")
+Timing Calg_Binomial_Satisfiability (2 threads, 69.032s elapsed time, 110.785s cpu time, 2.900s GC time, factor 1.60)
+Finished Calg_Binomial_Satisfiability (0:01:12 elapsed time, 0:01:54 cpu time, factor 1.57)
+
+Finished at Wed Nov 4 01:41:11 GMT 2026
+0:01:32 elapsed time, 0:01:54 cpu time, factor 1.23

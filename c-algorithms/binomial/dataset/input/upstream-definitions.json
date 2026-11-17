@@ -1,0 +1,54 @@
+{
+  "definitions": [
+    {
+      "name": "runs_to",
+      "category": "selected_upstream_definition",
+      "body": "runs_to \\<equiv>\nmap_fun run id\n (\\<lambda>f s Q. holds_post_state (\\<lambda>(r, t). Q r t) (f s))",
+      "file": null,
+      "line": null,
+      "canonical_fact": "Spec_Monad.runs_to_def",
+      "definition_references": [],
+      "anchor": "def-056"
+    },
+    {
+      "name": "reaches",
+      "category": "selected_upstream_definition",
+      "body": "reaches ?f ?s ?r' ?s' = ((?r', ?s') \\<in> outcomes (run ?f ?s))",
+      "file": null,
+      "line": null,
+      "canonical_fact": "Reaches.reaches_def",
+      "definition_references": [],
+      "anchor": "def-057"
+    },
+    {
+      "name": "c_guard",
+      "category": "selected_upstream_definition",
+      "body": "c_guard \\<equiv> \\<lambda>p. ptr_aligned p \\<and> c_null_guard p",
+      "file": null,
+      "line": null,
+      "canonical_fact": "CTypesDefs.c_type_class.c_guard_def",
+      "definition_references": [],
+      "anchor": "def-058"
+    },
+    {
+      "name": "h_val",
+      "category": "selected_upstream_definition",
+      "body": "h_val ?h \\<equiv>\n\\<lambda>p. from_bytes (heap_list ?h (size_of TYPE(?'a)) (ptr_val p))",
+      "file": null,
+      "line": null,
+      "canonical_fact": "CTypesDefs.c_type_class.h_val_def",
+      "definition_references": [],
+      "anchor": "def-059"
+    },
+    {
+      "name": "stack_allocs",
+      "category": "selected_upstream_definition",
+      "body": "stack_allocs ?n ?\\<S> ?T ?d =\n{(p, d').\n 0 < ?n \\<and>\n (\\<forall>i<?n. ptr_span (p +\\<^sub>p int i) \\<subseteq> ?\\<S>) \\<and>\n typ_uinfo_t TYPE(?'a) \\<noteq> typ_uinfo_t TYPE(stack_byte) \\<and>\n (\\<forall>a\\<in>{ptr_val p..+?n * size_of TYPE(?'a)}.\n     root_ptr_valid ?d (PTR(stack_byte) a)) \\<and>\n ptr_aligned p \\<and>\n d' = fold (\\<lambda>i. ptr_force_type (p +\\<^sub>p int i)) [0..<?n] ?d}",
+      "file": null,
+      "line": null,
+      "canonical_fact": "CLanguage.stack_allocs_def",
+      "definition_references": [],
+      "anchor": "def-060"
+    }
+  ]
+}

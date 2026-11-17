@@ -1,0 +1,38 @@
+{
+  "status": "accepted-generation-ready",
+  "dataset_binding": "2fdc1500b5ef9bbfa806e2e0c0fd18816f1023fa4cb3c5aa6079b5daa23e8a5a",
+  "source_dataset_binding": "8148dcb80eeeaa888e80256d45ff269410d39e98ea861ca4a668acee028eb52e",
+  "input_files": 45,
+  "input_bytes": 580939,
+  "model_calls": 0,
+  "all_91_targets_replayed": true,
+  "target_counts": {
+    "main": 78,
+    "fixed_helper": 13,
+    "background_declarations": 9,
+    "disabled": [
+      "0054"
+    ]
+  },
+  "acceptance_counts": {
+    "positive": 83,
+    "context_refuted": 8,
+    "unknown": 0
+  },
+  "counts_are_preparation_not_model_scores": true,
+  "prepared_created": true,
+  "prepared_path": "/tmp/binomial-hol-export-20261111-001/hol-prepared-002",
+  "parent_facts": 60810,
+  "entry_preflight": "passed",
+  "target_binding_native": "91/91 passed modulo type-parameter renaming",
+  "source_loaded_without_c": true,
+  "original_dataset_retained": true,
+  "canonical_entry": "c-algorithms/binomial/current-dataset.json",
+  "static_tests": {
+    "run": 20,
+    "passed": 19,
+    "skipped": 1,
+    "failures": 0
+  },
+  "completion_audit": "acceptance/completion-audit.json"
+}

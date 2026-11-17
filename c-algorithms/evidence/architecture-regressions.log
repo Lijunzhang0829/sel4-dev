@@ -1,0 +1,21 @@
+.......[regen-event] {"time": "2026-11-03T23:53:06.413734+00:00", "event": "generation_exclusion_started", "phase_id": "e42f2d401ab34ce9a690635e0856c7f1", "category": "heap_preparation"}
+[regen-event] {"time": "2026-11-03T23:53:06.414641+00:00", "event": "generation_exclusion_finished", "phase_id": "e42f2d401ab34ce9a690635e0856c7f1", "category": "heap_preparation"}
+.[regen-event] {"time": "2026-11-03T23:53:06.771169+00:00", "event": "generation_exclusion_started", "phase_id": "c28dd1d6627b42a48938f31ce1f86b8a", "category": "heap_preparation"}
+[regen-event] {"time": "2026-11-03T23:53:06.773203+00:00", "event": "generation_exclusion_finished", "phase_id": "c28dd1d6627b42a48938f31ce1f86b8a", "category": "heap_preparation"}
+..[regen-event] {"time": "2026-11-03T23:53:07.156037+00:00", "event": "generation_exclusion_started", "phase_id": "2600608ab54a483b8faf71374a2ae243", "category": "heap_preparation"}
+[regen-event] {"time": "2026-11-03T23:53:07.157024+00:00", "event": "generation_exclusion_finished", "phase_id": "2600608ab54a483b8faf71374a2ae243", "category": "heap_preparation"}
+[regen-event] {"time": "2026-11-03T23:53:07.253250+00:00", "event": "generation_exclusion_started", "phase_id": "b3305533ab54464391225ab36113818f", "category": "statement_preflight"}
+[regen-event] {"time": "2026-11-03T23:53:07.254426+00:00", "event": "generation_exclusion_finished", "phase_id": "b3305533ab54464391225ab36113818f", "category": "statement_preflight"}
+..[regen-event] {"time": "2026-11-03T23:53:07.771477+00:00", "event": "generation_exclusion_started", "phase_id": "c9c45774d60e4ef58c63e7778e784299", "category": "heap_preparation"}
+[regen-event] {"time": "2026-11-03T23:53:07.772544+00:00", "event": "generation_exclusion_finished", "phase_id": "c9c45774d60e4ef58c63e7778e784299", "category": "heap_preparation"}
+[regen-event] {"time": "2026-11-03T23:53:07.847969+00:00", "event": "generation_exclusion_started", "phase_id": "fa42091193bb48a18dc60f5d2aecc785", "category": "statement_preflight"}
+[regen-event] {"time": "2026-11-03T23:53:07.848352+00:00", "event": "generation_exclusion_finished", "phase_id": "fa42091193bb48a18dc60f5d2aecc785", "category": "statement_preflight"}
+....[regen-event] {"time": "2026-11-03T23:53:08.350464+00:00", "event": "generation_exclusion_started", "phase_id": "36ba6424a49a435880c353ceea710988", "category": "heap_preparation"}
+[regen-event] {"time": "2026-11-03T23:53:08.351333+00:00", "event": "generation_exclusion_finished", "phase_id": "36ba6424a49a435880c353ceea710988", "category": "heap_preparation"}
+.[regen-event] {"time": "2026-11-03T23:53:08.694285+00:00", "event": "generation_exclusion_started", "phase_id": "a09f8de83e9f42a09a58f1a89dc17000", "category": "heap_preparation"}
+[regen-event] {"time": "2026-11-03T23:53:08.695380+00:00", "event": "generation_exclusion_finished", "phase_id": "a09f8de83e9f42a09a58f1a89dc17000", "category": "heap_preparation"}
+....................
+----------------------------------------------------------------------
+Ran 37 tests in 5.313s
+
+OK

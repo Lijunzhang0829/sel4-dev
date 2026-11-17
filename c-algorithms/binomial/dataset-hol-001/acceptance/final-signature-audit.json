@@ -1,0 +1,7 @@
+{
+  "status": "pass",
+  "program_functions": 17,
+  "all_match_original_native_signature": true,
+  "prior_native_signature_comparison": "signature-compatibility.json",
+  "final_fixed_model_audit": "fixed-model-audit.xml"
+}

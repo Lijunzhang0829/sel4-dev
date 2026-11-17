@@ -1,0 +1,42 @@
+Started at Wed Nov 4 00:13:11 GMT 2026 (polyml-5.9.2_x86_64_32-linux on 28f8ea7f45ab)
+ISABELLE_TOOL_JAVA_OPTIONS="-Djava.awt.headless=true -Xms256m -Xmx2g -Xss16m"
+ISABELLE_BUILD_OPTIONS=""
+
+ML_PLATFORM="x86_64_32-linux"
+ML_HOME="/screen/Isabelle2026/contrib/polyml-5.9.2-6/x86_64_32-linux"
+ML_SYSTEM="polyml-5.9.2"
+ML_OPTIONS="--minheap 500 --enablegcsharing"
+
+Session Pure/Pure
+Session FOL/FOL
+Session Misc/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Cardinals (timing)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Combinatorics (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Number_Theory (main timing)
+Session HOL/HOL-Algebra (main timing)
+Session HOL/HOL-Decision_Procs (timing)
+Session HOL/HOL-ex (timing)
+Session HOL/HOL-Real_Asymp
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Statespace
+Session AFP/Simpl (AFP)
+Session AFP/Word_Lib (AFP)
+Session AFP/AutoCorres2 (AFP)
+Session Unsorted/Calg_Binomial_Foundation
+Session Unsorted/Calg_Binomial_Targets
+Running Calg_Binomial_Targets ...
+Calg_Binomial_Targets: theory Calg_Binomial_Targets.Binomial_Heap_Model
+Calg_Binomial_Targets: theory Calg_Binomial_Targets.Binomial_Heap_Targets
+Calg_Binomial_Targets: theory Calg_Binomial_Targets.Binomial_Preparation_Audit
+Calg_Binomial_Targets: theory Calg_Binomial_Targets.Binomial_Heap_Model 100% (3.138s cumulated time)
+Calg_Binomial_Targets: theory Calg_Binomial_Targets.Binomial_Heap_Targets 100% (0.301s cumulated time)
+Calg_Binomial_Targets: theory Calg_Binomial_Targets.Binomial_Preparation_Audit 100% (0.563s cumulated time)
+Timing Calg_Binomial_Targets (2 threads, 4.337s elapsed time, 4.230s cpu time, 0.233s GC time, factor 0.98)
+Finished Calg_Binomial_Targets (0:00:08 elapsed time, 0:00:07 cpu time, factor 0.93)
+
+Finished at Wed Nov 4 00:13:40 GMT 2026
+0:00:29 elapsed time, 0:00:07 cpu time, factor 0.26

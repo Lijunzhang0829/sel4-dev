@@ -1,0 +1,7 @@
+target_premise_instances=8
+fixed_stack_bridges=2
+preparation_facts=28
+skipped_proofs=0
+oracles=0
+hidden_hypotheses=0
+unproved_targets_exported=0

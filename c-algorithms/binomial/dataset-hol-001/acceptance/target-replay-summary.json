@@ -1,0 +1,772 @@
+{
+  "status": "pass",
+  "dataset_binding": "2fdc1500b5ef9bbfa806e2e0c0fd18816f1023fa4cb3c5aa6079b5daa23e8a5a",
+  "targets": 91,
+  "positive": 83,
+  "context_refuted": 8,
+  "main": {
+    "targets": 78,
+    "positive": 70,
+    "context_refuted": 8
+  },
+  "fixed_helper": {
+    "targets": 13,
+    "positive": 13,
+    "context_refuted": 0
+  },
+  "disabled": [
+    "0054"
+  ],
+  "negative_target_ids": [
+    "0007",
+    "0008",
+    "0033",
+    "0048",
+    "0052",
+    "0062",
+    "0068",
+    "0082"
+  ],
+  "model_calls": 0,
+  "counts_are_preparation_acceptance_not_generation_scores": true,
+  "original_target_statements_and_contexts_unchanged": true,
+  "private_source_archive_sha256": "ce454a6cb82005a05976c0553793204ea3fa4911a02ec837aa11ba24cdcd02b0",
+  "certificate_archive": "checked-targets.xml.gz",
+  "certificate_archive_sha256": "56c5d2b4b4c225160c1f8aa101330e3e7685d03bf64773f86dcb33953b0f6337",
+  "native_process": {
+    "returncode": 0,
+    "seconds": 529.042874038998,
+    "model_calls": 0,
+    "private_acceptance_only": true
+  },
+  "records": [
+    {
+      "target_id": "0001",
+      "name": "spec_0001",
+      "contract_id": "goal:90df8aea677b14f557d35861",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "472f1db58336c0e5f5b3f1df649501359ecb5b20f8bddde6c80cc888393f0739"
+    },
+    {
+      "target_id": "0002",
+      "name": "spec_0002",
+      "contract_id": "goal:f0bec7d93cf0e80f8feacc4e",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "19008746cf13507137cc2a289bd5831fe4d97b487a62a924780b55e045bffdba"
+    },
+    {
+      "target_id": "0004",
+      "name": "spec_0004",
+      "contract_id": "goal:02be74dd4b8c1fd3e562206f",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "bbb9e1ed9a67f5cebdb7b54f53778eb71d56e2e572f41d42f46790529ce71457"
+    },
+    {
+      "target_id": "0007",
+      "name": "spec_0007",
+      "contract_id": "goal:46bf317c43515adc91d01f80",
+      "outcome": "context_refuted",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "785766d2d7ef9851caf1a90a31cf66c16fe4af2b152faa1c5c1b910ab10533a0"
+    },
+    {
+      "target_id": "0008",
+      "name": "spec_0008",
+      "contract_id": "goal:87c77b0c5aeecf79a8bc33ea",
+      "outcome": "context_refuted",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "e73f3ff8ab5cda1288a0add842be35462fc22fa85e1452a5c3321d3345f8e545"
+    },
+    {
+      "target_id": "0009",
+      "name": "spec_0009",
+      "contract_id": "goal:ae3b93f910d0a1a1835ca397",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "b0c2d4baf3521768e4496b077c4dfffb5d2d96ca1732864ff9d0e3bd7a71034e"
+    },
+    {
+      "target_id": "0010",
+      "name": "spec_0010",
+      "contract_id": "goal:279499ce85900eab31bb9a4e",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "7ff48ba865493acca64aacc32b341bcd9c81867df29378a217c0fee8114cac43"
+    },
+    {
+      "target_id": "0011",
+      "name": "spec_0011",
+      "contract_id": "goal:41666a40b239b6d33b022705",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "8efbc68b42d63cd86c1f1447c9c7589506da4265199a1c91bd6f788ae67c175a"
+    },
+    {
+      "target_id": "0012",
+      "name": "spec_0012",
+      "contract_id": "goal:3dfe2ddeb7b1fbf02feb4e88",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "d3cab6663c5dd96a274ffb6f52c39f59f0ed4b98bcfcba20bec3820ee9022285"
+    },
+    {
+      "target_id": "0013",
+      "name": "spec_0013",
+      "contract_id": "goal:7331263f233928e426fbfaed",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "c69802b005df2b455f28babb434b114b4ba190cbac26e7c97264f7b1ce216a54"
+    },
+    {
+      "target_id": "0014",
+      "name": "spec_0014",
+      "contract_id": "goal:3b26b6d174940649abb54a8d",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "f6938578374f64fb438c790b7fc020dcbb63a0fa96c83e9e639c840de4edfb24"
+    },
+    {
+      "target_id": "0015",
+      "name": "spec_0015",
+      "contract_id": "goal:9570bd34cab60236cbbfaa81",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "6249e89208e935d6976521a3dc6d08226fb48182caf3c9d6877922df4a97f994"
+    },
+    {
+      "target_id": "0016",
+      "name": "spec_0016",
+      "contract_id": "goal:7bb64d6a3defa8ca2b41ae6a",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "f316d5e4ade0532e39a91408ca5220bbc0d2091640e47a87a736ce1f3f392891"
+    },
+    {
+      "target_id": "0017",
+      "name": "spec_0017",
+      "contract_id": "goal:cbfb34edfe09891d7052c8ae",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "111c76c2fd9cafba592b655d4325edea3ae87893e0f09bd05e8fa9a17f9cd9bc"
+    },
+    {
+      "target_id": "0018",
+      "name": "spec_0018",
+      "contract_id": "goal:05099a46a37331307e724fa6",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "76bd23700bbb41c869005df0788f80477df7e2f0dcf07550a8a9654cf1f4cf65"
+    },
+    {
+      "target_id": "0020",
+      "name": "spec_0020",
+      "contract_id": "goal:aaf3df9b92e5f6da1fd5cedd",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "30cb860172c9f3ce3ea729618d8cc2664b5e8bfa645354c0197f8d8f700d0657"
+    },
+    {
+      "target_id": "0021",
+      "name": "spec_0021",
+      "contract_id": "goal:d59fe45eecba8bf50a8741ef",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "f17bc325b934261c0974202af142846f88d4859f46fbbe7a388aa0d0137371bf"
+    },
+    {
+      "target_id": "0022",
+      "name": "spec_0022",
+      "contract_id": "goal:1b08b8158bca26df9dc1fb03",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "c50a1b8b88c5ea1b07ecc920b0f60318d3e499abb8c923258409497d1cbf8754"
+    },
+    {
+      "target_id": "0023",
+      "name": "spec_0023",
+      "contract_id": "goal:81ceb5a74f331c8491eb9cb9",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "3f4c722821205243eae4e5b69be039e282a6e3477820f0fabc6b9c7a69593c01"
+    },
+    {
+      "target_id": "0024",
+      "name": "spec_0024",
+      "contract_id": "goal:d413e92958046d251c0f53fc",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "909c052cf6ed0f793cb701d2468ac44565e930fa110ac65b68f0e92ac9f1cfc3"
+    },
+    {
+      "target_id": "0025",
+      "name": "spec_0025",
+      "contract_id": "goal:a0961efa95c44ade91e92322",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "594acec5065b0f9c3b973d2138e39282d7a2b11350f603c162880b47a89283fb"
+    },
+    {
+      "target_id": "0026",
+      "name": "spec_0026",
+      "contract_id": "goal:e3823bbc9c5a00a9146c6819",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "064a46de002400a7076b8fb249cc8a90e064cdebeee1cf98bfa5568987184eee"
+    },
+    {
+      "target_id": "0027",
+      "name": "spec_0027",
+      "contract_id": "goal:eff0b9bdadd3ef0771b04602",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "74eb84b42a3ea0867344ffdfecce6ca717a4f6d9d30dff659e173551c71c544a"
+    },
+    {
+      "target_id": "0029",
+      "name": "spec_0029",
+      "contract_id": "goal:cb2b55624a35ab6c721fd382",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "c8c6c5179f87779c53f3ca1a981f05fd4a21bd1b72c192c4d3bf8ea0213cc16b"
+    },
+    {
+      "target_id": "0030",
+      "name": "spec_0030",
+      "contract_id": "goal:bdc838cf4b54680142dda8f8",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "d365a43fd26ea6808d11594bb4be34c92b4290c74f5bc6651ae5665ba6d0394e"
+    },
+    {
+      "target_id": "0031",
+      "name": "spec_0031",
+      "contract_id": "goal:d25bb632dc24f56c3067b0cc",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "edeec36691203e3726caa4017b79d7abde2d48ee6d846443e60ccd7cecdc074e"
+    },
+    {
+      "target_id": "0032",
+      "name": "spec_0032",
+      "contract_id": "goal:f1fae30b88d4b32eda9788d5",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "810c52f39198f67fc129d984cd79c4ac9be46e72818f270f1e296e5f5df14aae"
+    },
+    {
+      "target_id": "0033",
+      "name": "spec_0033",
+      "contract_id": "goal:ed1b1db2cb9f18165d911985",
+      "outcome": "context_refuted",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "35b523a4faed806c61437ad57553355ad3b9d1d2cfc1413513267a7ec7e74936"
+    },
+    {
+      "target_id": "0035",
+      "name": "spec_0035",
+      "contract_id": "goal:19aa4002bdd79e64ca85768e",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "3cee2d790c4f3e1e1ed76de4864d1e07135da34232e9ab62721c30beaad0cd63"
+    },
+    {
+      "target_id": "0036",
+      "name": "spec_0036",
+      "contract_id": "goal:5bcbb228673fa5625ac3c47c",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "f162424ea978c43afcb71b79eb4a43d8d0177a223653570ea9b5fe9e29310cdc"
+    },
+    {
+      "target_id": "0037",
+      "name": "spec_0037",
+      "contract_id": "goal:900d22fd34e7f7b566b2d33f",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "fcb9d91f9d6d84cc4242a619fe5d65b3bcf8b50dd8350f6d01d08740887788f9"
+    },
+    {
+      "target_id": "0038",
+      "name": "spec_0038",
+      "contract_id": "goal:f47c52ecf7b14afc29129ee5",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "4c28a8fa3f6c724ef81cf1f87182966f2a244bfa24c4b84c20cd73bf236c7030"
+    },
+    {
+      "target_id": "0039",
+      "name": "spec_0039",
+      "contract_id": "goal:b7c60b24eec34e4a44cf14f5",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "c1cf48a86d7a122405119b75da523b6e04fb3c880b58623ace1c4edb640accf9"
+    },
+    {
+      "target_id": "0040",
+      "name": "spec_0040",
+      "contract_id": "goal:209fe84594ede492e43fbf46",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "817455941c1230d63e4f4ca16e61b75ed9c91184c1aca3632a8ebbc01627d038"
+    },
+    {
+      "target_id": "0041",
+      "name": "spec_0041",
+      "contract_id": "goal:981ef5b6703ae535743e9878",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "066305a3d78d9b4179fb9462893b5975733041dd26e2e336c7fe2f971ff7b7c8"
+    },
+    {
+      "target_id": "0042",
+      "name": "spec_0042",
+      "contract_id": "goal:9f44ff7dc59dcd22f3d117ae",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "e8128fe8922bdbb7df806af992984a8a309a8c319af33c50395c966be57936e7"
+    },
+    {
+      "target_id": "0044",
+      "name": "spec_0044",
+      "contract_id": "goal:4fb66e68eae5e3e6edd3dc5d",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "df618b093847cad855389c9d1084c4166658b212e7fde9b133742da35455d091"
+    },
+    {
+      "target_id": "0045",
+      "name": "spec_0045",
+      "contract_id": "goal:39c2d622f8bf4ff649e6d57a",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "246382e7ae2d2d40479caa2340ba8c625e43c2349dfb22b98b478270385a773d"
+    },
+    {
+      "target_id": "0046",
+      "name": "spec_0046",
+      "contract_id": "goal:06713380ad9e2b2a8ec90135",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "9e56ffefbc7ddb7690ebe002bb938d40a33761a331b00286654af230eedd91f1"
+    },
+    {
+      "target_id": "0047",
+      "name": "spec_0047",
+      "contract_id": "goal:afbbd52bc058d98471f814dc",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "78939da13a79c0b41aaea83ef0f452bbb95bbeac270770645724db7014c26adb"
+    },
+    {
+      "target_id": "0048",
+      "name": "spec_0048",
+      "contract_id": "goal:901ce6c6891ad78125ea6788",
+      "outcome": "context_refuted",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "172c94634e1bada7962f5b74f5a876ebf98ff85125c0057e0f5bcfcef4e84c6f"
+    },
+    {
+      "target_id": "0049",
+      "name": "spec_0049",
+      "contract_id": "goal:03ab7f9b059dd680710069d3",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "e0ff1a7157cf35b88ed6d0fd8e59b66ee3bb388c3e26eb77ece0b65e3e3dc007"
+    },
+    {
+      "target_id": "0050",
+      "name": "spec_0050",
+      "contract_id": "goal:2796d4edc6b4005f01575325",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "047b6dd3b054a0122f0ea3072883062d5b9a9922e8f5015e6ec3929aefc3acec"
+    },
+    {
+      "target_id": "0051",
+      "name": "spec_0051",
+      "contract_id": "goal:8b26e4c09cbde926588724d6",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "4c4a7ef3ef2c9eda5575bcf1b141ad47bda41db7ce1f35fd7218de56654a1654"
+    },
+    {
+      "target_id": "0052",
+      "name": "spec_0052",
+      "contract_id": "goal:c4024b370bd39bd9b7c97f37",
+      "outcome": "context_refuted",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "40b58616ff807c15e1ea0beab0ee65fa7ea8d367dad599a1b31bbe108138d31e"
+    },
+    {
+      "target_id": "0053",
+      "name": "spec_0053",
+      "contract_id": "goal:c0139a79701afe5868438e5c",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "a758565f9545c63ebcb30f0c22bb0e20b2df6d3ac3945c5b6dbee191d472ea0b"
+    },
+    {
+      "target_id": "0055",
+      "name": "spec_0055",
+      "contract_id": "goal:b08cdf7fb0892e33e1fcc680",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "122fd5fe7d9caad3704d617a56414ca959d8f264d2da76ca091504b620e31738"
+    },
+    {
+      "target_id": "0056",
+      "name": "spec_0056",
+      "contract_id": "goal:23c44aa3a51fbb1ae5033f22",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "b9626d8c370b367017a3b625308d0b5163ee71fcf2b30f4733e399c01088eca2"
+    },
+    {
+      "target_id": "0057",
+      "name": "spec_0057",
+      "contract_id": "goal:31d331e7ba5b969941e53851",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "5f7bd433b2e37686ec07468d9d0553e03f1f385c86296b79b2ed4571fc70c699"
+    },
+    {
+      "target_id": "0058",
+      "name": "spec_0058",
+      "contract_id": "goal:ef81db862543851e858a7f62",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "fe718f91d9a619e717e6a89105a747344d35521b5f20eb9845cc49b1129e52c6"
+    },
+    {
+      "target_id": "0060",
+      "name": "spec_0060",
+      "contract_id": "goal:8b8eab56e8839b93724b0840",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "f8b5d265811e935f9f7d3c2a7aa492fc5a95d29e3e3c91801c5b4937fe294d53"
+    },
+    {
+      "target_id": "0061",
+      "name": "spec_0061",
+      "contract_id": "goal:a69403012c8ac0916d51c84b",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "5e78378d2ee805b94275377ad16081a64112ffecb1656f6b29f943e71eed8f89"
+    },
+    {
+      "target_id": "0062",
+      "name": "spec_0062",
+      "contract_id": "goal:6dc1f86b64054afad4b196f7",
+      "outcome": "context_refuted",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "e1e2334ac9ddbcc110557da845848a57995d8f0839ce30fc078f55a9e3eb73f0"
+    },
+    {
+      "target_id": "0063",
+      "name": "spec_0063",
+      "contract_id": "goal:4ee6b7b213e0ecd0951a89b6",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "6d644203b3e6a997b9e40067fb431bb10518994c64be25e410189c26b0c46818"
+    },
+    {
+      "target_id": "0064",
+      "name": "spec_0064",
+      "contract_id": "goal:32ec1d57e5fc5765bc826fec",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "6ae091d424885156a1c0ff1f8af9e07286cda6f2e1e7c53e2931ec11782edea6"
+    },
+    {
+      "target_id": "0065",
+      "name": "spec_0065",
+      "contract_id": "goal:da9411aaa95a38b51a7153b6",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "ab45782e1e3423cdb76e9bbd0afa5c1c43cf47c55bb512f627c06c660549c5d9"
+    },
+    {
+      "target_id": "0066",
+      "name": "spec_0066",
+      "contract_id": "goal:fbb697912eec94fdfc1222ca",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "defb9fa5228f0c89edad01bfba5b5c987cb88953ca1ebf36ee719e1dfafbeb92"
+    },
+    {
+      "target_id": "0067",
+      "name": "spec_0067",
+      "contract_id": "goal:9680127a3012e9d4214290f5",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "762f2493ad318bff544ea98bd740776faa4f8974dfce6f600ae771cf0a5fca25"
+    },
+    {
+      "target_id": "0068",
+      "name": "spec_0068",
+      "contract_id": "goal:19a60e8c7feb662995919509",
+      "outcome": "context_refuted",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "9c4e39f882323e6f96e3ce43db067b41f69bfa17a785fc6f233b63154a88745a"
+    },
+    {
+      "target_id": "0069",
+      "name": "spec_0069",
+      "contract_id": "goal:d2393d2bd63a35083a582258",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "c94d552fc422633178830fb4b7aaf464042a60f6e758fc02453e23d6d6d4b5fc"
+    },
+    {
+      "target_id": "0070",
+      "name": "spec_0070",
+      "contract_id": "goal:b9b8faf3dc851c9fc45fe295",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "c4e38e074294ac5d2605d96a3cdf6e2ac4d41aad9940f7317e26a2d356697f19"
+    },
+    {
+      "target_id": "0071",
+      "name": "spec_0071",
+      "contract_id": "goal:0a385c00cbc70ca9f320b418",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "e17e58a8547ae8eb9adda47138a528c97c6bc0aedbe49b7a8b5a262a98f79ba2"
+    },
+    {
+      "target_id": "0072",
+      "name": "spec_0072",
+      "contract_id": "goal:ad59e6db7c3953cda2480181",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "37180804fe9147f5734bd1b78213ce3db3c99a61698248a59713e9343a2ade9b"
+    },
+    {
+      "target_id": "0073",
+      "name": "spec_0073",
+      "contract_id": "goal:8adf269f2166205b377c80c3",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "952ad8d46a774d5973181a477a5671c8e948d14c231ed308a9ecc17e9155d114"
+    },
+    {
+      "target_id": "0074",
+      "name": "spec_0074",
+      "contract_id": "goal:fd0d1b5fc6182bd3a39dc177",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "40f5c2a28d66ea2bf7c9a219c192cb8f74f01e53202549e4e58fedc1774889e3"
+    },
+    {
+      "target_id": "0075",
+      "name": "spec_0075",
+      "contract_id": "goal:ceee6877aca33f6a4d5ca508",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "5a054a6710b4423fe58ddabc5cb269c7d0708647d9eee3ebeb1532ea728c53e6"
+    },
+    {
+      "target_id": "0076",
+      "name": "spec_0076",
+      "contract_id": "goal:572cebcdc549ef1b7e1891be",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "4ff809136acbfd3f8486d2c785127543c0e72c9c91eebc9130e3532d39eb9b10"
+    },
+    {
+      "target_id": "0077",
+      "name": "spec_0077",
+      "contract_id": "goal:41ada5412b62b05024fe2a51",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "4862cf5a65b5aa4c59ffa57acefeab8b306e64f86208aa17cd25921a5c597848"
+    },
+    {
+      "target_id": "0078",
+      "name": "spec_0078",
+      "contract_id": "goal:e25f62412b19a22a4be2cbcf",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "922f9bd469daadc3fc919c6b974cfa3b3728c911ed50ad796471ffed225e030d"
+    },
+    {
+      "target_id": "0080",
+      "name": "spec_0080",
+      "contract_id": "goal:5b3b8fe6da95c0ce9f63558f",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "af9b138a7f7a6d0fd500a8619d2f1d259fab542c5ee327a1534f5f3d5010809b"
+    },
+    {
+      "target_id": "0081",
+      "name": "spec_0081",
+      "contract_id": "goal:e29d7426bbb66e126d04821c",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "bc6e8dc1f6e26224d1e8be3d5350801c78f9ea3d459fe507265b6477f2013464"
+    },
+    {
+      "target_id": "0082",
+      "name": "spec_0082",
+      "contract_id": "goal:95df42c6178aafa32e363ea0",
+      "outcome": "context_refuted",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "d9a1af66ea312e1c0f250a84a82671e2a439aa2a2f03f72d97947178833e1465"
+    },
+    {
+      "target_id": "0083",
+      "name": "spec_0083",
+      "contract_id": "goal:6a519b50652522fd025118d7",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "be47f895ec0a1a08132b32df94971b57f38e5e2abca977cdaab91813e101526d"
+    },
+    {
+      "target_id": "0084",
+      "name": "spec_0084",
+      "contract_id": "goal:7e877320e3f93a180492f352",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "831e803e9ea064114b6b6c20bb215f0d6c5b91ea1bf471f2c0ff3bf8f1389ccc"
+    },
+    {
+      "target_id": "0085",
+      "name": "spec_0085",
+      "contract_id": "goal:e8449bd3603802f63f4882f8",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "3daac83e66f756f307c480c828e2d923cae6478625d69664c3c4dd52b203afbe"
+    },
+    {
+      "target_id": "0086",
+      "name": "spec_0086",
+      "contract_id": "goal:308eed287bd13db5bd35aa12",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "9fb20f1680a67d4ee198fdc0efdcb3b87820a2d83d1e774610cc56416daa2559"
+    },
+    {
+      "target_id": "0087",
+      "name": "spec_0087",
+      "contract_id": "goal:1a30c15faddfbc06fffa5d46",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "cd6a3c2f10d2ea7a3bac25eca0d8fa783b319187a5bd70de2c4e1118cc1db0f3"
+    },
+    {
+      "target_id": "0088",
+      "name": "spec_0088",
+      "contract_id": "goal:5e72c5128c351fbc8cbf5822",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "efad4245aaacbab442739d98394009cf8f412248040d611463eaf797745c833c"
+    },
+    {
+      "target_id": "0089",
+      "name": "spec_0089",
+      "contract_id": "goal:ccee55eb9db690a79d757b4b",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "f14e28b80afe81d03367a4a738055a6ff1383fbb72a6a2a21c71dec963441f94"
+    },
+    {
+      "target_id": "0090",
+      "name": "spec_0090",
+      "contract_id": "goal:dd0005d8f406cc71a1329fe8",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "82555797639cb46879d678c15e991d0b6db46ad63d1006002c5aba528d7feaf8"
+    },
+    {
+      "target_id": "0091",
+      "name": "spec_0091",
+      "contract_id": "goal:c635f784ffba2fba9813030f",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "026aaae37fbb65ce82dc384ee01baa4ecd1bd0f871a09ec2a42ea2921fba9db4"
+    },
+    {
+      "target_id": "0092",
+      "name": "spec_0092",
+      "contract_id": "goal:6be6808c02e730ec03dee412",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "874fcf5f9af36733a551f58b25c9572b25d6640e4181a5642667ecb96baa1987"
+    },
+    {
+      "target_id": "0093",
+      "name": "spec_0093",
+      "contract_id": "goal:15594bb8e6d4b53453f97023",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "611fe1e6344eba423047902db58667a014710d39daee01eed72948a7704f95be"
+    },
+    {
+      "target_id": "0094",
+      "name": "spec_0094",
+      "contract_id": "goal:c3cb3f4c602026d251c05ee6",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "3c714c80285ea97519c07d5fc65ea2d5d50e35546abeafd3556fa449afd4b0e5"
+    },
+    {
+      "target_id": "0095",
+      "name": "spec_0095",
+      "contract_id": "goal:d5989fbc445bb228489fbd03",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "9ed5eae108b38d6532151c1d7a73b42594ee084d05da5768a24df83d75d8ffa4"
+    },
+    {
+      "target_id": "0096",
+      "name": "spec_0096",
+      "contract_id": "goal:27e543eb86d1d59ca41c213a",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "4cfe4114dfe9dc9ba8f05d58fc0a65c1569b1a0f8321cde445f1a3a6fe08da69"
+    },
+    {
+      "target_id": "0097",
+      "name": "spec_0097",
+      "contract_id": "goal:73609cdfd30ac703bfafaf6b",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "ab787f097362d8a661c56b5f5c436c1b901a1929e48d14f9b2a92dccf6ea05f8"
+    },
+    {
+      "target_id": "0098",
+      "name": "spec_0098",
+      "contract_id": "goal:13533af138d77a0b469306f1",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "82e4a82dd81e91605e35690b4f7adeb5e6056b8701de8a24a8f11187771f8559"
+    },
+    {
+      "target_id": "0099",
+      "name": "spec_0099",
+      "contract_id": "goal:f2ca0ff05e79a0dc72c9bbd5",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "9939afd4eb33a693c12ff4a079908b2f7bf40bb8f9acf871567600a5235c6520"
+    },
+    {
+      "target_id": "0100",
+      "name": "spec_0100",
+      "contract_id": "goal:d5cf2ec1b92317cf16a65198",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "acce77f6a7fb812831cc1aa6259cfaffda2531309074993260f4f573c2f6f6cd"
+    },
+    {
+      "target_id": "0101",
+      "name": "spec_0101",
+      "contract_id": "goal:c63546f8eea356b64f13a255",
+      "outcome": "proved",
+      "scope": "owned-context",
+      "native_contract_term_sha256": "85e1035ecb34f78b9f242df2e1c364fb1517f9572c3abfc86d31319793f0370b"
+    }
+  ]
+}

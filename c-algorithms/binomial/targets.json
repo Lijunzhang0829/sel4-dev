@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "status": "semantics_approved",
+  "generation_allowed": true,
+  "scope": "binomial heap original upstream; eight fixed contracts",
+  "semantic_binding": "5b6219120c616bc2c41b046cd84a8396f1cd33b0140d1dc39eff2ea182c5ef0e",
+  "source_closure": {
+    "ROOT": "42df8f2dd42b2bfe63f6f30a5dbc0aa721f2846c1f8e4c751199243eed35c10d",
+    "source-lock.json": "e1dc6a0ad880a63e60a74a1a1e1c4b8326426246a6fb50f64263826191039985",
+    "version-decision.json": "4cfbfc5c9d4732bff80e6cee20f69397151ef1f71ee584dde929147ffe927730",
+    "environment-lock.json": "ccfeee9ca284017c3b91c47b171852617eaf774f293e1532d53d53fb83043173",
+    "translation-input.json": "7a60a3c7e49482843d991c28603819fdc0ec97593a09df95e4bce3b976e9d173",
+    "c/binomial_heap_input.c": "7aa97b7051740519dbd2e813db096cd8a3ab3e33951e7950a26d472d67070d9f",
+    "theories/Binomial_Environment.thy": "ea4449bfe91a24ca94a538ff0d51c375a963de710e8d25c0daa5f8f46c12f8af",
+    "theories/Binomial_Heap_C.thy": "e8a9a68bf1011b23a93e9e75c8610f8fdba7b7b82e20d1d8f94777807cd16ada",
+    "targets-session/Binomial_Heap_Model.thy": "fb9675151af46bc93058d5aa535146c05914ad74fa0486e007c942fa2ed9d843",
+    "targets-session/Binomial_Heap_Targets.thy": "1cbdc1e9a98ee38a21e9f138b1fc13a369b8f4e1591415051013221f90daeb31",
+    "targets-session/Binomial_Preparation_Audit.thy": "c20e0e2ef12feb7e7707faa2bfe3a8f422a4eff091461e0c580fc541f6b48036"
+  },
+  "target_count": 8,
+  "targets": [
+    {
+      "id": "bn_count_exact",
+      "proposition": "bn_rep s h P F M \\<Longrightarrow> bn_contract (binomial_heap_num_entries' h) s\n    (\\<lambda>r t. unat r = size M \\<and> t = s)",
+      "isabelle_context": "binomial_heap_input_global_addresses",
+      "status": "unproved"
+    },
+    {
+      "id": "bn_insert_correct",
+      "proposition": "bn_rep s h P F M \\<Longrightarrow> bn_payload P v \\<Longrightarrow>\n    size M + 1 < 2 ^ 32 \\<Longrightarrow> bn_stack_ready \\<S> s \\<Longrightarrow> P \\<inter> \\<S> = {} \\<Longrightarrow>\n    bn_contract (binomial_heap_insert' h v) s (\\<lambda>r t.\n      bn_frame s h P F t \\<and>\n      (if r = 0 then (\\<exists>F'. bn_rep t h P F' M) \\<and>\n        live_blocks (phantom_machine_state_' t) = live_blocks (phantom_machine_state_' s)\n       else \\<exists>F'. bn_rep t h P F' (add_mset v M) \\<and> bn_storage_transition s h F t F'))",
+      "isabelle_context": "binomial_heap_input_global_addresses",
+      "status": "unproved"
+    },
+    {
+      "id": "bn_pop_correct",
+      "proposition": "bn_rep s h P F M \\<Longrightarrow> bn_stack_ready \\<S> s \\<Longrightarrow> P \\<inter> \\<S> = {} \\<Longrightarrow>\n    bn_contract (binomial_heap_pop' h) s (\\<lambda>r t. bn_frame s h P F t \\<and>\n      (if r = NULL then (\\<exists>F'. bn_rep t h P F' M) \\<and>\n        live_blocks (phantom_machine_state_' t) = live_blocks (phantom_machine_state_' s)\n       else r \\<in># M \\<and> (\\<forall>q \\<in># M. bn_key s r \\<le> bn_key s q) \\<and>\n         (\\<exists>F'. bn_rep t h P F' (M - {#r#}) \\<and> bn_storage_transition s h F t F')))",
+      "isabelle_context": "binomial_heap_input_global_addresses",
+      "status": "unproved"
+    },
+    {
+      "id": "bn_free_owned_storage",
+      "proposition": "bn_rep s h P F M \\<Longrightarrow> bn_contract (binomial_heap_free' h) s (\\<lambda>r t.\n    bn_frame s h P F t \\<and> allocator_wf (phantom_machine_state_' t) \\<and>\n    live_blocks (phantom_machine_state_' t) =\n      (\\<lambda>p. if p \\<in> set (bn_owned s h F) then None else live_blocks (phantom_machine_state_' s) p))",
+      "isabelle_context": "binomial_heap_input_global_addresses",
+      "status": "unproved"
+    },
+    {
+      "id": "bn_new_empty_or_failure",
+      "proposition": "allocator_wf (phantom_machine_state_' s) \\<Longrightarrow>\n    P \\<subseteq> reserved_bytes (phantom_machine_state_' s) \\<Longrightarrow>\n    bn_contract calg_binomial_new' s (\\<lambda>h t.\n      (\\<forall>a \\<in> P. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a) \\<and>\n      (\\<forall>p n. live_blocks (phantom_machine_state_' s) p = Some n \\<longrightarrow>\n        live_blocks (phantom_machine_state_' t) p = Some n \\<and>\n        (\\<forall>a \\<in> block_bytes p n. hrs_mem (t_hrs_' t) a = hrs_mem (t_hrs_' s) a)) \\<and>\n      (if h = NULL then phantom_machine_state_' t = phantom_machine_state_' s else\n        bn_rep t h P [] {#} \\<and> roots_C (bn_heap t h) = NULL \\<and>\n        phantom_machine_state_' t = (phantom_machine_state_' s)\\<lparr>live_blocks :=\n          (live_blocks (phantom_machine_state_' s))(ptr_val h := Some (size_of TYPE(StrictC'_BinomialHeap_C)))\\<rparr>))",
+      "isabelle_context": "binomial_heap_input_global_addresses",
+      "status": "unproved"
+    },
+    {
+      "id": "bn_ref_null",
+      "proposition": "bn_contract (binomial_tree_ref' NULL) s (\\<lambda>r t. t = s)",
+      "isabelle_context": "binomial_heap_input_global_addresses",
+      "status": "unproved"
+    },
+    {
+      "id": "bn_ref_increment",
+      "proposition": "c_guard p \\<Longrightarrow> unat (refcount_C (bn_tree s p)) < 65535 \\<Longrightarrow>\n    bn_contract (binomial_tree_ref' p) s (\\<lambda>r t.\n      bn_tree t p = (bn_tree s p)\\<lparr>refcount_C := refcount_C (bn_tree s p) + 1\\<rparr> \\<and>\n      phantom_machine_state_' t = phantom_machine_state_' s \\<and>\n      bytes_frame (block_bytes (ptr_val p) (size_of TYPE(StrictC'_BinomialTree_C)))\n        (hrs_mem (t_hrs_' s)) (hrs_mem (t_hrs_' t)))",
+      "isabelle_context": "binomial_heap_input_global_addresses",
+      "status": "unproved"
+    },
+    {
+      "id": "bn_merge_leaves_nonfailure",
+      "proposition": "allocator_wf (phantom_machine_state_' s) \\<Longrightarrow> c_guard h \\<Longrightarrow>\n    heap_type_C (bn_heap s h) = BINOMIAL_HEAP_TYPE_MIN \\<Longrightarrow>\n    compare_func_C (bn_heap s h) = binomial_heap_input.int_compare \\<Longrightarrow>\n    P \\<subseteq> reserved_bytes (phantom_machine_state_' s) \\<Longrightarrow>\n    bn_valid s P (BN p []) \\<Longrightarrow> bn_valid s P (BN q []) \\<Longrightarrow> p \\<noteq> q \\<Longrightarrow>\n    live_blocks (phantom_machine_state_' s) (ptr_val h) = Some (size_of TYPE(StrictC'_BinomialHeap_C)) \\<Longrightarrow>\n    ptr_val h \\<noteq> ptr_val p \\<Longrightarrow> ptr_val h \\<noteq> ptr_val q \\<Longrightarrow>\n    bn_contract (binomial_tree_merge' h p q) s (\\<lambda>r t. True)",
+      "isabelle_context": "binomial_heap_input_global_addresses",
+      "status": "unproved"
+    }
+  ],
+  "independent_readback_completed": true,
+  "satisfiability_checked": true,
+  "native_generation_adapter_checked": true,
+  "adapter_evidence": "evidence/adapter-verification.json"
+}

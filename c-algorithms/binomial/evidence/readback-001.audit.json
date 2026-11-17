@@ -1,0 +1,26 @@
+{
+  "allowed_item_types": [
+    "agent_message",
+    "error",
+    "reasoning"
+  ],
+  "event_stream_valid": true,
+  "event_types": {
+    "item.completed": 1,
+    "thread.started": 1,
+    "turn.completed": 1,
+    "turn.started": 1
+  },
+  "forbidden_item_types": [],
+  "item_types": {
+    "agent_message": 1
+  },
+  "no_tool_events": true,
+  "parse_errors": 0,
+  "passive_item_types": [
+    "agent_message",
+    "error",
+    "reasoning"
+  ],
+  "transport_diagnostic_count": 0
+}

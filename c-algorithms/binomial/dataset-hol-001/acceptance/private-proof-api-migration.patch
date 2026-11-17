@@ -1,0 +1,89 @@
+--- archive/Revision_Full_Preparation_Provider.thy
++++ hol-replay/Revision_Full_Preparation_Provider.thy
+@@ -1,4 +1,8 @@
+ theory Revision_Full_Preparation_Provider imports Revised_Ownership_Model begin
++
++lemma hol_int_le_pred: "((x::int) \<le> y - 1) = (x < y)" by linarith
++lemma hol_int_neg_add_one: "-((x::int)+1) = -x-1" by linarith
++
+ 
+ 
+ lemma vero_aux_live_readable:
+@@ -25,7 +29,7 @@
+    c_guard (ptr_coerce v :: 32 signed word ptr) \<Longrightarrow>
+    runs_to (binomial_heap_cmp' h v v) s Q = Q (Result 0) s"
+ 
+-by (simp add: binomial_heap_cmp'_def bn_heap_def runs_to_bind_iff runs_to_condition_iff runs_to_gets_iff \<P>_fun_ptr_simps int_compare'_def)
++by (simp add: binomial_heap_cmp'_def bn_heap_def runs_to_bind_iff runs_to_condition_iff runs_to_gets_iff map_of_default_def int_compare'_def)
+ 
+ 
+ 
+@@ -105,7 +109,7 @@
+     using R by (auto simp: bn_rep_def)
+   show ?thesis using AI AJ TP UP NN H NJ
+     by (auto simp: bn_ds_scan_step_def bn_contract_def bn_heap_def bn_tree_def bn_key_def bn_payload_def
+-      binomial_heap_cmp'_def int_compare'_def \<P>_fun_ptr_simps
++      binomial_heap_cmp'_def int_compare'_def map_of_default_def
+       runs_to_bind_iff runs_to_guard_iff runs_to_condition_iff runs_to_gets_iff
+       reaches_bind reaches_condition_iff reaches_gets[abs_def] reaches_guard[abs_def] reaches_return[abs_def]
+       succeeds_runs_to_iff word_sless_alt)
+@@ -1670,7 +1674,7 @@
+       t = s \<and> ((r <s 0) \<longleftrightarrow> bn_key s x < bn_key s y) \<and>
+       ((r = 0) \<longleftrightarrow> bn_key s x = bn_key s y))"
+ 
+-by (auto simp: bn_contract_def binomial_heap_cmp'_def bn_heap_def bn_key_def bn_payload_def runs_to_bind_iff runs_to_condition_iff runs_to_gets_iff \<P>_fun_ptr_simps int_compare'_def reaches_bind reaches_condition_iff reaches_gets reaches_guard reaches_return succeeds_runs_to_iff word_sless_alt; (rule exI, rule exI, simp add: reaches_condition_iff reaches_return))
++by (auto simp: bn_contract_def binomial_heap_cmp'_def bn_heap_def bn_key_def bn_payload_def runs_to_bind_iff runs_to_condition_iff runs_to_gets_iff map_of_default_def int_compare'_def reaches_bind reaches_condition_iff reaches_gets reaches_guard reaches_return succeeds_runs_to_iff word_sless_alt; (rule exI, rule exI, simp add: reaches_condition_iff reaches_return))
+ 
+ 
+ 
+@@ -2590,7 +2594,8 @@
+     by (rule ext; rule globals.equality; simp add: bn_tree_def vero_aux_refcount_dec)
+   show ?thesis
+     apply (subst binomial_tree_unref'.simps)
+-    by (simp only: E vero_aux_unref_tail_def vero_aux_unref_body_def[abs_def] bn_tree_def)
++    by (simp only: E vero_aux_unref_tail_def vero_aux_unref_body_def[abs_def] bn_tree_def
++      vero_aux_refcount_dec hol_int_le_pred hol_int_neg_add_one)
+ qed
+ 
+ lemma vero_aux_condition_true:
+@@ -5114,7 +5119,7 @@
+     apply (subst whileLoop_unroll)
+     apply (simp add: runs_to_condition_iff runs_to_bind_iff runs_to_guard_iff runs_to_gets_iff
+       ptr_add_def F G vero_aux_pop_header_def vero_aux_pop_leaf_def vero_aux_pop_parent_def
+-      binomial_heap_cmp'_def \<P>_fun_ptr_simps int_compare'_def)
++      binomial_heap_cmp'_def map_of_default_def int_compare'_def)
+     apply (subst whileLoop_unroll)
+     by (simp add: runs_to_condition_iff F vero_aux_pop_header_def)
+ qed
+--- archive/Revision_Witness_Provider.thy
++++ hol-replay/Revision_Witness_Provider.thy
+@@ -3,6 +3,10 @@
+  imports Repair_Phase_Model Revised_Ownership_Model
+ 
+ begin
++
++lemma hol_int_le_pred: "((x::int) \<le> y - 1) = (x < y)" by linarith
++lemma hol_int_neg_add_one: "-((x::int)+1) = -x-1" by linarith
++
+ 
+ 
+ 
+@@ -18,7 +22,7 @@
+    compare_func_C (bn_heap s h) = binomial_heap_input.int_compare \<Longrightarrow>
+    c_guard (ptr_coerce v :: 32 signed word ptr) \<Longrightarrow>
+    runs_to (binomial_heap_cmp' h v v) s Q = Q (Result 0) s"
+-by (simp add: binomial_heap_cmp'_def bn_heap_def runs_to_bind_iff runs_to_condition_iff runs_to_gets_iff \<P>_fun_ptr_simps int_compare'_def)
++by (simp add: binomial_heap_cmp'_def bn_heap_def runs_to_bind_iff runs_to_condition_iff runs_to_gets_iff map_of_default_def int_compare'_def)
+ 
+ end
+ 
+@@ -1205,7 +1209,8 @@
+     by (rule ext; rule globals.equality; simp add: bn_tree_def vero_aux_refcount_dec)
+   show ?thesis
+     apply (subst binomial_tree_unref'.simps)
+-    by (simp only: E vero_aux_unref_tail_def vero_aux_unref_body_def[abs_def] bn_tree_def)
++    by (simp only: E vero_aux_unref_tail_def vero_aux_unref_body_def[abs_def] bn_tree_def
++      vero_aux_refcount_dec hol_int_le_pred hol_int_neg_add_one)
+ qed
+ 
+ end

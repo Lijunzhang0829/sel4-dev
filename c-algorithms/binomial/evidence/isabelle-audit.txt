@@ -1,0 +1,133 @@
+
+Theory "Calg_Binomial_Targets.Binomial_Heap_Model" (in Calg_Binomial_Targets):
+
+Output (line 10 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_root :: "bn_shape \<Rightarrow> StrictC'_BinomialTree_C ptr"
+
+Output (line 10 of "/project/targets-session/Binomial_Heap_Model.thy"):
+Found termination order: "{}"
+
+Output (line 11 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_rank :: "bn_shape \<Rightarrow> nat"
+
+Output (line 11 of "/project/targets-session/Binomial_Heap_Model.thy"):
+Found termination order: "{}"
+
+Output (line 12 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_tree :: "'a globals_scheme \<Rightarrow> StrictC'_BinomialTree_C ptr \<Rightarrow> StrictC'_BinomialTree_C"
+
+Output (line 13 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_heap :: "'a globals_scheme \<Rightarrow> StrictC'_BinomialHeap_C ptr \<Rightarrow> StrictC'_BinomialHeap_C"
+
+Output (line 14 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_key :: "'a globals_scheme \<Rightarrow> 'b ptr \<Rightarrow> int"
+
+Output (line 15 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_payload :: "64 word set \<Rightarrow> 'a ptr \<Rightarrow> bool"
+
+Output (line 17 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_values :: "'a globals_scheme \<Rightarrow> bn_shape \<Rightarrow> unit ptr list"
+
+Output (line 19 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_blocks :: "'a globals_scheme \<Rightarrow> bn_shape \<Rightarrow> 64 word list"
+
+Output (line 22 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_valid :: "'a globals_scheme \<Rightarrow> 64 word set \<Rightarrow> bn_shape \<Rightarrow> bool"
+
+Output (line 35 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_forest_values :: "'a globals_scheme \<Rightarrow> bn_shape option list \<Rightarrow> unit ptr list"
+
+Output (line 37 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_owned :: "'a globals_scheme \<Rightarrow> StrictC'_BinomialHeap_C ptr \<Rightarrow> bn_shape option list \<Rightarrow> 64 word list"
+
+Output (line 41 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_rep ::
+    "'a globals_scheme \<Rightarrow> StrictC'_BinomialHeap_C ptr \<Rightarrow> 64 word set \<Rightarrow> bn_shape option list \<Rightarrow> unit ptr multiset \<Rightarrow> bool"
+
+Output (line 59 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_frame ::
+    "'a globals_scheme \<Rightarrow> StrictC'_BinomialHeap_C ptr \<Rightarrow> 64 word set \<Rightarrow> bn_shape option list \<Rightarrow> 'b globals_scheme \<Rightarrow> bool"
+
+Output (line 67 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_stack_ready :: "64 word set \<Rightarrow> 'a globals_scheme \<Rightarrow> bool"
+
+Output (line 74 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_storage_transition ::
+    "'a globals_scheme
+     \<Rightarrow> StrictC'_BinomialHeap_C ptr \<Rightarrow> bn_shape option list \<Rightarrow> 'b globals_scheme \<Rightarrow> bn_shape option list \<Rightarrow> bool"
+
+Output (line 82 of "/project/targets-session/Binomial_Heap_Model.thy"):
+consts
+  bn_contract :: "('e, 'a, 's) spec_monad \<Rightarrow> 's \<Rightarrow> ('a \<Rightarrow> 's \<Rightarrow> bool) \<Rightarrow> bool"
+
+Theory "Calg_Binomial_Targets.Binomial_Heap_Targets" (in Calg_Binomial_Targets):
+
+Output (line 5 of "/project/targets-session/Binomial_Heap_Targets.thy"):
+locale binomial_heap_input_global_addresses
+  assumes "binomial_heap_input_global_addresses"
+
+Theory "Calg_Binomial_Targets.Binomial_Preparation_Audit" (in Calg_Binomial_Targets):
+
+Output (line 5 of "/project/targets-session/Binomial_Preparation_Audit.thy"):
+locale binomial_heap_input_global_addresses
+  assumes "binomial_heap_input_global_addresses"
+
+Output (line 6 of "/project/targets-session/Binomial_Preparation_Audit.thy"):
+CALG_BINOMIAL_TRANSLATION_FACTS_CHECKED 95
+
+Output (line 6 of "/project/targets-session/Binomial_Preparation_Audit.thy"):
+CALG_BINOMIAL_STACK_TERM Term.Const ("Binomial_Heap_C.\<S>", Term.Type ("Set.set", [Term.Type ("Word.word", [Term.Type ("Numeral_Type.bit0", [Term.Type ("Numeral_Type.bit0", [Term.Type ("Numeral_Type.bit0", [Term.Type ("Numeral_Type.bit0", [Term.Type ("Numeral_Type.bit0", [Term.Type ("Numeral_Type.bit0", [Term.Type ("Numeral_Type.num1", [])])])])])])])])]))
+
+Output (line 6 of "/project/targets-session/Binomial_Preparation_Audit.thy"):
+val facts =
+   ["L1corres True \<Gamma> l1_binomial_heap_num_entries' (Call binomial_heap_input.binomial_heap_num_entries)",
+    "L2corres globals (\<lambda>s. clookup 1 (locals s)) global_exn_var'_' (\<lambda>s. clookup 0 (locals s) = ?heap)
+      (l2_binomial_heap_num_entries' ?heap) l1_binomial_heap_num_entries'",
+    "refines (l2_binomial_heap_num_entries' ?heap) (binomial_heap_num_entries' ?heap) ?s ?s (rel_prod rel_liftE (=))",
+    "L1corres True \<Gamma> l1_free' (Call binomial_heap_input.free)",
+    "L2corres globals (\<lambda>s. ()) global_exn_var'_' (\<lambda>s. clookup 0 (locals s) = ?ptr) (l2_free' ?ptr) l1_free'",
+    "refines (l2_free' ?ptr) (free' ?ptr) ?s ?s (rel_prod rel_liftE (=))",
+    "L1corres True \<Gamma> l1_binomial_tree_unref' (Call binomial_heap_input.binomial_tree_unref)",
+    "L2corres globals (\<lambda>s. ()) global_exn_var'_' (\<lambda>s. clookup 0 (locals s) = ?tree) (l2_binomial_tree_unref' ?tree)
+      l1_binomial_tree_unref'",
+    "refines (l2_binomial_tree_unref' ?tree) (binomial_tree_unref' ?tree) ?s ?s (rel_prod rel_liftE (=))",
+    "L1corres True \<Gamma> l1_binomial_heap_merge_undo' (Call binomial_heap_input.binomial_heap_merge_undo)",
+    "L2corres globals (\<lambda>s. ()) global_exn_var'_' ((\<lambda>s. ... ... ...) and (\<lambda>s. ... ... ...))
+      (l2_binomial_heap_merge_undo' ?new_roots ?count) l1_binomial_heap_merge_undo'",
+    "refines (l2_binomial_heap_merge_undo' ?new_roots ?count) (binomial_heap_merge_undo' ?new_roots ?count) ?s ?s
+      (rel_prod rel_liftE ...)",
+    "L1corres True \<Gamma> l1_binomial_tree_ref' (... ...)",
+    "L2corres globals (......... ...) global_exn_var'_' (......... ...) (... ...) l1_binomial_tree_ref'",
+    "... ......... ......... ?s ?s .........", "... ... ... ... ...", "...", "...", "...", ..., ...]:
+   thm list
+
+Output (line 15 of "/project/targets-session/Binomial_Preparation_Audit.thy"):
+CALG_BINOMIAL_TARGETS_NOT_EXPORTED_AS_FACTS 8
+
+Output (line 15 of "/project/targets-session/Binomial_Preparation_Audit.thy"):
+val targets =
+   ["bn_count_exact", "bn_insert_correct", "bn_pop_correct", "bn_free_owned_storage", "bn_new_empty_or_failure",
+    "bn_ref_null", "bn_ref_increment", "bn_merge_leaves_nonfailure"]:
+   string list
+val names =
+   ["ATP.fAll_def", "ATP.fAll_law", "ATP.fAll_table", "ATP.fChoice_def", "ATP.fChoice_iff_Ex", "ATP.fComp_def",
+    "ATP.fComp_law", "ATP.fEx_def", "ATP.fEx_law", "ATP.fEx_table", "ATP.fFalse_def", "ATP.fNot_def", "ATP.fNot_law",
+    "ATP.fNot_table", "ATP.fTrue_def", "ATP.fTrue_ne_fFalse", "ATP.fconj_def", "ATP.fconj_laws", "ATP.fconj_table",
+    "ATP.fdisj_def", ...]:
+   string list
+val leaked = []: string list

@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "script_sha256": "1147edcca3c806f4d17694f39937647a8495254c8b2890ab3eeccc20f4e8bf69",
+  "checks": [
+    {
+      "case": "unchanged_source_accepted",
+      "passed": true
+    },
+    {
+      "case": "source_drift_rejected",
+      "passed": true
+    },
+    {
+      "case": "catalog_proposition_drift_rejected",
+      "passed": true
+    },
+    {
+      "case": "missing_target_witness_rejected",
+      "passed": true
+    },
+    {
+      "case": "dropped_premise_rejected",
+      "passed": true
+    },
+    {
+      "case": "added_premise_rejected",
+      "passed": true
+    }
+  ],
+  "production_inputs_modified": false
+}

@@ -1,0 +1,7 @@
+session Calg_Binomial_Foundation = AutoCorres2 +
+  options [document = false, quick_and_dirty = false, timeout = 600]
+  directories "theories"
+  theories Binomial_Environment Binomial_Heap_C HOL_Layout_Facts
+session Calg_Project_Base in "model" = Calg_Binomial_Foundation +
+  options [document = false, quick_and_dirty = false, timeout = 300]
+  theories Binomial_Heap_Model Project_Input

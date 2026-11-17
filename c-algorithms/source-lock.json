@@ -1,0 +1,28 @@
+{
+  "upstream": "https://github.com/fragglet/c-algorithms",
+  "commit": "23d453792ed89a28ed7d2c8d4311a4d9f7822edd",
+  "scope": "binary heap, sequential integer min-heap instance",
+  "compiler": "gcc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
+  "command": [
+    "gcc",
+    "-E",
+    "-P",
+    "-CC",
+    "-nostdinc",
+    "-Ic/include",
+    "-Ivendor/src",
+    "c/binary_instance.c"
+  ],
+  "comparator_annotations": 2,
+  "compiler_image": "sha256:8e7ee430544e004b57343636038d5ce155c128e5ee002a22821cbeaa6f66d324",
+  "files": {
+    "vendor/src/binary-heap.c": "b26f8cf95544bfd55fbfd865749ce5b1822d612ca15537fef992d15a2e5af45f",
+    "vendor/src/binary-heap.h": "7bbd48c2a810b802b4daf91395690641e72afd35918fb207889b12426080ab8d",
+    "vendor/src/compare-int.c": "e31f939aac72fe45f771a39237538d90c8c65e87c908c685791e6f3248355b46",
+    "vendor/src/compare-int.h": "f1d31375d1106557d537567cfda01e53d15502b901d8935374e9c1a804b0116d",
+    "vendor/COPYING.md": "164ddf1a88f6379e2d3bb6e3af5ba4dc2b209b8f9258fa5fc5fc18ecfb48424c",
+    "c/include/stdlib.h": "ad6a5417ddd29fdc13997772223e973494e339d0c270e0dc55487cdb41077cc6",
+    "c/binary_instance.c": "d147343ae8dcdffd562a991b54ca299399448920bf5159c97c3e020a04f977f7",
+    "c/binary_heap_input.c": "151dcb8b43bcfafc6693afa50e440fa66b318e26c7d12f2da6fde746516e1483"
+  }
+}

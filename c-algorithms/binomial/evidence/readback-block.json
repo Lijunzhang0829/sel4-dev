@@ -1,0 +1,18 @@
+{
+  "status": "resolved_by_explicit_authorization_and_completed_readback",
+  "initial_rejection": {
+    "status": "authorization_pending",
+    "external_call_performed": false,
+    "source": "automatic approval review",
+    "reason": "Original-source selection does not explicitly authorize sending new binomial models and targets to external model destination.",
+    "requested_destination": "gpt-6-astra / low",
+    "pending_user_question": true
+  },
+  "resolved_utc": "2026-11-04T01:01:20.190894+00:00",
+  "external_call_performed": true,
+  "pending_user_question": false,
+  "authorization_path": "evidence/readback-authorization.json",
+  "authorization_sha256": "e6408cb23854da933a370d4bdd7459603b2ea9a238b9ae29a8d8ce3338c95bc2",
+  "comparison_path": "evidence/readback-comparison.json",
+  "comparison_sha256": "ed0eb6adb5b65457941cfcd875f7081b61344d1cb4ec70698a7200b2a5e9b0f6"
+}
