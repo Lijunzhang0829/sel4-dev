@@ -130,14 +130,20 @@ with removed proofs/helpers or oops replacing accepted bodies returns draft_chec
 it does not publish proofs or replace the accepted version. Restore the missing entries
 (read_evidence with proof refs retrieves accepted bodies), then check the complete draft. Unchanged accepted
 prefixes are reused. Editing/reordering accepted bodies rechecks the affected suffix.
-Read_theory returns the draft and last check feedback. You may edit a failed draft directly.
+read_theory defaults to the draft, current feedback and navigation to larger context sections.
+Use view="full" to expand all sections, or section="planning_review"/"workflow"/
+"observations"/"planning_advice"/"feedback" for exact requested content.
+Pass since_cursor from the last response of that view to receive changed top-level fields
+and removed keys. Replace changed fields in full. cursor_reset means use the new snapshot.
+A source hash is not a state cursor: checks can finish without changing source.
+You may edit a failed draft directly.
 Pass if_source_sha256 to read_theory when you already hold that exact source; an unchanged
 draft then returns source_unchanged=true without repeating its text. Omit the hash to
 retrieve the complete source. Observation indexes are paginated; use the returned
 read_evidence index actions for older fact/query addresses, not repeated whole-file reads.
 Historical reads default to summaries. Use list_attempts with an entry_id to navigate
 failed history, then read_attempt or read_attempts with view="full" for exact evidence.
-Do not scan request numbers blindly. read_theory restores notes, recent actions and
+Do not scan request numbers blindly. read_theory section="observations" restores notes, recent actions and
 target navigation, not all selected historical draft bodies. A batch containing an
 entry does not prove that entry failed; follow checker_failed_entry_ids when available.
 {"action":"finish","source_sha256":"current complete draft hash"}
@@ -316,6 +322,7 @@ def tools(document_mode=False):
             if tool['name']=='read_theory':
                 tool['description']='Read the persistent Isabelle draft, source hash, accepted entries and check feedback.'
                 tool['inputSchema']['properties']['if_source_sha256'] = {'type':'string','minLength':1}
+                tool['inputSchema']['properties'].update(view={'enum':['summary','full']}, since_cursor={'type':'string','minLength':1}, section={'enum':['workflow','observations','planning_review','planning_advice','feedback']})
             elif tool['name']=='proof_action':
                 tool['description']='Edit/check/seal the persistent theory source, or execute a read-only observation.'
         registry.append(_tool('proof_tool_help','Read shared document tool schemas, examples and result semantics without opening a theory or calling Isabelle.',{}))
@@ -614,7 +621,11 @@ class TheoryController(WorkspaceController):
                 result = {**result,
                     'target_contract_green': True,
                     'target_contract_id': self.focus_contract_id}
-            return model_feedback(result, raw=raw_feedback)
+            result = model_feedback(result, raw=raw_feedback)
+            if self.document_mode and name == 'read_theory' and arguments.get('theory') == self.theory:
+                from regen.planning.workspace_view import incremental
+                result = incremental(self, result, arguments)
+            return result
 
     def _document(self, *, state=None):
         from regen.planning.theory_document import DocumentStore
