@@ -825,7 +825,7 @@ def _init_run_unlocked(
     if schedule_path and read_json(schedule_path).get('artifact_type') == 'repository-file-generation-list':
         from regen.execution.repository_execution import init_run as init_repository
         return init_repository(run_dir, input_root, run_id, schedule_path,
-                               audit_policy=audit_policy,
+                               **({} if audit_policy == 'declaration-export-audit-v1' else {'audit_policy': audit_policy}),
             **policy_binding({'complete_context_policy':complete_context_policy}), **logging,
             contract_outcome_policy=contract_outcome_policy,
             unresolved_evidence_policy=unresolved_evidence_policy)
@@ -904,7 +904,7 @@ def init_run(
     try:
         return _init_run_unlocked(
             run_dir, input_root, run_id=run_id,
-            audit_policy=audit_policy,
+            **({} if audit_policy == 'declaration-export-audit-v1' else {'audit_policy': audit_policy}),
             schedule_path=schedule_path,
             complete_context_policy=complete_context_policy,
             log_storage=log_storage,
@@ -2242,12 +2242,8 @@ def main() -> int:
         help="Legacy schema only; new repository runs use --dataset-root.",
     )
     init.add_argument("--schedule", type=Path)
-    from regen.execution.checker_policy import COMPLETE_CONTEXT_POLICIES
-    init.add_argument('--complete-context-policy', choices=COMPLETE_CONTEXT_POLICIES,
-                      default='isolated-v1', help='Frozen final-theory renderer; new repository runs only')
-    init.add_argument('--audit-policy', choices=['declaration-export-audit-v1',
-                      'declaration-export-deferred-v2'], default='declaration-export-audit-v1',
-                      help='Frozen declaration audit renderer for a new repository run')
+    from regen.execution.checker_policy import ARCH_REUSE_CONTEXT
+    from regen.execution.deferred_audit import DEFERRED
     from regen.infrastructure.incremental_log import FORMAT
     init.add_argument('--log-storage', choices=['inline-v1', FORMAT], default='inline-v1',
                       help='Incremental immutable log objects for a new run')
@@ -2356,8 +2352,8 @@ def main() -> int:
                 args.run_dir, args.dataset_root or args.environment_run,
                 run_id=args.run_id,
                 schedule_path=args.schedule,
-                complete_context_policy=args.complete_context_policy,
-                audit_policy=args.audit_policy,
+                complete_context_policy=ARCH_REUSE_CONTEXT,
+                audit_policy=DEFERRED,
                 log_storage=args.log_storage,
                 contract_outcome_policy=(None if args.contract_outcome_policy == 'legacy-theory-v1'
                                          else args.contract_outcome_policy),

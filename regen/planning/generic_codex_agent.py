@@ -17,6 +17,7 @@ from regen.planning.workspace_preflight import native_checker
 from regen.planning.repository_plan_contract import contracts as planning_contracts, request_schema, proposal_schema, validate_request
 from regen.planning.document_interface import observation_instructions,tool_contracts
 from regen.planning.planning_advice import ADVICE_INSTRUCTIONS
+from regen.execution.deferred_audit import DEFERRED
 
 PROMPT_TEMPLATE = """Prove all fixed contracts in this repository using the supplied Isabelle harness.
 You are one Codex agent responsible for theory planning, proof generation and revision.
@@ -376,7 +377,7 @@ class Controller:
             self.stage.check()
             from regen.infrastructure.incremental_log import FORMAT
             init_run(run,self.dataset,self.config['run_id']+f'--plan-{epoch}',out/'file-generation-list.json',
-                complete_context_policy='arch-reuse-v1',log_storage=FORMAT,
+                complete_context_policy='arch-reuse-v1',audit_policy=DEFERRED,log_storage=FORMAT,
                 execution_models={'File Planner':self.config['model']})
             allocation={t['name']:list(t['contract_ids']) for t in current['theories']}
             info={'epoch':epoch,'run':str(run),'plan_id':current['plan_id'],'allocation':allocation}

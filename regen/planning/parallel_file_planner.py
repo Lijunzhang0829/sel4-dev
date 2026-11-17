@@ -219,7 +219,9 @@ check provider premises, select imports or a local alternative, and update revie
 ASYNC_INSTRUCTIONS = """
 ASYNCHRONOUS DOCUMENT CHECKS:
 check_theory/check_sketch submit an immutable snapshot and return task_id promptly.
-Use get_check_result to read results, or wait_checks when no independent work remains.
+Use get_check_result for an immediate snapshot, or wait_checks when no independent work remains.
+In document mode wait_checks waits for at least one terminal task or session interruption;
+its legacy timeout field is not a polling deadline. Task timeouts and experiment budget remain active.
 Keep one native check in flight. While it runs, read or edit proof bodies of other
 unreserved entries and use static premise queries. Checked entries, accepted proofs,
 imports, declarations and sketch metadata are reserved until the result is terminal.
@@ -331,6 +333,12 @@ def tools(document_mode=False):
                 tool['description']='Edit/check/seal the persistent theory source, or execute a read-only observation.'
         registry.append(_tool('proof_tool_help','Read shared document tool schemas, examples and result semantics without opening a theory or calling Isabelle.',{}))
         registry.extend(tool for tool in tools(False) if tool['name'] in {'get_check_result','wait_checks','cancel_check'})
+        waiter = next(tool for tool in registry if tool['name'] == 'wait_checks')
+        waiter['description'] = ('Wait until at least one task ends, or cancellation/error interrupts the session. '
+            'No unchanged running replies. Use get_check_result for a nonblocking snapshot.')
+        waiter['inputSchema']['properties']['timeout']['description'] = (
+            'Legacy compatibility field, validated but not a return deadline in document mode. '
+            'Native task deadlines and experiment budget still apply.')
         return registry
     text = {'type':'string','minLength':1}
     registry.extend([
@@ -350,12 +358,12 @@ def tools(document_mode=False):
 class TheoryController(WorkspaceController):
     def __init__(self, run_dir, theory, *, resources, executor, document_mode=False,
                  generation_strategy_name='baseline', focus_contract_id=None,
-                 stop_at_focus_contract=False, async_checks=False, **options):
+                 stop_at_focus_contract=False, **options):
         if type(stop_at_focus_contract) is not bool:
             raise ValueError('stop_at_focus_contract must be boolean')
         if stop_at_focus_contract and focus_contract_id is None:
             raise ValueError('stop_at_focus_contract requires focus_contract_id')
-        self.async_checks = bool(async_checks and document_mode)
+        self.async_checks = bool(document_mode)
         self._async_snapshots = {}
         self._publication_tasks = set()
         self.document_mode = document_mode
@@ -1028,7 +1036,13 @@ class TheoryController(WorkspaceController):
         if name == 'wait_checks':
             for key in arguments['task_ids']:
                 self._owned(key)
-            self.executor.wait(arguments['task_ids'],timeout=arguments.get('timeout',30))
+            if self.document_mode:
+                timeout = arguments.get('timeout', 30)
+                if type(timeout) not in (int, float) or not 0 <= timeout <= 60:
+                    raise ValueError('legacy timeout must be between 0 and 60')
+                self.executor.wait_until_result(arguments['task_ids'], check_active=self._check_session_active)
+            else:
+                self.executor.wait(arguments['task_ids'],timeout=arguments.get('timeout',30))
             return {'tasks':[self._owned(key) for key in arguments['task_ids']]}
         if name == 'cancel_check':
             self._owned(arguments['task_id'])
@@ -1417,7 +1431,7 @@ def run_theory_session(root, theory, *, resources, executor, settings, directory
         }
     controller = controller_class(root,theory,resources=resources,executor=executor,document_mode=document_mode,
         generation_strategy_name=generation_strategy_name, focus_contract_id=focus_contract_id,
-        stop_at_focus_contract=stop_at_focus_contract, async_checks=document_mode,
+        stop_at_focus_contract=stop_at_focus_contract,
         model=model,call_timeout=call_timeout,check_timeout=check_timeout,
         candidate_timeout=candidate_timeout, **controller_options)
     controller.publication_manager = publication_manager

@@ -68,7 +68,7 @@ class DocumentBoundaryTests(unittest.TestCase):
         self.assertEqual(result['assigned_writer_count'],1)
         self.assertEqual(result['max_parallel_theories'],self.base.executor.worker_capacity)
         self.assertEqual(result['native_slots'],1)
-        self.assertEqual(result['theory_tool_execution'],'serial')
+        self.assertEqual(result['theory_tool_execution'],'snapshot-async-v1')
 
     def test_entry_selectors_are_normalized_before_read_execution(self):
         def observe(kind,proposal,*args):
@@ -83,7 +83,7 @@ class DocumentBoundaryTests(unittest.TestCase):
         draft=self.base.read()['document']
         saved=self.base.call({'action':'edit_theory','base_sha256':draft['source_sha256'],
                             'edits':[{'old':'oops','new':'by simp'}]})
-        accepted=self.base.call({'action':'check_theory','source_sha256':saved['source_sha256']})
+        accepted=self.base.check_and_wait({'action':'check_theory','source_sha256':saved['source_sha256']})
         self.assertEqual(accepted['feedback']['status'],'accepted')
         from regen.execution.repository_execution import _progress_unlocked
         path=self.base.fixture.root/'execution-input.json'

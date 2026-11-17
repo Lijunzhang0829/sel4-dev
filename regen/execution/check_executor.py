@@ -536,6 +536,22 @@ class CheckExecutor:
                     return results
                 self.condition.wait(deadline-time.monotonic())
 
+    def wait_until_result(self, task_ids, *, check_active):
+        """Wait for a terminal task without turning heartbeats into model replies.
+
+        The owner checks session cancellation/budget interruption on each wake.
+        Native operation deadlines remain owned by the task, not this wait.
+        """
+        if not task_ids or len(set(task_ids)) != len(task_ids):
+            raise ValueError('distinct nonempty task IDs required')
+        with self.condition:
+            while True:
+                check_active()
+                results = [self.get(key) for key in task_ids]
+                if any(row['status'] in TERMINAL for row in results):
+                    return results
+                self.condition.wait(1.0)
+
     def cancel(self, task_id):
         # Do not hold executor lock while waiting for the commit guard.
         with self.lock:

@@ -253,13 +253,19 @@ class DocumentControllerTests(unittest.TestCase):
 
     def read(self):
         return self.controller.handle('read_theory',{'theory':'Target'},{})
+    def check_and_wait(self, proposal):
+        result = self.call(proposal)
+        if "feedback" in result:
+            return result
+        tasks = self.controller.handle("wait_checks", {"task_ids": [result["task_id"]]}, {})["tasks"]
+        return tasks[0]["result"]
 
     def test_hot_projection_matches_full_reconstruction_without_global_scan(self):
         from regen.execution import repository_execution as execution
         draft = self.read()['document']
         saved = self.call({'action':'edit_theory', 'base_sha256':draft['source_sha256'],
                            'edits':[{'old':'oops', 'new':'by simp'}]})
-        self.call({'action':'check_theory', 'source_sha256':saved['source_sha256']})
+        self.check_and_wait({'action':'check_theory', 'source_sha256':saved['source_sha256']})
         root = self.fixture.root
         state = self.controller._state('Target')[1]
         execution.progress(root)  # Seed a fully verified, rebuildable display.
@@ -295,7 +301,7 @@ class DocumentControllerTests(unittest.TestCase):
             draft=self.read()['document']
             saved=self.call({'action':'edit_theory','base_sha256':draft['source_sha256'],
                              'edits':[{'old':'oops','new':'by simp'}]})
-            result=self.call({'action':'check_theory','source_sha256':saved['source_sha256']})
+            result=self.check_and_wait({'action':'check_theory','source_sha256':saved['source_sha256']})
             self.assertIn('feedback',result,result)
             self.assertEqual(result['feedback']['status'],'accepted',result)
         state=self.controller._state('Target')[1]
@@ -309,7 +315,7 @@ class DocumentControllerTests(unittest.TestCase):
                          'edits':[{'old':'oops','new':'by simp'}]})
         self.assertEqual(saved['status'],'draft_saved')
         self.assertEqual(self.checkers['Target'].calls,0)
-        accepted=self.call({'action':'check_theory','source_sha256':saved['source_sha256']})
+        accepted=self.check_and_wait({'action':'check_theory','source_sha256':saved['source_sha256']})
         self.assertEqual(accepted['feedback']['status'],'accepted',accepted)
         _,state=self.controller._state('Target')
         self.assertEqual(state['document_source_sha256'],saved['source_sha256'])
@@ -317,7 +323,7 @@ class DocumentControllerTests(unittest.TestCase):
         self.checkers['Target'].verdict='red'
         saved=self.call({'action':'edit_theory','base_sha256':saved['source_sha256'],
                          'edits':[{'old':'by simp','new':'by fail'}]})
-        failed=self.call({'action':'check_theory','source_sha256':saved['source_sha256']})
+        failed=self.check_and_wait({'action':'check_theory','source_sha256':saved['source_sha256']})
         self.assertEqual(failed['feedback']['status'],'rejected_batch',failed)
         self.assertEqual(self.controller._state('Target')[1]['proofs'],state['proofs'])
         self.assertIn('by fail',self.read()['document']['source'])
@@ -335,12 +341,12 @@ class DocumentControllerTests(unittest.TestCase):
         draft=self.read()['document']
         saved=self.call({'action':'edit_theory','base_sha256':draft['source_sha256'],
                          'edits':[{'old':'oops','new':'by simp'}]})
-        self.assertEqual(self.call({'action':'check_theory',
+        self.assertEqual(self.check_and_wait({'action':'check_theory',
             'source_sha256':saved['source_sha256']})['feedback']['status'],'accepted')
         before=deepcopy(self.controller._state('Target')[1])
         diagnostic=self.call({'action':'edit_theory','base_sha256':saved['source_sha256'],
                              'edits':[{'old':'by simp','new':'oops'}]})
-        checked=self.call({'action':'check_theory','source_sha256':diagnostic['source_sha256']})
+        checked=self.check_and_wait({'action':'check_theory','source_sha256':diagnostic['source_sha256']})
         feedback=checked['feedback']
         self.assertEqual(feedback['check']['verdict'],'green',checked)
         self.assertEqual(feedback['status'],'draft_checked',checked)
@@ -361,7 +367,7 @@ class DocumentControllerTests(unittest.TestCase):
             self.call({'action':'finish','source_sha256':diagnostic['source_sha256']})
         restored=self.call({'action':'edit_theory','base_sha256':diagnostic['source_sha256'],
                            'edits':[{'old':'oops','new':'by simp'}]})
-        self.assertEqual(self.call({'action':'check_theory',
+        self.assertEqual(self.check_and_wait({'action':'check_theory',
             'source_sha256':restored['source_sha256']})['feedback']['status'],'accepted')
 
 if __name__=='__main__':unittest.main()
