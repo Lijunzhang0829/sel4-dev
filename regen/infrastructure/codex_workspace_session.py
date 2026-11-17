@@ -480,6 +480,20 @@ class CodexWorkspaceSession:
             confirmed = tool_result_confirmed(completion, result['response'],
                                               owner=key, tool=result['tool'])
         except ValueError as error:
+            item = completion.get('item', {})
+            # Diagnostic only: an empty server failure is not a delivery receipt.
+            # Keep strict comparison and the original failure/cleanup behavior.
+            self._event('local', {'event': 'tool_result_confirmation_rejected',
+                'thread_id': key[0], 'turn_id': key[1], 'call_id': key[2],
+                'tool': result['tool'], 'rpc_id': result['rpc_id'],
+                'response_sha256': result['response_sha256'],
+                'classification': ('server_failed_empty_receipt'
+                    if item.get('status') == 'failed' and item.get('success') is False
+                    and item.get('contentItems') == [] else 'receipt_mismatch'),
+                'sent_success': result['response'].get('success'),
+                'server_success': item.get('success'), 'server_status': item.get('status'),
+                'diagnostic': str(error), 'proof_authority': False,
+                'automatic_callback_replay': False})
             raise SessionProtocolError(str(error)) from error
         if confirmed and result['state'] != 'server_confirmed':
             result['state'] = 'server_confirmed'

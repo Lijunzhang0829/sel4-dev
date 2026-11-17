@@ -95,6 +95,27 @@ class WorkspaceResultConfirmationTests(unittest.TestCase):
                     artifact_dir=tmp, model='test', timeout=1)
             self.assertEqual(calls, [1])
 
+    def test_empty_server_failure_before_response_is_diagnosed_not_accepted(self):
+        # Real Pop_Transaction failure shape: failed/empty notification precedes
+        # the callback's successful result. This is not a formatting difference.
+        server = SERVER.replace(
+            "completion(1,{'success':True,'contentItems':[{'type':'inputText','text':'{\"accepted\": true}'}]})",
+            "completion(1,{'success':False,'contentItems':[],'status':'failed'})")
+        with tempfile.TemporaryDirectory() as tmp, CodexWorkspaceSession(
+                tools=TOOLS, allow_external_call=True,
+                command=[sys.executable, '-u', '-c', server, 'early']) as session:
+            calls = []
+            with self.assertRaisesRegex(SessionProtocolError, 'differs from sent result'):
+                session.run('prove', lambda *a: calls.append(1) or {'accepted': True},
+                            artifact_dir=tmp, model='test', timeout=1)
+            self.assertEqual(calls, [1])
+            events = [r['message'] for r in rows(Path(tmp)/'session-transcript.jsonl')
+                      if r['direction'] == 'local']
+            rejected = [m for m in events if m.get('event') == 'tool_result_confirmation_rejected']
+            self.assertEqual(rejected[0]['classification'], 'server_failed_empty_receipt')
+            self.assertFalse(rejected[0]['automatic_callback_replay'])
+            self.assertFalse(any(m.get('event') == 'tool_result_server_confirmed' for m in events))
+
     def test_late_receipt_for_previous_turn_does_not_touch_current_model_items(self):
         with self.session('normal') as session:
             session.thread_id, session.turn_id = 'thread', 'next-turn'
