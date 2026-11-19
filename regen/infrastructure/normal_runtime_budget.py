@@ -15,6 +15,17 @@ POLICY='normal-wall-minus-confirmed-interruptions-v2'
 LIMIT_REASON='normal_runtime_budget_reached'
 INTERRUPTIONS=frozenset({'provider_recovery','provider_stream_retry','stream_retry',
     'experiment_pause','native_unresponsive','provider_interruption','offline'})
+CLOCK_EXCLUSION_REASONS = INTERRUPTIONS
+
+BUDGET_CONTRACT = {
+    'attribution': 'shared-run-only',
+    'per_contract_split': False,
+    'per_helper_split': False,
+    'timeout_accounting': 'charged',
+    'proof_failure_charged': True,
+    'infrastructure_charged': False,
+    'blocked_charged': False,
+}
 
 
 class NormalRuntimeBudget(ActiveWallBudget):

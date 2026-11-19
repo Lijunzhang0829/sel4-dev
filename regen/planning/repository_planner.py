@@ -84,13 +84,20 @@ def prompt(payload: dict, feedback: list[str] | None = None) -> str:
                  'suggested_dependencies': [], 'premise_ids': ['one visible legal premise ID']},
             ]}],
     }
-    return (
-        'Plan a repository of Isabelle proofs for the fixed seL4 Refine contracts. '
-        'Use only the legal input below. Do not consult or reconstruct deleted human proofs.\n'
+    ownership_note = (
         'Choose generated theory names and distribute ALL contracts exactly once. Original owner '
         'groups identify input provenance; they do not constrain your generated files. You may '
         'introduce auxiliary-only theories and split auxiliaries into other ordinary nodes.\n'
-        'For a contract provide only its ID, never rewrite its statement/context/attributes. '
+        if payload['policy'].get('contract_visibility', 'owner-blind-v1') == 'source-theory-visible-v1' else
+        'Choose generated theory names and distribute ALL contracts exactly once. Original theory '
+        'attribution is absent; do not try to reconstruct it. You may introduce auxiliary-only '
+        'theories and split auxiliaries into other ordinary nodes.\n'
+    )
+    return (
+        'Plan a repository of Isabelle proofs for the fixed seL4 Refine contracts. '
+        'Use only the legal input below. Do not consult or reconstruct deleted human proofs.\n'
+        + ownership_note
+        + 'For a contract provide only its ID, never rewrite its statement/context/attributes. '
         'For an auxiliary provide an intent and the contract IDs it serves. Precise auxiliary '
         'statements will be elaborated by the file proof stage. Do not output proofs, tactics, '
         'imports, assumptions, or GREEN/sealed claims.\n'
@@ -140,6 +147,13 @@ def make_input(root: Path, gate_path: Path, index_path: Path, policy: dict,
                               'semantic_resolution_performed': False},
         'policy': policy,
     }
+    if policy.get('contract_visibility', 'owner-blind-v1') == 'owner-blind-v1':
+        payload['contracts'] = [
+            {key: value for key, value in item.items()
+             if key not in {'owner_theory', 'owner_file_slot', 'normalized_statement_sha256'}}
+            for item in contracts
+        ]
+        payload.pop('original_owner_groups', None)
     # Reserve bounded space for later validation feedback. Never truncate contracts.
     reserve = min(8000, max(0, context_budget // 10))
     limit = context_budget - reserve

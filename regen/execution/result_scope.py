@@ -15,7 +15,24 @@ from regen.execution.proof_commits import digest
 
 OWNED_CONTEXT_POLICY = 'owned-context-outcomes-v1'
 NEGATIVE_STATUSES = frozenset({'refuted', 'context_refuted'})
+PROVED_STATUSES = frozenset({'proved'})
+REFUTED_STATUSES = NEGATIVE_STATUSES | {'disproved'}
 ENVIRONMENT_SCHEMA = 'contract-environment-evidence-v1'
+
+
+def mathematical_status(status):
+    """Canonical three-way result: proved / refuted / unknown.
+
+    The internal scopes ``refuted`` vs ``context_refuted`` and baseline's
+    ``disproved`` all collapse to ``refuted`` here.  Infrastructure, blocked,
+    overfilled and extraction statuses are not mathematical outcomes and
+    therefore map to ``unknown``.
+    """
+    if status in PROVED_STATUSES:
+        return 'proved'
+    if status in REFUTED_STATUSES:
+        return 'refuted'
+    return 'unknown'
 
 
 def resolve_result_scope(run):

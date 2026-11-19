@@ -857,6 +857,31 @@ claim of exact causal per-contract cost. Unknown counters stay unknown.
             self.previous[thread_id] = total
 
 
+def helper_usage(rows):
+    """Aggregate native helper use-site observations.
+
+    ``used_helpers`` counts distinct helpers observed at a consumer site.
+    ``helper_citations`` counts distinct (helper, consumer) observation edges.
+    """
+    citations = {}
+    for row in rows:
+        if row.get("kind") != "helper_use_observed":
+            continue
+        data = row.get("data", {})
+        helper = data.get("helper_id")
+        if not isinstance(helper, str) or not helper:
+            continue
+        consumer = data.get("consumer_id") or data.get("consumer_line") or data.get("site")
+        if not isinstance(consumer, str):
+            consumer = "unknown"
+        citations.setdefault(helper, set()).add(consumer)
+    return {
+        "used_helpers": len(citations),
+        "helper_citations": sum(len(sites) for sites in citations.values()),
+        "cited_helper_ids": sorted(citations),
+    }
+
+
 def experiment_summary(ledger):
     """Comparable time/token curve, with helpers kept separate from contracts."""
     totals = {}; green = set(); helpers = set(); curve = []; owners = {}; costs=[]; targets={}; checks=[]; seals=[]
@@ -1024,6 +1049,9 @@ def experiment_summary(ledger):
         'targets':targets,'checks':checks,'seal_events':seals,
         'historical_first_green_contract_ids':sorted(ever_green),
         'historical_first_green_helper_ids':sorted(ever_helpers),
+        'created_helpers':len(ever_helpers),
+        **helper_usage(ledger.rows),
+        'helper_citations_basis':'native-fact-at-consumer-site observations are not aggregated in this summary',
         'current_valid_contract_ids':sorted(green),
         'current_valid_helper_ids':sorted(helpers),
         'current_valid_sealed_theories':sorted(current_seals),

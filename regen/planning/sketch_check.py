@@ -385,11 +385,15 @@ def check_groups(checker, store, source_sha256, target_entry_ids=None):
             group, signature)
         closed = (check.get('verdict') == 'green' and check.get('returncode') == 0
                   and 'REGEN_SKETCH_CLOSED ' + signature in check['log_content'].splitlines())
-        from regen.planning.helper_use_sites import observations, coverage
+        from regen.planning.helper_use_sites import observations, coverage, record_observations
         uses = observations(check['log_content'], group, signature)
         if 'use_sites' in group and (len(uses) != len(group['use_sites'])
                 or {u['index'] for u in uses} != set(range(len(group['use_sites'])))):
             closed = False
+        try:
+            record_observations(store, uses)
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
         receipt_id=uuid4().hex
         record = {'status': 'conditional_closed' if closed else 'sketch_rejected',
                   'receipt_id':receipt_id, 'run_id':store.state['graph']['run_id'],

@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import shutil
 import tempfile
+import time
 from uuid import uuid4
 
 from regen.execution.proof_commits import durable
@@ -55,6 +56,8 @@ def workspace_tools():
     obj = {'type':'object'}
     return [
         _tool('list_workspace', 'Read contract distribution, hard dependencies, advisory groups and current progress.', {}),
+        _tool('progress', 'Read current workspace progress as a compact summary.', {}),
+        _tool('budget', 'Read the shared-run budget/accounting contract; remaining time is available through experiment_status.', {}),
         _tool('read_theory', 'Read fixed contracts, local graph, GREEN index and recent feedback; no proof check.', {'theory':text}, ('theory',)),
         _tool('list_generated', 'Search accepted generated examples across this run, including unsealed theories.',
               {'theory':text, 'query':{'type':'string'}, 'offset':{'type':'integer','minimum':0},
@@ -219,8 +222,22 @@ class WorkspaceController:
         emit_event('workspace_tool_started', tool=name, theory=arguments.get('theory', arguments.get('target_theory')),
                    call_id=metadata.get('call_id'))
         try:
+            usage = self.root / 'api-usage.jsonl'
+            usage.parent.mkdir(parents=True, exist_ok=True)
+            with usage.open('a') as stream:
+                stream.write(json.dumps({'at': time.time(), 'tool': name,
+                    'theory': arguments.get('theory', arguments.get('target_theory'))}) + '\n')
+        except OSError:
+            pass
+        try:
             if name == 'list_workspace':
                 return self.list_workspace()
+            if name == 'progress':
+                return self.list_workspace()
+            if name == 'budget':
+                from regen.infrastructure.normal_runtime_budget import BUDGET_CONTRACT
+                return {'budget_contract': BUDGET_CONTRACT,
+                        'notice': 'Read experiment_status for remaining effective time; token/time are shared-run only.'}
             if name == 'read_theory':
                 package,state = self._state(arguments['theory'])
                 from regen.planning.theory_outcomes import current_dispositions

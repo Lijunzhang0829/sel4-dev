@@ -114,6 +114,24 @@ def observations(log, group, signature):
     return result
 
 
+def record_observations(store, uses):
+    """Append helper use-site observations to the run-level experiment ledger.
+
+    The run ledger lives two levels above the document root:
+    ``run_dir/theories/<theory>/document`` -> ``run_dir``.
+    """
+    run_id = store.state.get('graph', {}).get('run_id')
+    if not run_id:
+        return
+    from regen.infrastructure.experiment_ledger import Ledger
+    ledger = Ledger(store.root.parents[2] / 'effective-generation-budget', run_id)
+    for use in uses:
+        ledger.append('helper_use_observed',
+                      helper_id=use['helper_id'],
+                      consumer_id=use.get('consumer_line') or use.get('fact'),
+                      site=use)
+
+
 def coverage(group, uses):
     observed = {u['helper_id'] for u in uses}
     return {'observed_use_sites': len(uses),

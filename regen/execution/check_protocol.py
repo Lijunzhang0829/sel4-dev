@@ -13,6 +13,30 @@ from uuid import uuid4
 
 NAME = 'fresh-process-total-v1'
 FILENAME = 'native-check-protocol.json'
+SUCCESS_STATUSES = frozenset({'ok', 'green', 'proved', 'disproved', 'refuted', 'context_refuted'})
+TIMEOUT_STATUSES = frozenset({'timeout'})
+INFRASTRUCTURE_STATUSES = frozenset({'infrastructure_error', 'stack_exhausted', 'resource_exhausted', 'native_interrupt'})
+BLOCKED_STATUSES = frozenset({'blocked_dependency'})
+
+
+def classify_status(status):
+    """Canonical native-attempt class shared with the baselines."""
+    if status in SUCCESS_STATUSES:
+        return 'success'
+    if status in TIMEOUT_STATUSES:
+        return 'timeout'
+    if status in INFRASTRUCTURE_STATUSES:
+        return 'infrastructure'
+    if status in BLOCKED_STATUSES:
+        return 'blocked'
+    return 'proof_failure'
+
+
+def charged_attempt(status):
+    """Only proof failures and timeouts consume an attempt."""
+    return classify_status(status) in {'timeout', 'proof_failure'}
+
+
 PROTOCOL = {
     'schema_version': 1, 'name': NAME, 'backend': 'fresh-process-v1',
     'total_timeout_seconds': 300,
