@@ -132,16 +132,15 @@ chown -R "$1:$2" /heap-output
     for raw in map(json.loads,(source/'contracts.jsonl').read_text().splitlines()):
         cid = 'goal:'+sha256_json(raw['exact_statement'])[:24]
         mapping[cid] = raw['contract_id']
-        contracts.append({**raw,'contract_id':cid,'owner_theory':'Intervaltree.Fixed_Targets',
-            'kind':'lemma','contract_owned_attributes':[],'contract_owned_attributes_raw':'',
-            'normalized_statement_sha256':sha256_json(raw['exact_statement'])})
+        contracts.append({**raw,'contract_id':cid,
+            'kind':'lemma','contract_owned_attributes':[],'contract_owned_attributes_raw':''})
     if len(contracts) != 91 or len(mapping) != 91:
         raise ValueError('contract identity mismatch')
     profile = 'intervaltree-fixed-parent-v1'
     payload = {'schema_version':1,'artifact_type':'repository-planning-input',
         'benchmark':{'id':'intervaltree-91','target_session':'Intervaltree','architecture':'ARM',
             'independent_experiment':True,'cross_experiment_inputs':[]},
-        'contracts':contracts,'contract_cards':[contract_card(c) for c in contracts],
+        'contracts':contracts,'contract_cards':[{'contract_id':c['contract_id'],'name':c['name']} for c in contracts],
         'contract_visibility':'owner-blind-v1','owner_groups':{},'session_graph':{},
         'theory_import_graph':{},'upstream_session_closure':sorted(upstream),
         'contract_relation_candidates':[],

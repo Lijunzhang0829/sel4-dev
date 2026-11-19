@@ -49,17 +49,20 @@ class OwnerBlindView:
         # This payload is private and supports exact canonical file projections.
         self.canonical_payload['contract_relation_candidates'] = []
         self.canonical_payload['contract_cards'] = [
-            {k: deepcopy(c[k]) for k in ('contract_id', 'name', 'owner_theory')}
+            {k: deepcopy(c[k]) for k in ('contract_id', 'name', 'owner_theory') if k in c}
             for c in source['contracts']]
         self.public_contracts = {c['contract_id']:c for c in contracts}
-        labels = {x['owner_theory'] for x in source['contracts']}
+        labels = {x['owner_theory'] for x in source['contracts'] if x.get('owner_theory')}
         # The benchmark/session name is public; its occurrence is not a mapping
         # of a contract to the same-named original top-level theory.
         target = source['benchmark']['target_session']
         labels.update(x['owner_theory'].rsplit('.',1)[-1] for x in source['contracts']
-                      if x['owner_theory'].rsplit('.',1)[-1] != target)
-        self._owner_pattern = re.compile(r'(?<![A-Za-z0-9_])(?:' + '|'.join(
-            re.escape(v) for v in sorted(labels,key=len,reverse=True)) + r')(?![A-Za-z0-9_])')
+                      if x.get('owner_theory') and x['owner_theory'].rsplit('.',1)[-1] != target)
+        if labels:
+            self._owner_pattern = re.compile(r'(?<![A-Za-z0-9_])(?:' + '|'.join(
+                re.escape(v) for v in sorted(labels,key=len,reverse=True)) + r')(?![A-Za-z0-9_])')
+        else:
+            self._owner_pattern = re.compile(r'(?!)')
         self.assert_no_owner_disclosure(json.dumps(self.payload,ensure_ascii=False))
 
     def decode(self, value):

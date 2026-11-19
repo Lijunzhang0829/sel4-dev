@@ -105,11 +105,10 @@ def inventory(source):
 
 def contracts_for(targets):
     return [dict(contract_id='goal:'+sha256_json([t['statement'],t['context']])[:24],
-        name=t['name'],kind='lemma',owner_theory='Calg.Fixed_Targets',
+        name=t['name'],kind='lemma',
         exact_statement=t['statement'],
         contract_owned_context=[] if t['context']=='global' else ['context '+t['context']+' begin'],
-        contract_owned_attributes=[],contract_owned_attributes_raw='',
-        normalized_statement_sha256=sha256_json(t['statement'])) for t in targets]
+        contract_owned_attributes=[],contract_owned_attributes_raw='') for t in targets]
 
 
 def comparison_groups(manifest, targets, descriptor):
@@ -230,7 +229,7 @@ def prepare(source, parent, output, groups=None):
                   else 'calg-binomial-shuffled-'+str(len(targets)))
     payload['benchmark'].update(id=benchmark_id,independent_experiment=True,cross_experiment_inputs=[])
     contracts=contracts_for(targets)
-    payload.update(contracts=contracts,contract_cards=[contract_card(c) for c in contracts])
+    payload.update(contracts=contracts,contract_cards=[{'contract_id':c['contract_id'],'name':c['name']} for c in contracts])
     payload['context_profiles']=[dict(context_profile_id='calg-numbered-fixed-parent-v1',target_session='Calg',
         upstream_sessions=sorted(upstream),generated_import=IMPORT)]
     payload['parent_premises'].update(record_count=len(rows),database_sha256=digest(database),

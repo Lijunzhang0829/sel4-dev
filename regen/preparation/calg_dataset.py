@@ -294,13 +294,13 @@ def prepare(source, output, environment, resume=False):
         cid = 'goal:' + sha256_json([statement, context])[:24]
         mapping[cid] = raw['id']
         contracts.append({'contract_id': cid, 'name': raw['id'], 'kind': 'lemma',
-            'owner_theory': 'Calg.Fixed_Targets', 'exact_statement': statement,
+            'exact_statement': statement,
             'contract_owned_context': context, 'contract_owned_attributes': [],
-            'contract_owned_attributes_raw': '', 'normalized_statement_sha256': sha256_json(statement)})
+            'contract_owned_attributes_raw': ''})
     payload = {'schema_version': 1, 'artifact_type': 'repository-planning-input',
         'benchmark': {'id': f"calg-{profile['kind']}-{len(contracts)}", 'target_session': 'Calg', 'architecture': 'X64',
             'independent_experiment': True, 'cross_experiment_inputs': []},
-        'contracts': contracts, 'contract_cards': [contract_card(c) for c in contracts],
+        'contracts': contracts, 'contract_cards': [{'contract_id': c['contract_id'], 'name': c['name']} for c in contracts],
         'contract_visibility': 'owner-blind-v1', 'owner_groups': {}, 'session_graph': {},
         'theory_import_graph': {}, 'upstream_session_closure': sorted(upstream),
         'contract_relation_candidates': [],
