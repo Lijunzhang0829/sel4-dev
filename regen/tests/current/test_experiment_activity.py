@@ -67,6 +67,7 @@ class ActivityTests(unittest.TestCase):
             stale=experiment_summary(ledger)
             self.assertEqual(stale['historical_first_green_contract_ids'],['c'])
             self.assertEqual(stale['historical_first_green_helper_ids'],['h'])
+            self.assertEqual(stale['created_helpers'],1)
             self.assertEqual(stale['current_valid_contract_ids'],[])
             self.assertEqual(stale['current_valid_helper_ids'],[])
             self.assertEqual(stale['current_valid_sealed_theories'],[])

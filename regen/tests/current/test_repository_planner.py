@@ -83,7 +83,8 @@ end
     def test_upstream_handoff_free_grouping_and_nonleaf_auxiliaries(self):
         self.assertEqual(self.payload['environment_dataflow_id'], read_json(self.index)['dataflow_id'])
         self.assertEqual(len(self.payload['contracts']), 2)
-        self.assertEqual(len(self.payload['original_owner_groups']), 1)
+        self.assertNotIn('original_owner_groups', self.payload)
+        self.assertTrue(all('owner_theory' not in c and 'owner_file_slot' not in c for c in self.payload['contracts']))
         self.assertTrue(self.payload['legal_premises'])
         self.assertNotIn('human_secret_helper', json.dumps(self.payload))
         result, calls = self.call([self.proposal], allow=True)
